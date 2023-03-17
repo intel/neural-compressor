@@ -34,46 +34,46 @@ Classes
 
    Model domains enumeration.
 
-
+   .. 
 .. py:class:: DomainFlavours
 
    Bases: :py:obj:`enum.Enum`
 
    Domain flavours enumeration.
 
-
+   .. 
 .. py:class:: Frameworks
 
    Bases: :py:obj:`enum.Enum`
 
    Supported frameworks enumeration.
 
-
+   .. 
 .. py:class:: OptimizationTypes
 
    Bases: :py:obj:`enum.Enum`
 
    OptimizationTypes enumeration.
 
-
+   .. 
 .. py:class:: ExecutionStatus
 
    Bases: :py:obj:`enum.Enum`
 
    Executions statuses for optimizations, benchmarks and profilings.
 
-
+   .. 
 .. py:class:: Precisions
 
    Bases: :py:obj:`enum.Enum`
 
    Precisions enumeration.
 
-
+   .. 
 .. py:class:: Strategies
 
    Bases: :py:obj:`enum.Enum`
 
    Strategies enumeration.
 
-
+   .. 

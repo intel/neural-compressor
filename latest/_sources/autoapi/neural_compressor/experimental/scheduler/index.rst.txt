@@ -68,21 +68,21 @@ Classes
       opt_model.save()
 
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Getter of model.
 
       :returns: The model used in the Scheduler process.
 
-   .. py:property:: train_func
+   ..    .. .. py:property:: train_func
 
       Do not support get train_func.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Do not support get eval_func.
 
-   .. py:method:: append(*args)
+   ..    .. py:method:: append(*args)
 
       Add neural_compressor component into pipeline for sequential execution.
 

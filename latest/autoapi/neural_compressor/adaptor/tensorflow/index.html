@@ -102,34 +102,12 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">TensorFlowAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">TensorFlowAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../adaptor/index.html#neural_compressor.adaptor.adaptor.Adaptor" title="neural_compressor.adaptor.adaptor.Adaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.adaptor.Adaptor</span></code></a></p>
 <p>Adaptor Layer for stock tensorflow and spr-base.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.train">
-<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion_tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.train" title="Permalink to this definition"></a></dt>
-<dd><p>Model training API.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>[</em><a class="reference internal" href="../../ux/components/graph/graph/index.html#neural_compressor.ux.components.graph.graph.Graph" title="neural_compressor.ux.components.graph.graph.Graph"><em>Graph</em></a><em>, </em><em>GraphDef</em><em> or </em><em>Path String</em><em>]</em>) – The model could be the graph,
-graph_def object, the frozen pb or ckpt/savedmodel folder path.</p></li>
-<li><p><strong>dataloader</strong> (<em>generator</em>) – generate the data and labels.</p></li>
-<li><p><strong>optimizer_tuple</strong> (<em>tuple</em>) – optimizers for model training.</p></li>
-<li><p><strong>criterion_tuple</strong> (<em>tuple</em>) – criterions for model training.</p></li>
-<li><p><strong>hooks</strong> (<em>callback</em>) – on_epoch_begin hook on_epoch_end hook.</p></li>
-<li><p><strong>postprocess</strong> (<em>object</em>) – process the result from the model.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>None.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.evaluate" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.evaluate" title="Permalink to this definition"></a></dt>
 <dd><p>Evaluate the model for specified metric on validation dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -156,7 +134,7 @@ graph_def object, the frozen pb or ckpt/savedmodel folder path.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.quantize">
-<span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.quantize" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.quantize" title="Permalink to this definition"></a></dt>
 <dd><p>Execute the quantize process on the specified model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -179,7 +157,7 @@ which not enabled for tensorflow yet.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.query_fw_capability">
-<span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.query_fw_capability" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.query_fw_capability" title="Permalink to this definition"></a></dt>
 <dd><p>Collect the model-wise and op-wise configuration for quantization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -196,19 +174,19 @@ which not enabled for tensorflow yet.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.set_tensor">
-<span class="sig-name descname"><span class="pre">set_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.set_tensor" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.set_tensor" title="Permalink to this definition"></a></dt>
 <dd><p>Quantize the bias and weight tensors in tensor_dict.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_weight_and_bias">
-<span class="sig-name descname"><span class="pre">inspect_weight_and_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_weight_and_bias" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inspect_weight_and_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_weight_and_bias" title="Permalink to this definition"></a></dt>
 <dd><p>Inspect the weights and biases.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.fused_node_mapping">
-<span class="sig-name descname"><span class="pre">fused_node_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.fused_node_mapping" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fused_node_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.fused_node_mapping" title="Permalink to this definition"></a></dt>
 <dd><p>Create the mapping between first node and last node in fused sequence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -231,13 +209,13 @@ fused_mapping_reverse: key: last node in fused seq, val: first node name in fuse
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_activation">
-<span class="sig-name descname"><span class="pre">inspect_activation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_activation" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inspect_activation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_activation" title="Permalink to this definition"></a></dt>
 <dd><p>Inspect the activation.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_tensor">
-<span class="sig-name descname"><span class="pre">inspect_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspect_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'activation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_disk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_tensor" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inspect_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspect_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'activation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_disk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.inspect_tensor" title="Permalink to this definition"></a></dt>
 <dd><p>Dump the weight and activation(output) to local disk.</p>
 <ol class="arabic simple">
 <li><p>create the correspondence between query node name and the actually output node name in graph_def</p></li>
@@ -296,7 +274,7 @@ fused_mapping_reverse: key: last node in fused seq, val: first node name in fuse
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.quantize_input">
-<span class="sig-name descname"><span class="pre">quantize_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.quantize_input" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">quantize_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.quantize_input" title="Permalink to this definition"></a></dt>
 <dd><p>Quantize the model to be able to take quantized input.</p>
 <p>Remove graph QuantizedV2 op and move its input tensor to QuantizedConv2d
 and calculate the min-max scale.</p>
@@ -316,7 +294,7 @@ scale (float): The scale for dataloader to generate quantized input</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.get_optype_wise_ability">
-<span class="sig-name descname"><span class="pre">get_optype_wise_ability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.get_optype_wise_ability" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_optype_wise_ability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.get_optype_wise_ability" title="Permalink to this definition"></a></dt>
 <dd><p>Get the op type wise capability by generating the union value of each op type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -334,13 +312,13 @@ scale (float): The scale for dataloader to generate quantized input</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.save" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.save" title="Permalink to this definition"></a></dt>
 <dd><p>Save model to the path.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.convert">
-<span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.convert" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.convert" title="Permalink to this definition"></a></dt>
 <dd><p>The function is used to convert a source model format to another.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -355,7 +333,7 @@ scale (float): The scale for dataloader to generate quantized input</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.qat_convert">
-<span class="sig-name descname"><span class="pre">qat_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_recipe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.qat_convert" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">qat_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_recipe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.qat_convert" title="Permalink to this definition"></a></dt>
 <dd><p>Convert a fp32 ‘tf.keras’ model to be a int8 one with quantization aware training implementation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -375,7 +353,7 @@ scale (float): The scale for dataloader to generate quantized input</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.recover_tuned_model">
-<span class="sig-name descname"><span class="pre">recover_tuned_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.recover_tuned_model" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">recover_tuned_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.recover_tuned_model" title="Permalink to this definition"></a></dt>
 <dd><p>Execute the recover process on the specified model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -396,19 +374,19 @@ scale (float): The scale for dataloader to generate quantized input</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.diagnosis_helper">
-<span class="sig-name descname"><span class="pre">diagnosis_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quan_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.diagnosis_helper" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">diagnosis_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quan_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.diagnosis_helper" title="Permalink to this definition"></a></dt>
 <dd><p>Tensorflow diagnosis helper function.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.get_output_op_names">
-<span class="sig-name descname"><span class="pre">get_output_op_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qmodel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.get_output_op_names" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_output_op_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qmodel</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.get_output_op_names" title="Permalink to this definition"></a></dt>
 <dd><p>Get the oupur OPs’s names.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.calculate_op_sensitivity">
-<span class="sig-name descname"><span class="pre">calculate_op_sensitivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_op_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_batches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requantize_cfgs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.calculate_op_sensitivity" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calculate_op_sensitivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_op_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_batches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requantize_cfgs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor.calculate_op_sensitivity" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the op sensitivity.</p>
 <p>The sensitivity metric is the mse between the output of the last quantized op of
 the quantized model and the output of its corresponding op in the fp32 model.</p>
@@ -444,56 +422,19 @@ the quantized model and the output of its corresponding op in the fp32 model.</p
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">Tensorflow_ITEXAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">Tensorflow_ITEXAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.tensorflow.TensorFlowAdaptor" title="neural_compressor.adaptor.tensorflow.TensorFlowAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorFlowAdaptor</span></code></a></p>
 <p>Tensorflow ITEX Adaptor Class.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor.quantize">
-<span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor.quantize" title="Permalink to this definition"></a></dt>
-<dd><p>Execute the quantize process on the specified model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>tune_cfg</strong> (<em>dict</em>) – quantization configuration</p></li>
-<li><p><strong>model</strong> (<em>tf.compat.v1.GraphDef</em>) – fp32 model</p></li>
-<li><p><strong>data_loader</strong> (<em>generator</em>) – generator the data and labels</p></li>
-<li><p><strong>q_func</strong> (<em>optional</em>) – training function for quantization aware training mode,
-which not enabled for tensorflow yet.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>the quantized model</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tf.compat.v1.GraphDef</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">TensorflowQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itex_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">TensorflowQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itex_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../query/index.html#neural_compressor.adaptor.query.QueryBackendCapability" title="neural_compressor.adaptor.query.QueryBackendCapability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.query.QueryBackendCapability</span></code></a></p>
 <p>Tensorflow Query Capability Class.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_version">
-<span class="sig-name descname"><span class="pre">get_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_version" title="Permalink to this definition"></a></dt>
-<dd><p>Get the current backend version infomation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>version string.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>[string]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_op_types">
-<span class="sig-name descname"><span class="pre">get_op_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_op_types" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_op_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_op_types" title="Permalink to this definition"></a></dt>
 <dd><p>Get the supported op types by all precisions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -508,7 +449,7 @@ and value is the op types.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_fuse_patterns">
-<span class="sig-name descname"><span class="pre">get_fuse_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_fuse_patterns" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_fuse_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_fuse_patterns" title="Permalink to this definition"></a></dt>
 <dd><p>Get supported patterns by low precisions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -523,7 +464,7 @@ and value is the supported patterns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_quantization_capability">
-<span class="sig-name descname"><span class="pre">get_quantization_capability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_quantization_capability" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_quantization_capability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_quantization_capability" title="Permalink to this definition"></a></dt>
 <dd><p>Get the supported op types’ quantization capability.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -538,7 +479,7 @@ and value is a dict that describes all op types’ quantization capability.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_op_types_by_precision">
-<span class="sig-name descname"><span class="pre">get_op_types_by_precision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precision</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_op_types_by_precision" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_op_types_by_precision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precision</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_op_types_by_precision" title="Permalink to this definition"></a></dt>
 <dd><p>Get op types per precision.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -555,7 +496,7 @@ and value is a dict that describes all op types’ quantization capability.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_mixed_precision_combination">
-<span class="sig-name descname"><span class="pre">get_mixed_precision_combination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_mixed_precision_combination" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_mixed_precision_combination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_mixed_precision_combination" title="Permalink to this definition"></a></dt>
 <dd><p>Get the valid mixed precisions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -569,7 +510,7 @@ and value is a dict that describes all op types’ quantization capability.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_bf16_patterns">
-<span class="sig-name descname"><span class="pre">get_bf16_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_bf16_patterns" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_bf16_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_bf16_patterns" title="Permalink to this definition"></a></dt>
 <dd><p>Get BF16 pattern list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -583,7 +524,7 @@ and value is a dict that describes all op types’ quantization capability.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_eightbit_patterns">
-<span class="sig-name descname"><span class="pre">get_eightbit_patterns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qdq_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_eightbit_patterns" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_eightbit_patterns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qdq_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_eightbit_patterns" title="Permalink to this definition"></a></dt>
 <dd><p>Get eightbit op wise sequences information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -601,7 +542,7 @@ and value is a dict that describes all op types’ quantization capability.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.generate_internal_patterns">
-<span class="sig-name descname"><span class="pre">generate_internal_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.generate_internal_patterns" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">generate_internal_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tensorflow.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.generate_internal_patterns" title="Permalink to this definition"></a></dt>
 <dd><p>Translate the patterns defined in the yaml to internal pattern expression.</p>
 </dd></dl>
 

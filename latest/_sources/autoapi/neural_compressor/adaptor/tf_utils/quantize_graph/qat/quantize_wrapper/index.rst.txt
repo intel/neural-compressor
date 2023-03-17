@@ -29,11 +29,11 @@ Classes
 
    Base class for quantize wrapper.
 
-   .. py:property:: trainable
+   ..    .. .. py:property:: trainable
 
       Get trainable attribute for the layer and its sublayers.
 
-   .. py:property:: trainable_weights
+   ..    .. .. py:property:: trainable_weights
 
       List of all trainable weights tracked by this layer.
 
@@ -42,7 +42,7 @@ Classes
       :returns: A list of trainable variables.
       :rtype: trainable_weights (list)
 
-   .. py:property:: non_trainable_weights
+   ..    .. .. py:property:: non_trainable_weights
 
       List of all non-trainable weights tracked by this layer.
 
@@ -52,11 +52,11 @@ Classes
       :returns: A list of non-trainable variables.
       :rtype: non_trainable_weights (list)
 
-   .. py:property:: updates
+   ..    .. .. py:property:: updates
 
       Update layer.
 
-   .. py:property:: losses
+   ..    .. .. py:property:: losses
 
       List of losses added using the `add_loss()` API.
 
@@ -68,7 +68,7 @@ Classes
       :returns: A list of tensors.
       :rtype: losses (list)
 
-   .. py:method:: build(input_shape)
+   ..    .. py:method:: build(input_shape)
 
       Creates the variables of the layer.
 
@@ -137,7 +137,7 @@ Classes
 
    Weights and inputs will be quantized according to the layer type and quantize config.
 
-   .. py:method:: build(input_shape)
+   ..    .. py:method:: build(input_shape)
 
       Creates the variables of the layer.
 

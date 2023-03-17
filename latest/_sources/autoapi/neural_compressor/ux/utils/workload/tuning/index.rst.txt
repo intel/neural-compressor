@@ -34,59 +34,59 @@ Classes
 
    Configuration Strategy class.
 
-
+   .. 
 .. py:class:: MultiObjectives(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration MultiObjectives class.
 
-   .. py:property:: objective
+   ..    .. .. py:property:: objective
       :type: List[str]
 
       Get objectives.
 
-   .. py:property:: weight
+   ..    .. .. py:property:: weight
       :type: List[float]
 
       Get weights.
 
-
+   .. 
 .. py:class:: AccCriterion(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration AccCriterion class.
 
-
+   .. 
 .. py:class:: ExitPolicy(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration ExitPolicy class.
 
-
+   .. 
 .. py:class:: Workspace(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Workspace class.
 
-
+   .. 
 .. py:class:: Diagnosis(data: Optional[Dict[str, Any]] = None)
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Diagnosis class.
 
-
+   .. 
 .. py:class:: Tuning(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Tuning class.
 
-   .. py:method:: set_timeout(timeout: int) -> None
+   ..    .. py:method:: set_timeout(timeout: int) -> None
 
       Update tuning timeout in config.
 

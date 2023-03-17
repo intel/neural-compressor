@@ -31,4 +31,4 @@ Classes
    This Dataset is to construct a dataset from two specific image holders representing
        content image folder and style image folder.
 
-
+   .. 

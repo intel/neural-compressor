@@ -28,7 +28,7 @@ Classes
 
    Remove duplicated nodes like shared quantizev2 and const to decrease the output model size.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply post CSE optimization.
 

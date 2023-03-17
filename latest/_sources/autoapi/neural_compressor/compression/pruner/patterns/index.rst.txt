@@ -108,7 +108,7 @@ Functions
 
       A float representing the sparsity ratio of the modules after pruning.
 
-   .. py:method:: reduce_tensor(data, dim)
+   ..    .. py:method:: reduce_tensor(data, dim)
 
       Reduce the data along the given dimension.
 
@@ -260,7 +260,7 @@ Functions
 
       because PyTorch's tensor matmul has a hidden transpose operation.
 
-   .. py:method:: get_block_size_dict()
+   ..    .. py:method:: get_block_size_dict()
 
       Calulate the zero elements' ration in pre_masks.
 
@@ -483,7 +483,7 @@ Functions
 
       The size of the weight sequence.
 
-   .. py:method:: check_layer_validity(datas: dict, block_size: tuple)
+   ..    .. py:method:: check_layer_validity(datas: dict, block_size: tuple)
 
       Check if a layer is valid for this block_size.
 

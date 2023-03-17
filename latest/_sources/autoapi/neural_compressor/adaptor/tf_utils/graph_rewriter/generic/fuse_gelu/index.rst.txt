@@ -28,7 +28,7 @@ Classes
 
    Fuse Sqrt + RealDiv + Erf + AddV2 + Mul + Mul into Gelu op.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute the fusion from small ops to Gelu.
 

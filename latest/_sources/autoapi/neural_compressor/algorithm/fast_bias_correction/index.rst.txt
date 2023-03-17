@@ -28,4 +28,4 @@ Classes
 
    FastBiasCorrection algorithm class.
 
-
+   .. 

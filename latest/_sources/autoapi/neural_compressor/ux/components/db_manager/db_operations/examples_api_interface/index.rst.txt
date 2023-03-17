@@ -26,7 +26,7 @@ Classes
 
    Interface for queries connected with predefined models.
 
-   .. py:method:: create_project(data: dict) -> None
+   ..    .. py:method:: create_project(data: dict) -> None
       :staticmethod:
 
       Create new project for predefined model.

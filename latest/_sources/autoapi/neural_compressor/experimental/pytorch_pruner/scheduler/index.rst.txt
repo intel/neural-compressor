@@ -74,7 +74,7 @@ Functions
 
       A config dict object. Contains the scheduler information.
 
-   .. py:method:: update_sparsity_ratio(aggressive_ratio, current_prune_step, total_prune_steps, masks)
+   ..    .. py:method:: update_sparsity_ratio(aggressive_ratio, current_prune_step, total_prune_steps, masks)
       :abstractmethod:
 
       To be implemented in subclasses.
@@ -96,7 +96,7 @@ Functions
 
       
 
-   .. py:method:: update_sparsity_ratio(aggressive_ratio, current_prune_step, total_prune_steps, masks)
+   ..    .. py:method:: update_sparsity_ratio(aggressive_ratio, current_prune_step, total_prune_steps, masks)
 
       Return the aggressive ratio.
 
@@ -117,7 +117,7 @@ Functions
 
       
 
-   .. py:method:: update_sparsity_ratio(target_ratio, current_prune_step, total_prune_steps, masks)
+   ..    .. py:method:: update_sparsity_ratio(target_ratio, current_prune_step, total_prune_steps, masks)
 
       Obtain new target sparsity ratio according to the step.
 

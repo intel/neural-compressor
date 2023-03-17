@@ -47,14 +47,14 @@ Classes
 
    Basic class of tuning sampler.
 
-
+   .. 
 .. py:class:: OpWiseTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict)
 
    Bases: :py:obj:`TuningSampler`
 
    Not displayed in API Docs.
 
-   .. py:method:: get_opwise_candidate()
+   ..    .. py:method:: get_opwise_candidate()
 
       Collect all op-wise setting.
 
@@ -69,19 +69,19 @@ Classes
 
    Not displayed in API Docs.
 
-
+   .. 
 .. py:class:: FallbackTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict[tuple, Any], op_dtypes: Dict[str, str], accumulate: bool, skip_first: bool = True)
 
    Bases: :py:obj:`TuningSampler`
 
    Not displayed in API Docs.
 
-
+   .. 
 .. py:class:: OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs={})
 
    Op tuning config.
 
-   .. py:method:: get_state()
+   ..    .. py:method:: get_state()
 
       Return the op tuning configuration.
 
@@ -102,13 +102,13 @@ Classes
 
    Not displayed in API Docs.
 
-   .. py:property:: options
+   ..    .. .. py:property:: options
 
       Return all options.
 
       :returns: All options.
 
-   .. py:method:: get_options_name()
+   ..    .. py:method:: get_options_name()
 
       Return the name list of the options.
 
@@ -154,7 +154,7 @@ Classes
    1) capability -> internal format -> merge -> tuning space (tree)
 
 
-   .. py:method:: query_item_option(op_name_type, path, method_name, method_val)
+   ..    .. py:method:: query_item_option(op_name_type, path, method_name, method_val)
 
       Query the method value, such as scheme, algorithm.
 

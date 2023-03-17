@@ -106,7 +106,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.quantization.</span></span><span class="sig-name descname"><span class="pre">PostTrainingQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.quantization.</span></span><span class="sig-name descname"><span class="pre">PostTrainingQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant" title="Permalink to this definition"></a></dt>
 <dd><p>Post Training Quantization class.</p>
 <p>It automatically searches for optimal quantization recipes for low precision model inference,
 achieving best tuning objectives like inference performance within accuracy loss constraints.
@@ -115,58 +115,18 @@ and brings a unified API for automatic quantization that works on frameworks inc
 tensorflow, pytorch and mxnet.
 Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
 (&lt;1% or &lt;0.1% etc.) and tuning objectives (performance, memory footprint etc.).</p>
-<p class="rubric">Example</p>
-<p>conf = PostTrainingQuantConfig()
-quantizer = PostTrainingQuant(conf)
-quantizer.model = model
-quantizer.eval_func = eval_func
-quantizer.calib_dataloader = calib_dataloader
-q_model = quantizer.fit()</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.model" title="Permalink to this definition"></a></dt>
-<dd><p>Getter of model in neural_compressor.model.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.eval_func">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.eval_func" title="Permalink to this definition"></a></dt>
-<dd><p>Not support get eval_func.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.eval_dataloader">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_dataloader</span></span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.eval_dataloader" title="Permalink to this definition"></a></dt>
-<dd><p>Getter to eval dataloader.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.metric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.metric" title="Permalink to this definition"></a></dt>
-<dd><p>Get <cite>metric</cite> attribute.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.calib_func">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calib_func</span></span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.calib_func" title="Permalink to this definition"></a></dt>
-<dd><p>Not support get train_func.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.calib_dataloader">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calib_dataloader</span></span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.calib_dataloader" title="Permalink to this definition"></a></dt>
-<dd><p>Get <cite>calib_dataloader</cite> attribute.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.pre_proccess">
-<span class="sig-name descname"><span class="pre">pre_proccess</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.pre_proccess" title="Permalink to this definition"></a></dt>
-<dd><p>Create strategy to optimize model.</p>
-</dd></dl>
-
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">PostTrainingQuant</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_func</span> <span class="o">=</span> <span class="n">eval_func</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">calib_dataloader</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.quantization.PostTrainingQuant.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.execute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.quantization.PostTrainingQuant.execute" title="Permalink to this definition"></a></dt>
 <dd><p>Quantization execute routinue based on strategy design.</p>
 </dd></dl>
 
@@ -174,7 +134,7 @@ q_model = quantizer.fit()</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.quantization.fit">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.quantization.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.quantization.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.quantization.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.quantization.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Quantize the model with a given configure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -237,21 +197,24 @@ and neural_compressor will initialize this class when evaluation.</p></li>
 </ul>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<p># Quantization code for PTQ
-from neural_compressor import PostTrainingQuantConfig, set_workspace
-from neural_compressor import quantization
-conf = PostTrainingQuantConfig()</p>
-<p># saved intermediate files in ./saved folder
-set_workspace(“./saved”)</p>
-<dl class="simple">
-<dt>q_model = quantization.fit(model_origin,</dt><dd><p>conf,
-calib_dataloader=dataloader,
-calib_func=eval_func)</p>
-</dd>
-</dl>
-<p># Saved quantized model in ./saved folder
-q_model.save(“./saved”)</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code for PTQ</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">set_workspace</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+
+<span class="c1"># saved intermediate files in ./saved folder</span>
+<span class="n">set_workspace</span><span class="p">(</span><span class="s2">&quot;./saved&quot;</span><span class="p">)</span>
+
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model_origin</span><span class="p">,</span>
+                           <span class="n">conf</span><span class="p">,</span>
+                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                           <span class="n">calib_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+
+<span class="c1"># Saved quantized model in ./saved folder</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./saved&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>

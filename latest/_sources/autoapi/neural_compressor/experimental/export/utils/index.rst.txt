@@ -47,7 +47,7 @@ Functions
 
    Build dummy datareader for onnx static quantization.
 
-   .. py:method:: get_next()
+   ..    .. py:method:: get_next()
 
       Generate next data.
 

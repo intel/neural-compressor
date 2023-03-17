@@ -52,7 +52,7 @@ Functions
    :param global_config: global configs which may be overwritten by local_config.
    :type global_config: Conf
 
-   .. py:method:: on_epoch_begin(epoch)
+   ..    .. py:method:: on_epoch_begin(epoch)
       :abstractmethod:
 
       Be called on the beginning of epochs.

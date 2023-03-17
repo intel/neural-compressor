@@ -96,7 +96,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruner_legacy.magnitude.</span></span><span class="sig-name descname"><span class="pre">BasicMagnitudePruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruner_legacy.magnitude.</span></span><span class="sig-name descname"><span class="pre">BasicMagnitudePruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/magnitude.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../pruner/index.html#neural_compressor.experimental.pruner_legacy.pruner.Pruner" title="neural_compressor.experimental.pruner_legacy.pruner.Pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruner_legacy.pruner.Pruner</span></code></a></p>
 <p>Magnitude pruner class.</p>
 <dl class="field-list simple">
@@ -109,32 +109,26 @@
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_epoch_begin">
-<span class="sig-name descname"><span class="pre">on_epoch_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_epoch_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Update target sparsity according to the schedule and compute mask accordingly.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_step_begin">
-<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_step_begin" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/magnitude.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_step_begin" title="Permalink to this definition"></a></dt>
 <dd><p>Apply mask to the weight.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.compute_mask">
-<span class="sig-name descname"><span class="pre">compute_mask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.compute_mask" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_mask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/magnitude.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.compute_mask" title="Permalink to this definition"></a></dt>
 <dd><p>Compute masks according to absolute values.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_epoch_end">
-<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_epoch_end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/magnitude.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_epoch_end" title="Permalink to this definition"></a></dt>
 <dd><p>Sparsity ratio summary and apply mask to the weight.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_step_end">
-<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_step_end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/magnitude.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner.on_step_end" title="Permalink to this definition"></a></dt>
 <dd><p>Apply mask to the weight.</p>
 </dd></dl>
 

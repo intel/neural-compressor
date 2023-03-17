@@ -28,7 +28,7 @@ Classes
 
    Tuning strategy for auto mixed precision.
 
-   .. py:method:: next_tune_cfg()
+   ..    .. py:method:: next_tune_cfg()
 
       Generate the next tuning config.
 

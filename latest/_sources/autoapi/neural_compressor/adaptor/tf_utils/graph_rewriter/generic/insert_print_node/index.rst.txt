@@ -28,7 +28,7 @@ Classes
 
    InsertPrintMinMaxNode Pass for tensorflow sampling.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Insert print node in the graph to do the calibration.
 

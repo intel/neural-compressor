@@ -37,23 +37,23 @@ Functions
 
    Wrapper for Onnx schema.
 
-   .. py:property:: attributes
+   ..    .. .. py:property:: attributes
 
       Get valid attributes.
 
-   .. py:property:: domain
+   ..    .. .. py:property:: domain
 
       Get domain info.
 
-   .. py:property:: name
+   ..    .. .. py:property:: name
 
       Get op name.
 
-   .. py:property:: since_version
+   ..    .. .. py:property:: since_version
 
       Get opset version.
 
-   .. py:method:: from_onnx_schema(onnx_schema)
+   ..    .. py:method:: from_onnx_schema(onnx_schema)
       :staticmethod:
 
       Static method to construct OnnxOpSchema.

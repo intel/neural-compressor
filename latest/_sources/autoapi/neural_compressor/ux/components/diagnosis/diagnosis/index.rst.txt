@@ -26,7 +26,7 @@ Classes
 
    Diagnosis class.
 
-   .. py:method:: get_tensors_info(model_type: str = 'optimized') -> dict
+   ..    .. py:method:: get_tensors_info(model_type: str = 'optimized') -> dict
 
       Get information about tensors.
 

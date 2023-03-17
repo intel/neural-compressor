@@ -99,84 +99,12 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.</span></span><span class="sig-name descname"><span class="pre">QuantizeWrapperBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.</span></span><span class="sig-name descname"><span class="pre">QuantizeWrapperBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">tensorflow.keras.layers.Wrapper</span></code></p>
 <p>Base class for quantize wrapper.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.trainable">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">trainable</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.trainable" title="Permalink to this definition"></a></dt>
-<dd><p>Get trainable attribute for the layer and its sublayers.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.trainable_weights">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">trainable_weights</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.trainable_weights" title="Permalink to this definition"></a></dt>
-<dd><p>List of all trainable weights tracked by this layer.</p>
-<p>Trainable weights are updated via gradient descent during training.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of trainable variables.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>trainable_weights (list)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.non_trainable_weights">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">non_trainable_weights</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.non_trainable_weights" title="Permalink to this definition"></a></dt>
-<dd><p>List of all non-trainable weights tracked by this layer.</p>
-<p>Non-trainable weights are <em>not</em> updated during training. They are
-expected to be updated manually in <cite>call()</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of non-trainable variables.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>non_trainable_weights (list)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.updates">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">updates</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.updates" title="Permalink to this definition"></a></dt>
-<dd><p>Update layer.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.losses">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">losses</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.losses" title="Permalink to this definition"></a></dt>
-<dd><p>List of losses added using the <cite>add_loss()</cite> API.</p>
-<p>Variable regularization tensors are created when this property is
-accessed, so it is eager safe: accessing <cite>losses</cite> under a
-<cite>tf.GradientTape</cite> will propagate gradients back to the corresponding
-variables.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of tensors.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>losses (list)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.build">
-<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.build" title="Permalink to this definition"></a></dt>
-<dd><p>Creates the variables of the layer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input_shape</strong> (<em>tf.TensorShape</em><em> or </em><em>list</em>) – shapes of input tensors</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.compute_output_shape">
-<span class="sig-name descname"><span class="pre">compute_output_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.compute_output_shape" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_output_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.compute_output_shape" title="Permalink to this definition"></a></dt>
 <dd><p>Computes the output shape of the layer.</p>
 <p>This method will cause the layer’s state to be built, if that has not
 happened before. This requires that the layer will later be used with
@@ -196,13 +124,13 @@ inputs that match the input shape provided here.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.query_input_index">
-<span class="sig-name descname"><span class="pre">query_input_index</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.query_input_index" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">query_input_index</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.query_input_index" title="Permalink to this definition"></a></dt>
 <dd><p>Query QuantizeConfig to check if there is any designated input index for this layer.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.call">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.call" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.call" title="Permalink to this definition"></a></dt>
 <dd><p>This is where the quantize wrapper’s logic lives.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -219,7 +147,7 @@ inputs that match the input shape provided here.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.get_config">
-<span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.get_config" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.get_config" title="Permalink to this definition"></a></dt>
 <dd><p>Get the config of the quantize wrapper.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -233,7 +161,7 @@ inputs that match the input shape provided here.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.from_config">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.from_config" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase.from_config" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a quantize wrapper instance from its config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -252,24 +180,13 @@ inputs that match the input shape provided here.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.</span></span><span class="sig-name descname"><span class="pre">QuantizeWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.</span></span><span class="sig-name descname"><span class="pre">QuantizeWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizeWrapperBase</span></code></a></p>
 <p>General QuantizeWrapper for quantizable layers.</p>
 <p>Weights and inputs will be quantized according to the layer type and quantize config.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper.build">
-<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper.build" title="Permalink to this definition"></a></dt>
-<dd><p>Creates the variables of the layer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input_shape</strong> (<em>tf.TensorShape</em><em> or </em><em>list</em>) – shapes of input tensors</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper.call">
-<span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper.call" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_wrapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper.call" title="Permalink to this definition"></a></dt>
 <dd><p>This is where the quantize wrapper’s logic lives.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

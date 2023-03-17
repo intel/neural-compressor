@@ -29,7 +29,7 @@ Classes
 
    ArgMax operator.
 
-   .. py:method:: convert_check(convert_format)
+   ..    .. py:method:: convert_check(convert_format)
 
       Check if conversion can be done.
 
@@ -46,4 +46,4 @@ Classes
 
    INT8 ArgMax operator.
 
-
+   .. 

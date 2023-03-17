@@ -26,7 +26,7 @@ Classes
 
    Graph Converter Class is used to generate the quantization graph.
 
-   .. py:method:: convert()
+   ..    .. py:method:: convert()
 
       Do convertion.
 

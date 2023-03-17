@@ -30,7 +30,7 @@ Classes
    We only support inplace mode which means the model weights will be changed, you can call recover function only
    once to recover the weights if needed
 
-   .. py:method:: transform(alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d', 'ConvTranspose2d'], scales_per_op=False, calib_iter=100)
+   ..    .. py:method:: transform(alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d', 'ConvTranspose2d'], scales_per_op=False, calib_iter=100)
 
       The main entry of smooth quant
       :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -54,4 +54,4 @@ Classes
 
    
 
-
+   .. 

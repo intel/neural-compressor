@@ -102,66 +102,12 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.optimization.optimization.</span></span><span class="sig-name descname"><span class="pre">Optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.optimization.optimization.</span></span><span class="sig-name descname"><span class="pre">Optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/components/optimization/optimization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../../utils/json_serializer/index.html#neural_compressor.ux.utils.json_serializer.JsonSerializer" title="neural_compressor.ux.utils.json_serializer.JsonSerializer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.json_serializer.JsonSerializer</span></code></a></p>
 <p>Optimization class.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.output_model_name">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.output_model_name" title="Permalink to this definition"></a></dt>
-<dd><p>Get output model name.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.output_model_dir">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_model_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.output_model_dir" title="Permalink to this definition"></a></dt>
-<dd><p>Get path to output model directory.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.workdir">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.workdir" title="Permalink to this definition"></a></dt>
-<dd><p>Get path to optimization workdir.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.config_filename">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config_filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.config_filename" title="Permalink to this definition"></a></dt>
-<dd><p>Get filename for configuration.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.configuration_data">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">configuration_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.configuration_data" title="Permalink to this definition"></a></dt>
-<dd><p>Get configuration data for config generator.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.command">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">command</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.command" title="Permalink to this definition"></a></dt>
-<dd><p>Get execution command.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.optimization_script">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimization_script</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.optimization_script" title="Permalink to this definition"></a></dt>
-<dd><p>Get optimization script path.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.parameters">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.parameters" title="Permalink to this definition"></a></dt>
-<dd><p>Get optimization parameters.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.execute">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.execute" title="Permalink to this definition"></a></dt>
-<dd><p>Execute optimization.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.Optimization.generate_config">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.generate_config" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/components/optimization/optimization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.Optimization.generate_config" title="Permalink to this definition"></a></dt>
 <dd><p>Generate yaml config.</p>
 </dd></dl>
 
@@ -169,13 +115,13 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.OptimizationInterface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.optimization.optimization.</span></span><span class="sig-name descname"><span class="pre">OptimizationInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.OptimizationInterface" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.optimization.optimization.</span></span><span class="sig-name descname"><span class="pre">OptimizationInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/components/optimization/optimization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.OptimizationInterface" title="Permalink to this definition"></a></dt>
 <dd><p>Interface for optimization.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.optimization.optimization.DataloaderInterface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.optimization.optimization.</span></span><span class="sig-name descname"><span class="pre">DataloaderInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.DataloaderInterface" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.optimization.optimization.</span></span><span class="sig-name descname"><span class="pre">DataloaderInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/components/optimization/optimization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.components.optimization.optimization.DataloaderInterface" title="Permalink to this definition"></a></dt>
 <dd><p>Interface for dataloader.</p>
 </dd></dl>
 

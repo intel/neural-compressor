@@ -39,7 +39,7 @@ Functions
 
    Fuse decomposed small ops into InstanceNorm.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Find a group of ops that make up an instance/layer normalization pattern for fusion.
 

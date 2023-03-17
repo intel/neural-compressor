@@ -80,7 +80,7 @@ Functions
       Global pruning means that all pruning layers are gathered to calculate pruning criteria.
       Local pruning, on the contrast, means that pruning layers are to calculate criteria individually.
 
-   .. py:method:: get_masks(scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer)
+   ..    .. py:method:: get_masks(scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer)
 
       Call when new masks for pruning are to be calculated.
 
@@ -162,7 +162,7 @@ Functions
       Please be aware that the vertical direction of a Linear layer's weight in PyTorch refer to output channel.
       Because PyTorch's tensor matmul has a hidden transpose operation.
 
-   .. py:method:: get_block_size_dict(data)
+   ..    .. py:method:: get_block_size_dict(data)
 
       Calulate the zero elements' ration in pre_masks.
 
@@ -232,7 +232,7 @@ Functions
 
       The size of the weight sequence.
 
-   .. py:method:: get_sparsity_ratio(pre_masks)
+   ..    .. py:method:: get_sparsity_ratio(pre_masks)
 
       Calulate the zero elements' ration in pre_masks.
 

@@ -28,7 +28,7 @@ Classes
 
    INC Bench profiling results' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, profiling_id: int, node_name: str, total_execution_time: int, accelerator_execution_time: int, cpu_execution_time: int, op_run: int, op_defined: int) -> None
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, profiling_id: int, node_name: str, total_execution_time: int, accelerator_execution_time: int, cpu_execution_time: int, op_run: int, op_defined: int) -> None
       :staticmethod:
 
       Add profiling result to database.

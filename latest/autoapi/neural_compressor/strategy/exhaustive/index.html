@@ -96,27 +96,9 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.exhaustive.</span></span><span class="sig-name descname"><span class="pre">ExhaustiveTuneStrategy</span></span><a class="headerlink" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.exhaustive.</span></span><span class="sig-name descname"><span class="pre">ExhaustiveTuneStrategy</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/exhaustive.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
 <p>The exhaustive tuning strategy.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy.next_tune_cfg">
-<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Generate and yield the next tuning config using exhaustive search in tuning space.</p>
-<p>It sequentially traverse all possible quantization tuning configurations
-in a tuning space. From the perspective of the impact on performance,
-we currently only traverse all possible quantization tuning configs.
-Same reason as Bayesian, fallback datatypes are not included for now.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dict containing the tuning configuration for quantization.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tune_config (dict)</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>

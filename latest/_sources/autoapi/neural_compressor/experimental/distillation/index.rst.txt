@@ -53,45 +53,45 @@ Classes
 
       The best student model found in the training.
 
-   .. py:property:: criterion
+   ..    .. .. py:property:: criterion
 
       Getter of criterion.
 
       :returns: The criterion used in the distillation process.
 
-   .. py:property:: optimizer
+   ..    .. .. py:property:: optimizer
 
       Getter of optimizer.
 
       :returns: The optimizer used in the distillation process.
 
-   .. py:property:: teacher_model
+   ..    .. .. py:property:: teacher_model
 
       Getter of the teacher model.
 
       :returns: The teacher model used in the distillation process.
 
-   .. py:property:: student_model
+   ..    .. .. py:property:: student_model
 
       Getter of the student model.
 
       :returns: The student model used in the distillation process.
 
-   .. py:property:: train_cfg
+   ..    .. .. py:property:: train_cfg
 
       Getter of the train configuration.
 
       :returns: The train configuration used in the distillation process.
 
-   .. py:property:: evaluation_distributed
+   ..    .. .. py:property:: evaluation_distributed
 
       Getter to know whether need distributed evaluation dataloader.
 
-   .. py:property:: train_distributed
+   ..    .. .. py:property:: train_distributed
 
       Getter to know whether need distributed training dataloader.
 
-   .. py:method:: on_post_forward(input, teacher_output=None)
+   ..    .. py:method:: on_post_forward(input, teacher_output=None)
 
       Set or compute output of teacher model.
 

@@ -34,7 +34,7 @@ Functions
 
    Parameters feeder class.
 
-   .. py:method:: feed() -> Dict[str, Any]
+   ..    .. py:method:: feed() -> Dict[str, Any]
 
       Feed the parameters.
 

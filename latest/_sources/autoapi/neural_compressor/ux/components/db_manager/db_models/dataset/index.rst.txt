@@ -28,7 +28,7 @@ Classes
 
    INC Bench datasets' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, project_id: int, dataset_name: str, dataset_type: str, parameters: Optional[dict] = None, transforms: Optional[dict] = None, filter: Optional[dict] = None, metric: Optional[dict] = None, template_path: Optional[str] = None) -> int
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, project_id: int, dataset_name: str, dataset_type: str, parameters: Optional[dict] = None, transforms: Optional[dict] = None, filter: Optional[dict] = None, metric: Optional[dict] = None, template_path: Optional[str] = None) -> int
       :staticmethod:
 
       Add dataset to database.

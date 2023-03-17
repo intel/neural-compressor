@@ -28,7 +28,7 @@ Classes
 
    Fuse Pad op into Conv.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse Pad op into Conv2D/DepthwiseConv2dNative/Conv3D.
 

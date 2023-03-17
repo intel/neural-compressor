@@ -53,7 +53,7 @@ Functions
    :param framework_specific_info: dictionary of tuning configure from yaml file.
    :type framework_specific_info: dict
 
-   .. py:method:: is_fused_module(module)
+   ..    .. py:method:: is_fused_module(module)
 
       This is a helper function for `_propagate_qconfig_helper` to detecte
          if this module is fused.
@@ -107,7 +107,7 @@ Functions
    :param framework_specific_info: dictionary of tuning configure from yaml file.
    :type framework_specific_info: dict
 
-   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
 
       Execute the quantize process on the specified model.
 
@@ -233,7 +233,7 @@ Functions
    :param framework_specific_info: dictionary of tuning configure from yaml file.
    :type framework_specific_info: dict
 
-   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
 
       Execute the quantize process on the specified model.
 
@@ -308,7 +308,7 @@ Functions
    :param framework_specific_info: dictionary of tuning configure from yaml file.
    :type framework_specific_info: dict
 
-   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
 
       Execute the quantize process on the specified model.
 

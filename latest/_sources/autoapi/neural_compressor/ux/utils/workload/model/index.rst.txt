@@ -28,17 +28,17 @@ Classes
 
    Configuration Model class.
 
-   .. py:property:: inputs
+   ..    .. .. py:property:: inputs
       :type: List[str]
 
       Get inputs.
 
-   .. py:property:: outputs
+   ..    .. .. py:property:: outputs
       :type: List[str]
 
       Get outputs.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
 
       Serialize configuration Model class.
 

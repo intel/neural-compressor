@@ -48,7 +48,7 @@ Functions
 
    The label balance filter for COCO Record.
 
-
+   .. 
 .. py:class:: FILTERS(framework)
 
    Bases: :py:obj:`object`
@@ -61,7 +61,7 @@ Functions
                      "onnxrt_qlinearops", "onnxruntime"].
    :type framework: str
 
-
+   .. 
 .. py:class:: Filter
 
    Bases: :py:obj:`object`
@@ -71,7 +71,7 @@ Functions
    __call__ method is needed when write user specific transform.
 
 
-
+   .. 
 .. py:function:: filter_registry(filter_type, framework)
 
    Register all transform subclasses.

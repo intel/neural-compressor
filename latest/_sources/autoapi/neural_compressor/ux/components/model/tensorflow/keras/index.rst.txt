@@ -28,7 +28,7 @@ Classes
 
    Keras model.
 
-   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+   ..    .. py:method:: get_input_nodes() -> Optional[List[Any]]
 
       Get model input nodes.
 

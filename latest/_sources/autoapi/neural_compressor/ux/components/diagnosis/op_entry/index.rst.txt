@@ -28,7 +28,7 @@ Classes
 
    OP entry class.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
 
       Serialize OP entry.
 

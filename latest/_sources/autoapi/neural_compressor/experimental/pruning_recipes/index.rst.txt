@@ -49,7 +49,7 @@ Attributes
 
       A dict which stores registered Pruning Pattern subclasses.
 
-   .. py:method:: support_pattern()
+   ..    .. py:method:: support_pattern()
       :classmethod:
 
       Support patterns.

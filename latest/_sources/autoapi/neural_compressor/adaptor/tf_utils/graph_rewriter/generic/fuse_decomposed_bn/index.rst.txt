@@ -39,7 +39,7 @@ Functions
 
    Fuse decomposed small ops to BatchNormalization.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse individual ops in batch normalization to FusedBatchNorm.
 

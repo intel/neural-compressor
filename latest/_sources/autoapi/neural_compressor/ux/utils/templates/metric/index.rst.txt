@@ -28,57 +28,57 @@ Classes
 
    Metric represents data which is sent from Optimization and Benchmark.
 
-   .. py:property:: accuracy
+   ..    .. .. py:property:: accuracy
       :type: Optional[float]
 
       Accuracy for model.
 
-   .. py:property:: latency
+   ..    .. .. py:property:: latency
       :type: Optional[float]
 
       Latency for model.
 
-   .. py:property:: throughput
+   ..    .. .. py:property:: throughput
       :type: Optional[float]
 
       Throughput for model.
 
-   .. py:property:: acc_input_model
+   ..    .. .. py:property:: acc_input_model
       :type: Optional[float]
 
       Accuracy for input model.
 
-   .. py:property:: acc_optimized_model
+   ..    .. .. py:property:: acc_optimized_model
       :type: Optional[float]
 
       Accuracy for input model.
 
-   .. py:property:: size_input_model
+   ..    .. .. py:property:: size_input_model
       :type: Optional[float]
 
       Model size for float32.
 
-   .. py:property:: size_optimized_model
+   ..    .. .. py:property:: size_optimized_model
       :type: Optional[float]
 
       Get optimized model size.
 
-   .. py:property:: path_optimized_model
+   ..    .. .. py:property:: path_optimized_model
       :type: Optional[str]
 
       Get optimized model path.
 
-   .. py:property:: optimization_time
+   ..    .. .. py:property:: optimization_time
       :type: Optional[float]
 
       Optimization time.
 
-   .. py:property:: profiling_data
+   ..    .. .. py:property:: profiling_data
       :type: Optional[List[dict]]
 
       Get profiling data.
 
-   .. py:method:: insert_data(attribute: str, value: str) -> None
+   ..    .. py:method:: insert_data(attribute: str, value: str) -> None
 
       Set attribute value.
 

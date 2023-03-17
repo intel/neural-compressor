@@ -28,7 +28,7 @@ Classes
 
    Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Inject dummy BiasAdd if MatMul, Conv2D missing the valid add ops behind them.
 

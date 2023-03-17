@@ -37,7 +37,7 @@ Classes
 
    Interface for parameters to add model.
 
-   .. py:method:: parse_nodes(nodes: Union[None, str, List[str]]) -> List[str]
+   ..    .. py:method:: parse_nodes(nodes: Union[None, str, List[str]]) -> List[str]
       :staticmethod:
 
       Parse model's boundary nodes.
@@ -48,47 +48,47 @@ Classes
 
    Interface for parameters to add dataset.
 
-
+   .. 
 .. py:class:: OptimizationAddParamsInterface
 
    Interface for parameters to add optimization.
 
-
+   .. 
 .. py:class:: OptimizationEditParamsInterface
 
    Interface for parameters to edit optimization.
 
-
+   .. 
 .. py:class:: BenchmarkAddParamsInterface
 
    Interface for parameters to add benchmark.
 
-
+   .. 
 .. py:class:: BenchmarkEditParamsInterface
 
    Interface for parameters to edit benchmark.
 
-
+   .. 
 .. py:class:: ProfilingAddParamsInterface
 
    Interface for parameters to add profiling.
 
-
+   .. 
 .. py:class:: ProfilingEditParamsInterface
 
    Interface for parameters to edit profiling.
 
-
+   .. 
 .. py:class:: ProfilingResultAddParamsInterface
 
    Interface for parameters to add profiling result.
 
-
+   .. 
 .. py:class:: TuningHistoryItemInterface
 
    Interface for single tuning history item.
 
-   .. py:method:: serialize() -> Dict[str, Any]
+   ..    .. py:method:: serialize() -> Dict[str, Any]
 
       Serialize tuning history item.
 
@@ -98,7 +98,7 @@ Classes
 
    Interface for tuning history data.
 
-   .. py:method:: serialize() -> Dict[str, Any]
+   ..    .. py:method:: serialize() -> Dict[str, Any]
 
       Serialize history snapshot to dict.
 
@@ -108,4 +108,4 @@ Classes
 
    Interface for parameters for generating optimization from diagnosis tab.
 
-
+   .. 

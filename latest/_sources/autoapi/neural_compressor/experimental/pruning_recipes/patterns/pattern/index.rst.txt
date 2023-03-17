@@ -54,7 +54,7 @@ Functions
 
       A dict which stores registered Pruning Pattern subclasses.
 
-   .. py:method:: support_pattern()
+   ..    .. py:method:: support_pattern()
       :classmethod:
 
       Support patterns.
@@ -65,7 +65,7 @@ Functions
 
    Base class of pruning pattern.
 
-   .. py:method:: compute_sparsity(tensor)
+   ..    .. py:method:: compute_sparsity(tensor)
       :abstractmethod:
 
       To be implemented in subclasses.

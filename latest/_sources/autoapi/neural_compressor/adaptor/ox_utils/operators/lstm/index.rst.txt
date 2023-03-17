@@ -28,7 +28,7 @@ Classes
 
    LSTM Operator.
 
-   .. py:method:: quantize()
+   ..    .. py:method:: quantize()
 
       Do quantizaion.
 

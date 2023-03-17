@@ -43,7 +43,7 @@ Functions
 
 
 
-   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
       :abstractmethod:
 
       The function is used to do calibration and quanitization in post-training quantization.

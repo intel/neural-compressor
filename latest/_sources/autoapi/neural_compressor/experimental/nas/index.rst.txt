@@ -53,7 +53,7 @@ Classes
                          model architecture parameters.
    :type model_builder: function obj
 
-   .. py:method:: execute()
+   ..    .. py:method:: execute()
 
       Execute the search process.
 
@@ -91,7 +91,7 @@ Classes
    :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
    :type conf_fname_or_obj: string or obj
 
-   .. py:method:: search()
+   ..    .. py:method:: search()
 
       Execute the search process.
 
@@ -120,4 +120,4 @@ Classes
 
    :returns: An object of specified NAS approach.
 
-
+   .. 

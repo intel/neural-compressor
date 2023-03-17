@@ -58,7 +58,7 @@ Functions
    This design is mainly for Quantization-Aware Training.
    In this class will apply all hooks for Quantization-Aware Training.
 
-
+   .. 
 .. py:class:: DistillationCallbacks(conf=None, model=None)
 
    Bases: :py:obj:`BaseCallbacks`
@@ -88,31 +88,31 @@ Functions
 
       The best student model found in the training.
 
-   .. py:property:: criterion
+   ..    .. .. py:property:: criterion
 
       Getter of criterion.
 
       :returns: The criterion used in the distillation process.
 
-   .. py:property:: teacher_model
+   ..    .. .. py:property:: teacher_model
 
       Getter of the teacher model.
 
       :returns: The teacher model used in the distillation process.
 
-   .. py:property:: student_model
+   ..    .. .. py:property:: student_model
 
       Getter of the student model.
 
       :returns: The student model used in the distillation process.
 
-   .. py:property:: train_cfg
+   ..    .. .. py:property:: train_cfg
 
       Getter of the train configuration.
 
       :returns: The train configuration used in the distillation process.
 
-   .. py:method:: init_train_cfg()
+   ..    .. py:method:: init_train_cfg()
 
       Initialize the training configuration.
 
@@ -138,7 +138,7 @@ Functions
 
    In this class will apply all hooks for Pruning.
 
-   .. py:method:: on_train_end()
+   ..    .. py:method:: on_train_end()
 
       Be called after the end of training.
 
@@ -163,20 +163,20 @@ Functions
 
    Similiar to torch optimizer's interface.
 
-   .. rubric:: Example
+   Example::
 
-   from neural_compressor.config import WeightPruningConfig
+       from neural_compressor.config import WeightPruningConfig
 
-   config = WeightPruningConfig(
-       local_configs,
-       target_sparsity=0.8
-   )
-   prune = Pruning(config)
-   prune.update_config(start_step=1, end_step=10)
-   prune.model = self.model
+       config = WeightPruningConfig(
+           local_configs,
+           target_sparsity=0.8
+       )
+       prune = Pruning(config)
+       prune.update_config(start_step=1, end_step=10)
+       prune.model = self.model
 
-   .. py:property:: weight_compression
+   ..    .. .. py:property:: weight_compression
 
       Get weight_compression.
 
-
+   .. 

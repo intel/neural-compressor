@@ -28,7 +28,7 @@ Classes
 
    The class of supporting KL divergence calibration algorithm.
 
-   .. py:method:: expand_quantized_bins(quantized_bins, reference_bins)
+   ..    .. py:method:: expand_quantized_bins(quantized_bins, reference_bins)
 
       Expand quantized bins.
 

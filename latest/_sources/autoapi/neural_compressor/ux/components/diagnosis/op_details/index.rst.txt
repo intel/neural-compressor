@@ -31,7 +31,7 @@ Classes
 
    OP details class.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
 
       Serialize OpDetails.
 
@@ -43,18 +43,18 @@ Classes
 
    OP pattern class.
 
-
+   .. 
 .. py:class:: OpWeights(weights_data: dict)
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    OP weights class.
 
-
+   .. 
 .. py:class:: OpActivation(op_activation: dict)
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    OP activation class.
 
-
+   .. 

@@ -36,7 +36,7 @@ Functions
 
    Define Collector based on hook, which is used to record the intermediate result.
 
-   .. py:method:: hook_fn_act(m, inp, outp)
+   ..    .. py:method:: hook_fn_act(m, inp, outp)
 
       Get out and in features.
 
@@ -57,7 +57,7 @@ Functions
    Advances in neural information processing systems 33 (2020): 18518-18529.
    https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
 
-   .. py:method:: is_fused_module(module)
+   ..    .. py:method:: is_fused_module(module)
 
       This is a helper function for `_propagate_qconfig_helper` to detecte if this module is fused.
 
@@ -156,7 +156,7 @@ Functions
    quantized weights. This dict can be used to compare and compute the quantization
    error of the weights of float and quantized models.
 
-   Example usage::
+   Example::
 
        wt_compare_dict = compare_weights(
            float_model.state_dict(), qmodel.state_dict())

@@ -61,7 +61,7 @@ Functions
 
    Run end-to-end tokenziation.
 
-   .. py:method:: tokenize(text)
+   ..    .. py:method:: tokenize(text)
 
       Tokenize text.
 
@@ -83,7 +83,7 @@ Functions
 
    Run basic tokenization (punctuation splitting, lower casing, etc.).
 
-   .. py:method:: tokenize(text)
+   ..    .. py:method:: tokenize(text)
 
       Tokenizes a piece of text.
 
@@ -95,7 +95,7 @@ Functions
 
    Run WordPiece tokenziation.
 
-   .. py:method:: tokenize(text)
+   ..    .. py:method:: tokenize(text)
 
       Tokenize a piece of text into its word pieces.
 

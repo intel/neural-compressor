@@ -34,7 +34,7 @@ Functions
 
    Interface for queries connected with benchmark.
 
-   .. py:method:: delete_benchmark(data: dict) -> dict
+   ..    .. py:method:: delete_benchmark(data: dict) -> dict
       :staticmethod:
 
       Delete benchmark from database and clean workspace.

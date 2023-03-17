@@ -29,7 +29,7 @@ Classes
 
    Direct8Bit Operator.
 
-   .. py:method:: quantize_check()
+   ..    .. py:method:: quantize_check()
 
       Check if quantizaion can be done.
 
@@ -61,4 +61,4 @@ Classes
 
    QDirect Operator.
 
-
+   .. 

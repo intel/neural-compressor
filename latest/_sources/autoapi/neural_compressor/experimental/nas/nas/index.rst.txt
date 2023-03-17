@@ -37,7 +37,7 @@ Classes
 
    :returns: An object of specified NAS approach.
 
-
+   .. 
 .. py:class:: NASBase(search_space=None, model_builder=None)
 
    Bases: :py:obj:`object`
@@ -50,25 +50,25 @@ Classes
                          model architecture parameters.
    :type model_builder: function obj
 
-   .. py:property:: search_space
+   ..    .. .. py:property:: search_space
 
       Getter of the search space.
 
       :returns: The search space.
 
-   .. py:property:: search_algorithm
+   ..    .. .. py:property:: search_algorithm
 
       Getter of the search algorithm.
 
       :returns: The search algorithm.
 
-   .. py:property:: model_builder
+   ..    .. .. py:property:: model_builder
 
       Getter of the model builder.
 
       :returns: The model builder.
 
-   .. py:method:: select_model_arch()
+   ..    .. py:method:: select_model_arch()
 
       Propose architecture of the model based on search algorithm for next search iteration.
 

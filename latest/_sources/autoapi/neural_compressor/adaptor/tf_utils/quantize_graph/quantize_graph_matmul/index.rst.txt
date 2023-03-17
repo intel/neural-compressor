@@ -28,7 +28,7 @@ Classes
 
    Quantize MatMul and apply the fusion.
 
-   .. py:method:: apply_matmul_biasadd_relu_fusion(match_node_name)
+   ..    .. py:method:: apply_matmul_biasadd_relu_fusion(match_node_name)
 
       Apply the MatMul BiasAdd Relu fusion.
 

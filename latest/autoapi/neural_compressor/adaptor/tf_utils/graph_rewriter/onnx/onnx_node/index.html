@@ -96,185 +96,101 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.</span></span><span class="sig-name descname"><span class="pre">OnnxNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_conversion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.</span></span><span class="sig-name descname"><span class="pre">OnnxNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_conversion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode" title="Permalink to this definition"></a></dt>
 <dd><p>A ONNX Node Wrapper used for graph manipulations.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.input">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.input" title="Permalink to this definition"></a></dt>
-<dd><p>Get node input.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.output">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.output" title="Permalink to this definition"></a></dt>
-<dd><p>Get node output.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.inputs">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inputs</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.inputs" title="Permalink to this definition"></a></dt>
-<dd><p>Input node objects.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.attr">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">attr</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.attr" title="Permalink to this definition"></a></dt>
-<dd><p>Get node attributes.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.name">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.name" title="Permalink to this definition"></a></dt>
-<dd><p>Get op name.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.op">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">op</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.op" title="Permalink to this definition"></a></dt>
-<dd><p>Get node’s op.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.type">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.type" title="Permalink to this definition"></a></dt>
-<dd><p>Return Op type.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.domain">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">domain</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.domain" title="Permalink to this definition"></a></dt>
-<dd><p>Return Op domain.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.data_format">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">data_format</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.data_format" title="Permalink to this definition"></a></dt>
-<dd><p>Return data_format.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.summary">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">summary</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.summary" title="Permalink to this definition"></a></dt>
-<dd><p>Return node summary information.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.skip_conversion">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">skip_conversion</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.skip_conversion" title="Permalink to this definition"></a></dt>
-<dd><p>Get skip conversion setting.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.output_shapes">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_shapes</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.output_shapes" title="Permalink to this definition"></a></dt>
-<dd><p>Get output shapes.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.output_dtypes">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_dtypes</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.output_dtypes" title="Permalink to this definition"></a></dt>
-<dd><p>Get output dtypes.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_value_attr">
-<span class="sig-name descname"><span class="pre">get_value_attr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_value_attr" title="Permalink to this definition"></a></dt>
-<dd><p>Return onnx attr for value property of node.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_onnx_attrs">
-<span class="sig-name descname"><span class="pre">get_onnx_attrs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_onnx_attrs" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_onnx_attrs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_onnx_attrs" title="Permalink to this definition"></a></dt>
 <dd><p>Return onnx valid attributes.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.child_name">
-<span class="sig-name descname"><span class="pre">child_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.child_name" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">child_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.child_name" title="Permalink to this definition"></a></dt>
 <dd><p>Set child name.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_nhwc">
-<span class="sig-name descname"><span class="pre">is_nhwc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_nhwc" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_nhwc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_nhwc" title="Permalink to this definition"></a></dt>
 <dd><p>Return True if node is in NHWC format.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_const">
-<span class="sig-name descname"><span class="pre">is_const</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_const" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_const</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_const" title="Permalink to this definition"></a></dt>
 <dd><p>Return True if node is a constant.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_scalar">
-<span class="sig-name descname"><span class="pre">is_scalar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_scalar" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_scalar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_scalar" title="Permalink to this definition"></a></dt>
 <dd><p>Return True if node is a constant with a scalar value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_graph_input">
-<span class="sig-name descname"><span class="pre">is_graph_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_graph_input" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_graph_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_graph_input" title="Permalink to this definition"></a></dt>
 <dd><p>Check if the node is the input of the graph.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_graph_input_default_const">
-<span class="sig-name descname"><span class="pre">is_graph_input_default_const</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_graph_input_default_const" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_graph_input_default_const</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_graph_input_default_const" title="Permalink to this definition"></a></dt>
 <dd><p>Check if the node is the input of the graph and const.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_while">
-<span class="sig-name descname"><span class="pre">is_while</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_while" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_while</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.is_while" title="Permalink to this definition"></a></dt>
 <dd><p>Check if the node is while op.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr">
-<span class="sig-name descname"><span class="pre">get_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr" title="Permalink to this definition"></a></dt>
 <dd><p>Get raw attribute value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_value">
-<span class="sig-name descname"><span class="pre">get_attr_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_value" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_attr_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_value" title="Permalink to this definition"></a></dt>
 <dd><p>Get attribute value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_int">
-<span class="sig-name descname"><span class="pre">get_attr_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_int" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_attr_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_int" title="Permalink to this definition"></a></dt>
 <dd><p>Get attribute value as int.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_str">
-<span class="sig-name descname"><span class="pre">get_attr_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'utf-8'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_str" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_attr_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'utf-8'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_attr_str" title="Permalink to this definition"></a></dt>
 <dd><p>Get attribute value as string.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_attr">
-<span class="sig-name descname"><span class="pre">set_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_attr" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_attr" title="Permalink to this definition"></a></dt>
 <dd><p>Set node’s attribute.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_attr_onnx">
-<span class="sig-name descname"><span class="pre">set_attr_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_attr_onnx" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_attr_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_attr_onnx" title="Permalink to this definition"></a></dt>
 <dd><p>Set node’s onnx attributes.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.need_skip">
-<span class="sig-name descname"><span class="pre">need_skip</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.need_skip" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">need_skip</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.need_skip" title="Permalink to this definition"></a></dt>
 <dd><p>Check if need to skip conversion.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_tensor_value">
-<span class="sig-name descname"><span class="pre">get_tensor_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_tensor_value" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_tensor_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_tensor_value" title="Permalink to this definition"></a></dt>
 <dd><p>Get value for onnx tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -295,13 +211,13 @@ when as_list=True, return 1, type is &lt;class ‘int’&gt;.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.scalar_to_dim1">
-<span class="sig-name descname"><span class="pre">scalar_to_dim1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.scalar_to_dim1" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">scalar_to_dim1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.scalar_to_dim1" title="Permalink to this definition"></a></dt>
 <dd><p>Get value for onnx tensor.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_tensor_value">
-<span class="sig-name descname"><span class="pre">set_tensor_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_tensor_value" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_tensor_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_val</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_tensor_value" title="Permalink to this definition"></a></dt>
 <dd><p>Set new value for existing onnx tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -312,25 +228,25 @@ when as_list=True, return 1, type is &lt;class ‘int’&gt;.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_body_graphs">
-<span class="sig-name descname"><span class="pre">get_body_graphs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_body_graphs" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_body_graphs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_body_graphs" title="Permalink to this definition"></a></dt>
 <dd><p>Get body graphs.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_body_graph_as_attr">
-<span class="sig-name descname"><span class="pre">set_body_graph_as_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_body_graph_as_attr" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_body_graph_as_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.set_body_graph_as_attr" title="Permalink to this definition"></a></dt>
 <dd><p>Set body graphs as attribute.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.update_proto">
-<span class="sig-name descname"><span class="pre">update_proto</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.update_proto" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">update_proto</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.update_proto" title="Permalink to this definition"></a></dt>
 <dd><p>Update protobuf from internal structure.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_implicit_inputs">
-<span class="sig-name descname"><span class="pre">get_implicit_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recursive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_implicit_inputs" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_implicit_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recursive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode.get_implicit_inputs" title="Permalink to this definition"></a></dt>
 <dd><p>Get implicit inputs if the node has attributes being GraphProto.</p>
 </dd></dl>
 

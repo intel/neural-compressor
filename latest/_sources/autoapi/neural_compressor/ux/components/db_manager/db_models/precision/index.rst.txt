@@ -36,7 +36,7 @@ Functions
 
    INC Bench Precision table class.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str) -> int
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str) -> int
       :staticmethod:
 
       Add precision to DB.

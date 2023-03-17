@@ -129,7 +129,7 @@ Functions
 
       A float. Sparsity ratio maximum for every module.
 
-   .. py:method:: on_epoch_begin(epoch)
+   ..    .. py:method:: on_epoch_begin(epoch)
 
       Functions called in the beginning of each epoch.
 
@@ -218,7 +218,7 @@ Functions
 
       
 
-   .. py:method:: update_scores()
+   ..    .. py:method:: update_scores()
 
       Update self.scores.
 
@@ -241,7 +241,7 @@ Functions
 
       
 
-   .. py:method:: on_after_optimizer_step()
+   ..    .. py:method:: on_after_optimizer_step()
 
       Functions called after the optimizer.step().
 
@@ -265,7 +265,7 @@ Functions
 
       
 
-   .. py:method:: on_after_optimizer_step()
+   ..    .. py:method:: on_after_optimizer_step()
 
       Functions called after the optimizer.step().
 
@@ -289,7 +289,7 @@ Functions
 
       
 
-   .. py:method:: on_step_begin(local_step)
+   ..    .. py:method:: on_step_begin(local_step)
 
       Functions called on the beginning of each step.
 

@@ -26,12 +26,12 @@ Classes
 
    Configuration object for UX server.
 
-   .. py:property:: global_config_directory
+   ..    .. .. py:property:: global_config_directory
       :type: str
 
       Get the directory for global config files.
 
-   .. py:method:: set_up() -> None
+   ..    .. py:method:: set_up() -> None
 
       Reset variables.
 

@@ -28,7 +28,7 @@ Classes
 
    PyTorch Script Model class.
 
-   .. py:method:: get_framework_name() -> str
+   ..    .. py:method:: get_framework_name() -> str
       :staticmethod:
 
       Get the name of framework.

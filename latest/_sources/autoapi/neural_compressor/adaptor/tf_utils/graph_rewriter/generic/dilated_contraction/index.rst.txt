@@ -28,7 +28,7 @@ Classes
 
    Fuse the SpaceToBatchND + Conv + BatchToSpaceND pattern.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Dilated Contraction fusion.
 

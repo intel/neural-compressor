@@ -39,13 +39,13 @@ Functions
 
    Not displayed in API Docs.
 
-   .. py:property:: options
+   ..    .. .. py:property:: options
 
       Return all options.
 
       :returns: All options.
 
-   .. py:method:: get_options_name()
+   ..    .. py:method:: get_options_name()
 
       Return the name list of the options.
 
@@ -91,7 +91,7 @@ Functions
    1) capability -> internal format -> merge -> tuning space (tree)
 
 
-   .. py:method:: query_item_option(op_name_type, path, method_name, method_val)
+   ..    .. py:method:: query_item_option(op_name_type, path, method_name, method_val)
 
       Query the method value, such as scheme, algorithm.
 

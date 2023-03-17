@@ -28,7 +28,7 @@ Classes
 
    Remove training nodes optimizer.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Remove tranining nodes which has no control edge inputs.
 

@@ -37,7 +37,7 @@ Classes
        Maximum           LeakyRelu
    Note, the coefficient of Mul should be less than 1 or the conversion is not valid.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse small ops to LeakyRelu.
 

@@ -27,7 +27,7 @@ Classes
 
    Item that knows it it's already expired.
 
-   .. py:method:: is_expired() -> bool
+   ..    .. py:method:: is_expired() -> bool
 
       Check if item is already expired.
 
@@ -39,4 +39,4 @@ Classes
 
    Dict with items expiring after given time.
 
-
+   .. 

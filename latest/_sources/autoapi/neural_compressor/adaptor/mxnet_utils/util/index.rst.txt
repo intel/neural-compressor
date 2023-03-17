@@ -64,7 +64,7 @@ Functions
 
    Enum op types.
 
-
+   .. 
 .. py:function:: isiterable(obj) -> bool
 
    Checks whether object is iterable.
@@ -348,17 +348,17 @@ Functions
 
    DataLoader Wrap.
 
-
+   .. 
 .. py:class:: DataIterLoader(data_iter)
 
    DataIterLoader.
 
-
+   .. 
 .. py:class:: CollectorBase
 
    Collector Base class.
 
-   .. py:method:: collect_gluon(name, _, arr)
+   ..    .. py:method:: collect_gluon(name, _, arr)
       :abstractmethod:
 
       Collect by gluon api.
@@ -386,7 +386,7 @@ Functions
 
    Collect the calibration thresholds depending on the algorithm set.
 
-   .. py:method:: collect_gluon(name, _, arr)
+   ..    .. py:method:: collect_gluon(name, _, arr)
 
       Collect by gluon api.
 
@@ -403,7 +403,7 @@ Functions
 
    Tensors collector. Builds up qtensor_to_tensor mapping.
 
-   .. py:method:: collect_gluon(name, _, arr)
+   ..    .. py:method:: collect_gluon(name, _, arr)
 
       Collect by gluon api.
 
@@ -420,7 +420,7 @@ Functions
 
    Name collector.
 
-   .. py:method:: collect_gluon(name, _, arr)
+   ..    .. py:method:: collect_gluon(name, _, arr)
 
       Collect by gluon api.
 
@@ -430,11 +430,11 @@ Functions
 
    Calibration data class.
 
-   .. py:property:: min_max_dict
+   ..    .. .. py:property:: min_max_dict
 
       Return mix-max dict.
 
-   .. py:method:: post_collect()
+   ..    .. py:method:: post_collect()
 
       Return mix-max dict for mxnet version >= 2.0.0.
 

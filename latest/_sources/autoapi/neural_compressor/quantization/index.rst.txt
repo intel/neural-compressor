@@ -42,40 +42,40 @@ Functions
    Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
    (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
 
-   .. rubric:: Example
+   Example::
 
-   conf = PostTrainingQuantConfig()
-   quantizer = PostTrainingQuant(conf)
-   quantizer.model = model
-   quantizer.eval_func = eval_func
-   quantizer.calib_dataloader = calib_dataloader
-   q_model = quantizer.fit()
+       conf = PostTrainingQuantConfig()
+       quantizer = PostTrainingQuant(conf)
+       quantizer.model = model
+       quantizer.eval_func = eval_func
+       quantizer.calib_dataloader = calib_dataloader
+       q_model = quantizer.fit()
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Getter of model in neural_compressor.model.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Not support get eval_func.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Getter to eval dataloader.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Get `metric` attribute.
 
-   .. py:property:: calib_func
+   ..    .. .. py:property:: calib_func
 
       Not support get train_func.
 
-   .. py:property:: calib_dataloader
+   ..    .. .. py:property:: calib_dataloader
 
       Get `calib_dataloader` attribute.
 
-   .. py:method:: pre_proccess()
+   ..    .. py:method:: pre_proccess()
 
       Create strategy to optimize model.
 
@@ -150,22 +150,22 @@ Functions
                        and neural_compressor will initialize this class when evaluation.
    :type eval_metric: dict or obj
 
-   .. rubric:: Example
+   Example::
 
-   # Quantization code for PTQ
-   from neural_compressor import PostTrainingQuantConfig, set_workspace
-   from neural_compressor import quantization
-   conf = PostTrainingQuantConfig()
+       # Quantization code for PTQ
+       from neural_compressor import PostTrainingQuantConfig, set_workspace
+       from neural_compressor import quantization
+       conf = PostTrainingQuantConfig()
 
-   # saved intermediate files in ./saved folder
-   set_workspace("./saved")
+       # saved intermediate files in ./saved folder
+       set_workspace("./saved")
 
-   q_model = quantization.fit(model_origin,
-                              conf,
-                              calib_dataloader=dataloader,
-                              calib_func=eval_func)
+       q_model = quantization.fit(model_origin,
+                                  conf,
+                                  calib_dataloader=dataloader,
+                                  calib_func=eval_func)
 
-   # Saved quantized model in ./saved folder
-   q_model.save("./saved")
+       # Saved quantized model in ./saved folder
+       q_model.save("./saved")
 
 

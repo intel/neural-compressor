@@ -64,7 +64,7 @@ Functions
    Provide register method to register new Transforms
    and provide __getitem__ method to get Transforms according to Transforms type.
 
-   .. py:method:: register(name, transform_cls)
+   ..    .. py:method:: register(name, transform_cls)
 
       Register new Transform according to Transforms type.
 
@@ -81,7 +81,7 @@ Functions
 
    The base class for transform.
 
-
+   .. 
 .. py:class:: ComposeTransform(transform_list)
 
    Bases: :py:obj:`BaseTransform`
@@ -94,7 +94,7 @@ Functions
    :returns: tuple of processed image and label
    :rtype: sample (tuple)
 
-
+   .. 
 .. py:function:: transform_registry(transform_type, process, framework)
 
    Class decorator used to register all transform subclasses.
@@ -126,7 +126,7 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 
 .. py:class:: TensorflowResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)
 
    Bases: :py:obj:`BaseTransform`
@@ -145,7 +145,7 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 
 .. py:class:: RescaleTFTransform
 
    Bases: :py:obj:`BaseTransform`
@@ -154,7 +154,7 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 
 .. py:class:: NormalizeTFTransform(mean=[0.0], std=[1.0], rescale=None)
 
    Bases: :py:obj:`BaseTransform`
@@ -170,7 +170,7 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 
 .. py:class:: TFSquadV1PostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
 
    Bases: :py:obj:`BaseTransform`
@@ -201,7 +201,7 @@ Functions
 
    :returns: tuple of processed prediction and label
 
-   .. py:method:: process_result(results)
+   ..    .. py:method:: process_result(results)
 
       Get the processed results.
 
@@ -220,7 +220,7 @@ Functions
 
    See class TFSquadV1PostTransform for more details
 
-
+   .. 
 .. py:class:: ParseDecodeCocoTransform
 
    Bases: :py:obj:`neural_compressor.data.transforms.BaseTransform`
@@ -228,14 +228,14 @@ Functions
    Coco decoding will be performed automatically from Neural Compressor v1.4.
 
 
-
+   .. 
 .. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
 
    Bases: :py:obj:`object`
 
    Just collect the infos to construct a Postprocess.
 
-
+   .. 
 .. py:class:: LabelShift(label_shift=0)
 
    Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
@@ -247,7 +247,7 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 
 .. py:class:: BilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
 
    Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
@@ -265,7 +265,7 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 
 .. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
 
    Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
@@ -289,4 +289,4 @@ Functions
 
    :returns: tuple of processed image and label
 
-
+   .. 

@@ -28,7 +28,7 @@ Classes
 
    Quantize Conv2DBackpropInput and Conv3DBackpropInputV2 and apply the fusion.
 
-   .. py:method:: apply_single_deconv2d_fusion(match_node_name)
+   ..    .. py:method:: apply_single_deconv2d_fusion(match_node_name)
 
       Apply single Conv2DBackpropInput fusion.
 

@@ -28,7 +28,7 @@ Classes
 
    Remove the equivalent nodes which have the same inputs and attributes.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Strip the equivalent nodes in the graph.
 

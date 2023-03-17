@@ -26,7 +26,7 @@ Classes
 
    Interface for queries connected with project.
 
-   .. py:method:: get_project_details(data: dict) -> dict
+   ..    .. py:method:: get_project_details(data: dict) -> dict
       :staticmethod:
 
       Get project details from database.

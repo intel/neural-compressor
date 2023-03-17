@@ -28,7 +28,7 @@ Classes
 
    Quantize FusedBatchNormV3 to int8 op and apply the fusion.
 
-   .. py:method:: apply_newly_bn_relu_fusion(match_node_name)
+   ..    .. py:method:: apply_newly_bn_relu_fusion(match_node_name)
 
       Apply the FusedBatchNormV3 Relu fusion.
 

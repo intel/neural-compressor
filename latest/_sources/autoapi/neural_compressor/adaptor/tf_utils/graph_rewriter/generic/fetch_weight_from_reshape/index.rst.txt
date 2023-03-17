@@ -28,7 +28,7 @@ Classes
 
    Handle the Pack + Reshape + Conv2D fusion pattern.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fetch weight of Conv2D from Pack+Reshape+Conv2D pattern.
 

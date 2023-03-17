@@ -31,7 +31,7 @@ Classes
    There are three stages executed by Basic strategy sequentially,
    and the tuning process ends once the condition meets the exit policy.
 
-   .. py:method:: distributed_next_tune_cfg_lst(comm)
+   ..    .. py:method:: distributed_next_tune_cfg_lst(comm)
 
       Generate and yield the next tuning config list with below order.
 

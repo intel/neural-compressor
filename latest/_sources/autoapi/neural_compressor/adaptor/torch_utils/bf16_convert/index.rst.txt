@@ -37,7 +37,7 @@ Functions
 
    BF16Module Wrapper Class.
 
-   .. py:method:: forward(X)
+   ..    .. py:method:: forward(X)
 
       Convert dtype.
 

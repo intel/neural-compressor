@@ -26,7 +26,7 @@ Classes
 
    augment input model to dump tensor or for calibration.
 
-   .. py:method:: augment_graph(activation_only=False, weight_only=False)
+   ..    .. py:method:: augment_graph(activation_only=False, weight_only=False)
 
       Augment_graph.
 

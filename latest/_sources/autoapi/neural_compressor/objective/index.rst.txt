@@ -53,16 +53,16 @@ Functions
 
    Register a customized objective.
 
-   .. rubric:: Example
+   Example::
 
-   from eural_compressor.objective import objective_custom_registry
+       from eural_compressor.objective import objective_custom_registry
 
-   objective_cls = type(user_objective)
-   name = user_objective.__class__.__name__
-   objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
-   deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
-   self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-   objective_custom_registry(name, objective_cls)
+       objective_cls = type(user_objective)
+       name = user_objective.__class__.__name__
+       objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
+       deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
+       self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+       objective_custom_registry(name, objective_cls)
 
 
 .. py:class:: Objective
@@ -76,11 +76,11 @@ Functions
 
 
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       The interface benchmark model.
 
-   .. py:method:: reset()
+   ..    .. py:method:: reset()
       :abstractmethod:
 
       The interface reset benchmark measuring.
@@ -126,7 +126,7 @@ Functions
 
    Configuration Accuracy class. Evaluate the accuracy.
 
-   .. py:method:: start()
+   ..    .. py:method:: start()
 
       The interface start the measuring.
 
@@ -143,7 +143,7 @@ Functions
 
    Configuration Performance class. Evaluate the inference time.
 
-   .. py:method:: start()
+   ..    .. py:method:: start()
 
       Record the start time.
 
@@ -162,7 +162,7 @@ Functions
 
    Evaluate the peak size of memory blocks during inference.
 
-   .. py:method:: start()
+   ..    .. py:method:: start()
 
       Record the space allocation.
 
@@ -179,7 +179,7 @@ Functions
 
    Configuration ModelSize class. Evaluate the model size.
 
-   .. py:method:: start()
+   ..    .. py:method:: start()
 
       Start to calculate the model size.
 
@@ -194,24 +194,24 @@ Functions
 
    The base class for multiple benchmarks supported by neural_compressor.
 
-   .. rubric:: Example
+   Example::
 
-   from neural_compressor.objective import MultiObjective
-   obj = MultiObjective(
-       objectives=['accuracy', 'modelsize', 'performance'],
-       accuracy_criterion={'relative': 0.1},
-       obj_criterion=[True, False, False],
-       obj_weight=[0.7, 0.2, 0.1])
+       from neural_compressor.objective import MultiObjective
+       obj = MultiObjective(
+           objectives=['accuracy', 'modelsize', 'performance'],
+           accuracy_criterion={'relative': 0.1},
+           obj_criterion=[True, False, False],
+           obj_weight=[0.7, 0.2, 0.1])
 
-   .. py:property:: baseline
+   ..    .. .. py:property:: baseline
 
       Get the actual model performance.
 
-   .. py:property:: accuracy_target
+   ..    .. .. py:property:: accuracy_target
 
       Set the accuracy target.
 
-   .. py:method:: compare(last, baseline)
+   ..    .. py:method:: compare(last, baseline)
 
       The interface of comparing if metric reaches the goal with acceptable accuracy loss.
 
@@ -275,19 +275,19 @@ Functions
 
       Calculate the best results.
 
-      .. rubric:: Example
+      Example::
 
-      # metric + multi-objectives case:
-      tune_data = [
-          [acc1, [obj1, obj2, ...]],
-          [acc2, [obj1, obj2, ...]],
-          ...
-      ]
-      # multi-metrics + multi-objectives case:
-      tune_data = [
-          [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
-          [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
-      ]
+          # metric + multi-objectives case:
+          tune_data = [
+              [acc1, [obj1, obj2, ...]],
+              [acc2, [obj1, obj2, ...]],
+              ...
+          ]
+          # multi-metrics + multi-objectives case:
+          tune_data = [
+              [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
+              [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
+          ]
 
 
 

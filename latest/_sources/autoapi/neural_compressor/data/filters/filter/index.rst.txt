@@ -42,35 +42,35 @@ Functions
 
    The base filter class for Tensorflow framework.
 
-
+   .. 
 .. py:class:: ONNXRTQLFilters
 
    Bases: :py:obj:`object`
 
    The base filter class for ONNXRT framework QLinear mode.
 
-
+   .. 
 .. py:class:: ONNXRTITFilters
 
    Bases: :py:obj:`object`
 
    The base filter class for ONNXRT framework IT mode.
 
-
+   .. 
 .. py:class:: PyTorchFilters
 
    Bases: :py:obj:`object`
 
    The base filter class for PyTorch framework.
 
-
+   .. 
 .. py:class:: MXNetFilters
 
    Bases: :py:obj:`object`
 
    The base filter class for MXNet framework.
 
-
+   .. 
 .. py:class:: FILTERS(framework)
 
    Bases: :py:obj:`object`
@@ -83,7 +83,7 @@ Functions
                      "onnxrt_qlinearops", "onnxruntime"].
    :type framework: str
 
-
+   .. 
 .. py:function:: filter_registry(filter_type, framework)
 
    Register all transform subclasses.
@@ -108,4 +108,4 @@ Functions
    __call__ method is needed when write user specific transform.
 
 
-
+   .. 

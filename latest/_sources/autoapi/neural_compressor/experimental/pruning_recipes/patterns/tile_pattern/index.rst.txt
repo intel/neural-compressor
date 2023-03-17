@@ -33,7 +33,7 @@ Classes
 
    Parent class for all NxM tile patterns.
 
-   .. py:method:: compute_sparsity(tensor)
+   ..    .. py:method:: compute_sparsity(tensor)
 
       Calculate the sparsity of a tensor (weight matrix).
 
@@ -50,32 +50,32 @@ Classes
 
    1x1 tile pattern (unstructured).
 
-
+   .. 
 .. py:class:: TilePattern_2x2
 
    Bases: :py:obj:`TilePatternBase`
 
    2x2 tile pattern (unstructured).
 
-
+   .. 
 .. py:class:: TilePattern_1x16
 
    Bases: :py:obj:`TilePatternBase`
 
    1x16 tile pattern (unstructured).
 
-
+   .. 
 .. py:class:: TilePattern_4x1
 
    Bases: :py:obj:`TilePatternBase`
 
    4x1 tile pattern (unstructured).
 
-
+   .. 
 .. py:class:: TilePattern_1x2
 
    Bases: :py:obj:`TilePatternBase`
 
    1x2 tile pattern (unstructured).
 
-
+   .. 

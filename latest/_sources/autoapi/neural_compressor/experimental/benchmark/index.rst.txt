@@ -93,31 +93,31 @@ Functions
    NOTICE: neural_compressor Benchmark will use the original command to run sub-process, which
    depends on the user's code and has the possibility to run unnecessary code
 
-   .. py:property:: results
+   ..    .. .. py:property:: results
 
       Get the results of benchmarking.
 
-   .. py:property:: b_dataloader
+   ..    .. .. py:property:: b_dataloader
 
       Get the dataloader for the benchmarking.
 
-   .. py:property:: b_func
+   ..    .. .. py:property:: b_func
 
       Not support getting b_func.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Get the model.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Not support getting metric.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Not support getting postprocess.
 
-   .. py:method:: summary_benchmark()
+   ..    .. py:method:: summary_benchmark()
 
       Get the summary of the benchmark.
 

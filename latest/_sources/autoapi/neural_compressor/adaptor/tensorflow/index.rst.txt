@@ -30,7 +30,7 @@ Classes
 
    Adaptor Layer for stock tensorflow and spr-base.
 
-   .. py:method:: train(model, dataloader, optimizer_tuple, criterion_tuple, hooks, postprocess, **kwargs)
+   ..    .. py:method:: train(model, dataloader, optimizer_tuple, criterion_tuple, hooks, postprocess, **kwargs)
 
       Model training API.
 
@@ -285,7 +285,7 @@ Classes
 
    Tensorflow ITEX Adaptor Class.
 
-   .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
 
       Execute the quantize process on the specified model.
 
@@ -310,7 +310,7 @@ Classes
 
    Tensorflow Query Capability Class.
 
-   .. py:method:: get_version()
+   ..    .. py:method:: get_version()
 
       Get the current backend version infomation.
 

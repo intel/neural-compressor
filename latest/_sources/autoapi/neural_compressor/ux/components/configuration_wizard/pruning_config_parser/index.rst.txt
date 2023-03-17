@@ -26,7 +26,7 @@ Classes
 
    Pruning configuration parser class.
 
-   .. py:method:: parse(input_data: list) -> dict
+   ..    .. py:method:: parse(input_data: list) -> dict
       :abstractmethod:
 
       Parse configuration.

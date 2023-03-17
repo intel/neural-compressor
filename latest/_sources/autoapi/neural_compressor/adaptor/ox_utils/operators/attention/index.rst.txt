@@ -29,7 +29,7 @@ Classes
 
    Attention operator.
 
-   .. py:method:: quantize()
+   ..    .. py:method:: quantize()
 
       Do quantizaion.
 
@@ -51,7 +51,7 @@ Classes
 
    QAttention operator.
 
-   .. py:method:: convert()
+   ..    .. py:method:: convert()
 
       Convert to QDQ format.
 

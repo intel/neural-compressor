@@ -31,7 +31,7 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
-   .. py:method:: smooth_quant(model, dataloader, iterations, tune_cfg, alpha=0.5, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True)
+   ..    .. py:method:: smooth_quant(model, dataloader, iterations, tune_cfg, alpha=0.5, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True)
 
       Get augmented model with smooth quant.
 
@@ -155,7 +155,7 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
-
+   .. 
 .. py:class:: ONNXRT_IntegerOpsAdaptor(framework_specific_info)
 
    Bases: :py:obj:`ONNXRUNTIMEAdaptor`
@@ -165,7 +165,7 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
-
+   .. 
 .. py:class:: ONNXRT_QDQAdaptor(framework_specific_info)
 
    Bases: :py:obj:`ONNXRUNTIMEAdaptor`
@@ -175,4 +175,4 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
-
+   .. 

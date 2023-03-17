@@ -74,7 +74,7 @@ Classes
                  Defaults to None.
    :type dicts: dict, optional
 
-   .. py:method:: traverse()
+   ..    .. py:method:: traverse()
 
       Tpe traverse logic.
 

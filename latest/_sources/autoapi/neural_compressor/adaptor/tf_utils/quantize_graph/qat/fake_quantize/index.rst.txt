@@ -29,7 +29,7 @@ Classes
 
    ABC interface class for applying fake quantization by insert qdq.
 
-   .. py:method:: get_config()
+   ..    .. py:method:: get_config()
       :abstractmethod:
 
       Returns the config used to serialize the 'FakeQuantize'.
@@ -54,7 +54,7 @@ Classes
 
    The class that applies fake quantization.
 
-   .. py:method:: get_config()
+   ..    .. py:method:: get_config()
 
       Returns the config used to serialize the 'FakeQuantize'.
 

@@ -26,7 +26,7 @@ Classes
 
    Dict serializable class.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
 
       Serialize class to dict.
 

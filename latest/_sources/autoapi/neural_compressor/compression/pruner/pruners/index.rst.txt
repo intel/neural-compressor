@@ -132,7 +132,7 @@ Functions
 
       A float showing the maximum sparsity ratio for every module.
 
-   .. py:method:: on_epoch_begin(epoch)
+   ..    .. py:method:: on_epoch_begin(epoch)
 
       Implement at the beginning of each epoch.
 
@@ -244,7 +244,7 @@ Functions
 
       A Reg object that defines regulization terms.
 
-   .. py:method:: set_global_step(global_step)
+   ..    .. py:method:: set_global_step(global_step)
 
       Set global step number.
 
@@ -282,7 +282,7 @@ Functions
 
       
 
-   .. py:method:: update_masks(local_step)
+   ..    .. py:method:: update_masks(local_step)
 
       Update the masks at a given local step.
 
@@ -312,7 +312,7 @@ Functions
 
       
 
-   .. py:method:: check_progressive_validity()
+   ..    .. py:method:: check_progressive_validity()
 
       Check if the settings of progressive pruning are valid.
 

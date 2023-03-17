@@ -28,7 +28,7 @@ Classes
 
    INC Bench benchmarks results' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, accuracy: Optional[float], performance: Optional[float]) -> None
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, accuracy: Optional[float], performance: Optional[float]) -> None
       :staticmethod:
 
       Add benchmark result to database.

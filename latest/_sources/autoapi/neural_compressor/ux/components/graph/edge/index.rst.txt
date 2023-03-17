@@ -28,14 +28,14 @@ Classes
 
    Edge in graph.
 
-   .. py:property:: source
+   ..    .. .. py:property:: source
       :type: str
 
       Return source Node id.
 
-   .. py:property:: target
+   ..    .. .. py:property:: target
       :type: str
 
       Return target Node id.
 
-
+   .. 

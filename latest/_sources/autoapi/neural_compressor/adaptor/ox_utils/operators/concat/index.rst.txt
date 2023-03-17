@@ -29,7 +29,7 @@ Classes
 
    Concat Operator.
 
-   .. py:method:: quantize_check()
+   ..    .. py:method:: quantize_check()
 
       Check if quantizaion can be done.
 
@@ -61,7 +61,7 @@ Classes
 
    QConcat Operator.
 
-   .. py:method:: convert()
+   ..    .. py:method:: convert()
 
       Convert to QDQ format.
 

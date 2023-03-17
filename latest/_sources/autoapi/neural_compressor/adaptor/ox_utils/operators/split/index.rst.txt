@@ -29,7 +29,7 @@ Classes
 
    Split Operator.
 
-   .. py:method:: quantize()
+   ..    .. py:method:: quantize()
 
       Do quantizaion.
 
@@ -56,7 +56,7 @@ Classes
 
    QSplit Operator.
 
-   .. py:method:: convert()
+   ..    .. py:method:: convert()
 
       Convert to QDQ format.
 

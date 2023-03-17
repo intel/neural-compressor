@@ -32,4 +32,4 @@ Classes
    The value range is calculated from: low * stand_normal(0, 1) + high.
    (TODO) construct dummy data from real dataset or iteration of data.
 
-
+   .. 

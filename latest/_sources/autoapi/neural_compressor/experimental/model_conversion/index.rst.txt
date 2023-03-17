@@ -41,35 +41,35 @@ Classes
                              Conf class containing model conversion and evaluation setting if not specifed by code.
    :type conf_fname_or_obj: string or obj
 
-   .. py:property:: source
+   ..    .. .. py:property:: source
 
       Return source.
 
-   .. py:property:: destination
+   ..    .. .. py:property:: destination
 
       Return destination.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Return eval dataloader.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Return metric.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Check postprocess.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Return eval_func.
 
-   .. py:method:: dataset(dataset_type, *args, **kwargs)
+   ..    .. py:method:: dataset(dataset_type, *args, **kwargs)
 
       Return dataset.
 

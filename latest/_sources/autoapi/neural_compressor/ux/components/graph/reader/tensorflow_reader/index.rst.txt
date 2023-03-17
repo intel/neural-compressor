@@ -26,7 +26,7 @@ Classes
 
    Graph Reader for Tensorflow.
 
-   .. py:method:: read() -> neural_compressor.ux.components.graph.graph.Graph
+   ..    .. py:method:: read() -> neural_compressor.ux.components.graph.graph.Graph
 
       Read a graph.
 

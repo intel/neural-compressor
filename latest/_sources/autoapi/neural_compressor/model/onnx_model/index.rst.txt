@@ -28,35 +28,35 @@ Classes
 
    Build ONNX model.
 
-   .. py:property:: is_large_model
+   ..    .. .. py:property:: is_large_model
 
       Check the onnx model is over 2GB.
 
-   .. py:property:: model_path
+   ..    .. .. py:property:: model_path
 
       Return model path.
 
-   .. py:property:: q_config
+   ..    .. .. py:property:: q_config
 
       Return q_config.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model itself.
 
-   .. py:property:: graph_info
+   ..    .. .. py:property:: graph_info
 
       Return ORT Graph Info object holding information about backend graph.
 
-   .. py:property:: input_name_to_nodes
+   ..    .. .. py:property:: input_name_to_nodes
 
       Return input names of nodes.
 
-   .. py:property:: output_name_to_node
+   ..    .. .. py:property:: output_name_to_node
 
       Return output names of nodes.
 
-   .. py:method:: framework()
+   ..    .. py:method:: framework()
 
       Return framework.
 

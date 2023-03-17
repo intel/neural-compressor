@@ -56,7 +56,7 @@ Functions
 
       The collection of registered metrics for the specified framework.
 
-   .. py:method:: register(name, metric_cls) -> None
+   ..    .. py:method:: register(name, metric_cls) -> None
 
       Register a metric.
 
@@ -71,19 +71,19 @@ Functions
 
    The base class of Metric.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Return its metric class.
 
       :returns: The metric class.
 
-   .. py:property:: hvd
+   ..    .. .. py:property:: hvd
 
       Return its hvd class.
 
       :returns: The hvd class.
 
-   .. py:method:: update(preds, labels=None, sample_weight=None)
+   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
       :abstractmethod:
 
       Update the state that need to be evaluated.

@@ -32,7 +32,7 @@ Classes
    values. The collected histogram will be used for calculating the optimal thresholds for
    quantization using KL divergence.
 
-   .. py:method:: collect()
+   ..    .. py:method:: collect()
 
       Collect layer output NDArrays as a callback function.
 

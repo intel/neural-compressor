@@ -28,7 +28,7 @@ Classes
 
    Rename FusedBatchNorm op to FusedBatchNormV2.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Rename FusedBatchNorm op to FusedBatchNormV2.
 

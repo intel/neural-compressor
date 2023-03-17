@@ -28,38 +28,38 @@ Classes
 
    Abstract model class.
 
-   .. py:property:: domain
+   ..    .. .. py:property:: domain
       :type: neural_compressor.ux.components.model.domain.Domain
 
       Get model domain.
 
-   .. py:property:: input_shape
+   ..    .. .. py:property:: input_shape
       :type: neural_compressor.ux.components.model.shape.Shape
 
       Try to detect data shape.
 
-   .. py:property:: shape_elements_order
+   ..    .. .. py:property:: shape_elements_order
       :type: List[str]
       :abstractmethod:
 
       Get order of input shape channels.
 
-   .. py:property:: supports_profiling
+   ..    .. .. py:property:: supports_profiling
       :type: bool
 
       Check if profiling is supported for the model.
 
-   .. py:property:: supports_graph
+   ..    .. .. py:property:: supports_graph
       :type: bool
 
       Check if it is possible to display model's graph.
 
-   .. py:property:: supports_pruning
+   ..    .. .. py:property:: supports_pruning
       :type: bool
 
       Check if pruning is supported for the model.
 
-   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+   ..    .. py:method:: get_input_nodes() -> Optional[List[Any]]
 
       Get model input nodes.
 

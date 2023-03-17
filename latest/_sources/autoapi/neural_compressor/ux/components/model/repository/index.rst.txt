@@ -26,7 +26,7 @@ Classes
 
    Model repository.
 
-   .. py:method:: get_model(path: str) -> neural_compressor.ux.components.model.model.Model
+   ..    .. py:method:: get_model(path: str) -> neural_compressor.ux.components.model.model.Model
 
       Get Model for given path.
 

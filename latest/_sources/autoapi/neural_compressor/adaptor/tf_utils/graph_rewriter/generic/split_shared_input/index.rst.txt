@@ -28,7 +28,7 @@ Classes
 
    Split the shared input if the input node is shared and const.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute splitting the shared input.
 

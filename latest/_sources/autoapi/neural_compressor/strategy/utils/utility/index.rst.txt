@@ -38,7 +38,7 @@ Functions
 
    Ordered default dict.
 
-
+   .. 
 .. py:function:: extract_data_type(data_type: str) -> str
 
    Extract data type and signed from data type.

@@ -28,7 +28,7 @@ Classes
 
    TF-Slim nets factory.
 
-   .. py:method:: register(name, model_func, input_shape, arg_scope, **kwargs)
+   ..    .. py:method:: register(name, model_func, input_shape, arg_scope, **kwargs)
 
       Register a model to TFSlimNetsFactory.
 

@@ -28,7 +28,7 @@ Classes
 
    Folding BatchNorm nodes into Conv.
 
-   .. py:method:: scale_after_normalization(node)
+   ..    .. py:method:: scale_after_normalization(node)
 
       Check the scale_after_normalization attribute if the node is BatchNormWithGlobalNormalization.
 

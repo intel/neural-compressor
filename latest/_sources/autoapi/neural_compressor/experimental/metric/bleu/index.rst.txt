@@ -51,7 +51,7 @@ Functions
 
       The compiled regular expressions to recognize symbols.
 
-   .. py:method:: property_chars(prefix: str) -> str
+   ..    .. py:method:: property_chars(prefix: str) -> str
 
       Collect all Unicode strings starting with a specific prefix.
 
@@ -99,7 +99,7 @@ Functions
 
       List of the reference corresponding to the prediction result.
 
-   .. py:method:: reset() -> None
+   ..    .. py:method:: reset() -> None
 
       Clear the predictions and labels in the cache.
 

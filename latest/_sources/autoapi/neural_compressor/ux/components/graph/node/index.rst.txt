@@ -29,11 +29,11 @@ Classes
 
    Single Node in graph.
 
-
+   .. 
 .. py:class:: GroupNode(id: str, group_name: str)
 
    Bases: :py:obj:`Node`
 
    Node being a group of Nodes in Graph.
 
-
+   .. 

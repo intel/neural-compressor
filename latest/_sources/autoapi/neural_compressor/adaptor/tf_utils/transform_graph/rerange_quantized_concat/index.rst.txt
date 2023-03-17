@@ -28,7 +28,7 @@ Classes
 
    This class implements the rerange_quantize concat graph transform.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply the rerange quantized ConcatV2 transform.
 

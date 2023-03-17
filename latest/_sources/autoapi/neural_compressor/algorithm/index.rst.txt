@@ -50,7 +50,7 @@ Functions
 
    Build a dict for registered algorithms.
 
-   .. py:method:: support_algorithms()
+   ..    .. py:method:: support_algorithms()
       :classmethod:
 
       Get all algorithms.
@@ -66,49 +66,49 @@ Functions
 
    The base class of algorithm.
 
-
+   .. 
 .. py:class:: AlgorithmScheduler(conf)
 
    Bases: :py:obj:`object`
 
    control the Algorithm in different phase.
 
-   .. py:property:: origin_model
+   ..    .. .. py:property:: origin_model
 
       Return the origin model.
 
       :returns: The origin model.
       :rtype: model
 
-   .. py:property:: q_model
+   ..    .. .. py:property:: q_model
 
       Return the quantized model.
 
       :returns: The quantized model.
       :rtype: model
 
-   .. py:property:: dataloader
+   ..    .. .. py:property:: dataloader
 
       Return the dataloader.
 
       :returns: The dataloader.
       :rtype: dataloader
 
-   .. py:property:: adaptor
+   ..    .. .. py:property:: adaptor
 
       Return the adaptor.
 
       :returns: The adaptor.
       :rtype: adaptor
 
-   .. py:property:: calib_iter
+   ..    .. .. py:property:: calib_iter
 
       Return the calibration iter number.
 
       :returns: The calibration iter number.
       :rtype: calib_iter
 
-   .. py:method:: append_algorithm(location, algorithm)
+   ..    .. py:method:: append_algorithm(location, algorithm)
 
       Append algorithm to list of executed algorithms.
 

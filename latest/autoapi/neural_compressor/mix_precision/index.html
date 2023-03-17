@@ -106,64 +106,27 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">MixedPrecision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">MixedPrecision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision" title="Permalink to this definition"></a></dt>
 <dd><p>Class used for generating low precision model.</p>
 <p>MixedPrecision class automatically generates low precision model across various DL
 frameworks including tensorflow, pytorch and onnxruntime.</p>
-<p class="rubric">Example</p>
-<p>from neural_compressor.config import MixedPrecisionConfig
-def eval_func(model):</p>
-<blockquote>
-<div><p>…
-return accuracy</p>
-</div></blockquote>
-<p>conf = MixedPrecisionConfig()
-output_model = mix_precision.fit(</p>
-<blockquote>
-<div><p>model,
-conf,
-eval_func=eval_func,</p>
-</div></blockquote>
-<p>)</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.precisions">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precisions</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.precisions" title="Permalink to this definition"></a></dt>
-<dd><p>Get private member variable <cite>precisions</cite> of <cite>MixedPrecision</cite> class.</p>
-</dd></dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
+<span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="o">...</span>
+<span class="k">return</span> <span class="n">accuracy</span>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.eval_dataloader">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_dataloader</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.eval_dataloader" title="Permalink to this definition"></a></dt>
-<dd><p>Get eval_dataloader.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.model" title="Permalink to this definition"></a></dt>
-<dd><p>Get model.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.metric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.metric" title="Permalink to this definition"></a></dt>
-<dd><p>Get metric.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.eval_func">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.eval_func" title="Permalink to this definition"></a></dt>
-<dd><p>Get evaluation function.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.pre_process">
-<span class="sig-name descname"><span class="pre">pre_process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.pre_process" title="Permalink to this definition"></a></dt>
-<dd><p>Create strategy object for tuning.</p>
-</dd></dl>
-
+<span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>
+<span class="n">output_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">conf</span><span class="p">,</span>
+    <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.execute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.execute" title="Permalink to this definition"></a></dt>
 <dd><p>Execute routinue based on strategy design.</p>
 </dd></dl>
 
@@ -171,7 +134,7 @@ eval_func=eval_func,</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.mix_precision.fit">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.mix_precision.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Fit low precision model generation across multiple framework backends.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -218,11 +181,14 @@ quantization.</p></li>
 <dd class="field-odd"><p><strong>AssertionError.</strong> – </p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<p>from neural_compressor import mix_precision
-from neural_compressor.config import MixedPrecisionConfig</p>
-<p>conf = MixedPrecisionConfig()
-converted_model = mix_precision.fit(model, config=conf)</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>
+<span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>

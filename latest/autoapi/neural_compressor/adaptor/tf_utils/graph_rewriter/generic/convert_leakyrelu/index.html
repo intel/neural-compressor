@@ -96,7 +96,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.ConvertLeakyReluOptimizer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.</span></span><span class="sig-name descname"><span class="pre">ConvertLeakyReluOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.ConvertLeakyReluOptimizer" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.</span></span><span class="sig-name descname"><span class="pre">ConvertLeakyReluOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/convert_leakyrelu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.ConvertLeakyReluOptimizer" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
 <p>Convert below subgraph to Node A + LeakyRelu.</p>
 <dl>
@@ -115,12 +115,6 @@
 </dd>
 </dl>
 <p>Note, the coefficient of Mul should be less than 1 or the conversion is not valid.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.ConvertLeakyReluOptimizer.do_transformation">
-<span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu.ConvertLeakyReluOptimizer.do_transformation" title="Permalink to this definition"></a></dt>
-<dd><p>Fuse small ops to LeakyRelu.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

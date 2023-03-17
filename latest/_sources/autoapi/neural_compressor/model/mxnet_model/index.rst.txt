@@ -28,11 +28,11 @@ Classes
 
    Build MXNet model.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model itself.
 
-   .. py:method:: framework()
+   ..    .. py:method:: framework()
 
       Return framework.
 

@@ -50,77 +50,77 @@ Functions
 
    Configuration SGDOptimizer class.
 
-
+   .. 
 .. py:class:: AdamWOptimizer(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration AdamWOptimizer class.
 
-
+   .. 
 .. py:class:: AdamOptimizer(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration AdamOptimizer class.
 
-
+   .. 
 .. py:class:: Optimizer(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Optimizer class.
 
-
+   .. 
 .. py:class:: CrossEntropyLossCriterion(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration CrossEntropyLossCriterion class.
 
-
+   .. 
 .. py:class:: SparseCategoricalCrossentropyCriterion(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration SparseCategoricalCrossentropyCriterion class.
 
-
+   .. 
 .. py:class:: KnowledgeDistillationLossCriterion(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration KnowledgeDistillationLossCriterion class.
 
-
+   .. 
 .. py:class:: IntermediateLayersKnowledgeDistillationLoss(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration IntermediateLayersKnowledgeDistillationLoss class.
 
-
+   .. 
 .. py:class:: SelfKnowledgeDistillationLoss(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration SelfKnowledgeDistillationLoss class.
 
-
+   .. 
 .. py:class:: Criterion(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Criterion class.
 
-
+   .. 
 .. py:class:: Train(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Train class.
 
-   .. py:method:: set_postprocess_transforms(transforms: List[Dict[str, Any]]) -> None
+   ..    .. py:method:: set_postprocess_transforms(transforms: List[Dict[str, Any]]) -> None
 
       Set postprocess transformation.
 
@@ -137,7 +137,7 @@ Functions
 
    Configuration WeightCompressionApproach class.
 
-   .. py:method:: initialize_pruners(pruner_dict_list: List[Union[dict, neural_compressor.conf.config.Pruner]]) -> List[neural_compressor.conf.config.Pruner]
+   ..    .. py:method:: initialize_pruners(pruner_dict_list: List[Union[dict, neural_compressor.conf.config.Pruner]]) -> List[neural_compressor.conf.config.Pruner]
       :staticmethod:
 
       Initialize list of pruners from dict format.
@@ -161,14 +161,14 @@ Functions
 
    Configuration Approach class.
 
-
+   .. 
 .. py:class:: Pruning(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Pruning class.
 
-
+   .. 
 .. py:function:: parse_dict_value_to_float(data: dict, key: str) -> Optional[float]
 
    Parse value to float or None if value is None.

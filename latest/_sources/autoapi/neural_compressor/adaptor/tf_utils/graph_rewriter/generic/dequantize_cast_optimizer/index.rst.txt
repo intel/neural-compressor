@@ -28,7 +28,7 @@ Classes
 
    Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Remove the redundant Cast OP after Dequantize.
 

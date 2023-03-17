@@ -26,19 +26,19 @@ Classes
 
    Class that provides graph manipulation and matching.
 
-   .. py:property:: input_names
+   ..    .. .. py:property:: input_names
 
       Placeholder node outputs.
 
-   .. py:property:: opset
+   ..    .. .. py:property:: opset
 
       Get opset.
 
-   .. py:property:: extra_opset
+   ..    .. .. py:property:: extra_opset
 
       Get extra opset.
 
-   .. py:method:: set_config(target=None, opset=None, extra_opset=None)
+   ..    .. py:method:: set_config(target=None, opset=None, extra_opset=None)
 
       Set graph fields containing conversion options.
 

@@ -32,7 +32,7 @@ Classes
    of the model after quantization. It starts with the original(fp32) model,
    and then quantize the OPs to lower precision OP type wisely and OP wisely.
 
-   .. py:method:: next_tune_cfg()
+   ..    .. py:method:: next_tune_cfg()
 
       Generate and yield the next tuning config with below order.
 

@@ -28,7 +28,7 @@ Classes
 
    A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply tensorflow Grappler optimization.
 

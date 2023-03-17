@@ -28,7 +28,7 @@ Classes
 
    Insert Q/DQ pairs before quantizable ops.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Generate the graph with QDQ patterns, this is the first step to do new api quantizaiton.
 

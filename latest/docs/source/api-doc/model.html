@@ -19,8 +19,8 @@
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="Release" href="../releases_info.html" />
-    <link rel="prev" title="Strategies" href="strategy/strategy.html" /> 
+    <link rel="next" title="API Document Example" href="api_doc_example.html" />
+    <link rel="prev" title="Strategy" href="strategy.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -52,10 +52,16 @@
 <li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="apis.html">APIs</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="basic_api.html">User facing APIs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="adaptor.html">Adaptor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quantization.html">Quantization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mix_precision.html">Mix Precision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training.html">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmark.html">Benchmark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="objective.html">Objective</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compression.html">Compression</a></li>
 <li class="toctree-l2"><a class="reference internal" href="strategy.html">Strategy</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_doc_example.html">API Document Example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
@@ -94,26 +100,17 @@
 <p>The model API information is available:</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/base_model/index.html#module-neural_compressor.model.base_model" title="neural_compressor.model.base_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base_model</span></code></a></p></td>
-<td><p>Base model for multiple framework backends.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/model/index.html#module-neural_compressor.model.model" title="neural_compressor.model.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a></p></td>
-<td><p>Model for multiple framework backends.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/onnx_model/index.html#module-neural_compressor.model.onnx_model" title="neural_compressor.model.onnx_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">onnx_model</span></code></a></p></td>
-<td><p>Class for ONNX model.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/torch_model/index.html#module-neural_compressor.model.torch_model" title="neural_compressor.model.torch_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">torch_model</span></code></a></p></td>
-<td><p>Class for PyTorch model.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/tensorflow_model/index.html#module-neural_compressor.model.tensorflow_model" title="neural_compressor.model.tensorflow_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tensorflow_model</span></code></a></p></td>
 <td><p>Class for Tensorflow model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/keras_model/index.html#module-neural_compressor.model.keras_model" title="neural_compressor.model.keras_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keras_model</span></code></a></p></td>
 <td><p>Class for Keras model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/mxnet_model/index.html#module-neural_compressor.model.mxnet_model" title="neural_compressor.model.mxnet_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mxnet_model</span></code></a></p></td>
-<td><p>Class for MXNet model.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/torch_model/index.html#module-neural_compressor.model.torch_model" title="neural_compressor.model.torch_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">torch_model</span></code></a></p></td>
+<td><p>Class for PyTorch model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/model/onnx_model/index.html#module-neural_compressor.model.onnx_model" title="neural_compressor.model.onnx_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">onnx_model</span></code></a></p></td>
+<td><p>Class for ONNX model.</p></td>
 </tr>
 </tbody>
 </table>
@@ -123,8 +120,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="strategy/strategy.html" class="btn btn-neutral float-left" title="Strategies" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../releases_info.html" class="btn btn-neutral float-right" title="Release" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="strategy.html" class="btn btn-neutral float-left" title="Strategy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_doc_example.html" class="btn btn-neutral float-right" title="API Document Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

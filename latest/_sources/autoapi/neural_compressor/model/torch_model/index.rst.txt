@@ -31,15 +31,15 @@ Classes
 
    Build PyTorch base model.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Getter to model.
 
-   .. py:property:: fp32_model
+   ..    .. .. py:property:: fp32_model
 
       Getter to model.
 
-   .. py:method:: forward(*args, **kwargs)
+   ..    .. py:method:: forward(*args, **kwargs)
 
       Pytorch model forward func.
 
@@ -142,15 +142,15 @@ Classes
 
    Build PyTorchModel object.
 
-   .. py:property:: workspace_path
+   ..    .. .. py:property:: workspace_path
 
       Return workspace path.
 
-   .. py:property:: graph_info
+   ..    .. .. py:property:: graph_info
 
       Return graph info.
 
-   .. py:method:: save(root=None)
+   ..    .. py:method:: save(root=None)
 
       Save configure file and weights.
 
@@ -177,18 +177,18 @@ Classes
 
    Build PyTorchFXModel object.
 
-
+   .. 
 .. py:class:: IPEXModel(model, **kwargs)
 
    Bases: :py:obj:`PyTorchBaseModel`
 
    Build IPEXModel object.
 
-   .. py:property:: workspace_path
+   ..    .. .. py:property:: workspace_path
 
       Return workspace path.
 
-   .. py:method:: save(root=None)
+   ..    .. py:method:: save(root=None)
 
       Save PyTorch IPEX model.
 

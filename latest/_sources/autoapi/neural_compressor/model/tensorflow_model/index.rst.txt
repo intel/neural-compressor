@@ -240,75 +240,75 @@ Functions
 
    Build Tensorflow Base Model.
 
-   .. py:property:: name
+   ..    .. .. py:property:: name
 
       Renturn name.
 
-   .. py:property:: weights
+   ..    .. .. py:property:: weights
 
       Return weights.
 
-   .. py:property:: q_config
+   ..    .. .. py:property:: q_config
 
       Return q_config.
 
-   .. py:property:: workspace_path
+   ..    .. .. py:property:: workspace_path
 
       Return workspace path.
 
-   .. py:property:: model_type
+   ..    .. .. py:property:: model_type
 
       Return model type.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model itself.
 
-   .. py:property:: graph_def
+   ..    .. .. py:property:: graph_def
 
       Return graph defination.
 
-   .. py:property:: graph_info
+   ..    .. .. py:property:: graph_info
 
       Return graph info.
 
-   .. py:property:: sess
+   ..    .. .. py:property:: sess
 
       Return Session object.
 
-   .. py:property:: graph
+   ..    .. .. py:property:: graph
 
       Return model graph.
 
-   .. py:property:: iter_op
+   ..    .. .. py:property:: iter_op
 
       Return model iter op list.
 
-   .. py:property:: input_tensor_names
+   ..    .. .. py:property:: input_tensor_names
 
       Return input tensor names.
 
-   .. py:property:: output_tensor_names
+   ..    .. .. py:property:: output_tensor_names
 
       Return output tensor names.
 
-   .. py:property:: input_node_names
+   ..    .. .. py:property:: input_node_names
 
       Return input node names.
 
-   .. py:property:: output_node_names
+   ..    .. .. py:property:: output_node_names
 
       Return output node names.
 
-   .. py:property:: input_tensor
+   ..    .. .. py:property:: input_tensor
 
       Return input tensor.
 
-   .. py:property:: output_tensor
+   ..    .. .. py:property:: output_tensor
 
       Return output tensor.
 
-   .. py:method:: framework()
+   ..    .. py:method:: framework()
 
       Return framework.
 
@@ -330,11 +330,11 @@ Functions
 
    Build Tensorflow saved model.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model itself.
 
-   .. py:method:: get_all_weight_names()
+   ..    .. py:method:: get_all_weight_names()
 
       Get weight names of model.
 
@@ -389,15 +389,15 @@ Functions
 
    Build Tensorflow QAT model.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model itself.
 
-   .. py:property:: frozen_graph_def
+   ..    .. .. py:property:: frozen_graph_def
 
       Get frozen graph_def.
 
-   .. py:method:: save(root=None)
+   ..    .. py:method:: save(root=None)
 
       Save Tensorflow QAT model.
 
@@ -409,19 +409,19 @@ Functions
 
    Build Tensorflow checkpoint model.
 
-   .. py:property:: graph_def
+   ..    .. .. py:property:: graph_def
 
       Return graph defination.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return the model itself to avoid the initialization issue.
 
-
+   .. 
 .. py:class:: TensorflowModel
 
    Bases: :py:obj:`object`
 
    A wrapper to construct a Tensorflow Model.
 
-
+   .. 

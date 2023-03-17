@@ -28,7 +28,7 @@ Classes
 
    Configuration Mixed Precision class.
 
-   .. py:method:: set_precisions(precisions: Union[str, List[str]]) -> None
+   ..    .. py:method:: set_precisions(precisions: Union[str, List[str]]) -> None
 
       Update mixed_precision precisions in config.
 

@@ -34,17 +34,17 @@ Classes
 
    Configuration Metric class.
 
-   .. py:property:: name
+   ..    .. .. py:property:: name
       :type: str
 
       Get metric name.
 
-   .. py:property:: param
+   ..    .. .. py:property:: param
       :type: Optional[Union[int, bool]]
 
       Get metric param.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
 
       Return metric dict for config.
 
@@ -56,14 +56,14 @@ Classes
 
    Configuration Configs class.
 
-
+   .. 
 .. py:class:: PostprocessSchema(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration PostprocessSchema class.
 
-   .. py:method:: get_label_shift_value(data: dict) -> Optional[int]
+   ..    .. py:method:: get_label_shift_value(data: dict) -> Optional[int]
       :staticmethod:
 
       Get LabelShift value.
@@ -76,28 +76,28 @@ Classes
 
    Configuration Postprocess class.
 
-
+   .. 
 .. py:class:: Accuracy(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Accuracy class.
 
-
+   .. 
 .. py:class:: Performance(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Performance class.
 
-
+   .. 
 .. py:class:: Evaluation(data: Dict[str, Any] = {})
 
    Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
 
    Configuration Evaluation class.
 
-   .. py:method:: set_accuracy_postprocess_transforms(transforms: List[Dict[str, Any]]) -> None
+   ..    .. py:method:: set_accuracy_postprocess_transforms(transforms: List[Dict[str, Any]]) -> None
 
       Set postprocess transformation.
 

@@ -28,9 +28,9 @@ Classes
 
    OnnxRuntime diagnosis class.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
       :type: neural_compressor.ux.components.model.onnxrt.model.OnnxrtModel
 
       Get Neural Compressor Model instance.
 
-
+   .. 

@@ -48,7 +48,7 @@ Classes
 
       A config dict object. Contains pruners' information.
 
-   .. py:method:: update_items_for_all_pruners(**kwargs)
+   ..    .. py:method:: update_items_for_all_pruners(**kwargs)
 
       Functions which add User-defined arguments to the original configurations.
 

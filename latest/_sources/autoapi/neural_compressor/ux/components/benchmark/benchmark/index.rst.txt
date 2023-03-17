@@ -27,22 +27,22 @@ Classes
 
    Benchmark class.
 
-   .. py:property:: workdir
+   ..    .. .. py:property:: workdir
       :type: str
 
       Get path to optimization workdir.
 
-   .. py:property:: config_filename
+   ..    .. .. py:property:: config_filename
       :type: str
 
       Get filename for configuration.
 
-   .. py:property:: configuration_data
+   ..    .. .. py:property:: configuration_data
       :type: dict
 
       Get configuration data for config generator.
 
-   .. py:method:: execute() -> None
+   ..    .. py:method:: execute() -> None
 
       Execute benchmark and collect results.
 
@@ -57,4 +57,4 @@ Classes
 
    Interface for dataloader.
 
-
+   .. 

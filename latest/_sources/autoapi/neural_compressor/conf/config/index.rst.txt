@@ -31,7 +31,7 @@ Classes
 
    similiar to torch optimizer's interface
 
-
+   .. 
 .. py:class:: Conf(cfg_fname)
 
    Bases: :py:obj:`object`
@@ -41,7 +41,7 @@ Classes
    :param cfg_fname: The path to the configuration file.
    :type cfg_fname: string
 
-
+   .. 
 .. py:class:: Quantization_Conf(cfg=None)
 
    Bases: :py:obj:`Conf`
@@ -50,7 +50,7 @@ Classes
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
-
+   .. 
 .. py:class:: Pruning_Conf(cfg=None)
 
    Bases: :py:obj:`Conf`
@@ -59,7 +59,7 @@ Classes
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
-
+   .. 
 .. py:class:: Graph_Optimization_Conf(cfg=None)
 
    Bases: :py:obj:`Quantization_Conf`
@@ -68,7 +68,7 @@ Classes
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
-
+   .. 
 .. py:class:: MixedPrecision_Conf(cfg=None)
 
    Bases: :py:obj:`Quantization_Conf`
@@ -77,7 +77,7 @@ Classes
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
-
+   .. 
 .. py:class:: Benchmark_Conf(cfg=None)
 
    Bases: :py:obj:`Conf`
@@ -86,7 +86,7 @@ Classes
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
-
+   .. 
 .. py:class:: Distillation_Conf(cfg=None)
 
    Bases: :py:obj:`Conf`
@@ -95,7 +95,7 @@ Classes
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
-
+   .. 
 .. py:class:: NASConfig(approach=None, search_space=None, search_algorithm=None)
 
    Bases: :py:obj:`Conf`
@@ -105,4 +105,4 @@ Classes
    :param approach: The approach of the NAS.
    :param search_algorithm: The search algorithm for NAS procedure.
 
-
+   .. 

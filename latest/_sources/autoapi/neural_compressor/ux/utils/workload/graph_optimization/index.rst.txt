@@ -28,7 +28,7 @@ Classes
 
    Configuration Graph Optimization class.
 
-   .. py:method:: set_precisions(precisions: Union[str, List[str]]) -> None
+   ..    .. py:method:: set_precisions(precisions: Union[str, List[str]]) -> None
 
       Update graph_optimization precisions in config.
 

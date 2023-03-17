@@ -28,27 +28,27 @@ Classes
 
    Build Keras model.
 
-   .. py:property:: q_config
+   ..    .. .. py:property:: q_config
 
       Return q_config.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model itself.
 
-   .. py:property:: graph_info
+   ..    .. .. py:property:: graph_info
 
       Return graph info.
 
-   .. py:property:: input_node_names
+   ..    .. .. py:property:: input_node_names
 
       Return input node names.
 
-   .. py:property:: output_node_names
+   ..    .. .. py:property:: output_node_names
 
       Return output node names.
 
-   .. py:method:: save(root, *args, **kwargs)
+   ..    .. py:method:: save(root, *args, **kwargs)
       :abstractmethod:
 
       Save Keras model.

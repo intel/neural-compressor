@@ -39,7 +39,7 @@ Classes
    scale_c = r * scale and shift = u
    with this we don't change the min/max value, and correct the weight
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply bias correction graph transform.
 

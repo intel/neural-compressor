@@ -28,7 +28,7 @@ Classes
 
    Quantize the AvgPool and MaxPool.
 
-   .. py:method:: get_longest_fuse()
+   ..    .. py:method:: get_longest_fuse()
 
       Only pooling op itself, no fusion pattern.
 

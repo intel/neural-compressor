@@ -47,13 +47,13 @@ Functions
 
    Basic class for tuning strategy.
 
-   .. py:property:: evaluation_result
+   ..    .. .. py:property:: evaluation_result
 
       Evaluate the given model.
 
       :returns: The objective value evaluated.
 
-   .. py:method:: next_tune_cfg()
+   ..    .. py:method:: next_tune_cfg()
       :abstractmethod:
 
       Interface for generate the next tuning config.

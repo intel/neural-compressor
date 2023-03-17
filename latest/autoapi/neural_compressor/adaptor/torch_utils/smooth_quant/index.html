@@ -98,7 +98,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">TorchSmoothQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traced_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">TorchSmoothQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traced_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant" title="Permalink to this definition"></a></dt>
 <dd><p>Fake input channel quantization, for more details please refer to
 [1] SmoothQuant: Accurate and Efficient
 Post-Training Quantization for Large Language Models
@@ -107,22 +107,8 @@ Currently, we only handle the layers whose smooth scale could be absorbed, we wi
 We only support inplace mode which means the model weights will be changed, you can call recover function only
 once to recover the weights if needed</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">99.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Linear',</span> <span class="pre">'Conv2d',</span> <span class="pre">'ConvTranspose2d']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant.transform" title="Permalink to this definition"></a></dt>
-<dd><p>The main entry of smooth quant
-:param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
-to the paper for more details
-:param percentile: Not supported now
-:param op_types: The op typed to be smooth quantized
-:param scales_per_op: Not supported now
-:param calib_iter: Data size for calibration
-:return: A FP32 model with the same architecture as the orig model but with different weight which will be
-benefit to quantization</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant.recover">
-<span class="sig-name descname"><span class="pre">recover</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant.recover" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">recover</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant.recover" title="Permalink to this definition"></a></dt>
 <dd><p>recover the model weights
 :return:</p>
 </dd></dl>
@@ -131,7 +117,7 @@ benefit to quantization</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.smooth_quant.GraphTrace">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">GraphTrace</span></span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.GraphTrace" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">GraphTrace</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.smooth_quant.GraphTrace" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>

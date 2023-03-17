@@ -96,19 +96,12 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.</span></span><span class="sig-name descname"><span class="pre">FuseNodeStartWithConv2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.</span></span><span class="sig-name descname"><span class="pre">FuseNodeStartWithConv2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../quantize_graph_base/index.html#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase</span></code></a></p>
 <p>Quantize Conv2D/Conv3D/DepthwiseConv2dNative to int8 op.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_addn_relu_fusion">
-<span class="sig-name descname"><span class="pre">apply_conv3d_add_addn_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_addn_relu_fusion" title="Permalink to this definition"></a></dt>
-<dd><p>Apply Conv3D Add Addn Relu fusion.</p>
-<p>Dequantize + Conv3D + AddV2+ AddV2 + Relu + QuantizeV2</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_addn_fusion">
-<span class="sig-name descname"><span class="pre">apply_conv3d_add_addn_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_addn_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_conv3d_add_addn_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_addn_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv3D Add Addn fusion.</p>
 <p>Dequantize + Conv3D + BiasAdd + Add + QuantizeV2
 Dequantize + Conv3D + BiasAdd + AddV2 + QuantizeV2
@@ -117,7 +110,7 @@ Dequantize + Conv3D + AddV2 + AddV2 + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_relu_fusion">
-<span class="sig-name descname"><span class="pre">apply_conv3d_add_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_relu_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_conv3d_add_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_relu_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv3D Add Relu fusion.</p>
 <p>Dequantize + Conv3D + Add + Relu + QuantizeV2
 Dequantize + Conv3D + AddV2 + Relu + QuantizeV2</p>
@@ -125,7 +118,7 @@ Dequantize + Conv3D + AddV2 + Relu + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_fusion">
-<span class="sig-name descname"><span class="pre">apply_conv3d_add_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_conv3d_add_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_add_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv3D Add fusion.</p>
 <p>Dequantize + Conv3D + BiasAdd + QuantizeV2
 Dequantize + Conv3D + Add + QuantizeV2
@@ -134,14 +127,14 @@ Dequantize + Conv3D + AddV2 + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_single_fusion">
-<span class="sig-name descname"><span class="pre">apply_conv3d_single_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_single_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_conv3d_single_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv3d_single_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv3D single fusion.</p>
 <p>Dequantize + Conv3D + QuantizeV2</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_relu_fusion">
-<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_relu_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_relu_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D BiasAdd Relu fusion.</p>
 <p>Dequantize + Conv2D + AddN + Relu + QuantizeV2
 Dequantize + Conv2D + AddN + Relu6 + QuantizeV2
@@ -170,7 +163,7 @@ Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_fusion">
-<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D BiasAdd fusion.</p>
 <p>Dequantize + Conv2D + Biasadd + QuantizeV2
 Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2
@@ -180,7 +173,7 @@ Dequantize + Conv2D + AddV2 + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_single_fusion">
-<span class="sig-name descname"><span class="pre">apply_newly_conv_single_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_single_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_newly_conv_single_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_single_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D single fusion.</p>
 <p>Dequantize + Conv2D + QuantizeV2
 Dequantize + DepthwiseConv2dNative + QuantizeV2</p>
@@ -188,7 +181,7 @@ Dequantize + DepthwiseConv2dNative + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_addn_relu_fusion">
-<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_addn_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_addn_relu_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_addn_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_addn_relu_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D BiasAdd AddN Relu fusion.</p>
 <p>Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2
 Dequantize + Conv2D + BiasAdd + AddN + Relu6 + QuantizeV2
@@ -205,7 +198,7 @@ Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv_biasadd_hardswish_fusion">
-<span class="sig-name descname"><span class="pre">apply_conv_biasadd_hardswish_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv_biasadd_hardswish_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_conv_biasadd_hardswish_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_conv_biasadd_hardswish_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D BiasAdd hardswish fusion.</p>
 <p>Dequantize + Conv2D + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
 Dequantize + Conv2D + Add + Relu6 + Mul + Mul + QuantizeV2
@@ -215,7 +208,7 @@ Dequantize + DepthwiseConv2dNative + Add + Relu6 + Mul + Mul + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_swishf32_fusion">
-<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_swishf32_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_swishf32_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_swishf32_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_swishf32_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D BiasAdd swishf32 fusion.</p>
 <p>Dequantize + Conv2D + BiasAdd + swish_f32 + QuantizeV2
 Dequantize + Conv2D + Add + swish_f32 + QuantizeV2
@@ -229,7 +222,7 @@ Dequantize + DepthwiseConv2dNative + swish_f32 + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_addn_fusion">
-<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_addn_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_addn_fusion" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_newly_conv_biasadd_addn_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_newly_conv_biasadd_addn_fusion" title="Permalink to this definition"></a></dt>
 <dd><p>Apply Conv2D BiasAdd AddN fusion.</p>
 <p>Dequantize + Conv2D + Add + Add + QuantizeV2
 Dequantize + Conv2D + AddV2 + Add + QuantizeV2
@@ -238,13 +231,13 @@ Dequantize + Conv2D + BiasAdd + Add + QuantizeV2</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.get_longest_fuse">
-<span class="sig-name descname"><span class="pre">get_longest_fuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.get_longest_fuse" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_longest_fuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.get_longest_fuse" title="Permalink to this definition"></a></dt>
 <dd><p>Get the longest fusion patter.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_the_transform">
-<span class="sig-name descname"><span class="pre">apply_the_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_the_transform" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_the_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d.apply_the_transform" title="Permalink to this definition"></a></dt>
 <dd><p>Quantize Conv and apply the fusion.</p>
 </dd></dl>
 

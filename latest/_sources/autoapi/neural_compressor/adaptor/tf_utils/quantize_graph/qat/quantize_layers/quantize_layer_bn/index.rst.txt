@@ -28,4 +28,4 @@ Classes
 
    The class for quantization of BatchNormalization.
 
-
+   .. 

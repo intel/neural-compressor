@@ -28,7 +28,7 @@ Classes
 
    Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse Mul + Conv2D/DepthwiseConv2dNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul.
 

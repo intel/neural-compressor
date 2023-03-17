@@ -48,7 +48,7 @@ Functions
 
    Base Operator.
 
-   .. py:method:: quantize_check()
+   ..    .. py:method:: quantize_check()
 
       Check if quantizaion can be done.
 
@@ -80,7 +80,7 @@ Functions
 
    Base QOperator.
 
-   .. py:method:: convert()
+   ..    .. py:method:: convert()
 
       Convert to QDQ format.
 

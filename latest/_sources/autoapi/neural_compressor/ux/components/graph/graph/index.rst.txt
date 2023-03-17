@@ -28,17 +28,17 @@ Classes
 
    Model graph definition.
 
-   .. py:property:: nodes
+   ..    .. .. py:property:: nodes
       :type: List[neural_compressor.ux.components.graph.node.Node]
 
       Return nodes as a list.
 
-   .. py:property:: edges
+   ..    .. .. py:property:: edges
       :type: List[neural_compressor.ux.components.graph.edge.Edge]
 
       Return edges as a list.
 
-   .. py:method:: add_node(node: neural_compressor.ux.components.graph.node.Node) -> None
+   ..    .. py:method:: add_node(node: neural_compressor.ux.components.graph.node.Node) -> None
 
       Add a Node to graph.
 

@@ -97,7 +97,7 @@ Functions
 
    Lazy import python module till use.
 
-
+   .. 
 .. py:function:: singleton(cls)
 
    Not displayed in API Docs.
@@ -140,19 +140,19 @@ Functions
 
    Get CPU Info.
 
-   .. py:property:: bf16
+   ..    .. .. py:property:: bf16
 
       Get whether it is bf16.
 
-   .. py:property:: vnni
+   ..    .. .. py:property:: vnni
 
       Get whether it is vnni.
 
-   .. py:property:: cores_per_socket
+   ..    .. .. py:property:: cores_per_socket
 
       Get the cores per socket.
 
-   .. py:method:: get_number_of_sockets() -> int
+   ..    .. py:method:: get_number_of_sockets() -> int
 
       Get number of sockets in platform.
 
@@ -220,12 +220,12 @@ Functions
 
    Capture the output to file.
 
-
+   .. 
 .. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
 
    The statistics printer.
 
-   .. py:method:: print_stat()
+   ..    .. py:method:: print_stat()
 
       Print the statistics.
 
@@ -237,12 +237,12 @@ Functions
 
    Mode: Quantization, Benchmark or Pruning.
 
-
+   .. 
 .. py:class:: GLOBAL_STATE
 
    Access the global model.
 
-
+   .. 
 .. py:function:: load_data_from_pkl(path, filename)
 
    Load data from local pkl file.

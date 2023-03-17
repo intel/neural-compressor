@@ -26,12 +26,12 @@ Classes
 
    Database manager class.
 
-   .. py:property:: engine
+   ..    .. .. py:property:: engine
       :type: sqlalchemy.engine.Engine
 
       Ensure that SQLAlchemy engine is created.
 
-   .. py:method:: initialize_database() -> None
+   ..    .. py:method:: initialize_database() -> None
 
       Initialize database by creating engine and session.
 

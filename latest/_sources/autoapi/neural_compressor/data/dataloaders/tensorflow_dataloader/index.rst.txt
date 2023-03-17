@@ -38,7 +38,7 @@ Classes
    :param dataset: obj. wrapper of needed data.
    :param batch_size: int. batch size
 
-   .. py:method:: batch(batch_size, last_batch='rollover')
+   ..    .. py:method:: batch(batch_size, last_batch='rollover')
 
       Dataset return data per batch.
 
@@ -52,7 +52,7 @@ Classes
 
    this dataloader is designed to satisfy the usage of Bert models.
 
-
+   .. 
 .. py:class:: TensorflowModelZooBertDataLoader
 
    Bases: :py:obj:`neural_compressor.data.dataloaders.default_dataloader.DefaultDataLoader`
@@ -61,7 +61,7 @@ Classes
 
    this dataloader is designed to satisfy the usage of Model Zoo Bert models.
 
-
+   .. 
 .. py:class:: TensorflowDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
    Bases: :py:obj:`neural_compressor.data.dataloaders.base_dataloader.BaseDataLoader`
@@ -71,4 +71,4 @@ Classes
    if it's a tf.data.Dataset we will directly use the dataloader in the other case
    will use DefaultDataLoader instead.
 
-
+   .. 

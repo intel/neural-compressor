@@ -36,32 +36,32 @@ Functions
 
    Onnxrt Model class.
 
-   .. py:property:: domain
+   ..    .. .. py:property:: domain
       :type: neural_compressor.ux.components.model.domain.Domain
 
       Get model domain.
 
-   .. py:property:: input_shape
+   ..    .. .. py:property:: input_shape
       :type: neural_compressor.ux.components.model.shape.Shape
 
       Try to detect data shape.
 
-   .. py:property:: shape_elements_order
+   ..    .. .. py:property:: shape_elements_order
       :type: List[str]
 
       Get order of input shape channels.
 
-   .. py:property:: nc_model_instance
+   ..    .. .. py:property:: nc_model_instance
       :type: neural_compressor.model.onnx_model.ONNXModel
 
       Get Neural Compressor Model instance.
 
-   .. py:property:: filtered_input_nodes
+   ..    .. .. py:property:: filtered_input_nodes
       :type: List[Any]
 
       Get filtered input nodes.
 
-   .. py:method:: get_framework_name() -> str
+   ..    .. py:method:: get_framework_name() -> str
       :staticmethod:
 
       Get the name of framework.

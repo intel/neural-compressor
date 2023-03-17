@@ -28,7 +28,7 @@ Classes
 
    Calculate ExpandDims and remove it if its input is weight and next node is Conv2D.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Handle all ExpandDims ops whose input is weight and output is Conv2D.
 

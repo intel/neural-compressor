@@ -38,7 +38,7 @@ Classes
                          model architecture parameters.
    :type model_builder: function obj
 
-   .. py:method:: execute()
+   ..    .. py:method:: execute()
 
       Execute the search process.
 

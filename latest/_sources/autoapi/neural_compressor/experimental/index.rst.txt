@@ -83,27 +83,27 @@ Attributes
    This design is mainly for one-shot optimization for pruning/distillation/quantization-aware training.
    In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
 
-   .. py:property:: train_func
+   ..    .. .. py:property:: train_func
 
       Not support get train_func.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Not support get eval_func.
 
-   .. py:property:: train_dataloader
+   ..    .. .. py:property:: train_dataloader
 
       Getter to train dataloader.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Getter to eval dataloader.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Getter of model in neural_compressor.model.
 
-   .. py:method:: prepare()
+   ..    .. py:method:: prepare()
 
       Register Quantization Aware Training hooks.
 
@@ -246,31 +246,31 @@ Attributes
                              calibration & quantization tuning space etc.
    :type conf_fname_or_obj: string or obj
 
-   .. py:property:: calib_dataloader
+   ..    .. .. py:property:: calib_dataloader
 
       Get `calib_dataloader` attribute.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Get `metric` attribute.
 
-   .. py:property:: objective
+   ..    .. .. py:property:: objective
 
       Get `objective` attribute.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Get `postprocess` attribute.
 
-   .. py:property:: q_func
+   ..    .. .. py:property:: q_func
 
       Get `q_func` attribute.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Override model getter method to handle quantization aware training case.
 
-   .. py:method:: pre_process()
+   ..    .. py:method:: pre_process()
 
       Prepare dataloaders, qfuncs for Component.
 
@@ -315,19 +315,19 @@ Attributes
 
       A list of Pruner object.
 
-   .. py:property:: pruning_func
+   ..    .. .. py:property:: pruning_func
 
       Not support get pruning_func.
 
-   .. py:property:: evaluation_distributed
+   ..    .. .. py:property:: evaluation_distributed
 
       Getter to know whether need distributed evaluation dataloader.
 
-   .. py:property:: train_distributed
+   ..    .. .. py:property:: train_distributed
 
       Getter to know whether need distributed training dataloader.
 
-   .. py:method:: update_items_for_all_pruners(**kwargs)
+   ..    .. py:method:: update_items_for_all_pruners(**kwargs)
 
       Functions which add User-defined arguments to the original configurations.
 
@@ -384,31 +384,31 @@ Attributes
    NOTICE: neural_compressor Benchmark will use the original command to run sub-process, which
    depends on the user's code and has the possibility to run unnecessary code
 
-   .. py:property:: results
+   ..    .. .. py:property:: results
 
       Get the results of benchmarking.
 
-   .. py:property:: b_dataloader
+   ..    .. .. py:property:: b_dataloader
 
       Get the dataloader for the benchmarking.
 
-   .. py:property:: b_func
+   ..    .. .. py:property:: b_func
 
       Not support getting b_func.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Get the model.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Not support getting metric.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Not support getting postprocess.
 
-   .. py:method:: summary_benchmark()
+   ..    .. py:method:: summary_benchmark()
 
       Get the summary of the benchmark.
 
@@ -460,39 +460,39 @@ Attributes
                              preferred calibration & quantization tuning space etc.
    :type conf_fname_or_obj: string or obj
 
-   .. py:property:: precisions
+   ..    .. .. py:property:: precisions
 
       Get precision.
 
-   .. py:property:: input
+   ..    .. .. py:property:: input
 
       Get input.
 
-   .. py:property:: output
+   ..    .. .. py:property:: output
 
       Get output.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Get eval_dataloader.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Get model.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Get metric.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Get postprocess.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Get evaluation function.
 
-   .. py:method:: dataset(dataset_type, *args, **kwargs)
+   ..    .. py:method:: dataset(dataset_type, *args, **kwargs)
 
       Get dataset.
 
@@ -513,11 +513,11 @@ Attributes
    MixedPrecision class automatically generates low precision model across various DL
    frameworks including tensorflow, pytorch and onnxruntime.
 
-   .. py:property:: precisions
+   ..    .. .. py:property:: precisions
 
       Get private member variable `precisions` of `MixedPrecision` class.
 
-   .. py:method:: set_config_by_model(model_obj)
+   ..    .. py:method:: set_config_by_model(model_obj)
 
       Set member variable `conf` by a input model object.
 
@@ -542,35 +542,35 @@ Attributes
                              Conf class containing model conversion and evaluation setting if not specifed by code.
    :type conf_fname_or_obj: string or obj
 
-   .. py:property:: source
+   ..    .. .. py:property:: source
 
       Return source.
 
-   .. py:property:: destination
+   ..    .. .. py:property:: destination
 
       Return destination.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Return eval dataloader.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Return model.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Return metric.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Check postprocess.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Return eval_func.
 
-   .. py:method:: dataset(dataset_type, *args, **kwargs)
+   ..    .. py:method:: dataset(dataset_type, *args, **kwargs)
 
       Return dataset.
 
@@ -612,45 +612,45 @@ Attributes
 
       The best student model found in the training.
 
-   .. py:property:: criterion
+   ..    .. .. py:property:: criterion
 
       Getter of criterion.
 
       :returns: The criterion used in the distillation process.
 
-   .. py:property:: optimizer
+   ..    .. .. py:property:: optimizer
 
       Getter of optimizer.
 
       :returns: The optimizer used in the distillation process.
 
-   .. py:property:: teacher_model
+   ..    .. .. py:property:: teacher_model
 
       Getter of the teacher model.
 
       :returns: The teacher model used in the distillation process.
 
-   .. py:property:: student_model
+   ..    .. .. py:property:: student_model
 
       Getter of the student model.
 
       :returns: The student model used in the distillation process.
 
-   .. py:property:: train_cfg
+   ..    .. .. py:property:: train_cfg
 
       Getter of the train configuration.
 
       :returns: The train configuration used in the distillation process.
 
-   .. py:property:: evaluation_distributed
+   ..    .. .. py:property:: evaluation_distributed
 
       Getter to know whether need distributed evaluation dataloader.
 
-   .. py:property:: train_distributed
+   ..    .. .. py:property:: train_distributed
 
       Getter to know whether need distributed training dataloader.
 
-   .. py:method:: on_post_forward(input, teacher_output=None)
+   ..    .. py:method:: on_post_forward(input, teacher_output=None)
 
       Set or compute output of teacher model.
 
@@ -713,4 +713,4 @@ Attributes
 
    :returns: An object of specified NAS approach.
 
-
+   .. 

@@ -28,7 +28,7 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
-   .. py:method:: quantize(tune_cfg, nc_model, dataloader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, nc_model, dataloader, q_func=None)
 
       The function is used to do MXNet calibration and quanitization in post-training
          quantization.

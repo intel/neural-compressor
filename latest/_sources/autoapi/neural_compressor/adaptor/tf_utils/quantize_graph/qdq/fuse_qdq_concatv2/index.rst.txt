@@ -28,7 +28,7 @@ Classes
 
    Quantize ConcatV2 to int8 op QuantizedConcatV2.
 
-   .. py:method:: get_longest_fuse(do_transform=False)
+   ..    .. py:method:: get_longest_fuse(do_transform=False)
 
       Get longest fusion pattern.
 

@@ -43,31 +43,31 @@ Classes
                              calibration & quantization tuning space etc.
    :type conf_fname_or_obj: string or obj
 
-   .. py:property:: calib_dataloader
+   ..    .. .. py:property:: calib_dataloader
 
       Get `calib_dataloader` attribute.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Get `metric` attribute.
 
-   .. py:property:: objective
+   ..    .. .. py:property:: objective
 
       Get `objective` attribute.
 
-   .. py:property:: postprocess
+   ..    .. .. py:property:: postprocess
 
       Get `postprocess` attribute.
 
-   .. py:property:: q_func
+   ..    .. .. py:property:: q_func
 
       Get `q_func` attribute.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Override model getter method to handle quantization aware training case.
 
-   .. py:method:: pre_process()
+   ..    .. py:method:: pre_process()
 
       Prepare dataloaders, qfuncs for Component.
 

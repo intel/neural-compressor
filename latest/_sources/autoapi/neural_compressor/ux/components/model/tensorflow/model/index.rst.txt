@@ -28,27 +28,27 @@ Classes
 
    Abstract TensorFlow Model class.
 
-   .. py:property:: nc_model_instance
+   ..    .. .. py:property:: nc_model_instance
       :type: neural_compressor.model.model.TensorflowBaseModel
 
       Get Neural Compressor Model instance.
 
-   .. py:property:: input_shape
+   ..    .. .. py:property:: input_shape
       :type: neural_compressor.ux.components.model.shape.Shape
 
       Try to detect data shape.
 
-   .. py:property:: shape_elements_order
+   ..    .. .. py:property:: shape_elements_order
       :type: List[str]
 
       Get order of input shape channels.
 
-   .. py:property:: supports_pruning
+   ..    .. .. py:property:: supports_pruning
       :type: bool
 
       Check if pruning is supported for the model.
 
-   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+   ..    .. py:method:: get_input_nodes() -> Optional[List[Any]]
 
       Get model input nodes.
 

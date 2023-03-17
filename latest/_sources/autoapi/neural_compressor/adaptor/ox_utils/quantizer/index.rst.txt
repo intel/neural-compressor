@@ -26,7 +26,7 @@ Classes
 
    Quantizer class.
 
-   .. py:method:: check_opset_version()
+   ..    .. py:method:: check_opset_version()
 
       Check opset version.
 

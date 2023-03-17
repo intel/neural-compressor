@@ -28,7 +28,7 @@ Classes
 
    Convert placeholder to const for removing training nodes.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Rename the PlaceHolderWithDefault node to constant.
 

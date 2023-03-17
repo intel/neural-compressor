@@ -26,7 +26,7 @@ Classes
 
    This class contains several staticmethod functions.
 
-   .. py:method:: get_sorted_graph(input_graph, input_node_names, output_node_names)
+   ..    .. py:method:: get_sorted_graph(input_graph, input_node_names, output_node_names)
 
       Return a sorted graphdef object.
 

@@ -67,7 +67,7 @@ Functions
    neural_compressor built-in metric always take (predictions, labels) as inputs, it's
    recommended to design metric_cls to take (predictions, labels) as inputs.
 
-
+   .. 
 .. py:class:: TensorflowMetrics
 
    Bases: :py:obj:`object`
@@ -78,7 +78,7 @@ Functions
 
       A dict to maintain all metrics for Tensorflow model.
 
-
+   .. 
 .. py:class:: PyTorchMetrics
 
    Bases: :py:obj:`object`
@@ -89,7 +89,7 @@ Functions
 
       A dict to maintain all metrics for PyTorch model.
 
-
+   .. 
 .. py:class:: MXNetMetrics
 
    Bases: :py:obj:`object`
@@ -100,7 +100,7 @@ Functions
 
       A dict to maintain all metrics for MXNet model.
 
-
+   .. 
 .. py:class:: ONNXRTQLMetrics
 
    Bases: :py:obj:`object`
@@ -111,7 +111,7 @@ Functions
 
       A dict to maintain all metrics for ONNXRT QLinear model.
 
-
+   .. 
 .. py:class:: ONNXRTITMetrics
 
    Bases: :py:obj:`object`
@@ -122,7 +122,7 @@ Functions
 
       A dict to maintain all metrics for ONNXRT Integer model.
 
-
+   .. 
 .. py:class:: METRICS(framework: str)
 
    Bases: :py:obj:`object`
@@ -133,7 +133,7 @@ Functions
 
       The collection of registered metrics for the specified framework.
 
-   .. py:method:: register(name, metric_cls) -> None
+   ..    .. py:method:: register(name, metric_cls) -> None
 
       Register a metric.
 
@@ -162,19 +162,19 @@ Functions
 
    The base class of Metric.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Return its metric class.
 
       :returns: The metric class.
 
-   .. py:property:: hvd
+   ..    .. .. py:property:: hvd
 
       Return its hvd class.
 
       :returns: The hvd class.
 
-   .. py:method:: update(preds, labels=None, sample_weight=None)
+   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
       :abstractmethod:
 
       Update the state that need to be evaluated.
@@ -209,7 +209,7 @@ Functions
 
    The wrapper of Metric class for PyTorch.
 
-   .. py:method:: update(preds, labels=None, sample_weight=None)
+   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
 
       Convert the prediction to torch.
 
@@ -235,7 +235,7 @@ Functions
 
    The wrapper of Metric class for MXNet.
 
-   .. py:method:: update(preds, labels=None, sample_weight=None)
+   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
 
       Convert the prediction to MXNet array.
 
@@ -264,7 +264,7 @@ Functions
 
    The wrapper of Metric class for ONNXRT.
 
-   .. py:method:: update(preds, labels=None, sample_weight=None)
+   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
 
       Convert the prediction to NumPy array.
 
@@ -297,7 +297,7 @@ Functions
    It can be computed with the equation:
    F1 = 2 * (precision * recall) / (precision + recall)
 
-   .. py:method:: update(preds, labels)
+   ..    .. py:method:: update(preds, labels)
 
       Add the predictions and labels.
 
@@ -337,7 +337,7 @@ Functions
 
       The total number of samples.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -363,7 +363,7 @@ Functions
 
    A dummy metric that computes the average of predictions and prints it directly.
 
-   .. py:method:: reset()
+   ..    .. py:method:: reset()
 
       Reset the number of samples and total cases to zero.
 
@@ -401,7 +401,7 @@ Functions
 
       The sum of prediction.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -447,7 +447,7 @@ Functions
 
       :type: bool
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -479,7 +479,7 @@ Functions
 
       The instance of MSE Metric.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -526,7 +526,7 @@ Functions
 
       :type: bool
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -571,7 +571,7 @@ Functions
 
       The total number of predictions.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -616,7 +616,7 @@ Functions
 
       The total number of predictions.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -644,7 +644,7 @@ Functions
 
    Compute mean average precision of the detection task.
 
-   .. py:method:: update(predicts, labels, sample_weight=None)
+   ..    .. py:method:: update(predicts, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -672,7 +672,7 @@ Functions
 
    Computes mean average precision.
 
-   .. py:method:: update(predicts, labels, sample_weight=None)
+   ..    .. py:method:: update(predicts, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -700,21 +700,21 @@ Functions
 
    Computes mean average precision using algorithm in COCO.
 
-
+   .. 
 .. py:class:: TensorflowVOCMAP(anno_path=None, iou_thrs=None, map_points=None, map_key='DetectionBoxes_Precision/mAP')
 
    Bases: :py:obj:`TensorflowMAP`
 
    Computes mean average precision using algorithm in VOC.
 
-
+   .. 
 .. py:class:: SquadF1
 
    Bases: :py:obj:`BaseMetric`
 
    Evaluate for v1.1 of the SQuAD dataset.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -740,7 +740,7 @@ Functions
 
    Compute the mean IOU(Intersection over Union) score.
 
-   .. py:method:: update(preds, labels)
+   ..    .. py:method:: update(preds, labels)
 
       Add the predictions and labels.
 
@@ -767,7 +767,7 @@ Functions
 
    Compute the GLUE score.
 
-   .. py:method:: update(preds, labels)
+   ..    .. py:method:: update(preds, labels)
 
       Add the predictions and labels.
 
@@ -792,7 +792,7 @@ Functions
 
    Computes ROC score.
 
-   .. py:method:: update(preds, labels)
+   ..    .. py:method:: update(preds, labels)
 
       Add the predictions and labels.
 

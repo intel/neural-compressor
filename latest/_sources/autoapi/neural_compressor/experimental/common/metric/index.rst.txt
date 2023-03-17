@@ -32,4 +32,4 @@ Classes
    neural_compressor built-in metric always take (predictions, labels) as inputs, it's
    recommended to design metric_cls to take (predictions, labels) as inputs.
 
-
+   .. 

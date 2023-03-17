@@ -29,7 +29,7 @@ Classes
 
    GlobalAveragePool Operator.
 
-   .. py:method:: convert_check(convert_format)
+   ..    .. py:method:: convert_check(convert_format)
 
       Check if conversion can be done.
 
@@ -46,7 +46,7 @@ Classes
 
    QLinearGlobalAveragePool Operator.
 
-   .. py:method:: convert()
+   ..    .. py:method:: convert()
 
       Convert to QDQ format.
 

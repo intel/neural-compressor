@@ -26,7 +26,7 @@ Classes
 
    Graph collapser.
 
-   .. py:method:: collapse(graph: neural_compressor.ux.components.graph.graph.Graph) -> neural_compressor.ux.components.graph.graph.Graph
+   ..    .. py:method:: collapse(graph: neural_compressor.ux.components.graph.graph.Graph) -> neural_compressor.ux.components.graph.graph.Graph
 
       Return graph with collapsed nodes.
 

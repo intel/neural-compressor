@@ -31,14 +31,14 @@ Classes
    * Analyze the graph
    * Analyze the input/output node names of the specified graph
 
-   .. py:property:: graph
+   ..    .. .. py:property:: graph
 
       Getter of the _graph object.
 
       :returns: current graphdef object
       :rtype: graph
 
-   .. py:method:: has_positive_input(node_name)
+   ..    .. py:method:: has_positive_input(node_name)
 
       Check the specified node has positive input data or not.
 
@@ -208,7 +208,7 @@ Classes
 
    Encapsulates the graph operation into one class.
 
-   .. py:method:: compare_node_attr(node_a, node_b)
+   ..    .. py:method:: compare_node_attr(node_a, node_b)
       :staticmethod:
 
       Compare two node has identical attributes or not.

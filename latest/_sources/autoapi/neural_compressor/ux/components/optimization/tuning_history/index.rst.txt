@@ -46,7 +46,7 @@ Functions
 
    Tuning history watcher that sends update on file change.
 
-   .. py:method:: stop(process_succeeded: bool) -> None
+   ..    .. py:method:: stop(process_succeeded: bool) -> None
 
       Signal watcher to stop and dump tuning history to database.
 
@@ -66,7 +66,7 @@ Functions
 
    Tuning history class.
 
-   .. py:method:: send_history_snapshot(request_id: str, optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> None
+   ..    .. py:method:: send_history_snapshot(request_id: str, optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> None
       :staticmethod:
 
       Get tuning history for requested Workload.

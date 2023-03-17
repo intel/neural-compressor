@@ -35,7 +35,7 @@ Classes
    :param global_config: global configs which may be overwritten by local_config.
    :type global_config: Conf
 
-   .. py:method:: on_before_optimizer_step()
+   ..    .. py:method:: on_before_optimizer_step()
 
       Update gradient to prune the weights by back propagation.
 

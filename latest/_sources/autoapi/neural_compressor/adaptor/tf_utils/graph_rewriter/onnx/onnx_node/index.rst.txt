@@ -26,59 +26,59 @@ Classes
 
    A ONNX Node Wrapper used for graph manipulations.
 
-   .. py:property:: input
+   ..    .. .. py:property:: input
 
       Get node input.
 
-   .. py:property:: output
+   ..    .. .. py:property:: output
 
       Get node output.
 
-   .. py:property:: inputs
+   ..    .. .. py:property:: inputs
 
       Input node objects.
 
-   .. py:property:: attr
+   ..    .. .. py:property:: attr
 
       Get node attributes.
 
-   .. py:property:: name
+   ..    .. .. py:property:: name
 
       Get op name.
 
-   .. py:property:: op
+   ..    .. .. py:property:: op
 
       Get node's op.
 
-   .. py:property:: type
+   ..    .. .. py:property:: type
 
       Return Op type.
 
-   .. py:property:: domain
+   ..    .. .. py:property:: domain
 
       Return Op domain.
 
-   .. py:property:: data_format
+   ..    .. .. py:property:: data_format
 
       Return data_format.
 
-   .. py:property:: summary
+   ..    .. .. py:property:: summary
 
       Return node summary information.
 
-   .. py:property:: skip_conversion
+   ..    .. .. py:property:: skip_conversion
 
       Get skip conversion setting.
 
-   .. py:property:: output_shapes
+   ..    .. .. py:property:: output_shapes
 
       Get output shapes.
 
-   .. py:property:: output_dtypes
+   ..    .. .. py:property:: output_dtypes
 
       Get output dtypes.
 
-   .. py:method:: get_value_attr()
+   ..    .. py:method:: get_value_attr()
 
       Return onnx attr for value property of node.
 

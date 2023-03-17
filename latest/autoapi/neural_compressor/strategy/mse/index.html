@@ -96,40 +96,15 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.mse.MSETuneStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.mse.</span></span><span class="sig-name descname"><span class="pre">MSETuneStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dicts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_hooks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.mse.</span></span><span class="sig-name descname"><span class="pre">MSETuneStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dicts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_hooks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/mse.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
 <p>The tuning strategy using MSE policy in tuning space.</p>
 <p>The MSE strategy needs to get the tensors for each OP of raw FP32 models and the quantized model based on
 the best model-wise tuning configuration. It then calculates the MSE (Mean Squared Error) for each OP, sorts
 those OPs according to the MSE value, and performs the op-wise fallback in this order.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.mse.MSETuneStrategy.mse_impact_lst">
-<span class="sig-name descname"><span class="pre">mse_impact_lst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_qmodel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy.mse_impact_lst" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate and generate the MSE impact list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>op_list</strong> (<em>List</em><em>[</em><em>Tuple</em><em>(</em><em>str</em><em>, </em><em>str</em><em>)</em><em>]</em>) – List of ops in format of [(op_name, op_type), …].</p></li>
-<li><p><strong>fp32_model</strong> (<a class="reference internal" href="../../experimental/common/index.html#neural_compressor.experimental.common.Model" title="neural_compressor.experimental.common.Model"><em>Model</em></a>) – The original FP32 model before quantization.</p></li>
-<li><p><strong>current_best_model</strong> (<a class="reference internal" href="../../experimental/common/index.html#neural_compressor.experimental.common.Model" title="neural_compressor.experimental.common.Model"><em>Model</em></a>) – The currently best quantized model.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>The sorted list of ops by its MSE</dt><dd><p>impaction, in the same format of ‘op_list’.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>ordered_op_name_types (List[Tuple(str, str)])</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.mse.MSETuneStrategy.next_tune_cfg">
-<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/mse.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
 <dd><p>Generate and yield the next tuning config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>

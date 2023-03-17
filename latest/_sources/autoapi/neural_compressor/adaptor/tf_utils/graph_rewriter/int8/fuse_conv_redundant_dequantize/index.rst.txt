@@ -28,7 +28,7 @@ Classes
 
    Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse the _QuantizedConv Op with the following Dequantize op.
 

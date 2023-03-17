@@ -29,7 +29,7 @@ Classes
 
    MaxPool Operator.
 
-   .. py:method:: quantize_check()
+   ..    .. py:method:: quantize_check()
 
       Check if quantizaion can be done.
 
@@ -56,4 +56,4 @@ Classes
 
    QMaxPool Operator.
 
-
+   .. 

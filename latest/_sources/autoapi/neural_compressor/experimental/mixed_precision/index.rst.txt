@@ -31,11 +31,11 @@ Classes
    MixedPrecision class automatically generates low precision model across various DL
    frameworks including tensorflow, pytorch and onnxruntime.
 
-   .. py:property:: precisions
+   ..    .. .. py:property:: precisions
 
       Get private member variable `precisions` of `MixedPrecision` class.
 
-   .. py:method:: set_config_by_model(model_obj)
+   ..    .. py:method:: set_config_by_model(model_obj)
 
       Set member variable `conf` by a input model object.
 

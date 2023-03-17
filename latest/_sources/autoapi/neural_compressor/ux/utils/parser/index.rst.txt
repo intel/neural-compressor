@@ -33,13 +33,13 @@ Classes
 
    Parser abstract class.
 
-   .. py:property:: patterns
+   ..    .. .. py:property:: patterns
       :type: dict
       :abstractmethod:
 
       Set patterns to get metrics from lines.
 
-   .. py:method:: process() -> Dict[str, Any]
+   ..    .. py:method:: process() -> Dict[str, Any]
       :abstractmethod:
 
       Process log files.
@@ -52,12 +52,12 @@ Classes
 
    Parser class is responsible for parsing optimization log files.
 
-   .. py:property:: patterns
+   ..    .. .. py:property:: patterns
       :type: dict
 
       Set patterns to get metrics from lines.
 
-   .. py:method:: process() -> Dict[str, Any]
+   ..    .. py:method:: process() -> Dict[str, Any]
 
       Process files.
 
@@ -69,12 +69,12 @@ Classes
 
    Parser class is responsible for parsing performance benchmark log files.
 
-   .. py:property:: patterns
+   ..    .. .. py:property:: patterns
       :type: dict
 
       Set patterns to get metrics from lines.
 
-   .. py:method:: process() -> Dict[str, Any]
+   ..    .. py:method:: process() -> Dict[str, Any]
 
       Process files.
 
@@ -103,12 +103,12 @@ Classes
 
    Parser class is responsible for parsing accuracy benchmark log files.
 
-   .. py:property:: patterns
+   ..    .. .. py:property:: patterns
       :type: dict
 
       Set patterns to get metrics from lines.
 
-   .. py:method:: process() -> Dict[str, Any]
+   ..    .. py:method:: process() -> Dict[str, Any]
 
       Process accuracy logs.
 
@@ -118,7 +118,7 @@ Classes
 
    Benchmark parser factory.
 
-   .. py:method:: get_parser(benchmark_mode: str, logs: List[str]) -> Parser
+   ..    .. py:method:: get_parser(benchmark_mode: str, logs: List[str]) -> Parser
       :staticmethod:
 
       Get benchmark parser for specified mode.
@@ -131,12 +131,12 @@ Classes
 
    Parser class is responsible for parsing profiling log files.
 
-   .. py:property:: patterns
+   ..    .. .. py:property:: patterns
       :type: dict
 
       Set patterns to get metrics from lines.
 
-   .. py:method:: unify_time(string_value: str) -> float
+   ..    .. py:method:: unify_time(string_value: str) -> float
       :staticmethod:
 
       Unify time with unit to micro seconds float value.

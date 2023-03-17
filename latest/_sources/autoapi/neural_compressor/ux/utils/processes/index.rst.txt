@@ -30,7 +30,7 @@ Classes
 
    Provide helper methods to retrieve information about all executed processes.
 
-   .. py:property:: is_ok
+   ..    .. .. py:property:: is_ok
       :type: bool
 
       Property provide information if all executed process during one call executed properly.
@@ -38,7 +38,7 @@ Classes
       :rtype : bool
       :return: return False if at least one of processes failed, in other case return True
 
-   .. py:method:: return_code_all() -> None
+   ..    .. py:method:: return_code_all() -> None
 
       Provide list of return codes of all Process.
 

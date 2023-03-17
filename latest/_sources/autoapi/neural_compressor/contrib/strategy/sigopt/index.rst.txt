@@ -74,7 +74,7 @@ Classes
                  Defaults to None.
    :type dicts: dict, optional
 
-   .. py:method:: params_to_tune_configs(params)
+   ..    .. py:method:: params_to_tune_configs(params)
 
       Get the parameters of the tuning strategy.
 

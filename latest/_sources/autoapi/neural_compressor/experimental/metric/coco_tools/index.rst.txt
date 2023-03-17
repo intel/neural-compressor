@@ -72,7 +72,7 @@ Functions
       type of detections being wrapped. Can be one of ['bbox',
       'segmentation']
 
-   .. py:method:: LoadAnnotations(annotations: list) -> pycocotools.coco.COCO
+   ..    .. py:method:: LoadAnnotations(annotations: list) -> pycocotools.coco.COCO
 
       Load annotations dictionary into COCO datastructure.
 
@@ -108,7 +108,7 @@ Functions
                                             agnostic_mode=False)
      metrics = evaluator.ComputeMetrics()
 
-   .. py:method:: GetCategory(category_id: int) -> dict
+   ..    .. py:method:: GetCategory(category_id: int) -> dict
 
       Fetch dictionary holding category information given category id.
 

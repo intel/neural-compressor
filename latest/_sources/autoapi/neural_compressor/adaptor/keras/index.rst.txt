@@ -27,7 +27,7 @@ Classes
 
 
 
-   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+   ..    .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
 
       Execute the quantize process on the specified model.
 

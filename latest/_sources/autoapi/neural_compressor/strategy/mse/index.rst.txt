@@ -32,7 +32,7 @@ Classes
    the best model-wise tuning configuration. It then calculates the MSE (Mean Squared Error) for each OP, sorts
    those OPs according to the MSE value, and performs the op-wise fallback in this order.
 
-   .. py:method:: mse_impact_lst(op_list: List, fp32_model, best_qmodel)
+   ..    .. py:method:: mse_impact_lst(op_list: List, fp32_model, best_qmodel)
 
       Calculate and generate the MSE impact list.
 

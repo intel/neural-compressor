@@ -28,7 +28,7 @@ Classes
 
    Remove the unused nodes in the graph.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute stripping unused nodes.
 

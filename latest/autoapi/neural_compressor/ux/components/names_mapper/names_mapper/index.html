@@ -99,45 +99,15 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.names_mapper.names_mapper.</span></span><span class="sig-name descname"><span class="pre">MappingDirection</span></span><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.names_mapper.names_mapper.</span></span><span class="sig-name descname"><span class="pre">MappingDirection</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/components/names_mapper/names_mapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
 <p>Mapping directions enumeration.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.names_mapper.names_mapper.</span></span><span class="sig-name descname"><span class="pre">NamesMapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection" title="neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection"><span class="pre">MappingDirection</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.names_mapper.names_mapper.</span></span><span class="sig-name descname"><span class="pre">NamesMapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection" title="neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection"><span class="pre">MappingDirection</span></a></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/components/names_mapper/names_mapper.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper" title="Permalink to this definition"></a></dt>
 <dd><p>Names Mapper class.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.framework_mappings">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">framework_mappings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.framework_mappings" title="Permalink to this definition"></a></dt>
-<dd><p>Get framework mappings.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.domain_mappings">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">domain_mappings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.domain_mappings" title="Permalink to this definition"></a></dt>
-<dd><p>Get domain mappings.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.domain_flavour_mappings">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">domain_flavour_mappings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.domain_flavour_mappings" title="Permalink to this definition"></a></dt>
-<dd><p>Get domain flavour mappings.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.precision_mappings">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precision_mappings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.precision_mappings" title="Permalink to this definition"></a></dt>
-<dd><p>Get precision mappings.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.map_name">
-<span class="sig-name descname"><span class="pre">map_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper.map_name" title="Permalink to this definition"></a></dt>
-<dd><p>Map specified value to correct direction.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

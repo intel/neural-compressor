@@ -28,7 +28,7 @@ Classes
 
    Saved_model model.
 
-   .. py:method:: supports_path(path: str) -> bool
+   ..    .. py:method:: supports_path(path: str) -> bool
       :staticmethod:
 
       Check if given path is of supported model.

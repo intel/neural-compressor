@@ -26,4 +26,4 @@ Classes
 
    QuantizeLayer Base Class.
 
-
+   .. 

@@ -33,7 +33,7 @@ Classes
    fallback the OPs according to the scoring result.
 
 
-   .. py:method:: next_tune_cfg()
+   ..    .. py:method:: next_tune_cfg()
 
       Generate and yield the next tuning config using HAWQ v2 search in tuning space.
 

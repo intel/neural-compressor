@@ -26,7 +26,7 @@ Classes
 
    Convert tensorflow QDQ graph to ONNX QDQ graph.
 
-   .. py:method:: duplicate_tf_quantizev2_nodes(model)
+   ..    .. py:method:: duplicate_tf_quantizev2_nodes(model)
 
       Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2.
 

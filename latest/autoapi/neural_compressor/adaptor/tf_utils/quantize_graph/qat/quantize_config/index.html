@@ -96,37 +96,12 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.</span></span><span class="sig-name descname"><span class="pre">QuantizeConfig</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.</span></span><span class="sig-name descname"><span class="pre">QuantizeConfig</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Class for building custom quantize config.</p>
 <p>There should be only one QuantizeConfig instance for global setting.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.add_quantize_recipe">
-<span class="sig-name descname"><span class="pre">add_quantize_recipe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantize_recipe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.add_quantize_recipe" title="Permalink to this definition"></a></dt>
-<dd><p>Add custom recipe for quantization to the QuantizeConfig instance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>quantize_recipe</strong> (<em>dict</em>) – <p>A dict that decide whether given layers should be quantized.
-A typical quantize_recipe will be a dict of layer_name and
-dict as key-value pairs. In each value dict, there should be
-a {‘quantize’: bool} key-value pair and a {‘index’: list} pair.
-The latter one is used to decide which inputs should be quantized
-in some layers with multiple inputs.
-For example:</p>
-<blockquote>
-<div><dl class="simple">
-<dt>{‘conv5_block3_3_conv’: {‘quantize’: Flase}</dt><dd><p>’conv5_block3_3_add’ : {‘quantize’: True, ‘index’: [1, 3]}</p>
-</dd>
-</dl>
-<p>}</p>
-</div></blockquote>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.query_layer">
-<span class="sig-name descname"><span class="pre">query_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.query_layer" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">query_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.query_layer" title="Permalink to this definition"></a></dt>
 <dd><p>Query if a specific layer is in the quantize_recipe dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -143,7 +118,7 @@ For example:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.remove_layer">
-<span class="sig-name descname"><span class="pre">remove_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.remove_layer" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.remove_layer" title="Permalink to this definition"></a></dt>
 <dd><p>Remove a specific layer from the quantize_recipe dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -154,7 +129,7 @@ For example:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.remove_layers">
-<span class="sig-name descname"><span class="pre">remove_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.remove_layers" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.remove_layers" title="Permalink to this definition"></a></dt>
 <dd><p>Remove a batch of layers from the quantize_recipe dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -165,7 +140,7 @@ For example:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.get_quantize_recipe">
-<span class="sig-name descname"><span class="pre">get_quantize_recipe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.get_quantize_recipe" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_quantize_recipe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.get_quantize_recipe" title="Permalink to this definition"></a></dt>
 <dd><p>Get the current recipe dict for quantization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -179,7 +154,7 @@ For example:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.is_empty">
-<span class="sig-name descname"><span class="pre">is_empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.is_empty" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.is_empty" title="Permalink to this definition"></a></dt>
 <dd><p>Check if the recipe of quantization is an empty dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -193,7 +168,7 @@ For example:</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.clear_quantize_recipe">
-<span class="sig-name descname"><span class="pre">clear_quantize_recipe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.clear_quantize_recipe" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">clear_quantize_recipe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.clear_quantize_recipe" title="Permalink to this definition"></a></dt>
 <dd><p>Clear recipe of quantization to be an empty dict.</p>
 </dd></dl>
 

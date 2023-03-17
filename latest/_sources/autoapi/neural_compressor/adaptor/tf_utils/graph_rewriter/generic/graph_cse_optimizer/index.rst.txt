@@ -68,7 +68,7 @@ Classes
    :returns: A optimized graphdef object.
    :rtype: [graphdef]
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Optimize the graph contains multi output nodes.
 

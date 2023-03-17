@@ -61,7 +61,7 @@ Functions
 
       The collection of registered metrics for the specified framework.
 
-   .. py:method:: register(name, metric_cls) -> None
+   ..    .. py:method:: register(name, metric_cls) -> None
 
       Register a metric.
 
@@ -80,26 +80,26 @@ Functions
    neural_compressor built-in metric always take (predictions, labels) as inputs, it's
    recommended to design metric_cls to take (predictions, labels) as inputs.
 
-
+   .. 
 .. py:class:: BaseMetric(metric, single_output=False, hvd=None)
 
    Bases: :py:obj:`object`
 
    The base class of Metric.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Return its metric class.
 
       :returns: The metric class.
 
-   .. py:property:: hvd
+   ..    .. .. py:property:: hvd
 
       Return its hvd class.
 
       :returns: The hvd class.
 
-   .. py:method:: update(preds, labels=None, sample_weight=None)
+   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
       :abstractmethod:
 
       Update the state that need to be evaluated.
@@ -151,7 +151,7 @@ Functions
 
       The total number of predictions.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -193,7 +193,7 @@ Functions
 
    Compute mean average precision of the detection task.
 
-   .. py:method:: update(predicts, labels, sample_weight=None)
+   ..    .. py:method:: update(predicts, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -221,7 +221,7 @@ Functions
 
    Evaluate for v1.1 of the SQuAD dataset.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 
@@ -264,7 +264,7 @@ Functions
 
       The total number of predictions.
 
-   .. py:method:: update(preds, labels, sample_weight=None)
+   ..    .. py:method:: update(preds, labels, sample_weight=None)
 
       Add the predictions and labels.
 

@@ -1,12 +1,29 @@
 APIs
 ####
 
-The following API information is available:
+**User facing APIs:**
 
 .. toctree::
    :maxdepth: 1
 
-   basic_api
-   adaptor
-   strategy
-   model
+   quantization.rst
+   mix_precision.rst
+   training.rst
+   benchmark.rst
+   config.rst
+   objective.rst
+
+
+**Advanced APIs:**
+
+.. toctree::
+   :maxdepth: 1
+
+   compression.rst
+   strategy.rst
+   model.rst
+
+**API document example:**
+
+.. toctree::
+  api_doc_example.rst

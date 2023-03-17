@@ -28,7 +28,7 @@ Classes
 
    Convert MatMul/Conv2D + Add(AddV2) to MatMul + BiasAdd.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute convertion Add to BiasAdd.
 

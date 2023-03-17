@@ -28,7 +28,7 @@ Classes
 
    Insert logging graph transformation.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute the insert logging transformation.
 

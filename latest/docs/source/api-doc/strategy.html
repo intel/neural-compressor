@@ -19,8 +19,8 @@
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="Strategies" href="strategy/strategy.html" />
-    <link rel="prev" title="Util" href="adaptor/torch_utils/util.html" /> 
+    <link rel="next" title="Model" href="model.html" />
+    <link rel="prev" title="Compression" href="compression.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -52,13 +52,16 @@
 <li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="apis.html">APIs</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="basic_api.html">User facing APIs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="adaptor.html">Adaptor</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Strategy</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="strategy/strategy.html">Strategies</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="quantization.html">Quantization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mix_precision.html">Mix Precision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training.html">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmark.html">Benchmark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="objective.html">Objective</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compression.html">Compression</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Strategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_doc_example.html">API Document Example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
@@ -95,19 +98,30 @@
   <section id="strategy">
 <h1>Strategy<a class="headerlink" href="#strategy" title="Permalink to this heading"></a></h1>
 <p>The strategy API information is available:</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="strategy/strategy.html">Strategies</a></li>
-</ul>
-</div>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/strategy/auto/index.html#module-neural_compressor.strategy.auto" title="neural_compressor.strategy.auto"><code class="xref py py-obj docutils literal notranslate"><span class="pre">auto</span></code></a></p></td>
+<td><p>The auto tuning strategy.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/strategy/basic/index.html#module-neural_compressor.strategy.basic" title="neural_compressor.strategy.basic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">basic</span></code></a></p></td>
+<td><p>The basic tuning strategy.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/strategy/mse_v2/index.html#module-neural_compressor.strategy.mse_v2" title="neural_compressor.strategy.mse_v2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mse_v2</span></code></a></p></td>
+<td><p>The MSE_V2 tuning strategy.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/strategy/hawq_v2/index.html#module-neural_compressor.strategy.hawq_v2" title="neural_compressor.strategy.hawq_v2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hawq_v2</span></code></a></p></td>
+<td><p>The HAWQ_V2 tuning strategy.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="adaptor/torch_utils/util.html" class="btn btn-neutral float-left" title="Util" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="strategy/strategy.html" class="btn btn-neutral float-right" title="Strategies" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="compression.html" class="btn btn-neutral float-left" title="Compression" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="model.html" class="btn btn-neutral float-right" title="Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

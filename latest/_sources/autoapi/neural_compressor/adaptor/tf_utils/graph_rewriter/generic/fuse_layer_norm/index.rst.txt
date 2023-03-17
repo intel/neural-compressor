@@ -39,7 +39,7 @@ Functions
    Current fusion is only for the case, when LayerNormalization uses FusedBatcNormV3.
    And further restrict it to only 2D or 3D tensor inputs to keras LayerNormalization api.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       The following pattern will be searched in the graph with additional contraints.
 

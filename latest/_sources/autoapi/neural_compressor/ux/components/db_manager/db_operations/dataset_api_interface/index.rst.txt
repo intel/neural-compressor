@@ -38,7 +38,7 @@ Functions
 
    Interface for queries connected with datasets.
 
-   .. py:method:: delete_dataset(data: dict) -> dict
+   ..    .. py:method:: delete_dataset(data: dict) -> dict
       :staticmethod:
 
       Delete dataset from database and clean workspace.

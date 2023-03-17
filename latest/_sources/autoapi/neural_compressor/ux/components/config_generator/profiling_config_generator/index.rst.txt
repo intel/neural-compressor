@@ -28,7 +28,7 @@ Classes
 
    Configuration generator class.
 
-   .. py:method:: generate() -> None
+   ..    .. py:method:: generate() -> None
 
       Dump profiling configuration to json file.
 

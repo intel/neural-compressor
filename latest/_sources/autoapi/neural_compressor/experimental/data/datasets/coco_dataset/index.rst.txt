@@ -31,7 +31,7 @@ Classes
 
    Parse the features from sample.
 
-
+   .. 
 .. py:class:: COCORecordDataset
 
    Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.IterableDataset`
@@ -47,7 +47,7 @@ Classes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-
+   .. 
 .. py:class:: COCORaw(root, img_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=filter)
 
    Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.Dataset`
@@ -69,7 +69,7 @@ Classes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-
+   .. 
 .. py:class:: COCONpy(root, npy_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=None)
 
    Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.Dataset`
@@ -90,4 +90,4 @@ Classes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-
+   .. 

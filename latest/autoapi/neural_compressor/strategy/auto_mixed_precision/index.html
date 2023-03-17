@@ -96,29 +96,12 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.auto_mixed_precision.</span></span><span class="sig-name descname"><span class="pre">AutoMixedPrecisionTuneStrategy</span></span><a class="headerlink" href="#neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.auto_mixed_precision.</span></span><span class="sig-name descname"><span class="pre">AutoMixedPrecisionTuneStrategy</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/auto_mixed_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
 <p>Tuning strategy for auto mixed precision.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy.next_tune_cfg">
-<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Generate the next tuning config.</p>
-<p>Tuning configurations are generated according to the following rules:
-1. First, it tries to convert all ops into target date type as many as possible.
-2. If the accuracy does  not meets the requirements, it starts the stage of fallback</p>
-<blockquote>
-<div><p>which converts ops into higher precision.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>tune_config (dict)</em> – A dict containing the tuning configuration.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy.traverse">
-<span class="sig-name descname"><span class="pre">traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy.traverse" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/auto_mixed_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy.traverse" title="Permalink to this definition"></a></dt>
 <dd><p>Traverse the tuning space according to auto-mixed precision strategy.</p>
 </dd></dl>
 

@@ -39,27 +39,27 @@ Classes
    This design is mainly for pruning/distillation/quantization-aware training.
    In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Getter of model in neural_compressor.model.
 
-   .. py:property:: train_func
+   ..    .. .. py:property:: train_func
 
       Not support get train_func.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Not support get eval_func.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Getter to eval dataloader.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Get `metric` attribute.
 
-   .. py:method:: on_train_begin(dataloader=None)
+   ..    .. py:method:: on_train_begin(dataloader=None)
 
       Be called before the beginning of training.
 
@@ -146,7 +146,7 @@ Classes
    This design is mainly for Quantization-Aware Training.
    In this class will apply all hooks for Quantization-Aware Training.
 
-
+   .. 
 .. py:class:: PruningCallbacks(conf=None, model=None)
 
    Bases: :py:obj:`BaseCallbacks`
@@ -155,7 +155,7 @@ Classes
 
    In this class will apply all hooks for Pruning.
 
-   .. py:method:: on_train_end()
+   ..    .. py:method:: on_train_end()
 
       Be called after the end of training.
 
@@ -195,31 +195,31 @@ Classes
 
       The best student model found in the training.
 
-   .. py:property:: criterion
+   ..    .. .. py:property:: criterion
 
       Getter of criterion.
 
       :returns: The criterion used in the distillation process.
 
-   .. py:property:: teacher_model
+   ..    .. .. py:property:: teacher_model
 
       Getter of the teacher model.
 
       :returns: The teacher model used in the distillation process.
 
-   .. py:property:: student_model
+   ..    .. .. py:property:: student_model
 
       Getter of the student model.
 
       :returns: The student model used in the distillation process.
 
-   .. py:property:: train_cfg
+   ..    .. .. py:property:: train_cfg
 
       Getter of the train configuration.
 
       :returns: The train configuration used in the distillation process.
 
-   .. py:method:: init_train_cfg()
+   ..    .. py:method:: init_train_cfg()
 
       Initialize the training configuration.
 

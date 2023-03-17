@@ -28,7 +28,7 @@ Classes
 
    GraphTransform Base Class.
 
-   .. py:method:: parse_input_pb()
+   ..    .. py:method:: parse_input_pb()
 
       Parse the input pbdef to get the node name and node mapping.
 

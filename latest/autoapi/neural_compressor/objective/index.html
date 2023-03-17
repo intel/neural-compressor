@@ -125,7 +125,7 @@
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.objective.objective_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.objective_registry" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.objective_registry" title="Permalink to this definition"></a></dt>
 <dd><p>The class decorator used to register all Objective subclasses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -142,52 +142,43 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.objective.objective_custom_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_custom_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.objective_custom_registry" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_custom_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.objective_custom_registry" title="Permalink to this definition"></a></dt>
 <dd><p>Register a customized objective.</p>
-<p class="rubric">Example</p>
-<p>from eural_compressor.objective import objective_custom_registry</p>
-<p>objective_cls = type(user_objective)
-name = user_objective.__class__.__name__
-objective_cfg = name if deep_get(self.conf.usr_cfg, “tuning.objective”) else [name]
-deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
-self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-objective_custom_registry(name, objective_cls)</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eural_compressor.objective</span> <span class="kn">import</span> <span class="n">objective_custom_registry</span>
+
+<span class="n">objective_cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">user_objective</span><span class="p">)</span>
+<span class="n">name</span> <span class="o">=</span> <span class="n">user_objective</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="n">objective_cfg</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">deep_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span><span class="p">,</span> <span class="s2">&quot;tuning.objective&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="n">deep_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span><span class="p">,</span> <span class="n">user_obj_cfg</span><span class="p">,</span> <span class="n">objective_cfg</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span> <span class="o">=</span> <span class="n">DotDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span><span class="p">)</span>
+<span class="n">objective_custom_registry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">objective_cls</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.objective.Objective">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Objective</span></span><a class="headerlink" href="#neural_compressor.objective.Objective" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Objective</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Objective" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The base class for precise benchmark supported by neural_compressor.</p>
 <p>With built-in objectives, users can compress models with different objectives easily.
 In special cases, users can also register their own objective classes.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.objective.Objective.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.objective.Objective.model" title="Permalink to this definition"></a></dt>
-<dd><p>The interface benchmark model.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.objective.Objective.reset">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.reset" title="Permalink to this definition"></a></dt>
-<dd><p>The interface reset benchmark measuring.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Objective.start">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.start" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Objective.start" title="Permalink to this definition"></a></dt>
 <dd><p>The interface start benchmark measuring.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Objective.end">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.end" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Objective.end" title="Permalink to this definition"></a></dt>
 <dd><p>The interface end benchmark measuring.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Objective.result">
-<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.result" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Objective.result" title="Permalink to this definition"></a></dt>
 <dd><p>The result will return the total mean of the result.</p>
 <p>The interface to get benchmark measuring result measurer may sart and end many times,
 can set the start and end index of the result list to calculate.</p>
@@ -204,7 +195,7 @@ used to skip steps for warm up</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Objective.result_list">
-<span class="sig-name descname"><span class="pre">result_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.result_list" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">result_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Objective.result_list" title="Permalink to this definition"></a></dt>
 <dd><p>The interface to get benchmark measuring result list.</p>
 <p>This interface will return a list of each start-end loop measure value.</p>
 </dd></dl>
@@ -213,18 +204,12 @@ used to skip steps for warm up</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.objective.Accuracy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Accuracy</span></span><a class="headerlink" href="#neural_compressor.objective.Accuracy" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Accuracy</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Accuracy" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
 <p>Configuration Accuracy class. Evaluate the accuracy.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.objective.Accuracy.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Accuracy.start" title="Permalink to this definition"></a></dt>
-<dd><p>The interface start the measuring.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Accuracy.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Accuracy.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Accuracy.end" title="Permalink to this definition"></a></dt>
 <dd><p>The interface end the measuring.</p>
 </dd></dl>
 
@@ -232,18 +217,12 @@ used to skip steps for warm up</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.objective.Performance">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Performance</span></span><a class="headerlink" href="#neural_compressor.objective.Performance" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Performance</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Performance" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
 <p>Configuration Performance class. Evaluate the inference time.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.objective.Performance.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Performance.start" title="Permalink to this definition"></a></dt>
-<dd><p>Record the start time.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Performance.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Performance.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Performance.end" title="Permalink to this definition"></a></dt>
 <dd><p>Record the duration time.</p>
 </dd></dl>
 
@@ -251,19 +230,13 @@ used to skip steps for warm up</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.objective.Footprint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Footprint</span></span><a class="headerlink" href="#neural_compressor.objective.Footprint" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Footprint</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Footprint" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
 <p>Configuration Footprint class.</p>
 <p>Evaluate the peak size of memory blocks during inference.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.objective.Footprint.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Footprint.start" title="Permalink to this definition"></a></dt>
-<dd><p>Record the space allocation.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.Footprint.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Footprint.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Footprint.end" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the space usage.</p>
 </dd></dl>
 
@@ -271,18 +244,12 @@ used to skip steps for warm up</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.objective.ModelSize">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">ModelSize</span></span><a class="headerlink" href="#neural_compressor.objective.ModelSize" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">ModelSize</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.ModelSize" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
 <p>Configuration ModelSize class. Evaluate the model size.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.objective.ModelSize.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.ModelSize.start" title="Permalink to this definition"></a></dt>
-<dd><p>Start to calculate the model size.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.ModelSize.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.ModelSize.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.ModelSize.end" title="Permalink to this definition"></a></dt>
 <dd><p>Get the actual model size.</p>
 </dd></dl>
 
@@ -290,52 +257,26 @@ used to skip steps for warm up</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">MultiObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[True]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">MultiObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[True]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective" title="Permalink to this definition"></a></dt>
 <dd><p>The base class for multiple benchmarks supported by neural_compressor.</p>
-<p class="rubric">Example</p>
-<p>from neural_compressor.objective import MultiObjective
-obj = MultiObjective(</p>
-<blockquote>
-<div><p>objectives=[‘accuracy’, ‘modelsize’, ‘performance’],
-accuracy_criterion={‘relative’: 0.1},
-obj_criterion=[True, False, False],
-obj_weight=[0.7, 0.2, 0.1])</p>
-</div></blockquote>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.baseline">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">baseline</span></span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.baseline" title="Permalink to this definition"></a></dt>
-<dd><p>Get the actual model performance.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.accuracy_target">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">accuracy_target</span></span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_target" title="Permalink to this definition"></a></dt>
-<dd><p>Set the accuracy target.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.compare">
-<span class="sig-name descname"><span class="pre">compare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.compare" title="Permalink to this definition"></a></dt>
-<dd><p>The interface of comparing if metric reaches the goal with acceptable accuracy loss.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>last</strong> (<em>tuple</em>) – The tuple of last metric.</p></li>
-<li><p><strong>baseline</strong> (<em>tuple</em>) – The tuple saving FP32 baseline.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.objective</span> <span class="kn">import</span> <span class="n">MultiObjective</span>
+<span class="n">obj</span> <span class="o">=</span> <span class="n">MultiObjective</span><span class="p">(</span>
+    <span class="n">objectives</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="s1">&#39;modelsize&#39;</span><span class="p">,</span> <span class="s1">&#39;performance&#39;</span><span class="p">],</span>
+    <span class="n">accuracy_criterion</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;relative&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+    <span class="n">obj_criterion</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+    <span class="n">obj_weight</span><span class="o">=</span><span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.accuracy_meets">
-<span class="sig-name descname"><span class="pre">accuracy_meets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_meets" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">accuracy_meets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_meets" title="Permalink to this definition"></a></dt>
 <dd><p>Verify the new model performance is better than the previous model performance.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.accuracy_meet_req">
-<span class="sig-name descname"><span class="pre">accuracy_meet_req</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_meet_req" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">accuracy_meet_req</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_meet_req" title="Permalink to this definition"></a></dt>
 <dd><p>Compare the result of last tuning with baseline to check whether the result meet requirements.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -352,7 +293,7 @@ obj_weight=[0.7, 0.2, 0.1])</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.evaluate" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.evaluate" title="Permalink to this definition"></a></dt>
 <dd><p>The interface of calculating the objective.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -366,54 +307,52 @@ obj_weight=[0.7, 0.2, 0.1])</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.reset">
-<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.reset" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.reset" title="Permalink to this definition"></a></dt>
 <dd><p>Reset the objective value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.start" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.start" title="Permalink to this definition"></a></dt>
 <dd><p>Start to measure the objective value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.end">
-<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.end" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.end" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the objective value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.result">
-<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.result" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.result" title="Permalink to this definition"></a></dt>
 <dd><p>Get the results.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.set_model">
-<span class="sig-name descname"><span class="pre">set_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.set_model" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.set_model" title="Permalink to this definition"></a></dt>
 <dd><p>Set the objective model.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.best_result">
-<span class="sig-name descname"><span class="pre">best_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.best_result" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">best_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective.best_result" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the best results.</p>
-<p class="rubric">Example</p>
-<p># metric + multi-objectives case:
-tune_data = [</p>
-<blockquote>
-<div><p>[acc1, [obj1, obj2, …]],
-[acc2, [obj1, obj2, …]],
-…</p>
-</div></blockquote>
-<p>]
-# multi-metrics + multi-objectives case:
-tune_data = [</p>
-<blockquote>
-<div><p>[[acc1, acc2], [[acc1, acc2], obj1, obj2]],
-[[acc1, acc2], [[acc1, acc2], obj1, obj2]]</p>
-</div></blockquote>
-<p>]</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># metric + multi-objectives case:</span>
+<span class="n">tune_data</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">[</span><span class="n">acc1</span><span class="p">,</span> <span class="p">[</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+    <span class="p">[</span><span class="n">acc2</span><span class="p">,</span> <span class="p">[</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+<span class="c1"># multi-metrics + multi-objectives case:</span>
+<span class="n">tune_data</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">[[</span><span class="n">acc1</span><span class="p">,</span> <span class="n">acc2</span><span class="p">],</span> <span class="p">[[</span><span class="n">acc1</span><span class="p">,</span> <span class="n">acc2</span><span class="p">],</span> <span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">]],</span>
+    <span class="p">[[</span><span class="n">acc1</span><span class="p">,</span> <span class="n">acc2</span><span class="p">],</span> <span class="p">[[</span><span class="n">acc1</span><span class="p">,</span> <span class="n">acc2</span><span class="p">],</span> <span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">]]</span>
+<span class="p">]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </dd></dl>

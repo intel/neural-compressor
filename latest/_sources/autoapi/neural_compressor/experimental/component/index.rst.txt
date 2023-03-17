@@ -34,27 +34,27 @@ Classes
    This design is mainly for one-shot optimization for pruning/distillation/quantization-aware training.
    In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
 
-   .. py:property:: train_func
+   ..    .. .. py:property:: train_func
 
       Not support get train_func.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Not support get eval_func.
 
-   .. py:property:: train_dataloader
+   ..    .. .. py:property:: train_dataloader
 
       Getter to train dataloader.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Getter to eval dataloader.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Getter of model in neural_compressor.model.
 
-   .. py:method:: prepare()
+   ..    .. py:method:: prepare()
 
       Register Quantization Aware Training hooks.
 

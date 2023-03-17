@@ -28,7 +28,7 @@ Classes
 
    INC Bench profilings' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, model_id: int, dataset_id: int, num_threads: int) -> int
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, model_id: int, dataset_id: int, num_threads: int) -> int
       :staticmethod:
 
       Add profiling to database.

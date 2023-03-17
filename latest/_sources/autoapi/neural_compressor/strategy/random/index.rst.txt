@@ -28,7 +28,7 @@ Classes
 
    The random tuning strategy.
 
-   .. py:method:: next_tune_cfg()
+   ..    .. py:method:: next_tune_cfg()
 
       Generate and yield the next tuning config by random searching in tuning space.
 

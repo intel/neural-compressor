@@ -95,23 +95,23 @@ Functions
    :param conf: The config.BenchmarkConfig class containing accuracy goal, tuning objective etc.
    :type conf: obj
 
-   .. py:property:: results
+   ..    .. .. py:property:: results
 
       Get the results of benchmarking.
 
-   .. py:property:: b_dataloader
+   ..    .. .. py:property:: b_dataloader
 
       Get the dataloader for the benchmarking.
 
-   .. py:property:: b_func
+   ..    .. .. py:property:: b_func
 
       Not support getting b_func.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Get the model.
 
-   .. py:method:: summary_benchmark()
+   ..    .. py:method:: summary_benchmark()
 
       Get the summary of the benchmark.
 
@@ -152,12 +152,12 @@ Functions
    :param b_func: Customized benchmark function. If user passes the dataloader,
                   then b_func is not needed.
 
-   .. rubric:: Example
+   Example::
 
-   # Run benchmark according to config
-   from neural_compressor.benchmark import fit
+       # Run benchmark according to config
+       from neural_compressor.benchmark import fit
 
-   conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-   fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+       conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+       fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
 
 

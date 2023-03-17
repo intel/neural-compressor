@@ -28,7 +28,7 @@ Classes
 
    INC Bench models' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, project_id: int, name: str, path: str, input_nodes: List[str], output_nodes: List[str], size: float, framework_id: int, precision_id: int, domain_id: int, domain_flavour_id: int, supports_profiling: bool, supports_graph: bool, supports_pruning: bool) -> int
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, project_id: int, name: str, path: str, input_nodes: List[str], output_nodes: List[str], size: float, framework_id: int, precision_id: int, domain_id: int, domain_flavour_id: int, supports_profiling: bool, supports_graph: bool, supports_pruning: bool) -> int
       :staticmethod:
 
       Add model to database.

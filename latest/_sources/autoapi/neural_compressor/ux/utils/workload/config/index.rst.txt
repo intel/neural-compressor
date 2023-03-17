@@ -28,7 +28,7 @@ Classes
 
    Configuration class.
 
-   .. py:method:: initialize(data: Dict[str, Any] = {}) -> None
+   ..    .. py:method:: initialize(data: Dict[str, Any] = {}) -> None
 
       Initialize config from dict.
 

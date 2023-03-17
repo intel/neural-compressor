@@ -31,7 +31,7 @@ Classes
    There are three stages executed by auto strategy sequentially,
    and the tuning process ends once the condition meets the exit policy.
 
-   .. py:method:: sequential_traverse()
+   ..    .. py:method:: sequential_traverse()
 
       Try different strategies sequentially.
 

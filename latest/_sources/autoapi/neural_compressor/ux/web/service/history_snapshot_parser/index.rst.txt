@@ -26,7 +26,7 @@ Classes
 
    History Snapshot Parser.
 
-   .. py:method:: parse_history_snapshot() -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
+   ..    .. py:method:: parse_history_snapshot() -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
 
       Parse provided history snapshot.
 

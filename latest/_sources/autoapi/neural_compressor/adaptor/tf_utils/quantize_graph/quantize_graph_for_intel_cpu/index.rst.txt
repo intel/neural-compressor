@@ -28,7 +28,7 @@ Classes
 
    Quantize the graph.
 
-   .. py:method:: do_transform()
+   ..    .. py:method:: do_transform()
 
       Apply all the transformers to fuse into int8 op.
 

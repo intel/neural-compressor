@@ -28,7 +28,7 @@ Classes
 
    Tensorflow profiler class.
 
-   .. py:method:: initialize_graph(tf_module: Any) -> Any
+   ..    .. py:method:: initialize_graph(tf_module: Any) -> Any
 
       Initialize tensorflow model graph.
 

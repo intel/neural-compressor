@@ -26,7 +26,7 @@ Classes
 
    Optimization factory.
 
-   .. py:method:: get_diagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis
+   ..    .. py:method:: get_diagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis
       :staticmethod:
 
       Get diagnosis for specified framework.

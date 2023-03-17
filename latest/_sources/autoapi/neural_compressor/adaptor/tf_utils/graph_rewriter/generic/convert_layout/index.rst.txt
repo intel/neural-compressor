@@ -35,7 +35,7 @@ Classes
 
    Return: converted graph_def
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute converting layout.
 

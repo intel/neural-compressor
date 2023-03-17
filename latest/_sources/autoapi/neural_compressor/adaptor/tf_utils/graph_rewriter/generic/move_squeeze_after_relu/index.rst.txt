@@ -28,7 +28,7 @@ Classes
 
    Move Squeeze op after Relu op for match fusion pattern.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Move Squeeze/Reshape after Relu.
 

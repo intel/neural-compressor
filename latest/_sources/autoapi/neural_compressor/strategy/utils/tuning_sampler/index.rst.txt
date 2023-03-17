@@ -33,7 +33,7 @@ Classes
 
    Class decorator used to register all TuningSampler subclasses.
 
-   .. py:method:: register(name)
+   ..    .. py:method:: register(name)
       :classmethod:
 
       Register new tuning sampler.
@@ -46,35 +46,35 @@ Classes
 
    Not displayed in API Docs.
 
-
+   .. 
 .. py:class:: TuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
 
    Not displayed in API Docs.
 
    Basic class of tuning sampler.
 
-
+   .. 
 .. py:class:: ModelWiseTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict[tuple, neural_compressor.strategy.utils.tuning_structs.OpTuningConfig])
 
    Bases: :py:obj:`TuningSampler`
 
    Not displayed in API Docs.
 
-
+   .. 
 .. py:class:: OpTypeWiseTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict[tuple, neural_compressor.strategy.utils.tuning_structs.OpTuningConfig])
 
    Bases: :py:obj:`TuningSampler`
 
    Not displayed in API Docs.
 
-
+   .. 
 .. py:class:: OpWiseTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict)
 
    Bases: :py:obj:`TuningSampler`
 
    Not displayed in API Docs.
 
-   .. py:method:: get_opwise_candidate()
+   ..    .. py:method:: get_opwise_candidate()
 
       Collect all op-wise setting.
 
@@ -89,11 +89,11 @@ Classes
 
    Not displayed in API Docs.
 
-
+   .. 
 .. py:class:: SmoothQuantSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
 
    Bases: :py:obj:`TuningSampler`
 
    Sampler for the hyperparameter tuning of smooth quantization.
 
-
+   .. 

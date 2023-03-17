@@ -26,7 +26,7 @@ Classes
 
    Model graph reader.
 
-   .. py:method:: read(model_path: str, expanded_groups: List[str]) -> neural_compressor.ux.components.graph.graph.Graph
+   ..    .. py:method:: read(model_path: str, expanded_groups: List[str]) -> neural_compressor.ux.components.graph.graph.Graph
 
       Return Graph for given model path.
 

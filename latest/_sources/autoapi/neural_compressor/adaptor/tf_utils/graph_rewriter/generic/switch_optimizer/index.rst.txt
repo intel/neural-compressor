@@ -28,7 +28,7 @@ Classes
 
    Remove switch op if the input condition is true.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Replace all enter ops whose output is matmul with const.
 

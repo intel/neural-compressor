@@ -28,7 +28,7 @@ Classes
 
    Data shape definition.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
 
       Serialize Shape class to dict.
 

@@ -33,7 +33,7 @@ Classes
    :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
    :type conf_fname_or_obj: string or obj
 
-   .. py:method:: search()
+   ..    .. py:method:: search()
 
       Execute the search process.
 

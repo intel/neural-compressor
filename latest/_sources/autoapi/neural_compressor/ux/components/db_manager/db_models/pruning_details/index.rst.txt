@@ -28,7 +28,7 @@ Classes
 
    INC Bench pruning details' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, pruning_details: neural_compressor.ux.utils.workload.pruning.Pruning) -> int
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, pruning_details: neural_compressor.ux.utils.workload.pruning.Pruning) -> int
       :staticmethod:
 
       Add pruning details to database.

@@ -32,7 +32,7 @@ Classes
    This Dataset is to construct a dataset from a input shape and label shape.
    The value range is calculated from: low * stand_normal(0, 1) + high.
 
-
+   .. 
 .. py:class:: SparseDummyDataset(dense_shape, label_shape=None, sparse_ratio=0.5, low=-128.0, high=127.0, dtype='float32', transform=None, filter=None)
 
    Bases: :py:obj:`neural_compressor.data.datasets.dataset.IterableDataset`
@@ -42,4 +42,4 @@ Classes
    This Dataset is to construct a dataset from a input shape and label shape.
    The value range is calculated from: low * stand_normal(0, 1) + high.
 
-
+   .. 

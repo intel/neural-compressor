@@ -64,7 +64,7 @@ Functions
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-
+   .. 
 .. py:class:: Datasets(framework)
 
    Bases: :py:obj:`object`
@@ -76,7 +76,7 @@ Functions
                      "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
    :type framework: str
 
-
+   .. 
 .. py:class:: Dataset
 
    Bases: :py:obj:`object`
@@ -86,7 +86,7 @@ Functions
    Subclass datasets should overwrite two methods:
    `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
 
-
+   .. 
 .. py:class:: IterableDataset
 
    Bases: :py:obj:`object`
@@ -96,7 +96,7 @@ Functions
    Subclass iterable dataset should also implement a method:
    `__iter__` for interating over the samples of the dataset.
 
-
+   .. 
 .. py:function:: dataset_registry(dataset_type, framework, dataset_format='')
 
    Register dataset subclasses.
@@ -132,4 +132,4 @@ Functions
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-
+   .. 

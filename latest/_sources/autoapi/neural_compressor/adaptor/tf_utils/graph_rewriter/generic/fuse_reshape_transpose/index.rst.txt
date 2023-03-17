@@ -28,7 +28,7 @@ Classes
 
    Fuse Transpose + Reshape + MatMul/Conv ==> MatMul/Conv.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute Transpose + Reshape + MatMul/Conv fusion.
 

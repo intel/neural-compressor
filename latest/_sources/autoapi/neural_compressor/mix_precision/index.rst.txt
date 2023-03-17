@@ -37,41 +37,41 @@ Functions
    MixedPrecision class automatically generates low precision model across various DL
    frameworks including tensorflow, pytorch and onnxruntime.
 
-   .. rubric:: Example
+   Example::
 
-   from neural_compressor.config import MixedPrecisionConfig
-   def eval_func(model):
-       ...
+       from neural_compressor.config import MixedPrecisionConfig
+       def eval_func(model):
+           ...
        return accuracy
 
-   conf = MixedPrecisionConfig()
-   output_model = mix_precision.fit(
-       model,
-       conf,
-       eval_func=eval_func,
-   )
+       conf = MixedPrecisionConfig()
+       output_model = mix_precision.fit(
+           model,
+           conf,
+           eval_func=eval_func,
+       )
 
-   .. py:property:: precisions
+   ..    .. .. py:property:: precisions
 
       Get private member variable `precisions` of `MixedPrecision` class.
 
-   .. py:property:: eval_dataloader
+   ..    .. .. py:property:: eval_dataloader
 
       Get eval_dataloader.
 
-   .. py:property:: model
+   ..    .. .. py:property:: model
 
       Get model.
 
-   .. py:property:: metric
+   ..    .. .. py:property:: metric
 
       Get metric.
 
-   .. py:property:: eval_func
+   ..    .. .. py:property:: eval_func
 
       Get evaluation function.
 
-   .. py:method:: pre_process()
+   ..    .. py:method:: pre_process()
 
       Create strategy object for tuning.
 
@@ -129,12 +129,12 @@ Functions
 
    :raises AssertionError.:
 
-   .. rubric:: Example
+   Example::
 
-   from neural_compressor import mix_precision
-   from neural_compressor.config import MixedPrecisionConfig
+       from neural_compressor import mix_precision
+       from neural_compressor.config import MixedPrecisionConfig
 
-   conf = MixedPrecisionConfig()
-   converted_model = mix_precision.fit(model, config=conf)
+       conf = MixedPrecisionConfig()
+       converted_model = mix_precision.fit(model, config=conf)
 
 

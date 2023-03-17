@@ -42,7 +42,7 @@ Functions
 
    Logger class.
 
-   .. py:method:: get_logger()
+   ..    .. py:method:: get_logger()
 
       Get the logger.
 

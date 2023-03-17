@@ -34,7 +34,7 @@ Classes
    :param search_space: A dictionary for defining the search space.
    :type search_space: dict
 
-   .. py:method:: suggest()
+   ..    .. py:method:: suggest()
       :abstractmethod:
 
       Suggest the model architecture.
@@ -66,7 +66,7 @@ Classes
    :param search_space: A dictionary for defining the search space.
    :type search_space: dict
 
-   .. py:method:: suggest()
+   ..    .. py:method:: suggest()
 
       Suggest the model architecture.
 
@@ -85,7 +85,7 @@ Classes
    :param search_space: A dictionary for defining the search space.
    :type search_space: dict
 
-   .. py:method:: suggest()
+   ..    .. py:method:: suggest()
 
       Suggest the model architecture.
 
@@ -104,7 +104,7 @@ Classes
    :param search_space: A dictionary for defining the search space.
    :type search_space: dict
 
-   .. py:method:: suggest()
+   ..    .. py:method:: suggest()
 
       Suggest the model architecture.
 

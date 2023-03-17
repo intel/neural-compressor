@@ -96,7 +96,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.scheduler.</span></span><span class="sig-name descname"><span class="pre">Scheduler</span></span><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.scheduler.</span></span><span class="sig-name descname"><span class="pre">Scheduler</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/scheduler.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Scheduler for neural_compressor component pipeline execution.</p>
 <p>Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.
@@ -135,64 +135,9 @@ opt_model = scheduler()
 opt_model.save()</p>
 </li>
 </ol>
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.model" title="Permalink to this definition"></a></dt>
-<dd><p>Getter of model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The model used in the Scheduler process.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler.train_func">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_func</span></span><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.train_func" title="Permalink to this definition"></a></dt>
-<dd><p>Do not support get train_func.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler.eval_func">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.eval_func" title="Permalink to this definition"></a></dt>
-<dd><p>Do not support get eval_func.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler.append">
-<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.append" title="Permalink to this definition"></a></dt>
-<dd><p>Add neural_compressor component into pipeline for sequential execution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to user configuration yaml file or
-conf class.</p></li>
-<li><p><strong>calib_dataloader</strong> (<em>generator</em>) – Optional. Data loader for calibration of Post-
-Training Static Quantization,
-or None for Post-Training Dynamic Quantization,
-or Data loader for training phase of Quantization-
-aware Training,
-or Data loader for training phase of Pruning,
-if its corresponding field is not configured in yaml.</p></li>
-<li><p><strong>eval_dataloader</strong> (<em>generator</em>) – Optional. Data loader for evaluation phase of all
-neural_compressor components, if its corresponding field is not
-configured in yaml and eval_func is not specified.</p></li>
-<li><p><strong>postprocess</strong> (<a class="reference internal" href="../../data/index.html#neural_compressor.data.Postprocess" title="neural_compressor.data.Postprocess"><em>Postprocess</em></a>) – Optional. Object initialized from common.Postprocess.</p></li>
-<li><p><strong>metric</strong> (<a class="reference internal" href="../common/index.html#neural_compressor.experimental.common.Metric" title="neural_compressor.experimental.common.Metric"><em>Metric</em></a>) – Optional. Object initialized from common.Metric.</p></li>
-<li><p><strong>q_func</strong> (<em>func</em>) – Optional. Training function for Quantization-Aware
-Training and Pruning cases if user doesn’t provide
-training info in user configuration yaml file.</p></li>
-<li><p><strong>eval_func</strong> (<em>func</em>) – Optional. Evaluation function for Quantization-Aware
-Training and Pruning, being None for other cases.</p></li>
-<li><p><strong>kwargs</strong> (<em>named arguments</em>) – Reserved for interface extension.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler.combine">
-<span class="sig-name descname"><span class="pre">combine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.combine" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">combine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/scheduler.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.combine" title="Permalink to this definition"></a></dt>
 <dd><p>Combine neural_compressor components into a new component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

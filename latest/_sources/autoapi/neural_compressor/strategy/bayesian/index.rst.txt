@@ -38,7 +38,7 @@ Functions
 
    The Bayesian tuning strategy.
 
-   .. py:method:: next_tune_cfg()
+   ..    .. py:method:: next_tune_cfg()
 
       Generate the next tuning config according to bayesian search algorithm.
 
@@ -76,31 +76,31 @@ Functions
 
    Allows for constant-time appends while ensuring no duplicates are added.
 
-   .. py:property:: empty
+   ..    .. .. py:property:: empty
 
       Check if the space is empty.
 
-   .. py:property:: params
+   ..    .. .. py:property:: params
 
       Get all params stored in this space.
 
-   .. py:property:: target
+   ..    .. .. py:property:: target
 
       Get all target values in this space.
 
-   .. py:property:: dim
+   ..    .. .. py:property:: dim
 
       Get the dimension of this space.
 
-   .. py:property:: keys
+   ..    .. .. py:property:: keys
 
       Get all keys of this space.
 
-   .. py:property:: bounds
+   ..    .. .. py:property:: bounds
 
       Get the bounds of this space.
 
-   .. py:method:: params_to_array(params)
+   ..    .. py:method:: params_to_array(params)
 
       Generate an array from params.
 
@@ -174,19 +174,19 @@ Functions
    This class takes the parameters bounds in order to find which values for
    the parameters yield the maximum value using bayesian optimization.
 
-   .. py:property:: space
+   ..    .. .. py:property:: space
 
       Get the target space.
 
-   .. py:property:: max
+   ..    .. .. py:property:: max
 
       Get the maximum value of target space.
 
-   .. py:property:: res
+   ..    .. .. py:property:: res
 
       Get the minimum value of target space.
 
-   .. py:method:: suggest()
+   ..    .. py:method:: suggest()
 
       Suggest the most promising points.
 

@@ -55,21 +55,21 @@ Functions
 
    Record criterions in TensorflowCriterions class.
 
-
+   .. 
 .. py:class:: PyTorchCriterions
 
    Bases: :py:obj:`object`
 
    Record criterions in PyTorchCriterions class.
 
-
+   .. 
 .. py:class:: Criterions(framework)
 
    Bases: :py:obj:`object`
 
    Integrate criterions of different framework.
 
-   .. py:method:: register(name, criterion_cls)
+   ..    .. py:method:: register(name, criterion_cls)
 
       Register criterion name and result in existing criterion class.
 
@@ -99,22 +99,22 @@ Functions
 
    Knowledge Distillation Framework.
 
-   .. py:property:: student_model
+   ..    .. .. py:property:: student_model
 
       Return student model.
 
-   .. py:property:: teacher_model
+   ..    .. .. py:property:: teacher_model
 
       Return teacher model.
 
-
+   .. 
 .. py:class:: KnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
 
    Bases: :py:obj:`KnowledgeDistillationFramework`
 
    Initialize the KnowledgeDistillationLoss class.
 
-   .. py:method:: teacher_model_forward(input, teacher_model=None)
+   ..    .. py:method:: teacher_model_forward(input, teacher_model=None)
       :abstractmethod:
 
       Define parameters for teacher_model_forward function.
@@ -188,7 +188,7 @@ Functions
 
    The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
 
-   .. py:method:: SoftCrossEntropy(logits, targets)
+   ..    .. py:method:: SoftCrossEntropy(logits, targets)
 
       Return SoftCrossEntropy.
 
@@ -262,14 +262,14 @@ Functions
 
    PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss.
 
-
+   .. 
 .. py:class:: TensorflowKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
 
    Bases: :py:obj:`KnowledgeDistillationLoss`
 
    The TensorflowKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
 
-   .. py:method:: SoftCrossEntropy(targets, logits)
+   ..    .. py:method:: SoftCrossEntropy(targets, logits)
 
       Return SoftCrossEntropy.
 
@@ -330,14 +330,14 @@ Functions
 
    TensorflowKnowledgeDistillationLossWrapper wraps TensorflowKnowledgeDistillationLoss.
 
-
+   .. 
 .. py:class:: TensorflowKnowledgeDistillationLossExternal(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
 
    Bases: :py:obj:`KnowledgeDistillationLoss`
 
    TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss.
 
-   .. py:method:: teacher_model_forward(input, teacher_model=None)
+   ..    .. py:method:: teacher_model_forward(input, teacher_model=None)
 
       Teacher model forward.
 
@@ -385,7 +385,7 @@ Functions
 
    The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
 
-   .. py:method:: init_loss_funcs()
+   ..    .. py:method:: init_loss_funcs()
       :abstractmethod:
 
       Init loss funcs.
@@ -444,7 +444,7 @@ Functions
 
    PyTorch Intermediate Layers Knowledge Distillation Loss.
 
-   .. py:method:: register_hooks_for_models()
+   ..    .. py:method:: register_hooks_for_models()
 
       Register hooks for models to record module output.
 
@@ -515,14 +515,14 @@ Functions
 
    PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper.
 
-
+   .. 
 .. py:class:: SelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
 
    Bases: :py:obj:`KnowledgeDistillationFramework`
 
    SelfKnowledge Distillation Loss.
 
-   .. py:method:: init_loss_funcs()
+   ..    .. py:method:: init_loss_funcs()
       :abstractmethod:
 
       Init loss funcs.
@@ -568,7 +568,7 @@ Functions
 
    PyTorch SelfKnowledge Distillation Loss.
 
-   .. py:method:: SoftCrossEntropy(logits, targets)
+   ..    .. py:method:: SoftCrossEntropy(logits, targets)
 
       Return SoftCrossEntropy.
 
@@ -645,4 +645,4 @@ Functions
 
    PyTorch SelfKnowledge Distillation Loss Wrapper.
 
-
+   .. 

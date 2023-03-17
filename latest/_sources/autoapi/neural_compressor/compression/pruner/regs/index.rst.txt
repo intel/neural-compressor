@@ -69,7 +69,7 @@ Functions
    :param config: A config dict object that includes information of the regularizer.
    :param pattern: A config dict object that includes information of the pattern.
 
-   .. py:method:: on_before_optimizer_step()
+   ..    .. py:method:: on_before_optimizer_step()
 
       Implement before optimizer.step().
 
@@ -101,7 +101,7 @@ Functions
 
       A float representing the coeffient related to group lasso.
 
-   .. py:method:: on_before_optimizer_step()
+   ..    .. py:method:: on_before_optimizer_step()
 
       Calculate the group-lasso score map.
 

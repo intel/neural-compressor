@@ -41,11 +41,11 @@ Functions
 
    DefaultDataLoader for multiple framework backends.
 
-   .. py:property:: dataloader
+   ..    .. .. py:property:: dataloader
 
       Return dataloader.
 
-   .. py:method:: batch(batch_size, last_batch='rollover')
+   ..    .. py:method:: batch(batch_size, last_batch='rollover')
 
       Set batch_size and last_batch.
 

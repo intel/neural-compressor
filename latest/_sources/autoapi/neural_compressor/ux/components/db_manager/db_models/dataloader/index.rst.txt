@@ -36,7 +36,7 @@ Functions
 
    INC Bench Dataloader table class.
 
-   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
+   ..    .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
       :staticmethod:
 
       List available dataloaders.

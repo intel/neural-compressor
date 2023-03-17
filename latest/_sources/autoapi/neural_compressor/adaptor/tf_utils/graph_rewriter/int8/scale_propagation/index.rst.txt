@@ -28,7 +28,7 @@ Classes
 
    Scale propagation converter.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply the scale propagation algrothim.
 

@@ -37,12 +37,12 @@ Functions
 
    Domain defined parameters.
 
-
+   .. 
 .. py:class:: Response
 
    Domain defined response.
 
-
+   .. 
 .. py:function:: create_simple_response(data: Union[Dict[str, Any], List[Dict[str, Any]]]) -> Response
 
    Create new Response object with only data set.
@@ -52,27 +52,27 @@ Functions
 
    Message used to send data to GUI.
 
-   .. py:property:: subject
+   ..    .. .. py:property:: subject
       :type: str
 
       Get the subject.
 
-   .. py:property:: status
+   ..    .. .. py:property:: status
       :type: str
 
       Get the status.
 
-   .. py:property:: data
+   ..    .. .. py:property:: data
       :type: Any
 
       Get the data.
 
-
+   .. 
 .. py:class:: MessageQueue
 
    Queue for passing messages to GUI.
 
-   .. py:method:: post_failure(subject: str, data: Any) -> None
+   ..    .. py:method:: post_failure(subject: str, data: Any) -> None
 
       Post failure message.
 

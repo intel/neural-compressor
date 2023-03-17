@@ -26,40 +26,40 @@ Classes
 
    Executor class provide execute shell command.
 
-   .. py:property:: process_duration
+   ..    .. .. py:property:: process_duration
       :type: Optional[float]
 
       Return duration of the process in [s].
 
-   .. py:property:: workdir
+   ..    .. .. py:property:: workdir
       :type: str
 
       Property concat workdir path.
 
       :return: workdir path
 
-   .. py:property:: request_id
+   ..    .. .. py:property:: request_id
       :type: Optional[str]
 
       Property contain info about request.
 
       :return: request id
 
-   .. py:property:: log_name
+   ..    .. .. py:property:: log_name
       :type: Optional[str]
 
       Property contain info about output file name.
 
       :return: requested log filename
 
-   .. py:property:: additional_log_names
+   ..    .. .. py:property:: additional_log_names
       :type: List[str]
 
       Property contain info about additional output file names.
 
       :return: list of additional log filenames
 
-   .. py:method:: call_one(args: List[Any], logger: Optional[Any] = None, executable: Optional[Any] = None, shell: bool = False, cwd: Optional[str] = None, env: Optional[dict] = None, universal_newlines: bool = False, startupinfo: Optional[Any] = None, creationflags: int = 0, processes: Optional[Any] = None, ignore_exit_codes: Union[list, Any] = None, pid: Optional[str] = None) -> None
+   ..    .. py:method:: call_one(args: List[Any], logger: Optional[Any] = None, executable: Optional[Any] = None, shell: bool = False, cwd: Optional[str] = None, env: Optional[dict] = None, universal_newlines: bool = False, startupinfo: Optional[Any] = None, creationflags: int = 0, processes: Optional[Any] = None, ignore_exit_codes: Union[list, Any] = None, pid: Optional[str] = None) -> None
 
       Execute single call for process.
 

@@ -28,12 +28,12 @@ Classes
 
    Frozen pb model.
 
-   .. py:property:: supports_profiling
+   ..    .. .. py:property:: supports_profiling
       :type: bool
 
       Check if profiling is supported for the model.
 
-   .. py:method:: supports_path(path: str) -> bool
+   ..    .. py:method:: supports_path(path: str) -> bool
       :staticmethod:
 
       Check if given path is of supported model.

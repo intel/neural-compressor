@@ -28,7 +28,7 @@ Classes
 
    Fuse Quantized Conv Op with the successor Requantize Op.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse the quantized op with the following requantize op.
 

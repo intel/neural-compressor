@@ -27,7 +27,7 @@ Classes
 
    This is the base class for quantize graph.
 
-   .. py:method:: register_transformer(node_name, entry)
+   ..    .. py:method:: register_transformer(node_name, entry)
 
       Register transformers API.
 
@@ -51,7 +51,7 @@ Classes
 
    :param object {[type]} -- [description]:
 
-   .. py:method:: apply_the_transform()
+   ..    .. py:method:: apply_the_transform()
 
       This is the virtual interface to be implemented by derived class.
 

@@ -28,7 +28,7 @@ Classes
 
    Support HostConst as default for all devices, not just for GPU.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Convert Const to HostConst as default.
 

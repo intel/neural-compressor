@@ -36,7 +36,7 @@ Functions
 
    INC Bench Framework table class.
 
-   .. py:method:: get_framework_id(db_session: sqlalchemy.orm.session.Session, framework_name: str) -> int
+   ..    .. py:method:: get_framework_id(db_session: sqlalchemy.orm.session.Session, framework_name: str) -> int
       :staticmethod:
 
       Get framework id from name.

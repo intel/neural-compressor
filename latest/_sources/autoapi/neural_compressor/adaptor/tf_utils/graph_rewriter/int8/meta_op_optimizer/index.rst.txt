@@ -30,7 +30,7 @@ Classes
 
    With such changes, the Quantize and Dequantize OP will removed for better performance.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply the fusion of Dequantize + MetaOp + QuantizeV2.
 

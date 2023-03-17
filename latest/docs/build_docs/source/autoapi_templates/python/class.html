@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; Intel® Neural Compressor 2.0 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/build_docs/source/autoapi_templates/python/class.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p>{% if obj.display %}
+.. py:{{ obj.type }}:: {{ obj.short_name }}{% if obj.args %}({{ obj.args }}){% endif %}
+{% for (args, return_annotation) in obj.overloads %}</p>
+<blockquote>
+<div><p>{{ ” ” * (obj.type | length) }}   {{ obj.short_name }}{% if args %}({{ args }}){% endif %}</p>
+</div></blockquote>
+<p>{% endfor %}</p>
+<blockquote>
+<div><p>{% if obj.bases %}
+{% if “show-inheritance” in autoapi_options %}
+Bases: {% for base in obj.bases %}{{ base|link_objs }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}</p>
+<p>{% if “show-inheritance-diagram” in autoapi_options and obj.bases != [“object”] %}
+.. autoapi-inheritance-diagram:: {{ obj.obj[“full_name”] }}</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">parts<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1</p>
+</dd>
+</dl>
+<p>{% if “private-members” in autoapi_options %}
+:private-bases:
+{% endif %}</p>
+</div></blockquote>
+<p>{% endif %}
+{% endif %}
+{% if obj.docstring %}
+{{ obj.docstring|indent(3) }}
+{% endif %}
+{% if “inherited-members” in autoapi_options %}
+{% set visible_classes = obj.classes|selectattr(“display”)|list %}
+{% else %}
+{% set visible_classes = obj.classes|rejectattr(“inherited”)|selectattr(“display”)|list %}
+{% endif %}
+{% for klass in visible_classes %}
+{{ klass.render()|indent(3) }}
+{% endfor %}
+{% if “inherited-members” in autoapi_options %}
+{% set visible_properties = obj.properties|selectattr(“display”)|list %}
+{% else %}
+{% set visible_properties = obj.properties|rejectattr(“inherited”)|selectattr(“display”)|list %}
+{% endif %}
+.. {% for property in visible_properties %}
+.. {{ property.render()|indent(3) }}
+.. {% endfor %}
+{% if “inherited-members” in autoapi_options %}
+{% set visible_attributes = obj.attributes|selectattr(“display”)|list %}
+{% else %}
+{% set visible_attributes = obj.attributes|rejectattr(“inherited”)|selectattr(“display”)|list %}
+{% endif %}
+{% for attribute in visible_attributes %}
+{{ attribute.render()|indent(3) }}
+{% endfor %}
+{% if “inherited-members” in autoapi_options %}
+{% set visible_methods = obj.methods|selectattr(“display”)|list %}
+{% else %}
+{% set visible_methods = obj.methods|rejectattr(“inherited”)|selectattr(“display”)|list %}
+{% endif %}
+{% for method in visible_methods %}
+{{ method.render()|indent(3) }}
+{% endfor %}</p>
+</div></blockquote>
+<p>{% endif %}</p>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

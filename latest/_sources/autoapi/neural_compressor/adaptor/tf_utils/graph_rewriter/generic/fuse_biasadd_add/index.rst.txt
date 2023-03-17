@@ -28,7 +28,7 @@ Classes
 
    Fuse Biasadd + Add into BiasAdd when the second input of Add is const node.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse Biasadd + Add into BiasAdd for pattern fusion.
 

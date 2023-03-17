@@ -28,7 +28,7 @@ Classes
 
    Fuse _QuantizedMatMul with the successor Dequantize Op.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse the _QuantizedMatMul with the following Dequantize op.
 

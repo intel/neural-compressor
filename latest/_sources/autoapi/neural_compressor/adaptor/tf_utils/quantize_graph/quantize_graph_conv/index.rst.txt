@@ -28,7 +28,7 @@ Classes
 
    Quantize Conv2D/DepthwiseConv2dNative to int8 op.
 
-   .. py:method:: apply_conv_single_fusion(match_node_name)
+   ..    .. py:method:: apply_conv_single_fusion(match_node_name)
 
       Apply Conv2D single fusion.
 

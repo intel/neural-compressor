@@ -31,7 +31,7 @@ Classes
    :param object: the input model to be converted.
    :type object: model
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
       :abstractmethod:
 
       Base Interface that need to be implemented by each sub class.

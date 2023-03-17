@@ -28,7 +28,7 @@ Classes
 
    Quantized RNN converter.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Apply the RNN convertion.
 

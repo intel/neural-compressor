@@ -31,14 +31,14 @@ Classes
    generate a new dataloader by setting batch_size and last_batch.
 
 
-   .. py:property:: batch_size
+   ..    .. .. py:property:: batch_size
 
       Get dataloader's batch_size.
 
       :returns: batch_size
       :rtype: int
 
-   .. py:method:: batch(batch_size, last_batch=None)
+   ..    .. py:method:: batch(batch_size, last_batch=None)
 
       Set batch size for dataloader.
 

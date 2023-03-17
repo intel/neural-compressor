@@ -38,7 +38,7 @@ Classes
      |                  |
    BiasAdd           BiasAdd
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Fuse Conv + Sub + RealDiv + Mul + BiasAdd to Conv + BiasAdd.
 

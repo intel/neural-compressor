@@ -28,7 +28,7 @@ Classes
 
    There should be only one QuantizeConfig instance for global setting.
 
-   .. py:method:: add_quantize_recipe(quantize_recipe)
+   ..    .. py:method:: add_quantize_recipe(quantize_recipe)
 
       Add custom recipe for quantization to the QuantizeConfig instance.
 

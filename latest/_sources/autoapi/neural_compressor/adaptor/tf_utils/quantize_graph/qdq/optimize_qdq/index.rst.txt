@@ -28,7 +28,7 @@ Classes
 
    Apply the fusion DQ + OP + Q pattern.
 
-   .. py:method:: get_quantized_nodes()
+   ..    .. py:method:: get_quantized_nodes()
 
       Get the quantized Ops.
 

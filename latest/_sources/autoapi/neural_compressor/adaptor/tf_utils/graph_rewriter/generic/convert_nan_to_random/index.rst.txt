@@ -28,7 +28,7 @@ Classes
 
    Convert Const node which value consists of NAN to random data.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute convert NAN to random.
 

@@ -28,7 +28,7 @@ Classes
 
    INC Bench benchmarks' table representation.
 
-   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, model_id: int, dataset_id: int, mode: str, batch_size: int, iterations: int, warmup_iterations: int, number_of_instance: int, cores_per_instance: int, execution_command: str) -> int
+   ..    .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, model_id: int, dataset_id: int, mode: str, batch_size: int, iterations: int, warmup_iterations: int, number_of_instance: int, cores_per_instance: int, execution_command: str) -> int
       :staticmethod:
 
       Add benchark to database.

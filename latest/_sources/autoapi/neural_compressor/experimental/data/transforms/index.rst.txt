@@ -51,7 +51,7 @@ Functions
    Provide register method to register new Transforms
    and provide __getitem__ method to get Transforms according to Transforms type.
 
-   .. py:method:: register(name, transform_cls)
+   ..    .. py:method:: register(name, transform_cls)
 
       Register new Transform according to Transforms type.
 
@@ -68,7 +68,7 @@ Functions
 
    The base class for transform.
 
-
+   .. 
 .. py:function:: transform_registry(transform_type, process, framework)
 
    Class decorator used to register all transform subclasses.

@@ -28,7 +28,7 @@ Classes
 
    INC Bench Project class.
 
-   .. py:method:: create_project(db_session: sqlalchemy.orm.session.Session, name: str) -> int
+   ..    .. py:method:: create_project(db_session: sqlalchemy.orm.session.Session, name: str) -> int
       :staticmethod:
 
       Create project object.

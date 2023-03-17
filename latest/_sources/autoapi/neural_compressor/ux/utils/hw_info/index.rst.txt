@@ -42,7 +42,7 @@ Functions
 
    Class responsible for gathering information about platform hardware.
 
-   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
 
       Serialize class to dict.
 

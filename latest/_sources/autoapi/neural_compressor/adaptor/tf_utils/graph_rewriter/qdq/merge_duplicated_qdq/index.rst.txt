@@ -28,7 +28,7 @@ Classes
 
    Merge duplicated QDQ patterns.
 
-   .. py:method:: do_transformation()
+   ..    .. py:method:: do_transformation()
 
       Execute the merge.
 

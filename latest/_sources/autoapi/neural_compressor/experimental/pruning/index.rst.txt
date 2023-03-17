@@ -47,19 +47,19 @@ Classes
 
       A list of Pruner object.
 
-   .. py:property:: pruning_func
+   ..    .. .. py:property:: pruning_func
 
       Not support get pruning_func.
 
-   .. py:property:: evaluation_distributed
+   ..    .. .. py:property:: evaluation_distributed
 
       Getter to know whether need distributed evaluation dataloader.
 
-   .. py:property:: train_distributed
+   ..    .. .. py:property:: train_distributed
 
       Getter to know whether need distributed training dataloader.
 
-   .. py:method:: update_items_for_all_pruners(**kwargs)
+   ..    .. py:method:: update_items_for_all_pruners(**kwargs)
 
       Functions which add User-defined arguments to the original configurations.
 
@@ -115,7 +115,7 @@ Classes
    :param nc_model: A neural compression model object.
    :param hooks: A dict. Contains pure-defined hooks.
 
-   .. py:method:: on_train_begin(logs=None, dataloader=None)
+   ..    .. py:method:: on_train_begin(logs=None, dataloader=None)
 
       Call the same-name function from hooks.
 

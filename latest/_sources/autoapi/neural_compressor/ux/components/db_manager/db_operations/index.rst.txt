@@ -52,7 +52,7 @@ Classes
 
    Interface for queries connected with benchmark.
 
-   .. py:method:: delete_benchmark(data: dict) -> dict
+   ..    .. py:method:: delete_benchmark(data: dict) -> dict
       :staticmethod:
 
       Delete benchmark from database and clean workspace.
@@ -147,7 +147,7 @@ Classes
 
    Interface for queries connected with datasets.
 
-   .. py:method:: delete_dataset(data: dict) -> dict
+   ..    .. py:method:: delete_dataset(data: dict) -> dict
       :staticmethod:
 
       Delete dataset from database and clean workspace.
@@ -230,7 +230,7 @@ Classes
 
    Interface for queries connected with diagnosis of models.
 
-   .. py:method:: get_op_list(data: dict) -> List[dict]
+   ..    .. py:method:: get_op_list(data: dict) -> List[dict]
       :staticmethod:
 
       Get OP list for model.
@@ -295,7 +295,7 @@ Classes
 
    Interface for queries connected with dictonaries.
 
-   .. py:method:: list_domains(data: dict) -> dict
+   ..    .. py:method:: list_domains(data: dict) -> dict
       :staticmethod:
 
       List model domains.
@@ -372,7 +372,7 @@ Classes
 
    Interface for queries connected with predefined models.
 
-   .. py:method:: create_project(data: dict) -> None
+   ..    .. py:method:: create_project(data: dict) -> None
       :staticmethod:
 
       Create new project for predefined model.
@@ -389,7 +389,7 @@ Classes
 
    Interface for queries connected with models.
 
-   .. py:method:: add_model(data: dict) -> int
+   ..    .. py:method:: add_model(data: dict) -> int
       :staticmethod:
 
       Add model details.
@@ -424,7 +424,7 @@ Classes
 
    Interface for queries connected with optimizations.
 
-   .. py:method:: delete_optimization(data: dict) -> dict
+   ..    .. py:method:: delete_optimization(data: dict) -> dict
       :staticmethod:
 
       Delete optimization from database and clean workspace.
@@ -573,7 +573,7 @@ Classes
 
    Interface for queries connected with profiling.
 
-   .. py:method:: get_profiling_details(data: dict) -> dict
+   ..    .. py:method:: get_profiling_details(data: dict) -> dict
       :staticmethod:
 
       Parse input data and get profiling details.
@@ -668,7 +668,7 @@ Classes
 
    Interface for queries connected with project.
 
-   .. py:method:: get_project_details(data: dict) -> dict
+   ..    .. py:method:: get_project_details(data: dict) -> dict
       :staticmethod:
 
       Get project details from database.

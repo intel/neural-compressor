@@ -28,7 +28,7 @@ Classes
 
    Freeze value without calibration.
 
-   .. py:method:: generate_output_graph(max_name_value)
+   ..    .. py:method:: generate_output_graph(max_name_value)
 
       Generate transformed graph for freeze_max/freeze_min transformation.
 

@@ -28,7 +28,7 @@ Classes
 
    Quantize ConcatV2 to int8 op QuantizedConcatV2.
 
-   .. py:method:: get_longest_fuse()
+   ..    .. py:method:: get_longest_fuse()
 
       Only single ConcatV2, no fusion pattern.
 
