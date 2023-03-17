@@ -89,11 +89,11 @@ class MagnitudeCriterion(PruningCriterion):
         super(MagnitudeCriterion, self).__init__(modules, config)
 
     def on_step_begin(self):
-        """Calculate and store the pruning scores based on magtinude criterion."""
+        """Calculate and store the pruning scores based on a magnitude criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
                 p = self.modules[key].weight.data
-                self.scores[key] = p
+                self.scores[key] = torch.abs(p)
 
 
 @register_criterion('gradient')

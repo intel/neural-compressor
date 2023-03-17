@@ -88,26 +88,7 @@ function run_tuning {
         --arch-sparse-feature-size=128 --max-ind-range=40000000 --ipex-interaction \
         --numpy-rand-seed=727  --inference-only --num-batches=1000 \
         --print-freq=10 --print-time --mini-batch-size=128 --test-mini-batch-size=${batch_size} \
-        --save-model ${tuned_checkpoint} \
-        $ARGS |tee $LOG_0
-        wait
-        set +x
-
-        throughput=$(grep 'throughput:' ${LOG}/throughput.log |sed -e 's/.*throughput//;s/[^0-9.]//g' |awk '
-        BEGIN {
-                sum = 0;
-                i = 0;
-              }
-              {
-                sum = sum + $1;
-                i++;
-              }
-        END   {
-        sum = sum / i;
-                printf("%.3f", sum);
-        }')
-        echo ""dlrm";"batch_size";${batch_size};"Throughput": ${throughput}"
-
+        --save-model ${tuned_checkpoint}
     else
         echo "Error: No such mode: ${mode}"
         exit 1

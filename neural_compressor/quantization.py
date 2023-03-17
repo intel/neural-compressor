@@ -40,7 +40,8 @@ class PostTrainingQuant:
     Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
     (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
 
-    Example:
+    Example::
+
         conf = PostTrainingQuantConfig()
         quantizer = PostTrainingQuant(conf)
         quantizer.model = model
@@ -83,13 +84,11 @@ class PostTrainingQuant:
 
         strategy = cfg.tuning.strategy.name.lower()
         
-        if cfg.quant_level == "auto" or cfg.quantization.quant_level == "auto":
+        if cfg.quantization.quant_level == "auto":
             strategy = "auto"
-            logger.info(f"Start auto tuning.")
             
-        if cfg.quantization.quant_level == 0:
+        elif cfg.quantization.quant_level == 0:
             strategy = "conservative"
-            logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
 
         if strategy == "mse_v2":
             if not (cfg.model.framework.startswith("tensorflow") or cfg.model.framework == 'pytorch_fx'):
@@ -98,6 +97,7 @@ class PostTrainingQuant:
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
+        logger.info(f"Start {strategy} tuning.")
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
@@ -108,6 +108,10 @@ class PostTrainingQuant:
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
+
+        if self._eval_func is None and self._eval_dataloader is None:
+            self.conf.usr_cfg.tuning.exit_policy.performance_only = True
+            logger.info("Quantize model without tuning!")
 
         self.strategy = STRATEGIES[strategy](
             self._model,
@@ -450,7 +454,8 @@ def fit(model,
         eval_metric (dict or obj):             Set metric class or a dict of built-in metric configures,
                                               and neural_compressor will initialize this class when evaluation.
 
-    Example:
+    Example::
+
         # Quantization code for PTQ
         from neural_compressor import PostTrainingQuantConfig, set_workspace
         from neural_compressor import quantization

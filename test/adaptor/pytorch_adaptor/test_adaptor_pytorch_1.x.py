@@ -796,7 +796,11 @@ class TestPytorchAdaptor(unittest.TestCase):
             model.model.dequant.qconfig = torch.quantization.default_qconfig
         nc_torch._fallback_quantizable_ops_recursively(
             model.model, '', fallback_ops, op_qcfgs={})
-        torch.quantization.add_observer_(model.model)
+        if PT_VERSION >= Version("2.0.0").release:
+            from torch.quantization.quantize import _add_observer_ as add_observer_
+        else:
+            from torch.quantization.quantize import add_observer_
+        add_observer_(model.model)
         model.model(x)
         torch.quantization.convert(model.model, self.adaptor.q_mapping, inplace=True)
         qy = model.model(x)

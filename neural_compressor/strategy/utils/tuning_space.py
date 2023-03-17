@@ -252,7 +252,8 @@ class TuningSpace:
 
     def _merge_optype_wise_cfg(self, cap: Dict, optype_wise_usr_cfg: Dict, fw_cap: Dict):
         for op_type, op_user_cfg in optype_wise_usr_cfg.items():
-            op_lst = [op_name_type for op_name_type in cap['op'] if op_name_type[1] == op_type]
+            op_type_pattern = re.compile(op_type)
+            op_lst = [op_name_type for op_name_type in cap['op'] if op_type_pattern.fullmatch(op_name_type[1])]
             for op_name_type in op_lst:
                 cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                              op_user_cfg,

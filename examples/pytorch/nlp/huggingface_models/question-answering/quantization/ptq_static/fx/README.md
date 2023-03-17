@@ -23,26 +23,24 @@ python -u ./run_qa.py \
         --max_seq_length 384 \
         --per_device_eval_batch_size ${batch_size} \
         --no_cuda \
-        --output_dir /path/to/checkpoint/dir \
+        --output_dir saved_results \
         --tune \
         --overwrite_output_dir \
         --dataloader_drop_last
 ```
 > NOTE
 >
-> /path/to/checkpoint/dir is the path to finetune output_dir
-
+> `saved_results` is the path to finetuned output_dir
 or
-
 ```bash
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ```
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=/path/to/checkpoint/dir
+sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --config=saved_results
 # fp32
-sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path
+sh run_benchmark.sh --topology=topology_name --mode=performance
 ```
 ## 3. Validated Model List
 <table>
@@ -62,7 +60,7 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 </tbody>
 </table>
 
-# Tutorial of Enabling NLP Models with Intel® Neural Compressor
+# Tutorial of Enabling NLP Models with Intel® Neural Compressor.
 ## 1. Intel® Neural Compressor supports two usages:
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.

@@ -36,8 +36,8 @@ def get_model_tuning_dict_results():
             "Framework": args.framework,
             "Version": args.fwk_ver,
             "Model": args.model,
-            "Strategy": tmp['strategy'],
-            "Tune_time": tmp['tune_time'],
+            "Strategy": tmp.get('strategy', 'basic'),
+            "Tune_time": tmp.get('tune_time'),
         }
         benchmark_accuracy_result_dict = {
             'int8': {
@@ -49,7 +49,7 @@ def get_model_tuning_dict_results():
                 "Mode": "Inference",
                 "Type": "Accuracy",
                 "BS": 1,
-                "Value": tmp['int8_acc'],
+                "Value": tmp.get('int8_acc'),
                 "Url": URL,
             },
             'fp32': {
@@ -61,7 +61,7 @@ def get_model_tuning_dict_results():
                 "Mode": "Inference",
                 "Type": "Accuracy",
                 "BS": 1,
-                "Value": tmp['fp32_acc'],
+                "Value": tmp.get('fp32_acc'),
                 "Url": URL,
             }
         }
@@ -124,7 +124,7 @@ def get_refer_data():
 def collect_log():
     results = []
     tuning_infos = []
-    print("tuning log dir is {}".format(tuning_log))
+    print(f"tuning log dir is {tuning_log}")
     # get model tuning results
     if os.path.exists(tuning_log):
         print('tuning log found')
@@ -138,9 +138,13 @@ def collect_log():
         if ((args.model in OOB_MODEL_LIST) and args.framework == "tensorflow"):
             tmp['fp32_acc'], tmp['int8_acc'] = "unknown", "unknown"
 
-        results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], "<url>"))
-        results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], "<url>"))
-        tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['strategy'], str(tmp['tune_time']), str(tmp['tuning_trials']), "<url>", f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
+        results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(
+            OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], "<url>"))
+        results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(
+            OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], "<url>"))
+        tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp.get('strategy', 'basic'), str(
+            tmp['tune_time']), str(tmp['tuning_trials']), "<url>", f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
+
     # get model benchmark results
     for precision in ['int8', 'fp32']:
         throughput = 0.0

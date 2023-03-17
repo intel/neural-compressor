@@ -26,11 +26,11 @@ Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, th
 
 # Supported Framework Model Matrix
 
-| Export | Post-training Dynamic Quantization | Post-training Static Quantization | Quantization Aware Training |
-| :---: | :---: | :---: | :---: |
-| FP32 PyTorch Model -> FP32 ONNX Model | &#10004; | &#10004; | &#10004; |
-| INT8 PyTorch Model -> INT8 QDQ ONNX Model | &#10004; | &#10004; | &#10004; |
-| INT8 PyTorch Model -> INT8 QLinear ONNX Model | &#10004; | &#10004; | &#10004; |
+| Export | PyTorch | TensorFlow |
+| :---: | :---: |:----------:|
+| FP32 Model -> FP32 ONNX Model | &#10004; |  &#10004;  |
+| INT8 Model -> INT8 QDQ ONNX Model | &#10004; |  &#10004;  |
+| INT8 Model -> INT8 QLinear ONNX Model | &#10004; | :x: |
 
 # Examples
 

@@ -516,8 +516,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])),
                   backend=self.backend, reduce_range=self.reduce_range)
-        self.min_max = augment.dump_minmax(q_config=quantize_config)
-        quantize_params = augment.dump_calibration(quantize_config, self.min_max)
+        self.min_max = augment.dump_minmax()
+        quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
 
     def inspect_tensor(self, model, dataloader, op_list=[],
@@ -689,8 +689,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     is_nlp = True
                     break
 
-        # 4. according to LSTM structure
-        if "LSTM" in [node.op_type for node in model.model.graph.node]:
+        # 4. according to LSTM/Attention optype
+        op_types = [node.op_type for node in model.model.graph.node]
+        if "LSTM" in op_types or 'Attention' in op_types:
             is_nlp = True
 
         logger.warning("The model is automatically detected as {} model. "
@@ -942,7 +943,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision == 'fp16' and self.device == 'cpu':
+                if precision in ['fp16', 'bf16'] and (self.device == 'cpu' or self.backend != 'CUDAExecutionProvider'):
+                    continue
+                elif precision == 'bf16' and 'CUDAExecutionProvider' not in ort.get_available_providers():
                     continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \

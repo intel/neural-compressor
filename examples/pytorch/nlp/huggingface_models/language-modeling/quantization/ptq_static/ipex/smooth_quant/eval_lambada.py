@@ -1,25 +1,28 @@
+import os.path
+
 import transformers
 import torch
 from tqdm import tqdm
 import sys
 import argparse
 
-sys.path.append('./')
+sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
-parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
-parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-1.7b')
-# parser.add_argument('--alpha', type=float, default=0.5)
+# parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
+parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-560m')
+parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--log_frequency', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=16)
+parser.add_argument('--kl', action='store_true', default=False, help="whether to use kl divergence for calibration")
 args = parser.parse_args()
 
 from torch.nn.functional import pad
 
-
 class Evaluator:
-    def __init__(self, dataset, tokenizer, device, batch_size=16):
+    def __init__(self, dataset, tokenizer, device, batch_size=args.batch_size):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.device = device
@@ -33,7 +36,6 @@ class Evaluator:
         index = 1
         for input_ids, label, label_indices in tqdm(self.dataloader):
             outputs = model(input_ids)
-
             last_token_logits = outputs[0][:, label_indices, :]
             pred = last_token_logits.argmax(dim=-1)
             total += label.size(0)
@@ -42,6 +44,7 @@ class Evaluator:
                 print(hit / total)
             index += 1
         acc = hit / total
+        print(acc)
         return acc
 
 
@@ -114,7 +117,6 @@ class INCDataloader:
 from datasets import load_dataset
 
 model_name = args.model_name_or_path
-
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
 eval_dataset = load_dataset('lambada', split='validation')
 
@@ -139,17 +141,16 @@ if args.int8:
     from neural_compressor import PostTrainingQuantConfig
     from neural_compressor import quantization
 
-
-
+    recipes = {}
     if args.sq:
-        # from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-        # sq = TorchSmoothQuant(model, calib_dataloader)
-        # model = sq.transform(alpha=args.alpha)
-        conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
-                                       recipes={"smooth_quant": True})
-    else:
-        conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
-                                       )
+        recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
+    op_type_dict = None
+    if args.kl:
+        op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
+
+    conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
+                                   recipes=recipes,
+                                   op_type_dict=op_type_dict)
 
     q_model = quantization.fit(model,
                                conf,
