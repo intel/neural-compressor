@@ -64,7 +64,8 @@ ops_schema = Schema({
 def check_value(name, src, supported_type, supported_value=[]):
     """Check if the given object is the given supported type and in the given supported value.
 
-    Example:
+    Example::
+
         from neural_compressor.config import check_value
 
         def datatype(self, datatype):
@@ -151,7 +152,8 @@ options = Options()
 class BenchmarkConfig:
     """Config Class for Benchmark.
 
-    Example:
+    Example::
+
         # Run benchmark according to config
         from neural_compressor.benchmark import fit
 
@@ -286,7 +288,8 @@ class BenchmarkConfig:
 class AccuracyCriterion:
     """Class of Accuracy Criterion.
     
-    Example:
+    Example::
+
         from neural_compressor.config import AccuracyCriterion
         
         accuracy_criterion = AccuracyCriterion(
@@ -783,7 +786,8 @@ class _BaseQuantizationConfig:
 class TuningCriterion:
     """Class for Tuning Criterion.
     
-    Example:
+    Example::
+
         from neural_compressor.config import TuningCriterion
         
         tuning_criterion=TuningCriterion(
@@ -864,7 +868,8 @@ tuning_criterion = TuningCriterion()
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
     """Config Class for Post Training Quantization.
     
-    Example:
+    Example::
+
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
         conf = PostTrainingQuantConfig(
@@ -945,7 +950,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     """Config Class for Quantization Aware Training.
 
-    Example:
+    Example::
+
         from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
 
         if approach == "qat":
@@ -986,7 +992,8 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 class WeightPruningConfig:
     """Similiar to torch optimizer's interface.
 
-    Example:
+    Example::
+
         from neural_compressor.config import WeightPruningConfig
 
         config = WeightPruningConfig(
@@ -1037,7 +1044,8 @@ class WeightPruningConfig:
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss.
 
-    Example:
+    Example::
+
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
         from neural_compressor import QuantizationAwareTrainingConfig
         from neural_compressor.training import prepare_compression
@@ -1065,7 +1073,8 @@ class KnowledgeDistillationLossConfig:
 class IntermediateLayersKnowledgeDistillationLossConfig:
     """Config Class for Intermediate Layers Knowledge Distillation Loss.
     
-    Example:
+    Example::
+
         from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
         
         distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
@@ -1092,7 +1101,8 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
 class SelfKnowledgeDistillationLossConfig:
     """Config Class for Self Knowledge Distillation Loss.
     
-    Example:
+    Example::
+
         from neural_compressor.training import prepare_compression
         from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
 
@@ -1134,7 +1144,8 @@ class DistillationConfig:
         criterion (Callable, optional): Distillation loss configure.
         optimizer (dictionary, optional): Optimizer configure.
     
-    Example:
+    Example::
+
         from neural_compressor.training import prepare_compression
         from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
 
@@ -1190,7 +1201,8 @@ class DistillationConfig:
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     """Config Class for MixedPrecision.
 
-    Example:
+    Example::
+
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
 

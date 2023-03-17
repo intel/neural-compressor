@@ -3,12 +3,17 @@ This module is only used as reference to convert Python docstring to API documen
 
 The created the API document is in `API Doc`_.
 
-Example:
-    Examples can be given using the ``Example`` or ``Examples`` sections.
+Usage::
 
-    Style 1::
+    $python api_doc_example.py
 
-        $ python api_doc_example.py
+Example::
+
+    def fun(a):
+        return a+1
+
+    x = fun(2)
+    print(x)
 
 Attributes:
     attribute1 (int): Module level attribute.
@@ -38,7 +43,8 @@ def function1(param1, param2):
         param1 (str): The parameter1.
         param2 (float): The parameter2.
 
-    Example:
+    Example::
+
         >>> python api_doc_example.py
         >>> import os
         ... for i in range(3)
@@ -123,7 +129,7 @@ def generator1(n):
     Yields:
         int: The next number in [0, `n` - 1].
 
-    Examples:
+    Examples::
 
         >>> print([i for i in example_generator(4)])
         [0, 1, 2, 3]
