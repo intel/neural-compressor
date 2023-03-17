@@ -175,12 +175,12 @@ class GraphConverter:
         output_tensor = model.output_tensor
         # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
         node_names = [node.name for node in sess.graph.as_graph_def().node]
-        if 'init_all_tables' in node_names: # pragma: no cover
+        if 'init_all_tables' in node_names:
             init_table_op = sess.graph.get_operation_by_name('init_all_tables')
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
-        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0: # pragma: no cover
+        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0:
             feed_dict = {}
             _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
                 else iterator_sess_run(sess, iter_op, \
@@ -199,7 +199,7 @@ class GraphConverter:
                                 break
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else: # pragma: no cover
+            else:
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
                 feed_dict = {}
