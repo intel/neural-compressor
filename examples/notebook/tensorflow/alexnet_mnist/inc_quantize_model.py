@@ -50,7 +50,7 @@ def compare_ver(src, dst):
 
 def auto_tune(input_graph_path, config, batch_size, int8_pb_file):
     dataset = Dataset()
-    dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+    dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size = batch_size)
     q_model = fit(
         model=input_graph_path,
         conf=config,
