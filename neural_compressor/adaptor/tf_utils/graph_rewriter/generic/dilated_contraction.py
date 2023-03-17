@@ -64,7 +64,7 @@ class DilatedContraction(GraphRewriterBase):
             real_padding = [padding_value[i] - crops_value[i] for i in range(4)]
             explict_padding = [0, 0, 0, 0, 0, 0, 0, 0]
             data_format = contraction_node.attr['data_format'].s.decode()
-            if any(real_padding): # pragma: no cover
+            if any(real_padding):
                 contraction_node.attr['padding'].s = "EXPLICIT".encode()
                 assert data_format in ('NHWC', 'NCHW')
                 if data_format == "NHWC":
