@@ -8,6 +8,7 @@ from neural_compressor.adaptor.tf_utils.util import is_ckpt_format
 from neural_compressor.adaptor.tf_utils.util import collate_tf_preds
 from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
 from neural_compressor.adaptor.tf_utils.util import generate_feed_dict
+from neural_compressor.adaptor.tf_utils.util import get_model_input_shape
 from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
@@ -106,6 +107,7 @@ class TestTFutil(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('test.pb')
+        os.removedirs('fake_ckpt')
 
     @disable_random()
     def test_fix_ref_type(self):
@@ -135,7 +137,8 @@ class TestTFutil(unittest.TestCase):
 
     @disable_random()
     def test_judge_ckpt_format(self):
-        ckpt_format = is_ckpt_format('./test.pb')
+        os.mkdir('fake_ckpt')
+        ckpt_format = is_ckpt_format('fake_ckpt')
         self.assertEqual(ckpt_format, False)
 
     @disable_random()
