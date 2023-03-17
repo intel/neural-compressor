@@ -86,7 +86,7 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
       <tr>
         <td colspan="3" align="center"><a href="metric.md">Metric</a></td>
         <td colspan="3" align="center"><a href="objective.md">Objective</a></td>
-        <td colspan="3" align="center"><a href="/neural_coder/docs/smooth_quan.md">SmoothQuant</a></td>
+        <td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
       </tr>
   </tbody>
 </table>
