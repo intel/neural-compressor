@@ -145,7 +145,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 return []
 
         # If weight node non const, can't insert dummy biasadd to do matmul fusion.
-        if weight_node.op != 'Const' and len(match_node_name) == 3: # pragma: no cover
+        if weight_node.op != 'Const' and len(match_node_name) == 3:
             self.exclude_matmul_nodes.append(matched_node.node.name)
             self.output_graph = self.input_graph
             return []
@@ -384,7 +384,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
         single_matmul_fusion = True
         if len(match_node_name) == 3:
-            if is_shared_output: # pragma: no cover
+            if is_shared_output:
                 self.output_graph = self.input_graph
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 return []

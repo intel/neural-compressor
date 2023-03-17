@@ -278,7 +278,7 @@ class GraphConverter:
                 is_supported_version = True
                 is_sprbase_version = True
 
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             raise ValueError(e)
         finally:
             if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
@@ -297,7 +297,7 @@ class GraphConverter:
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
                              "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 
-            if not is_supported_version: # pragma: no cover
+            if not is_supported_version:
                 raise ValueError(
                     str('Please install TensorFlow within version >={} and <={}.')
                     .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
@@ -305,7 +305,7 @@ class GraphConverter:
     def _check_args(self):
         """Check model's arguments."""
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
-                and not os.path.exists(os.path.dirname(self.model.workspace_path)): # pragma: no cover
+                and not os.path.exists(os.path.dirname(self.model.workspace_path)):
             raise ValueError('"output_graph" directory does not exist.')
         self._output_path = self.model.workspace_path
 
@@ -527,11 +527,11 @@ class GraphConverter:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
 
-        except ValueError as e: # pragma: no cover
+        except ValueError as e:
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             import traceback
             traceback.print_exc()
             self._tmp_model = None
@@ -551,7 +551,7 @@ class GraphConverter:
                 self.fp32_ops,
                 self.bf16_ops).do_transformation()
 
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             import traceback
             traceback.print_exc()
             self._tmp_model = None
@@ -733,11 +733,11 @@ class GraphConverter:
             self._insert_qdq_pairs()
             self._convert_qdq()
 
-        except ValueError as e: # pragma: no cover
+        except ValueError as e:
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             import traceback
             traceback.print_exc()
             self._tmp_model = None

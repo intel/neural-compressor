@@ -106,7 +106,7 @@ class GraphConverterWithoutCalib:
         try:
             from tensorflow import python
             if (hasattr(python, "pywrap_tensorflow")
-                    and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):# pragma: no cover
+                    and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):
                 from tensorflow.python.pywrap_tensorflow import IsMklEnabled
             elif hasattr(python.util, "_pywrap_util_port"):
                 from tensorflow.python.util._pywrap_util_port import IsMklEnabled
@@ -128,9 +128,9 @@ class GraphConverterWithoutCalib:
                 is_supported_version = True
                 is_sprbase_version = True
 
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             raise ValueError(e)
-        finally:# pragma: no cover
+        finally:
             if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
                 logger.warning(
                     str('Please note the {} version of TensorFlow is not fully verified! '
@@ -156,7 +156,7 @@ class GraphConverterWithoutCalib:
         """Check model's arguments."""
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
                 and not os.path.exists(os.path.dirname(self.model.workspace_path)):
-            raise ValueError('"output_graph" directory does not exist.') # pragma: no cover
+            raise ValueError('"output_graph" directory does not exist.')
         self._output_path = self.model.workspace_path
 
     def _gen_tmp_filenames(self):
@@ -224,7 +224,7 @@ class GraphConverterWithoutCalib:
             self._rnn_details = self._analysis_rnn_model()
             self._freeze_requantization_ranges_without_calib()
             self._fuse_requantize_with_fused_quantized_node()
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             import traceback
             traceback.print_exc()
             self._tmp_model = None
@@ -242,7 +242,7 @@ class GraphConverterWithoutCalib:
                 self.fp32_ops,
                 self.bf16_ops).do_transformation()
 
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             self._tmp_model = None
             logger.error('Fail to convert graph due to {}.'.format(str(e)))
         finally:

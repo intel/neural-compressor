@@ -66,7 +66,7 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             # ignore shared output case for license-plate-recognition-barrier-0007 model
             if len(self.graph_info[dequantize_node_name].outputs) == 2 and \
                self.graph_info[self.graph_info[dequantize_node_name].outputs[0]].node.op == 'Reshape' and \
-               self.graph_info[self.graph_info[dequantize_node_name].outputs[1]].node.op == 'Shape': # pragma: no cover
+               self.graph_info[self.graph_info[dequantize_node_name].outputs[1]].node.op == 'Shape':
                 continue
 
             new_node = node_def_pb2.NodeDef()
@@ -126,7 +126,7 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
                     new_node.attr["Tbias"].CopyFrom( \
                         attr_value_pb2.AttrValue(type=dequantize_node.attr['dtype'].type))
                 Helper.set_attr_string_list(new_node, 'fused_ops', eval(fused_ops))
-            else: # pragma: no cover
+            else:
                 Helper.set_attr_type_list(new_node, 'Thost_outputs', [dequantize_node.attr['DstT'].type])
                 new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr['DstT'].type))
 

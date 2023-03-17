@@ -52,7 +52,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid"}
 
         for node in self.model.node:
-            if node.name in self.node_name_mapping: # pragma: no cover
+            if node.name in self.node_name_mapping:
                 raise ValueError("Duplicate Node Found when _parse_graph, the node name is {}" \
                     .format(node.name))
             self.node_name_mapping[node.name] = self.node_details(node=node, output=[])
@@ -161,7 +161,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if len_deq_outputs == 1:
                 continue
 
-            for index in range(len_deq_outputs - 1): # pragma: no cover
+            for index in range(len_deq_outputs - 1):
                 rep_dequantize_node = Helper.create_node(
                     "Dequantize", deq_node_name + '_' + str(index + 1),
                     [quantize_node_name, quantize_node_name + ':1', quantize_node_name + ':2'])
@@ -301,7 +301,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         reshape_dims_name = namespace_prefix + "_reshape_dims" + unique_input_name
         reduction_dims_name = namespace_prefix + "_reduction_dims" + unique_input_name
 
-        if self.fake_quant: # pragma: no cover
+        if self.fake_quant:
             min_node = Helper.create_constant_node(
                 min_input_name, -1., dtypes.float32, device="cpu")
             max_node = Helper.create_constant_node(
@@ -468,7 +468,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 min_value *= range_coefficent
                 max_value *= range_coefficent
                 min_value = min(min_value, 0.0)
-                if min_value == max_value: # pragma: no cover
+                if min_value == max_value:
                     if abs(min_value) < 0.000001:
                         max_value = min_value + 1.0
                     elif min_value > 0:
@@ -638,11 +638,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
         # transpose_a could be set to True.
         if not self.itex_mode and self.graph_info[matched_node_name].node.op == "MatMul": 
-            if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True: # pragma: no cover
+            if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
         if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op:
             return True
-        if "_MklFusedInstanceNorm" == self.graph_info[matched_node_name].node.op: # pragma: no cover
+        if "_MklFusedInstanceNorm" == self.graph_info[matched_node_name].node.op:
             return True
         return False
 
