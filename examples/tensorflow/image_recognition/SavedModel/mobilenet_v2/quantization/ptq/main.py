@@ -115,7 +115,7 @@ class eval_object_detection_optimized_graph(object):
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             if args.mode == 'performance':
-                conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+                conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
                 from neural_compressor.utils.create_obj_from_config import create_dataloader
                 dataloader_args = {
                     'batch_size': args.batch_size,

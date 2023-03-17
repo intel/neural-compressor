@@ -15,6 +15,7 @@
 
 .container {
   max-width: 100%;
+  max-height: 80vh;
   flex-wrap: nowrap !important;
 }
 
@@ -29,18 +30,22 @@
 }
 
 .overflow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: auto;
-  max-height: 600px;
 }
 
 .graph {
-  width: calc(50% - 140px);
+  width: calc(50% - 240px);
   flex-shrink: 0;
 }
 
 .graph-100 {
   max-width: 100%;
-  min-width: calc(100% - 250px);
+  min-width: calc(100% - 350px);
 }
 
 .header {
@@ -62,8 +67,8 @@
   color: white;
 }
 
-.width-200 {
-  width: 200px;
+.width-300 {
+  width: 300px;
 }
 
 mat-button-toggle-group {
@@ -94,4 +99,27 @@ mat-button-toggle-group {
 
 .nowrap {
   white-space: nowrap;
+}
+
+.property-card {
+  background-color: #ececec;
+}
+
+.property-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table-key {
+  text-align: right;
+  padding: 5px;
+  width: 50%;
+}
+
+.table-value {
+  text-align: left;
+  background-color: white;
+  padding: 5px;
+  border: 2px #ececec solid;
+  width: 50%;
 }

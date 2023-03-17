@@ -147,7 +147,7 @@ def main(_):
         if FLAGS.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=10, cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(iteration=10, cores_per_instance=4, num_of_instance=1)
             fit(FLAGS.input_model, conf, b_func=eval)
         elif FLAGS.mode == 'accuracy':
             acc_result = eval(FLAGS.input_model)

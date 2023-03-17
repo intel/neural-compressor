@@ -22,6 +22,7 @@ from .utils import logger
 from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
                                WeightPruningConfig)
 from typing import Callable, List, Union
+from .compression import prepare_pruning
 
 
 class CompressionManager:
@@ -32,7 +33,8 @@ class CompressionManager:
         callbacks: A list of Callbacks instances.
                    Such as: DistillationCallbbacks, QuantizationAwareTrainingCallbacks, PruningCallbacks.
 
-    Examples:
+    Examples::
+
         import neural_compressor.training.prepare_compression
         compression_manager = prepare_compression(nc_model, confs)
         compression_manager.callbacks.on_train_begin()
@@ -275,7 +277,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
     Returns:
         CompressionManager
 
-    Examples:
+    Examples::
+
         import neural_compressor.training.prepare_compression
         
         compression_manager = prepare_compression(conf, model)

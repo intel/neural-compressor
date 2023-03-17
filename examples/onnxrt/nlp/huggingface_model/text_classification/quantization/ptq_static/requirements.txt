@@ -1,5 +1,5 @@
 torch
-transformers==4.16.0
+transformers
 onnx
 onnxruntime
 coloredlogs

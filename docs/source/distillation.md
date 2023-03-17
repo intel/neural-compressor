@@ -20,7 +20,7 @@ Distillation is one of popular approaches of network compression, which transfer
 
 <img src="./imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300>
 
-Intel® Neural Compressor supports Knowledge Distillation and Intermediate Layer Knowledge Distillation algorithms.
+Intel® Neural Compressor supports Knowledge Distillation, Intermediate Layer Knowledge Distillation and Self Distillation algorithms.
 
 ### Knowledge Distillation
 Knowledge distillation is proposed in [Distilling the Knowledge in a Neural Network](https://arxiv.org/abs/1503.02531). It leverages the logits (the input of softmax in the classification tasks) of teacher and student model to minimize the the difference between their predicted class distributions, this can be done by minimizing the below loss function. 
@@ -90,14 +90,14 @@ def training_func_for_nc(model):
 ...
 ```
 
-In this case, the launcher code is like the following:
+In this case, the launcher code for Knowledge Distillation is like the following:
 
 ```python
 from neural_compressor.training import prepare_compression
-from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 
-distil_loss = SelfKnowledgeDistillationLossConfig()
-conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+distil_loss_conf = KnowledgeDistillationLossConfig()
+conf = DistillationConfig(teacher_model=teacher_model, criterion=distil_loss_conf)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
 compression_manager = prepare_compression(model, conf)
@@ -107,6 +107,17 @@ model = training_func_for_nc(model)
 eval_func(model)
 ```
 
+For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that `distil_loss_conf` should be set accordingly as shown below. More detailed settings can be found in this [example](../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510) for Intermediate Layer Knowledge Distillation and this [example](../../examples/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344) for Self Distillation.
+
+```python
+from neural_compressor.config import IntermediateLayersKnowledgeDistillationLossConfig, SelfKnowledgeDistillationLossConfig
+
+# for Intermediate Layer Knowledge Distillation
+distil_loss_conf = IntermediateLayersKnowledgeDistillationLossConfig(layer_mappings=layer_mappings)
+
+# for Self Distillation
+distil_loss_conf = SelfKnowledgeDistillationLossConfig(layer_mappings=layer_mappings)
+```
 ## Examples
 [Distillation PyTorch Examples](../../examples/README.md#distillation-1)
 <br>
