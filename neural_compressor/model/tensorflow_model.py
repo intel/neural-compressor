@@ -1014,8 +1014,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         import pandas as pd
         import tensorflow as tf
         import numpy as np
-        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
-                                   'Std', 'Mean', 'Abs-Mean'])
+        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)"])
         pd.set_option('display.precision', 2)
         param_dims = [2, 4]
         params_size = 0
@@ -1038,20 +1037,16 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
                     dense_param_size,
                     sparse_param_size,
                     (1 - density) * 100,
-                    np.std(weights),
-                    np.mean(weights),
-                    np.mean(np.abs(weights))
                 ])
 
         total_sparsity = sparse_params_size / params_size * 100
 
         df.loc[len(df.index)] = ([
             'Total sparsity:',
-            params_size,
             "-",
-            int(sparse_params_size),
-            total_sparsity,
-            0, 0, 0])
+            params_size,
+            sparse_params_size,
+            total_sparsity,])
 
         return df, total_sparsity
 
