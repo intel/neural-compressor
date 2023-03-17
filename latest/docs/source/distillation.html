@@ -96,7 +96,7 @@
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p>Distillation is one of popular approaches of network compression, which transfers knowledge from a large model to a smaller one without loss of validity. As smaller models are less expensive to evaluate, they can be deployed on less powerful hardware (such as a mobile device). Graph shown below is the workflow of the distillation, the teacher model will take the same input that feed into the student model to produce the output that contains knowledge of the teacher model to instruct the student model.
 <br></p>
-<img src="./imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300><p>Intel® Neural Compressor supports Knowledge Distillation and Intermediate Layer Knowledge Distillation algorithms.</p>
+<img src="./imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300><p>Intel® Neural Compressor supports Knowledge Distillation, Intermediate Layer Knowledge Distillation and Self Distillation algorithms.</p>
 <section id="knowledge-distillation">
 <h3>Knowledge Distillation<a class="headerlink" href="#knowledge-distillation" title="Permalink to this heading"></a></h3>
 <p>Knowledge distillation is proposed in <a class="reference external" href="https://arxiv.org/abs/1503.02531">Distilling the Knowledge in a Neural Network</a>. It leverages the logits (the input of softmax in the classification tasks) of teacher and student model to minimize the the difference between their predicted class distributions, this can be done by minimizing the below loss function.</p>
@@ -175,12 +175,12 @@ The additional classifiers in self-distillation allow the neural network to work
 <span class="o">...</span>
 </pre></div>
 </div>
-<p>In this case, the launcher code is like the following:</p>
+<p>In this case, the launcher code for Knowledge Distillation is like the following:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">SelfKnowledgeDistillationLossConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
 
-<span class="n">distil_loss</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">()</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss</span><span class="p">)</span>
+<span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss_conf</span><span class="p">)</span>
 <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
 <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
 <span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
@@ -188,6 +188,16 @@ The additional classifiers in self-distillation allow the neural network to work
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 <span class="n">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that <code class="docutils literal notranslate"><span class="pre">distil_loss_conf</span></code> should be set accordingly as shown below. More detailed settings can be found in this <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510">example</a> for Intermediate Layer Knowledge Distillation and this <a class="reference external" href="../../examples/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344">example</a> for Self Distillation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">,</span> <span class="n">SelfKnowledgeDistillationLossConfig</span>
+
+<span class="c1"># for Intermediate Layer Knowledge Distillation</span>
+<span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">(</span><span class="n">layer_mappings</span><span class="o">=</span><span class="n">layer_mappings</span><span class="p">)</span>
+
+<span class="c1"># for Self Distillation</span>
+<span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">(</span><span class="n">layer_mappings</span><span class="o">=</span><span class="n">layer_mappings</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
