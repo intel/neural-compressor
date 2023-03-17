@@ -183,13 +183,23 @@ def main():
             # use the MSE_V2 strategy by default.
             from neural_compressor.config import TuningCriterion
             tuning_criterion = TuningCriterion(strategy="mse_v2")
-            conf = PostTrainingQuantConfig(tuning_criterion=tuning_criterion)
+            conf = PostTrainingQuantConfig(quant_level=1,
+                                           tuning_criterion=tuning_criterion)
+            from neural_compressor.metric import METRICS
+            metrics = METRICS('pytorch')
+            top1 = metrics['topk']()
+            q_model = quantization.fit(model,
+                                        conf,
+                                        calib_dataloader=val_loader,
+                                        eval_dataloader=val_loader,
+                                        eval_metric=top1)
+
         else:
             conf = PostTrainingQuantConfig()
-        q_model = quantization.fit(model,
-                                    conf,
-                                    calib_dataloader=val_loader,
-                                    eval_func=eval_func)
+            q_model = quantization.fit(model,
+                                        conf,
+                                        calib_dataloader=val_loader,
+                                        eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         return
     
