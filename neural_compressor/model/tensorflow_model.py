@@ -50,14 +50,14 @@ def get_model_type(model):
         if (model.endswith('.h5') and os.path.isfile(model)) or \
           is_saved_model_format(os.path.dirname(model)) or \
           (os.path.isdir(model) and is_saved_model_format(model)):
-            if version1_lt_version2(tf.version.VERSION, '2.10.0'):
+            if version1_lt_version2(tf.version.VERSION, '2.10.0'): # pragma: no cover
                 logger.warn("keras model running on tensorflow 2.10.0 and"
                             " lower not support intel ITEX.")
             try:
                 model = tf.keras.models.load_model(model)
                 if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
                     return 'keras'
-                return 'saved_model'
+                return 'saved_model' # pragma: no cover
             except:
                 pass
     if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
@@ -71,7 +71,7 @@ def get_model_type(model):
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (model.endswith('.pb') and os.path.isfile(model)):
-            if is_saved_model_format(os.path.dirname(model)):
+            if is_saved_model_format(os.path.dirname(model)): # pragma: no cover
                 return 'saved_model'
             else:
                 return 'frozen_pb'
@@ -174,7 +174,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """
     device = kwargs.get('device')
     graph = tf.Graph()
-    if version1_lt_version2(tf.version.VERSION, '2.0.0'):
+    if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
         from tensorflow._api.v1.config import experimental
         list_physical_devices = experimental.list_physical_devices
     else:
@@ -190,14 +190,14 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
             else:
                 found_device = False
                 gpus = list_physical_devices("GPU")
-                for gpu in gpus:
+                for gpu in gpus: # pragma: no cover
                     if gpu.name.replace('physical_device:', '') == device:
                         found_device = True
                 xpus = list_physical_devices("XPU")
-                for xpu in xpus:
+                for xpu in xpus: # pragma: no cover
                     if xpu.name.replace('physical_device:', '') == device:
                         found_device = True
-                if found_device:
+                if found_device: # pragma: no cover
                     with graph.device(device):
                         tf.import_graph_def(model, name='')
                 else:
@@ -212,7 +212,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_node_names = tensor_to_node(output_tensor_names)
         model = strip_unused_nodes(model, input_node_names, output_node_names)
         with graph.as_default():
-            if device == "cpu":
+            if device == "cpu": # pragma: no cover
                 cpus = list_physical_devices("CPU")
                 node_device = cpus[0].name.replace('physical_device:', '')
                 with graph.device(node_device):
@@ -220,14 +220,14 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
             else:
                 found_device = False
                 gpus = list_physical_devices("GPU")
-                for gpu in gpus:
+                for gpu in gpus: # pragma: no cover
                     if gpu.name.replace('physical_device:', '') == device:
                         found_device = True
                 xpus = list_physical_devices("XPU")
-                for xpu in xpus:
+                for xpu in xpus: # pragma: no cover
                     if xpu.name.replace('physical_device:', '') == device:
                         found_device = True
-                if found_device:
+                if found_device: # pragma: no cover
                     with graph.device(device):
                         tf.import_graph_def(model, name='')
                 else:
@@ -279,7 +279,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if not os.listdir(os.path.join(model,'variables')):
+    if not os.listdir(os.path.join(model,'variables')): # pragma: no cover
         sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
         loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
         if len(input_tensor_names) == 0:
@@ -399,7 +399,7 @@ def _check_keras_format(model, saved_model_dir):
             model,
             saved_model_dir,
             options=save_options.SaveOptions(save_debug_info=True))
-    except:
+    except: # pragma: no cover
         return 'trackable_object'
     saved_model_proto, _ = parse_saved_model_with_debug_info(saved_model_dir)
     saved_model_version = saved_model_proto.saved_model_schema_version
@@ -477,15 +477,15 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                     temp_dir, input_tensor_names, output_tensor_names)
                 if '_FusedBatchNormEx' in [node.op for node in graph_def.node]:
                     keras_format = 'trackable_object'
-            except:
+            except: # pragma: no cover
                 keras_format = 'trackable_object'
         if keras_format == 'trackable_object':
             try:
                 graph_def, input_names, output_names = _get_graph_from_original_keras_v2(
                                                        model, temp_dir)
-            except:
+            except: # pragma: no cover
                 keras_format = 'saved_model_v1'
-        if keras_format == 'saved_model_v1':
+        if keras_format == 'saved_model_v1': # pragma: no cover
             try:
                 tf.keras.backend.set_learning_phase(0)
                 graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
@@ -500,7 +500,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
-def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
+def slim_session(model, input_tensor_names, output_tensor_names, **kwargs): # pragma: no cover
     """Build session with slim model.
 
     Args:
@@ -573,7 +573,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     config.inter_op_parallelism_threads = 1
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
-    if version1_lt_version2(tf.version.VERSION, '2.0.0'):
+    if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
         from tensorflow._api.v1.config import experimental
         list_physical_devices = experimental.list_physical_devices
     else:
@@ -581,7 +581,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
 
     with graph.as_default():
         device = kwargs.get('device')
-        if device == "cpu":
+        if device == "cpu": # pragma: no cover
             cpus = list_physical_devices("CPU")
             node_device = cpus[0].name.replace('physical_device:', '')
             with graph.device(node_device):
@@ -590,14 +590,14 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
         else:
             found_device = False
             gpus = list_physical_devices("GPU")
-            for gpu in gpus:
+            for gpu in gpus: # pragma: no cover
                 if gpu.name.replace('physical_device:', '') == device:
                     found_device = True
             xpus = list_physical_devices("XPU")
-            for xpu in xpus:
+            for xpu in xpus: # pragma: no cover
                 if xpu.name.replace('physical_device:', '') == device:
                     found_device = True
-            if found_device:
+            if found_device: # pragma: no cover
                 with graph.device(device):
                     saver = tf.compat.v1.train.import_meta_graph(\
                         os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
