@@ -76,21 +76,6 @@ Classes
       :type input_shape: tf.TensorShape or list
 
 
-   .. py:method:: compute_output_shape(input_shape)
-
-      Computes the output shape of the layer.
-
-      This method will cause the layer's state to be built, if that has not
-      happened before. This requires that the layer will later be used with
-      inputs that match the input shape provided here.
-
-      :param input_shape: input shape of the layer.
-      :type input_shape: tuple of integers or tf.TensorShape
-
-      :returns: output shape of the layer.
-      :rtype: output_shape(tf.TensorShape)
-
-
    .. py:method:: query_input_index()
 
       Query QuantizeConfig to check if there is any designated input index for this layer.
@@ -106,26 +91,6 @@ Classes
 
       :returns: Outputs of the wrapped layer.
       :rtype: outputs (tf.Tensor or dict/list/tuple)
-
-
-   .. py:method:: get_config()
-
-      Get the config of the quantize wrapper.
-
-      :returns: dict of wrapper config.
-      :rtype: config (dict)
-
-
-   .. py:method:: from_config(config)
-      :classmethod:
-
-      Creates a quantize wrapper instance from its config.
-
-      :param config: A Python dictionary, typically the output of get_config.
-      :type config: dict
-
-      :returns: (QuantizeWrapperBase): A quantize wrapper instance.
-      :rtype: output_obj
 
 
 
