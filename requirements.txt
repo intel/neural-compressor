@@ -21,4 +21,3 @@ cryptography
 sqlalchemy==1.4.27
 alembic==1.7.7
 pywin32; sys_platform != 'linux'
-deprecated
