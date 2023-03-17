@@ -231,7 +231,13 @@
 </section>
 <section id="quantization-approaches">
 <h3>Quantization Approaches<a class="headerlink" href="#quantization-approaches" title="Permalink to this heading"></a></h3>
-<p>Quantization has three different approaches: 1) post training dynamic quantization 2) post training static  quantization 3) quantization aware training. The first two approaches belong to optimization on inference. The last belongs to optimization during training.</p>
+<p>Quantization has three different approaches:</p>
+<ol class="simple">
+<li><p>post training dynamic quantization</p></li>
+<li><p>post training static  quantization</p></li>
+<li><p>quantization aware training.</p></li>
+</ol>
+<p>The first two approaches belong to optimization on inference. The last belongs to optimization during training.</p>
 <section id="post-training-dynamic-quantization">
 <h4>Post Training Dynamic Quantization<a class="headerlink" href="#post-training-dynamic-quantization" title="Permalink to this heading"></a></h4>
 <p>The weights of the neural network get quantized into int8 format from float32 format offline. The activations of the neural network is quantized as well with the min/max range collected during inference runtime.</p>
@@ -248,15 +254,16 @@
 </section>
 </section>
 </section>
-<section id="accuracy-aware-tuning">
-<h2>Accuracy Aware Tuning<a class="headerlink" href="#accuracy-aware-tuning" title="Permalink to this heading"></a></h2>
+<section id="with-or-without-accuracy-aware-tuning">
+<h2>With or Without Accuracy Aware Tuning<a class="headerlink" href="#with-or-without-accuracy-aware-tuning" title="Permalink to this heading"></a></h2>
 <p>Accuracy aware tuning is one of unique features provided by Intel(R) Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods.</p>
 <p>This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met.</p>
+<p>Neural compressor also support to quantize all quantizable ops without accuracy tuning, user can decide whether to tune the model accuracy or not. Please refer to “Get Start” below.</p>
 <section id="working-flow">
 <h3>Working Flow<a class="headerlink" href="#working-flow" title="Permalink to this heading"></a></h3>
-<p>Currently <code class="docutils literal notranslate"><span class="pre">accuracy</span> <span class="pre">aware</span> <span class="pre">tuning</span></code> supports <code class="docutils literal notranslate"><span class="pre">post</span> <span class="pre">training</span> <span class="pre">quantization</span></code>, <code class="docutils literal notranslate"><span class="pre">quantization</span> <span class="pre">aware</span> <span class="pre">training</span></code>, and <code class="docutils literal notranslate"><span class="pre">pruning</span></code>. Other during-training optimization tunings are under development.</p>
+<p>Currently <code class="docutils literal notranslate"><span class="pre">accuracy</span> <span class="pre">aware</span> <span class="pre">tuning</span></code> supports <code class="docutils literal notranslate"><span class="pre">post</span> <span class="pre">training</span> <span class="pre">quantization</span></code>, <code class="docutils literal notranslate"><span class="pre">quantization</span> <span class="pre">aware</span> <span class="pre">training</span></code>.</p>
 <p>User could refer to below chart to understand the whole tuning flow.</p>
-<img src="./imgs/accuracy_aware_tuning_flow.png" width=914 height=480 alt="accuracy aware tuning working flow"></section>
+<img src="./imgs/accuracy_aware_tuning_flow.png" width=600 height=480 alt="accuracy aware tuning working flow"></section>
 </section>
 <section id="supported-feature-matrix">
 <h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading"></a></h2>
@@ -318,12 +325,17 @@
 <p>The design philosophy of the quantization interface of Intel(R) Neural Compressor is easy-of-use. It requests user to provide <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">calibration</span> <span class="pre">dataloader</span></code>, and <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code>. Those parameters would be used to quantize and tune the model.</p>
 <p><code class="docutils literal notranslate"><span class="pre">model</span></code> is the framework model location or the framework model object.</p>
 <p><code class="docutils literal notranslate"><span class="pre">calibration</span> <span class="pre">dataloader</span></code> is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.</p>
-<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> is a function used to evaluate model accuracy. This function should be same with how user makes evaluation on fp32 model, just taking <code class="docutils literal notranslate"><span class="pre">model</span></code> as input and returning a scalar value represented the evaluation accuracy.</p>
+<p>If a user needs to tune the model accuracy, the user should provide either <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> or <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>. If the user won’t to tune the model accuracy, then the user should provide neither <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> nor <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking <code class="docutils literal notranslate"><span class="pre">model</span></code> as input and returning a scalar value represented the evaluation accuracy.</p>
+<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> is a dataloader for evaluation. The dataloader can be of any framework dataloader, like as: PyTorch, Tensorflow, onnxruntime.</p>
+<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> is an object to compute the metric to evaluating the performance of the model. <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> must be supported by neural compressor. Please refer to <a class="reference internal" href="metric.html"><span class="doc">metric.md</span></a>.</p>
 <p>User could execute:</p>
+<section id="post-training-quantization">
+<h3>Post Training Quantization<a class="headerlink" href="#post-training-quantization" title="Permalink to this heading"></a></h3>
 <ol class="simple">
-<li><p>Quantization without tuning</p></li>
+<li><p>Without Accuracy Aware Tuning</p></li>
 </ol>
-<p>This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It’s user responsibility to ensure the accuracy of the quantized model meets expectation.</p>
+<p>This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It’s user responsibility to ensure the accuracy of the quantized model meets expectation. Intel(R) Neural Compressor support <code class="docutils literal notranslate"><span class="pre">Post</span> <span class="pre">Training</span> <span class="pre">Static</span> <span class="pre">Quantization</span></code> and <code class="docutils literal notranslate"><span class="pre">Post</span> <span class="pre">Training</span> <span class="pre">Dynamic</span> <span class="pre">Quantization</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
 
 <span class="c1"># Original code</span>
@@ -338,7 +350,7 @@
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span> <span class="c1"># default approach is &quot;auto&quot;, you can set &quot;dynamic&quot;:PostTrainingQuantConfig(approach=&quot;dynamic&quot;)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
                            <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
                            <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">)</span>
@@ -346,9 +358,83 @@
 </pre></div>
 </div>
 <ol class="simple">
-<li><p>Quantization with accuracy aware tuning</p></li>
+<li><p>With Accuracy Aware Tuning</p></li>
 </ol>
-<p>This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance.</p>
+<p>This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide either <code class="docutils literal notranslate"><span class="pre">eval_func</span></code> or <code class="docutils literal notranslate"><span class="pre">eval_dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">eval_metric</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
+
+<span class="c1"># Original code</span>
+<span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="n">top1</span><span class="o">.</span><span class="n">avg</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
+<span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
+                     <span class="n">val_dataset</span><span class="p">,</span>
+                     <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                           <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
+                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+                           <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.metric</span> <span class="kn">import</span> <span class="n">METRICS</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">METRICS</span><span class="p">(</span><span class="s1">&#39;pytorch&#39;</span><span class="p">)</span>
+<span class="n">top1</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;topk&#39;</span><span class="p">]()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                           <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
+                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+                           <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+                           <span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h3>Quantization Aware Training<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<ol class="simple">
+<li><p>Without Accuracy Aware Tuning
+This method only requires the user to call the callback function during the training process. After the training is completed, after the training is completed, Neural Compressor will convert to quantized model.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
+
+<span class="c1"># Original code</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
+<span class="n">train_dataset</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
+                     <span class="n">train_dataset</span><span class="p">,</span>
+                     <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">criterion</span> <span class="o">=</span> <span class="o">...</span>
+
+<span class="c1"># Quantization code</span>
+<span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+<span class="n">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>With Accuracy Aware Tuning
+This method requires the user to provide training function and evaluation function to Neural Compressor, and in training function, the user should call the callback function.</p></li>
+</ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
 
 <span class="c1"># Original code</span>
@@ -367,18 +453,165 @@
 <span class="c1"># Quantization code</span>
 <span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="o">...</span>
+    <span class="k">return</span> <span class="n">model</span>  <span class="c1"># user should return a best performance model here</span>
 
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span><span class="p">,</span> <span class="n">fit</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
 <span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
-<span class="n">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">compression_manager</span><span class="o">=</span><span class="n">compression_manager</span><span class="p">,</span> <span class="n">train_func</span><span class="o">=</span><span class="n">train_func</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span>
 <span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+<section id="specify-quantization-rules">
+<h3>Specify Quantization Rules<a class="headerlink" href="#specify-quantization-rules" title="Permalink to this heading"></a></h3>
+<p>Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can set <code class="docutils literal notranslate"><span class="pre">op_name_dict</span></code> and <code class="docutils literal notranslate"><span class="pre">op_type_dict</span></code> in config class to achieve the above purpose.</p>
+<ol class="simple">
+<li><p>Example of <code class="docutils literal notranslate"><span class="pre">op_name_dict</span></code></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;layer1.0.conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;layer2.0.conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uint8&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;minmax&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;per_tensor&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;int8&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;minmax&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;per_channel&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Example of <code class="docutils literal notranslate"><span class="pre">op_type_dict</span></code></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Conv&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_type_dict</span><span class="o">=</span><span class="n">op_type_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="specify-quantization-recipes">
+<h3>Specify Quantization Recipes<a class="headerlink" href="#specify-quantization-recipes" title="Permalink to this heading"></a></h3>
+<p>Intel(R) Neural Compressor support some quantization recipes. Users can set <code class="docutils literal notranslate"><span class="pre">recipes</span></code> in config class to achieve the above purpose. (<code class="docutils literal notranslate"><span class="pre">fast_bias_correction</span></code> and <code class="docutils literal notranslate"><span class="pre">weight_correction</span></code> is working in progress.)</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Recipes</th>
+<th style="text-align: center;">PyTorch</th>
+<th style="text-align: right;">Tensorflow</th>
+<th style="text-align: right;">ONNX Runtime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">smooth_quant</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">smooth_quant_args</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">fast_bias_correction</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">N/A</td>
+</tr>
+<tr>
+<td style="text-align: left;">weight_correction</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">N/A</td>
+</tr>
+<tr>
+<td style="text-align: left;">first_conv_or_matmul_quantization</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">✅</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">last_conv_or_matmul_quantization</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">✅</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">pre_post_process_quantization</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">gemm_to_matmul</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">graph_optimization_level</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">add_qdq_pair_to_weight</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">optypes_to_exclude_output_quant</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">dedicated_qdq_pair</td>
+<td style="text-align: center;">N/A</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">✅</td>
+</tr>
+</tbody>
+</table><p>Example of recipe:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recipes</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">&quot;smooth_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="c1"># default value is 0.5</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;fast_bias_correction&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">recipes</span><span class="o">=</span><span class="n">recipes</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
