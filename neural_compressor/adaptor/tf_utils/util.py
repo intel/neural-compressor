@@ -80,7 +80,7 @@ def read_graph(in_graph, in_graph_is_binary=True):
         if in_graph_is_binary:
             input_graph_def.ParseFromString(data)
         else:
-            text_format.Merge(data, input_graph_def) # pragma: no cover
+            text_format.Merge(data, input_graph_def)
 
     return input_graph_def
 
@@ -136,14 +136,14 @@ def _parse_ckpt_bn_input(graph_def):
                 real_moving_mean_op_name = name_part + '/moving_mean'
                 if len(_get_nodes_from_name(real_moving_mean_op_name, graph_def)) > 0:
                     # replace the real moving mean op name
-                    node.input[3] = real_moving_mean_op_name # pragma: no cover
+                    node.input[3] = real_moving_mean_op_name
 
             if moving_var_op.op == 'Const':
                 name_part = moving_var_op_name.rsplit('/', 1)[0]
                 real_moving_var_op_name = name_part + '/moving_variance'
                 if len(_get_nodes_from_name(real_moving_var_op_name, graph_def)) > 0:
                     # replace the real moving mean op name
-                    node.input[4] = real_moving_var_op_name # pragma: no cover
+                    node.input[4] = real_moving_var_op_name
 
     return graph_def
 
@@ -351,7 +351,7 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
             elif node.op in type_attr.keys():
                 placeholder_node.attr["dtype"].CopyFrom(
                     attr_value_pb2.AttrValue(type=node.attr[type_attr[node.op]].type))
-            else: # pragma: no cover
+            else:
                 raise KeyError("%s op's type attribute is not found,"
                                "you should add it to type_attr dict" % node.op)
             if "_output_shapes" in node.attr:
@@ -499,7 +499,7 @@ def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
             int8_node_lst.add(node_name)
         elif node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:  # pragma: no cover
             bf16_node_lst.add(node.name)
-        else:  # pragma: no cover
+        else:
             continue
     inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
     dequan_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
