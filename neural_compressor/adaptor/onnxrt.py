@@ -517,7 +517,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   iterations=list(range(0, quantize_config['calib_iteration'])),
                   backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax(q_config=quantize_config)
-        quantize_params = augment.dump_calibration(quantize_config)
+        quantize_params = augment.dump_calibration(quantize_config, self.min_max)
         return quantize_params
 
     def inspect_tensor(self, model, dataloader, op_list=[],
@@ -1221,7 +1221,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                 ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
                             else:
                                 ort_inputs.update({inputs_names[i]: inputs[i]})
-
                 if measurer is not None:
                     measurer.start()
                     predictions = session.run(None, ort_inputs)

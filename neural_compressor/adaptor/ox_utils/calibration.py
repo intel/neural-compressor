@@ -37,6 +37,7 @@ from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
     _get_qrange_for_qType, calculate_scale_zp
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
+from neural_compressor.adaptor.ox_utils.util import find_by_name
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -249,6 +250,7 @@ class ONNXRTAugment:
                             ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
                         else:
                             ort_inputs.update({inputs_names[i]: inputs[i]})
+
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break
@@ -262,10 +264,9 @@ class ONNXRTAugment:
             for (data, name) in zip(intermediate_output, node_output_names):
                 merged_dict.setdefault(name, []).append(data)
         intermediate_outputs = []
-
         if calib_mode == 'naive':
             ranges_dict = {}
-            for data_name in merged_dict.keys():
+            for data_name in merged_dict.keys():    
                 input_name_to_nodes = self.model_wrapper.input_name_to_nodes
                 output_name_to_node = self.model_wrapper.output_name_to_node
                 node = None
@@ -278,10 +279,9 @@ class ONNXRTAugment:
                 # initialize a calibrater according to 'algorithm' in q_config
                 # and collect ranges of the intermediate output
                 calib_method = q_config[node.name]['activation']['algorithm'] \
-                    if node.name in q_config else 'minmax'
+                    if node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
                 assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
-                unsigned = (q_config[node.name]['activation']['dtype'] == 2) if node.name in q_config else False
-                calibrator = CALIBRATOR[calib_method](unsigned=unsigned)
+                calibrator = CALIBRATOR[calib_method]()
                 calibrator.collect(merged_dict[data_name])
                 ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
                 calibrator.clear()
@@ -390,7 +390,6 @@ class ONNXRTAugment:
                              Currently only naive mode is supported.')
 
         final_dict = dict(zip(node_output_names, pairs))
-
         return final_dict
 
     def dump_minmax(self, q_config, calib_mode='naive'):
@@ -400,7 +399,7 @@ class ONNXRTAugment:
         return self._map_calibration(node_output_names, output_dicts,
                                      calib_mode=calib_mode)
 
-    def dump_calibration(self, q_config, calib_mode='naive'):
+    def dump_calibration(self, q_config, min_max, calib_mode='naive'):
         """Gather calibration params for quantization.
 
         Args:
@@ -411,7 +410,7 @@ class ONNXRTAugment:
                                         a minimum of all values and the second element 
                                         is a maximum of all values. Defaults to 'naive'.
         """
-        return self.calculate_quantization_params(q_config, self.dump_minmax(q_config, calib_mode))
+        return self.calculate_quantization_params(q_config, min_max)
 
     def calculate_quantization_params(self, q_config, quantization_thresholds):
         """Given quantization thresholds, calculate the quantization params.
