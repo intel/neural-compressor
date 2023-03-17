@@ -31,7 +31,7 @@ w=h=32
 
 def preprocess(image, label):
     image = tf.cast(image, tf.float32)/255.0
-    return  tf.image.resize(image, [w, h]), np.array(tf.one_hot(label, class_num))    
+    return  tf.image.resize(image, [w, h]), label  
 
 
 def load_raw_dataset():
