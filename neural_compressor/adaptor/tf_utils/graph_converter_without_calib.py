@@ -106,7 +106,7 @@ class GraphConverterWithoutCalib:
         try:
             from tensorflow import python
             if (hasattr(python, "pywrap_tensorflow")
-                    and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):
+                    and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):# pragma: no cover
                 from tensorflow.python.pywrap_tensorflow import IsMklEnabled
             elif hasattr(python.util, "_pywrap_util_port"):
                 from tensorflow.python.util._pywrap_util_port import IsMklEnabled
@@ -130,7 +130,7 @@ class GraphConverterWithoutCalib:
 
         except Exception as e:
             raise ValueError(e)
-        finally:
+        finally:# pragma: no cover
             if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
                 logger.warning(
                     str('Please note the {} version of TensorFlow is not fully verified! '
