@@ -301,7 +301,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         reshape_dims_name = namespace_prefix + "_reshape_dims" + unique_input_name
         reduction_dims_name = namespace_prefix + "_reduction_dims" + unique_input_name
 
-        if self.fake_quant:
+        if self.fake_quant: # pragma: no cover
             min_node = Helper.create_constant_node(
                 min_input_name, -1., dtypes.float32, device="cpu")
             max_node = Helper.create_constant_node(
