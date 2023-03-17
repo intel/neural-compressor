@@ -878,13 +878,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet50</td>
     <td>Image Recognition</td>
     <td>Multi-shot: Pruning and PTQ<br></td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/optimization_pipeline/prune_and_ptq/eager">link</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/optimization_pipeline/prune_and_ptq/fx">link</a></td>
   </tr>
   <tr>
     <td>ResNet50</td>
     <td>Image Recognition</td>
     <td>One-shot: QAT during Pruning<br></td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/optimization_pipeline/qat_during_prune/eager">link</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/optimization_pipeline/qat_during_prune/fx">link</a></td>
   </tr>
   <tr>
     <td>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa</td>

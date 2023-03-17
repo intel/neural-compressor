@@ -131,6 +131,7 @@ q_model = fit(
 </table>
 
 ## Selected Publications/Events
+* Post on Social Media: [Adopt with Tencent TACO: Heterogeneous optimization is also key to improving AI computing power](https://mp.weixin.qq.com/s/I-FQqOuW7HTnwXegLGNAtw) (Mar 2023)
 * Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
 * Blog by Intel: [Intel® AMX Enhances AI Inference Performance](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/alibaba-solution-brief.html) (Jan 2023)
 * Blog by TensorFlow: [Optimizing TensorFlow for 4th Gen Intel Xeon Processors](https://blog.tensorflow.org/2023/01/optimizing-tensorflow-for-4th-gen-intel-xeon-processors.html) (Jan 2023)

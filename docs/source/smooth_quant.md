@@ -4,18 +4,15 @@
 
 2. [Quantization Fundamentals](#Quantization-Fundamentals)
 3. [SmoothQuant](#SmoothQuant)
-4. [SmoothQuant Support Matrix](SmoothQuant-Support-Matrix)
-5. [Get Started](#Get-Started)
-6. [Validated Models](#Validated-Models)
-7. [Example](#Example)
+4. [SmoothQuant Support Matrix](#SmoothQuant-Support-Matrix)
+5. [Validated Models](#Validated-Models)
+6. [Example](#Example)
 
 
 
 ## Introduction
 
-Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult. 
-
-**SmoothQuant**, an training free post-training quantization (PTQ) solution, offline migrate this difficulty from activations to weights with a mathematically equivalent transformation.
+Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  [SmoothQuant](https://arxiv.org/abs/2211.10438), an training free post-training quantization (PTQ) solution, offline migrate this difficulty from activations to weights with a mathematically equivalent transformation.
 
 ## Quantization Fundamentals
 
@@ -73,6 +70,7 @@ For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance th
 | SmoothQuant   | ✔           | ✖              |
 
 ## Validated Models
+
 | Model\Accuracy        | FP32   | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) |
 | --------------------- | ------ | ---------------------- | --------------------- |
 | bigscience/bloom-560m | 65.16% | 64.96%                 | 66.52% (alpha=0.5)    |
@@ -84,6 +82,7 @@ For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance th
 | facebook/opt-2.7b     | 77.90% | 78.99%                 | 78.91% (alpha=0.5)    |
 | facebook/opt-6.7b     | 81.51% | 79.44%                 | 81.58% (alpha=0.5)    |
 | EleutherAI/gpt-j-6B   | 79.17% | 78.76%                 | 79.13% (alpha=0.5)    |
+
 ## Example
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/eval_lambada.py) on how to use smooth quant.

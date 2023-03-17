@@ -41,3 +41,5 @@ python -u main.py \
     --keep-batch-size \
     --lr 0.001
 ```
+
+Please get familiar with some parameters of pruning by referring to our [Pruning API README](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner)
