@@ -21,7 +21,7 @@ from datasets import Dataset
 from transformers import EvalPrediction
 from transformers.trainer_pt_utils import nested_concat
 from transformers.trainer_utils import EvalLoopOutput
-from onnxruntime import InferenceSession
+import onnxruntime
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,6 @@ class ORTModel:
     def __init__(
         self,
         model,
-        execution_provider: Optional[str] = "CPUExecutionProvider",
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
         label_names: Optional[List[str]] = None,
     ):
@@ -37,8 +36,6 @@ class ORTModel:
         Args:
             model:
                 onnx.onnx_ml_pb2.ModelProto.
-            execution_provider (:obj:`str`, `optional`):
-                ONNX Runtime execution provider to use.
             compute_metrics (`Callable[[EvalPrediction], Dict]`, `optional`):
                 The function that will be used to compute metrics at evaluation. Must take an `EvalPrediction` and
                 return a dictionary string to metric values.
@@ -47,7 +44,8 @@ class ORTModel:
         """
         self.compute_metrics = compute_metrics
         self.label_names = ["labels"] if label_names is None else label_names
-        self.session = InferenceSession(model.SerializeToString(), providers=[execution_provider])
+        self.session = onnxruntime.InferenceSession(model.SerializeToString(),
+                                                    providers=onnxruntime.get_available_providers())
         self.onnx_input_names = {input_key.name: idx for idx, input_key in enumerate(self.session.get_inputs())}
 
     def evaluation_loop(self, dataset: Dataset):

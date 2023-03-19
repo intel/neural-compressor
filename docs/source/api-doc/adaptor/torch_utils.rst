@@ -3,11 +3,8 @@ Torch Utils
 
 The torch utils API information is available:
 
-.. toctree::
-   :maxdepth: 1
-
-   torch_utils/bf16_convert.rst
-   torch_utils/hawq_metric.rst
-   torch_utils/onnx.rst
-   torch_utils/symbolic_trace.rst
-   torch_utils/util.rst
+.. autoapisummary::
+   neural_compressor.adaptor.torch_utils.bf16_convert
+   neural_compressor.adaptor.torch_utils.hawq_metric
+   neural_compressor.adaptor.torch_utils.symbolic_trace
+   neural_compressor.adaptor.torch_utils.util

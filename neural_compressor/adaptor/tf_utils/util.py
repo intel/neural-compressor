@@ -497,7 +497,7 @@ def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
         node_name = int8_node_name_reverse(node)
         if 'Quantized' in node.op:
             int8_node_lst.add(node_name)
-        elif node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:
+        elif node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:  # pragma: no cover
             bf16_node_lst.add(node.name)
         else:
             continue

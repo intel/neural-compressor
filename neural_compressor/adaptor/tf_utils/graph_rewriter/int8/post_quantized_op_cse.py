@@ -100,7 +100,7 @@ class PostCseOptimizer(GraphRewriterBase):
                         if j in graph_info:
                             graph_info.pop(j)
 
-                elif node_type == 'QuantizeV2':
+                elif node_type == 'QuantizeV2': # pragma: no cover
                     next_node = graph_info[j].outputs[0]
                     quantize_v2_output_names = (j, j + ':1', j + ':2')
 

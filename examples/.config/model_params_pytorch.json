@@ -1,15 +1,13 @@
 {
   "pytorch": {
-    "resnet18": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+    "resnet50": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "resnet50",
+      "main_script": "main.py",
+      "batch_size": 100
     },
-    "resnet18_fx": {
+    "resnet18": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
@@ -23,6 +21,13 @@
      "main_script": "main.py",
      "batch_size": 100
     },
+    "resnext_101":{
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "resnext101_32x8d",
+      "main_script": "main.py",
+      "batch_size": 100
+     },
     "efficientnet_b0": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
@@ -43,15 +48,6 @@
       "input_model": "efficientnet_b7",
       "main_script": "main.py",
       "batch_size": 100
-    },
-    "resnet50": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
     },
     "resnet50_ipex": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
@@ -90,52 +86,21 @@
       "batch_size": 100,
       "new_benchmark": false
     },
-    "resnext101_32x8d": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
     "inception_v3": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "inception_v3",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "mobilenet_v2": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "mobilenet_v2",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "resnet18_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet18_buildin_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet18_qat_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
@@ -143,38 +108,25 @@
       "batch_size": 100
     },
     "resnet50_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet50_qat_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet50",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "resnet101_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
+    "resnext101_qat": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "resnext101_32x8d",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "mobilenet_v2_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "mobilenet_v2",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "peleenet": {
       "model_src_dir": "image_recognition/peleenet/quantization/ptq/fx",
@@ -184,22 +136,18 @@
       "batch_size": 100
     },
     "resnest50": {
-      "model_src_dir": "image_recognition/resnest/quantization/ptq/eager",
+      "model_src_dir": "image_recognition/resnest/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "resnest50",
+      "main_script": "verify.py",
+      "batch_size": 100
     },
     "se_resnext50_32x4d": {
-      "model_src_dir": "image_recognition/se_resnext/quantization/ptq/eager",
+      "model_src_dir": "image_recognition/se_resnext/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "se_resnext50_32x4d",
+      "main_script": "run_eval.py",
+      "batch_size": 100
     },
     "yolo_v3": {
       "model_src_dir": "object_detection/yolo_v3/quantization/ptq_static/fx",
@@ -364,13 +312,11 @@
       "main_script": "run_glue.py"
     },
     "3dunet": {
-      "model_src_dir": "image_recognition/3d-unet/quantization/ptq/eager",
+      "model_src_dir": "image_recognition/3d-unet/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build",
       "input_model": "/tf_dataset/pytorch/mlperf_3dunet/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
       "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "run.py"
     },
     "rnnt": {
       "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/eager",
@@ -476,13 +422,11 @@
       "main_script": "run_translation.py"
     },
     "pegasus_samsum": {
-      "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": false
+      "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/fx",
+      "dataset_location": "/tf_dataset/pytorch/billsum",
+      "input_model": "/tf_dataset2/models/huggingface/pegasus-samsum",
+      "main_script": "run_summarization.py",
+      "batch_size": 64
     },
     "dialogpt_wikitext": {
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/eager",

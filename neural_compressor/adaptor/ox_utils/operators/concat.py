@@ -120,7 +120,7 @@ class QConcatOperator(QOperator):
         inputs = []
         inits = []
         # input dq
-        for i in range(int((len(node.input) - 2) / 3 - 1)):
+        for i in range(int((len(node.input) - 2) / 3)):
             in_dq = onnx.helper.make_node(
                 'DequantizeLinear',
                 node.input[2 + i*3 : 2 + (i+1)*3],

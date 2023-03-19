@@ -32,8 +32,15 @@ function run_benchmark {
 
     if [[ "${input_model}" =~ "spanbert" ]]; then
         model_name_or_path="mrm8488/spanbert-finetuned-squadv1"
-    elif [[ "${input_model}" =~ "bert-base" ]]; then
+    elif [[ "${input_model}" =~ "bert-base-multilingual" ]]; then
         model_name_or_path="salti/bert-base-multilingual-cased-finetuned-squad"
+    elif [[ "${input_model}" =~ "distilbert-base-uncased" ]]; then
+        model_name_or_path="distilbert-base-uncased-distilled-squad"
+    elif [[ "${input_model}" =~ "bert-large-uncased" ]]; then
+        model_name_or_path="bert-large-uncased-whole-word-masking-finetuned-squad"
+    elif [[ "${input_model}" =~ "roberta-large" ]]; then
+        model_name_or_path="deepset/roberta-large-squad2"
+        extra_cmd='--version_2_with_negative=True'
     fi
 
     python main.py \
@@ -44,7 +51,8 @@ function run_benchmark {
             --overwrite_output_dir \
             --dataset_name=squad \
             --batch_size=${batch_size} \
-            --benchmark
+            --benchmark \
+             ${extra_cmd}
             
 }
 

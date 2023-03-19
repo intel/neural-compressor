@@ -52,7 +52,7 @@ class QuantizeConfig():
                                     The latter one is used to decide which inputs should be quantized
                                     in some layers with multiple inputs.
                                     For example:
-                                        {'conv5_block3_3_conv': {'quantize': Flase}
+                                        {'conv5_block3_3_conv': {'quantize': False}
                                          'conv5_block3_3_add' : {'quantize': True, 'index': [1, 3]}
                                         }
         """

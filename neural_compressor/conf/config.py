@@ -1333,8 +1333,8 @@ distillation_default_schema = Schema({
                                   'loss_types': ['CE', 'KL'],
                                   'loss_weights': [0.5, 0.5]}}}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}):dict
-
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+ 
 })
 
 class Conf(object):

@@ -3,3 +3,4 @@ torch
 accelerate
 datasets
 evaluate
+tqdm

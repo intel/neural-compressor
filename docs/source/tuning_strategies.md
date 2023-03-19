@@ -15,25 +15,27 @@ Tuning Strategies
 
 3. [Tuning Algorithms](#tuning-algorithms)
 
-    3.1. [Conservative Tuning](#conservative-tuning)
+    3.1. [Auto](#auto)
 
-    3.2. [Basic](#basic)
+    3.2. [Conservative Tuning](#conservative-tuning)
 
-    3.3. [MSE](#mse)
+    3.3. [Basic](#basic)
 
-    3.4. [MSE_V2](#mse_v2)
+    3.4. [MSE](#mse)
 
-    3.5. [HAWQ_V2](#hawq_v2)
+    3.5. [MSE_V2](#mse_v2)
 
-    3.6. [Bayesian](#bayesian)
+    3.6. [HAWQ_V2](#hawq_v2)
 
-    3.7. [Exhaustive](#exhaustive)
+    3.7. [Bayesian](#bayesian)
 
-    3.8. [Random](#random)
+    3.8. [Exhaustive](#exhaustive)
 
-    3.9. [SigOpt](#sigopt)
+    3.9. [Random](#random)
 
-    3.10. [TPE](#tpe)
+    3.10. [SigOpt](#sigopt)
+
+    3.11. [TPE](#tpe)
 
  4. [Distributed Tuning](#distributed-tuning)
 
@@ -85,21 +87,50 @@ accuracy_criterion = AccuracyCriterion(
 )
 ```
 
+
 ### Tuning Process 
-Once the `tuning space` was constructed, user can specify the tuning process by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with the strategy name in the `TuningCriterion`. If user specifies the `quant_level` with 0, it will execute the conservative tuning, the detail can be found [here](./tuning_strategies.md#conservative-tuning). When user selects `quant_level` with `1`, it will execute the tuning process according to the strategy name. By default, the value of `quant_level` is `1`. Please note that the priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the tuning process by strategy name. The design and usage of each tuning process are introduced in the following session.
+
+Intel® Neural Compressor allows users to choose different tuning processes by specifying the quantization level (`quant_level`). Currently, the recognized `quant_level`s are `0`, `1`, and `"auto"`. For `quant_level` is `1`, the tuning process can be finer-grained controlled by setting the `strategy` field.
+
+- `0`: "Conservative" tuning. `0` starts with an `fp32` model and tries to quantize OPs into lower precision by **op-type-wise**. `0` can be useful to give users insights about the accuracy degradation after quantizing some OPs.
+
+- `1`: "Aggressive" tuning. `1` starts with the default quantization configuration and selects different quantization parameters. `1` can be used to achieve the performance. 
+
+- `"auto"` (default) Auto tuning. `"auto"` combines the advantages of `quant_level=0` and `quant_level=1`. Currently, it tries default quantization configuration, `0`, and [`basic`](./tuning_strategies.md#basic) strategy sequentially.
+
 
 ## Tuning Algorithms
 
+
+### Auto
+
+#### Design
+
+The auto tuning (`quant_level`=`"auto"`) is the default tuning process. Classical settings are shown below:
+
+#### Usage
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    quant_level="auto",  # optional, the quantization level.
+    tuning_criterion=TuningCriterion(
+        timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+        max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+    ),
+)
+```
 ### Conservative Tuning
 
 #### Design
-The conservative tuning (`quant_level` = `0`) is designed for user who wants to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP name wisely.
+The conservative tuning (`quant_level`=`0`) starts with an `fp32` model and tries to convert key OPs like `conv`, `matmul`, or `linear` into lower precision **op-type-wise**.
 #### Usage
 
 To use conservative tuning, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
 
 ```python
-from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=0,  # the quantization level.
@@ -114,11 +145,19 @@ conf = PostTrainingQuantConfig(
 
 ### Design
 
-The `Basic` strategy is designed for quantizing most models. There are three stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy. 
+The `Basic` strategy is designed for quantizing most models. There are six stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy. 
 
-- **Stage I**. OP Type Wise Tuning
+- **Stage I**. Quantize with default quantization configuration
+    
+    At this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.
 
-    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that,  the OP is initialized with different quantization modes according to the quantization approach.
+- **Stage II**. Apply all recipes
+
+    At this stage, it tries to apply all recipes.
+
+- **Stage III**. OP-Type-Wise Tuning
+
+    At this stage, it tries to quantize OPs as many as possible and traverse all OP type wise tuning configs. Note that, the OP is initialized with different quantization modes according to the quantization approach.
     
     a. `post_training_static_quant`: Quantize all OPs support PTQ static.
 
@@ -126,26 +165,32 @@ The `Basic` strategy is designed for quantizing most models. There are three sta
     
     c. `post_training_auto_quant`: Quantize all OPs support PTQ static or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise tuning configs meet the accuracy loss criteria.
 
-- **Stage II**. Fallback OP One by One
+- **Stage IV**. Try recipe One by One
 
-    In this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+    At this stage, it tries recipe one by one based on the tuning config with the best result in the previous stage.
 
-- **Stage III**. Fallback Multiple OPs Accumulated
+- **Stage V**. Fallback OP One by One
 
-    In the final stage, it first sorted the OPs list according to the impact score in stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
+    At this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+
+- **Stage VI**. Fallback Multiple OPs Accumulated
+
+    At the final stage, it first sorted the OPs list according to the impact score in stage V, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
 
 ### Usage
 
-`Basic` is the default strategy. It can be used by default with nothing changed in the `strategy` field of `TuningCriterion`. Classical settings are shown below:
+`Basic` is the default strategy for `quant_level`=`1`, it can be used by default with nothing changed in the `strategy` field of `TuningCriterion` after set the `quant_level`=`1` in `PostTrainingQuantConfig`. Classical settings are shown below:
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="basic"  # optional. name of tuning strategy. 
     ),
 )
+
 ```
 
 ### MSE
@@ -167,10 +212,12 @@ The usage of `MSE` is similar to `Basic`. To use `MSE` strategy, the `strategy` 
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="mse" 
     ),
 )
+
 ```
 
 ### MSE_V2
@@ -186,6 +233,7 @@ To use the `MSE_V2` tuning strategy, the `strategy` field in the `TuningCriterio
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="mse_v2",
         strategy_kwargs={"confidence_batches": 2}  # optional. the number of batches to score the op impact.
@@ -210,6 +258,7 @@ def model_loss(output, target, criterion):
 
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="hawq_v2",
         strategy_kwargs={"hawq_v2_loss": model_loss}  # required. the loss function for calculating the hessian trace.
@@ -242,6 +291,7 @@ value as shown in below example, because the param space for `bayesian` can be v
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
         max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
@@ -269,6 +319,7 @@ configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="exhaustive",
     ),
@@ -291,6 +342,7 @@ tuning configs to generate a better-performance quantized model.
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="random",
     ),
@@ -315,6 +367,7 @@ Note that the `sigopt_api_token`, `sigopt_project_id`, and `sigopt_experiment_na
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="sigopt",
         strategy_kwargs={
@@ -375,6 +428,7 @@ take from 24 hours to a few days to complete, depending on the model.
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
+    quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="tpe"
     )

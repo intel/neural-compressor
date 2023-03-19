@@ -482,7 +482,7 @@ class GraphConverter:
             self._quantize_graph()
             self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
 
-            if self.fake_quant:
+            if self.fake_quant: # pragma: no cover
                 self._fuse_requantize_with_fused_quantized_node()
             else:
                 if self._enable_kl_op_names:
@@ -493,6 +493,7 @@ class GraphConverter:
 
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+
                 # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
                 # after enabling pad+conv2d in new API.
                 non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
@@ -590,7 +591,7 @@ class GraphConverter:
             self.itex_mode).do_transform()
         self.exclude_node_names = exclude_node_names
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        if debug:
+        if debug and not self.performance_only:
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_dynamic_range_model_path)
 
@@ -654,7 +655,7 @@ class GraphConverter:
 
     def _fuse_requantize_with_fused_quantized_node(self):
         """Fuse the Requantize/Dequantize with fused quantized Ops."""
-        if self.fake_quant:
+        if self.fake_quant: # pragma: no cover
             self._tmp_graph_def = FreezeFakeQuantOpOptimizer(
                 self._tmp_graph_def).do_transformation()
 

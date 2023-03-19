@@ -221,6 +221,19 @@ class Benchmark(object):
             # (TODO) should add summary after win32 benchmark has log
             pass
 
+    def call_one(self, cmd, log_file):
+        """Execute one command for one instance in one thread and dump the log (for Windows)."""
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                shell=True) # nosec
+        with open(log_file, "w", 1, encoding="utf-8") as log_file:
+            log_file.write(f"[ COMMAND ] {cmd} \n")
+            for line in proc.stdout:
+                decoded_line = line.decode("utf-8", errors="ignore").strip()
+                logger.info(decoded_line)   # redirect to terminal
+                log_file.write(decoded_line + "\n")
+
     def config_instance(self, raw_cmd):
         """Configure the multi-instance commands and trigger benchmark with sub process.
 
@@ -530,7 +543,8 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
         b_func:                   Customized benchmark function. If user passes the dataloader,
                                   then b_func is not needed.
 
-    Example:
+    Example::
+
         # Run benchmark according to config
         from neural_compressor.benchmark import fit
 

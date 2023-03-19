@@ -12,6 +12,10 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import tensor_util
 
+import logging
+logger = logging.getLogger("neural_compressor")
+logger.setLevel(logging.DEBUG)
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
