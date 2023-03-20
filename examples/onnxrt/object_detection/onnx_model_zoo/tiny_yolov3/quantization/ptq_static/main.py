@@ -103,8 +103,6 @@ class Dataloader:
         self.batch_size = batch_size
         self.image_list = []
         self.model_image_size = (size, size)
-        root = root.replace('\\', '/')
-        assert root.endswith('/val2017'), "data path should be like 'path/to/val2017'"
         img_path = root
         anno_path = os.path.join(os.path.dirname(root), anno_dir)
         coco = COCO(anno_path)
