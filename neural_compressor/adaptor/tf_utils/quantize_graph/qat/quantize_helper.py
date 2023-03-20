@@ -31,7 +31,7 @@ def init_quantize_config(model, quantize_recipe=None):
         config (QuantizeConfig): QuantizeConfig instance used to decide whether a specific layer 
                                  should be quantized.
     """
-    assert 'quantize_config' not in global_config, ("quantize_config has been unexpectedly"
+    assert 'quantize_config' not in global_config, ("quantize_config has been unexpectedly "
     "created. Please check your QAT workflow")
 
     config = QuantizeConfig()
@@ -55,7 +55,7 @@ def _is_quantizable_layer(layer):
     layer_class = layer.__class__.__name__
 
     quantize_config = global_config['quantize_config']
-    specific_layer_config = quantize_config.query_layer(layer)
+    specific_layer_config = quantize_config.query_layer(layer.name)
     if specific_layer_config:
         # the layer is set to be unquantizable by QuantizeConfig
         if not specific_layer_config['quantize']:

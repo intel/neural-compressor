@@ -54,20 +54,6 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
         """Modify the layer name to be quantized layer."""
         return "{}_{}".format("quant", layer.name)
 
-    @staticmethod
-    def _weight_name(name):
-        """Extracts the weight name from the full TensorFlow variable name.
-
-        For example, returns 'kernel' for 'dense_2/kernel:0'.
-
-        Args:
-          name (string): TensorFlow variable name.
-
-        Returns:
-          weight_name (string): Extracted weight name.
-        """
-        return name.split(":")[0].split("/")[-1]
-
     def build(self, input_shape):
         """Creates the variables of the layer.
 
@@ -82,21 +68,6 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
             dtype=tf.dtypes.int32,
             trainable=False,
         )
-
-    def compute_output_shape(self, input_shape):
-        """Computes the output shape of the layer.
-
-        This method will cause the layer's state to be built, if that has not
-        happened before. This requires that the layer will later be used with
-        inputs that match the input shape provided here.
-
-        Args:
-            input_shape (tuple of integers or tf.TensorShape): input shape of the layer.
-
-        Returns:
-            output_shape(tf.TensorShape) : output shape of the layer.
-        """
-        return self.layer.compute_output_shape(self.layer.input_shape)
 
     def _init_min_max_variables(self, name, shape):
         """Initialize the minimum and maximum values of variables to the wrapped layer.
@@ -142,35 +113,6 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
           outputs (tf.Tensor or dict/list/tuple): Outputs of the wrapped layer.
         """
         raise NotImplementedError
-
-    def get_config(self):
-        """Get the config of the quantize wrapper.
-        
-        Returns:
-          config (dict): dict of wrapper config.
-        """
-        base_config = super(QuantizeWrapperBase, self).get_config()
-        config = {"quantize_config": None}
-        return dict(list(base_config.items()) + list(config.items()))
-
-    @classmethod
-    def from_config(cls, config):
-        """Creates a quantize wrapper instance from its config.
-
-        Args:
-            config (dict): A Python dictionary, typically the output of get_config.
-
-        Returns:
-            output_obj: (QuantizeWrapperBase): A quantize wrapper instance.
-        """
-        config = config.copy()
-        quantize_config = tf.keras.utils.deserialize_keras_object(
-            config.pop("quantize_config"), module_objects=globals(), custom_objects=None
-        )
-
-        layer = tf.keras.layers.deserialize(config.pop("layer"))
-
-        return cls(layer=layer, quantize_config=quantize_config, **config)
 
     @property
     def trainable(self):
@@ -276,6 +218,7 @@ class QuantizeWrapper(QuantizeWrapperBase):
         num_input = 1
         if not isinstance(input_shape, tf.TensorShape):
             num_input = len(input_shape)
+        self.query_input_index()
         if not self.index:
             self.index = [i for i in range(num_input)]
 

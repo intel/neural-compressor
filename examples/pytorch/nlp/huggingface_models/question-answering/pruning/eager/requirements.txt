@@ -2,3 +2,4 @@ accelerate
 datasets
 transformers
 torch
+tqdm

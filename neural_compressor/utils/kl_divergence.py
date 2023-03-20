@@ -17,10 +17,7 @@
 
 """KL Divergence: measure probability distribution difference to determine the thresholds per quantized op."""
 
-import math
-
-
-class KL_Divergence(object):
+class KL_Divergence(object): # pragma: no cover
     """The class of supporting KL divergence calibration algorithm."""
     def __init__(self):
         """Init a KL Divergence object."""
@@ -64,6 +61,7 @@ class KL_Divergence(object):
                 if q_idx == 0:
                     print("Fatal error!, idx = " + str(idx) +
                           " qindex = 0! p_idx = " + str(p_idx))
+                import math
                 tmp_sum1 += p_idx * (math.log(Q_sum * p_idx))
                 tmp_sum2 += p_idx * (math.log(P_sum * q_idx))
         return (tmp_sum1 - tmp_sum2) / P_sum
