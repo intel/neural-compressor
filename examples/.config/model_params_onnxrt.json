@@ -408,7 +408,7 @@
     },
     "fcn_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/fcn/fcn-resnet50-13.onnx",
       "main_script": "main.py",
       "batch_size": 1
