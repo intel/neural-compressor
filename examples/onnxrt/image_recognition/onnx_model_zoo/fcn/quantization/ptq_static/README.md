@@ -22,6 +22,18 @@ wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentatio
 ## 3. Prepare Dataset
 Download dataset [MS COCO 2017 dataset](https://cocodataset.org/#download).
 
+Dataset directories:
+
+```bash
+coco2017
+├── annotations
+|       ├── instances_val2017.json
+|       └── ...
+├── test2017
+├── train2017
+└── val2017
+```
+
 # Run
 
 ## 1. Quantization
