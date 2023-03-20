@@ -492,6 +492,14 @@ class ONNXModel(BaseModel):
         return result_chain
     
     def find_qkv_in_attention(self, find_all=False):
+        """Find qkv MatMul in Attention.
+
+        Args:
+            find_all (bool, optional): find all qkv MatMul. Defaults to False
+
+        Returns:
+            qkv (list): qkv MatMul list
+        """
         qkv = []
         for node in self._model.graph.node:
             start_node, qkv_nodes_list = None, None
