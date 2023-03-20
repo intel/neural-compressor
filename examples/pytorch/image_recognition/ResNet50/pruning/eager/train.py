@@ -367,6 +367,8 @@ group.add_argument('--target-sparsity', type=float, default=0.9,
                     help='the coefficient of teacher-student distillation loss')
 group.add_argument('--pruning-pattern', type=str, default="1x1",
                     help='the coefficient of teacher-student distillation loss')
+group.add_argument('--no-cuda', action='store_true', default=False,
+                    help='user defined device setter.')
 
 def _parse_args():
     # Do we have a config file to parse?
@@ -395,6 +397,14 @@ def main():
 
     args.prefetcher = not args.no_prefetcher
     device = utils.init_distributed_device(args)
+
+    # user define args.no_cuda, even if the machine have GPU, user can still choose CPU to train.
+    if args.no_cuda:
+        device = torch.device("cpu")
+    if torch.cuda.is_available() and device.type == "cpu":
+        _logger.warning(f"Your device has cuda enabled, but your model will be pruned on cpu.")
+        device = torch.device("cpu")
+
     if args.distributed:
         _logger.info(
             'Training in distributed mode with multiple processes, 1 device per process.'
@@ -828,6 +838,7 @@ def main():
         loader_eval,
         validate_loss_fn,
         args,
+        device=device,
         amp_autocast=amp_autocast,
     )
     _logger.info(f"Model accuracy before pruning is {eval_metrics}")
@@ -847,6 +858,7 @@ def main():
                 optimizer,
                 train_loss_fn,
                 args,
+                device=device,
                 lr_scheduler=lr_scheduler,
                 saver=saver,
                 output_dir=output_dir,
@@ -867,6 +879,7 @@ def main():
                 loader_eval,
                 validate_loss_fn,
                 args,
+                device=device,
                 amp_autocast=amp_autocast,
             )
 
@@ -879,6 +892,7 @@ def main():
                     loader_eval,
                     validate_loss_fn,
                     args,
+                    device=device,
                     amp_autocast=amp_autocast,
                     log_suffix=' (EMA)',
                 )
@@ -920,7 +934,7 @@ def train_one_epoch(
         optimizer,
         loss_fn,
         args,
-        device=torch.device('cuda'),
+        device=None,
         lr_scheduler=None,
         saver=None,
         output_dir=None,
@@ -996,7 +1010,8 @@ def train_one_epoch(
         if model_ema is not None:
             model_ema.update(model)
 
-        torch.cuda.synchronize()
+        if device.type == 'cuda':
+            torch.cuda.synchronize()
 
         num_updates += 1
         batch_time_m.update(time.time() - end)
@@ -1056,7 +1071,7 @@ def validate(
         loader,
         loss_fn,
         args,
-        device=torch.device('cuda'),
+        device=None,
         amp_autocast=suppress,
         log_suffix=''
 ):
