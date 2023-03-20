@@ -18,35 +18,7 @@ Quantization is a common compression operation to reduce memory and accelerate i
 
 Quantization convert the floating point matrix to an integer matrix.  `Affine quantization` and `Scale quantization`, also called `asymmetric quantization` and `symmetric quantization`, are two common range mapping techniques used in tensor conversion between different data types.
 
-**Asymmetric Quantization**
-
-In asymmetric mode, we map the min/max in the float range to the min/max of the integer range. 
-
-The math equation is like:
-$$
-X_{int8} = round(X_{fp32}/S) + Z
-$$
-
-where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
-
-We choose the minimum value of the matrix elements for the lower clipping point, and the maximum value for the upper clipping point. With the lower and upper bounds, the scale factor is computed as:
-$$
-S = \frac{X_{max} - X_{min}}{2^n-1}
-$$
-Where n is the number of bits used for quantization.
-
-The zero point is computed as:
-$$
-Z = - round(X_{min}/S)
-$$
-**Symmetric Quantization**
-
-In symmetric mode, instead of mapping the exact min/max of the float range to the quantized range, we choose the maximum absolute value between min/max.  Therefore, we don`t use a zero-point. The formula is:
-$$
-X_{int8} = round(X_{fp32}/S) \\
-S = \frac{max(|x_{max}|, |x_{min}|)}{2^n -1}
-$$
-
+For more details, plase read [quantization](quantization.md).
 ## SmoothQuant
 
 Some models, especially LLMs, activations are much harder to quantize due to the outliers than weights which the distribution is uniform and flat. The variance amongst the channels for a given token is large but small between magnitudes of a given channels, therefore, the quantization error will decrease if we can use activation per-channel quantization. However, can't perform channel-wise activation quantization currently because it cannot map to hardware-accelerate GEMM kernels well.
@@ -60,6 +32,8 @@ $$
 s_j = max(|X_j|)^\alpha / max(|W_j|)^{1-\alpha}
 $$
 $j = 1, 2, ...s, C_i$ where j correspond to j-th input channel.
+
+![](./imgs/smoothquant.png)
 
 For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance the difficult between activations and weights, can have a low quantization error. For others models with more significant outliers in activations, increase $\alpha$ to a bigger num, for example 0.75 ,  to migrate more quantization difficulty to weights.
 
