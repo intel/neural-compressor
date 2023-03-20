@@ -7,4 +7,5 @@ protobuf
 torch
 evaluate
 transformers
+tqdm
 

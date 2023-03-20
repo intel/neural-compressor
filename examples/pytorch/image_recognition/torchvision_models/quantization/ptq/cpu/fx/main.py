@@ -19,8 +19,8 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 
 model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+                     if name.islower() and not name.startswith("__")
+                     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
@@ -95,6 +95,11 @@ best_acc1 = 0
 
 def main():
     args = parser.parse_args()
+    
+    if 'efficient' in args.arch:
+        import torchvision.models as models
+    else:
+        import torchvision.models.quantization as models
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -169,7 +174,7 @@ def main():
     def eval_func(model):
         accu = validate(val_loader, model, criterion, args)
         return float(accu)
-
+    
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
@@ -178,16 +183,26 @@ def main():
             # use the MSE_V2 strategy by default.
             from neural_compressor.config import TuningCriterion
             tuning_criterion = TuningCriterion(strategy="mse_v2")
-            conf = PostTrainingQuantConfig(tuning_criterion=tuning_criterion)
+            conf = PostTrainingQuantConfig(quant_level=1,
+                                           tuning_criterion=tuning_criterion)
+            from neural_compressor.metric import METRICS
+            metrics = METRICS('pytorch')
+            top1 = metrics['topk']()
+            q_model = quantization.fit(model,
+                                        conf,
+                                        calib_dataloader=val_loader,
+                                        eval_dataloader=val_loader,
+                                        eval_metric=top1)
+
         else:
             conf = PostTrainingQuantConfig()
-        q_model = quantization.fit(model,
-                                    conf,
-                                    calib_dataloader=val_loader,
-                                    eval_func=eval_func)
+            q_model = quantization.fit(model,
+                                        conf,
+                                        calib_dataloader=val_loader,
+                                        eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         return
-
+    
     if args.performance or args.accuracy:
         model.eval()
         if args.int8:
@@ -304,7 +319,6 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, 'model_best.pth.tar')
-
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

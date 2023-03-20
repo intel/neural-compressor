@@ -176,7 +176,37 @@ class TestPythonicConf(unittest.TestCase):
         self.assertEqual(q.conf.usr_cfg.use_bf16, False)
         q.pre_process()
         self.assertEqual(q.strategy.adaptor.query_handler.get_precisions(), ['int8', 'uint8'])
+        self.assertNotEqual(config.mxnet, None)
+        self.assertNotEqual(config.tensorflow, None)
+        self.assertNotEqual(config.pytorch, None)
+        self.assertNotEqual(config.keras, None)
 
+    def test_weight_activation_op(self):
+        opconf = OpQuantConf()
+        self.assertEqual(opconf.op_type, None)
+
+        opconf = OpQuantConf('MatMul')
+        self.assertEqual(opconf.op_type, 'MatMul')
+        self.assertNotEqual(opconf.weight, None)
+        self.assertNotEqual(opconf.activation, None)
+
+        opconf.weight.datatype = ['int8']
+        opconf.activation.datatype = ['uint8']
+        opconf.weight.scheme = ['asym']
+        opconf.activation.scheme = ['sym']
+        opconf.weight.granularity = ['per_channel']
+        opconf.activation.granularity = ['per_tensor']
+        opconf.weight.algorithm = ['minmax']
+        opconf.activation.algorithm = ['minmax']
+        self.assertEqual(opconf.weight.datatype, ['int8'])
+        self.assertEqual(opconf.activation.datatype, ['uint8'])
+        self.assertEqual(opconf.weight.scheme, ['asym'])
+        self.assertEqual(opconf.activation.scheme, ['sym'])
+        self.assertEqual(opconf.weight.granularity, ['per_channel'])
+        self.assertEqual(opconf.activation.granularity, ['per_tensor'])
+        self.assertEqual(opconf.weight.algorithm, ['minmax'])
+        self.assertEqual(opconf.activation.algorithm, ['minmax'])
+ 
     def test_quantization(self):
         q = Quantization(config)
         q.model = build_matmul_model()

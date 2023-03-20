@@ -211,11 +211,11 @@ Growth rules for the sparsity of iterative pruning, "exp", "cos", "cube",  and "
 
 ### Regularization
 
-Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus pruned. **Group-lasso** method is used in Intel Neural Compressor.
+Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus pruned. **Group-lasso** method is supported in Intel Neural Compressor.
 
 - Group Lasso
 
-  The main ideas of Group Lasso are to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
+  The main idea of Group Lasso is to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
 <a target="_blank" href="../../../docs/source/imgs/pruning/Regularization.jpg">
@@ -240,7 +240,7 @@ The following section exemplifies how to use hooks in user pass-in training func
   ```python
       configs = [
               { ## Example of a regular configuration
-                "op_names": ['layer1.*'], # A list of modules that would be pruned.
+                "op_names": ['layer1.*'], # A list of modules that would be pruned. All linear/conv layers will be hooked when op_names is not explicitly defined.
                 "start_step": 1,  # Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), start_step should be equal to or greater than 1.
                 "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step = end_step.
                 "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
@@ -297,7 +297,7 @@ The following section exemplifies how to use hooks in user pass-in training func
         on_step_begin() # Prune weights
         on_before_optimizer_step() # Do weight regularization
         on_after_optimizer_step() # Update weights' criteria, mask weights
-        on_train_end() # end of pruner, Print sparse information
+        on_train_end() # End of pruner, print sparse information
         """
         from neural_compressor.training import prepare_compression, WeightPruningConfig
         config = WeightPruningConfig(configs)

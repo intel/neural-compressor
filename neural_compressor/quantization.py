@@ -40,7 +40,8 @@ class PostTrainingQuant:
     Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
     (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
 
-    Example:
+    Example::
+
         conf = PostTrainingQuantConfig()
         quantizer = PostTrainingQuant(conf)
         quantizer.model = model
@@ -453,7 +454,8 @@ def fit(model,
         eval_metric (dict or obj):             Set metric class or a dict of built-in metric configures,
                                               and neural_compressor will initialize this class when evaluation.
 
-    Example:
+    Example::
+
         # Quantization code for PTQ
         from neural_compressor import PostTrainingQuantConfig, set_workspace
         from neural_compressor import quantization

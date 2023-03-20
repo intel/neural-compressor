@@ -104,21 +104,34 @@ class QSplitOperator(QOperator):
         inputs = []
         inits = []
 
-        if all([child.op_type not in self.qop_list or \
+        if all([child.op_type not in self.qop_list and \
                 child.op_type != 'DequantizeLinear' for child in self.children]):
             return False, add_nodes, inits
 
         # input dq
+        in_dq = None
         for child in self.children:
-            if child.op_type == 'DequantizeLinear':
-                in_dq = onnx.helper.make_node(
-                    'DequantizeLinear',
-                    [node.input[0], child.input[1], child.input[2]],
-                    [node.name + '_in_dequant'],
-                    node.name + '_in_dequant')
-                inputs.append(node.name + '_in_dequant')
-                add_nodes.append(in_dq)
-                break
+            idx = [list(child.input).index(i) for i in node.output if i in child.input][0]
+            if child.op_type in ['DequantizeLinear', 'QLinearLeakyRelu', 'QLinearSigmoid', 'QLinearConv',
+                'QLinearGlobalAveragePool', 'QLinearAveragePool']:
+                in_dq_inputs = [node.input[0], child.input[1], child.input[2]]
+            elif child.op_type in ['QEmbedLayerNormalization']:
+                in_dq_inputs = [node.input[0], child.input[idx + 6], child.input[idx + 11]]
+            elif child.op_type in ['QAttention']:
+                in_dq_inputs = [node.input[0], child.input[idx + 3], child.input[idx + 3]]
+            else:
+                in_dq_inputs = [node.input[0], child.input[idx + 1], child.input[idx + 2]]
+            in_dq = onnx.helper.make_node(
+                'DequantizeLinear',
+                in_dq_inputs,
+                [node.name + '_in_dequant'],
+                node.name + '_in_dequant')
+            inputs.append(node.name + '_in_dequant')
+            add_nodes.append(in_dq)
+            break
+
+        if in_dq is None:
+            return False, add_nodes, inits
 
         outputs = []
         for i, out in enumerate(node.output):
@@ -127,16 +140,15 @@ class QSplitOperator(QOperator):
                 [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
                 [node.output[i]],
                 node.name + '_out_quant_' + str(i))
-        outputs.append([node.name + '_out_quant_' + str(i)])
-        add_nodes.append(out_q)
+            outputs.append(out_q.input[0])
+            add_nodes.append(out_q)
 
-        outputs = node.output
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
 
-        gather_node = onnx.helper.make_node(
+        new_node = onnx.helper.make_node(
             node.op_type, inputs,
             outputs, node.name + '_convert', **kwargs)
-        add_nodes.append(gather_node)
+        add_nodes.append(new_node)
         return True, add_nodes, inits

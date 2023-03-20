@@ -46,7 +46,9 @@ class TestHAWQV2TuningStrategy(unittest.TestCase):
         #tuning and accuracy criterion
         strategy_kwargs = {'hawq_v2_loss': hawq_v2_loss}
         tuning_criterion = TuningCriterion(strategy='hawq_v2', strategy_kwargs=strategy_kwargs, max_trials=5)
-        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+        conf = PostTrainingQuantConfig(approach="static", 
+                                       quant_level=1,
+                                       tuning_criterion=tuning_criterion)
 
         # fit
         q_model = fit(model=model,

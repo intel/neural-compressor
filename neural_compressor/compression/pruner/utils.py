@@ -174,8 +174,9 @@ def check_config(prune_config):
         assert N > 0, "N should be greater than 0"
         assert M > N, "M should be greater than N"
         max_ratio = float(N) / M
-        assert prune_config['target_sparsity'] <= max_ratio, \
-            "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
+        if prune_config['pruning_type']!="pattern_lock":
+            assert prune_config['target_sparsity'] <= max_ratio, \
+                "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
         prune_config['max_sparsity_ratio_per_op'] = min(max_ratio, prune_config['max_sparsity_ratio_per_op'])
     if prune_config['reg_coeff'] != None:
         prune_config['reg_coeff'] = float(prune_config['reg_coeff'])
