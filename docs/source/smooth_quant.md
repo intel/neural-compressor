@@ -18,7 +18,7 @@ Quantization is a common compression operation to reduce memory and accelerate i
 
 Quantization convert the floating point matrix to an integer matrix.  `Affine quantization` and `Scale quantization`, also called `asymmetric quantization` and `symmetric quantization`, are two common range mapping techniques used in tensor conversion between different data types.
 
-For more details, plase read [quantization](quantization.md).
+For more details, please read [quantization](quantization.md).
 ## SmoothQuant
 
 Some models, especially LLMs, activations are much harder to quantize due to the outliers than weights which the distribution is uniform and flat. The variance amongst the channels for a given token is large but small between magnitudes of a given channels, therefore, the quantization error will decrease if we can use activation per-channel quantization. However, can't perform channel-wise activation quantization currently because it cannot map to hardware-accelerate GEMM kernels well.
@@ -59,4 +59,4 @@ For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance th
 
 ## Example
 
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/eval_lambada.py) on how to use smooth quant.
+User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md) on how to use smooth quant.
