@@ -723,6 +723,8 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
 
     from ..pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs, PyTorch_FXAdaptor
     op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg["approach"])
+    # TODO WA for only calculate the sensitivity with int8
+    op_cfgs.pop('bf16_ops_list', None)
     # insert hook to get output tesnor from last module
     last_module_name = list(op_cfgs.keys())[-1]
     module = fetch_module(model, last_module_name) # get last module

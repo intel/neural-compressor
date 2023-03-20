@@ -26,7 +26,7 @@ from time import time
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-
+from .utils.constant import PRECISION_LIST
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):
     """The `mse_v2` tuning strategy.
@@ -82,6 +82,8 @@ class MSE_V2TuneStrategy(TuneStrategy):
             for quant_mode, quant_mode_items in quant_mode_wise_items.items():
                 initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
 
+            quant_ops = quant_mode_wise_items.get('static', [])
+            quant_ops += quant_mode_wise_items.get('dynamic', [])
             # Optype-wise tuning 
             early_stop_tuning = True
             stage1_cnt = 0
@@ -133,30 +135,38 @@ class MSE_V2TuneStrategy(TuneStrategy):
             op_quant_cfgs = {op_info: tune_cfg_backup[op_info] for op_info in quant_ops_in_tune_cfg}
             fallback_records = []
             self.re_quant = True
-            while not self.objectives.compare(self.last_tune_result, self.baseline):
-                # Record the time of calcutating the sensitivity
-                start = time()
-                ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
-                                                                self.calib_dataloader, 
-                                                                deepcopy(self._tune_cfg_converter(tune_cfg)), 
-                                                                self.output_op_names,
-                                                                self.confidence_batches,
-                                                                fallback=True)
-                logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
-                select_op_info = ops_lst[0]
-                logger.info(f"*** The op {select_op_info} have the highest sensitivity in the current state, \
-                    fallback it to fp32.")
-                tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0], 
-                                                            select_op_info[1], 
-                                                            'fp32', 
-                                                            self.tuning_space)
-                # Record the fallback history
-                if not fallback_records: 
-                    fallback_records = [[select_op_info]]
+            for target_dtype in PRECISION_LIST:
+                target_type_op_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
+                fallback_items_lst = [item for item in quant_ops if item in target_type_op_lst]
+                if fallback_items_lst:
+                    logger.info(f"Start to fallback op to {target_dtype}.")
                 else:
-                    fallback_records.append(fallback_records[-1] + [select_op_info])
-                logger.debug(f"*** The fallback ops record: \n{self._tuning_record_msg(fallback_records)}")
-                yield tune_cfg
+                    logger.info(f"No op support {target_dtype}.")
+                    continue
+                while not self.objectives.compare(self.last_tune_result, self.baseline):
+                    # Record the time of calculating the sensitivity
+                    start = time()
+                    ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
+                                                                    self.calib_dataloader, 
+                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)), 
+                                                                    self.output_op_names,
+                                                                    self.confidence_batches,
+                                                                    fallback=True)
+                    logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
+                    select_op_info = ops_lst[0]
+                    logger.info(f"*** The op {select_op_info} have the highest sensitivity in the current state, \
+                        fallback it to fp32.")
+                    tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0],
+                                                                select_op_info[1],
+                                                                target_dtype, 
+                                                                self.tuning_space)
+                    # Record the fallback history
+                    if not fallback_records: 
+                        fallback_records = [[select_op_info]]
+                    else:
+                        fallback_records.append(fallback_records[-1] + [select_op_info])
+                    logger.debug(f"*** The fallback ops record: \n{self._tuning_record_msg(fallback_records)}")
+                    yield tune_cfg
 
             logger.info(f"*** The accuracy meeting the accuracy requirements, stop fallback ops.")
             while self.objectives.compare(self.last_tune_result, self.baseline):
