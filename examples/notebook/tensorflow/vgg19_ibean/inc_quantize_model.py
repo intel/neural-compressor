@@ -79,7 +79,6 @@ def auto_tune(input_graph_path, batch_size, int8_pb_file):
     return q_model
 
 
-
 batch_size =32
 model_fp32_path="model_keras.fp32"
 int8_pb_file = "model_pb.int8"
