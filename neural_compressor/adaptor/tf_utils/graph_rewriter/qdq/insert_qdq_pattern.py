@@ -214,6 +214,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 input_node = self.node_name_mapping[node.input[1]].node
             if input_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
                 return False
+            return self._find_relu_node(input_node)
         elif self._check_op_list(node.op) or (self.itex_mode and node.op in ('Add', 'AddV2')):
             if node.op == 'ConcatV2':
                 find_relu = False
