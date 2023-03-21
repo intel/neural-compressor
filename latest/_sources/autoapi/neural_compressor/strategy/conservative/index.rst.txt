@@ -47,4 +47,16 @@ Classes
       :rtype: tune_config (dict)
 
 
+   .. py:method:: initialize_tune_cfg()
+
+      Init the tuning config.
+
+      Initialize the tuning config for conservative tuning.
+
+      :returns: key is (op_name, op_type); value is quantization mode.
+                quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
+                initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
+      :rtype: op_item_dtype_dict (OrderedDict)
+
+
 
