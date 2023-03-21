@@ -162,7 +162,7 @@ if __name__ == "__main__":
     from neural_compressor import set_workspace
     set_workspace(args.workspace)
 
-    dataloader = Dataloader(args.batch_size)
+    dataloader = Dataloader(batch_size=args.batch_size)
     def eval(model):
         return eval_func(model, dataloader, args.workspace)
 
