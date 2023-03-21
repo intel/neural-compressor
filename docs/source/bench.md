@@ -129,7 +129,7 @@ First you have to choose the model path. When it is chosen, in most cases all ot
 For several model types there will be a button available ![Show graph](imgs/bench/show_graph_button.png "Show graph") in the project wizard. It is also possible to see the graph in Diagnosis tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.
 
 
-![Bert model graph](imgs/bench/graph.jpg "Bert model graph").
+![Resnet model graph](imgs/bench/graph-resnet.jpg "Resnet model graph").
 
 # Project List
 On the left hand side there is a panel with list of created projects. When you click on the project name, you can see its details. "Create new project" button navigates to new project wizard pop-up described in previous section.
