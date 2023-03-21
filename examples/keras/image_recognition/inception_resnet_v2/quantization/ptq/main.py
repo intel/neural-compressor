@@ -120,7 +120,7 @@ def main(_):
         from neural_compressor.utils.utility import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex', 
-            calibration_sampling_size=[50, 100])
+            calibration_sampling_size=[20, 150])
         q_model = fit(
             model=FLAGS.input_model,
             conf=config,
