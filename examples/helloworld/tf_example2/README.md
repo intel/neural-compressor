@@ -77,9 +77,9 @@ This customized metric will calculate accuracy.
 ```
 ### 3. Use the customized data loader and metric for quantization 
 ```python
-    dataset = Dataset()
-    dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size=1)
-    config = PostTrainingQuantConfig()
+dataset = Dataset()
+    dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+    config = PostTrainingQuantConfig(backend='itex')
     q_model = fit(
         model='../models/saved_model',
         conf=config,
@@ -94,9 +94,7 @@ Please get the input and output op name from nc_workspace/tensorflow/hello_world
 
 Run inference on the quantized model
 ```python
-    import tensorflow as tf
-    with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
-         tf.compat.v1.import_graph_def(q_model.graph_def, name='')
-         styled_image = sess.run(['output:0'], feed_dict={'input:0':dataset.test_images})
-         print("Inference is done.")
+    keras_model = q_model.model
+    predictions = keras_model.predict_on_batch(dataset.test_images)
+    print("Inference is done.")
 ```
