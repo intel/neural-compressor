@@ -13,13 +13,10 @@ The model optimizations supported by [Intel(R) Neural Compressor](https://github
    
    This includes `post-training dynamic quantizer` and `post-training static quantizer`. Comping with ORT quantizer, Intel Neural Compressor can provide higher accuracy and better performance gain.
 
-<a target="_blank" href="INC vs ORT on dynamic quant">
-  <img src="./imgs/inc_vs_ort_dynamic.png" alt="Extension" width="100%" height="100%">
+<a target="_blank" href="INC vs ORT on dynamic & static quant">
+  <img src="./imgs/inc_vs_ort_quantizer.png" alt="Extension" width="100%" height="100%">
 </a>
 
-<a target="_blank" href="INC vs ORT on static quant">
-  <img src="./imgs/inc_vs_ort_static.png" alt="Extension" width="100%" height="100%">
-</a>
 
 2. during-training optimization
 
