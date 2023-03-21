@@ -29,7 +29,7 @@ function init_params {
 function run_tuning {
 
     python main.py \
-            --quant_format ${quant_format} \
+            --quant_format ${quant_format-QOperator} \
             --model_path ${input_model} \
             --output_model ${output_model} \
             --tune
