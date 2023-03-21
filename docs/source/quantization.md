@@ -93,7 +93,12 @@ Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 dat
 
 ### Quantization Approaches
 
-Quantization has three different approaches: 1) post training dynamic quantization 2) post training static  quantization 3) quantization aware training. The first two approaches belong to optimization on inference. The last belongs to optimization during training.
+Quantization has three different approaches:
+1) post training dynamic quantization
+2) post training static  quantization
+3) quantization aware training.
+
+The first two approaches belong to optimization on inference. The last belongs to optimization during training.
 
 #### Post Training Dynamic Quantization
 
@@ -111,19 +116,21 @@ This approach is major quantization approach people should try because it could 
 
 Quantization aware training emulates inference-time quantization in the forward pass of the training process by inserting `fake quant` ops before those quantizable ops. With `quantization aware training`, all weights and activations are `fake quantized` during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while aware of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
 
-## Accuracy Aware Tuning
+## With or Without Accuracy Aware Tuning
 
 Accuracy aware tuning is one of unique features provided by Intel(R) Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods. 
 
 This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met.
 
+Neural compressor also support to quantize all quantizable ops without accuracy tuning, user can decide whether to tune the model accuracy or not. Please refer to "Get Start" below.
+
 ### Working Flow
 
-Currently `accuracy aware tuning` supports `post training quantization`, `quantization aware training`, and `pruning`. Other during-training optimization tunings are under development.
+Currently `accuracy aware tuning` supports `post training quantization`, `quantization aware training`.
 
 User could refer to below chart to understand the whole tuning flow.
 
-<img src="./imgs/accuracy_aware_tuning_flow.png" width=914 height=480 alt="accuracy aware tuning working flow">
+<img src="./imgs/accuracy_aware_tuning_flow.png" width=600 height=480 alt="accuracy aware tuning working flow">
 
 ## Supported Feature Matrix
 
@@ -189,13 +196,20 @@ The design philosophy of the quantization interface of Intel(R) Neural Compresso
 
 `calibration dataloader` is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.
 
-`evaluation function` is a function used to evaluate model accuracy. This function should be same with how user makes evaluation on fp32 model, just taking `model` as input and returning a scalar value represented the evaluation accuracy.
+If a user needs to tune the model accuracy, the user should provide either `evaluation function` or `evaluation dataloader` `evaluation metric`. If the user won't to tune the model accuracy, then the user should provide neither `evaluation function` nor `evaluation dataloader` `evaluation metric`.
+
+`evaluation function` is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking `model` as input and returning a scalar value represented the evaluation accuracy.
+
+`evaluation dataloader` is a dataloader for evaluation. The dataloader can be of any framework dataloader, like as: PyTorch, Tensorflow, onnxruntime.
+
+`evaluation metric` is an object to compute the metric to evaluating the performance of the model. `evaluation metric` must be supported by neural compressor. Please refer to [metric.md](metric.md).
 
 User could execute:
+### Post Training Quantization
 
-1. Quantization without tuning
+1. Without Accuracy Aware Tuning
 
-This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation.
+This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation. Intel(R) Neural Compressor support `Post Training Static Quantization` and `Post Training Dynamic Quantization`.
 
 ``` python
 # main.py
@@ -212,7 +226,7 @@ val_dataloader = torch.utils.data.Dataloader(
 from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
 
-conf = PostTrainingQuantConfig()
+conf = PostTrainingQuantConfig() # default approach is "auto", you can set "dynamic":PostTrainingQuantConfig(approach="dynamic")
 q_model = quantization.fit(model=model,
                            conf=conf,
                            calib_dataloader=val_dataloader)
@@ -220,9 +234,83 @@ q_model.save('./output')
 
 ```
 
-2. Quantization with accuracy aware tuning
+2. With Accuracy Aware Tuning
 
-This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance.
+This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide either `eval_func` or `eval_dataloader` `eval_metric`.
+
+``` python
+# main.py
+
+# Original code
+def validate(val_loader, model, criterion, args):
+    ...
+    return top1.avg
+
+model = ResNet50()
+val_dataset = ...
+val_dataloader = torch.utils.data.Dataloader(
+                     val_dataset,
+                     batch_size=args.batch_size, shuffle=False,
+                     num_workers=args.workers, ping_memory=True)
+
+# Quantization code
+from neural_compressor import quantization
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig()
+q_model = quantization.fit(model=model,
+                           conf=conf,
+                           calib_dataloader=val_dataloader,
+                           eval_func=validate)
+q_model.save('./output')
+```
+or
+
+```python
+from neural_compressor.metric import METRICS
+metrics = METRICS('pytorch')
+top1 = metrics['topk']()
+q_model = quantization.fit(model=model,
+                           conf=conf,
+                           calib_dataloader=val_dataloader,
+                           eval_dataloader=val_dataloader,
+                           eval_metric=top1)
+```
+### Quantization Aware Training
+
+1. Without Accuracy Aware Tuning
+This method only requires the user to call the callback function during the training process. After the training is completed, after the training is completed, Neural Compressor will convert to quantized model. 
+
+```python
+# main.py
+
+# Original code
+model = ResNet50()
+train_dataset = ...
+train_dataloader = torch.utils.data.Dataloader(
+                     train_dataset,
+                     batch_size=args.batch_size, shuffle=True,
+                     num_workers=args.workers, ping_memory=True)
+criterion = ...
+
+# Quantization code
+def train_func(model):
+    ...
+
+from neural_compressor import QuantizationAwareTrainingConfig
+from neural_compressor.training import prepare_compression
+conf = QuantizationAwareTrainingConfig()
+compression_manager = prepare_compression(model, conf)
+compression_manager.callbacks.on_train_begin()
+model = compression_manager.model
+train_func(model)
+compression_manager.callbacks.on_train_end()
+compression_manager.save('./output')
+
+```
+
+2. With Accuracy Aware Tuning
+This method requires the user to provide training function and evaluation function to Neural Compressor, and in training function, the user should call the callback function.
 
 ```python
 # main.py
@@ -243,18 +331,94 @@ def validate(val_loader, model, criterion, args):
 # Quantization code
 def train_func(model):
     ...
+    return model  # user should return a best performance model here
 
 from neural_compressor import QuantizationAwareTrainingConfig
-from neural_compressor.training import prepare_compression
+from neural_compressor.training import prepare_compression, fit
 conf = QuantizationAwareTrainingConfig()
 compression_manager = prepare_compression(model, conf)
-compression_manager.callbacks.on_train_begin()
-model = compression_manager.model
-train_func(model)
-compression_manager.callbacks.on_train_end()
+q_model = fit(compression_manager=compression_manager, train_func=train_func, eval_func=validate)
 compression_manager.save('./output')
+```
+
+### Specify Quantization Rules
+Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can set `op_name_dict` and `op_type_dict` in config class to achieve the above purpose.
+
+1. Example of `op_name_dict`
+```python
+op_name_dict = {
+    "layer1.0.conv1": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer2.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+}
+conf = PostTrainingQuantConfig(op_name_dict=op_name_dict)
 
 ```
+2. Example of `op_type_dict`
+```python
+op_type_dict = {
+    'Conv': {
+        'weight': {
+            'dtype': ['fp32']
+        },
+        'activation': {
+            'dtype': ['fp32']
+        }
+    }
+}
+conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
+```
+
+### Specify Quantization Recipes
+Intel(R) Neural Compressor support some quantization recipes. Users can set `recipes` in config class to achieve the above purpose. (`fast_bias_correction` and `weight_correction` is working in progress.)
+
+| Recipes | PyTorch |  Tensorflow | ONNX Runtime |
+| :---------------- |:---------------:| ---------------:|---------------:|
+| smooth_quant      | ✅ | N/A | ✅ |
+| smooth_quant_args | ✅ | N/A | ✅ |
+| fast_bias_correction | N/A | N/A | N/A |
+| weight_correction | N/A | N/A | N/A |
+| first_conv_or_matmul_quantization | N/A | ✅ | ✅ |
+| last_conv_or_matmul_quantization | N/A | ✅ | ✅ |
+| pre_post_process_quantization | N/A | N/A | ✅ |
+| gemm_to_matmul | N/A | N/A | ✅ |
+| graph_optimization_level | N/A | N/A | ✅ |
+| add_qdq_pair_to_weight | N/A | N/A | ✅ |
+| optypes_to_exclude_output_quant | N/A | N/A | ✅ |
+| dedicated_qdq_pair | N/A | N/A | ✅ |
+
+Example of recipe:
+```python
+recipes = {
+    "smooth_quant": True,
+    "smooth_quant_args": {
+        "alpha": 0.5 # default value is 0.5
+    },
+    "fast_bias_correction": False,
+}
+conf = conf = PostTrainingQuantConfig(recipes=recipes)
+
+```
+
 
 ## Examples
 

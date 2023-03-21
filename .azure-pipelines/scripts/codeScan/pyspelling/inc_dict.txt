@@ -2556,3 +2556,6 @@ toolchain
 bigscience
 FQqOuW
 HTnwXegLGNAtw
+gemm
+optypes
+gloo

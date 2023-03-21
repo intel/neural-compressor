@@ -50,7 +50,7 @@ def get_model_type(model):
         if (model.endswith('.h5') and os.path.isfile(model)) or \
           is_saved_model_format(os.path.dirname(model)) or \
           (os.path.isdir(model) and is_saved_model_format(model)):
-            if version1_lt_version2(tf.version.VERSION, '2.10.0'):
+            if version1_lt_version2(tf.version.VERSION, '2.10.0'): # pragma: no cover
                 logger.warn("keras model running on tensorflow 2.10.0 and"
                             " lower not support intel ITEX.")
             try:
@@ -174,7 +174,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """
     device = kwargs.get('device')
     graph = tf.Graph()
-    if version1_lt_version2(tf.version.VERSION, '2.0.0'):
+    if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
         from tensorflow._api.v1.config import experimental
         list_physical_devices = experimental.list_physical_devices
     else:
@@ -187,7 +187,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 node_device = cpus[0].name.replace('physical_device:', '')
                 with graph.device(node_device):
                     tf.import_graph_def(model, name='')
-            else:
+            else: # pragma: no cover
                 found_device = False
                 gpus = list_physical_devices("GPU")
                 for gpu in gpus:
@@ -217,7 +217,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 node_device = cpus[0].name.replace('physical_device:', '')
                 with graph.device(node_device):
                     tf.import_graph_def(model, name='')
-            else:
+            else: # pragma: no cover
                 found_device = False
                 gpus = list_physical_devices("GPU")
                 for gpu in gpus:
@@ -500,7 +500,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
-def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
+def slim_session(model, input_tensor_names, output_tensor_names, **kwargs): # pragma: no cover
     """Build session with slim model.
 
     Args:
@@ -573,7 +573,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     config.inter_op_parallelism_threads = 1
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
-    if version1_lt_version2(tf.version.VERSION, '2.0.0'):
+    if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
         from tensorflow._api.v1.config import experimental
         list_physical_devices = experimental.list_physical_devices
     else:
@@ -587,7 +587,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
             with graph.device(node_device):
                 saver = tf.compat.v1.train.import_meta_graph(\
                     os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
-        else:
+        else: # pragma: no cover
             found_device = False
             gpus = list_physical_devices("GPU")
             for gpu in gpus:

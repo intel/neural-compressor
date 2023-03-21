@@ -269,35 +269,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-## Pruning
-<table>
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Domain</th>
-    <th>Pruning Type </th>
-    <th>Approach </th>
-    <th>Examples</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>ResNet V2</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">pb</a></td>
-  </tr>
-  <tr>
-    <td>ViT</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">ckpt</a></td>
-  </tr>
-</tbody>
-</table>
-
 ## Distillation
 <table>
 <thead>

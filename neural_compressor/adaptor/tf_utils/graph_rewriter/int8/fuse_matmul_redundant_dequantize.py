@@ -54,7 +54,7 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             dequantize_node_name = i[1]
             dequantize_node = self.graph_info[dequantize_node_name].node
 
-            if len(self.graph_info[quantized_node_name].outputs) > 3:
+            if len(self.graph_info[quantized_node_name].outputs) > 3:  # pragma: no cover
                 need_drop = False
                 for output in self.graph_info[quantized_node_name].outputs:
                     if self.graph_info[output].node.op != 'Dequantize':

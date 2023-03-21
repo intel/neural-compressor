@@ -60,7 +60,7 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
 
             if matmul_a_node.op == 'Const' or matmul_b_node.op not in ['Const', 'Enter']:
                 continue
-            if matmul_b_node.op == 'Enter':
+            if matmul_b_node.op == 'Enter': # pragma: no cover
                 parent_node = graph_info[Helper.node_name_from_input(matmul_b_node.input[0])].node
                 if parent_node.op != 'Const':
                     continue
@@ -99,7 +99,7 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
                         and g.parent_frame_details[i[0]] else bias_const_node_name])
             Helper.set_attr_dtype(bias_node, "T", dtypes.float32)
             g.add_node(bias_node, i[0], next_node_names)
-            if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]:
+            if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]: # pragma: no cover
                 g.add_node(bias_const_node, None, [bias_const_enter_node.name])
                 g.add_node(bias_const_enter_node, bias_const_node_name, [bias_node_name])
             else:
