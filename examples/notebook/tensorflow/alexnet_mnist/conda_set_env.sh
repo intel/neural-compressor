@@ -5,6 +5,6 @@ conda deactivate
 conda env remove -n $ENV_NAME
 conda create -n $ENV_NAME python=3.9 -c intel -y
 conda activate $ENV_NAME
-conda install -n $ENV_NAME tensorflow python-flatbuffers  -c intel -y
+conda install -n $ENV_NAME tensorflow python-flatbuffers -y
 conda install -n $ENV_NAME neural-compressor runipy notebook ipykernel -c conda-forge  -c intel -y
 python -m ipykernel install --user --name $ENV_NAME

@@ -1,8 +1,3 @@
-import os
-import tensorflow as tf
-print("Tensorflow version {}".format(tf.__version__))
-tf.compat.v1.enable_eager_execution()
-
 """
 Intel Neural Compressor has old package names: iLiT and LPOT.
 """
@@ -16,6 +11,11 @@ except:
     except:
         import ilit as inc
         print("iLiT version {}".format(inc.__version__))       
+
+import os
+import tensorflow as tf
+print("Tensorflow version {}".format(tf.__version__))
+tf.compat.v1.enable_eager_execution()
 
 import matplotlib.pyplot as plt
 import numpy as np
