@@ -39,7 +39,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '--data_path',
     type=str,
-    help="Path of COCO dataset, it contains val2017 and annotations subfolder"
+    help="Path to val2017 folder"
 )
 parser.add_argument(
     '--label_path',
@@ -93,7 +93,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 class Dataloader:
-    def __init__(self, root, batch_size=1, size=416, img_dir='val2017', \
+    def __init__(self, root, batch_size=1, size=416,  \
             anno_dir='annotations/instances_val2017.json'):
         import json
         import os
@@ -103,8 +103,8 @@ class Dataloader:
         self.batch_size = batch_size
         self.image_list = []
         self.model_image_size = (size, size)
-        img_path = os.path.join(root, img_dir)
-        anno_path = os.path.join(root, anno_dir)
+        img_path = root
+        anno_path = os.path.join(os.path.dirname(root), anno_dir)
         coco = COCO(anno_path)
         img_ids = coco.getImgIds()
         cat_ids = coco.getCatIds()
