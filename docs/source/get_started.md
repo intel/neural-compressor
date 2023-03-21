@@ -60,4 +60,6 @@ inc_bench
 ![Architecture](./imgs/INC_GUI.gif)
 
 ## Validated Models
-Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo) with the performance speedup up to 4.2x on VNNI while minimizing the accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated typical models are available [here](/docs/source/validated_model_list.md).
+Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo). 
+Over 30 pruning, knowledge distillation and model export samples are also available. 
+More details for validated typical models are available [here](/examples/README.md).
