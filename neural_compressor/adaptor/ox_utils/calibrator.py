@@ -47,6 +47,8 @@ class MinMaxCalibrator(CalibratorBase):
         """Collect calibration range."""
         if len(set([data.shape for data in datas])) != 1:
             for data in datas:
+                if data.size == 0: # pragma: no cover
+                    continue
                 self._collect_value(data)
         else:
             datas = np.asarray(datas)
@@ -252,6 +254,8 @@ class HistogramCollector():
         """collect histogram data."""
         if len(set([data.shape for data in datas])) != 1:
             for data in datas:
+                if data.size == 0: # pragma: no cover
+                    continue
                 self._collect_value(data)
         else:
             datas = np.asarray(datas)

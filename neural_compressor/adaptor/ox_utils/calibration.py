@@ -291,7 +291,7 @@ class ONNXRTAugment:
                 ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
                 calibrator.clear()
             return list(ranges_dict.keys()), ranges_dict
-        elif calib_mode == None:
+        elif calib_mode == None: # pragma: no cover
             return list(merged_dict.keys()), merged_dict
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
