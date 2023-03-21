@@ -371,10 +371,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     bf16_ops_list = tune_cfg['bf16_ops_list'] if 'bf16_ops_list' in tune_cfg.keys() else []
     if len(bf16_ops_list) > 0 and (version >= Version("1.11.0-rc1")):
-        from .utility import CpuInfo
         from ..adaptor.torch_utils.bf16_convert import Convert
-        if os.getenv('FORCE_BF16') != '1':
-            assert CpuInfo().bf16, "Please run the model in the machine in which supports the bfloat16 data type!"
         model = Convert(model, tune_cfg)
     assert is_int8_model(model), "Int8 model is not loaded."
     if checkpoint_dir is None and history_cfg is not None:
