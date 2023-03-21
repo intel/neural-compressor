@@ -200,7 +200,7 @@ If a user needs to tune the model accuracy, the user should provide either `eval
 
 `evaluation function` is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking `model` as input and returning a scalar value represented the evaluation accuracy.
 
-`evaluation dataloader` is a data loader for evaluation. It is iterable and should yield a tuple of (input, label). The input could be a object, list, tuple or dict, depending on user implementation, as well as it can be taken as model input. The label should be able to take as input of supported metrics. If this parameter is not None, user needs to specify pre-defined evaluation metrics through configuration file and should set "eval_func" paramter as None. Tuner will combine model, eval_dataloader and pre-defined metrics to run evaluation process.
+`evaluation dataloader` is a data loader for evaluation. It is iterable and should yield a tuple of (input, label). The input could be a object, list, tuple or dict, depending on user implementation, as well as it can be taken as model input. The label should be able to take as input of supported metrics. If this parameter is not None, user needs to specify pre-defined evaluation metrics through configuration file and should set "eval_func" parameter as None. Tuner will combine model, eval_dataloader and pre-defined metrics to run evaluation process.
 
 `evaluation metric` is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. `evaluation metric` must be supported by neural compressor. Please refer to [metric.md](metric.md).
 
@@ -420,7 +420,7 @@ conf = conf = PostTrainingQuantConfig(recipes=recipes)
 ```
 
 ### Specify Quantization Backend
-Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNXRuntime and MXNet. The neraul compressor will automatically determine which framework to use based on the model type, but for backend, users need to set it themselves in configure object.
+Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Runtime and MXNet. The neural compressor will automatically determine which framework to use based on the model type, but for backend, users need to set it themselves in configure object.
 
 <table class="center">
     <thead>
