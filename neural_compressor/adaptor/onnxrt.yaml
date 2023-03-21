@@ -26,7 +26,7 @@
                     'granularity': ['per_channel', 'per_tensor'],
                     'algorithm': ['minmax']
                     },
-        'activation': &uint8_asym_pertensor_minmax {
+        'activation': &uint8_asym_pertensor {
                     'dtype': ['uint8'],
                     'scheme': ['asym'],
                     'granularity': ['per_tensor'],
@@ -49,17 +49,17 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
-      'MatMul': {
+      'MatMul': &default_static_qlinear_qdq {
         'weight':   &int8_sym_pertensor_minmax {
                     'dtype': ['int8'],
                     'scheme': ['sym'],
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax']
                     }, 
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
-      'Attention': &default_static_qlinear_qdq {
+      'Attention': &default_static_qlinear_qdq_minmax {
         'weight':   *int8_sym_pertensor_minmax,
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
@@ -69,13 +69,13 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QLinear']
       },
-      'Relu': *default_static_qlinear_qdq, 
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'EmbedLayerNormalization': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
+      'Relu': *default_static_qlinear_qdq_minmax, 
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'EmbedLayerNormalization': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
     },
     'dynamic': &ref_1_6_dynamic {
@@ -113,7 +113,7 @@
       },
       'Conv': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
@@ -122,17 +122,17 @@
         'mode': ['QDQ', 'QLinear']
       },
       'MatMul': *default_static_qlinear_qdq,
-      'Attention': *default_static_qlinear_qdq,
+      'Attention': *default_static_qlinear_qdq_minmax,
       'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'EmbedLayerNormalization': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
+      'Relu': *default_static_qlinear_qdq_minmax,
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'EmbedLayerNormalization': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
+      'Pad': *default_static_qlinear_qdq_minmax,
+      'Split': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
     },
     'dynamic': *ref_1_6_dynamic 
@@ -152,7 +152,7 @@
       },
       'Conv': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
@@ -162,28 +162,28 @@
       },
       'MatMul': {
         'weight':  *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
-      'Attention': *default_static_qlinear_qdq,
+      'Attention': *default_static_qlinear_qdq_minmax,
       'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'EmbedLayerNormalization': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
+      'Relu': *default_static_qlinear_qdq_minmax,
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'EmbedLayerNormalization': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
+      'Pad': *default_static_qlinear_qdq_minmax,
+      'Split': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'Resize': *default_static_qlinear_qdq,
+      'Squeeze': *default_static_qlinear_qdq_minmax,
+      'Reshape': *default_static_qlinear_qdq_minmax,
+      'Concat': *default_static_qlinear_qdq_minmax,
+      'AveragePool': *default_static_qlinear_qdq_minmax,
+      'Unsqueeze': *default_static_qlinear_qdq_minmax,
+      'Transpose': *default_static_qlinear_qdq_minmax,
+      'Resize': *default_static_qlinear_qdq_minmax,
     },
     'dynamic': {
       'Conv': {
@@ -219,7 +219,7 @@
       },
       'Conv': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
@@ -229,7 +229,7 @@
       },
       'MatMul': {
         'weight':   *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'EmbedLayerNormalization': {
@@ -237,24 +237,24 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
-      'Attention': *default_static_qlinear_qdq,
+      'Attention': *default_static_qlinear_qdq_minmax,
       'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
+      'Relu': *default_static_qlinear_qdq_minmax,
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
+      'Pad': *default_static_qlinear_qdq_minmax,
+      'Split': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'Resize': *default_static_qlinear_qdq,
+      'Squeeze': *default_static_qlinear_qdq_minmax,
+      'Reshape': *default_static_qlinear_qdq_minmax,
+      'Concat': *default_static_qlinear_qdq_minmax,
+      'AveragePool': *default_static_qlinear_qdq_minmax,
+      'Unsqueeze': *default_static_qlinear_qdq_minmax,
+      'Transpose': *default_static_qlinear_qdq_minmax,
+      'Resize': *default_static_qlinear_qdq_minmax,
     },
     'dynamic': &ref_1_9_dynamic {
       'Conv': {
@@ -293,7 +293,7 @@
       },
       'Conv': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
@@ -303,7 +303,7 @@
       },
       'MatMul': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'EmbedLayerNormalization': {
@@ -311,24 +311,24 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
-      'Attention': *default_static_qlinear_qdq,
+      'Attention': *default_static_qlinear_qdq_minmax,
       'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
+      'Relu': *default_static_qlinear_qdq_minmax,
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
+      'Pad': *default_static_qlinear_qdq_minmax,
+      'Split': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'Resize': *default_static_qlinear_qdq,
+      'Squeeze': *default_static_qlinear_qdq_minmax,
+      'Reshape': *default_static_qlinear_qdq_minmax,
+      'Concat': *default_static_qlinear_qdq_minmax,
+      'AveragePool': *default_static_qlinear_qdq_minmax,
+      'Unsqueeze': *default_static_qlinear_qdq_minmax,
+      'Transpose': *default_static_qlinear_qdq_minmax,
+      'Resize': *default_static_qlinear_qdq_minmax,
     },
     'dynamic': *ref_1_9_dynamic
   }
@@ -347,7 +347,7 @@
       },
       'Conv': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
@@ -357,7 +357,7 @@
       },
       'MatMul': {
         'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
       'Gemm': {
@@ -370,25 +370,25 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
-      'Attention': *default_static_qlinear_qdq,
+      'Attention': *default_static_qlinear_qdq_minmax,
       'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
+      'Relu': *default_static_qlinear_qdq_minmax,
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
+      'Pad': *default_static_qlinear_qdq_minmax,
+      'Split': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
+      'Squeeze': *default_static_qlinear_qdq_minmax,
+      'Reshape': *default_static_qlinear_qdq_minmax,
+      'Concat': *default_static_qlinear_qdq_minmax,
+      'AveragePool': *default_static_qlinear_qdq_minmax,
+      'Unsqueeze': *default_static_qlinear_qdq_minmax,
+      'Transpose': *default_static_qlinear_qdq_minmax,
       'ArgMax': *default_static_qlinear,
-      'Resize': *default_static_qlinear_qdq,
+      'Resize': *default_static_qlinear_qdq_minmax,
 
     },
     'dynamic': *ref_1_9_dynamic

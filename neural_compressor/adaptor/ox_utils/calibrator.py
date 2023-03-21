@@ -57,26 +57,37 @@ class PercentileCalibrator(CalibratorBase):
     def collect_calib_data(self, datas):
         if not self.collector:
             self.collector = HistogramCollector(self.num_bins)
-        self.collector.collect_percentile(datas)
+        self.collector.collect_value(datas)
         self.compute_percentile_range(self.percentile)
 
     def compute_percentile_range(self, percentile):
         if percentile < 0 or percentile > 100:
             raise ValueError("Invalid percentile. Must be in range 0 <= percentile <= 100.")
 
-        calib_hist, calib_bin_edges = self.collector.histogram
+        calib_hist, calib_bin_edges, min_range, max_range, th = self.collector.histogram
         total = calib_hist.sum()
         cdf = np.cumsum(calib_hist / total)
-        idx = np.searchsorted(cdf, percentile / 100)
-        self._calib_min = -calib_bin_edges[idx].astype('float32')
-        self._calib_max = calib_bin_edges[idx].astype('float32')
+        percent_to_cut_one_side = (100.0 - percentile) / 200.0
+        max_idx = np.searchsorted(cdf, 1.0 - percent_to_cut_one_side)
+        min_idx = np.searchsorted(cdf, percent_to_cut_one_side)
+        self._calib_min = calib_bin_edges[min_idx].astype('float32')
+        self._calib_max = calib_bin_edges[max_idx].astype('float32')
+        if self._calib_min < min_range:
+            self._calib_min = min_range
+        if self._calib_max > max_range:
+            self._calib_max = max_range
+    
+    def clear(self):
+        self._calib_min = None
+        self._calib_max = None
+        self.collector = None
 
 @calib_registry(calib_method='kl')
-class EntropyCalibrator(CalibratorBase):
+class KLCalibrator(CalibratorBase):
     def __init__(self, 
                  num_bins=128,
                  num_quantized_bins=128):
-        super(EntropyCalibrator, self).__init__()
+        super(KLCalibrator, self).__init__()
         self.collector = None
         self.num_bins = num_bins
         self.num_quantized_bins = num_quantized_bins
@@ -84,7 +95,7 @@ class EntropyCalibrator(CalibratorBase):
     def collect_calib_data(self, datas):
         if not self.collector:
             self.collector = HistogramCollector(self.num_bins)
-        self.collector.collect_entropy(datas)
+        self.collector.collect_value(datas)
         self.compute_entropy_range()
 
     def compute_entropy_range(self):
@@ -172,43 +183,18 @@ class EntropyCalibrator(CalibratorBase):
         if optimal_threshold[1] > max_value:
             optimal_threshold = (optimal_threshold[0], max_value)
         return optimal_threshold[0], optimal_threshold[1]
+    
+    def clear(self):
+        self._calib_min = None
+        self._calib_max = None
+        self.collector = None
         
 class HistogramCollector():
     def __init__(self, num_bins=2048):
         self._num_bins = num_bins
         self._histogram = None
     
-    def collect_percentile(self, data):
-        data = np.asarray(data)
-        data = data.flatten()
-        assert data.size > 0, "collected intermediate data size"\
-        "should not be 0, please check augmented_model"
-
-        data = np.abs(data)
-        max_range = np.max(data)
-        min_range = np.min(data)
-        
-        if self._histogram is None:
-            # first time it uses num_bins to compute histogram.
-            width = max_range / self._num_bins
-            bin_type = np.result_type(min_range, max_range, data)
-            if np.issubdtype(bin_type, np.integer):
-                bin_type = np.result_type(bin_type, float)
-            calib_bin_edges = np.linspace(min_range, max_range, self._num_bins + 1, endpoint=True, dtype=bin_type)
-            calib_hist, calib_bin_edges = np.histogram(data, bins=calib_bin_edges)
-            self._histogram = (calib_hist, calib_bin_edges)
-        else:
-            calib_hist, calib_bin_edges = self._histogram
-            width = calib_bin_edges[1] - calib_bin_edges[0]
-            if max_range > calib_bin_edges[-1]:
-                new_calib_bin_edges = np.arange(calib_bin_edges[-1] + width, max_range + width, width)
-                calib_bin_edges = np.hstack((calib_bin_edges, new_calib_bin_edges))
-            hist, calib_bin_edges = np.histogram(data, bins=calib_bin_edges)
-            hist[:len(calib_hist)] += calib_hist
-            calib_hist = hist
-            self._histogram = (calib_hist, calib_bin_edges)
-    
-    def collect_entropy(self, data):
+    def collect_value(self, data):
         data = np.asarray(data)
         data = data.flatten()
         assert data.size > 0, "collected intermediate data size"\
