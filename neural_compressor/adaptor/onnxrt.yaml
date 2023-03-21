@@ -36,7 +36,12 @@
       },
       'FusedConv': {
         'weight':   *int8_sym_perchanneltensor_minmax, #'QDQ': *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
+        'activation': &uint8_asym_pertensor_minmax {
+                    'dtype': ['uint8'],
+                    'scheme': ['asym'],
+                    'granularity': ['per_tensor'],
+                    'algorithm': ['minmax']
+                    }
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
