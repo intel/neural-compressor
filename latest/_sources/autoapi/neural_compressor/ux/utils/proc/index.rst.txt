@@ -40,16 +40,16 @@ Classes
 
       Info contains information about process arguments start and stop time.
 
-      Example::
+      .. rubric:: Example
 
-          "cmd": [
-              "docker",
-              "pull",
-              "hub.docker.intel.com/aibt_tensorflow/centos-7_3_mkldnn_tensorflow:latest"
-          ],
-          "output_path": "111224/stages/pull_image/0c750a01-90e0-4aa8-99fe-a194d55a2046.txt",
-          "time_start": "2018-05-17T14:47:22.352502",
-          "time_stop": "2018-05-17T14:47:25.110410"
+      "cmd": [
+          "docker",
+          "pull",
+          "hub.docker.intel.com/aibt_tensorflow/centos-7_3_mkldnn_tensorflow:latest"
+      ],
+      "output_path": "111224/stages/pull_image/0c750a01-90e0-4aa8-99fe-a194d55a2046.txt",
+      "time_start": "2018-05-17T14:47:22.352502",
+      "time_stop": "2018-05-17T14:47:25.110410"
 
       :return: Process information
 
