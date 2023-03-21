@@ -3,6 +3,7 @@ import numpy as np
 CALIBRATOR = {}
 
 def calib_registry(calib_method):
+    """The class decorator used to register all Calibrator subclasses."""
     def decorator_calib(cls):
         assert cls.__name__.endswith(
             'Calibrator'), "The name of subclass of Calibrator should end with \'Calibrator\' substring."
@@ -13,27 +14,37 @@ def calib_registry(calib_method):
     return decorator_calib
 
 class CalibratorBase:
+    """Base calibrator class."""
+
     def __init__(self):
+        """Initialize base calibrator class."""
         self._calib_min = None
         self._calib_max = None
 
     def collect(self, datas):
+        """Collect calibration range."""
         self.collect_calib_data(datas)
 
     def clear(self):
+        """Clear calibration range."""
         self._calib_min = None
         self._calib_max = None
     
     @property
     def calib_range(self):
+        """Get calibration range value."""
         return self._calib_min, self._calib_max
 
 @calib_registry(calib_method='minmax')
 class MinMaxCalibrator(CalibratorBase):
+    """MinMax calibrator class."""
+
     def __init__(self):
+        """Initialize minmax calibrator class."""
         super(MinMaxCalibrator, self).__init__()
     
     def collect_calib_data(self, datas):
+        """Collect calibration range."""
         if len(set([data.shape for data in datas])) != 1:
             for data in datas:
                 self._collect_value(data)
@@ -45,6 +56,7 @@ class MinMaxCalibrator(CalibratorBase):
             self._collect_value(datas)
     
     def _collect_value(self, data):
+        """Collect min/max value."""
         data = np.asarray(data)
         local_min = np.min(data)
         local_max = np.max(data)
@@ -57,21 +69,32 @@ class MinMaxCalibrator(CalibratorBase):
 
 @calib_registry(calib_method='percentile')
 class PercentileCalibrator(CalibratorBase):
+    """Percentile calibrator class."""
+
     def __init__(self, 
                  num_bins=2048,
                  percentile=99.999):
+        """Initialize percentile calibrator class.
+
+        Args:
+            num_bins (int, optional): number of bins to create a new histogram 
+                                      for collecting tensor values. Defaults to 2048.
+            percentile (float, optional): A float number between [0, 100]. Defaults to 99.999.
+        """
         super(PercentileCalibrator, self).__init__()
         self.collector = None
         self.num_bins = num_bins
         self.percentile = percentile
 
     def collect_calib_data(self, datas):
+        """Collect calibration range."""
         if not self.collector:
             self.collector = HistogramCollector(self.num_bins)
         self.collector.collect_data(datas)
         self.compute_percentile_range(self.percentile)
 
     def compute_percentile_range(self, percentile):
+        """Compute percentile range."""
         if percentile < 0 or percentile > 100:
             raise ValueError("Invalid percentile. Must be in range 0 <= percentile <= 100.")
 
@@ -89,38 +112,55 @@ class PercentileCalibrator(CalibratorBase):
             self._calib_max = max_range
     
     def clear(self):
+        """Clear calibration range."""
         self._calib_min = None
         self._calib_max = None
         self.collector = None
 
 @calib_registry(calib_method='kl')
 class KLCalibrator(CalibratorBase):
+    """KL calibrator class."""
+
     def __init__(self, 
                  num_bins=128,
                  num_quantized_bins=128):
+        """Initialize kl calibrator class.
+
+        Args:
+            num_bins (int, optional):number of bins to create a new histogram 
+                                     for collecting tensor values. Defaults to 128.
+            num_quantized_bins (int, optional): number of quantized bins. Defaults to 128.
+        """
         super(KLCalibrator, self).__init__()
         self.collector = None
         self.num_bins = num_bins
         self.num_quantized_bins = num_quantized_bins
     
     def collect_calib_data(self, datas):
+        """Collect calibration range."""
         if not self.collector:
             self.collector = HistogramCollector(self.num_bins)
         self.collector.collect_data(datas)
-        self.compute_entropy_range()
+        self.compute_kl_range()
 
-    def compute_entropy_range(self):
-        # histogram_dict = self.histogram_dict
+    def compute_kl_range(self):
+        """Compute kl range."""
         histogram = self.collector.histogram
-        self._calib_min, self._calib_max = self.get_entropy_threshold(histogram, self.num_quantized_bins)
+        self._calib_min, self._calib_max = self.get_kl_threshold(histogram, self.num_quantized_bins)
 
-    def get_entropy_threshold(self, histogram, num_quantized_bins):
-        """Given a dataset, find the optimal threshold for quantizing it.
-        The reference distribution is `q`, and the candidate distribution is `p`.
-        `q` is a truncated version of the original distribution.
+    def get_kl_threshold(self, histogram, num_quantized_bins):
+        """Compute kl threshold.
+
         Ref: 
         https://github.com//apache/incubator-mxnet/blob/master/python/mxnet/contrib/quantization.py
         https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py
+
+        Args:
+            histogram (tuple): hist, hist_edges, min, max and threshold
+            num_quantized_bins (int): number of quantized bins.
+
+        Returns:
+            float: optimal threshold
         """
         import copy
         from scipy.stats import entropy
@@ -201,11 +241,15 @@ class KLCalibrator(CalibratorBase):
         self.collector = None
         
 class HistogramCollector():
+    """Histogram collctor class."""
+
     def __init__(self, num_bins=2048):
+        """Initialize histogram collctor."""
         self._num_bins = num_bins
         self._histogram = None
     
     def collect_data(self, datas):
+        """collect histogram data."""
         if len(set([data.shape for data in datas])) != 1:
             for data in datas:
                 self._collect_value(data)
@@ -217,6 +261,7 @@ class HistogramCollector():
             self._collect_value(datas)
     
     def _collect_value(self, data):
+        """collect value."""
         data = np.asarray(data)
         min_range = np.min(data)
         max_range = np.max(data)
@@ -234,7 +279,7 @@ class HistogramCollector():
 
                 
     def combine_histogram(self, old_hist, data_arr, new_min, new_max, new_th):
-
+        """Combine histogram."""
         (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
 
         if new_th <= old_th:
@@ -271,32 +316,36 @@ class HistogramCollector():
                 new_th,
             )
 
-    def reset(self):
-        """Reset the collected histogram"""
-        self._histogram = {}
-
     @property
     def histogram(self):
+        """Get histogram."""
         return self._histogram
 
 
 def smooth_distribution(p, eps=0.0001):
-    """Given a discrete distribution (may have not been normalized to 1),
+    """Smooth distribution.
+
+    Given a discrete distribution (may have not been normalized to 1),
     smooth it by replacing zeros with eps multiplied by a scaling factor
     and taking the corresponding amount off the non-zero values.
     Ref: 
-    http://web.engr.illinois.edu/~hanj/cs412/bk3/KL-divergence.pdf
+    http://hanj.cs.illinois.edu/cs412/bk3/KL-divergence.pdf
     https://github.com//apache/incubator-mxnet/blob/master/python/mxnet/contrib/quantization.py
     https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py
-    """
 
+    Args:
+        p (array): distribution array
+        eps (float, optional): a small probability. Defaults to 0.0001.
+
+    Returns:
+        array: smoothed distribution
+    """
     is_zeros = (p == 0).astype(np.float32)
     is_nonzeros = (p != 0).astype(np.float32)
     n_zeros = is_zeros.sum()
     n_nonzeros = p.size - n_zeros
 
     if not n_nonzeros:
-        # raise ValueError('The discrete probability distribution is malformed. All entries are 0.')
         return -1
     eps1 = eps * float(n_zeros) / float(n_nonzeros)
     assert eps1 < 1.0, "n_zeros=%d, n_nonzeros=%d, eps1=%f" % (
