@@ -48,4 +48,8 @@ we plan to contribute features into Olive with two phases.
 
 3. Add INC distillation into Olive
 
+4. Add INC accuracy diagnostic and debugging into Olive
+
+5. Add INC visualization into Olive
+
 Please note this proposal is for high level direction alignment. welcome any comments or feedbacks on that.
