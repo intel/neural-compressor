@@ -41,7 +41,7 @@
                     'scheme': ['asym'],
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax']
-                    }
+                    },
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
