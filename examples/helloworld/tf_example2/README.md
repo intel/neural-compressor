@@ -77,7 +77,7 @@ This customized metric will calculate accuracy.
 ```
 ### 3. Use the customized data loader and metric for quantization 
 ```python
-dataset = Dataset()
+    dataset = Dataset()
     dataloader = DataLoader(framework='tensorflow', dataset=dataset)
     config = PostTrainingQuantConfig(backend='itex')
     q_model = fit(
