@@ -477,8 +477,7 @@ def main():
         from neural_compressor.utils.constant import FP32
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         config = PostTrainingQuantConfig(approach='static',
-                                         quant_format=model_args.quant_format,
-                                         recipes={"ffn_matmul_quantization": False})
+                                         quant_format=model_args.quant_format)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
