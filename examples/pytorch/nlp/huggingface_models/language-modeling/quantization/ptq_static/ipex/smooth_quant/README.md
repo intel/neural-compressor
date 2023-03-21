@@ -1,5 +1,5 @@
 # Introduction
-This example is to demonstrate the accuracy improvement introduced by [SmoothQuant](https://arxiv.org/pdf/2211.05100.pdf)
+This example is to demonstrate the accuracy improvement introduced by [SmoothQuant](https://arxiv.org/pdf/2211.10438.pdf)
 for int8 models. [Lambada](https://huggingface.co/datasets/lambada) train split is used for calibration (unless specified) and validation is used for evaluation.
 
 # 1. Environment

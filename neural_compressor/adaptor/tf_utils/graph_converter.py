@@ -29,7 +29,7 @@ from tensorflow.python.platform import gfile
 from neural_compressor.utils.utility import get_all_fp32_data
 from neural_compressor.utils.utility import get_tensor_histogram
 from neural_compressor.utils.utility import combine_histogram
-from neural_compressor.utils.utility import CaptureOutputToFile
+from neural_compressor.utils.utility import CaptureOutputToFile, CpuInfo
 from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.model import Model
 from .transform_graph.insert_logging import InsertLogging
@@ -361,7 +361,8 @@ class GraphConverter:
         if self.exclude_node_names:
             self.bf16_ops.extend(self.exclude_node_names)
 
-        if len(self.bf16_ops) > 0 and (self.use_bf16 or self.performance_only):
+        if len(self.bf16_ops) > 0 and (self.use_bf16 or self.performance_only) and \
+           (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'):
             model = self.bf16_convert()
 
         if self.new_api:

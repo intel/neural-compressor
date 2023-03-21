@@ -97,7 +97,7 @@ bash run_benchmark.sh --topology=topology_name --mode=performance --input_model=
   <tr>
     <td>bert_large_RTE</td>
     <td><a href="https://huggingface.co/yoshitomo-matsubara/bert-large-uncased-rte">yoshitomo-matsubara/bert-large-uncased-rte</a></td>
-    <td>rte</a></td>
+    <td>rte</td>
   </tr>
   <tr>
     <td>xlm-roberta-base_MRPC</td>

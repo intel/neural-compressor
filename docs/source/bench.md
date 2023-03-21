@@ -129,7 +129,7 @@ First you have to choose the model path. When it is chosen, in most cases all ot
 For several model types there will be a button available ![Show graph](imgs/bench/show_graph_button.png "Show graph") in the project wizard. It is also possible to see the graph in Diagnosis tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.
 
 
-![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
+![Resnet model graph](imgs/bench/graph-resnet.jpg "Resnet model graph").
 
 # Project List
 On the left hand side there is a panel with list of created projects. When you click on the project name, you can see its details. "Create new project" button navigates to new project wizard pop-up described in previous section.
@@ -219,9 +219,12 @@ Click "Download .csv file" button to get profiling data in .csv file.
 # Diagnosis Tab
 Diagnosis tab offers convenient debug information for optimizations with easy way for generating new one with requested variations.
 
-To get OP list you need to execute quantization optimization and select optimized model on left hand side. In OP table you can see list of OPs with MSE and min/max activation values. Selecting one of OP in table highlights its position in graph. Configuration for currently selected OP can be set in section under OP table.
+To get OP list you need to execute quantization optimization and select optimized model on left hand side. In OP table you can see list of OPs with MSE and min/max activation values. Selecting one of OP in table highlights its position in graph. 
 
-![Diagnosis-tab](imgs/bench/diagnosis-tab.png "Diagnosis-tab")
+![Diagnosis-tab](imgs/bench/diagnosis-tab.jpg "Diagnosis-tab")
+
+Configuration for currently selected OP can be set in section under graph and OP table. Activation and weights histograms can be generated in this section as shown in the picture below.
+![Diagnosis-histogram](imgs/bench/histogram.jpg "Histogram")
 
 You can set model wise parameters that apply to whole model by clicking button with "Model wise". When you set specific configuration you can view summary and generate new optimization config.
 
