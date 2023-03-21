@@ -126,6 +126,16 @@ class ConservativeTuneStrategy(TuneStrategy):
         return sorted_items
 
     def initialize_tune_cfg(self):
+        """Init the tuning config.
+
+        Initialize the tuning config for conservative tuning.
+
+        Returns:
+            op_item_dtype_dict (OrderedDict): key is (op_name, op_type); value is quantization mode.
+            quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
+            initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
+        
+        """
         from .utils.constant import auto_query_order_o0 as query_order
         from .utils.tuning_space import initial_tuning_cfg_with_quant_mode
         
@@ -157,20 +167,12 @@ class ConservativeTuneStrategy(TuneStrategy):
         str, OrderedDict[str, List[Tuple[TuningItem, str]]]]:
         """Create the op queue to be quantized.
         
-        --------------------------------------------------------------------------
-        | Level 1 |         bf16       |         fp16       |  static/dynamic    |
-        | Level 2 | conv2d, linear, ...| conv2d, linear, ...| conv2d, linear, ...|
-        
         Args:
             op_type_priority: The optype list with priority.
             
         Returns:
             The op item pool to convert into lower precision.
             quant_items_pool(OrderDict):
-                bf16:
-                    OrderDict:
-                        conv2d: [(TuningItem, bf16), (TuningItem, bf16)]
-                        linear: [(TuningItem, bf16), (TuningItem, bf16)]
                 int8:
                     OrderDict:
                         # (TuningItem, quant_mode)
@@ -180,12 +182,6 @@ class ConservativeTuneStrategy(TuneStrategy):
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items
         # Add all quantized pair into queue
         quant_items_pool = COrderedDict()
-        # # collect and sorted all ops that support bf16 and fp16
-        # for quant_mode in  ['bf16', 'fp16']:
-        #     if quant_mode in quant_mode_wise_items:
-        #         op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
-        #         op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-        #         quant_items_pool[quant_mode] = op_item_pairs
         op_item_pairs = []
         quant_ops_name_set = set()
         # collect and sorted all ops that support int8
