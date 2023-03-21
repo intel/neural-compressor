@@ -31,5 +31,5 @@ static_query_order = ['static', 'bf16', 'fp16', 'fp32']
 dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
 
 
-FALLBACK_RECIPES_SET = {'first_conv_or_matmul_quantization', 'last_conv_or_matmul_quantization' \
+FALLBACK_RECIPES_SET = {'first_conv_or_matmul_quantization', 'last_conv_or_matmul_quantization', \
     'pre_post_process_quantization'}

@@ -139,7 +139,12 @@ class ONNXRTAugment:
                              (node.name in self.white_nodes)
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    tensors_to_dump.update(node.input)
+                    for inp in node.input:
+                        initializer = find_by_name(inp, model.graph.initializer)
+                        if initializer is None:
+                            tensors_to_dump.update([inp])
+                        if inp in [input.name for input in model.graph.input]:
+                            tensors_to_dump.update([inp])
                     tensors_to_dump.update(node.output)
                 elif weight_only:
                     for input in node.input:

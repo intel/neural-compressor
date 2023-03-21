@@ -34,15 +34,26 @@ class MinMaxCalibrator(CalibratorBase):
         super(MinMaxCalibrator, self).__init__()
     
     def collect_calib_data(self, datas):
-        for data in datas:
-            local_min = np.min(data)
-            local_max = np.max(data)
-            if self._calib_min is None and self._calib_max is None:
-                self._calib_min = local_min
-                self._calib_max = local_max
-            else:
-                self._calib_min = np.minimum(self._calib_min, local_min)
-                self._calib_max = np.maximum(self._calib_max, local_max)
+        if len(set([data.shape for data in datas])) != 1:
+            for data in datas:
+                self._collect_value(data)
+        else:
+            datas = np.asarray(datas)
+            datas = datas.flatten()
+            assert datas.size > 0, "collected intermediate data size"\
+            "should not be 0, please check augmented_model"
+            self._collect_value(datas)
+    
+    def _collect_value(self, data):
+        data = np.asarray(data)
+        local_min = np.min(data)
+        local_max = np.max(data)
+        if self._calib_min is None and self._calib_max is None:
+            self._calib_min = local_min
+            self._calib_max = local_max
+        else:
+            self._calib_min = np.minimum(self._calib_min, local_min)
+            self._calib_max = np.maximum(self._calib_max, local_max)
 
 @calib_registry(calib_method='percentile')
 class PercentileCalibrator(CalibratorBase):
@@ -57,7 +68,7 @@ class PercentileCalibrator(CalibratorBase):
     def collect_calib_data(self, datas):
         if not self.collector:
             self.collector = HistogramCollector(self.num_bins)
-        self.collector.collect_value(datas)
+        self.collector.collect_data(datas)
         self.compute_percentile_range(self.percentile)
 
     def compute_percentile_range(self, percentile):
@@ -95,7 +106,7 @@ class KLCalibrator(CalibratorBase):
     def collect_calib_data(self, datas):
         if not self.collector:
             self.collector = HistogramCollector(self.num_bins)
-        self.collector.collect_value(datas)
+        self.collector.collect_data(datas)
         self.compute_entropy_range()
 
     def compute_entropy_range(self):
@@ -194,12 +205,19 @@ class HistogramCollector():
         self._num_bins = num_bins
         self._histogram = None
     
-    def collect_value(self, data):
+    def collect_data(self, datas):
+        if len(set([data.shape for data in datas])) != 1:
+            for data in datas:
+                self._collect_value(data)
+        else:
+            datas = np.asarray(datas)
+            datas = datas.flatten()
+            assert datas.size > 0, "collected intermediate data size"\
+            "should not be 0, please check augmented_model"
+            self._collect_value(datas)
+    
+    def _collect_value(self, data):
         data = np.asarray(data)
-        data = data.flatten()
-        assert data.size > 0, "collected intermediate data size"\
-        "should not be 0, please check augmented_model"
-
         min_range = np.min(data)
         max_range = np.max(data)
 
@@ -213,6 +231,7 @@ class HistogramCollector():
                                                     min_range, 
                                                     max_range, 
                                                     th)
+
                 
     def combine_histogram(self, old_hist, data_arr, new_min, new_max, new_th):
 
