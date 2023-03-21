@@ -214,17 +214,21 @@ class KerasAdaptor(Adaptor):
                         fuse_layers.append(layer)
                 elif len(layer['inbound_nodes']):
                     new_bound_nodes = []
-                    for bound_node in layer['inbound_nodes'][0]:
-                        if bound_node[0] in self.bn_weights.keys():
-                            bn_inbound_node = node_map[bound_node[0]]['inbound_nodes'][0][0]
-                            if bn_inbound_node[0] in self.conv_weights.keys():
-                                new_bound_nodes.append(bn_inbound_node)
+                    # OpLambda node will have different bound node
+                    if layer['class_name'] in ['TFOpLambda', 'SlicingOpLambda']:
+                        fuse_layers.append(layer)
+                    else:
+                        for bound_node in layer['inbound_nodes'][0]:
+                            if bound_node[0] in self.bn_weights.keys():
+                                bn_inbound_node = node_map[bound_node[0]]['inbound_nodes'][0][0]
+                                if bn_inbound_node[0] in self.conv_weights.keys():
+                                    new_bound_nodes.append(bn_inbound_node)
+                                else:
+                                    new_bound_nodes.append(bound_node)
                             else:
                                 new_bound_nodes.append(bound_node)
-                        else:
-                            new_bound_nodes.append(bound_node)
-                    layer['inbound_nodes'] = [new_bound_nodes]
-                    fuse_layers.append(layer)
+                        layer['inbound_nodes'] = [new_bound_nodes]
+                        fuse_layers.append(layer)
                 else:
                     fuse_layers.append(layer)
             else:
