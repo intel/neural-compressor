@@ -373,7 +373,8 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     if len(bf16_ops_list) > 0 and (version >= Version("1.11.0-rc1")):
         from ..adaptor.torch_utils.bf16_convert import Convert
         model = Convert(model, tune_cfg)
-    assert is_int8_model(model), "Int8 model is not loaded."
+    if not is_int8_model(model):   # pragma: no cover
+        logger.warning("The loaded model is not a int8 model.")
     if checkpoint_dir is None and history_cfg is not None:
         _set_activation_scale_zeropoint(model, history_cfg)
     else:
