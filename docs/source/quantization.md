@@ -415,7 +415,7 @@ recipes = {
     },
     "fast_bias_correction": False,
 }
-conf = conf = PostTrainingQuantConfig(recipes=recipes)
+conf = PostTrainingQuantConfig(recipes=recipes)
 
 ```
 
@@ -484,7 +484,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
 
 Example of configure for backend:
 ```python
-conf = conf = PostTrainingQuantConfig(backend="IPEX")
+conf = PostTrainingQuantConfig(backend="IPEX")
 
 ```
 
