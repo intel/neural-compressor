@@ -201,7 +201,7 @@ or specify different port that is already opened, for example 8080:</p>
 <section id="display-model-graph">
 <h2>Display Model Graph<a class="headerlink" href="#display-model-graph" title="Permalink to this heading"></a></h2>
 <p>For several model types there will be a button available <img alt="Show graph" src="../../_images/show_graph_button.png" /> in the project wizard. It is also possible to see the graph in Diagnosis tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.</p>
-<p><img alt="Bert model graph" src="../../_images/graph_bert.png" />.</p>
+<p><img alt="Resnet model graph" src="../../_images/graph-resnet.jpg" />.</p>
 </section>
 </section>
 <section id="project-list">
@@ -302,8 +302,10 @@ Click “Download .csv file” button to get profiling data in .csv file.
 <section id="diagnosis-tab">
 <h1>Diagnosis Tab<a class="headerlink" href="#diagnosis-tab" title="Permalink to this heading"></a></h1>
 <p>Diagnosis tab offers convenient debug information for optimizations with easy way for generating new one with requested variations.</p>
-<p>To get OP list you need to execute quantization optimization and select optimized model on left hand side. In OP table you can see list of OPs with MSE and min/max activation values. Selecting one of OP in table highlights its position in graph. Configuration for currently selected OP can be set in section under OP table.</p>
-<p><img alt="Diagnosis-tab" src="../../_images/diagnosis-tab.png" /></p>
+<p>To get OP list you need to execute quantization optimization and select optimized model on left hand side. In OP table you can see list of OPs with MSE and min/max activation values. Selecting one of OP in table highlights its position in graph.</p>
+<p><img alt="Diagnosis-tab" src="../../_images/diagnosis-tab.jpg" /></p>
+<p>Configuration for currently selected OP can be set in section under graph and OP table. Activation and weights histograms can be generated in this section as shown in the picture below.
+<img alt="Diagnosis-histogram" src="../../_images/histogram.jpg" /></p>
 <p>You can set model wise parameters that apply to whole model by clicking button with “Model wise”. When you set specific configuration you can view summary and generate new optimization config.</p>
 <p><img alt="Diagnosis-actions" src="../../_images/diagnosis-actions.png" /></p>
 <p>Model wise configuration provides separate settings for weights and activations.
