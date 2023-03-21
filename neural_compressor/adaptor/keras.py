@@ -119,8 +119,6 @@ class KerasAdaptor(Adaptor):
     def _pre_optimize(self, model):
         model = self._check_quantize_format(model)
         model = self._fuse_bn(model)
-        #(TODO) change to package fuse bn
-        # model = self._fuse_bn_from_package(model)
         return model
 
     def _check_quantize_format(self, model):
@@ -146,35 +144,57 @@ class KerasAdaptor(Adaptor):
                     self.conv_format[layer['name']] = 's8'
         return model
 
-    # def _fuse_bn_from_package(self, model):
-    #     from batch_normalization_folding.folder import fold_batchnormalization_layers
-    #     fused_model, output_str=fold_batchnormalization_layers(model, True)
-    #     return fused_model
-
     def _fuse_bn(self, model):
         json_model = copy.deepcopy(json.loads(model.to_json()))
         config = json_model["config"]
         fp32_layers = config["layers"]
-        def fuse_conv_bn(conv_weight, bn_weight, eps=1.0e-5):
-            gamma = bn_weight[0].reshape(1, 1, 1, bn_weight[0].shape[0])
-            beta = bn_weight[1]
-            mean = bn_weight[2]
-            var = bn_weight[3].reshape(1, 1, 1, bn_weight[3].shape[0])
-            scale_value = gamma / np.sqrt(var + eps)
-            weight = conv_weight[0] * scale_value
-            if len(conv_weight) == 1:
-                bias = np.zeros_like(mean)
+        def fuse_conv_bn(conv_weight, bn_weight, conv_type='Conv2D', eps=1.0e-5):
+            assert conv_type in ['Conv2D', 'DepthwiseConv2D', 'SeparableConv2D'], \
+                    'only support Conv2D, DepthwiseConv2D, SeparableConv2D...'
+            if len(bn_weight) > 3:
+                if conv_type == 'DepthwiseConv2D':
+                    gamma = bn_weight[0].reshape(1, 1, bn_weight[0].shape[0], 1) 
+                    var = bn_weight[3].reshape(1, 1, bn_weight[3].shape[0], 1)
+                else:
+                    gamma = bn_weight[0].reshape(1, 1, 1, bn_weight[0].shape[0])
+                    var = bn_weight[3].reshape(1, 1, 1, bn_weight[3].shape[0])
+                beta = bn_weight[1]
+                mean = bn_weight[2]
             else:
-                bias = conv_weight[1]
-            bias = beta + (bias - mean) * scale_value
-            bias = bias.reshape(-1)
-            return [weight, bias]
+                gamma = 1.
+                beta = bn_weight[0]
+                mean = bn_weight[1]
+                if conv_type == 'DepthwiseConv2D':
+                    var = bn_weight[2].reshape(1, 1, bn_weight[2].shape[0], 1)
+                else:
+                    var = bn_weight[2].reshape(1, 1, 1, bn_weight[2].shape[0])
 
-        bn_node_map = {}
+            if len(conv_weight) == 1:
+                weight = conv_weight[0]
+                bias = np.zeros_like(beta)
+            elif len(conv_weight) == 2 and conv_type == 'SeparableConv2D':
+                depth_weight = conv_weight[0]
+                weight = conv_weight[1]
+                bias = np.zeros_like(beta)
+            elif len(conv_weight) == 2 and conv_type != 'SeparableConv2D':
+                weight = conv_weight[0]
+                bias = conv_weight[1]
+            elif len(conv_weight) == 3:
+                depth_weight = conv_weight[0]
+                weight = conv_weight[1]
+                bias = conv_weight[2]
+            scale_value = gamma / np.sqrt(var + eps)
+            weight = weight * scale_value
+            bias = beta + (bias - mean) * scale_value.reshape(-1)
+            bias = bias.reshape(-1)
+            return [depth_weight, weight, bias] if conv_type == 'SeparableConv2D' \
+                else [weight, bias] 
+
+        node_map = {}
         for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
             layer_config = layer['config']
-            if layer['class_name'] in ['BatchNormalization'] and 'inbound_nodes' in layer:
-                bn_node_map[layer['name']] = layer
+            if 'inbound_nodes' in layer:
+                node_map[layer['name']] = layer
 
         fuse_layers = []
         fold_conv = []
@@ -182,23 +202,21 @@ class KerasAdaptor(Adaptor):
             layer_config = layer['config']
             if 'inbound_nodes' in layer: 
                 if layer['class_name'] in ['BatchNormalization']:
-                    bn_inbound_node = bn_node_map[layer_config['name']]['inbound_nodes'][0][0]
+                    bn_inbound_node = node_map[layer_config['name']]['inbound_nodes'][0][0]
                     if bn_inbound_node[0] in self.conv_weights.keys():
                         conv_weight = self.conv_weights[bn_inbound_node[0]]
+                        conv_layer = node_map[bn_inbound_node[0]]
                         bn_weight = self.bn_weights[layer_config['name']]
-                        if len(bn_weight) > 3:
-                            self.layer_weights[bn_inbound_node[0]] = \
-                                fuse_conv_bn(conv_weight, bn_weight) 
-                            fold_conv.append(bn_inbound_node[0])
-                        else:
-                            fuse_layers.append(layer)
+                        self.layer_weights[bn_inbound_node[0]] = fuse_conv_bn(
+                            conv_weight, bn_weight, conv_layer['class_name'], layer['config']['epsilon'])
+                        fold_conv.append(bn_inbound_node[0])
                     else:
                         fuse_layers.append(layer)
                 elif len(layer['inbound_nodes']):
                     new_bound_nodes = []
                     for bound_node in layer['inbound_nodes'][0]:
                         if bound_node[0] in self.bn_weights.keys():
-                            bn_inbound_node = bn_node_map[bound_node[0]]['inbound_nodes'][0][0]
+                            bn_inbound_node = node_map[bound_node[0]]['inbound_nodes'][0][0]
                             if bn_inbound_node[0] in self.conv_weights.keys():
                                 new_bound_nodes.append(bn_inbound_node)
                             else:
@@ -215,7 +233,9 @@ class KerasAdaptor(Adaptor):
                     conv_name = fp32_layers[idx - 1]['config']['name']
                     conv_weight = self.conv_weights[conv_name]
                     bn_weight = self.bn_weights[layer_config['name']]
-                    self.layer_weights[conv_name] = fuse_conv_bn(conv_weight, bn_weight)
+                    conv_type = fp32_layers[idx - 1]['class_name']
+                    self.layer_weights[conv_name] = fuse_conv_bn(
+                        conv_weight, bn_weight, conv_type, layer['config']['epsilon'])
                     fold_conv.append(conv_name)
                 else:
                     fuse_layers.append(layer)
@@ -223,7 +243,8 @@ class KerasAdaptor(Adaptor):
         # bn folding will have a shift bias
         for idx, layer in enumerate(fuse_layers):
             layer_config = layer['config']
-            if layer['class_name'] in ['Conv2D'] and layer_config['name'] in fold_conv:
+            if layer['class_name'] in ['Conv2D', 'DepthwiseConv2D', 'SeparableConv2D'] and \
+                    layer_config['name'] in fold_conv:
                 layer_config['use_bias'] = True
             
         json_model['config']['layers'] = fuse_layers
@@ -500,7 +521,9 @@ class KerasAdaptor(Adaptor):
         self.layer_weights = {}
         for layer in keras_object.layers:
             if layer.get_weights():
-                if isinstance(layer, tf.keras.layers.Conv2D):
+                if isinstance(layer, tf.keras.layers.Conv2D) or \
+                   isinstance(layer, tf.keras.layers.DepthwiseConv2D) or \
+                   isinstance(layer, tf.keras.layers.SeparableConv2D):
                     self.conv_weights[layer.name] = copy.deepcopy(layer.get_weights())
                 elif isinstance(layer, tf.keras.layers.BatchNormalization):
                     self.bn_weights[layer.name] = copy.deepcopy(layer.get_weights())
@@ -579,7 +602,35 @@ class KerasAdaptor(Adaptor):
                  ]
                }
         '''
-        pass
+        assert inspect_type in ['weight', 'activation', 'all'], \
+                'Inspect type only support weight, activation or all'
+        from keras import backend as K
+        tensor_out = {}
+        inp = model.input
+        outputs = [(layer.name, layer.output) for layer in model.layers]
+        outputs = [(name, out) for (name, out) in outputs if name in op_list] if len(op_list) else outputs
+        if inspect_type == 'weight' or inspect_type == 'all':
+            weights = [(layer.name, layer.get_weights()) for layer in model.layers if layer.get_weights()]
+            weights = [(name, wei) for (name, wei) in weights if name in op_list] if len(op_list) else weights
+            tensor_out['weight'] = weights
+
+        functors = [(name, K.function([inp], [out])) for (name, out) in outputs]
+        iterations = max(iteration_list) if iteration_list is not None else -1
+        observer_dict = {}
+        ret = {}
+        if inspect_type == 'activation' or inspect_type == 'all':
+            activation_list = []
+            for idx, (inputs, labels) in enumerate(dataloader):
+                layer_outs = [(name, func([inputs])) for (name, func) in functors]
+                iter_map = {}
+                for (name, out_list) in layer_outs:
+                    iter_map[name] = dict([(name+':'+str(i), out) for i, out in enumerate(out_list)])
+                activation_list.append(iter_map)
+                if idx == iterations:
+                    break
+            tensor_out['activation'] = [acti for idx, acti in enumerate(activation_list) if idx in iteration_list]
+
+        return tensor_out
 
     def set_tensor(self, model, tensor_dict):
         '''The function is used by tune strategy class for setting tensor back to model.
