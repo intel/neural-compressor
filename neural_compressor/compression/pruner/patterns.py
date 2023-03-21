@@ -17,9 +17,11 @@
 # limitations under the License.
 
 from .utils import torch
+from .utils import nn
+import nn.functional as F
 from .utils import logger
 from collections import namedtuple
-import torch.nn.functional as F
+from functools import partial
 
 PATTERNS = {}
 
@@ -725,10 +727,11 @@ class PatternNxM(BasePattern):
             module.register_parameter("block_mask", block_mask)
             def forward(self, input): # only for linear
                 assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
-                block_size = [self.weight.shape[0]//self.block_mask.shape[0], self.weight.shape[1]//self.block_mask.shape[1]]
+                block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
+                        self.weight.shape[1]//self.block_mask.shape[1]]
                 mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
-                return F.linear(input, self.weight * mask, self.bias)  
-            module.forward = forward.__get__(module, input)
+                return F.linear(input, self.weight*mask, self.bias)
+            module.forward = partial(forward, module)
             masks[key] = modules[key].block_mask
         return masks
     
@@ -740,7 +743,8 @@ class PatternNxM(BasePattern):
             module = self.modules[key]
             block_size = self.block_size[key]
             org_shape = module.weight.shape
-            mask = module.block_mask.data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+            mask = module.block_mask.data.repeat_interleave(\
+                    block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
             reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
             module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
             

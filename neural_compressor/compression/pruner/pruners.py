@@ -440,7 +440,7 @@ class BlockMask(BasePruner):
             return
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.update_block_masks(self.masks)
-        self.mask_weights() # done on forward
+        # self.mask_weights() # done on forward, this is double check
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
@@ -455,11 +455,12 @@ class BlockMask(BasePruner):
         ##the order of the following three lines can't not be exchanged
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_after_optimizer_step()
-        self.mask_weights()
+        # self.mask_weights()
         self.global_step += 1
-    
-    def on_train_end(self):
-        """Implement at the end of training phase."""
+        
+    def on_epoch_end(self):
+        """Implement at the end of each epoch phase."""
+        self.mask_weights()
                 
     def mask_weights(self):
         """Apply block masks to corresponding modules' weights.
@@ -474,21 +475,6 @@ class BlockMask(BasePruner):
         for key in self.masks.keys():
             module = self.modules[key]
             module.block_mask.data = masks[key].data
-            
-    def check_is_pruned_step(self, step):
-        """Check if a pruning process should be performed at the current step.
-        
-        Args:
-            step: an integer representing the number of current step.
-            
-        Returns: 
-            A Boolean.
-        """
-        if step < self.start_step or step > self.end_step:
-            return False
-        if int(step - self.start_step) % self.pruning_frequency == 0:
-            return True
-        return False
 
 
 @register_pruner('progressive')

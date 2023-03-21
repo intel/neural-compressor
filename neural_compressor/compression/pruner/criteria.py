@@ -218,7 +218,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                 continue # No corresponding block mask, skip.
             mask = self.modules[key].block_mask
             self.scores[key] = torch.zeros(mask.shape).to(mask.device)
-        self.alpha = 0.9
+        self.alpha = 1.0
         self.beta = 1.0
         
     def on_train_begin(self):
@@ -233,30 +233,5 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                     continue # No corresponding block mask, skip.
                 mask = self.modules[key].block_mask
                 self.scores[key] *= self.alpha
-                reduce_weight = self.reduce_weights(self.modules[key])
-                self.scores[key] += self.beta * torch.abs(reduce_weight * mask.grad)
-                
-    def reduce_weights(self, module):
-        """Calculate the reduced weights by block."""
-        if type(module).__name__ not in ["Linear"]: # Currently only linear is supported
-            return module.block_mask
-        block_size = [module.weight.shape[0]//module.block_mask.shape[0], \
-                      module.weight.shape[1]//module.block_mask.shape[1]] 
-        shape = module.weight.shape
-        new_shape = [shape[0] // block_size[0], block_size[0], shape[1] // block_size[1],
-                     block_size[1]]
-        weight = module.weight.data.reshape(new_shape)
-        reduced_weight = self.reduce_tensor(self.reduce_tensor(weight, dim=-1), dim=1)
-        return reduced_weight
-        
-    def reduce_tensor(self, data, dim):
-        """Reduce the data along the given dimension."""
-        name = self.config['criterion_reduce_type']
-        if name == "mean":
-            return torch.mean(data, dim=dim)
-        elif name == "sum":
-            return torch.sum(data, dim=dim)
-        elif name == "max":
-            return torch.max(data, dim=dim)[0]
-        else:
-            assert False, "currently only support mean, sum and max reduce type"
+                self.scores[key] += self.beta * torch.abs(mask.data*mask.grad)
+

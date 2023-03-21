@@ -25,7 +25,7 @@ import math
 import os
 import sys
 
-sys.path.insert(0, '.')
+sys.path.insert(0, './')
 from pathlib import Path
 
 import datasets
@@ -673,7 +673,6 @@ def main():
         if args.max_train_samples is not None:
             # Number of samples might increase during Feature Creation, We select only specified max samples
             train_dataset = train_dataset.select(range(args.max_train_samples))
-            
 
     # Validation preprocessing
     def prepare_validation_features(examples):
@@ -976,10 +975,8 @@ def main():
             "pruning_type": "block_mask",
             "pruning_scope": "global",
             "criterion_type": "snip_momentum_block",
-            "op_names": [".output.dense"],
-            "pattern": "channelx1",
+            "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
             "sparsity_decay_type": "exp",
-            "excluded_op_names": [".attention"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }

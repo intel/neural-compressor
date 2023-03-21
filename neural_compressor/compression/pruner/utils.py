@@ -26,10 +26,11 @@ try:
     from neural_compressor.conf.dotdict import DotDict
     from neural_compressor.utils import logger
     from neural_compressor.conf.config import Pruner
-    LazyImport('torch.nn')
+    nn = LazyImport('torch.nn')
     torch = LazyImport('torch')
 except:
     import torch
+    import torch.nn as nn
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)
@@ -181,7 +182,7 @@ def check_config(prune_config):
         max_ratio = float(N) / M
         if prune_config['pruning_type']!="pattern_lock":
             assert prune_config['target_sparsity'] <= max_ratio, \
-                "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
+                   "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
         prune_config['max_sparsity_ratio_per_op'] = min(max_ratio, prune_config['max_sparsity_ratio_per_op'])
     if prune_config['reg_coeff'] != None:
         prune_config['reg_coeff'] = float(prune_config['reg_coeff'])
