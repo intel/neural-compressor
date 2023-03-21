@@ -26,11 +26,13 @@ try:
     from neural_compressor.conf.dotdict import DotDict
     from neural_compressor.utils import logger
     from neural_compressor.conf.config import Pruner
-    nn = LazyImport('torch.nn')
+    LazyImport('torch.nn')
     torch = LazyImport('torch')
+    F = LazyImport('torch.nn.functional')
+    
 except:
     import torch
-    import torch.nn as nn
+    import torch.nn.functional as F
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)

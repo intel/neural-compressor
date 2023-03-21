@@ -17,11 +17,10 @@
 # limitations under the License.
 
 from .utils import torch
-from .utils import nn
-import nn.functional as F
 from .utils import logger
 from collections import namedtuple
-from functools import partial
+from torch.nn import functional as F
+
 
 PATTERNS = {}
 
@@ -731,6 +730,7 @@ class PatternNxM(BasePattern):
                         self.weight.shape[1]//self.block_mask.shape[1]]
                 mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
                 return F.linear(input, self.weight*mask, self.bias)
+            from functools import partial
             module.forward = partial(forward, module)
             masks[key] = modules[key].block_mask
         return masks
