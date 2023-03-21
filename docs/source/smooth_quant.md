@@ -21,7 +21,7 @@ Quantization convert the floating point matrix to an integer matrix.  `Affine qu
 For more details, please read [quantization](quantization.md).
 ## SmoothQuant
 
-Some models, especially LLMs, activations are much harder to quantize due to the outliers than weights which the distribution is uniform and flat. The variance amongst the channels for a given token is large but small between magnitudes of a given channels, therefore, the quantization error will decrease if we can use activation per-channel quantization. However, can't perform channel-wise activation quantization currently because it cannot map to hardware-accelerate GEMM kernels well.
+Some models, especially LLMs, activations are much harder to quantize due to the outliers than weights whose distribution is uniform and flat. The variance amongst the channels for a given token is large but small between magnitudes of a given channels, therefore, the quantization error will decrease if we can use activation per-channel quantization. However, can't perform channel-wise activation quantization currently because it cannot map to hardware-accelerate GEMM kernels well.
 
 SmoothQuant is an alternative method of per-channel activation quantization. It divide the input activation by a per-channel smoothing factor $s\in\mathbb R^{C_i} $ , where $C_i$ is the input channel. Also scale the weights accordingly to keep the mathematical equivalence.
 $$
@@ -35,7 +35,7 @@ $j = 1, 2, ...s, C_i$ where j correspond to j-th input channel.
 
 ![](./imgs/smoothquant.png)
 
-For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance the difficult between activations and weights, can have a low quantization error. For others models with more significant outliers in activations, increase $\alpha$ to a bigger num, for example 0.75 ,  to migrate more quantization difficulty to weights.
+For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance the difficult between activations and weights, can have a low quantization error. For others models with more significant outliers in activations, increase $\alpha$ to a bigger num, for example 0.75, to migrate more quantization difficulty to weights.
 
 ## SmoothQuant Support Matrix
 
