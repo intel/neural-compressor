@@ -160,6 +160,8 @@ class Benchmark(object):
             "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
         conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
         self.conf = BenchmarkConf()
+        self.bench_workspace_path = self.conf.usr_cfg.tuning.workspace.path + "benchmark/"
+        os.makedirs(self.bench_workspace_path, exist_ok=True)
         self.conf.map_pyconfig_to_cfg(conf)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
@@ -197,7 +199,7 @@ class Benchmark(object):
             latency_l = []
             throughput_l = []
             for i in range(0, num_of_instance):
-                log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+                log = '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, i)
                 with open(log, "r") as f:
                     for line in f:
                         latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
@@ -262,7 +264,7 @@ class Benchmark(object):
             prefix = self.generate_prefix(core_list)
             instance_cmd = '{} {}'.format(prefix, raw_cmd)
             if sys.platform in ['linux']:
-                instance_log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+                instance_log = '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, i)
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
@@ -280,9 +282,9 @@ class Benchmark(object):
             for idx, cmd in enumerate(cmd_list):
                 # wrap each execution of windows bat file in one thread
                 # write the log to the log file of the corresponding instance
-                logger.info('Will dump to {}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))
+                logger.info('Will dump to {}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, idx))
                 threads.append(Thread(target=self.call_one, args=(cmd,
-                    '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
+                    '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, idx))))
             for command_thread in threads:
                 command_thread.start()
                 logger.info("Worker threads start")
