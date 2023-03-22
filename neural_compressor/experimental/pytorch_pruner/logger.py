@@ -16,8 +16,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    from ...utils import logger
-except:
-    import logging
-    logger = logging.getLogger(__name__)
+from ...utils import logger
