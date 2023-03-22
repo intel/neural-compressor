@@ -208,13 +208,21 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
         elif self.itex_mode and node.op in ('Add', 'AddV2', 'AddN'):
-            if re.search(r"\w+:\d+", node.input[1]):
-                input_node = self.node_name_mapping[node.input[1].rsplit(':', 1)[0]].node
+            if re.search(r"\w+:\d+", node.input[0]):
+                input0_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]].node
             else:
-                input_node = self.node_name_mapping[node.input[1]].node
-            if input_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
+                input0_node = self.node_name_mapping[node.input[0]].node
+            if re.search(r"\w+:\d+", node.input[1]):
+                input1_node = self.node_name_mapping[node.input[1].rsplit(':', 1)[0]].node
+            else:
+                input1_node = self.node_name_mapping[node.input[1]].node
+            if input0_node.op in ("AvgPool", "MaxPool"):
+                return self._find_relu_node(input0_node)
+            if input1_node.op in ("AvgPool", "MaxPool"):
+                return self._find_relu_node(input1_node)
+            if input1_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
                 return False
-            return self._find_relu_node(input_node)
+            return self._find_relu_node(input1_node)
         elif self._check_op_list(node.op) or (self.itex_mode and node.op in ('Add', 'AddV2')):
             if node.op == 'ConcatV2':
                 find_relu = False
