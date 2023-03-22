@@ -19,9 +19,6 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
-      --batch_size=*)
-          batch_size=$(echo $var |cut -f2 -d=)
-      ;;
     esac
   done
 
@@ -33,7 +30,7 @@ function run_benchmark {
     python main.py \
             --model_path ${input_model} \
             --mode=${mode} \
-            --batch_size=${batch_size-8} \
+            --batch_size=1 \
             --benchmark
             
 }
