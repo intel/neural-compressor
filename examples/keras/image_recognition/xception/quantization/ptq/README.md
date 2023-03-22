@@ -29,7 +29,7 @@ Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installati
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU(Experimental)
-Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the keras model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
