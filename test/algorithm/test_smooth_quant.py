@@ -145,7 +145,25 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.6,calib_iter=2)
         assert len(sq.absorb_to_layer) == 0
 
+import torch.nn as nn
+class LlamaRMSNorm(nn.Module):
+    def __init__(self, hidden_size, eps=1e-6):
+        """
+        LlamaRMSNorm is equivalent to T5LayerNorm
+        """
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(hidden_size))
+        self.variance_epsilon = eps
 
+    def forward(self, hidden_states):
+        variance = hidden_states.to(torch.float32).pow(2).mean(-1, keepdim=True)
+        hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
+
+        # convert into half-precision if necessary
+        if self.weight.dtype in [torch.float16, torch.bfloat16]:
+            hidden_states = hidden_states.to(self.weight.dtype)
+
+        return self.weight * hidden_states
 
 class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
@@ -158,6 +176,29 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 yield torch.rand((1, 3))
 
         self.linear_dl = RandDataloader()
+
+
+    @classmethod
+    def test_sq_linear_LlamaRMSNorm(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1)
+        assert len(sq.absorb_to_layer) == 1
+
 
     @classmethod
     def test_sq_linear_relu6(self):
