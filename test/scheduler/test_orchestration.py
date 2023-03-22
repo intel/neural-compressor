@@ -6,26 +6,17 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
-from packaging.version import Version
-import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-from neural_compressor.config import WeightPruningConfig
+from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig, \
+    QuantizationAwareTrainingConfig, WeightPruningConfig
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.training import prepare_compression
 
-PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= Version("1.8.0-rc1"):
-    FX_MODE = True
-else:
-    FX_MODE = False
 
 class TestPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
-    q_model = torchvision.models.quantization.resnet18()
-    q_model.fuse_model()
 
-    def test_distillation_prune_oneshot_with_new_API(self):
+    def test_distillation_prune_qat_oneshot_with_new_API(self):
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -36,7 +27,10 @@ class TestPruning(unittest.TestCase):
         d_conf = DistillationConfig(copy.deepcopy(self.model), distillation_criterion)
         p_conf = WeightPruningConfig(
             [{'start_step': 0, 'end_step': 2}], target_sparsity=0.64, pruning_scope="local")
-        compression_manager = prepare_compression(model=model, confs=[d_conf, p_conf])
+        q_conf = QuantizationAwareTrainingConfig()
+        compression_manager = prepare_compression(model=model, confs=[d_conf, p_conf, q_conf])
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
         def train_func_for_nc(model):
             epochs = 3
             iters = 3
@@ -46,7 +40,6 @@ class TestPruning(unittest.TestCase):
                                         momentum=0.1,
                                         nesterov=True,
                                         weight_decay=0.001)
-            compression_manager.callbacks.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -73,17 +66,18 @@ class TestPruning(unittest.TestCase):
             return model
 
         train_func_for_nc(model)
-        print(20 * '=' + 'test_distillation_prune_oneshot' + 20 * '=')
+        print(20 * '=' + 'test_distillation_prune_qat_oneshot' + 20 * '=')
         try:
-            conv_weight = model.layer1[0].conv1.weight().dequantize()
+            conv_weight = dict(model.model.layer1.named_modules())["0.conv1"].weight().dequantize()
         except:
-            conv_weight = model.layer1[0].conv1.weight
+            conv_weight = dict(model.model.layer1.named_modules())["0.conv1"].weight()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.64,
                                delta=0.05)
+        self.assertTrue("quantized" in str(type(dict(model.model.layer1.named_modules())["0.conv1"])))
         self.assertEqual(
             str(compression_manager.callbacks.callbacks_list),
-            "[Distillation Callbacks, Pruning Callbacks]"
+            "[Distillation Callbacks, Pruning Callbacks, Quantization Aware Training Callbacks]"
         )
 
 

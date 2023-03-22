@@ -542,6 +542,7 @@ def main():
         )
         conf = PostTrainingQuantConfig(
             approach="static", 
+            quant_level=1,
             tuning_criterion=tuning_criterion,
             calibration_sampling_size=[300],
         )

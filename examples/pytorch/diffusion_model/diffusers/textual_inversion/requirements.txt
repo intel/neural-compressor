@@ -6,3 +6,4 @@ ftfy
 tensorboard
 modelcards
 intel_extension_for_pytorch
+tqdm

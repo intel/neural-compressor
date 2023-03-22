@@ -6,3 +6,4 @@ protobuf
 scipy
 scikit-learn
 Keras-Preprocessing
+tqdm

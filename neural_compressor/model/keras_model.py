@@ -140,9 +140,9 @@ class KerasModel(BaseModel):
     @property
     def input_node_names(self):
         """Return input node names."""
-        return []
+        return self.model.input_names
 
     @property
     def output_node_names(self):
         """Return output node names."""
-        return []
+        return self.model.output_names

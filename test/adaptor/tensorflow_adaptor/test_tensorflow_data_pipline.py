@@ -3,6 +3,7 @@
 #
 import unittest
 import numpy as np
+from neural_compressor.objective import Performance
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name, iterator_sess_run
 
@@ -48,6 +49,9 @@ class TestDataPipelineConvert(unittest.TestCase):
         sess = tf.compat.v1.Session(graph=graph)
         iterator_sess_run(sess, iter_op, \
             feed_dict={}, output_tensor=output_tensor)
+        measurer = Performance()
+        iterator_sess_run(sess, iter_op, feed_dict={}, \
+            output_tensor=output_tensor, measurer=measurer)
 
 
 if __name__ == "__main__":

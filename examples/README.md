@@ -18,8 +18,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
 * *[BERT Mini SST2 performance boost with INC](/examples/notebook/bert_mini_distillation): train a BERT-Mini model on SST-2 dataset through distillation, and leverage quantization to accelerate the inference while maintaining the accuracy using Intel® Neural Compressor.
 * [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
 * *[Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
-* *[Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
-* *[Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
+* [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
+* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 
 # TensorFlow Examples
 ## Quantization
@@ -269,35 +269,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-## Pruning
-<table>
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Domain</th>
-    <th>Pruning Type </th>
-    <th>Approach </th>
-    <th>Examples</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>ResNet V2</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">pb</a></td>
-  </tr>
-  <tr>
-    <td>ViT</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">ckpt</a></td>
-  </tr>
-</tbody>
-</table>
-
 ## Distillation
 <table>
 <thead>
@@ -461,12 +432,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq/fx">fx</a> / <a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex">ipex</a></td>
   </tr>
   <tr>
-    <td>*Mask R-CNN</td>
-    <td>Object Detection</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
-  </tr>
-  <tr>
     <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
@@ -479,28 +444,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/recommendation/dlrm/quantization/ptq/ipex">ipex</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*RNN-T</td>
-    <td>Speech Recognition</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> </td>
-  </tr>
-  <tr>
-    <td>*Wav2Vec2</td>
-    <td>Speech Recognition</td>
-    <td>Post-Training Dynamic</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> </td>
-  </tr>
-  <tr>
-    <td>*HuBERT</td>
+    <td>HuBERT</td>
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic /Static Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
-  </tr>
-  <tr>
-    <td>*BlendCNN</td>
-    <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/blendcnn/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>

@@ -193,7 +193,7 @@ class TestTensorflowModel(unittest.TestCase):
             if not os.path.getsize(dst_path):
                 os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, inception_ckpt_url))
             os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
-        if tf.version.VERSION > '2.0.0':
+        if parse_version(tf.version.VERSION) > parse_version('2.0.0'):
             return
         from tf_slim.nets import inception  
         model = Model('./slim_ckpt/inception_v1.ckpt')
@@ -214,7 +214,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf slim_ckpt')
     
     def test_keras_h5_model(self):
-        if tf.version.VERSION < '2.3.0':
+        if parse_version(tf.version.VERSION) < parse_version('2.3.0'):
             return
         keras_model = build_keras()
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
@@ -230,7 +230,7 @@ class TestTensorflowModel(unittest.TestCase):
         
         
     def test_keras_saved_model(self):
-        if tf.version.VERSION < '2.3.0':
+        if parse_version(tf.version.VERSION) < parse_version('2.3.0'):
             return
         keras_model = build_keras()
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
@@ -263,19 +263,30 @@ class TestTensorflowModel(unittest.TestCase):
         model = TensorflowQATModel('./simple_model')
         assert isinstance(model.model, tf.keras.Model)
 
-
-        os.makedirs('./keras_model', exist_ok=True)
         model.save('./keras_model')
-        load_model = tf.keras.models.load_model('./keras_model')
+        loaded_model = tf.keras.models.load_model('./keras_model')
+        assert isinstance(loaded_model, tf.keras.Model)
+
+        model.save('keras_model.h5')
+        loaded_model = tf.keras.models.load_model('keras_model.h5')
+        assert isinstance(loaded_model, tf.keras.Model)
+
+        root = model.save()
+        loaded_model = tf.keras.models.load_model(root)
+        assert isinstance(loaded_model, tf.keras.Model)
+
         os.system('rm -rf simple_model')
         os.system('rm -rf keras_model')
+        os.remove('keras_model.h5')
+        os.system('rm -rf '+root)
 
-    @unittest.skipIf(tf.version.VERSION < '2.4.0' or platform.system().lower() == "windows", "Only supports tf 2.4.0 or above")
+    @unittest.skipIf(parse_version(tf.version.VERSION) < parse_version('2.4.0') or platform.system().lower() == "windows", "Only supports tf 2.4.0 or above")
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
-        center_resnet50_saved_model_url = 'https://gcs.tensorflow.google.cn/tfhub-modules/tensorflow/centernet/resnet50v1_fpn_512x512/1.tar.gz'
+        center_resnet50_saved_model_url = 'https://tfhub.dev/tensorflow/centernet/resnet50v1_fpn_512x512/1?tf-hub-format=compressed'
         dst_path = '/tmp/.neural_compressor/saved_model.tar.gz'
         center_dst_path = '/tmp/.neural_compressor/center_saved_model.tar.gz'
+
         if not os.path.exists(dst_path):
           os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
         if not os.path.getsize(dst_path):
@@ -284,12 +295,18 @@ class TestTensorflowModel(unittest.TestCase):
           os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(center_resnet50_saved_model_url, center_dst_path))
         if not os.path.getsize(center_dst_path):
             os.system("rm -fr {0} && wget {1} -O {0}".format(center_dst_path, center_resnet50_saved_model_url))
+
         os.system("tar -xvf {}".format(dst_path))
         unzip_center_model = 'unzip_center_model'
         os.system("mkdir -p {} ".format(unzip_center_model))
         os.system("tar -xvf {} -C {}".format(center_dst_path,unzip_center_model))
+
         model = Model('ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
         center_model = Model('unzip_center_model')
+
+        from tensorflow.python.training.tracking.tracking import AutoTrackable 
+        assert isinstance(model.model, AutoTrackable), "The model getter of TensorflowSavedModelModel is not correctly run."
+
         from tensorflow.python.framework import graph_util  
         graph_def = graph_util.convert_variables_to_constants(
             sess=model.sess,
@@ -321,6 +338,16 @@ class TestTensorflowModel(unittest.TestCase):
        
         self.assertTrue(isinstance(center_model.graph_def, tf.compat.v1.GraphDef))
         self.assertTrue(isinstance(center_model.graph, tf.compat.v1.Graph))
+
+        from neural_compressor.model.tensorflow_model import _get_graph_from_saved_model_v1
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v1(unzip_center_model)
+        assert graph_def is not None, 'Can not parse the saved model...'
+
+        from tensorflow.python.saved_model.loader_impl import parse_saved_model_with_debug_info
+        from neural_compressor.model.tensorflow_model import _contains_function_with_implements_attr
+        saved_model_proto, _ = parse_saved_model_with_debug_info(unzip_center_model)
+        self.assertEqual(False, _contains_function_with_implements_attr(saved_model_proto))
+
         os.system('rm -rf unzip_center_model')
 
 

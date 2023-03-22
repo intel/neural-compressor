@@ -92,8 +92,8 @@ class WeightConf:
 
     @datatype.setter
     def datatype(self, datatype):
-        if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
-            self._datatype = datatype
+        if check_value('datatype', datatype, str, ['fp32', 'bf16', 'uint8', 'int8']):
+            self._datatype = datatype if isinstance(datatype, list) else [datatype]
 
     @property
     def scheme(self):
@@ -101,8 +101,8 @@ class WeightConf:
 
     @scheme.setter
     def scheme(self, scheme):
-        if check_value('scheme', scheme, list, ['sym', 'asym']):
-            self._scheme = scheme
+        if check_value('scheme', scheme, str, ['sym', 'asym']):
+            self._scheme = scheme if isinstance(scheme, list) else [scheme]
 
     @property
     def granularity(self):
@@ -110,8 +110,8 @@ class WeightConf:
 
     @granularity.setter
     def granularity(self, granularity):
-        if check_value('granularity', granularity, list, ['per_channel', 'per_tensor']):
-            self._granularity = granularity
+        if check_value('granularity', granularity, str, ['per_channel', 'per_tensor']):
+            self._granularity = granularity if isinstance(granularity, list) else [granularity]
 
     @property
     def algorithm(self):
@@ -119,8 +119,8 @@ class WeightConf:
 
     @algorithm.setter
     def algorithm(self, algorithm):
-        if check_value('algorithm', algorithm, list, ['minmax', 'kl']):
-            self._algorithm = algorithm
+        if check_value('algorithm', algorithm, str, ['minmax', 'kl']):
+            self._algorithm = algorithm if isinstance(algorithm, list) else [algorithm]
 
 class ActivationConf(WeightConf):
     def __init__(self, datatype=None, scheme=None, granularity=None, algorithm=None):
