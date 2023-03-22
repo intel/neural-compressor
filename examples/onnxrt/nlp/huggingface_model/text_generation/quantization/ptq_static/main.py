@@ -63,7 +63,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--batch_size',
-    default=8,
+    default=1,
     type=int,
 )
 parser.add_argument(
@@ -104,12 +104,12 @@ def eval_func(onnx_model, dataloader, workspace):
         model_path = os.path.join(workspace, 'eval.onnx')
 
     session = ort.InferenceSession(model_path, options, providers=ort.get_available_providers())
-    inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+    inputs_names = [i.name for i in session.get_inputs()]
 
     total, hit = 0, 0
     pad_len = 0
     for idx, batch in enumerate(dataloader):
-        ort_inputs = dict(zip(inputs_names, batch))
+        ort_inputs = dict(zip(inputs_names, batch[0]))
         predictions = session.run(None, ort_inputs)
         outputs = torch.from_numpy(predictions[0])
         label = torch.from_numpy(batch[0][0][:, -1])
