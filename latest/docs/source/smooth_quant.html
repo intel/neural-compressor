@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smooth Quant &mdash; Intel® Neural Compressor 2.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Smooth Quant</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/smooth_quant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="smooth-quant">
+<h1>Smooth Quant<a class="headerlink" href="#smooth-quant" title="Permalink to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#Introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#Quantization-Fundamentals">Quantization Fundamentals</a></p></li>
+<li><p><a class="reference external" href="#SmoothQuant">SmoothQuant</a></p></li>
+<li><p><a class="reference external" href="#SmoothQuant-Support-Matrix">SmoothQuant Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#Validated-Models">Validated Models</a></p></li>
+<li><p><a class="reference external" href="#Example">Example</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  <a class="reference external" href="https://arxiv.org/abs/2211.10438">SmoothQuant</a>, an training free post-training quantization (PTQ) solution, offline migrate this difficulty from activations to weights with a mathematically equivalent transformation.</p>
+</section>
+<section id="quantization-fundamentals">
+<h2>Quantization Fundamentals<a class="headerlink" href="#quantization-fundamentals" title="Permalink to this heading"></a></h2>
+<p>Quantization convert the floating point matrix to an integer matrix.  <code class="docutils literal notranslate"><span class="pre">Affine</span> <span class="pre">quantization</span></code> and <code class="docutils literal notranslate"><span class="pre">Scale</span> <span class="pre">quantization</span></code>, also called <code class="docutils literal notranslate"><span class="pre">asymmetric</span> <span class="pre">quantization</span></code> and <code class="docutils literal notranslate"><span class="pre">symmetric</span> <span class="pre">quantization</span></code>, are two common range mapping techniques used in tensor conversion between different data types.</p>
+<p>For more details, please read <a class="reference internal" href="quantization.html"><span class="doc">quantization</span></a>.</p>
+</section>
+<section id="smoothquant">
+<h2>SmoothQuant<a class="headerlink" href="#smoothquant" title="Permalink to this heading"></a></h2>
+<p>Some models, especially LLMs, activations are much harder to quantize due to the outliers than weights whose distribution is uniform and flat. The variance amongst the channels for a given token is large but small between magnitudes of a given channels, therefore, the quantization error will decrease if we can use activation per-channel quantization. However, can’t perform channel-wise activation quantization currently because it cannot map to hardware-accelerate GEMM kernels well.</p>
+<p>SmoothQuant is an alternative method of per-channel activation quantization. It divide the input activation by a per-channel smoothing factor $s\in\mathbb R^{C_i} $ , where $C_i$ is the input channel. Also scale the weights accordingly to keep the mathematical equivalence.
+$$
+Y = (Xdiag(s)^{-1})\cdot(diag(s)W) = \hat{X}\hat{W}
+$$
+This formula migrate the difficulty from activations to weights. In order to control how much difficulty shift to weights, we use a hyper-parameter named migration strength $\alpha$.
+$$
+s_j = max(|X_j|)^\alpha / max(|W_j|)^{1-\alpha}
+$$
+$j = 1, 2, …s, C_i$ where j correspond to j-th input channel.</p>
+<p><img alt="../../_images/smoothquant.png" src="../../_images/smoothquant.png" /></p>
+<p>For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance the difficult between activations and weights, can have a low quantization error. For others models with more significant outliers in activations, increase $\alpha$ to a bigger num, for example 0.75, to migrate more quantization difficulty to weights.</p>
+</section>
+<section id="smoothquant-support-matrix">
+<h2>SmoothQuant Support Matrix<a class="headerlink" href="#smoothquant-support-matrix" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th><strong>Algorithm</strong></th>
+<th><strong>PyTorch</strong></th>
+<th><strong>TensorFlow</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SmoothQuant</td>
+<td>✔</td>
+<td>✖</td>
+</tr>
+</tbody>
+</table></section>
+<section id="validated-models">
+<h2>Validated Models<a class="headerlink" href="#validated-models" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Model\Accuracy</th>
+<th>FP32</th>
+<th>INT8 (w/o SmoothQuant)</th>
+<th>INT8 (w/ SmoothQuant)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bigscience/bloom-560m</td>
+<td>65.16%</td>
+<td>64.96%</td>
+<td>66.52% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>bigscience/bloom-1b7</td>
+<td>71.55%</td>
+<td>67.61%</td>
+<td>72.81% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>bigscience/bloom-3b</td>
+<td>74.06%</td>
+<td>70.73%</td>
+<td>74.41% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>bigscience/bloom-7b1</td>
+<td>77.59%</td>
+<td>76.28%</td>
+<td>77.18% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>bigscience/bloom-176b</td>
+<td>84.17%</td>
+<td>82.13%</td>
+<td>83.52% (alpha=0.6)</td>
+</tr>
+<tr>
+<td>facebook/opt-125m</td>
+<td>63.89%</td>
+<td>63.54%</td>
+<td>63.91% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>facebook/opt-2.7b</td>
+<td>77.90%</td>
+<td>78.99%</td>
+<td>78.91% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>facebook/opt-6.7b</td>
+<td>81.51%</td>
+<td>79.44%</td>
+<td>81.58% (alpha=0.5)</td>
+</tr>
+<tr>
+<td>EleutherAI/gpt-j-6B</td>
+<td>79.17%</td>
+<td>78.76%</td>
+<td>79.13% (alpha=0.5)</td>
+</tr>
+</tbody>
+</table></section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
+<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md">examples</a> on how to use smooth quant.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
