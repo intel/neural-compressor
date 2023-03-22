@@ -264,7 +264,8 @@ class Benchmark(object):
             prefix = self.generate_prefix(core_list)
             instance_cmd = '{} {}'.format(prefix, raw_cmd)
             if sys.platform in ['linux']:
-                instance_log = '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, i)
+                instance_log = '{}{}_{}_{}.log'.format(
+                    self.bench_workspace_path, num_of_instance, cores_per_instance, i)
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
@@ -282,7 +283,8 @@ class Benchmark(object):
             for idx, cmd in enumerate(cmd_list):
                 # wrap each execution of windows bat file in one thread
                 # write the log to the log file of the corresponding instance
-                logger.info('Will dump to {}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, idx))
+                logger.info('Will dump to {}{}_{}_{}.log'.format(
+                    self.bench_workspace_path, num_of_instance, cores_per_instance, idx))
                 threads.append(Thread(target=self.call_one, args=(cmd,
                     '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, idx))))
             for command_thread in threads:
