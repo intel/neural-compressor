@@ -73,7 +73,7 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 <tr>
 <td colspan="3" align="center"><a href="metric.md">Metric</a></td>
 <td colspan="3" align="center"><a href="objective.md">Objective</a></td>
-<td colspan="3" align="center"><a href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md">SmoothQuant</a></td>
+<td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
 </tr>
 </tbody>
 </table>
