@@ -54,7 +54,7 @@ Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 dat
 | :-------------- |:---------------:| ---------------:|---------------:|
 | TensorFlow    | [oneDNN](https://github.com/oneapi-src/oneDNN) | Activation (int8/uint8), Weight (int8) | - |
 | PyTorch         | [FBGEMM](https://github.com/pytorch/FBGEMM) | Activation (uint8), Weight (int8) | Activation (uint8) |
-| IPEX | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
+| PyTorch(IPEX) | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
 | MXNet           | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
 | ONNX Runtime | [MLAS](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/core/mlas) | Weight (int8) | Activation (uint8) |
 
@@ -200,9 +200,9 @@ If a user needs to tune the model accuracy, the user should provide either `eval
 
 `evaluation function` is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking `model` as input and returning a scalar value represented the evaluation accuracy.
 
-`evaluation dataloader` is a dataloader for evaluation. The dataloader can be of any framework dataloader, like as: PyTorch, Tensorflow, onnxruntime.
+`evaluation dataloader` is a data loader for evaluation. It is iterable and should yield a tuple of (input, label). The input could be a object, list, tuple or dict, depending on user implementation, as well as it can be taken as model input. The label should be able to take as input of supported metrics. If this parameter is not None, user needs to specify pre-defined evaluation metrics through configuration file and should set "eval_func" parameter as None. Tuner will combine model, eval_dataloader and pre-defined metrics to run evaluation process.
 
-`evaluation metric` is an object to compute the metric to evaluating the performance of the model. `evaluation metric` must be supported by neural compressor. Please refer to [metric.md](metric.md).
+`evaluation metric` is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. `evaluation metric` must be supported by neural compressor. Please refer to [metric.md](metric.md).
 
 User could execute:
 ### Post Training Quantization
@@ -415,7 +415,76 @@ recipes = {
     },
     "fast_bias_correction": False,
 }
-conf = conf = PostTrainingQuantConfig(recipes=recipes)
+conf = PostTrainingQuantConfig(recipes=recipes)
+
+```
+
+### Specify Quantization Backend
+Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Runtime and MXNet. The neural compressor will automatically determine which framework to use based on the model type, but for backend, users need to set it themselves in configure object.
+
+<table class="center">
+    <thead>
+        <tr>
+            <th>Framework</th>
+            <th>Backend</th>
+            <th>Backend Library</th>
+            <th>Value in Configure</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2" align="left">PyTorch</td>
+            <td align="left">FX</td>
+            <td align="left">FBGEMM</td>
+            <td align="left">"default"</td>
+        </tr>
+        <tr>
+            <td align="left">IPEX</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"ipex"</td>
+        </tr>
+        <tr>
+            <td rowspan="3" align="left">ONNX Runtime</td>
+            <td align="left">CPUExecutionProvider</td>
+            <td align="left">MLAS</td>
+            <td align="left">"default"</td>
+        </tr>
+        <tr>
+            <td align="left">TensorrtExecutionProvider</td>
+            <td align="left">TensorRT</td>
+            <td align="left">"onnxrt_trt_ep"</td>
+        </tr>
+        <tr>
+            <td align="left">CUDAExecutionProvider</td>
+            <td align="left">CUDA</td>
+            <td align="left">"onnxrt_cuda_ep"</td>
+        </tr>
+        <tr>
+            <td rowspan="2" align="left">Tensorflow</td>
+            <td align="left">Tensorflow</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"default"</td>
+        </tr>
+        <tr>
+            <td align="left">ITEX</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"itex"</td>
+        </tr>  
+        <tr>
+            <td align="left">MXNet</td>
+            <td align="left">OneDNN</td>
+            <td align="left">OneDNN</td>
+            <td align="left">“default</td>
+        </tr>
+    </tbody>
+</table>
+<br>
+<br>
+
+
+Example of configure for backend:
+```python
+conf = PostTrainingQuantConfig(backend="IPEX")
 
 ```
 
