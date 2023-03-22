@@ -128,7 +128,7 @@ class KerasAdaptor(Adaptor):
         name_op_map = {}
 
         for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
-            name_op_map[layer['name']] = layer
+            name_op_map[layer['config']['name']] = layer
 
         for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
             layer_config = layer['config']
@@ -139,9 +139,9 @@ class KerasAdaptor(Adaptor):
                     check_layer = fp32_layers[idx - 1]
                 if check_layer['class_name'] in ['Activation'] and \
                         check_layer['config']['activation'] in ['relu']:
-                    self.conv_format[layer['name']] = 'u8'
+                    self.conv_format[layer['config']['name']] = 'u8'
                 else:
-                    self.conv_format[layer['name']] = 's8'
+                    self.conv_format[layer['config']['name']] = 's8'
         return model
 
     def _fuse_bn(self, model):
@@ -306,7 +306,7 @@ class KerasAdaptor(Adaptor):
               fake_q_name = 'fake_quant_' + str(idx)
               fake_q_layer = {'class_name': 'FakeQuant', 
                               'name': fake_q_name,
-                              'T': self.conv_format[layer['name']],
+                              'T': self.conv_format[layer['config']['name']],
                               'config': {'mode': 'per_tensor', 'name': fake_q_name}, 
                               }
               if 'inbound_nodes' in layer:
@@ -608,7 +608,7 @@ class KerasAdaptor(Adaptor):
         '''
         assert inspect_type in ['weight', 'activation', 'all'], \
                 'Inspect type only support weight, activation or all'
-        from keras import backend as K
+        from keras import backend as K # pylint: disable=E0401
         tensor_out = {}
         inp = model.input
         outputs = [(layer.name, layer.output) for layer in model.layers]
