@@ -63,7 +63,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--batch_size',
-    default=8,
+    default=1,
     type=int,
 )
 parser.add_argument(
@@ -89,28 +89,32 @@ def tokenize_function(examples):
 
 def eval_func(onnx_model, dataloader, workspace):
     options = ort.SessionOptions()
-    onnx.save(onnx_model, os.path.join(workspace, 'eval.onnx'), save_as_external_data=True)
-    session = ort.InferenceSession(os.path.join(workspace, 'eval.onnx'), options,
-        providers=ort.get_available_providers())
-    inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+    options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    if isinstance(onnx_model, str):
+        model_path = onnx_model
+    else:
+        onnx.save(onnx_model, os.path.join(workspace, 'eval.onnx'), save_as_external_data=True)
+        model_path = os.path.join(workspace, 'eval.onnx')
+    session = ort.InferenceSession(model_path, options, providers=ort.get_available_providers())
+    inputs_names = [i.name for i in session.get_inputs()]
 
     total, hit = 0, 0
- 
+    pad_len = 0
     for idx, batch in enumerate(dataloader):
-        ort_inputs = dict(zip(inputs_names, batch))
+        ort_inputs = dict(zip(inputs_names, batch[0]))
         predictions = session.run(None, ort_inputs)
-        outputs = torch.from_numpy(predictions[0]) 
+        outputs = torch.from_numpy(predictions[0])
+        label = torch.from_numpy(batch[0][0][:, -1])
         last_token_logits = outputs[:, -2 - pad_len, :]
         pred = last_token_logits.argmax(dim=-1)
-        total += label.size(0)
+        total += len(label)
         hit += (pred == label).sum().item()
     
     acc = hit / total
     return acc
 
 class Dataloader:
-    def __init__(self, pad_max=196, batch_size=8):
-        self.pad_max = pad_max
+    def __init__(self, batch_size=1):
         self.batch_size=batch_size
         dataset = load_dataset('lambada', split='validation')
         dataset = dataset.map(tokenize_function, batched=True)
@@ -130,8 +134,7 @@ class Dataloader:
         for text in batch:
             input_ids = text["input_ids"]
             attention_mask = text["attention_mask"]
-            pad_len = 196 - len(input_ids)
-
+            pad_len = 0
             input_ids = pad(input_ids, (0, pad_len), value=1)
             input_ids_padded.append(input_ids)
             attention_mask = pad(attention_mask, (0, pad_len), value=1)
@@ -148,7 +151,6 @@ class Dataloader:
                     data.append(np.zeros((input_ids.shape[0],16,1,256), dtype='float32'))
                     data.append(np.zeros((input_ids.shape[0],16,1,256), dtype='float32'))
                 attention_mask = torch.ones((input_ids.shape[0], input_ids.shape[1] +1))
-                attention_mask[:,0] = 0
                 data.append(attention_mask.detach().cpu().numpy().astype('int64'))
                 yield data, 1
         except StopIteration:
@@ -163,16 +165,15 @@ if __name__ == "__main__":
         return eval_func(model, dataloader, args.workspace)
 
     if args.benchmark:
-        model = onnx.load(args.model_path)
         if args.mode == 'performance':            
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=28,
                                    num_of_instance=1)
-            fit(model, conf, b_dataloader=dataloader)
+            fit(args.model_path, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
-            acc_result = eval(model)
+            acc_result = eval(args.model_path)
             print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
