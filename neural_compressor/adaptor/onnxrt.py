@@ -176,6 +176,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         from onnx import numpy_helper
         black_nodes = []
         white_nodes = []
+        quantize_config = None
         if tune_cfg is not None:
             quantize_config = self._cfg_to_quantize_config(tune_cfg)
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
@@ -187,7 +188,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                 iterations=list(range(0, iterations)),
                                 backend=self.backend, reduce_range=self.reduce_range)
 
-        max_vals_per_channel, shape_infos = augment.calib_smooth(percentile, op_types)
+        max_vals_per_channel, shape_infos = augment.calib_smooth(percentile, op_types, quantize_config)
 
         input_tensors_2_weights = {}
         input_tensors_2_weights_nodes = {}
@@ -540,8 +541,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   iterations=iteration_list,
                   white_nodes=op_list,
                   backend=self.backend)
-        tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
-                                      weight=(inspect_type!='activation'))
+        tensors = augment.dump_tensor(quantization_cfg,
+                                      activation=(inspect_type!='weight'),
+                                      weight=(inspect_type!='activation'),)
         if save_to_disk:
             if not save_path:
                 save_path = self.work_space

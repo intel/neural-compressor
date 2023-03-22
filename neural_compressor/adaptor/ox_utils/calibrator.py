@@ -1,3 +1,27 @@
+#!/usr/bin/env python
+# coding: utf-8
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft, Intel Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+"""Calibrator for onnx models."""
+
 import numpy as np
 
 CALIBRATOR = {}
@@ -29,6 +53,10 @@ class CalibratorBase:
         """Clear calibration range."""
         self._calib_min = None
         self._calib_max = None
+
+    def collect_calib_data(self, datas):
+        """Collect calibration range value."""
+        raise NotImplementedError
     
     @property
     def calib_range(self):
@@ -238,6 +266,7 @@ class KLCalibrator(CalibratorBase):
         return optimal_threshold[0], optimal_threshold[1]
     
     def clear(self):
+        """Clear calibration range."""
         self._calib_min = None
         self._calib_max = None
         self.collector = None
@@ -251,7 +280,7 @@ class HistogramCollector():
         self._histogram = None
     
     def collect_data(self, datas):
-        """collect histogram data."""
+        """Collect histogram data."""
         if len(set([data.shape for data in datas])) != 1:
             for data in datas:
                 if data.size == 0: # pragma: no cover
@@ -265,7 +294,7 @@ class HistogramCollector():
             self._collect_value(datas)
     
     def _collect_value(self, data):
-        """collect value."""
+        """Collect value."""
         data = np.asarray(data)
         min_range = np.min(data)
         max_range = np.max(data)

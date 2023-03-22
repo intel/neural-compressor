@@ -284,12 +284,13 @@ class ONNXRTAugment:
                 # initialize a calibrater according to 'algorithm' in q_config
                 # and collect ranges of the intermediate output
                 calib_method = q_config[node.name]['activation']['algorithm'] \
-                    if node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
+                    if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
                 assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
                 calibrator = CALIBRATOR[calib_method]()
                 calibrator.collect(merged_dict[data_name])
                 ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
                 calibrator.clear()
+                del calibrator
             return list(ranges_dict.keys()), ranges_dict
         elif calib_mode == None: # pragma: no cover
             return list(merged_dict.keys()), merged_dict
@@ -466,7 +467,7 @@ class ONNXRTAugment:
 
         return quantization_params
 
-    def dump_tensor(self, activation=True, weight=False):
+    def dump_tensor(self, q_config=None, activation=True, weight=False):
         """Dump activation or weight or both from the model."""
         if "QuantizeLinear" in [node.op_type for node in self.model.graph.node] or \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]:
@@ -475,7 +476,7 @@ class ONNXRTAugment:
             self.dynamically_quantized = \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
         self.augment_graph(activation_only=not weight, weight_only=not activation)
-        _, output_dicts = self.get_intermediate_outputs()
+        _, output_dicts = self.get_intermediate_outputs(q_config)
         iters = len(list(output_dicts.values())[-1])
         map_node_activation = [{} for _ in range(iters)]
         map_node_weight = {}
@@ -647,7 +648,7 @@ class ONNXRTAugment:
         max_per_channels = max_per_channels.astype(np.single)
         return max_per_channels
 
-    def calib_smooth(self, percentile, op_types):
+    def calib_smooth(self, percentile, op_types, q_config):
         """Smooth model calibration.
 
         Mainly get the max info per channel of input tensors.
@@ -664,7 +665,7 @@ class ONNXRTAugment:
         tensors_to_dump = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_dump)
         self.augmented_model = self.model_wrapper.model
-        _, output_dicts = self.get_intermediate_outputs()
+        _, output_dicts = self.get_intermediate_outputs(q_config)
 
         # remove the input tensors of {op_types} to outputs of the model
         self.model_wrapper.remove_tensors_from_outputs(tensors_to_dump)
