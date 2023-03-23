@@ -432,6 +432,7 @@ class FallbackTuningSampler(TuningSampler):
 
 class BlockFallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
+
     def __init__(self,
                  tuning_space: TuningSpace,
                  tuning_order_lst: List[TuningOrder],
@@ -446,7 +447,7 @@ class BlockFallbackTuningSampler(TuningSampler):
             tuning_space: Tuning space.
             tuning_order_lst: The tuning orders.
             initial_op_tuning_cfg: The initial tuning config.
-            op_block: The block of op_list, [[(op name, op type), (op name, op type), ...], op_list2, ...].
+            op_block_lst: The block of op_list, [[(op name, op type), (op name, op type), ...], op_list2, ...].
             accumulate: Fallback accumulated or not.
             skip_first: Skip fallback the first op or not. Defaults to True.
         """
