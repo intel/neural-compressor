@@ -46,11 +46,9 @@ python ./run_glue.py \
     --save_steps 100000 \
     --output_dir $OUT_DIR
 ```
-Run the `prepare_model.sh` script
 
-Usage:
+Run the `prepare_model.sh` script:
 ```shell
-cd examples/onnxrt/language_translation/mobilebert/
 
 bash prepare_model.sh --input_dir=$OUT_DIR \
                       --task_name=$TASK_NAME \
