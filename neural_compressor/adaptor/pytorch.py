@@ -3505,9 +3505,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
 
         
-        from .torch_utils.block import get_block
+        from .torch_utils.block import get_block, get_other_blocks, show_nest_dict
         attention_block = get_block(model)
         logger.info(f"Blocks: {len(attention_block)}")
+        other_blocks = get_other_blocks(model)
+        logger.info(f"Other Blocks: {len(other_blocks)}")
+        show_nest_dict(other_blocks)
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3525,7 +3528,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        block_info = [[(name,  self._get_op_type(module_dict[op_name])) for name, _, _ in block]  for block in attention_block if block[0][0] in q_ops_set]
+        block_info = [[(name,  self._get_op_type(module_dict[op_name])) for name, _, _ in block]  for block_index, block in other_blocks.items()]
+        
         self.block_info = block_info
         
     def _get_op_type(self, child):
