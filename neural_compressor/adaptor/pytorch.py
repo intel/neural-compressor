@@ -1027,7 +1027,10 @@ class TemplateAdaptor(Adaptor):
         tmp_model = model
         tmp_model.eval()
         quantizable_ops = []
+        # add block ops
+        self.block_info = None
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
+        logger.info(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
             if self.approach == "post_training_dynamic_quant" else \
             self.query_handler.get_quantization_capability()['quant_aware'] \
@@ -1037,6 +1040,7 @@ class TemplateAdaptor(Adaptor):
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
+        q_capability['block_info'] = self.block_info
 
         if self.approach == "post_training_dynamic_quant":
             capability_pair = [
@@ -3499,6 +3503,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
+
+        
+        from .torch_utils.block import get_block
+        attention_block = get_block(model)
+        logger.info(f"Blocks: {len(attention_block)}")
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3506,7 +3515,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     module_prefix = op_name + '.' + name
                     if module_prefix in module_dict:
                         module_dict.pop(module_prefix)  # remove sub-modules of fused modules
-
+        q_ops_set = set()
         for op_name, child in module_dict.items():
             if type(child) in self.white_list \
                and type(child) != torch.nn.Sequential \
@@ -3515,6 +3524,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     (op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
+                q_ops_set.add(op_name)
+        block_info = [[name for name, _, _ in block]  for block in attention_block if block[0][0] in q_ops_set]  
+        self.block_info = block_info
+        
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.
