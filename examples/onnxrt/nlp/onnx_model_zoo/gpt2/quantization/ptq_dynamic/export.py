@@ -11,7 +11,7 @@ import os
 # for 8 transformer architectures and 30 pretrained weights.
 #          Model          | Tokenizer          | Pretrained weights shortcut          | save_name
 MODELS = [
-    (GPT2LMHeadModel, GPT2Tokenizer, 'gpt2', 'gpt2-lm-heah'),
+    (GPT2LMHeadModel, GPT2Tokenizer, 'gpt2', 'gpt2-lm-head'),
 ]
 data_dir = 'test_data_set_0'
 
@@ -28,14 +28,14 @@ def update_flatten_list(inputs, res_list):
 
 def to_numpy(x):
     if type(x) is not np.ndarray:
-        x = x.detach().cpu().numpy() if hasattr(x, 'requires_grad') and x.requires_grad else x.cpu().numpy()
+        x = x.detach().cpu().numpy() if x.requires_grad else x.cpu().numpy()
     return x
 
 
 def save_tensor_proto(file_path, name, data):
     tp = numpy_helper.from_array(data)
     tp.name = name
-    
+
     with open(file_path, 'wb') as f:
         f.write(tp.SerializeToString())
 
@@ -80,10 +80,10 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
 
     model_dir = os.path.join(dir, 'model.onnx')
     if isinstance(model, torch.jit.ScriptModule):
-        torch.onnx._export(model, inputs, model_dir, verbose=False, input_names=input_names,
+        torch.onnx._export(model, inputs, model_dir, verbose=True, input_names=input_names,
                            output_names=output_names, **kwargs)
     else:
-        torch.onnx.export(model, inputs, model_dir, verbose=False, input_names=input_names,
+        torch.onnx.export(model, inputs, model_dir, verbose=True, input_names=input_names,
                           output_names=output_names, **kwargs)
 
     test_data_dir = os.path.join(dir, data_dir)
