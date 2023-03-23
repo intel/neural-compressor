@@ -3525,9 +3525,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        block_info = [[name for name, _, _ in block]  for block in attention_block if block[0][0] in q_ops_set]  
+        block_info = [[(name,  self._get_op_type(module_dict[op_name])) for name, _, _ in block]  for block in attention_block if block[0][0] in q_ops_set]
         self.block_info = block_info
         
+    def _get_op_type(self, child):
+        if str(child.__class__.__name__) in unify_op_type_mapping:
+            return unify_op_type_mapping[str(child.__class__.__name__)]
+        else:
+            return str(child.__class__.__name__)
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.

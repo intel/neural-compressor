@@ -242,7 +242,7 @@ class BasicTuneStrategy(TuneStrategy):
             stage1_cnt = 0
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
-            stage1_max = 1e9  # TODO set a more appropriate value
+            stage1_max = 2  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
