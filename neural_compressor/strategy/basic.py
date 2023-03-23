@@ -164,7 +164,7 @@ class BasicTuneStrategy(TuneStrategy):
 
     def fallback_by_block(self, fallback_items_lst, best_op_tuning_cfg_stage1, target_dtype, tuning_space,\
         calib_sampling_size):
-        """ Fallback ops by block.
+        """Fallback ops by block.
 
         Step 1. block by block
         Step 2. accumulate block
