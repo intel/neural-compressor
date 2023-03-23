@@ -39,6 +39,7 @@ function init_params {
 function run_tuning {
     python main.py \
             --pretrained ${dataset_location}\
+            --weights ${input_model}\
             -j 1 \
             --tune
 
