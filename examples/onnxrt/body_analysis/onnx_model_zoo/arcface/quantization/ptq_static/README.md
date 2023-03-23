@@ -16,7 +16,17 @@ pip install -r requirements.txt
 Download model from [ONNX Model Zoo](https://github.com/onnx/models).
 
 ```shell
-wget https://github.com/onnx/models/raw/main/vision/body_analysis/arcface/model/arcfaceresnet100-11.onnx
+wget https://github.com/onnx/models/raw/main/vision/body_analysis/arcface/model/arcfaceresnet100-8.onnx
+```
+
+Convert opset version to 11 for more quantization capability.
+
+```python
+import onnx
+from onnx import version_converter
+model = onnx.load('arcfaceresnet100-8.onnx')
+model = version_converter.convert_version(model, 11)
+onnx.save_model(model, 'arcfaceresnet100-11.onnx')
 ```
 
 ## 3. Prepare Dataset
