@@ -127,28 +127,28 @@ class COCORawDataloader():
 class COCORawDataset():
     """Coco raw dataset.
     Please arrange data in this way:
-        /root/img_dir/1.jpg
-        /root/img_dir/2.jpg
-        ...
-        /root/img_dir/n.jpg
-        /root/anno_dir
+        root
+          ├──  1.jpg
+          ├──  2.jpg
+               ...
+          └──  n.jpg
+        anno_dir
     Please use Resize transform when batch_size > 1
-    Args: root (str): Root directory of dataset.
-          img_dir (str, default='val2017'): image file directory.
+    Args: root (str): Root directory of dataset..
           anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
           transform (transform object, default=None):  transform to process input data.
           filter (Filter objects, default=None): filter out examples according 
                                                  to specific conditions.
     """
 
-    def __init__(self, root, img_dir='val2017', \
+    def __init__(self, root, \
             anno_dir='annotations/instances_val2017.json', transform=None, filter=None):
         """Initialize the attributes of class."""
         self.batch_size = 1
         self.image_list = []
         self.transform = transform
-        img_path = os.path.join(root, img_dir)
-        anno_path = os.path.join(root, anno_dir)
+        img_path = root
+        anno_path = os.path.join(os.path.dirname(root), anno_dir)
         coco = COCO(anno_path)
         img_ids = coco.getImgIds()
         cat_ids = coco.getCatIds()

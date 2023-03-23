@@ -369,6 +369,10 @@ group.add_argument('--pruning-pattern', type=str, default="1x1",
                     help='the coefficient of teacher-student distillation loss')
 group.add_argument('--no-cuda', action='store_true', default=False,
                     help='user defined device setter.')
+group.add_argument('--distributed', action='store_true', default=False,
+                    help='Whether do distributed training.')
+group.add_argument('--dist_backend', type=str, default="nccl",
+                    help='The backend to be used for distributed training.')
 
 def _parse_args():
     # Do we have a config file to parse?
@@ -601,7 +605,7 @@ def main():
         else:
             if utils.is_primary(args):
                 _logger.info("Using native Torch DistributedDataParallel.")
-            model = NativeDDP(model, device_ids=[device], broadcast_buffers=not args.no_ddp_bb)
+            model = NativeDDP(model, device_ids=None if args.no_cuda else [device], broadcast_buffers=not args.no_ddp_bb)
         # NOTE: EMA model does not need to be wrapped by DDP
 
     # create the train and eval datasets

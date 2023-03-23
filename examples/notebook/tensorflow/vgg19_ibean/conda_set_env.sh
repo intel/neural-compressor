@@ -8,6 +8,6 @@ conda activate $ENV_NAME
 conda install pip -y
 pip install --upgrade pip
 pip install matplotlib
-pip install tensorflow==2.10.0 neural-compressor runipy notebook ipykernel
+pip install tensorflow neural-compressor runipy notebook ipykernel
 pip install tensorflow_hub tensorflow_datasets
 python -m ipykernel install --user --name $ENV_NAME

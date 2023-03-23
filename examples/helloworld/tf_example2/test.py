@@ -48,7 +48,7 @@ from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import DataLoader
 dataset = Dataset()
 dataloader = DataLoader(framework='tensorflow', dataset=dataset)
-config = PostTrainingQuantConfig()
+config = PostTrainingQuantConfig(backend='itex')
 q_model = fit(
     model='../models/saved_model',
     conf=config,
@@ -57,8 +57,6 @@ q_model = fit(
     eval_metric=MyMetric())
 
 # Optional, run quantized model
-import tensorflow as tf
-with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
-    tf.compat.v1.import_graph_def(q_model.graph_def, name='')
-    styled_image = sess.run(['Identity:0'], feed_dict={'input:0':dataset.test_images})
-    print("Inference is done.")
+keras_model = q_model.model
+predictions = keras_model.predict_on_batch(dataset.test_images)
+print("Inference is done.")

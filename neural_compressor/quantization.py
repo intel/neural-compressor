@@ -447,7 +447,7 @@ def fit(model,
                                               supported metrics. If this parameter is
                                               not None, user needs to specify pre-defined
                                               evaluation metrics through configuration file
-                                              and should set "eval_func" paramter as None.
+                                              and should set "eval_func" parameter as None.
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.

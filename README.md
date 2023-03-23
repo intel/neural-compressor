@@ -125,7 +125,7 @@ q_model = fit(
           <td colspan="1" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
           <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
           <td colspan="3" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-          <td colspan="3" align="center"><a href="./examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md">SmoothQuant</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
   </tbody>
 </table>

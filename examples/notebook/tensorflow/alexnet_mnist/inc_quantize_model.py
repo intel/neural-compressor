@@ -11,7 +11,10 @@ print("neural_compressor version {}".format(inc.__version__))
 import tensorflow as tf
 print("tensorflow {}".format(tf.__version__))
 
-from neural_compressor.experimental import Quantization, common
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data import DataLoader
+from neural_compressor.quantization import fit
+
 import mnist_dataset
 
 
@@ -45,24 +48,22 @@ def compare_ver(src, dst):
         return -1
     return 0
 
-def auto_tune(input_graph_path, yaml_config, batch_size, int8_pb_file):
-    quantizer = Quantization(yaml_config)
+def auto_tune(input_graph_path, config, batch_size, int8_pb_file):
     dataset = Dataset()
-    quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=batch_size)
-    quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=batch_size)
-    quantizer.model = common.Model(input_graph_path)
-    if compare_ver(inc.__version__, "1.9")>=0:
-        q_model = quantizer.fit()
-    else:
-        q_model = quantizer()
+    dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size = batch_size)
+    q_model = fit(
+        model=input_graph_path,
+        conf=config,
+        calib_dataloader=dataloader,
+        eval_dataloader=dataloader)
 
     return q_model
 
 
-yaml_file = "alexnet.yaml"
+config = PostTrainingQuantConfig()
 batch_size = 200
 fp32_frozen_pb_file = "fp32_frozen.pb"
 int8_pb_file = "alexnet_int8_model.pb"
 
-q_model = auto_tune(fp32_frozen_pb_file, yaml_file, batch_size, int8_pb_file)
+q_model = auto_tune(fp32_frozen_pb_file, config, batch_size, int8_pb_file)
 q_model.save(int8_pb_file)
