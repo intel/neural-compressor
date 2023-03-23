@@ -34,6 +34,8 @@ def model_forward(model, dataloader, iters):
         for idx, input in enumerate(dataloader):
             if isinstance(input, dict):
                 out = model(**input)
+            elif isinstance(input,list) or isinstance(input, tuple):
+                out = model(*input)
             else:
                 out = model(input)
             cnt += 1
@@ -281,7 +283,7 @@ class TorchSmoothQuant:
             scale = scale.view(scale.shape[0], 1)
             layer.weight *= scale
 
-        elif layer.__class__.__name__ == "LlamaRMSNorm":  ##quite tricky
+        elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
             layer.weight *= scale
 
 
@@ -459,6 +461,7 @@ class GraphTrace:
             "GroupNorm": "aten::group_norm",
             "InstanceNorm2d": "instance_norm",
             "LlamaRMSNorm": "aten::mul",
+            "T5LayerNorm": "aten::mul",
         }
         ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to",
