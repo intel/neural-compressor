@@ -311,13 +311,6 @@
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
-    "3dunet": {
-      "model_src_dir": "image_recognition/3d-unet/quantization/ptq/fx",
-      "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build",
-      "input_model": "/tf_dataset/pytorch/mlperf_3dunet/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1",
-      "batch_size": 100,
-      "main_script": "run.py"
-    },
     "rnnt": {
       "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/eager",
       "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
@@ -407,10 +400,10 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "t5_WMT_en_ro": {
+    "t5-small": {
       "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/wmt16",
-      "input_model": "/tf_dataset2/models/huggingface/t5-small-finetuned-en-to-ro-dataset_20",
+      "input_model": "/tf_dataset2/models/huggingface/t5-small",
       "batch_size": 64,
       "main_script": "run_translation.py"
     },

@@ -420,12 +420,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/image_recognition/resnest/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
-    <td>3D-UNet</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/image_recognition/3d-unet/quantization/ptq/fx">fx</a></td>
-  </tr>
-  <tr>
     <td>SSD ResNet34</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
@@ -564,7 +558,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
-    <td>t5_WMT_en_ro</td>
+    <td>t5-small</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx">fx</a></td>
