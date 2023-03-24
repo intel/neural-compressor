@@ -197,7 +197,6 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        import onnx
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(
             quant_format='QDQ',
