@@ -134,10 +134,8 @@ def eval_func(model):
 
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor import quantization
-conf = PostTrainingQuantConfig()
-q_model = quantization.fit(model,
-                           conf,
-                           calib_dataloader=eval_dataloader,
-                           eval_func=eval_func)
+tuning_criterion = TuningCriterion(max_trials=600)
+conf = PostTrainingQuantConfig(approach="dynamic", tuning_criterion=tuning_criterion)
+q_model = fit(model, conf=conf, eval_func=eval_func)
 q_model.save(training_args.output_dir)
 ```
