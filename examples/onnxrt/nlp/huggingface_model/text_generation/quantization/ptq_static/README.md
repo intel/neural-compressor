@@ -27,14 +27,14 @@ Static quantization:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --batch_size=batch_size \
-                   --quant_format="QOperator" # or QDQ
+                   --batch_size=batch_size # optional \
+                   --quant_format="QOperator" # or QDQ, optional
 ```
 
 ## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
-                      --batch_size=batch_size \
+                      --batch_size=batch_size # optional \
                       --mode=performance # or accuracy
 ```
