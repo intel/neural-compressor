@@ -18,9 +18,6 @@ pip install -r requirements.txt
 cd examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ```
-> NOTE
->
-> topology_name can be:{"t5_WMT_en_ro", "marianmt_WMT_en_ro"}
 ## 2. Benchmark
 ```bash
 # int8
@@ -39,8 +36,8 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 </thead>
 <tbody align="center">
   <tr>
-    <td>t5_WMT_en_ro</td>
-    <td><a href="https://huggingface.co/aretw0/t5-small-finetuned-en-to-ro-dataset_20">aretw0/t5-small-finetuned-en-to-ro-dataset_20</a></td>
+    <td>t5-small</td>
+    <td><a href="https://huggingface.co/t5-small">t5-small</a></td>
     <td><a href="https://huggingface.co/datasets/wmt16">wmt16</a></td>
   </tr>
   <tr>

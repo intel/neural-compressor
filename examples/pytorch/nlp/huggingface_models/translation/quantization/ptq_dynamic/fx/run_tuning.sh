@@ -40,7 +40,7 @@ function run_tuning {
     batch_size=16
     extra_cmd=''
 
-    if [ "${topology}" = "t5_WMT_en_ro" ];then
+    if [ "${topology}" = "t5-small" ];then
         extra_cmd='--model_name_or_path '${input_model}
     elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
         extra_cmd="--model_name_or_path Helsinki-NLP/opus-mt-en-ro"
