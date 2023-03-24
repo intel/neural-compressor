@@ -162,14 +162,14 @@ class Datasets(object):
     """A base class for all framework datasets.
 
     Args:
-        framework (str): framework name, like:"tensorflow", "tensorflow_itex",
+        framework (str): framework name, like:"tensorflow", "tensorflow_itex", "keras",
                          "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
                          "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
     """
 
     def __init__(self, framework):
         """Initialize the attributes of class."""
-        assert framework in ["tensorflow", "tensorflow_itex", \
+        assert framework in ["tensorflow", "tensorflow_itex", "keras", \
                              "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops", \
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
