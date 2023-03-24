@@ -27,11 +27,13 @@ Static quantization:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
+                   --batch_size=batch_size
 ```
 
 ## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
-                      --mode=performance # or accuracy
+                      --mode=performance # or accuracy \
+                      --batch_size=batch_size
 ```
