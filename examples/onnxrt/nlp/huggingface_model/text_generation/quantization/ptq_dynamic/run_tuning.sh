@@ -17,6 +17,9 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -28,6 +31,7 @@ function run_tuning {
     python main.py \
             --model_path ${input_model} \
             --output_model ${output_model} \
+            --batch_size ${batch_size-1} \
             --tune
 }
 
