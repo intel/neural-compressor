@@ -78,6 +78,11 @@ parser.add_argument(
     help="workspace to save intermediate files",
     default="nc_workspace"
 )
+parser.add_argument(
+    '--pad_max',
+    default=196,
+    type=int,
+)
 args = parser.parse_args()
 
 # load model
@@ -87,7 +92,7 @@ def tokenize_function(examples):
     example = tokenizer(examples['text'])
     return example
 
-def eval_func(onnx_model, dataloader, workspace):
+def eval_func(onnx_model, dataloader, workspace, pad_max):
     options = ort.SessionOptions()
     options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
     if isinstance(onnx_model, str):
@@ -95,17 +100,22 @@ def eval_func(onnx_model, dataloader, workspace):
     else:
         onnx.save(onnx_model, os.path.join(workspace, 'eval.onnx'), save_as_external_data=True)
         model_path = os.path.join(workspace, 'eval.onnx')
+
     session = ort.InferenceSession(model_path, options, providers=ort.get_available_providers())
     inputs_names = [i.name for i in session.get_inputs()]
 
     total, hit = 0, 0
     pad_len = 0
-    for idx, batch in enumerate(dataloader):
-        ort_inputs = dict(zip(inputs_names, batch[0]))
+ 
+    for idx, (batch, last_ind) in enumerate(dataloader):
+        ort_inputs = dict(zip(inputs_names, batch))
+        label = torch.from_numpy(batch[0][torch.arange(len(last_ind)), last_ind])
+        pad_len = pad_max - last_ind - 1
+        
         predictions = session.run(None, ort_inputs)
         outputs = torch.from_numpy(predictions[0])
-        label = torch.from_numpy(batch[0][0][:, -1])
-        last_token_logits = outputs[:, -2 - pad_len, :]
+
+        last_token_logits = outputs[torch.arange(len(last_ind)), -2 - pad_len, :]
         pred = last_token_logits.argmax(dim=-1)
         total += len(label)
         hit += (pred == label).sum().item()
@@ -114,7 +124,8 @@ def eval_func(onnx_model, dataloader, workspace):
     return acc
 
 class Dataloader:
-    def __init__(self, batch_size=1):
+    def __init__(self, pad_max=196, batch_size=1):
+        self.pad_max = pad_max
         self.batch_size=batch_size
         dataset = load_dataset('lambada', split='validation')
         dataset = dataset.map(tokenize_function, batched=True)
@@ -130,29 +141,31 @@ class Dataloader:
 
         input_ids_padded = []
         attention_mask_padded = []
+        last_ind = []
 
         for text in batch:
             input_ids = text["input_ids"]
-            attention_mask = text["attention_mask"]
-            pad_len = 0
+            pad_len = self.pad_max - input_ids.shape[0]
+            last_ind.append(input_ids.shape[0] - 1)
+            attention_mask = torch.ones(len(input_ids) + 1)
+            attention_mask[0] = 0
             input_ids = pad(input_ids, (0, pad_len), value=1)
             input_ids_padded.append(input_ids)
-            attention_mask = pad(attention_mask, (0, pad_len), value=1)
+            attention_mask = pad(attention_mask, (0, pad_len), value=0)
             attention_mask_padded.append(attention_mask)
 
-        return (torch.vstack(input_ids_padded), torch.vstack(attention_mask_padded))
+        return (torch.vstack(input_ids_padded), torch.vstack(attention_mask_padded)), torch.tensor(last_ind)
 
 
     def __iter__(self):
         try:
-            for input_ids, attention_mask in self.dataloader:
+            for (input_ids, attention_mask), last_ind in self.dataloader:
                 data = [input_ids.detach().cpu().numpy().astype('int64')]
                 for i in range(28):
                     data.append(np.zeros((input_ids.shape[0],16,1,256), dtype='float32'))
                     data.append(np.zeros((input_ids.shape[0],16,1,256), dtype='float32'))
-                attention_mask = torch.ones((input_ids.shape[0], input_ids.shape[1] +1))
                 data.append(attention_mask.detach().cpu().numpy().astype('int64'))
-                yield data, 1
+                yield data, last_ind.detach().cpu().numpy()
         except StopIteration:
             return
             
@@ -160,9 +173,9 @@ if __name__ == "__main__":
     from neural_compressor import set_workspace
     set_workspace(args.workspace)
 
-    dataloader = Dataloader(batch_size=args.batch_size)
+    dataloader = Dataloader(pad_max=args.pad_max, batch_size=args.batch_size)
     def eval(model):
-        return eval_func(model, dataloader, args.workspace)
+        return eval_func(model, dataloader, args.workspace, args.pad_max)
 
     if args.benchmark:
         if args.mode == 'performance':            
@@ -178,7 +191,6 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        import onnx
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(
             approach='dynamic',
