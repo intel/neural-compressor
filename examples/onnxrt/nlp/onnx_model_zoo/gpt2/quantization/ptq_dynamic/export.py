@@ -81,10 +81,10 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
     model_dir = os.path.join(dir, 'model.onnx')
     if isinstance(model, torch.jit.ScriptModule):
         torch.onnx._export(model, inputs, model_dir, verbose=True, input_names=input_names,
-                           output_names=output_names, example_outputs=outputs, **kwargs)
+                           output_names=output_names, **kwargs)
     else:
         torch.onnx.export(model, inputs, model_dir, verbose=True, input_names=input_names,
-                          output_names=output_names, example_outputs=outputs, **kwargs)
+                          output_names=output_names, **kwargs)
 
     test_data_dir = os.path.join(dir, data_dir)
     if not os.path.exists(test_data_dir):
@@ -128,7 +128,7 @@ def gpt2_test():
         model_dir, data_dir = save_model(save_name, model.cpu(), input_ids_1, output_1,
                                          opset_version=11,
                                          input_names=['input1'],
-                                         dynamic_axes={'input1': [0, 1, 2, 3]})
+                                         dynamic_axes={'input1': [0, 1, 2]})
 
         # Test exported model with TensorProto data saved in files
         inputs_flatten = flatten(input_ids_1)
@@ -142,7 +142,6 @@ def gpt2_test():
             tensor = onnx.TensorProto()
             with open(f_, 'rb') as file:
                 tensor.ParseFromString(file.read())
-            print(type(numpy_helper.to_array(tensor)))
             inputs.append(numpy_helper.to_array(tensor))
 
         outputs = []
