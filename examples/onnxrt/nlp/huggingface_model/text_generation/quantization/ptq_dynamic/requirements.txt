@@ -4,4 +4,3 @@ onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.10'
 datasets
-ptimum[exporters]
