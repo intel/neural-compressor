@@ -20,6 +20,9 @@ function init_params {
       --quant_format=*)
           quant_format=$(echo $var |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -32,6 +35,7 @@ function run_tuning {
             --quant_format ${quant_format-QOperator} \
             --model_path ${input_model} \
             --output_model ${output_model} \
+            --batch_size ${batch_size} \
             --tune
 }
 
