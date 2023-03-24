@@ -33,7 +33,7 @@ function run_benchmark {
     python main.py \
             --model_path ${input_model} \
             --mode=${mode} \
-            --batch_size=${batch_size} \
+            --batch_size=${batch_size-1} \
             --benchmark
             
 }
