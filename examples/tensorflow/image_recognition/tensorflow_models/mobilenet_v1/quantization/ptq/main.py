@@ -31,13 +31,16 @@ arg_parser.add_argument("--output-graph",
                         help='Specify tune result model save dir',
                         dest='output_graph')
 arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
+arg_parser.add_argument('--profile', dest='profile', action='store_true', help='use Neural Insights to profile model.')
 arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
 arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
+arg_parser.add_argument('--diagnose', dest='diagnose', action='store_true', help='use Neural Insights to diagnose tuning.')
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
 arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
 args = arg_parser.parse_args()
+
 
 def evaluate(model, eval_dataloader, metric, postprocess=None):
     """Custom evaluate function to estimate the accuracy of the model.
@@ -91,6 +94,9 @@ class eval_classifier_optimized_graph:
         from neural_compressor.utils import set_random_seed
         set_random_seed(9527)
 
+        if args.diagnose and not args.tune:
+            print("[ WARNING ] Diagnosis works only with tuning.")
+
         if args.tune:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
@@ -111,7 +117,10 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50])
+            conf = PostTrainingQuantConfig(
+                calibration_sampling_size=[20, 50],
+                diagnosis=args.diagnose,
+            )
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader)
             q_model.save(args.output_graph)
@@ -130,15 +139,25 @@ class eval_classifier_optimized_graph:
             def eval(model):
                 return evaluate(model, dataloader, top1)
 
+            if args.profile and args.mode != "performance":
+                print("[ WARNING ] Profiling works only with performance benchmark.")
+
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
+                conf = BenchmarkConfig(
+                    warmup=10,
+                    iteration=100,
+                    cores_per_instance=4,
+                    num_of_instance=1,
+                    profiling=args.profile,
+                )
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)
                 print("Batch size = %d" % dataloader.batch_size)
                 print("Accuracy: %.5f" % acc_result)
+
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_classifier_optimized_graph()

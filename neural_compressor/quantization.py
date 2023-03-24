@@ -15,11 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Neural Compressor Quantization API."""
-
 import os
 import pickle
 import random
+
 import numpy as np
+
 from .conf.config import QuantConf
 from .conf.dotdict import deep_get, deep_set, DotDict
 from .conf.pythonic_config import Config
@@ -43,6 +44,7 @@ class PostTrainingQuant:
     Example::
 
         conf = PostTrainingQuantConfig()
+        
         quantizer = PostTrainingQuant(conf)
         quantizer.model = model
         quantizer.eval_func = eval_func
@@ -389,6 +391,25 @@ class PostTrainingQuant:
         self._calib_dataloader = dataloader
 
 
+def register_neural_insights_workload(workload_location: str, model_path: str) -> None:
+    try:
+        import os
+        from neural_insights import NeuralInsights
+        from neural_insights.ux.utils.consts import WorkloadMode, WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.add_workload(
+            workload_location=workload_location,
+            workload_mode=WorkloadMode.QUANTIZATION,
+            model_path=model_path,
+            # TODO: Get path for other frameworks than TF
+        )
+        logger.debug("Registered quantization workload to Neural Insights.")
+    except ImportError:
+        logger.debug("Neural Insights not found.")
+    except Exception:
+        logger.debug("Could not register workload to Neural Insights.")
+
+
 def fit(model,
         conf,
         calib_dataloader=None,
@@ -473,6 +494,11 @@ def fit(model,
         q_model.save("./saved")
     """
     quantizer = PostTrainingQuant(conf)
+    if quantizer.conf.usr_cfg.tuning.diagnosis:
+        register_neural_insights_workload(
+            workload_location=os.path.abspath(quantizer.conf.usr_cfg.tuning.workspace.path),
+            model_path=os.path.abspath(model),
+        )
     quantizer.model = model
     if eval_func is not None:
         quantizer.eval_func = eval_func

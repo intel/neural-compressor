@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Benchmark is used for evaluating the model performance."""
-
+import json
 import os
 import re
 import sys
@@ -27,6 +27,8 @@ from threading import Thread
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
 from .conf.config import BenchmarkConf
+from .profiling.parser import ProfilingParser
+from .profiling.profiler import Profiler
 from .utils import logger
 from .utils import OPTIONS
 from .utils.utility import GLOBAL_STATE, MODE
@@ -39,6 +41,8 @@ from .utils import logger
 from .conf.pythonic_config import Config
 from .config import BenchmarkConfig
 from .utils.utility import Statistics
+
+from neural_compressor.profiling.factory import ProfilerFactory
 
 
 def set_env_var(env_var, value, overwrite_existing=False):
@@ -156,6 +160,7 @@ class Benchmark(object):
         self._b_dataloader = None
         self._b_func = None
         self._results = {}
+        self._raw_model = None
         assert isinstance(conf, BenchmarkConfig), \
             "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
         conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
@@ -185,6 +190,8 @@ class Benchmark(object):
             raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
         self.config_instance(raw_cmd)
         self.summary_benchmark()
+        if cfg.evaluation.profiling:
+            self.profile()
         return None
 
     fit = __call__
@@ -405,6 +412,63 @@ class Benchmark(object):
         else:
             self._b_func(self._model.model)
 
+    def profile(self) -> None:
+        """Execute profiling for benchmark configuration."""
+        intra_num_of_threads = 1
+        inter_num_of_threads = 1
+        num_warmup = 10
+
+        intra_num_of_threads_conf = self.conf.usr_cfg.evaluation.performance.configs.intra_num_of_threads
+        if intra_num_of_threads_conf is not None:
+            intra_num_of_threads = intra_num_of_threads_conf
+        else:
+            logger.warning(
+                f"Could not find intra_num_of_threads value in config. Using: {intra_num_of_threads}",
+            )
+
+        inter_num_of_threads_conf = self.conf.usr_cfg.evaluation.performance.configs.inter_num_of_threads
+        if inter_num_of_threads_conf is not None:
+            inter_num_of_threads = inter_num_of_threads_conf
+        else:
+            logger.warning(
+                f"Could not find inter_num_of_threads value in config. Using: {inter_num_of_threads}",
+            )
+
+        num_warmup_conf = self.conf.usr_cfg.evaluation.performance.warmup
+        if num_warmup_conf is not None:
+            num_warmup = num_warmup_conf
+        else:
+            logger.warning(
+                f"Could not get find num_warmup value in config. Using: {num_warmup}",
+            )
+
+        profiling_log = os.path.abspath(
+            os.path.join(
+                self.conf.usr_cfg.tuning.workspace.path,
+                "profiling.log",
+            ),
+        )
+        profiler: Profiler = ProfilerFactory.get_profiler(
+            model_path=self.raw_model,
+            model=self.model,
+            dataloader=self.b_dataloader,
+            log_file=profiling_log,
+        )
+        profiler.profile_model(
+            intra_num_of_threads=intra_num_of_threads,
+            inter_num_of_threads=inter_num_of_threads,
+            num_warmup=num_warmup,
+        )
+        parser = ProfilingParser([profiling_log])
+        parsed_data = parser.process()
+
+        profiling_data_file = os.path.join(
+            os.path.dirname(profiling_log),
+            "profiling_data.json",
+        )
+        with open(profiling_data_file, "w") as profiling_json:
+            json.dump(parsed_data, profiling_json, indent=4)
+
     @property
     def results(self):
         """Get the results of benchmarking."""
@@ -489,6 +553,7 @@ class Benchmark(object):
                        be careful of the name of the model configured in the yaml file,
                        make sure the name is in the supported slim model list.
         """
+        self._raw_model = user_model
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
             assert not isinstance(user_model, BaseModel), \
@@ -527,9 +592,34 @@ class Benchmark(object):
             self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
 
+    @property
+    def raw_model(self):
+        """Get the raw model."""
+        return self._raw_model
+
     def __repr__(self):
         """Get the object representation in string format."""
         return 'Benchmark'
+
+
+def register_neural_insights_workload(workload_location: str, model_path: str) -> None:  # TODO:
+    try:
+        import os
+        from neural_insights import NeuralInsights
+        from neural_insights.ux.utils.consts import WorkloadMode, WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.add_workload(
+            workload_location=workload_location,
+            workload_mode=WorkloadMode.BENCHMARK,
+            model_path=model_path,
+            # TODO: Get path for other frameworks than TF
+        )
+        logger.debug("Registered benchmark workload to Neural Insights.")
+    except ImportError:
+        logger.debug("Neural Insights not found.")
+    except Exception:
+        logger.debug("Could not register workload to Neural Insights.")
+
 
 def fit(model, config=None, b_dataloader=None, b_func=None):
     """Benchmark the model performance with the configure.
@@ -553,6 +643,10 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
     """
     benchmarker = Benchmark(config)
     benchmarker.model = model
+    register_neural_insights_workload(  # TODO: Register only once (skip in multi instances)
+        workload_location=os.path.abspath(benchmarker.conf.usr_cfg.tuning.workspace.path),
+        model_path=os.path.abspath(model),
+    )
     if b_func is not None:
         benchmarker.b_func = b_func
     if b_dataloader is not None:

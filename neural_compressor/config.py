@@ -169,7 +169,9 @@ class BenchmarkConfig:
                  cores_per_instance=None,
                  num_of_instance=None,
                  inter_num_of_threads=None,
-                 intra_num_of_threads=None):
+                 intra_num_of_threads=None,
+                 profiling=False,
+                 ):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -180,6 +182,7 @@ class BenchmarkConfig:
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
+        self.profiling = profiling
 
     @property
     def backend(self):
@@ -283,6 +286,17 @@ class BenchmarkConfig:
         if intra_num_of_threads is None or check_value('intra_num_of_threads',
                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def profiling(self):
+        """Get profiling property."""
+        return self._profiling
+
+    @profiling.setter
+    def profiling(self, profiling):
+        """Set profiling property."""
+        if check_value('profiling', profiling, bool):
+            self._profiling = profiling
 
 
 class AccuracyCriterion:
@@ -394,7 +408,8 @@ class _BaseQuantizationConfig:
                  excluded_precisions=[],
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False):
+                 use_distributed_tuning=False,
+                 diagnosis=False):
         """Initialize _BaseQuantizationConfig class.
 
         Args:
@@ -460,6 +475,7 @@ class _BaseQuantizationConfig:
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
         self.use_distributed_tuning=use_distributed_tuning
+        self.diagnosis = diagnosis
         self._example_inputs = example_inputs
 
     @property
@@ -899,6 +915,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False,
+                 diagnosis=False,
     ):
         """Init a PostTrainingQuantConfig object."""
         self.tuning_criterion = tuning_criterion
@@ -921,7 +938,9 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
-                         use_distributed_tuning=use_distributed_tuning)
+                         use_distributed_tuning=use_distributed_tuning,
+                         diagnosis=diagnosis,
+                         )
         self.approach = approach
 
     @property

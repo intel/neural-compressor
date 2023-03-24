@@ -1,0 +1,7 @@
+.workloadBlock {
+    border-radius: 25px;
+    border: 2px solid #73AD21;
+    padding: 10px;
+    width: fit-content;
+    margin: 20px;
+}
