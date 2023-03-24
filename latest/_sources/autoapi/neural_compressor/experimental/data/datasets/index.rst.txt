@@ -53,7 +53,7 @@ Functions
 
    A base class for all framework datasets.
 
-   :param framework: framework name, like:"tensorflow", "tensorflow_itex",
+   :param framework: framework name, like:"tensorflow", "tensorflow_itex", "keras",
                      "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
                      "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
    :type framework: str
