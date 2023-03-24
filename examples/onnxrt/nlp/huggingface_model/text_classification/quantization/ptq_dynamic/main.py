@@ -402,6 +402,9 @@ if __name__ == "__main__":
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
+        fp32_op_names = None
+        if args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
+            fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
         config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
