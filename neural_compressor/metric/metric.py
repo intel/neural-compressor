@@ -133,6 +133,7 @@ class ONNXRTITMetrics(object):
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "tensorflow_itex": TensorflowMetrics,
+                     "keras": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
                      "pytorch": PyTorchMetrics,
                      "pytorch_ipex": PyTorchMetrics,
@@ -145,6 +146,7 @@ framework_metrics = {"tensorflow": TensorflowMetrics,
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
 TENSORFLOW_ITEX_METRICS = {}
+KERAS_METRICS = {}
 MXNET_METRICS = {}
 PYTORCH_METRICS = {}
 ONNXRT_QL_METRICS = {}
@@ -152,6 +154,7 @@ ONNXRT_IT_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "tensorflow_itex": TENSORFLOW_ITEX_METRICS,
+                    "keras": KERAS_METRICS,
                     "mxnet": MXNET_METRICS,
                     "pytorch": PYTORCH_METRICS,
                     "pytorch_ipex": PYTORCH_METRICS,
@@ -176,7 +179,7 @@ class METRICS(object):
         Args:
             framework: The framwork name.
         """
-        assert framework in ("tensorflow", "tensorflow_itex",
+        assert framework in ("tensorflow", "tensorflow_itex", "keras",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
                              "onnxruntime"), \
@@ -226,6 +229,7 @@ def metric_registry(metric_type: str, framework: str):
             assert single_framework in [
                 "tensorflow",
                 "tensorflow_itex",
+                "keras",
                 "mxnet",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",

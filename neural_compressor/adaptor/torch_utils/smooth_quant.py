@@ -34,6 +34,8 @@ def model_forward(model, dataloader, iters):
         for idx, input in enumerate(dataloader):
             if isinstance(input, dict):
                 out = model(**input)
+            elif isinstance(input,list) or isinstance(input, tuple):
+                out = model(*input)
             else:
                 out = model(input)
             cnt += 1
@@ -272,7 +274,7 @@ class TorchSmoothQuant:
             ##the order could not be changed
             if hasattr(layer, "bias") and (layer.bias != None):
                 layer.bias *= scale
-            scale = scale.view(scale.shape[0], 1 , 1, 1)
+            scale = scale.view(scale.shape[0], 1, 1, 1)
             layer.weight *= scale
 
         elif isinstance(layer, torch.nn.Linear):
@@ -281,8 +283,13 @@ class TorchSmoothQuant:
             scale = scale.view(scale.shape[0], 1)
             layer.weight *= scale
 
+        elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+            layer.weight *= scale
+
+
         else:
-            logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to weight and bias directly ")
+            logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to weight and bias directly, "
+                           f"this may introduce accuracy issue, please have a check ")
             if hasattr(layer, "weight") and layer.weight != None:
                 layer.weight *= scale
             if hasattr(layer, "bias") and layer.bias != None:
@@ -317,7 +324,7 @@ class TorchSmoothQuant:
             input_power = torch.pow(input_max, alpha)
             logger.debug(f"{max(input_max)}, {min(input_power)}")
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha)
-            #logger.info(f"{absorb_to_layer[key][0]} layer sparsity is
+            # logger.info(f"{absorb_to_layer[key][0]} layer sparsity is
             # {1.0-torch.count_nonzero(input_power)/input_power.numel()}")
 
             scale = torch.clip(input_power / weight_power, min=1e-5)
@@ -332,7 +339,7 @@ class TorchSmoothQuant:
         return weight_scales_info, absorb_scales_info
 
     def _check_same_hyperparameters(self, percentile, op_types,
-                                  scales_per_op, calib_iter):
+                                    scales_per_op, calib_iter):
         """
         :param percentile:
         :param op_types:
@@ -403,7 +410,7 @@ class TorchSmoothQuant:
                 self._scale_layer_weight(key, 1.0 / self.weight_scale_info[key])
             for key in self.absorb_scales_info:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
-            self.weight_scale_info = {} ##clear the data
+            self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
 
     def _trace(self, op_types):
@@ -453,6 +460,8 @@ class GraphTrace:
             "BatchNorm2d": "aten::batch_norm",
             "GroupNorm": "aten::group_norm",
             "InstanceNorm2d": "instance_norm",
+            "LlamaRMSNorm": "aten::mul",
+            "T5LayerNorm": "aten::mul",
         }
         ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to",
@@ -463,7 +472,8 @@ class GraphTrace:
 
         self.could_absorb_layers = ["aten::layer_norm", "aten::batch_norm", "aten::linear", "aten::_convolution",
                                     "aten::group_norm",
-                                    "aten::instance_norm"]  ##TODO,suppport more norm
+                                    "aten::instance_norm",
+                                    "aten::mul"]  ##TODO,suppport more norm
 
     def trace(self, model, dummy_input):
         traced_model = None
