@@ -179,7 +179,7 @@
       "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/",
       "input_model": "/tf_dataset/tensorflow/saved_model/efficientnet_v2",
       "main_script": "main.py",
-      "batch_size": 100
+      "batch_size": 10
     },
     "ssd_resnet50_v1": {
       "model_src_dir": "object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq",
