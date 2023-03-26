@@ -169,7 +169,7 @@
     },
     "efficientnet_b0": {
       "model_src_dir": "image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/",
       "input_model": "/tf_dataset/pre-trained-models/efficientnet-b0",
       "main_script": "main.py",
       "batch_size": 32
