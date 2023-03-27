@@ -143,12 +143,7 @@ if args.int8:
 
     recipes = {}
     if args.sq:
-        if args.alpha == 'auto':
-            from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-            sq = TorchSmoothQuant(model, calib_dataloader, True)
-            model = sq.transform(alpha=args.alpha)
-        else:
-            recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
+        recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
     op_type_dict = None
     if args.kl:
         op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
