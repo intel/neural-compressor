@@ -22,8 +22,7 @@ from .contrib import *
 # we need to set a global 'NA' backend, or Model can't be used
 from .utils.utility import set_random_seed, set_tensorboard, set_workspace
 from .utils import options
-from .conf.config import conf
-from .conf.pythonic_config import config
+from .config import conf
 from .config import DistillationConfig, PostTrainingQuantConfig, \
                     WeightPruningConfig, QuantizationAwareTrainingConfig, \
                     MixedPrecisionConfig

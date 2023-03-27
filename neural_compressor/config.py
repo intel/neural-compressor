@@ -457,28 +457,7 @@ tuning_criterion = TuningCriterion()
 
 
 class _BaseQuantizationConfig:
-    def __init__(self,
-                 inputs=[],
-                 outputs=[],
-                 backend="default",
-                 domain="auto",
-                 model_name="",
-                 metric={},
-                 recipes={},
-                 quant_format="default",
-                 device="cpu",
-                 calibration_sampling_size=[100],
-                 op_type_dict=None,
-                 op_name_dict=None,
-                 performance_only=False,
-                 reduce_range=None,
-                 excluded_precisions=[],
-                 quant_level="auto",
-                 accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion,
-                 use_distributed_tuning=False):
-        """Initialize _BaseQuantizationConfig class.
-        Args:
+    """Args:
             inputs: inputs of model
             outputs: outputs of model
             backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
@@ -514,6 +493,28 @@ class _BaseQuantizationConfig:
                          strategy, auto (default) is the combination of 0 and 1.
             accuracy_criterion: accuracy constraint settings
             use_distributed_tuning: whether use distributed tuning or not
+    """
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend="default",
+                 domain="auto",
+                 model_name="",
+                 metric={},
+                 recipes={},
+                 quant_format="default",
+                 device="cpu",
+                 calibration_sampling_size=[100],
+                 op_type_dict=None,
+                 op_name_dict=None,
+                 performance_only=False,
+                 reduce_range=None,
+                 excluded_precisions=[],
+                 quant_level="auto",
+                 accuracy_criterion=accuracy_criterion,
+                 tuning_criterion=tuning_criterion,
+                 use_distributed_tuning=False):
+        """Initialize _BaseQuantizationConfig class.
         """
         self.inputs = inputs
         self.outputs = outputs
@@ -1617,3 +1618,5 @@ class Config:
     @property
     def onnxruntime(self):
         return self._onnxruntime
+
+config = Config()
