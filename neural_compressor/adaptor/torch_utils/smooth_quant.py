@@ -532,8 +532,6 @@ class TorchSmoothQuant:
 
             self.recover()
             if alpha == 'auto':
-                alpha_min, alpha_max, alpha_step, alpha_scale = 0.3, 0.6, 0.05, 100
-                attn_method = 'min'
                 self.auto_tune_alpha(input_maxes, alpha_min, alpha_max, alpha_step, attn_method)
             else:
                 self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, 
