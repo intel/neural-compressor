@@ -411,17 +411,17 @@ class TorchSmoothQuant:
         else:
             return True
 
-    def auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, 
-                        alpha_step=0.05, alpha_scale=100, attn_method='min'):
+    def auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
         """
         Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
         input_maxes:
         alpha_min: min value of alpha search space.
         alpha_max: max value of alpha search space.
         alpha_step: step size of alpha search space.
-        alpha_scale: scale value used to generate alpha values.
         attn_method: criterion method used on attention ops; currently min, max and mean are supported.
         """
+        import copy
+        alpha_scale = 100
         alpha_values = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                          round(alpha_step * alpha_scale)))
         ans_layer2absorb, self.layer_to_absorb, ans = {}, {}, {}
@@ -448,9 +448,8 @@ class TorchSmoothQuant:
                     input_op_S = quant_dequant_x(input_op * self.absorb_scales_info[absorb_key])
                     layer = self._get_module(layer_key)
                     weight_S = quant_dequant_w(torch.t(layer.weight))
-                    layer_S = torch.nn.Linear(layer.in_features, layer.out_features)
+                    layer_S = copy.deepcopy(layer)
                     layer_S.weight.data = torch.t(weight_S)
-                    layer_S.bias = layer.bias
                     output_S = layer_S(input_op_S)
                     self.recover()
                     loss = torch.sum(torch.abs(output_op - output_S) ** 2)
@@ -493,6 +492,7 @@ class TorchSmoothQuant:
                 op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op)
             self.weight_scale_info.update(op_weight_scale)
             self.absorb_scales_info.update(op_absorb_scale)
+        self.input_values, self.output_values = {}, {}
 
 
 
@@ -534,7 +534,7 @@ class TorchSmoothQuant:
             if alpha == 'auto':
                 alpha_min, alpha_max, alpha_step, alpha_scale = 0.3, 0.6, 0.05, 100
                 attn_method = 'min'
-                self.auto_tune_alpha(input_maxes, alpha_min, alpha_max, alpha_step, alpha_scale, attn_method)
+                self.auto_tune_alpha(input_maxes, alpha_min, alpha_max, alpha_step, attn_method)
             else:
                 self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, 
                                                                         input_maxes, alpha)
