@@ -13,7 +13,7 @@ parser.add_argument('--int8', action='store_true', default=False, help="eval fp3
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
 # parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
 parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-560m')
-parser.add_argument('--alpha', type=float, default=0.5)
+parser.add_argument('--alpha', default=0.5, help="Set alpha=auto to use alpha tuning.")
 parser.add_argument('--log_frequency', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--kl', action='store_true', default=False, help="whether to use kl divergence for calibration")
@@ -143,7 +143,12 @@ if args.int8:
 
     recipes = {}
     if args.sq:
-        recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
+        if args.alpha == 'auto':
+            from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+            sq = TorchSmoothQuant(model, calib_dataloader, True)
+            model = sq.transform(alpha=args.alpha)
+        else:
+            recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
     op_type_dict = None
     if args.kl:
         op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
