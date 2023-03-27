@@ -411,7 +411,8 @@ class TorchSmoothQuant:
         else:
             return True
 
-    def auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, alpha_scale=100, attn_method='min'):
+    def auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, 
+                        alpha_step=0.05, alpha_scale=100, attn_method='min'):
         """
         Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
         input_maxes:
@@ -421,7 +422,8 @@ class TorchSmoothQuant:
         alpha_scale: scale value used to generate alpha values.
         attn_method: criterion method used on attention ops; currently min, max and mean are supported.
         """
-        alpha_values = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale), round(alpha_step * alpha_scale)))
+        alpha_values = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
+                         round(alpha_step * alpha_scale)))
         ans_layer2absorb, self.layer_to_absorb, ans = {}, {}, {}
         ## Searching optimal alphas
         for idx, key in enumerate(self.absorb_to_layer):
@@ -438,7 +440,8 @@ class TorchSmoothQuant:
                 loss_alpha = {}
                 for alpha in alpha_values:
                     alpha = alpha / alpha_scale
-                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample, input_max_op, alpha)
+                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample, 
+                                                                            input_max_op, alpha)
                     input_op, output_op = self.input_values[layer_key], self.output_values[layer_key]
                     if output_op.ndim == 3:
                         output_op = output_op[0]
@@ -484,7 +487,8 @@ class TorchSmoothQuant:
             layer_key_ = self.layer_to_absorb[absorb_key]
             input_max_op[layer_key_] = input_maxes[layer_key_]
             if key in ans_layer2absorb:
-                op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op, alpha=ans_layer2absorb[key])
+                op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op, 
+                                                                            alpha=ans_layer2absorb[key])
             else:
                 op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op)
             self.weight_scale_info.update(op_weight_scale)
@@ -532,7 +536,8 @@ class TorchSmoothQuant:
                 attn_method = 'min'
                 self.auto_tune_alpha(input_maxes, alpha_min, alpha_max, alpha_step, alpha_scale, attn_method)
             else:
-                self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, input_maxes, alpha)
+                self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, 
+                                                                        input_maxes, alpha)
             return self.model
 
     def recover(self):
