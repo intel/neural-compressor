@@ -20,7 +20,6 @@
 
 
 # general setting
-# for test
 # ------------- light_color start----------------
 # black
 LIGHT_BLACK="echo -en \\E[30m"
