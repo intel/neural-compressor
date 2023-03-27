@@ -43,7 +43,7 @@ def model_forward(model, dataloader, iters):
                 break
 
 
-def quant_dequant_w(m, num_bits=8, scheme='sym'):
+def quant_dequant_w(m, num_bits=8, scheme='asym'):
     if isinstance(m, torch.nn.Linear):
         x = m.weight
         if scheme == 'sym':
@@ -53,13 +53,13 @@ def quant_dequant_w(m, num_bits=8, scheme='sym'):
             q_min, q_max = 0, 2. ** num_bits - 1.
             scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
         scale = torch.clip(scale, min=1e-5)
-        scale = scale.unsqueeze(dim=-1)
+
         if scheme == 'sym':
             bias = 0
         else:
             bias = torch.round(0 - (torch.min(x, dim=1).values) / scale)
             bias = bias.unsqueeze(dim=-1)
-
+        scale = scale.unsqueeze(dim=-1)
         q_x = x / scale + bias
         q_x.clamp_(q_min, q_max).round_()
         return (q_x - bias) * scale
@@ -191,12 +191,12 @@ class TorchSmoothQuant:
 
         def save_input_output_hook(module, inputs, outputs):
             input = inputs[0]
-            if name in self.input_values:
-                self.input_values[name].append(input)
-                self.output_values[name].append(outputs)
-            else:
-                self.input_values[name] = [input]
-                self.output_values[name] = [outputs]
+            # if name in self.input_values:
+            #     self.input_values[name].append(input)
+            #     self.output_values[name].append(outputs)
+            # else:
+            self.input_values[name] = [input]
+            self.output_values[name] = [outputs]
 
         return save_input_output_hook
 
@@ -467,6 +467,7 @@ class TorchSmoothQuant:
         alpha_step: step size of alpha search space.
         attn_method: criterion method used on attention ops; currently min, max and mean are supported.
         """
+        logger.info("enter auto")
         import copy
         alpha_scale = 100
         alpha_values = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
