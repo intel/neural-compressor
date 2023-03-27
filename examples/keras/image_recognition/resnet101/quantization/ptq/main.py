@@ -124,9 +124,9 @@ def main(_):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.utils.utility import set_random_seed
-        set_random_seed(9527)
+        set_random_seed(9524)
         config = PostTrainingQuantConfig(backend='itex', 
-            calibration_sampling_size=[10, 20])
+            calibration_sampling_size=[10, 15])
         q_model = fit(
             model=FLAGS.input_model,
             conf=config,

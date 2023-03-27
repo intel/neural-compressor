@@ -14,29 +14,14 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### Install Intel Tensorflow
+
+### Install Requirements
+The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
+The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
-pip install intel-tensorflow
+pip install -r requirements.txt
 ```
 > Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
-
-### Install Intel Extension for Tensorflow
-
-#### Quantizing the model on Intel GPU
-Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
-
-```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
-```
-Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
-
-#### Quantizing the model on Intel CPU(Experimental)
-Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
-
-```shell
-pip install --upgrade intel-extension-for-tensorflow[cpu]
-```
 
 ## 2. Prepare Pretrained model
 

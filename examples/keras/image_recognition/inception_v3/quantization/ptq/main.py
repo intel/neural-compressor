@@ -137,11 +137,6 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model.model import Model
-            from neural_compressor.adaptor.keras import KerasAdaptor
-            keras_adaptor = KerasAdaptor(framework_specific_info={'device': 'CPU'})
-            model = Model(FLAGS.input_model).model
-            tensor = keras_adaptor.inspect_tensor(model, eval_dataloader, iteration_list=[2])
-            import pdb; pdb.set_trace()
             accuracy = evaluate(Model(FLAGS.input_model).model)
             logger.info('Batch size = %d' % FLAGS.batch_size)
             logger.info("Accuracy: %.5f" % accuracy)
