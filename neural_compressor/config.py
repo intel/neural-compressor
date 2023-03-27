@@ -1200,6 +1200,16 @@ class DistillationConfig:
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     """Config Class for MixedPrecision.
+    
+    Args:
+        device (String, optional): device for execution. Support 'cpu' and 'gpu', default is 'cpu'
+        backend (String, optional): backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'
+        precision (String, optional): target precision for mix precision conversion. Support 'bf16' and 'fp16', default is 'bf16'
+        inputs (List, optional): inputs of model, default is []
+        outputs (List, optional): outputs of model, default is []
+        tuning_criterion (TuningCriterion object, optional): accuracy tuning settings, it won't work if there is no accuracy tuning process
+        accuracy_criterion (AccuracyCriterion object, optional): accuracy constraint settings, it won't work if there is no accuracy tuning process
+        excluded_precisions (List, optional): precisions to be excluded during mix precision conversion, default is []
 
     Example::
 
