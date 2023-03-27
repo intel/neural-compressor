@@ -541,8 +541,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   iterations=iteration_list,
                   white_nodes=op_list,
                   backend=self.backend)
-        tensors = augment.dump_tensor(quantization_cfg,
-                                      activation=(inspect_type!='weight'),
+        tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
                                       weight=(inspect_type!='activation'),)
         if save_to_disk:
             if not save_path:
