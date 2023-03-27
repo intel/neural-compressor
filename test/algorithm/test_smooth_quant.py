@@ -1,6 +1,40 @@
 import unittest
 import torch
+
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+
+# class TestSqConvOpFuseAuto(unittest.TestCase):
+#     @classmethod
+#     def setUpClass(self):
+#         class RandDataloader:
+#             def __init__(self):
+#                 pass
+#
+#             def __iter__(self):
+#                 yield torch.rand((1, 3, 1, 1))
+#
+#         self.conv_dl = RandDataloader()
+#
+#     @classmethod
+#     def test_sq_conv_relu6(self):
+#         class Model(torch.nn.Module):
+#             def __init__(self):
+#                 super(Model, self).__init__()
+#                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
+#                 self.act = torch.nn.ReLU6()
+#                 self.conv2 = torch.nn.Conv2d(4, 3, 1, 1)
+#
+#             def forward(self, x):
+#                 out = self.conv1(x)
+#                 out = self.act(out)
+#                 out = self.conv2(out)
+#                 return out
+#
+#         model = Model()
+#
+#         sq = TorchSmoothQuant(model, self.conv_dl)
+#         sq.transform(alpha='auto')
+#         assert len(sq.absorb_to_layer) == 1
 
 
 class TestSqConvOpFuse(unittest.TestCase):
@@ -75,7 +109,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.5,calib_iter=2)
+        sq.transform(alpha=0.5, calib_iter=2)
         assert len(sq.absorb_to_layer) == 0
 
     @classmethod
@@ -232,7 +266,7 @@ class TestSqListInput(unittest.TestCase):
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
-    def test_sq_linear_LlamaRMSNorm(self):
+    def test_sq_linear_LlamaRMSNorm_tuple(self):
         class Model(torch.nn.Module):
             def __init__(self):
                 super(Model, self).__init__()
@@ -251,6 +285,40 @@ class TestSqListInput(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 1
+
+class TestAlphaAutoLinear(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                pass
+
+            def __iter__(self):
+                yield torch.rand((1, 3))
+
+        self.linear_dl = RandDataloader()
+
+    @classmethod
+    def test_sq_linear_LlamaRMSNorm_auto(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha='auto', calib_iter=1)
+        assert len(sq.absorb_to_layer) == 1
+
 
 class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
@@ -287,7 +355,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
-    def test_sq_linear_LlamaRMSNorm(self):
+    def test_sq_linear_T5Norm(self):
         class Model(torch.nn.Module):
             def __init__(self):
                 super(Model, self).__init__()
@@ -352,7 +420,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
-    def test_sq_linear_norm(self):
+    def test_sq_linear_norm_linear(self):
         class Model(torch.nn.Module):
             def __init__(self):
                 super(Model, self).__init__()
@@ -375,7 +443,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         assert len(sq.absorb_to_layer) == 2
 
     @classmethod
-    def test_sq_linear_norm(self):
+    def test_sq_linear_gelu_norm(self):
         class Model(torch.nn.Module):
             def __init__(self):
                 super(Model, self).__init__()
