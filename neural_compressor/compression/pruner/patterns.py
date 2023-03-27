@@ -16,11 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import torch
-from .utils import logger
+from .utils import torch, F, logger
 from collections import namedtuple
-from torch.nn import functional as F
-
+from functools import partial
 
 PATTERNS = {}
 
@@ -107,7 +105,7 @@ class BasePattern:
         self.max_sparsity_ratio_per_op = self.config['max_sparsity_ratio_per_op']
         self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
-        self.block = bool('block' in self.config['pruning_type'] or 'block' in self.config['criterion_type'])
+        self.block = bool('block' in self.config['pruning_type'] or 'free' in self.config['pruning_type'])
         # Not using deterministic_algorithms for all examples
         torch.use_deterministic_algorithms(False)
 
@@ -425,9 +423,10 @@ class PatternNxM(BasePattern):
             else:
                 shape = datas[key].shape
             if self.N == "channel": # support "channelxM" format
-                block_sizes_dict[key][0] = shape[0]
-            if self.M == "channel" :
-                block_sizes_dict[key][1] = shape[1]
+                block_sizes_dict[key] = [shape[0], self.block_size[1]]
+            if self.M == "channel":
+                block_sizes_dict[key] = [self.block_size[0], shape[1]]
+                
         return block_sizes_dict
 
     def check_layer_validity(self):
@@ -730,9 +729,8 @@ class PatternNxM(BasePattern):
                         self.weight.shape[1]//self.block_mask.shape[1]]
                 mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
                 return F.linear(input, self.weight*mask, self.bias)
-            from functools import partial
             module.forward = partial(forward, module)
-            masks[key] = modules[key].block_mask
+            masks[key] = modules[key].block_mask.data
         return masks
     
     def mask_block_weights(self):
