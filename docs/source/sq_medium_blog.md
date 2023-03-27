@@ -28,13 +28,13 @@ Quantization is a common compression operation to reduce memory and accelerate i
 
 ## SmoothQuant and our enhancement
 
-For LLMs, activations are much harder to quantize due to the outliers than weights whose distribution is uniform and flat. The variance amongst the channels for a given token is large but small between magnitudes of a given channels, therefore, the quantization error will decrease if we can use activation per-channel quantization. However, can't perform channel-wise activation quantization currently because it cannot map to hardware-accelerate GEMM kernels well.
+For LLMs, activations are much harder to quantize than weights due to the outliers. The activation variance is large amongst the channels for a given token but is small between magnitudes of a given channels. Therefore, the quantization error will decrease if we can use activation per-channel quantization. However, channel-wise activation quantization currently could not be performed because it can not map to hardware-accelerate GEMM kernels well.
 
-SmoothQuant is an alternative method of per-channel activation quantization. It divide the input activation by a per-channel smoothing factor $s\in\mathbb R^{C_i} $ , where $C_i$ is the input channel. Also scale the weights accordingly to keep the mathematical equivalence.
+SmoothQuant is an alternative method of per-channel activation quantization. It divides the input activation by a per-channel smoothing factor $s\in\mathbb R^{C_i} $ , where $C_i$ is the input channel. It also scales the weights accordingly to keep the mathematical equivalence.
 $$
 Y = (Xdiag(s)^{-1})\cdot(diag(s)W) = \hat{X}\hat{W}
 $$
-This formula migrate the difficulty from activations to weights. In order to control how much difficulty shift to weights, we use a hyper-parameter named migration strength $\alpha$. 
+This formula migrates the quantization difficulty from activations to weights. In order to control how much difficulty is shifted to weights, a hyper-parameter named migration strength $\alpha$ is used. 
 $$
 s_j = max(|X_j|)^\alpha / max(|W_j|)^{1-\alpha}
 $$
@@ -42,7 +42,10 @@ $j = 1, 2, ...s, C_i$ where j correspond to j-th input channel.
 
 ![](./imgs/smoothquant.png)
 
-For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance the difficult between activations and weights, can have a low quantization error. For others models with more significant outliers in activations, increase $\alpha$ to a bigger num, for example 0.75, to migrate more quantization difficulty to weights.
+For most of models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.
+
+### Our enhancement: Layer-wise Auto-tuning of $\alpha$.
+Instead of using a fixed-value $\alpha$ to control how to split the quantization difficulty, we proposed a method to enable layer-wise auto-tuning of $\alpha$ values. A Layer-wise alpha value is calculated based on a user-defined $\alpha$-value range and then used for smoothing transformation of this layer. Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
 
 ## Results
 
