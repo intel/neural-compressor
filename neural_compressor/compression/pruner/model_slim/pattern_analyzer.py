@@ -21,6 +21,8 @@ import re
 
 JIT_SUPPORT_OPS = ['linear', 'gelu', 'mul'] # linear and all act_fn supported by pytorch-aten extension
 
+# MHA_SUPPORT_NAMES = ["q", "k", "v"]
+
 def get_attributes(module: torch.nn.Module, attrs: str):
     """Get a multi-level descent module of module.
 
@@ -66,7 +68,7 @@ class RecipeSearcher(object):
         self.model = model
         self.recipe = recipe
         self.targets = list(self.recipe.keys())
-        self.search_results = {}
+        self.search_results = []
 
     def search(self, target_name):
         """Operations called for entire searching process."""
@@ -79,7 +81,7 @@ class RecipeSearcher(object):
         module_type = type(module).__name__
         if module_type in self.targets:
             sublayers = [get_attributes(module, sublayer_name) for sublayer_name in self.recipe[module_type]]
-            self.search_results[module_name] = sublayers
+            self.search_results.append(sublayers)
         # recursively search
         for n, m in module.named_children():
             self.dfs_search(m, n, target_name)
@@ -244,6 +246,23 @@ class JitBasicSearcher(object):
         for attr in attrs:
             sub_module = getattr(sub_module, attr)
         return sub_module
+    
+    def get_layer_name(self, scope_code):
+        """
+        Get the module name from its static graph scope code.
+        """
+        scope_regex = re.compile('scope\: .* \#')
+        try:
+            scope_part = scope_regex.search(scope_code)[0]
+        except:
+            print(f"{scope_code} does contain wanted scope info.")
+            return ""
+        # strip scope keyword, only keep contrete items
+        scope_part = scope_part[7:-2].strip()
+        scope_contents = scope_part.split('/')[-1]
+        level_names = scope_contents.split('.')
+        level_names_main =  ".".join(level_names[1:])
+        return level_names_main
 
 class PathSearcher(JitBasicSearcher):
     """Static graph searcher.
@@ -317,10 +336,10 @@ class PathSearcher(JitBasicSearcher):
         return self.search_results
 
 class Linear2LinearSearcher(JitBasicSearcher):
-    """Static graph searcher.
+    """Static graph searcher for consecutive linear layers.
 
     Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
-    Automatically searcher linear layers which can be optimized.
+    Automatically search linear layers which can be optimized.
 
     Args:
         model (torch.nn.Module): The PyTorch model for searching.
@@ -379,3 +398,115 @@ class Linear2LinearSearcher(JitBasicSearcher):
         print(f"Found {len(self.search_results)} target pattern 'linear2linear' in model {type(self.model).__name__}")
         JitBasicSearcher.get_layer_for_all(self)
         return self.search_results
+
+class SelfMHASearcher(JitBasicSearcher):
+    """Static graph searcher for multi-head attention modules.
+
+    Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+    Automatically search multi-head attention modules which can be optimized.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model for searching.
+            
+    Attributes:
+        model: The PyTorch model for searching.
+        device: The model's current device type.
+        static_graph: The static graph of original model.
+        flatten_static_graph: A list of string with the model's static graph inference details.
+    """
+
+    def __init__(self, model):
+        """Initialize."""
+        super(SelfMHASearcher, self).__init__(model)
+    
+    def gather_mha_inputs(self):
+        """Search the multi-head attention modules' query, key, as well as value layers."""
+        linears = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::linear")
+        linear_infos = [JitBasicSearcher.analyze_code(self, li) for li in linears]
+        # generate all nodes' name and their related input node names
+        input_counts = {}
+        # get all linear modules
+        for linfo in linear_infos:
+            if linfo['input_name'] in input_counts:
+                input_counts[linfo['input_name']] += 1
+            else:
+                input_counts[linfo['input_name']] = 1
+        input_counts_filtered = {}
+        # in our strategy, when three linear layers share the same input, they should be query, key, and value
+        for k, v in input_counts.items():
+            if v == 3:
+                # attention's number
+                input_counts_filtered[k] = v
+            else: 
+                continue
+        return input_counts_filtered
+    
+    def gather_qkv_from_input(self, input_names: dict):
+        """Gather query, key and value layers of the same self-attention module together."""
+        qkv_clusters = {}
+        linears = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::linear")
+        for li in linears:
+            linfo = JitBasicSearcher.analyze_code(self, li)
+            if linfo['input_name'] in input_names:
+                if linfo['input_name'] in qkv_clusters:
+                    qkv_clusters[linfo['input_name']].append(linfo['op_trace'])
+                else:
+                    qkv_clusters[linfo['input_name']] = [linfo['op_trace']]
+            else:
+                continue
+        return qkv_clusters
+    
+    def search_ffn_from_qkv(self, qkv_clusters):
+        """Search the related ffn linear module related to every self-attention."""
+        linear_lut = []
+        for n, m in self.model.named_modules():
+            if type(m).__name__ == "Linear":
+                linear_lut.append(n)
+        # initialize the qkv data structure 
+        self_attn_list = []
+        for input_name in qkv_clusters:
+            self_attn = {
+                "qkv": qkv_clusters[input_name][:],
+                "ffn": []
+            }
+            for idx in range(len(linear_lut)):
+                if idx >= 1 and (linear_lut[idx-1] in self_attn["qkv"]) and (linear_lut[idx] not in self_attn["qkv"]):
+                    # this means we find the first linear layer after qkv
+                    self_attn["ffn"].append(linear_lut[idx])
+                    break
+                else:
+                    continue
+            self_attn_list.append(self_attn)
+            del self_attn
+        return self_attn_list
+
+    def search(self, split_qkv_ffn = True):
+        """Operations called for entire searching process.
+
+        Args:
+            split_qkv_ffn: a bool. Whether to rearrange searched attention heads' linear layers.
+                if True: return two lists: one contains all query, key and value layers, 
+                    the other contains all forward layers.
+                if False: only return one list containing self-attention's linear layers, 
+                    query, key, value layers and forward layers are not splited. 
+        
+        Return:
+            two lists containing self-attention modules' layer names.
+
+        """
+        input_names_for_linears = self.gather_mha_inputs()
+        qkv_clusters = self.gather_qkv_from_input(input_names_for_linears)
+        qkv_clusters_main = {}
+        for input_name in qkv_clusters:
+            qkv_clusters_main[input_name] = [JitBasicSearcher.get_layer_name(self, scope_code) for scope_code in qkv_clusters[input_name]]
+        self_attn_list = self.search_ffn_from_qkv(qkv_clusters_main)
+        if not split_qkv_ffn:
+            return self_attn_list, None
+        else:
+            # put all qkv into one list, all ffn into another list
+            qkv_list = []
+            ffn_list = []
+            for item in self_attn_list:
+                qkv_list += item["qkv"]
+                ffn_list += item['ffn']
+            return qkv_list, ffn_list

@@ -65,10 +65,13 @@ class PostCompressionUtils(object):
         """
         # import pdb;pdb.set_trace()
         # round the pruning number to be a multiple of 2^n
-        if round_option > 0 and indice.__len__() > round_option:
+        if round_option > 0:
             round_length = (indice.__len__() // round_option) * round_option
             indice = random.sample(indice, round_length)
             indice.sort()
+        else:
+            # round_option is 0, means no need to select indice
+            pass
 
         mask = torch.ones(n_heads, head_size)
         already_pruned_heads = set()
@@ -227,3 +230,64 @@ class LinearCompressionIterator(object):
             layer_idx += 1
             del linear_pruner
         print(f"Post training compression finished.")
+
+class MHACompression(object):
+    """
+    use huggingface build-in head mask to compress weights,
+    (one mha module only have one head mask), tested on training-free progress
+    different layers have different masks, but heads number to mask is the same
+    """
+    def __init__(self, mha, head_nums, head_size):
+        # for example, bert-base hidden-size is 768, head_nums is 12, then head_size is 64
+        # four linear layers to be pruned
+        self.mha = mha
+        self.query = self.mha.self.query
+        self.key = self.mha.self.key
+        self.value = self.mha.self.value
+        self.ffn = self.mha.output.dense
+        # other configs
+        # hidden_size = head_nums * head_size
+        self.head_nums = head_nums
+        self.head_size = head_size
+        self.hidden_size = int(self.head_nums * self.head_size)
+        # device
+        self.device = self.query.weight.device
+    
+    def find_common_indice(self, d):
+        common_indice = list(d.values())[0]
+        for k, v in d.items():
+            common_indice = set(common_indice) & set(v)
+        return list(common_indice)
+    
+    def __call__(self, head_mask = None):
+        """
+        for qkv, prune output channel, for output, prune input channel
+        four linear shares identical masks (attention mask)
+        """
+        query_indice = PostCompressionUtils.get_mha_output_indice(self.query.weight, self.hidden_size, self.head_nums)
+        key_indice = PostCompressionUtils.get_mha_output_indice(self.key.weight, self.hidden_size, self.head_nums)
+        value_indice = PostCompressionUtils.get_mha_output_indice(self.value.weight, self.hidden_size, self.head_nums)
+        ffn_indice = PostCompressionUtils.get_mha_input_indice(self.ffn.weight, self.hidden_size, self.head_nums)
+        all_indice_to_prune = {
+            "query": query_indice,
+            "key": key_indice,
+            "value": value_indice,
+            "ffn": ffn_indice
+        }
+        
+        # alignment, take the least heads to prune
+        print(all_indice_to_prune)
+        prune_indice = self.find_common_indice(all_indice_to_prune)
+        print(prune_indice)
+
+        _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, self.head_nums, self.head_size) # 1 refer to channel-wise pruning
+        # prune qkv, outputs
+        # Prune linear layers
+        PostCompressionUtils.prune_linear(self.query, indice_to_keep, self.device, dim=0, prune_bias=True)
+        PostCompressionUtils.prune_linear(self.key, indice_to_keep, self.device, dim=0, prune_bias=True)
+        PostCompressionUtils.prune_linear(self.value, indice_to_keep, self.device, dim=0, prune_bias=True)
+        PostCompressionUtils.prune_linear(self.ffn, indice_to_keep, self.device, dim=1, prune_bias=False)
+
+        # Update hyper params and store pruned heads
+        self.mha.self.num_attention_heads = self.mha.self.num_attention_heads - len(prune_indice)
+        self.mha.self.all_head_size = self.mha.self.attention_head_size * self.mha.self.num_attention_heads
