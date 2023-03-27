@@ -692,13 +692,13 @@ class _BaseQuantizationConfig:
     @property
     def tuning_criterion(self):
         """Get tuning_criterion."""
-        return self.tuning_criterion
+        return self._tuning_criterion
 
     @tuning_criterion.setter
     def tuning_criterion(self, tuning_criterion):
         """Set tuning_criterion."""
         if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
-            self.tuning_criterion = tuning_criterion
+            self._tuning_criterion = tuning_criterion
 
     @property
     def excluded_precisions(self):

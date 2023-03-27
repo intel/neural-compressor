@@ -20,9 +20,8 @@ import os
 import pickle
 import random
 import numpy as np
-from .conf.config import QuantConf
 from .conf.dotdict import deep_get, deep_set, DotDict
-from .conf.pythonic_config import Config
+from .config import Config
 from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, MODELS
 from .strategy import STRATEGIES
 from .utils import logger
@@ -42,7 +41,7 @@ class PostTrainingQuant:
 
     Example::
 
-        conf = PostTrainingQuantConfig()
+        conf = Config()
         quantizer = PostTrainingQuant(conf)
         quantizer.model = model
         quantizer.eval_func = eval_func
@@ -53,13 +52,11 @@ class PostTrainingQuant:
         """Initialize the parameters.
 
         Args:
-            conf (PostTrainingQuantConfig): A instance of PostTrainingQuantConfig to
+            conf (QuantizationConfig): A instance of QuantizationConfig to
                                             specify the quantization behavior.
         """
-        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
-        self.conf = QuantConf()
-        self.conf.map_pyconfig_to_cfg(conf)
-        seed = self.conf.usr_cfg.tuning.random_seed
+        self.conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        seed = self.conf.options.random_seed
         random.seed(seed)
         np.random.seed(seed)
         self._train_func = None
@@ -74,15 +71,16 @@ class PostTrainingQuant:
 
     def pre_proccess(self):
         """Create strategy to optimize model."""
-        cfg = self.conf.usr_cfg
+        cfg = self.conf
 
         if os.environ.get("PERFORMANCE_ONLY") in ['0', '1']:
             performance_only = bool(int(os.environ.get("PERFORMANCE_ONLY")))
-            deep_set(cfg, 'tuning.exit_policy.performance_only', performance_only)
+            deep_set(cfg, 'quantization.performance_only', performance_only)
             logger.info("Get environ 'PERFORMANCE_ONLY={}'," \
-                " force setting 'tuning.exit_policy.performance_only = True'.".format(performance_only))
+                " force setting 'quantization.performance_only = True'.".format(performance_only))
 
-        strategy = cfg.tuning.strategy.name.lower()
+        strategy = cfg.quantization.tuning_criterion.strategy
+        
         
         if cfg.quantization.quant_level == "auto":
             strategy = "auto"
@@ -91,9 +89,9 @@ class PostTrainingQuant:
             strategy = "conservative"
 
         if strategy == "mse_v2":
-            if not (cfg.model.framework.startswith("tensorflow") or cfg.model.framework == 'pytorch_fx'):
+            if not (cfg.quantization._framework.startswith("tensorflow") or cfg.quantization._framework == 'pytorch_fx'):
                 strategy = "basic"
-                logger.warning(f"MSE_v2 does not support {cfg.model.framework} now, use basic instead.")
+                logger.warning(f"MSE_v2 does not support {cfg.quantization._framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
@@ -101,8 +99,8 @@ class PostTrainingQuant:
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
-                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
+        self.resume_file = os.path.abspath(os.path.expanduser(cfg.options.resume_from)) \
+                           if cfg.options.workspace and cfg.options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -110,7 +108,7 @@ class PostTrainingQuant:
                 _resume = pickle.load(f).__dict__
 
         if self._eval_func is None and self._eval_dataloader is None:
-            self.conf.usr_cfg.tuning.exit_policy.performance_only = True
+            self.conf.quantization.performance_only = True
             logger.info("Quantize model without tuning!")
 
         self.strategy = STRATEGIES[strategy](
@@ -126,9 +124,9 @@ class PostTrainingQuant:
     def execute(self):
         """Quantization execute routinue based on strategy design."""
         try:
-            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+            with time_limit(self.conf.quantization.tuning_criterion.timeout):
                 logger.debug("Dump user configuration:")
-                logger.debug(self.conf.usr_cfg)
+                logger.debug(self.conf)
                 self.strategy.traverse()
         except KeyboardInterrupt:
             pass
@@ -183,53 +181,53 @@ class PostTrainingQuant:
                         make sure the name is in supported slim model list.
 
         """
-        cfg = self.conf.usr_cfg
-        if cfg.model.framework == 'NA':
+        cfg = self.conf
+        if cfg.quantization._framework == None:
             if isinstance(user_model, BaseModel):
-                cfg.model.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
-                if cfg.model.backend == "ipex":
-                    assert cfg.model.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
-                if cfg.model.backend == "itex":
+                cfg.quantization._framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
+                if cfg.quantization.backend == "ipex":
+                    assert cfg.quantization._framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
+                if cfg.quantization.backend == "itex":
                     if get_model_type(user_model.model) == 'keras':
-                        assert cfg.model.framework == "keras", "Please wrap the model with KerasModel class!"
+                        assert cfg.quantization._framework == "keras", "Please wrap the model with KerasModel class!"
                     else:
-                        assert cfg.model.framework == "pytorch_itex", \
+                        assert cfg.quantization._framework == "pytorch_itex", \
                             "Please wrap the model with TensorflowModel class!"
             else:
                 framework = get_model_fwk_name(user_model)
-                cfg.model.framework = framework
+                cfg.quantization._framework = framework
                 if framework == "tensorflow":
-                    if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
-                        cfg.model.framework = 'keras'
+                    if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
+                        cfg.quantization._framework = 'keras'
                 if framework == "pytorch":
-                    if cfg.model.backend == "default":
-                        cfg.model.framework = "pytorch_fx"
-                    elif cfg.model.backend == "ipex":
-                        cfg.model.framework = "pytorch_ipex"
+                    if cfg.quantization.backend == "default":
+                        cfg.quantization._framework = "pytorch_fx"
+                    elif cfg.quantization.backend == "ipex":
+                        cfg.quantization._framework = "pytorch_ipex"
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            if "tensorflow" in cfg.model.framework or cfg.model.framework == "keras":
-                self._model = Model(user_model, backend=cfg.model.framework, device=cfg.device)
+            if "tensorflow" in cfg.quantization._framework or cfg.quantization._framework == "keras":
+                self._model = Model(user_model, backend=cfg.quantization._framework, device=cfg.quantization.device)
             else:
-                self._model = Model(user_model, backend=cfg.model.framework)
+                self._model = Model(user_model, backend=cfg.quantization._framework)
         else:
-            if cfg.model.framework == "pytorch_ipex":
+            if cfg.quantization._framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 assert type(user_model) == IPEXModel, \
                             "The backend is ipex, please wrap the model with IPEXModel class!"
-            elif cfg.model.framework == "pytorch_fx":
+            elif cfg.quantization._framework == "pytorch_fx":
                 from neural_compressor.model.torch_model import PyTorchFXModel
                 assert type(user_model) == PyTorchFXModel, \
                             "The backend is default, please wrap the model with PyTorchFXModel class!"
 
             self._model = user_model
 
-        if 'tensorflow' in cfg.model.framework:
-            self._model.name = cfg.model.name
-            self._model.output_tensor_names = cfg.model.outputs
-            self._model.input_tensor_names = cfg.model.inputs
-            self._model.workspace_path = cfg.tuning.workspace.path
+        if 'tensorflow' in cfg.quantization._framework:
+            self._model.name = cfg.quantization.model_name
+            self._model.output_tensor_names = cfg.quantization.outputs
+            self._model.input_tensor_names = cfg.quantization.inputs
+            self._model.workspace_path = cfg.options.workspace
 
     @property
     def eval_func(self):
@@ -304,7 +302,7 @@ class PostTrainingQuant:
                 The object of Metric or a dict of built-in metric configurations.
 
         """
-        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
+        if deep_get(self.conf, "quantization.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
 
@@ -323,11 +321,11 @@ class PostTrainingQuant:
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.usr_cfg.model.framework)
+            metrics = METRICS(self.conf.quantization._framework)
             metrics.register(name, metric_cls)
 
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+        deep_set(self.conf, "quantization.metric", metric_cfg)
+        self.conf = DotDict(self.conf)
 
         self._metric = user_metric
 
@@ -457,9 +455,9 @@ def fit(model,
     Example::
 
         # Quantization code for PTQ
-        from neural_compressor import PostTrainingQuantConfig, set_workspace
+        from neural_compressor import Config, set_workspace
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig()
+        conf = Config()
 
         # saved intermediate files in ./saved folder
         set_workspace("./saved")
