@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: Singleton
 
-   Bases: :py:obj:`type`
+
 
    Singleton class.
 
-   .. 
+

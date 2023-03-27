@@ -26,10 +26,4 @@ Classes
 
    Profiling factory.
 
-   ..    .. py:method:: get_profiler(profiling_data: dict) -> Optional[neural_compressor.ux.components.profiling.profiler.Profiler]
-      :staticmethod:
-
-      Get profiling for specified framework.
-
-
 

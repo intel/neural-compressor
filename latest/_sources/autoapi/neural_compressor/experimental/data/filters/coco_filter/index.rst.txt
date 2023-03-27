@@ -25,15 +25,15 @@ Classes
 
 .. py:class:: LabelBalanceCOCORecordFilter(size=1)
 
-   Bases: :py:obj:`neural_compressor.experimental.data.filters.filter.Filter`
+
 
    The label balance filter for COCO Record.
 
-   .. 
+
 .. py:class:: LabelBalanceCOCORawFilter(size=1)
 
-   Bases: :py:obj:`neural_compressor.experimental.data.filters.filter.Filter`
+
 
    The label balance filter for COCO raw data.
 
-   .. 
+

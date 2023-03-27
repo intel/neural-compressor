@@ -38,28 +38,23 @@ Functions
 
 .. py:class:: TensorflowOptimizers
 
-   Bases: :py:obj:`object`
+
 
    Class to get all registered TensorFlow Optimizers once only.
 
-   .. 
+
 .. py:class:: PyTorchOptimizers
 
-   Bases: :py:obj:`object`
+
 
    Class to get all registered PyTorch Optimizers once only.
 
-   .. 
+
 .. py:class:: Optimizers(framework)
 
-   Bases: :py:obj:`object`
+
 
    Main entry to get the specific type of optimizer.
-
-   ..    .. py:method:: register(name, optimizer_cls)
-
-      Allow registration of non-built-in optimizers.
-
 
 
 .. py:function:: optimizer_registry(optimizer_type, framework)
@@ -79,41 +74,41 @@ Functions
 
 .. py:class:: TensorFlowSGD(param_dict)
 
-   Bases: :py:obj:`object`
+
 
    TensorFlow keras SGD optimizer.
 
    :param param_dict: The dict of parameters setting by user for SGD optimizer
    :type param_dict: dict
 
-   .. 
+
 .. py:class:: TensorFlowAdamW(param_dict)
 
-   Bases: :py:obj:`object`
+
 
    tensorflow_addons AdamW optimizer.
 
    :param param_dict: The dict of parameters setting by user for AdamW optimizer
    :type param_dict: dict
 
-   .. 
+
 .. py:class:: TensorFlowAdam(param_dict)
 
-   Bases: :py:obj:`object`
+
 
    tensorflow Adam optimizer.
 
    :param param_dict: The dict of parameters setting by user for Adam optimizer
    :type param_dict: dict
 
-   .. 
+
 .. py:class:: PyTorchSGD(param_dict)
 
-   Bases: :py:obj:`object`
+
 
    PyTorch SGD optimizer.
 
    :param param_dict: The dict of parameters setting by user for SGD optimizer
    :type param_dict: dict
 
-   .. 
+

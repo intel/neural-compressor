@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: OpEntry(op_name: str, mse: float, activation_min: float, activation_max: float)
 
-   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
 
    OP entry class.
-
-   ..    .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
-
-      Serialize OP entry.
-
 
 

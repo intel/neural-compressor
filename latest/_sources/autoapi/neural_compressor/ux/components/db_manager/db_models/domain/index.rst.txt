@@ -32,21 +32,9 @@ Functions
 
 .. py:class:: Domain
 
-   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
 
    INC Bench Domain table class.
-
-   ..    .. py:method:: get_domain_id(db_session: sqlalchemy.orm.session.Session, domain_name: str) -> int
-      :staticmethod:
-
-      Get domain id from name.
-
-
-   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
-      :staticmethod:
-
-      List available domains.
-
 
 
 .. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None

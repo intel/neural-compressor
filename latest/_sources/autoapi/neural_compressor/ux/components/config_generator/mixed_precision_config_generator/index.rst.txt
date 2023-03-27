@@ -24,23 +24,8 @@ Classes
 
 .. py:class:: MixedPrecisionConfigGenerator(*args: Any, **kwargs: Any)
 
-   Bases: :py:obj:`neural_compressor.ux.components.config_generator.config_generator.ConfigGenerator`
+
 
    Configuration generator class.
-
-   ..    .. py:method:: generate() -> None
-
-      Generate yaml config file.
-
-
-   .. py:method:: generate_evaluation_config() -> neural_compressor.ux.utils.workload.evaluation.Evaluation
-
-      Generate evaluation configuration.
-
-
-   .. py:method:: generate_mixed_precision_config() -> neural_compressor.ux.utils.workload.mixed_precision.MixedPrecision
-
-      Generate graph optimization configuration.
-
 
 

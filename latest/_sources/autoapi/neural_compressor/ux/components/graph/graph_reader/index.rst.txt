@@ -26,14 +26,4 @@ Classes
 
    Model graph reader.
 
-   ..    .. py:method:: read(model_path: str, expanded_groups: List[str]) -> neural_compressor.ux.components.graph.graph.Graph
-
-      Return Graph for given model path.
-
-
-   .. py:method:: find_pattern_in_graph(model_path: str, op_name: str, pattern: List[str]) -> Tuple[neural_compressor.ux.components.graph.graph.Graph, List[str]]
-
-      Search graph for specific nodes pattern.
-
-
 

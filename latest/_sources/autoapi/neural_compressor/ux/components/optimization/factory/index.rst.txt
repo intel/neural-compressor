@@ -26,10 +26,4 @@ Classes
 
    Optimization factory.
 
-   ..    .. py:method:: get_optimization(optimization_data: dict, project_data: dict, dataset_data: dict) -> neural_compressor.ux.components.optimization.optimization.Optimization
-      :staticmethod:
-
-      Get optimization for specified workload.
-
-
 

@@ -38,14 +38,9 @@ Functions
 
 .. py:class:: Logger
 
-   Bases: :py:obj:`object`
+
 
    Logger class.
-
-   ..    .. py:method:: get_logger()
-
-      Get the logger.
-
 
 
 .. py:function:: log(level, msg, *args, **kwargs)

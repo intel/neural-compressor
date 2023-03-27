@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: FastBiasCorrection(threshold=2.0, channel_axis=1)
 
-   Bases: :py:obj:`neural_compressor.algorithm.algorithm.Algorithm`
+
 
    FastBiasCorrection algorithm class.
 
-   .. 
+

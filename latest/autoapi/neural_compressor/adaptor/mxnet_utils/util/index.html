@@ -191,8 +191,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.OpType">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">OpType</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.OpType" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
-<p>Enum op types.</p>
+<dd><p>Enum op types.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -627,57 +626,24 @@ dict: calibration configuration.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CollectorBase</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="Permalink to this definition"></a></dt>
 <dd><p>Collector Base class.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.collect_module">
-<span class="sig-name descname"><span class="pre">collect_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.collect_module" title="Permalink to this definition"></a></dt>
-<dd><p>Collect by module name.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.pre_batch">
-<span class="sig-name descname"><span class="pre">pre_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.pre_batch" title="Permalink to this definition"></a></dt>
-<dd><p>Function to call prior to batch inference.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.post_batch">
-<span class="sig-name descname"><span class="pre">post_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.post_batch" title="Permalink to this definition"></a></dt>
-<dd><p>Function to call after batch inference.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CalibCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_tensors_kl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_tensors_minmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8001</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p>
-<p>Collect the calibration thresholds depending on the algorithm set.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibCollector.calc_kl_th_dict">
-<span class="sig-name descname"><span class="pre">calc_kl_th_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantized_dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector.calc_kl_th_dict" title="Permalink to this definition"></a></dt>
-<dd><p>Calculation kl thresholds.</p>
-</dd></dl>
-
+<dd><p>Collect the calibration thresholds depending on the algorithm set.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.TensorCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">TensorCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qtensor_to_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_to_node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p>
-<p>Tensors collector. Builds up qtensor_to_tensor mapping.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.TensorCollector.pre_batch">
-<span class="sig-name descname"><span class="pre">pre_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector.pre_batch" title="Permalink to this definition"></a></dt>
-<dd><p>Preprocess.</p>
-</dd></dl>
-
+<dd><p>Tensors collector. Builds up qtensor_to_tensor mapping.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.NameCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">NameCollector</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.NameCollector" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p>
-<p>Name collector.</p>
+<dd><p>Name collector.</p>
 </dd></dl>
 
 <dl class="py class">

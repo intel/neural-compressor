@@ -38,7 +38,7 @@ Functions
 
 .. py:class:: PytorchBertDataset(dataset, task, model_type='bert', transform=None, filter=None)
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
 
    PyTorch dataset used for model Bert.
 
@@ -73,10 +73,10 @@ Functions
        dataset = PytorchBertDataset(dataset=dataset, task='classifier', model_type='bert',
                                     transform=preprocess, filter=filter)
 
-   .. 
+
 .. py:class:: ONNXRTBertDataset(data_dir, model_name_or_path, max_seq_length=128, do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False, evaluate=True, transform=None, filter=None)
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
 
    ONNXRT dataset used for model Bert.
 
@@ -103,7 +103,7 @@ Functions
        dataset = ONNXRTBertDataset(data_dir=data_dir, model_name_or_path='bert-base-uncase',
                                     transform=preprocess, filter=filter)
 
-   .. 
+
 .. py:function:: load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, model_type, tokenizer, evaluate)
 
    Load and cache the examples.
@@ -134,15 +134,10 @@ Functions
                  float for regression problems.
    :param seq_length: (Optional) The length of input sequence before padding.
 
-   ..    .. py:method:: to_json_string()
-
-      Serialize this instance to a JSON string.
-
-
 
 .. py:class:: TensorflowBertDataset(root, label_file, task='squad', model_type='bert', transform=None, filter=None)
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
 
    Tensorflow dataset used for model Bert.
 
@@ -156,17 +151,17 @@ Functions
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions
 
-   .. 
+
 .. py:class:: ParseDecodeBert
 
    Helper function for TensorflowModelZooBertDataset.
 
    Parse the features from sample.
 
-   .. 
+
 .. py:class:: TensorflowModelZooBertDataset(root, label_file, task='squad', model_type='bert', transform=None, filter=None, num_cores=28)
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
 
    Tensorflow dataset for three-input Bert in tf record format.
 
@@ -179,4 +174,4 @@ Functions
          transform (transform object, default=None):  transform to process input data.
          filter (Filter objects, default=None): filter out examples according.
 
-   .. 
+

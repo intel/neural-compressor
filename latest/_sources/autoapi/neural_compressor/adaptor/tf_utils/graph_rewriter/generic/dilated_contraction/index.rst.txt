@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: DilatedContraction(model)
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Fuse the SpaceToBatchND + Conv + BatchToSpaceND pattern.
-
-   ..    .. py:method:: do_transformation()
-
-      Dilated Contraction fusion.
-
 
 

@@ -146,34 +146,19 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.data.transforms.tokenization.FullTokenizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">FullTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocab_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/tokenization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.tokenization.FullTokenizer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Run end-to-end tokenziation.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.data.transforms.tokenization.FullTokenizer.convert_tokens_to_ids">
-<span class="sig-name descname"><span class="pre">convert_tokens_to_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tokens</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/tokenization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.tokenization.FullTokenizer.convert_tokens_to_ids" title="Permalink to this definition"></a></dt>
-<dd><p>Convert tokens to ids.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.data.transforms.tokenization.FullTokenizer.convert_ids_to_tokens">
-<span class="sig-name descname"><span class="pre">convert_ids_to_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/tokenization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.tokenization.FullTokenizer.convert_ids_to_tokens" title="Permalink to this definition"></a></dt>
-<dd><p>Convert ids to tokens.</p>
-</dd></dl>
-
+<dd><p>Run end-to-end tokenziation.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.data.transforms.tokenization.BasicTokenizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">BasicTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/tokenization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.tokenization.BasicTokenizer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Run basic tokenization (punctuation splitting, lower casing, etc.).</p>
+<dd><p>Run basic tokenization (punctuation splitting, lower casing, etc.).</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.data.transforms.tokenization.WordpieceTokenizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">WordpieceTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unk_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[UNK]'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_input_chars_per_word</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/tokenization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.tokenization.WordpieceTokenizer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Run WordPiece tokenziation.</p>
+<dd><p>Run WordPiece tokenziation.</p>
 </dd></dl>
 
 </section>

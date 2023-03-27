@@ -51,40 +51,6 @@ Functions
        quantizer.calib_dataloader = calib_dataloader
        q_model = quantizer.fit()
 
-   ..    .. .. py:property:: model
-
-      Getter of model in neural_compressor.model.
-
-   ..    .. .. py:property:: eval_func
-
-      Not support get eval_func.
-
-   ..    .. .. py:property:: eval_dataloader
-
-      Getter to eval dataloader.
-
-   ..    .. .. py:property:: metric
-
-      Get `metric` attribute.
-
-   ..    .. .. py:property:: calib_func
-
-      Not support get train_func.
-
-   ..    .. .. py:property:: calib_dataloader
-
-      Get `calib_dataloader` attribute.
-
-   ..    .. py:method:: pre_proccess()
-
-      Create strategy to optimize model.
-
-
-   .. py:method:: execute()
-
-      Quantization execute routinue based on strategy design.
-
-
 
 .. py:function:: fit(model, conf, calib_dataloader=None, calib_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
 

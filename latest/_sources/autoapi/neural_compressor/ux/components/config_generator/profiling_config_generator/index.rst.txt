@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: ProfilingConfigGenerator(*args: Any, **kwargs: Any)
 
-   Bases: :py:obj:`neural_compressor.ux.components.config_generator.config_generator.ConfigGenerator`
+
 
    Configuration generator class.
-
-   ..    .. py:method:: generate() -> None
-
-      Dump profiling configuration to json file.
-
 
 

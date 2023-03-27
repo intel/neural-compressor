@@ -26,27 +26,4 @@ Classes
 
    Convert tensorflow QDQ graph to ONNX QDQ graph.
 
-   ..    .. py:method:: duplicate_tf_quantizev2_nodes(model)
-
-      Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2.
-
-
-   .. py:method:: tf_graph_optimize(model)
-
-      Pre optimize the tensorflow graphdef to make ONNX QDQ model convert more easier.
-
-
-   .. py:method:: transpose_inputs(ctx, inputs_as_nchw)
-
-      Insert a transpose from NHWC to NCHW on model input on users request.
-
-
-   .. py:method:: convert(save_path)
-
-      Convert tensorflow QDQ model to onnx QDQ model.
-
-      :param save_path: save path of ONNX QDQ model.
-      :type save_path: str
-
-
 

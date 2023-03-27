@@ -27,7 +27,7 @@ Classes
 
 .. py:class:: Sampler(data_source)
 
-   Bases: :py:obj:`object`
+
 
    Base class for all Samplers.
 
@@ -37,27 +37,27 @@ Classes
    else if you have an IndexDataset(method __getitem__ implemented), your dataset should have
    method __len__ implemented.
 
-   .. 
+
 .. py:class:: IterableSampler(dataset)
 
-   Bases: :py:obj:`Sampler`
+
 
    Interally samples elements.
 
    Used for datasets retrieved element by interator. Yield None to act as a placeholder for each iteration.
 
-   .. 
+
 .. py:class:: SequentialSampler(dataset, distributed)
 
-   Bases: :py:obj:`Sampler`
+
 
    Sequentially samples elements, used for datasets retrieved element by index.
 
-   .. 
+
 .. py:class:: BatchSampler(sampler, batch_size, drop_last=True)
 
-   Bases: :py:obj:`Sampler`
+
 
    Yield a batch of indices and number of batches.
 
-   .. 
+

@@ -36,16 +36,6 @@ Functions
 
    Define Collector based on hook, which is used to record the intermediate result.
 
-   ..    .. py:method:: hook_fn_act(m, inp, outp)
-
-      Get out and in features.
-
-
-   .. py:method:: remove()
-
-      Remove handle.
-
-
 
 .. py:class:: HessianTrace(model, dataloader, q_model, criterion=None)
 
@@ -56,95 +46,6 @@ Functions
    Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks."
    Advances in neural information processing systems 33 (2020): 18518-18529.
    https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
-
-   ..    .. py:method:: is_fused_module(module)
-
-      This is a helper function for `_propagate_qconfig_helper` to detecte if this module is fused.
-
-      :param module: the input module.
-      :type module: object
-
-      :returns: is fused or not
-      :rtype: (bool)
-
-
-   .. py:method:: mse_metric_gap(fp32_tensor, dequantize_tensor)
-
-      Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
-
-      :param fp32_tensor: The FP32 tensor.
-      :type fp32_tensor: tensor
-      :param dequantize_tensor: The INT8 dequantize tensor.
-      :type dequantize_tensor: tensor
-
-
-   .. py:method:: get_fused_mapping()
-
-      Map the ops of both fused or not modules to weights.
-
-      :returns: weights of each op.
-                op_list (list): ops.
-      :rtype: weight_to_op (dict)
-
-
-   .. py:method:: get_device(model: torch.nn.Module)
-
-      Get the device.
-
-      :param model: the input model.
-      :type model: torch.nn.Module
-
-
-   .. py:method:: register_act_grad_hooks(model)
-
-      Append hook handles.
-
-
-   .. py:method:: reset_act_gradient_and_hooks()
-
-      Reset hook.
-
-
-   .. py:method:: get_params()
-
-      Get weight names and parameters.
-
-
-   .. py:method:: get_vtHv_weight(params, num_samples)
-
-      Get vtHv weight.
-
-
-   .. py:method:: get_weight_traces(num_samples)
-
-      Get op names to trace.
-
-      :param num_samples: sample number.
-      :type num_samples: int
-
-      :returns: op names to trace.
-      :rtype: op_name_to_trace (dict)
-
-
-   .. py:method:: get_act_traces(num_samples)
-
-      Get op names to trace.
-
-      :param num_samples: sample number.
-      :type num_samples: int
-
-      :returns: res_dict (dict).
-
-
-   .. py:method:: get_act_gap(fp32_model, q_model)
-
-      Estimates each activation gap between quantized model and float model.
-
-
-   .. py:method:: get_avg_traces(enable_act=True, num_sample=0)
-
-      Estimates average hessian trace for each parameter.
-
 
 
 .. py:function:: compare_weights(float_dict: Dict[str, Any], quantized_dict: Dict[str, Any]) -> Dict[str, Dict[str, torch.Tensor]]

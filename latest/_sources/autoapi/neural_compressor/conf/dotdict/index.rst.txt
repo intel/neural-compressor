@@ -62,11 +62,11 @@ Functions
 
 .. py:class:: DotDict(value=None)
 
-   Bases: :py:obj:`dict`
+
 
    access yaml using attributes instead of using the dictionary notation.
 
    :param value: The dict object to access.
    :type value: dict
 
-   .. 
+

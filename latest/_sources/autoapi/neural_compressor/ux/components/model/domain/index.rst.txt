@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: Domain(domain: str = '', domain_flavour: str = '')
 
-   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
 
    Model domain definition.
 
-   .. 
+

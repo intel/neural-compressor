@@ -40,36 +40,31 @@ Functions
 
    Abstract routing definition.
 
-   .. 
+
 .. py:class:: RealtimeRoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
 
-   Bases: :py:obj:`RoutingDefinition`
+
 
    Routing executed in realtime.
 
-   .. 
+
 .. py:class:: DeferredRoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
 
-   Bases: :py:obj:`RoutingDefinition`
+
 
    Routing executed in separate thread.
 
-   .. 
+
 .. py:class:: DeferredSubprocessRoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
 
-   Bases: :py:obj:`RoutingDefinition`
+
 
    Routing executed in separate thread and it spawns subprocess.
 
-   .. 
+
 .. py:class:: Router
 
    Connector between api.py and components.
-
-   ..    .. py:method:: handle(request: neural_compressor.ux.web.communication.Request) -> neural_compressor.ux.web.communication.Response
-
-      Run operation on requested component and return result.
-
 
 
 .. py:function:: get_model_graph(data: Dict[str, Any]) -> neural_compressor.ux.components.graph.graph.Graph

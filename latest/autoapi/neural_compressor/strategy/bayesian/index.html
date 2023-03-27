@@ -113,8 +113,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.BayesianTuneStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.bayesian.</span></span><span class="sig-name descname"><span class="pre">BayesianTuneStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dicts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_hooks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.BayesianTuneStrategy" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
-<p>The Bayesian tuning strategy.</p>
+<dd><p>The Bayesian tuning strategy.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -145,87 +144,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.bayesian.</span></span><span class="sig-name descname"><span class="pre">TargetSpace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pbounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9527</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Holds the param-space coordinates (X) and target values (Y).</p>
+<dd><p>Holds the param-space coordinates (X) and target values (Y).</p>
 <p>Allows for constant-time appends while ensuring no duplicates are added.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace.array_to_params">
-<span class="sig-name descname"><span class="pre">array_to_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace.array_to_params" title="Permalink to this definition"></a></dt>
-<dd><p>Generate an params’ dict from array.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>np.array</em>) – The array contains all params.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>the dict contains keys and the params corresponding to it.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace.register">
-<span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace.register" title="Permalink to this definition"></a></dt>
-<dd><p>Append a point and its target value to the known data.</p>
-<p>Runs in amortized constant time.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>params</strong> (<em>ndarray</em>) – a single point, with len(params) == self.dim</p></li>
-<li><p><strong>target</strong> (<em>float</em>) – target function value</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>KeyError</strong> – if the point is not unique</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace.get_target">
-<span class="sig-name descname"><span class="pre">get_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace.get_target" title="Permalink to this definition"></a></dt>
-<dd><p>Get the target value of params.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>params</strong> (<em>ndarray</em>) – a single point, with len(params) == self.dim</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>target function value.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>target (float)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace.random_sample">
-<span class="sig-name descname"><span class="pre">random_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace.random_sample" title="Permalink to this definition"></a></dt>
-<dd><p>Create random points within the bounds of the space.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[num x dim] array points with dimensions corresponding to <cite>self._keys</cite></p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>data (ndarray)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace.max">
-<span class="sig-name descname"><span class="pre">max</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace.max" title="Permalink to this definition"></a></dt>
-<dd><p>Get maximum target value found and corresponding parametes.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.TargetSpace.res">
-<span class="sig-name descname"><span class="pre">res</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.TargetSpace.res" title="Permalink to this definition"></a></dt>
-<dd><p>Get all target values found and corresponding parametes.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -234,12 +154,6 @@
 <dd><p>The class for bayesian optimization.</p>
 <p>This class takes the parameters bounds in order to find which values for
 the parameters yield the maximum value using bayesian optimization.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.bayesian.BayesianOptimization.gen_next_params">
-<span class="sig-name descname"><span class="pre">gen_next_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/bayesian.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.bayesian.BayesianOptimization.gen_next_params" title="Permalink to this definition"></a></dt>
-<dd><p>Get the next parameter.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

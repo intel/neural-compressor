@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: MXNetDataLoader
 
-   Bases: :py:obj:`neural_compressor.data.dataloaders.base_dataloader.BaseDataLoader`
+
 
    Subclass of BaseDataLoader.
 
-   .. 
+

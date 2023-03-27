@@ -56,25 +56,10 @@ Functions
 
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
-   ..    .. py:method:: on_step_begin()
-
-      Calculate and store the pruning scores of pruning modules at the beginning of a step.
-
-
-   .. py:method:: on_before_optimizer_step()
-
-      Calculate and store the pruning scores of pruning modules before the optimizer step.
-
-
-   .. py:method:: on_after_optimizer_step()
-
-      Calculate and store the pruning scores of pruning modules after the optimizer step.
-
-
 
 .. py:class:: MagnitudeCriterion(modules, config)
 
-   Bases: :py:obj:`PruningCriterion`
+
 
    Pruning criterion.
 
@@ -88,15 +73,10 @@ Functions
 
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
-   ..    .. py:method:: on_step_begin()
-
-      Calculate and store the pruning scores based on a magnitude criterion.
-
-
 
 .. py:class:: GradientCriterion(modules, config)
 
-   Bases: :py:obj:`PruningCriterion`
+
 
    Pruning criterion.
 
@@ -110,15 +90,10 @@ Functions
 
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
-   ..    .. py:method:: on_before_optimizer_step()
-
-      Calculate and store the pruning scores based on gradient criterion.
-
-
 
 .. py:class:: SnipCriterion(modules, config)
 
-   Bases: :py:obj:`PruningCriterion`
+
 
    Pruning criterion.
 
@@ -134,15 +109,10 @@ Functions
 
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
-   ..    .. py:method:: on_before_optimizer_step()
-
-      Calculate and store the pruning scores based on snip criterion.
-
-
 
 .. py:class:: SnipMomentumCriterion(modules, config)
 
-   Bases: :py:obj:`PruningCriterion`
+
 
    Pruning criterion.
 
@@ -157,10 +127,5 @@ Functions
    .. attribute:: scores
 
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
-
-   ..    .. py:method:: on_before_optimizer_step()
-
-      Calculate and store the pruning scores based on snip_momentum criterion.
-
 
 

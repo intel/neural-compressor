@@ -24,57 +24,8 @@ Classes
 
 .. py:class:: KerasModel(model, **kwargs)
 
-   Bases: :py:obj:`neural_compressor.model.base_model.BaseModel`
+
 
    Build Keras model.
-
-   ..    .. .. py:property:: q_config
-
-      Return q_config.
-
-   ..    .. .. py:property:: model
-
-      Return model itself.
-
-   ..    .. .. py:property:: graph_info
-
-      Return graph info.
-
-   ..    .. .. py:property:: input_node_names
-
-      Return input node names.
-
-   ..    .. .. py:property:: output_node_names
-
-      Return output node names.
-
-   ..    .. py:method:: save(root, *args, **kwargs)
-      :abstractmethod:
-
-      Save Keras model.
-
-
-   .. py:method:: framework()
-      :abstractmethod:
-
-      Return framework.
-
-
-   .. py:method:: get_all_weight_names()
-
-      Get weight names of model.
-
-      :returns: weight names list.
-      :rtype: list
-
-
-   .. py:method:: report_sparsity()
-
-      Get sparsity of the model.
-
-      :returns: DataFrame of sparsity of each weight.
-                total_sparsity (float): total sparsity of model.
-      :rtype: df (DataFrame)
-
 
 

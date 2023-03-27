@@ -24,28 +24,12 @@ Classes
 
 .. py:class:: MSE_V2TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The `mse_v2` tuning strategy.
 
    MSE_v2 is a strategy with a two stages fallback and revert fallback.
    Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
    tuning strategy.
-
-   ..    .. py:method:: next_tune_cfg()
-
-      Generate and yield the next tuning config with below order.
-
-         1. In the fallback stage, it uses multi-batch data to score the op impact
-          and then fallback the op with the highest score util found the quantized model
-          that meets accuracy criteria.
-         2. In the revert fallback stage, it also scores
-          the impact of fallback OPs in the previous stage and selects the op
-          with the lowest score to revert the fallback until the quantized model
-          that does not meets accuracy criteria.
-
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
-
 
 

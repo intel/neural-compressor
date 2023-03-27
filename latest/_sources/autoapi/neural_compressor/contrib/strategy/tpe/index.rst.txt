@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: TpeTuneStrategy(model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None)
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The tuning strategy using tpe search in tuning space.
 
@@ -73,33 +73,5 @@ Classes
    :param dicts: The dict containing resume information.
                  Defaults to None.
    :type dicts: dict, optional
-
-   ..    .. py:method:: traverse()
-
-      Tpe traverse logic.
-
-
-   .. py:method:: add_loss_to_tuned_history_and_find_best(tuning_history_list)
-
-      Find the best tuned history.
-
-
-   .. py:method:: object_evaluation(tune_cfg, model)
-
-      Check if config was alredy evaluated.
-
-
-   .. py:method:: calculate_loss(acc_diff, lat_diff, config)
-
-      Calculate the accuracy loss.
-
-
-   .. py:method:: stop(timeout, trials_count)
-
-      Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
-
-      :returns: True if need stop, otherwise False.
-      :rtype: bool
-
 
 

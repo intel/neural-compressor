@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: PyTorchDataLoader
 
-   Bases: :py:obj:`neural_compressor.experimental.data.dataloaders.base_dataloader.BaseDataLoader`
+
 
    PyTorchDataLoader inherits from BaseDataLoader.
 
-   .. 
+

@@ -63,45 +63,6 @@ Functions
        compression_manager.callbacks.on_train_end()
        compression_manager.save("path_to_save")
 
-   ..    .. .. py:property:: train_func
-
-      Not support get train_func.
-
-   ..    .. .. py:property:: eval_func
-
-      Not support get eval_func.
-
-   ..    .. .. py:property:: eval_dataloader
-
-      Getter to eval dataloader.
-
-   ..    .. .. py:property:: metric
-
-      Get `metric` attribute.
-
-   ..    .. py:method:: fit()
-
-      Compress model with tuning for quantization.
-
-
-   .. py:method:: save(root=None)
-
-      Save compressed model.
-
-      :param root: path to save the model
-      :type root: str
-
-
-   .. py:method:: export(save_path: str, conf)
-
-      Convert the model to another type model, like `onnx` model and so on.
-
-      :param save_path: The path to save the model
-      :type save_path: str
-      :param conf: The configure for onnx exportation.
-      :type conf: Union[Callable, List]
-
-
 
 .. py:function:: fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
 
@@ -189,60 +150,5 @@ Functions
 .. py:class:: CallBacks(callbacks_list)
 
    Define the basic command for the training loop.
-
-   ..    .. py:method:: on_train_begin(dataloader=None)
-
-      Be called before the beginning of training.
-
-
-   .. py:method:: on_train_end()
-
-      Be called after the end of training.
-
-
-   .. py:method:: on_epoch_begin(epoch)
-
-      Be called on the beginning of epochs.
-
-
-   .. py:method:: on_step_begin(batch_id)
-
-      Be called on the beginning of batches.
-
-
-   .. py:method:: on_after_compute_loss(input, student_output, student_loss, teacher_output=None)
-
-      Be called on the end of loss computation.
-
-
-   .. py:method:: on_before_optimizer_step()
-
-      Be called before optimizer step.
-
-
-   .. py:method:: on_after_optimizer_step()
-
-      Be called after optimizer step.
-
-
-   .. py:method:: on_before_eval()
-
-      Be called before evaluation.
-
-
-   .. py:method:: on_after_eval()
-
-      Be called after evaluation.
-
-
-   .. py:method:: on_step_end()
-
-      Be called on the end of batches.
-
-
-   .. py:method:: on_epoch_end()
-
-      Be called on the end of epochs.
-
 
 

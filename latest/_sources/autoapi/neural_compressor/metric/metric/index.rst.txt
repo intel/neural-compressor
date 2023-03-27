@@ -59,7 +59,7 @@ Functions
 
 .. py:class:: Metric(metric_cls, name='user_metric', **kwargs)
 
-   Bases: :py:obj:`object`
+
 
    A wrapper of the information needed to construct a Metric.
 
@@ -67,10 +67,10 @@ Functions
    neural_compressor built-in metric always take (predictions, labels) as inputs, it's
    recommended to design metric_cls to take (predictions, labels) as inputs.
 
-   .. 
+
 .. py:class:: TensorflowMetrics
 
-   Bases: :py:obj:`object`
+
 
    Tensorflow metrics collection.
 
@@ -78,10 +78,10 @@ Functions
 
       A dict to maintain all metrics for Tensorflow model.
 
-   .. 
+
 .. py:class:: PyTorchMetrics
 
-   Bases: :py:obj:`object`
+
 
    PyTorch metrics collection.
 
@@ -89,10 +89,10 @@ Functions
 
       A dict to maintain all metrics for PyTorch model.
 
-   .. 
+
 .. py:class:: MXNetMetrics
 
-   Bases: :py:obj:`object`
+
 
    MXNet metrics collection.
 
@@ -100,10 +100,10 @@ Functions
 
       A dict to maintain all metrics for MXNet model.
 
-   .. 
+
 .. py:class:: ONNXRTQLMetrics
 
-   Bases: :py:obj:`object`
+
 
    ONNXRT QLinear metrics collection.
 
@@ -111,10 +111,10 @@ Functions
 
       A dict to maintain all metrics for ONNXRT QLinear model.
 
-   .. 
+
 .. py:class:: ONNXRTITMetrics
 
-   Bases: :py:obj:`object`
+
 
    ONNXRT Integer metrics collection.
 
@@ -122,24 +122,16 @@ Functions
 
       A dict to maintain all metrics for ONNXRT Integer model.
 
-   .. 
+
 .. py:class:: METRICS(framework: str)
 
-   Bases: :py:obj:`object`
+
 
    Intel Neural Compressor Metrics.
 
    .. attribute:: metrics
 
       The collection of registered metrics for the specified framework.
-
-   ..    .. py:method:: register(name, metric_cls) -> None
-
-      Register a metric.
-
-      :param name: The name of metric.
-      :param metric_cls: The metric class.
-
 
 
 .. py:function:: metric_registry(metric_type: str, framework: str)
@@ -158,138 +150,35 @@ Functions
 
 .. py:class:: BaseMetric(metric, single_output=False, hvd=None)
 
-   Bases: :py:obj:`object`
+
 
    The base class of Metric.
-
-   ..    .. .. py:property:: metric
-
-      Return its metric class.
-
-      :returns: The metric class.
-
-   ..    .. .. py:property:: hvd
-
-      Return its hvd class.
-
-      :returns: The hvd class.
-
-   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
-      :abstractmethod:
-
-      Update the state that need to be evaluated.
-
-      :param preds: The prediction result.
-      :param labels: The reference. Defaults to None.
-      :param sample_weight: The sampling weight. Defaults to None.
-
-      :raises NotImplementedError: The method should be implemented by subclass.
-
-
-   .. py:method:: reset()
-      :abstractmethod:
-
-      Clear the predictions and labels.
-
-      :raises NotImplementedError: The method should be implemented by subclass.
-
-
-   .. py:method:: result()
-      :abstractmethod:
-
-      Evaluate the difference between predictions and labels.
-
-      :raises NotImplementedError: The method should be implemented by subclass.
-
 
 
 .. py:class:: WrapPyTorchMetric(metric, single_output=False, hvd=None)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    The wrapper of Metric class for PyTorch.
-
-   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
-
-      Convert the prediction to torch.
-
-      :param preds: The prediction result.
-      :param labels: The reference. Defaults to None.
-      :param sample_weight: The sampling weight. Defaults to None.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Evaluate the difference between predictions and labels.
-
 
 
 .. py:class:: WrapMXNetMetric(metric, single_output=False, hvd=None)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    The wrapper of Metric class for MXNet.
-
-   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
-
-      Convert the prediction to MXNet array.
-
-      :param preds: The prediction result.
-      :param labels: The reference. Defaults to None.
-      :param sample_weight: The sampling weight. Defaults to None.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Evaluate the difference between predictions and labels.
-
-      :returns: The evaluated result.
-      :rtype: acc
-
 
 
 .. py:class:: WrapONNXRTMetric(metric, single_output=False, hvd=None)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    The wrapper of Metric class for ONNXRT.
-
-   ..    .. py:method:: update(preds, labels=None, sample_weight=None)
-
-      Convert the prediction to NumPy array.
-
-      :param preds: The prediction result.
-      :param labels: The reference. Defaults to None.
-      :param sample_weight: The sampling weight. Defaults to None.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Evaluate the difference between predictions and labels.
-
-      :returns: The evaluated result.
-      :rtype: acc
-
 
 
 .. py:class:: F1
 
-   Bases: :py:obj:`BaseMetric`
+
 
    F1 score of a binary classification problem.
 
@@ -297,28 +186,10 @@ Functions
    It can be computed with the equation:
    F1 = 2 * (precision * recall) / (precision + recall)
 
-   ..    .. py:method:: update(preds, labels)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Compute the F1 score.
-
-
 
 .. py:class:: Accuracy
 
-   Bases: :py:obj:`BaseMetric`
+
 
    The Accuracy for the classification tasks.
 
@@ -337,25 +208,6 @@ Functions
 
       The total number of samples.
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Compute the accuracy.
-
-
 
 .. py:class:: PyTorchLoss
 
@@ -363,31 +215,10 @@ Functions
 
    A dummy metric that computes the average of predictions and prints it directly.
 
-   ..    .. py:method:: reset()
-
-      Reset the number of samples and total cases to zero.
-
-
-   .. py:method:: update(output)
-
-      Add the predictions.
-
-      :param output: The predictions.
-
-
-   .. py:method:: compute()
-
-      Compute the  average of predictions.
-
-      :raises ValueError: There must have at least one example.
-
-      :returns: The dummy loss.
-
-
 
 .. py:class:: Loss
 
-   Bases: :py:obj:`BaseMetric`
+
 
    A dummy Metric.
 
@@ -401,31 +232,10 @@ Functions
 
       The sum of prediction.
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Reset the number of samples and total cases to zero.
-
-
-   .. py:method:: result()
-
-      Compute the  average of predictions.
-
-      :returns: The dummy loss.
-
-
 
 .. py:class:: MAE(compare_label=True)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Computes Mean Absolute Error (MAE) loss.
 
@@ -447,31 +257,10 @@ Functions
 
       :type: bool
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Compute the MAE score.
-
-      :returns: The MAE score.
-
-
 
 .. py:class:: RMSE(compare_label=True)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Computes Root Mean Squared Error (RMSE) loss.
 
@@ -479,31 +268,10 @@ Functions
 
       The instance of MSE Metric.
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Compute the RMSE score.
-
-      :returns: The RMSE score.
-
-
 
 .. py:class:: MSE(compare_label=True)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Computes Mean Squared Error (MSE) loss.
 
@@ -526,31 +294,10 @@ Functions
 
       :type: bool
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Clear the predictions and labels.
-
-
-   .. py:method:: result()
-
-      Compute the MSE score.
-
-      :returns: The MSE score.
-
-
 
 .. py:class:: TensorflowTopK(k=1)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Compute Top-k Accuracy classification score for Tensorflow model.
 
@@ -571,31 +318,10 @@ Functions
 
       The total number of predictions.
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Reset the number of samples and correct predictions.
-
-
-   .. py:method:: result()
-
-      Compute the top-k score.
-
-      :returns: The top-k score.
-
-
 
 .. py:class:: GeneralTopK(k=1)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Compute Top-k Accuracy classification score.
 
@@ -616,198 +342,60 @@ Functions
 
       The total number of predictions.
 
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Reset the number of samples and correct predictions.
-
-
-   .. py:method:: result()
-
-      Compute the top-k score.
-
-      :returns: The top-k score.
-
-
 
 .. py:class:: COCOmAPv2(anno_path=None, iou_thrs='0.5:0.05:0.95', map_points=101, map_key='DetectionBoxes_Precision/mAP', output_index_mapping={'num_detections': -1, 'boxes': 0, 'scores': 1, 'classes': 2})
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Compute mean average precision of the detection task.
-
-   ..    .. py:method:: update(predicts, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param predicts: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight. Defaults to None.
-
-
-   .. py:method:: reset()
-
-      Reset the prediction and labels.
-
-
-   .. py:method:: result()
-
-      Compute mean average precision.
-
-      :returns: The mean average precision score.
-
 
 
 .. py:class:: TensorflowMAP(anno_path=None, iou_thrs=0.5, map_points=0, map_key='DetectionBoxes_Precision/mAP')
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Computes mean average precision.
-
-   ..    .. py:method:: update(predicts, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param predicts: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Reset the prediction and labels.
-
-
-   .. py:method:: result()
-
-      Compute mean average precision.
-
-      :returns: The mean average precision score.
-
 
 
 .. py:class:: TensorflowCOCOMAP(anno_path=None, iou_thrs=None, map_points=None, map_key='DetectionBoxes_Precision/mAP')
 
-   Bases: :py:obj:`TensorflowMAP`
+
 
    Computes mean average precision using algorithm in COCO.
 
-   .. 
+
 .. py:class:: TensorflowVOCMAP(anno_path=None, iou_thrs=None, map_points=None, map_key='DetectionBoxes_Precision/mAP')
 
-   Bases: :py:obj:`TensorflowMAP`
+
 
    Computes mean average precision using algorithm in VOC.
 
-   .. 
+
 .. py:class:: SquadF1
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Evaluate for v1.1 of the SQuAD dataset.
-
-   ..    .. py:method:: update(preds, labels, sample_weight=None)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-      :param sample_weight: The sample weight.
-
-
-   .. py:method:: reset()
-
-      Reset the score list.
-
-
-   .. py:method:: result()
-
-      Compute F1 score.
-
 
 
 .. py:class:: mIOU(num_classes=21)
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Compute the mean IOU(Intersection over Union) score.
-
-   ..    .. py:method:: update(preds, labels)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-
-
-   .. py:method:: reset()
-
-      Reset the hist.
-
-
-   .. py:method:: result()
-
-      Compute mean IOU.
-
-      :returns: The mean IOU score.
-
 
 
 .. py:class:: ONNXRTGLUE(task='mrpc')
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Compute the GLUE score.
-
-   ..    .. py:method:: update(preds, labels)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-
-
-   .. py:method:: reset()
-
-      Reset the prediction and labels.
-
-
-   .. py:method:: result()
-
-      Compute the GLUE score.
-
 
 
 .. py:class:: ROC(task='dlrm')
 
-   Bases: :py:obj:`BaseMetric`
+
 
    Computes ROC score.
-
-   ..    .. py:method:: update(preds, labels)
-
-      Add the predictions and labels.
-
-      :param preds: The predictions.
-      :param labels: The labels corresponding to the predictions.
-
-
-   .. py:method:: reset()
-
-      Reset the prediction and labels.
-
-
-   .. py:method:: result()
-
-      Compute the ROC score.
-
 
 

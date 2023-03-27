@@ -60,11 +60,11 @@ Functions
 
 .. py:class:: OpType
 
-   Bases: :py:obj:`enum.Enum`
+
 
    Enum op types.
 
-   .. 
+
 .. py:function:: isiterable(obj) -> bool
 
    Checks whether object is iterable.
@@ -348,95 +348,40 @@ Functions
 
    DataLoader Wrap.
 
-   .. 
+
 .. py:class:: DataIterLoader(data_iter)
 
    DataIterLoader.
 
-   .. 
+
 .. py:class:: CollectorBase
 
    Collector Base class.
 
-   ..    .. py:method:: collect_gluon(name, _, arr)
-      :abstractmethod:
-
-      Collect by gluon api.
-
-
-   .. py:method:: collect_module(name, arr)
-
-      Collect by module name.
-
-
-   .. py:method:: pre_batch(m, b)
-
-      Function to call prior to batch inference.
-
-
-   .. py:method:: post_batch(m, b, o)
-
-      Function to call after batch inference.
-
-
 
 .. py:class:: CalibCollector(include_tensors_kl, include_tensors_minmax, num_bins=8001)
 
-   Bases: :py:obj:`CollectorBase`
+
 
    Collect the calibration thresholds depending on the algorithm set.
-
-   ..    .. py:method:: collect_gluon(name, _, arr)
-
-      Collect by gluon api.
-
-
-   .. py:method:: calc_kl_th_dict(quantized_dtype)
-
-      Calculation kl thresholds.
-
 
 
 .. py:class:: TensorCollector(include_nodes, qtensor_to_tensor, tensor_to_node)
 
-   Bases: :py:obj:`CollectorBase`
+
 
    Tensors collector. Builds up qtensor_to_tensor mapping.
-
-   ..    .. py:method:: collect_gluon(name, _, arr)
-
-      Collect by gluon api.
-
-
-   .. py:method:: pre_batch(m, b)
-
-      Preprocess.
-
 
 
 .. py:class:: NameCollector
 
-   Bases: :py:obj:`CollectorBase`
+
 
    Name collector.
-
-   ..    .. py:method:: collect_gluon(name, _, arr)
-
-      Collect by gluon api.
-
 
 
 .. py:class:: CalibData(cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[])
 
    Calibration data class.
-
-   ..    .. .. py:property:: min_max_dict
-
-      Return mix-max dict.
-
-   ..    .. py:method:: post_collect()
-
-      Return mix-max dict for mxnet version >= 2.0.0.
-
 
 

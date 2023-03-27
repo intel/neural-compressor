@@ -31,10 +31,10 @@ Classes
 
    Parse the features from sample.
 
-   .. 
+
 .. py:class:: COCORecordDataset
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.IterableDataset`
+
 
    Tensorflow COCO dataset in tf record format.
 
@@ -47,10 +47,10 @@ Classes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-   .. 
+
 .. py:class:: COCORaw(root, img_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=filter)
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
 
    Coco raw dataset.
 
@@ -69,10 +69,10 @@ Classes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-   .. 
+
 .. py:class:: COCONpy(root, npy_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=None)
 
-   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
 
    COCO npy dataset.
 
@@ -90,4 +90,4 @@ Classes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-   .. 
+

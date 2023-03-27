@@ -31,23 +31,4 @@ Classes
    generate a new dataloader by setting batch_size and last_batch.
 
 
-   ..    .. .. py:property:: batch_size
-
-      Get dataloader's batch_size.
-
-      :returns: batch_size
-      :rtype: int
-
-   ..    .. py:method:: batch(batch_size, last_batch=None)
-
-      Set batch size for dataloader.
-
-      :param batch_size: number of samples per batch.
-      :type batch_size: int
-      :param last_batch: whether to drop the last batch if it is incomplete.
-                         Support ['rollover', 'discard'], rollover means False, discard means True.
-                         Defaults to None.
-      :type last_batch: str, optional
-
-
 

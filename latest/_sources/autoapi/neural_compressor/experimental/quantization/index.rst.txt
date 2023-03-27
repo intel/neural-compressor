@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: Quantization(conf_fname_or_obj=None)
 
-   Bases: :py:obj:`neural_compressor.experimental.component.Component`
+
 
    This class provides easy use API for quantization.
 
@@ -42,49 +42,5 @@ Classes
                              QuantConf class containing accuracy goal, tuning objective and preferred
                              calibration & quantization tuning space etc.
    :type conf_fname_or_obj: string or obj
-
-   ..    .. .. py:property:: calib_dataloader
-
-      Get `calib_dataloader` attribute.
-
-   ..    .. .. py:property:: metric
-
-      Get `metric` attribute.
-
-   ..    .. .. py:property:: objective
-
-      Get `objective` attribute.
-
-   ..    .. .. py:property:: postprocess
-
-      Get `postprocess` attribute.
-
-   ..    .. .. py:property:: q_func
-
-      Get `q_func` attribute.
-
-   ..    .. .. py:property:: model
-
-      Override model getter method to handle quantization aware training case.
-
-   ..    .. py:method:: pre_process()
-
-      Prepare dataloaders, qfuncs for Component.
-
-
-   .. py:method:: execute()
-
-      Quantization execute routinue based on strategy design.
-
-
-   .. py:method:: distributed_execute()
-
-      Quantization distributed execute routinue based on strategy design.
-
-
-   .. py:method:: dataset(dataset_type, *args, **kwargs)
-
-      Get dataset according to dataset_type.
-
 
 

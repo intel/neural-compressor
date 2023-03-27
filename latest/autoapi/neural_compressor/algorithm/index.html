@@ -100,13 +100,13 @@
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.algorithm.ALGORITHMS" title="neural_compressor.algorithm.ALGORITHMS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ALGORITHMS</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ALGORITHMS</span></code></p></td>
 <td><p>Build a dict for registered algorithms.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.algorithm.Algorithm" title="neural_compressor.algorithm.Algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Algorithm</span></code></a></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Algorithm</span></code></p></td>
 <td><p>The base class of algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.algorithm.AlgorithmScheduler" title="neural_compressor.algorithm.AlgorithmScheduler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlgorithmScheduler</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlgorithmScheduler</span></code></p></td>
 <td><p>control the Algorithm in different phase.</p></td>
 </tr>
 </tbody>
@@ -116,59 +116,11 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.algorithm.algorithm_registry" title="neural_compressor.algorithm.algorithm_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">algorithm_registry</span></code></a>(algorithm_type, location)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">algorithm_registry</span></code>(algorithm_type, location)</p></td>
 <td><p>Decorate and register all Algorithm subclasses.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.algorithm.ALGORITHMS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.algorithm.</span></span><span class="sig-name descname"><span class="pre">ALGORITHMS</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/algorithm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.algorithm.ALGORITHMS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Build a dict for registered algorithms.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.algorithm.Algorithm">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.algorithm.</span></span><span class="sig-name descname"><span class="pre">Algorithm</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/algorithm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.algorithm.Algorithm" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The base class of algorithm.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.algorithm.AlgorithmScheduler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.algorithm.</span></span><span class="sig-name descname"><span class="pre">AlgorithmScheduler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/algorithm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.algorithm.AlgorithmScheduler" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>control the Algorithm in different phase.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.algorithm.AlgorithmScheduler.reset_exec_algorithms">
-<span class="sig-name descname"><span class="pre">reset_exec_algorithms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/algorithm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.algorithm.AlgorithmScheduler.reset_exec_algorithms" title="Permalink to this definition"></a></dt>
-<dd><p>Reset the list of executed algorithms.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.algorithm.algorithm_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.algorithm.</span></span><span class="sig-name descname"><span class="pre">algorithm_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/algorithm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.algorithm.algorithm_registry" title="Permalink to this definition"></a></dt>
-<dd><p>Decorate and register all Algorithm subclasses.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
-<li><p><strong>algorithm_type</strong> (<em>str</em>) – The algorithm registration name</p></li>
-<li><p><strong>location</strong> (<em>str</em>) – The location to call algorithms</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The class of register.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>cls</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 </section>
 </section>

@@ -134,59 +134,6 @@
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_step_begin">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_step_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the beginning of steps.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_epoch_end">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_epoch_end" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the end of epochs.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_step_end">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_step_end" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the end of steps.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_before_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_before_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Be called before optimizer steps.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_train_begin">
-<span class="sig-name descname"><span class="pre">on_train_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_train_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the beginning of the training process.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_train_end">
-<span class="sig-name descname"><span class="pre">on_train_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.on_train_end" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the end of the training process.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pruner.Pruner.update_sparsity">
-<span class="sig-name descname"><span class="pre">update_sparsity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pruner.Pruner.update_sparsity" title="Permalink to this definition"></a></dt>
-<dd><p>Update sparsity goals according to epoch numbers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>epoch</strong> (<em>int</em>) – the epoch number</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>sparsity target in this epoch</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>sparsity (float)</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>

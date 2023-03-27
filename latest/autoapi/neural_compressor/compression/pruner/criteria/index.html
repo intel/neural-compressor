@@ -149,25 +149,12 @@
 <dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.PruningCriterion.on_before_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.PruningCriterion.on_before_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate and store the pruning scores of pruning modules before the optimizer step.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.PruningCriterion.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.PruningCriterion.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate and store the pruning scores of pruning modules after the optimizer step.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.MagnitudeCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">MagnitudeCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.MagnitudeCriterion" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.compression.pruner.criteria.PruningCriterion" title="neural_compressor.compression.pruner.criteria.PruningCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCriterion</span></code></a></p>
-<p>Pruning criterion.</p>
+<dd><p>Pruning criterion.</p>
 <p>The magnitude criterion_class is derived from PruningCriterion.
 The magnitude value is used to score and determine if a weight is to be pruned.</p>
 <dl class="field-list simple">
@@ -189,8 +176,7 @@ The magnitude value is used to score and determine if a weight is to be pruned.<
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.GradientCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">GradientCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.GradientCriterion" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.compression.pruner.criteria.PruningCriterion" title="neural_compressor.compression.pruner.criteria.PruningCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCriterion</span></code></a></p>
-<p>Pruning criterion.</p>
+<dd><p>Pruning criterion.</p>
 <p>The gradient criterion_class is derived from PruningCriterion.
 The absolute value of gradient is used to score and determine if a weight is to be pruned.</p>
 <dl class="field-list simple">
@@ -212,8 +198,7 @@ The absolute value of gradient is used to score and determine if a weight is to 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">SnipCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipCriterion" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.compression.pruner.criteria.PruningCriterion" title="neural_compressor.compression.pruner.criteria.PruningCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCriterion</span></code></a></p>
-<p>Pruning criterion.</p>
+<dd><p>Pruning criterion.</p>
 <p>The snip criterion_class is derived from PruningCriterion.
 The product of magnitude and gradient is used to score and determine if a weight is to be pruned.
 Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity.
@@ -237,8 +222,7 @@ Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivit
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipMomentumCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">SnipMomentumCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.compression.pruner.criteria.PruningCriterion" title="neural_compressor.compression.pruner.criteria.PruningCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCriterion</span></code></a></p>
-<p>Pruning criterion.</p>
+<dd><p>Pruning criterion.</p>
 <p>The snip_momentum criterion_class is derived from PruningCriterion.
 A momentum mechanism is used to calculate snip score, which determines if a weight is to be pruned.</p>
 <dl class="field-list simple">

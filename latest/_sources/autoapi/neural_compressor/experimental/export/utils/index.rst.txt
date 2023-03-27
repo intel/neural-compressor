@@ -43,13 +43,8 @@ Functions
 
 .. py:class:: DummyDataReader(fp32_onnx_path)
 
-   Bases: :py:obj:`ortq`
+
 
    Build dummy datareader for onnx static quantization.
-
-   ..    .. py:method:: get_next()
-
-      Generate next data.
-
 
 

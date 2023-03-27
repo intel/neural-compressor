@@ -97,8 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.quantization.Quantization">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.quantization.</span></span><span class="sig-name descname"><span class="pre">Quantization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.quantization.Quantization" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../component/index.html#neural_compressor.experimental.component.Component" title="neural_compressor.experimental.component.Component"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.component.Component</span></code></a></p>
-<p>This class provides easy use API for quantization.</p>
+<dd><p>This class provides easy use API for quantization.</p>
 <blockquote>
 <div><p>It automatically searches for optimal quantization recipes for low precision model inference,
 achieving best tuning objectives like inference performance within accuracy loss constraints.
@@ -117,24 +116,6 @@ QuantConf class containing accuracy goal, tuning objective and preferred
 calibration &amp; quantization tuning space etc.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.quantization.Quantization.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.quantization.Quantization.execute" title="Permalink to this definition"></a></dt>
-<dd><p>Quantization execute routinue based on strategy design.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.quantization.Quantization.distributed_execute">
-<span class="sig-name descname"><span class="pre">distributed_execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.quantization.Quantization.distributed_execute" title="Permalink to this definition"></a></dt>
-<dd><p>Quantization distributed execute routinue based on strategy design.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.quantization.Quantization.dataset">
-<span class="sig-name descname"><span class="pre">dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.quantization.Quantization.dataset" title="Permalink to this definition"></a></dt>
-<dd><p>Get dataset according to dataset_type.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

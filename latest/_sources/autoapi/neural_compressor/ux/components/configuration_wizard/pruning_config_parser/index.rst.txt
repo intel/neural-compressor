@@ -26,20 +26,4 @@ Classes
 
    Pruning configuration parser class.
 
-   ..    .. py:method:: parse(input_data: list) -> dict
-      :abstractmethod:
-
-      Parse configuration.
-
-
-   .. py:method:: generate_tree(input_data: dict) -> list
-
-      Generate tree from pruning configuration.
-
-
-   .. py:method:: parse_entry(input_data: dict) -> Any
-
-      Parse configuration entry to tree element.
-
-
 

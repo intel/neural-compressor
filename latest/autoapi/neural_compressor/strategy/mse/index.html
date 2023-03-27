@@ -97,25 +97,10 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.mse.MSETuneStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.mse.</span></span><span class="sig-name descname"><span class="pre">MSETuneStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dicts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_hooks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/mse.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
-<p>The tuning strategy using MSE policy in tuning space.</p>
+<dd><p>The tuning strategy using MSE policy in tuning space.</p>
 <p>The MSE strategy needs to get the tensors for each OP of raw FP32 models and the quantized model based on
 the best model-wise tuning configuration. It then calculates the MSE (Mean Squared Error) for each OP, sorts
 those OPs according to the MSE value, and performs the op-wise fallback in this order.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.mse.MSETuneStrategy.next_tune_cfg">
-<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/mse.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.mse.MSETuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Generate and yield the next tuning config.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dict containing the tuning configuration for quantization.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tune_config (dict)</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>

@@ -24,18 +24,8 @@ Classes
 
 .. py:class:: FuseMatMulRedundantDequantizeTransformer(model, device='cpu')
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Fuse _QuantizedMatMul with the successor Dequantize Op.
-
-   ..    .. py:method:: do_transformation()
-
-      Fuse the _QuantizedMatMul with the following Dequantize op.
-
-      The output of _QuantizedMatMul or is fp32 or bf16.
-
-      :returns: the optimized graphdef object
-      :rtype: [graphdef]
-
 
 

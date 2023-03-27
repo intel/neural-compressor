@@ -24,21 +24,8 @@ Classes
 
 .. py:class:: ExhaustiveTuneStrategy
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The exhaustive tuning strategy.
-
-   ..    .. py:method:: next_tune_cfg()
-
-      Generate and yield the next tuning config using exhaustive search in tuning space.
-
-      It sequentially traverse all possible quantization tuning configurations
-      in a tuning space. From the perspective of the impact on performance,
-      we currently only traverse all possible quantization tuning configs.
-      Same reason as Bayesian, fallback datatypes are not included for now.
-
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
-
 
 

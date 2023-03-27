@@ -27,55 +27,29 @@ Classes
 
 .. py:class:: FuseMatMulRequantizeDequantizeTransformer(model, device='cpu')
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
-
-   ..    .. py:method:: do_transformation()
-
-      Apply the fusion of QuantizedMatMul + Requantize + Dequantize.
-
 
 
 .. py:class:: FuseMatMulRequantizeTransformer(model, device='cpu')
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Fuse Quantized MatMul Op with the successor Requantize Op.
-
-   ..    .. py:method:: do_transformation()
-
-      Fuse the quantized op with the following requantize op.
-
-      :returns: the optimized graphdef object
-      :rtype: [graphdef]
-
 
 
 .. py:class:: FuseMatMulRequantizeDequantizeNewAPITransformer(model, device='cpu')
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
-
-   ..    .. py:method:: do_transformation()
-
-      Apply the fusion of QuantizedMatMul + Requantize + Dequantize.
-
 
 
 .. py:class:: FuseMatMulRequantizeNewAPITransformer(model, device='cpu')
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
-
-   ..    .. py:method:: do_transformation()
-
-      Fuse the quantized op with the following requantize op.
-
-      :returns: the optimized graphdef object
-      :rtype: [graphdef]
-
 
 

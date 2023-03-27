@@ -26,10 +26,4 @@ Classes
 
    Request data processor.
 
-   ..    .. py:method:: get_string_value(data: Dict[str, Any], name: str) -> str
-      :staticmethod:
-
-      Get string value from request.
-
-
 

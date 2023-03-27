@@ -183,53 +183,13 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">Benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.Benchmark" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Benchmark class can be used to evaluate the model performance.</p>
+<dd><p>Benchmark class can be used to evaluate the model performance.</p>
 <p>With the objective setting, user can get the data of what they configured in yaml.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>conf</strong> (<em>obj</em>) – The config.BenchmarkConfig class containing accuracy goal, tuning objective etc.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.call_one">
-<span class="sig-name descname"><span class="pre">call_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.call_one" title="Permalink to this definition"></a></dt>
-<dd><p>Execute one command for one instance in one thread and dump the log (for Windows).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.config_instance">
-<span class="sig-name descname"><span class="pre">config_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_cmd</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.config_instance" title="Permalink to this definition"></a></dt>
-<dd><p>Configure the multi-instance commands and trigger benchmark with sub process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>raw_cmd</strong> – raw command used for benchmark</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.generate_prefix">
-<span class="sig-name descname"><span class="pre">generate_prefix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.generate_prefix" title="Permalink to this definition"></a></dt>
-<dd><p>Generate the command prefix with numactl.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>core_list</strong> – a list of core indexes bound with specific instances</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.run_instance">
-<span class="sig-name descname"><span class="pre">run_instance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.run_instance" title="Permalink to this definition"></a></dt>
-<dd><p>Run the instance with the configuration.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>set</strong> (<em>runs benchmarking with numactl on specific cores and instances</em>) – by user config and returns model performance</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py function">

@@ -98,47 +98,6 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.query.</span></span><span class="sig-name descname"><span class="pre">QueryBackendCapability</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability" title="Permalink to this definition"></a></dt>
 <dd><p>Base class that defines Query Interface.
 Each adaption layer should implement the inherited class for specific backend on their own.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.query.QueryBackendCapability.get_precisions">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_precisions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability.get_precisions" title="Permalink to this definition"></a></dt>
-<dd><p>Get the supported low precisions, e.g [‘int8’, ‘bf16’]</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.query.QueryBackendCapability.get_op_types">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_op_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability.get_op_types" title="Permalink to this definition"></a></dt>
-<dd><p>Get the op types for specific backend per low precision.
-e.g {‘2.3.0’: {‘int8’: [‘Conv2D’, ‘MatMuL’]}}</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.query.QueryBackendCapability.get_fuse_patterns">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_fuse_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability.get_fuse_patterns" title="Permalink to this definition"></a></dt>
-<dd><p>Get the fusion patterns for specified op type for every specific precision</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.query.QueryBackendCapability.set_quantization_config">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">set_quantization_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability.set_quantization_config" title="Permalink to this definition"></a></dt>
-<dd><p>Set the quantization config to backend.
-:param q_config: set the organized quantization configuration to backend.
-:type q_config: yaml content?</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.query.QueryBackendCapability.get_quantization_capability">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_quantization_capability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability.get_quantization_capability" title="Permalink to this definition"></a></dt>
-<dd><p>Get the quantization capability of low precision op types.
-e.g, granularity, scheme and etc.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.query.QueryBackendCapability.get_mixed_precision_combination">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_mixed_precision_combination</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unsupported_precisions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/query.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.query.QueryBackendCapability.get_mixed_precision_combination" title="Permalink to this definition"></a></dt>
-<dd><p>Get the valid precision combination base on hardware and user’ config.
-e.g[‘fp32’, ‘bf16’, ‘int8’]</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

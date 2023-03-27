@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: DataLoader
 
-   Bases: :py:obj:`object`
+
 
    Entrance of all configured DataLoaders.
 
-   .. 
+

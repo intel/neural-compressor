@@ -24,22 +24,8 @@ Classes
 
 .. py:class:: MXNetModel(model, **kwargs)
 
-   Bases: :py:obj:`neural_compressor.model.base_model.BaseModel`
+
 
    Build MXNet model.
-
-   ..    .. .. py:property:: model
-
-      Return model itself.
-
-   ..    .. py:method:: framework()
-
-      Return framework.
-
-
-   .. py:method:: save(root=None)
-
-      Save MXNet model.
-
 
 

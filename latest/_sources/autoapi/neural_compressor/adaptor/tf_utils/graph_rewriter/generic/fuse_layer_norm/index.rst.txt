@@ -39,37 +39,6 @@ Functions
    Current fusion is only for the case, when LayerNormalization uses FusedBatcNormV3.
    And further restrict it to only 2D or 3D tensor inputs to keras LayerNormalization api.
 
-   ..    .. py:method:: do_transformation()
-
-      The following pattern will be searched in the graph with additional contraints.
-
-      Here * means any type of op.
-      Subgraph:
-              *(input)  *  * Const  *  Const                       FusedOp
-                   x    |   x  |    |  x        Const              -------
-                    x   |    x |    | x  Const   x
-                    Reshape  Fill   Fill  x     x         *(input) *(gamma)  *(beta)
-                       x      x      x   x     x                x     |      x
-                        x    x      x   x     x                  x    |     x
-                   F u s e d B a t c h N o r m V 3              _MklLayerNorm
-                          x
-                           x   *
-                            x x
-                         Reshape
-                             x   *(gamma)
-                              x x
-                              Mul
-                      *(beta) x
-                         x   x
-                       AddV2(output)
-      :param input_graph_def: A GraphDef containing a model.
-
-      :returns: Modified graph with individual ops that made up of layer normalization
-                fused to LayerNorm.
-
-      :raises ValueError: If the graph is badly formed with duplicate node names.
-
-
 
 .. py:function:: node_name_from_input(node_name)
 

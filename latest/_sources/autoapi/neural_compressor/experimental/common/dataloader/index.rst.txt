@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: DataLoader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
-   Bases: :py:obj:`object`
+
 
    A wrapper of the information needed to construct a dataloader.
 
@@ -34,4 +34,4 @@ Classes
    object created then framework infomation can be known. Future we will support
    creating iterable dataloader from neural_compressor.experimental.common.DataLoader
 
-   .. 
+

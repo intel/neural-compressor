@@ -97,28 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.</span></span><span class="sig-name descname"><span class="pre">FreezeValueWithoutCalibTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_min_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gpu'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/int8/freeze_value_without_calib.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Freeze value without calibration.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer.generate_output_graph_ranges">
-<span class="sig-name descname"><span class="pre">generate_output_graph_ranges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_name_value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/int8/freeze_value_without_calib.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer.generate_output_graph_ranges" title="Permalink to this definition"></a></dt>
-<dd><p>Generate transformed graph for freeze_max/freeze_min transformation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>max_name_value</strong> – target values</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>transformed graph</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer.do_transformation_without_calib">
-<span class="sig-name descname"><span class="pre">do_transformation_without_calib</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/int8/freeze_value_without_calib.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer.do_transformation_without_calib" title="Permalink to this definition"></a></dt>
-<dd><p>Apply transformation without calibration.</p>
-</dd></dl>
-
+<dd><p>Freeze value without calibration.</p>
 </dd></dl>
 
 </section>

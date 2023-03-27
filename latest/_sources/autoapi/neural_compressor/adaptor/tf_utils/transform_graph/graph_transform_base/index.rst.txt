@@ -24,43 +24,8 @@ Classes
 
 .. py:class:: GraphTransformBase(input_pb)
 
-   Bases: :py:obj:`object`
+
 
    GraphTransform Base Class.
-
-   ..    .. py:method:: parse_input_pb()
-
-      Parse the input pbdef to get the node name and node mapping.
-
-      :returns: the dict that key is node name while the value is nodeDef.
-
-
-   .. py:method:: generate_input_map()
-
-      Generate the input map.
-
-
-   .. py:method:: node_name_from_input(node_name)
-
-      Get the original node name from input string.
-
-      :param node_name: input node's name in string
-
-      :returns: node's name
-
-
-   .. py:method:: get_node_name_from_input(node_name)
-
-      Get the original node name from input string.
-
-      :param node_name: input node's name in string
-
-      :returns: node's name
-
-
-   .. py:method:: do_transformation()
-
-      Virtual Interface. Each transformation should implement it.
-
 
 

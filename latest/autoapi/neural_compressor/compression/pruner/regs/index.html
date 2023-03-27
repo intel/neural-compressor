@@ -170,19 +170,12 @@
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.compression.pruner.regs.BaseReg.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/regs.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.regs.BaseReg.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Implement after optimizer.step().</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.regs.GroupLasso">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.regs.</span></span><span class="sig-name descname"><span class="pre">GroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../patterns/index.html#neural_compressor.compression.pruner.patterns.BasePattern" title="neural_compressor.compression.pruner.patterns.BasePattern"><span class="pre">neural_compressor.compression.pruner.patterns.BasePattern</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeff</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/regs.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.regs.GroupLasso" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.compression.pruner.regs.BaseReg" title="neural_compressor.compression.pruner.regs.BaseReg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseReg</span></code></a></p>
-<p>Regularizer.</p>
+<dd><p>Regularizer.</p>
 <p>A regularizer class derived from BaseReg. In this class, the Group-lasso regularization will be performed.
 Group-lasso is a variable-selection and regularization method.</p>
 <dl class="field-list simple">
@@ -204,12 +197,6 @@ Group-lasso is a variable-selection and regularization method.</p>
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.regs.GroupLasso.alpha">
 <span class="sig-name descname"><span class="pre">alpha</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/regs.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.regs.GroupLasso.alpha" title="Permalink to this definition"></a></dt>
 <dd><p>A float representing the coeffient related to group lasso.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.compression.pruner.regs.GroupLasso.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/regs.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.regs.GroupLasso.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Perform group lasso regularization after optimization.</p>
 </dd></dl>
 
 </dd></dl>

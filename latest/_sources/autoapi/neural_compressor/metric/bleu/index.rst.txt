@@ -33,7 +33,7 @@ Functions
 
 .. py:class:: UnicodeRegex
 
-   Bases: :py:obj:`object`
+
 
    Ad-hoc hack to recognize all punctuation and symbols.
 
@@ -51,19 +51,6 @@ Functions
 
       The compiled regular expressions to recognize symbols.
 
-   ..    .. py:method:: property_chars(prefix: str) -> str
-
-      Collect all Unicode strings starting with a specific prefix.
-
-      :param prefix: The specific prefix.
-
-      :returns:
-
-                The join result of all Unicode strings starting
-                  with a specific prefix.
-      :rtype: punctuation
-
-
 
 .. py:function:: bleu_tokenize(string: str) -> List[str]
 
@@ -80,7 +67,7 @@ Functions
 
 .. py:class:: BLEU
 
-   Bases: :py:obj:`object`
+
 
    Computes the BLEU (Bilingual Evaluation Understudy) score.
 
@@ -98,29 +85,5 @@ Functions
    .. attribute:: labels
 
       List of the reference corresponding to the prediction result.
-
-   ..    .. py:method:: reset() -> None
-
-      Clear the predictions and labels in the cache.
-
-
-   .. py:method:: update(prediction: Sequence[str], label: Sequence[str]) -> None
-
-      Add the prediction and label.
-
-      :param prediction: The prediction result.
-      :param label: The reference corresponding to the prediction result.
-
-      :raises ValueError: An error occurred when the length of the prediction
-      :raises and label are different.:
-
-
-   .. py:method:: result() -> float
-
-      Compute the BLEU score.
-
-      :returns: The approximate BLEU score.
-      :rtype: bleu_score
-
 
 

@@ -26,22 +26,4 @@ Classes
 
    Workload related services.
 
-   ..    .. py:method:: get_config(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
-      :classmethod:
-
-      Get config file for requested Workload.
-
-
-   .. py:method:: get_code_template(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
-      :classmethod:
-
-      Get code template file for requested Workload.
-
-
-   .. py:method:: get_output(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
-      :classmethod:
-
-      Get config file for requested Workload.
-
-
 

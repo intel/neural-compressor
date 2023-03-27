@@ -98,13 +98,13 @@
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.filters.LabelBalanceCOCORecordFilter" title="neural_compressor.data.filters.LabelBalanceCOCORecordFilter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LabelBalanceCOCORecordFilter</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">LabelBalanceCOCORecordFilter</span></code></p></td>
 <td><p>The label balance filter for COCO Record.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.filters.FILTERS" title="neural_compressor.data.filters.FILTERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FILTERS</span></code></a></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">FILTERS</span></code></p></td>
 <td><p>The filter register for all frameworks.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.filters.Filter" title="neural_compressor.data.filters.Filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Filter</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Filter</span></code></p></td>
 <td><p>The base class for transform.</p></td>
 </tr>
 </tbody>
@@ -114,62 +114,11 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.filters.filter_registry" title="neural_compressor.data.filters.filter_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code></a>(filter_type, framework)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code>(filter_type, framework)</p></td>
 <td><p>Register all transform subclasses.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.data.filters.LabelBalanceCOCORecordFilter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.filters.</span></span><span class="sig-name descname"><span class="pre">LabelBalanceCOCORecordFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/filters.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.filters.LabelBalanceCOCORecordFilter" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="filter/index.html#neural_compressor.data.filters.filter.Filter" title="neural_compressor.data.filters.filter.Filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.data.filters.filter.Filter</span></code></a></p>
-<p>The label balance filter for COCO Record.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.data.filters.FILTERS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.filters.</span></span><span class="sig-name descname"><span class="pre">FILTERS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/filters.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.filters.FILTERS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The filter register for all frameworks.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>framework</strong> (<em>str</em>) – frameworks in [“tensorflow”, “tensorflow_itex”, “mxnet”,
-“onnxrt_qdq”, “pytorch”, “pytorch_ipex”,
-“pytorch_fx”, “onnxrt_integerops”, “keras”,
-“onnxrt_qlinearops”, “onnxruntime”].</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.data.filters.Filter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.filters.</span></span><span class="sig-name descname"><span class="pre">Filter</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/filters.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.filters.Filter" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The base class for transform.</p>
-<p>__call__ method is needed when write user specific transform.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.data.filters.filter_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.filters.</span></span><span class="sig-name descname"><span class="pre">filter_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/filters.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.filters.filter_registry" title="Permalink to this definition"></a></dt>
-<dd><p>Register all transform subclasses.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filter_type</strong> (<em>str</em>) – fILTER registration name.</p></li>
-<li><p><strong>framework</strong> (<em>str</em>) – support 4 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’, ‘onnxrt’.</p></li>
-<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The class of register.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>cls</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 </section>
 </section>

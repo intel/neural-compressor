@@ -130,8 +130,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruning_recipes.patterns.pattern.PATTERNS">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruning_recipes.patterns.pattern.</span></span><span class="sig-name descname"><span class="pre">PATTERNS</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning_recipes/patterns/pattern.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruning_recipes.patterns.pattern.PATTERNS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class that contain all registered pattern types.</p>
+<dd><p>Class that contain all registered pattern types.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruning_recipes.patterns.pattern.PATTERNS.patterns">
 <span class="sig-name descname"><span class="pre">patterns</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning_recipes/patterns/pattern.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruning_recipes.patterns.pattern.PATTERNS.patterns" title="Permalink to this definition"></a></dt>
@@ -144,18 +143,6 @@
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruning_recipes.patterns.pattern.</span></span><span class="sig-name descname"><span class="pre">PatternBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_contiguous</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning_recipes/patterns/pattern.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase" title="Permalink to this definition"></a></dt>
 <dd><p>Base class of pruning pattern.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase.reduce">
-<span class="sig-name descname"><span class="pre">reduce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'abs_sum'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning_recipes/patterns/pattern.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase.reduce" title="Permalink to this definition"></a></dt>
-<dd><p>Reshaped tensor, support ‘abs_max’, ‘abs_sum’.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase.reshape">
-<span class="sig-name descname"><span class="pre">reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning_recipes/patterns/pattern.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase.reshape" title="Permalink to this definition"></a></dt>
-<dd><p>Reshape tensor into dims+2.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

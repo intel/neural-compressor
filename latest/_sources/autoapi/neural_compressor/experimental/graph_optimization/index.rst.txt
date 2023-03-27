@@ -42,46 +42,4 @@ Classes
                              preferred calibration & quantization tuning space etc.
    :type conf_fname_or_obj: string or obj
 
-   ..    .. .. py:property:: precisions
-
-      Get precision.
-
-   ..    .. .. py:property:: input
-
-      Get input.
-
-   ..    .. .. py:property:: output
-
-      Get output.
-
-   ..    .. .. py:property:: eval_dataloader
-
-      Get eval_dataloader.
-
-   ..    .. .. py:property:: model
-
-      Get model.
-
-   ..    .. .. py:property:: metric
-
-      Get metric.
-
-   ..    .. .. py:property:: postprocess
-
-      Get postprocess.
-
-   ..    .. .. py:property:: eval_func
-
-      Get evaluation function.
-
-   ..    .. py:method:: dataset(dataset_type, *args, **kwargs)
-
-      Get dataset.
-
-
-   .. py:method:: set_config_by_model(model_obj)
-
-      Set model config.
-
-
 

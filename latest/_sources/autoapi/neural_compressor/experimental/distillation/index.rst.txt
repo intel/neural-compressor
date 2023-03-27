@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: Distillation(conf_fname_or_obj=None)
 
-   Bases: :py:obj:`neural_compressor.experimental.component.Component`
+
 
    Distillation class derived from Component class.
 
@@ -52,94 +52,5 @@ Classes
    .. attribute:: best_model
 
       The best student model found in the training.
-
-   ..    .. .. py:property:: criterion
-
-      Getter of criterion.
-
-      :returns: The criterion used in the distillation process.
-
-   ..    .. .. py:property:: optimizer
-
-      Getter of optimizer.
-
-      :returns: The optimizer used in the distillation process.
-
-   ..    .. .. py:property:: teacher_model
-
-      Getter of the teacher model.
-
-      :returns: The teacher model used in the distillation process.
-
-   ..    .. .. py:property:: student_model
-
-      Getter of the student model.
-
-      :returns: The student model used in the distillation process.
-
-   ..    .. .. py:property:: train_cfg
-
-      Getter of the train configuration.
-
-      :returns: The train configuration used in the distillation process.
-
-   ..    .. .. py:property:: evaluation_distributed
-
-      Getter to know whether need distributed evaluation dataloader.
-
-   ..    .. .. py:property:: train_distributed
-
-      Getter to know whether need distributed training dataloader.
-
-   ..    .. py:method:: on_post_forward(input, teacher_output=None)
-
-      Set or compute output of teacher model.
-
-      Deprecated.
-
-
-   .. py:method:: init_train_cfg()
-
-      Initialize the training configuration.
-
-
-   .. py:method:: create_criterion()
-
-      Create the criterion for training.
-
-
-   .. py:method:: create_optimizer()
-
-      Create the optimizer for training.
-
-
-   .. py:method:: prepare()
-
-      Prepare hooks.
-
-
-   .. py:method:: pre_process()
-
-      Preprocessing before the disillation pipeline.
-
-      Initialize necessary parts for distillation pipeline.
-
-
-   .. py:method:: execute()
-
-      Do distillation pipeline.
-
-      First train the student model with the teacher model, after training,
-      evaluating the best student model if any.
-
-      :returns: Best distilled model found.
-
-
-   .. py:method:: generate_hooks()
-
-      Register hooks for distillation.
-
-      Register necessary hooks for distillation pipeline.
-
 
 

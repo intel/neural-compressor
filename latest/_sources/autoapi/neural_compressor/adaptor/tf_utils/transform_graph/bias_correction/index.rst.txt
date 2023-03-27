@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: BiasCorrection(input_graph, fp32_graph, method='weight_empirical', new_api=False)
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase`
+
 
    This class implements the bias correction graph transform.
 
@@ -38,10 +38,5 @@ Classes
    an empirical solution is to make:
    scale_c = r * scale and shift = u
    with this we don't change the min/max value, and correct the weight
-
-   ..    .. py:method:: do_transformation()
-
-      Apply bias correction graph transform.
-
 
 

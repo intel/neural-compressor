@@ -129,83 +129,10 @@ Functions
 
       A float. Sparsity ratio maximum for every module.
 
-   ..    .. py:method:: on_epoch_begin(epoch)
-
-      Functions called in the beginning of each epoch.
-
-
-   .. py:method:: mask_weights()
-
-      Functions called when masks are applied on corresponding modules' weights.
-
-      Weights are multipled with masks. This is the formal pruning process.
-
-
-   .. py:method:: on_step_begin(local_step)
-
-      Functions called on the beginning of each step.
-
-      Judge if the current step should execute a pruning process.
-      If so, using scores and criteria to update the masks and pruning the model.
-      Or, simply train the model with its original structure.
-
-
-   .. py:method:: on_step_end()
-
-      Functions called in the end of each step.
-
-
-   .. py:method:: on_epoch_end()
-
-      Functions called in the end of each epoch.
-
-
-   .. py:method:: on_before_optimizer_step()
-
-      Functions called before the optimizer.step().
-
-
-   .. py:method:: on_after_optimizer_step()
-
-      Functions called after the optimizer.step().
-
-      Prune the model after optimization.
-
-
-   .. py:method:: on_train_begin(dataloader=None)
-
-      Functions called in the beginning of training.
-
-
-   .. py:method:: on_train_end()
-
-      Functions called in the end of each training.
-
-
-   .. py:method:: on_before_eval()
-
-      Functions called in the beginning of evaluation.
-
-
-   .. py:method:: on_after_eval()
-
-      Functions called in the end of evaluation.
-
-
-   .. py:method:: check_is_pruned_step(step)
-
-      Decide whether the current step should execute a pruning process.
-
-
-   .. py:method:: update_scores()
-
-      Update self.scores.
-
-
 
 .. py:class:: MagnitudePruner(modules, config)
 
-   Bases: :py:obj:`Pruner`
+
 
    Pruning Pruner.
 
@@ -218,15 +145,10 @@ Functions
 
       
 
-   ..    .. py:method:: update_scores()
-
-      Update self.scores.
-
-
 
 .. py:class:: SnipPruner(modules, config)
 
-   Bases: :py:obj:`Pruner`
+
 
    Pruning Pruner.
 
@@ -241,17 +163,10 @@ Functions
 
       
 
-   ..    .. py:method:: on_after_optimizer_step()
-
-      Functions called after the optimizer.step().
-
-      Prune the model after optimization and update the scores based on weights and gradients.
-
-
 
 .. py:class:: SnipMomentumPruner(modules, config)
 
-   Bases: :py:obj:`Pruner`
+
 
    Pruning Pruner.
 
@@ -265,17 +180,10 @@ Functions
 
       
 
-   ..    .. py:method:: on_after_optimizer_step()
-
-      Functions called after the optimizer.step().
-
-      Prune the model after optimization and update the scores based on weights and gradients.
-
-
 
 .. py:class:: PatternLockPruner(modules, config)
 
-   Bases: :py:obj:`Pruner`
+
 
    Pruning Pruner.
 
@@ -288,15 +196,5 @@ Functions
    .. attribute:: Inherit from parent class Pruner.
 
       
-
-   ..    .. py:method:: on_step_begin(local_step)
-
-      Functions called on the beginning of each step.
-
-
-   .. py:method:: on_after_optimizer_step()
-
-      Functions called after the optimizer.step().
-
 
 

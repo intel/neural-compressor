@@ -114,12 +114,6 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.hawq_metric.</span></span><span class="sig-name descname"><span class="pre">Node_collector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector" title="Permalink to this definition"></a></dt>
 <dd><p>Define Collector based on hook, which is used to record the intermediate result.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector.remove">
-<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector.remove" title="Permalink to this definition"></a></dt>
-<dd><p>Remove handle.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -131,113 +125,6 @@
 Dong, Zhen, et al. “Hawq-v2: Hessian aware trace-weighted quantization of neural networks.”
 Advances in neural information processing systems 33 (2020): 18518-18529.
 <a class="reference external" href="https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py">https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py</a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.mse_metric_gap">
-<span class="sig-name descname"><span class="pre">mse_metric_gap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dequantize_tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.mse_metric_gap" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fp32_tensor</strong> (<em>tensor</em>) – The FP32 tensor.</p></li>
-<li><p><strong>dequantize_tensor</strong> (<em>tensor</em>) – The INT8 dequantize tensor.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_fused_mapping">
-<span class="sig-name descname"><span class="pre">get_fused_mapping</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_fused_mapping" title="Permalink to this definition"></a></dt>
-<dd><p>Map the ops of both fused or not modules to weights.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>weights of each op.
-op_list (list): ops.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>weight_to_op (dict)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_device">
-<span class="sig-name descname"><span class="pre">get_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_device" title="Permalink to this definition"></a></dt>
-<dd><p>Get the device.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – the input model.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.register_act_grad_hooks">
-<span class="sig-name descname"><span class="pre">register_act_grad_hooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.register_act_grad_hooks" title="Permalink to this definition"></a></dt>
-<dd><p>Append hook handles.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.reset_act_gradient_and_hooks">
-<span class="sig-name descname"><span class="pre">reset_act_gradient_and_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.reset_act_gradient_and_hooks" title="Permalink to this definition"></a></dt>
-<dd><p>Reset hook.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_params">
-<span class="sig-name descname"><span class="pre">get_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_params" title="Permalink to this definition"></a></dt>
-<dd><p>Get weight names and parameters.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_vtHv_weight">
-<span class="sig-name descname"><span class="pre">get_vtHv_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_vtHv_weight" title="Permalink to this definition"></a></dt>
-<dd><p>Get vtHv weight.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_weight_traces">
-<span class="sig-name descname"><span class="pre">get_weight_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_weight_traces" title="Permalink to this definition"></a></dt>
-<dd><p>Get op names to trace.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>num_samples</strong> (<em>int</em>) – sample number.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>op names to trace.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>op_name_to_trace (dict)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_act_traces">
-<span class="sig-name descname"><span class="pre">get_act_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_act_traces" title="Permalink to this definition"></a></dt>
-<dd><p>Get op names to trace.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>num_samples</strong> (<em>int</em>) – sample number.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>res_dict (dict).</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_act_gap">
-<span class="sig-name descname"><span class="pre">get_act_gap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_act_gap" title="Permalink to this definition"></a></dt>
-<dd><p>Estimates each activation gap between quantized model and float model.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_avg_traces">
-<span class="sig-name descname"><span class="pre">get_avg_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enable_act</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace.get_avg_traces" title="Permalink to this definition"></a></dt>
-<dd><p>Estimates average hessian trace for each parameter.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py function">

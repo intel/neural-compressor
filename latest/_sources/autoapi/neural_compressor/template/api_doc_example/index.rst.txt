@@ -191,28 +191,10 @@ Attributes
 
       :type: :obj:`int`, optional
 
-   ..    .. .. py:property:: property1
-
-      Property is documented.
-
-      :type: str
-
-   ..    .. py:attribute:: attr5
+   .. py:attribute:: attr5
 
       Docstring *after* attribute, with type specified.
 
       :type: str
-
-   .. py:method:: method1(param1, param2)
-
-      method1 for execute.
-
-      .. note:: It's public.
-
-      :param param1: The parameter1.
-      :param param2: The parameter2.
-
-      :returns: True|False.
-
 
 

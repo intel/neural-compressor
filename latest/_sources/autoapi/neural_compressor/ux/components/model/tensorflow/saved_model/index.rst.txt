@@ -24,14 +24,8 @@ Classes
 
 .. py:class:: SavedModelModel
 
-   Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
+
 
    Saved_model model.
-
-   ..    .. py:method:: supports_path(path: str) -> bool
-      :staticmethod:
-
-      Check if given path is of supported model.
-
 
 

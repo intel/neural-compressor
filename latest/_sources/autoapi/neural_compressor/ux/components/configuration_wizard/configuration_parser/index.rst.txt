@@ -36,42 +36,6 @@ Functions
 
    Configuration type parser class.
 
-   ..    .. py:method:: parse(input_data: dict) -> dict
-
-      Parse configuration.
-
-
-   .. py:method:: parse_evaluation_data(evaluation_data: dict) -> None
-
-      Parse input evaluation data.
-
-
-   .. py:method:: parse_transforms(transforms_data: List[dict]) -> List[dict]
-
-      Parse transforms list.
-
-
-   .. py:method:: parse_dataloader(dataloader_data: dict) -> dict
-
-      Parse dataloader dict.
-
-
-   .. py:method:: parse_metric(metric_data: dict) -> dict
-
-      Parse metric data.
-
-
-   .. py:method:: get_param_type(param_group: str, param_name: str) -> Union[Type, List[Type]]
-
-      Get parameter type.
-
-
-   .. py:method:: parse_value(value: Any, required_type: Union[Type, List[Type], List[List[Type]]]) -> Any
-      :staticmethod:
-
-      Parse value to required type.
-
-
 
 .. py:function:: parse_list_value(value: Any, required_type: Union[Type, List[Type], List[List[Type]]]) -> List[Any]
 

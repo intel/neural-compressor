@@ -59,7 +59,7 @@ Functions
 
 .. py:class:: COCOWrapper(dataset: Dict[str, Any], detection_type: str = 'bbox')
 
-   Bases: :py:obj:`pycocotools.coco.COCO`
+
 
    Wrapper for the pycocotools COCO class.
 
@@ -72,29 +72,10 @@ Functions
       type of detections being wrapped. Can be one of ['bbox',
       'segmentation']
 
-   ..    .. py:method:: LoadAnnotations(annotations: list) -> pycocotools.coco.COCO
-
-      Load annotations dictionary into COCO datastructure.
-
-      See http://mscoco.org/dataset/#format for a description of the annotations
-      format.  As above, this function replicates the default behavior of the API
-      but does not require writing to external storage.
-
-      :param annotations: python list holding object detection results where each
-                          detection is encoded as a dict with required keys ['image_id',
-                          'category_id', 'score'] and one of ['bbox', 'segmentation'] based on
-                          `detection_type`.
-
-      :returns: a coco.COCO datastructure holding object detection annotations results
-
-      :raises ValueError: if (1) annotations is not a list or annotations do not
-          correspond to the images contained in self.
-
-
 
 .. py:class:: COCOEvalWrapper(groundtruth: pycocotools.coco.COCO = None, detections: pycocotools.coco.COCO = None, agnostic_mode=False, iou_type: str = 'bbox', iou_thrs: Union[str, float] = None, map_points=None)
 
-   Bases: :py:obj:`pycocotools.cocoeval.COCOeval`
+
 
    Wrapper for the pycocotools COCOeval class.
 
@@ -107,76 +88,6 @@ Functions
      evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,
                                             agnostic_mode=False)
      metrics = evaluator.ComputeMetrics()
-
-   ..    .. py:method:: GetCategory(category_id: int) -> dict
-
-      Fetch dictionary holding category information given category id.
-
-      :param category_id: integer id
-
-      :returns: dictionary holding 'id', 'name'.
-
-
-   .. py:method:: GetAgnosticMode() -> bool
-
-      Return whether COCO Eval is configured to evaluate in agnostic mode.
-
-
-   .. py:method:: GetCategoryIdList() -> List[int]
-
-      Return the list of IDs of all valid categories.
-
-
-   .. py:method:: accumulate(p: pycocotools.cocoeval.Params = None)
-
-      Accumulate evaluation results per image and store it to self.eval.
-
-      :param p: input params for evaluation
-
-
-   .. py:method:: ComputeMetrics(include_metrics_per_category: bool = False, all_metrics_per_category: bool = False)
-
-      Compute detection metrics.
-
-      :param include_metrics_per_category: Whether include metrics per category.
-      :param all_metrics_per_category: Whether include all the summery metrics for
-                                       each category in per_category_ap. Be careful with setting it to true if
-                                       you have more than handful of categories, because it will pollute
-                                       your mldash.
-
-      :returns:
-
-                A tuple of (summary_metrics, per_category_ap), in which
-                  (1) summary_metrics is a dictionary holding:
-                    'Precision/mAP': mean average precision over classes averaged over IOU
-                      thresholds ranging from .5 to .95 with .05 increments;
-                    'Precision/mAP@.50IOU': mean average precision at 50% IOU;
-                    'Precision/mAP@.75IOU': mean average precision at 75% IOU;
-                    'Precision/mAP (small)': mean average precision for small objects
-                      (area < 32^2 pixels);
-                    'Precision/mAP (medium)': mean average precision for medium sized
-                      objects (32^2 pixels < area < 96^2 pixels);
-                    'Precision/mAP (large)': mean average precision for large objects
-                      (96^2 pixels < area < 10000^2 pixels);
-                    'Recall/AR@1': average recall with 1 detection;
-                    'Recall/AR@10': average recall with 10 detections;
-                    'Recall/AR@100': average recall with 100 detections;
-                    'Recall/AR@100 (small)': average recall for small objects with 100
-                      detections;
-                    'Recall/AR@100 (medium)': average recall for medium objects with 100
-                      detections;
-                    'Recall/AR@100 (large)': average recall for large objects with 100
-                      detections;
-                  and (2) per_category_ap is a dictionary holding category specific results with
-                    keys of the form: 'Precision mAP ByCategory/category'
-                    (without the supercategory part if no supercategories exist).
-
-                For backward compatibility 'PerformanceByCategory' is included in the
-                  output regardless of all_metrics_per_category. If evaluating class-agnostic
-                  mode, per_category_ap is an empty dictionary.
-
-      :raises ValueError: If category_stats does not exist.
-
 
 
 .. py:function:: ExportSingleImageGroundtruthToCoco(image_id: Union[int, str], next_annotation_id: int, category_id_set: Set[str], groundtruth_boxes: numpy.array, groundtruth_classes: numpy.array, groundtruth_masks: Union[numpy.array, None] = None, groundtruth_is_crowd: Union[numpy.array, None] = None) -> list

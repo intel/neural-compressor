@@ -236,192 +236,36 @@ Functions
 
 .. py:class:: TensorflowBaseModel(model, **kwargs)
 
-   Bases: :py:obj:`neural_compressor.model.base_model.BaseModel`
+
 
    Build Tensorflow Base Model.
-
-   ..    .. .. py:property:: name
-
-      Renturn name.
-
-   ..    .. .. py:property:: weights
-
-      Return weights.
-
-   ..    .. .. py:property:: q_config
-
-      Return q_config.
-
-   ..    .. .. py:property:: workspace_path
-
-      Return workspace path.
-
-   ..    .. .. py:property:: model_type
-
-      Return model type.
-
-   ..    .. .. py:property:: model
-
-      Return model itself.
-
-   ..    .. .. py:property:: graph_def
-
-      Return graph defination.
-
-   ..    .. .. py:property:: graph_info
-
-      Return graph info.
-
-   ..    .. .. py:property:: sess
-
-      Return Session object.
-
-   ..    .. .. py:property:: graph
-
-      Return model graph.
-
-   ..    .. .. py:property:: iter_op
-
-      Return model iter op list.
-
-   ..    .. .. py:property:: input_tensor_names
-
-      Return input tensor names.
-
-   ..    .. .. py:property:: output_tensor_names
-
-      Return output tensor names.
-
-   ..    .. .. py:property:: input_node_names
-
-      Return input node names.
-
-   ..    .. .. py:property:: output_node_names
-
-      Return output node names.
-
-   ..    .. .. py:property:: input_tensor
-
-      Return input tensor.
-
-   ..    .. .. py:property:: output_tensor
-
-      Return output tensor.
-
-   ..    .. py:method:: framework()
-
-      Return framework.
-
-
-   .. py:method:: save(root=None)
-
-      Save Tensorflow model.
-
-
-   .. py:method:: export(save_path, conf)
-
-      Export the Tensorflow fp32/int8 model to ONNX fp32/int8 model.
-
 
 
 .. py:class:: TensorflowSavedModelModel(model, **kwargs)
 
-   Bases: :py:obj:`TensorflowBaseModel`
+
 
    Build Tensorflow saved model.
-
-   ..    .. .. py:property:: model
-
-      Return model itself.
-
-   ..    .. py:method:: get_all_weight_names()
-
-      Get weight names of model.
-
-      :returns: weight names list.
-      :rtype: list
-
-
-   .. py:method:: update_weights(tensor_name, new_tensor)
-
-      Update model weights.
-
-
-   .. py:method:: get_weight(tensor_name)
-
-      Return model wight with a given tensor name.
-
-      :param tensor_name: name of a tensor.
-      :type tensor_name: str
-
-
-   .. py:method:: report_sparsity()
-
-      Get sparsity of the model.
-
-      :returns: DataFrame of sparsity of each weight.
-                total_sparsity (float): total sparsity of model.
-      :rtype: df (DataFrame)
-
-
-   .. py:method:: build_saved_model(root=None)
-
-      Build Tensorflow saved model.
-
-      :param root: path to saved model. Defaults to None.
-      :type root: str, optional
-
-      :returns: path to saved model.
-                builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds
-                    the SavedModel protocol buffer and saves variables and assets.
-      :rtype: root (str)
-
-
-   .. py:method:: save(root=None)
-
-      Save Tensorflow model.
-
 
 
 .. py:class:: TensorflowQATModel(model='', **kwargs)
 
-   Bases: :py:obj:`TensorflowSavedModelModel`
+
 
    Build Tensorflow QAT model.
-
-   ..    .. .. py:property:: model
-
-      Return model itself.
-
-   ..    .. .. py:property:: frozen_graph_def
-
-      Get frozen graph_def.
-
-   ..    .. py:method:: save(root=None)
-
-      Save Tensorflow QAT model.
-
 
 
 .. py:class:: TensorflowCheckpointModel(model, **kwargs)
 
-   Bases: :py:obj:`TensorflowBaseModel`
+
 
    Build Tensorflow checkpoint model.
 
-   ..    .. .. py:property:: graph_def
 
-      Return graph defination.
-
-   ..    .. .. py:property:: model
-
-      Return the model itself to avoid the initialization issue.
-
-   .. 
 .. py:class:: TensorflowModel
 
-   Bases: :py:obj:`object`
+
 
    A wrapper to construct a Tensorflow Model.
 
-   .. 
+

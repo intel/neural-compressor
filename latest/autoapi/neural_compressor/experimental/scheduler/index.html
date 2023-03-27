@@ -97,8 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.scheduler.</span></span><span class="sig-name descname"><span class="pre">Scheduler</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/scheduler.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Scheduler for neural_compressor component pipeline execution.</p>
+<dd><p>Scheduler for neural_compressor component pipeline execution.</p>
 <p>Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.
 This scheduler will sequentially execute specified components by the order of
 appending. This interface provids an unique entry to pipeline execute all supported
@@ -135,29 +134,6 @@ opt_model = scheduler()
 opt_model.save()</p>
 </li>
 </ol>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.scheduler.Scheduler.combine">
-<span class="sig-name descname"><span class="pre">combine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/scheduler.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.scheduler.Scheduler.combine" title="Permalink to this definition"></a></dt>
-<dd><p>Combine neural_compressor components into a new component.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> (<a class="reference internal" href="../component/index.html#neural_compressor.experimental.component.Component" title="neural_compressor.experimental.component.Component"><em>Component</em></a>) – Components to be combined together. Input Component should be</p></li>
-<li><p><strong>combination</strong> (<em>supported in Neural Compressor and pass the sanity check during combine. The illegal</em>) – </p></li>
-<li><p><strong>error.</strong> (<em>(</em><em>e.g. Components uses different frameworks</em><em>) </em><em>returns an</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The return component is created as base Component class.
-It syncs input components configuration and creates dataloaders/functions
-accordingly.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Combined Component</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>

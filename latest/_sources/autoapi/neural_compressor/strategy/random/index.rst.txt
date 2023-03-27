@@ -24,20 +24,8 @@ Classes
 
 .. py:class:: RandomTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The random tuning strategy.
-
-   ..    .. py:method:: next_tune_cfg()
-
-      Generate and yield the next tuning config by random searching in tuning space.
-
-      Random strategy is used to randomly choose quantization tuning configurations
-      from the tuning space. As with the Exhaustive strategy, it also only considers
-      quantization tuning configs to generate a better-performance quantized model.
-
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
-
 
 

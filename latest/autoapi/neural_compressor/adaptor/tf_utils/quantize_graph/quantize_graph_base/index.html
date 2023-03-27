@@ -101,23 +101,6 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.</span></span><span class="sig-name descname"><span class="pre">QuantizeGraphBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase" title="Permalink to this definition"></a></dt>
 <dd><p>This is the base class for quantize graph.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.do_transform">
-<span class="sig-name descname"><span class="pre">do_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.do_transform" title="Permalink to this definition"></a></dt>
-<dd><p>This is the virtual interface need to be implemented by derived class.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.remove_dead_nodes">
-<span class="sig-name descname"><span class="pre">remove_dead_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.remove_dead_nodes" title="Permalink to this definition"></a></dt>
-<dd><p>Removes nodes that are no longer needed for inference from the graph.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -129,36 +112,6 @@
 <dd class="field-odd"><p><strong>[</strong><strong>description</strong><strong>]</strong> (<em>object {</em><em>[</em><em>type</em><em>]</em><em>} --</em>) – </p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.get_longest_fuse">
-<span class="sig-name descname"><span class="pre">get_longest_fuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.get_longest_fuse" title="Permalink to this definition"></a></dt>
-<dd><p>This is the virtual interface to be implemented by derived class.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.eightbitize_single_input_tensor_node">
-<span class="sig-name descname"><span class="pre">eightbitize_single_input_tensor_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_op_function</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.eightbitize_single_input_tensor_node" title="Permalink to this definition"></a></dt>
-<dd><p>Quantize the single input tensor node.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.add_output_graph_node">
-<span class="sig-name descname"><span class="pre">add_output_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.add_output_graph_node" title="Permalink to this definition"></a></dt>
-<dd><p>Inserts one node into the new graph.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.remove_redundant_quantization">
-<span class="sig-name descname"><span class="pre">remove_redundant_quantization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_graph</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.remove_redundant_quantization" title="Permalink to this definition"></a></dt>
-<dd><p>Remove the redundant Quantize/QuantizeV2 nodes.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.create_nodes_map">
-<span class="sig-name descname"><span class="pre">create_nodes_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/quantize_graph/quantize_graph_base.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.create_nodes_map" title="Permalink to this definition"></a></dt>
-<dd><p>Builds a mapping of node names to their defs from the graph.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

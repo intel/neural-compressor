@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: RemoveTrainingNodesOptimizer(model, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics', 'StopGradient'])
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Remove training nodes optimizer.
-
-   ..    .. py:method:: do_transformation()
-
-      Remove tranining nodes which has no control edge inputs.
-
 
 

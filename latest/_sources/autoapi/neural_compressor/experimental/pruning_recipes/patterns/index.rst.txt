@@ -32,20 +32,4 @@ Classes
 
 
 
-.. py:class:: PATTERNS
-
-   Bases: :py:obj:`object`
-
-   Class that contain all registered pattern types.
-
-   .. attribute:: patterns
-
-      A dict which stores registered Pruning Pattern subclasses.
-
-   ..    .. py:method:: support_pattern()
-      :classmethod:
-
-      Support patterns.
-
-
 

@@ -97,28 +97,10 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.conservative.ConservativeTuneStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.conservative.</span></span><span class="sig-name descname"><span class="pre">ConservativeTuneStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dicts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_hooks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/conservative.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.conservative.ConservativeTuneStrategy" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
-<p>Tuning strategy with accuracy first, performance second.</p>
+<dd><p>Tuning strategy with accuracy first, performance second.</p>
 <p>The quantization level O0 is designed for user who want to keep the accuracy
 of the model after quantization. It starts with the original(fp32) model,
 and then quantize the OPs to lower precision OP type wisely and OP wisely.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.conservative.ConservativeTuneStrategy.initialize_tune_cfg">
-<span class="sig-name descname"><span class="pre">initialize_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/conservative.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.conservative.ConservativeTuneStrategy.initialize_tune_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Init the tuning config.</p>
-<p>Initialize the tuning config for conservative tuning.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>key is (op_name, op_type); value is quantization mode.
-quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
-initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>op_item_dtype_dict (OrderedDict)</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>

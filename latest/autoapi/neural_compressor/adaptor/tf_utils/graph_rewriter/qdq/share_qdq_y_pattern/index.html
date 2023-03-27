@@ -97,8 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern.ShareQDQForItexYPatternOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern.</span></span><span class="sig-name descname"><span class="pre">ShareQDQForItexYPatternOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/qdq/share_qdq_y_pattern.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern.ShareQDQForItexYPatternOptimizer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.</p>
+<dd><p>Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.</p>
 <p>Only 1 Q/DQ before Add op need to be inserted. Insert 2 Q/DQ breaks the ITEX fusion pattern.</p>
 </dd></dl>
 

@@ -51,4 +51,4 @@ Classes
 
    Optimizations enumeration.
 
-   .. 
+

@@ -30,28 +30,9 @@ Classes
    We only support inplace mode which means the model weights will be changed, you can call recover function only
    once to recover the weights if needed
 
-   ..    .. py:method:: transform(alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d', 'ConvTranspose2d'], scales_per_op=False, calib_iter=100)
-
-      The main entry of smooth quant
-      :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
-      to the paper for more details
-      :param percentile: Not supported now
-      :param op_types: The op typed to be smooth quantized
-      :param scales_per_op: Not supported now
-      :param calib_iter: Data size for calibration
-      :return: A FP32 model with the same architecture as the orig model but with different weight which will be
-      benefit to quantization
-
-
-   .. py:method:: recover()
-
-      recover the model weights
-      :return:
-
-
 
 .. py:class:: GraphTrace
 
    
 
-   .. 
+

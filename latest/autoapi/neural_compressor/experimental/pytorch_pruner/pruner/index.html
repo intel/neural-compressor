@@ -255,90 +255,12 @@ pruning is enabled.</p>
 <dd><p>A float. Sparsity ratio maximum for every module.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.mask_weights">
-<span class="sig-name descname"><span class="pre">mask_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.mask_weights" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called when masks are applied on corresponding modules’ weights.</p>
-<p>Weights are multipled with masks. This is the formal pruning process.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_step_begin">
-<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_step</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_step_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called on the beginning of each step.</p>
-<p>Judge if the current step should execute a pruning process.
-If so, using scores and criteria to update the masks and pruning the model.
-Or, simply train the model with its original structure.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_step_end">
-<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_step_end" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called in the end of each step.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_epoch_end">
-<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_epoch_end" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called in the end of each epoch.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_before_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_before_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called before the optimizer.step().</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called after the optimizer.step().</p>
-<p>Prune the model after optimization.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_train_begin">
-<span class="sig-name descname"><span class="pre">on_train_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_train_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called in the beginning of training.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_train_end">
-<span class="sig-name descname"><span class="pre">on_train_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_train_end" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called in the end of each training.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_before_eval">
-<span class="sig-name descname"><span class="pre">on_before_eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_before_eval" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called in the beginning of evaluation.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_after_eval">
-<span class="sig-name descname"><span class="pre">on_after_eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.on_after_eval" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called in the end of evaluation.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.check_is_pruned_step">
-<span class="sig-name descname"><span class="pre">check_is_pruned_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.check_is_pruned_step" title="Permalink to this definition"></a></dt>
-<dd><p>Decide whether the current step should execute a pruning process.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.Pruner.update_scores">
-<span class="sig-name descname"><span class="pre">update_scores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.update_scores" title="Permalink to this definition"></a></dt>
-<dd><p>Update self.scores.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.MagnitudePruner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.pruner.</span></span><span class="sig-name descname"><span class="pre">MagnitudePruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.MagnitudePruner" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner" title="neural_compressor.experimental.pytorch_pruner.pruner.Pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pruner</span></code></a></p>
-<p>Pruning Pruner.</p>
+<dd><p>Pruning Pruner.</p>
 <p>A Pruner class derived from Pruner. In this pruner, the scores are calculated based on weights.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -358,8 +280,7 @@ Or, simply train the model with its original structure.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.SnipPruner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.pruner.</span></span><span class="sig-name descname"><span class="pre">SnipPruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.SnipPruner" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner" title="neural_compressor.experimental.pytorch_pruner.pruner.Pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pruner</span></code></a></p>
-<p>Pruning Pruner.</p>
+<dd><p>Pruning Pruner.</p>
 <p>A Pruner class derived from Pruner. In this pruner, the scores are calculated based on SNIP.
 Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity
 (<a class="reference external" href="https://arxiv.org/abs/1810.02340">https://arxiv.org/abs/1810.02340</a>)</p>
@@ -381,8 +302,7 @@ Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivit
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.SnipMomentumPruner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.pruner.</span></span><span class="sig-name descname"><span class="pre">SnipMomentumPruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.SnipMomentumPruner" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner" title="neural_compressor.experimental.pytorch_pruner.pruner.Pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pruner</span></code></a></p>
-<p>Pruning Pruner.</p>
+<dd><p>Pruning Pruner.</p>
 <p>A Pruner class derived from Pruner. In this pruner, the scores are calculated based on SNIP.
 Moreoever, the score map is updated with a momentum like process.</p>
 <dl class="field-list simple">
@@ -403,8 +323,7 @@ Moreoever, the score map is updated with a momentum like process.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.PatternLockPruner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.pruner.</span></span><span class="sig-name descname"><span class="pre">PatternLockPruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.PatternLockPruner" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.pruner.Pruner" title="neural_compressor.experimental.pytorch_pruner.pruner.Pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pruner</span></code></a></p>
-<p>Pruning Pruner.</p>
+<dd><p>Pruning Pruner.</p>
 <p>A Pruner class derived from Pruner. In this pruner, original model’s sparsity pattern will be fixed while training.
 This pruner is useful when you want to train a sparse model without change its original structure.</p>
 <dl class="field-list simple">
@@ -419,12 +338,6 @@ This pruner is useful when you want to train a sparse model without change its o
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">Inherit</span> <span class="pre">from</span> <span class="pre">parent</span> <span class="pre">class</span> <span class="pre">Pruner.</span></span></dt>
 <dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.pruner.PatternLockPruner.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pytorch_pruner/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.pruner.PatternLockPruner.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Functions called after the optimizer.step().</p>
-</dd></dl>
 
 </dd></dl>
 

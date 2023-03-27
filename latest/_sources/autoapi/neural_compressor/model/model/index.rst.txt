@@ -41,8 +41,8 @@ Functions
 
 .. py:class:: Model
 
-   Bases: :py:obj:`object`
+
 
    A wrapper to construct a Neural Compressor Model.
 
-   .. 
+

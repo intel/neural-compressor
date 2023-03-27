@@ -413,108 +413,31 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../base_model/index.html#neural_compressor.model.base_model.BaseModel" title="neural_compressor.model.base_model.BaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.model.base_model.BaseModel</span></code></a></p>
-<p>Build Tensorflow Base Model.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.save" title="Permalink to this definition"></a></dt>
-<dd><p>Save Tensorflow model.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.export">
-<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.export" title="Permalink to this definition"></a></dt>
-<dd><p>Export the Tensorflow fp32/int8 model to ONNX fp32/int8 model.</p>
-</dd></dl>
-
+<dd><p>Build Tensorflow Base Model.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowSavedModelModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="neural_compressor.model.tensorflow_model.TensorflowBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBaseModel</span></code></a></p>
-<p>Build Tensorflow saved model.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.update_weights">
-<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.update_weights" title="Permalink to this definition"></a></dt>
-<dd><p>Update model weights.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_weight">
-<span class="sig-name descname"><span class="pre">get_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_weight" title="Permalink to this definition"></a></dt>
-<dd><p>Return model wight with a given tensor name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tensor_name</strong> (<em>str</em>) – name of a tensor.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.report_sparsity">
-<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.report_sparsity" title="Permalink to this definition"></a></dt>
-<dd><p>Get sparsity of the model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>DataFrame of sparsity of each weight.
-total_sparsity (float): total sparsity of model.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>df (DataFrame)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.build_saved_model">
-<span class="sig-name descname"><span class="pre">build_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.build_saved_model" title="Permalink to this definition"></a></dt>
 <dd><p>Build Tensorflow saved model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>root</strong> (<em>str</em><em>, </em><em>optional</em>) – path to saved model. Defaults to None.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>path to saved model.
-builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds</p>
-<blockquote>
-<div><p>the SavedModel protocol buffer and saves variables and assets.</p>
-</div></blockquote>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>root (str)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.save" title="Permalink to this definition"></a></dt>
-<dd><p>Save Tensorflow model.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowQATModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowQATModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowSavedModelModel</span></code></a></p>
-<p>Build Tensorflow QAT model.</p>
+<dd><p>Build Tensorflow QAT model.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowCheckpointModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="neural_compressor.model.tensorflow_model.TensorflowBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBaseModel</span></code></a></p>
-<p>Build Tensorflow checkpoint model.</p>
+<dd><p>Build Tensorflow checkpoint model.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowModel</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A wrapper to construct a Tensorflow Model.</p>
+<dd><p>A wrapper to construct a Tensorflow Model.</p>
 </dd></dl>
 
 </section>

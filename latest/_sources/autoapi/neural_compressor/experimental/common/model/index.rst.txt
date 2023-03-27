@@ -32,11 +32,11 @@ Functions
 
 .. py:class:: Model
 
-   Bases: :py:obj:`object`
+
 
    A wrapper of the information needed to construct a Model.
 
-   .. 
+
 .. py:function:: set_backend(backend: str)
 
    Set backed from configure file.

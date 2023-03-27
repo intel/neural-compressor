@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: SplitSharedInputOptimizer(model)
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Split the shared input if the input node is shared and const.
-
-   ..    .. py:method:: do_transformation()
-
-      Execute splitting the shared input.
-
 
 

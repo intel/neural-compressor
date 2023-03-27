@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: OptimizationService
 
-   Bases: :py:obj:`neural_compressor.ux.web.service.workload.WorkloadService`
+
 
    Optimization related services.
 
-   .. 
+

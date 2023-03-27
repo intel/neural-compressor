@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: SigOptTuneStrategy(model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None)
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The tuning strategy using SigOpt HPO search in tuning space.
 
@@ -73,32 +73,5 @@ Classes
    :param dicts: The dict containing resume information.
                  Defaults to None.
    :type dicts: dict, optional
-
-   ..    .. py:method:: params_to_tune_configs(params)
-
-      Get the parameters of the tuning strategy.
-
-
-   .. py:method:: next_tune_cfg()
-
-      Yielding the tuning config to traverse by concreting strategies according to last tuning result.
-
-
-   .. py:method:: get_acc_target(base_acc)
-
-      Get the tuning target of the accuracy ceiterion.
-
-
-   .. py:method:: traverse()
-
-      The main traverse logic, which could be override by some concrete strategy which needs more hooks.
-
-      This is SigOpt version of traverse -- with additional constraints setting to HPO.
-
-
-   .. py:method:: create_exp(acc_target)
-
-      Set the config for the experiment.
-
 
 

@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: WeightCorrection(eps=1e-05, channel_axis=1)
 
-   Bases: :py:obj:`neural_compressor.algorithm.algorithm.Algorithm`
+
 
    FastBiasCorrection algorithm class.
 
@@ -37,4 +37,4 @@ Classes
    scale_c = r * scale and shift = u
    with this we don't change the min/max value, and correct the weight.
 
-   .. 
+

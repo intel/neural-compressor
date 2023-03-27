@@ -129,25 +129,25 @@
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.Datasets" title="neural_compressor.experimental.data.Datasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Datasets</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Datasets</span></code></p></td>
 <td><p>A base class for all framework datasets.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.Dataset" title="neural_compressor.experimental.data.Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dataset</span></code></a></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
 <td><p>The base class of dataset.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.IterableDataset" title="neural_compressor.experimental.data.IterableDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IterableDataset</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">IterableDataset</span></code></p></td>
 <td><p>An iterable Dataset.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.TRANSFORMS" title="neural_compressor.experimental.data.TRANSFORMS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TRANSFORMS</span></code></a></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">TRANSFORMS</span></code></p></td>
 <td><p>Transforms collection class.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.BaseTransform" title="neural_compressor.experimental.data.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></p></td>
 <td><p>The base class for transform.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.FILTERS" title="neural_compressor.experimental.data.FILTERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FILTERS</span></code></a></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">FILTERS</span></code></p></td>
 <td><p>The filter register for all frameworks.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.Filter" title="neural_compressor.experimental.data.Filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Filter</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Filter</span></code></p></td>
 <td><p>The base class for transform.</p></td>
 </tr>
 </tbody>
@@ -157,13 +157,13 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.dataset_registry" title="neural_compressor.experimental.data.dataset_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dataset_registry</span></code></a>(dataset_type, framework[, dataset_format])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dataset_registry</span></code>(dataset_type, framework[, dataset_format])</p></td>
 <td><p>Register dataset subclasses.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transform_registry" title="neural_compressor.experimental.data.transform_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_registry</span></code></a>(transform_type, process, framework)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_registry</span></code>(transform_type, process, framework)</p></td>
 <td><p>Class decorator used to register all transform subclasses.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filter_registry" title="neural_compressor.experimental.data.filter_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code></a>(filter_type, framework)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code>(filter_type, framework)</p></td>
 <td><p>Register all transform subclasses.</p></td>
 </tr>
 </tbody>
@@ -178,142 +178,6 @@
 </tr>
 </tbody>
 </table>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.Datasets">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">Datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.Datasets" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A base class for all framework datasets.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>framework</strong> (<em>str</em>) – framework name, like:”tensorflow”, “tensorflow_itex”, “keras”,
-“mxnet”, “onnxrt_qdq”, “onnxrt_qlinearops”, “onnxrt_integerops”,
-“pytorch”, “pytorch_ipex”, “pytorch_fx”, “onnxruntime”.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.Dataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.Dataset" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The base class of dataset.</p>
-<p>Subclass datasets should overwrite two methods:
-<cite>__getitem__</cite> for indexing to data sample and <a href="#id1"><span class="problematic" id="id2">`</span></a>__len__`for the size of the dataset</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.IterableDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">IterableDataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.IterableDataset" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>An iterable Dataset.</p>
-<p>Subclass iterable dataset should also implement a method:
-<cite>__iter__</cite> for interating over the samples of the dataset.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.dataset_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">dataset_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.dataset_registry" title="Permalink to this definition"></a></dt>
-<dd><p>Register dataset subclasses.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
-<li><p><strong>dataset_type</strong> (<em>str</em>) – The dataset registration name</p></li>
-<li><p><strong>framework</strong> (<em>str</em>) – support 3 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’</p></li>
-<li><p><strong>data_format</strong> (<em>str</em>) – The format dataset saved, eg ‘raw_image’, ‘tfrecord’</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The class of register.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>cls</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.TRANSFORMS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">TRANSFORMS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.TRANSFORMS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Transforms collection class.</p>
-<p>Provide register method to register new Transforms
-and provide __getitem__ method to get Transforms according to Transforms type.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.BaseTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">BaseTransform</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.BaseTransform" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The base class for transform.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.transform_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">transform_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transform_registry" title="Permalink to this definition"></a></dt>
-<dd><p>Class decorator used to register all transform subclasses.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>transform_type</strong> (<em>str</em>) – Transform registration name</p></li>
-<li><p><strong>process</strong> (<em>str</em>) – support 3 process including ‘preprocess’, ‘postprocess’, ‘general’</p></li>
-<li><p><strong>framework</strong> (<em>str</em>) – support 4 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’, ‘onnxrt’</p></li>
-<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The class of register.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>cls</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.FILTERS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">FILTERS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.FILTERS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The filter register for all frameworks.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>framework</strong> (<em>str</em>) – frameworks in [“tensorflow”, “tensorflow_itex”, “mxnet”,
-“onnxrt_qdq”, “pytorch”, “pytorch_ipex”,
-“pytorch_fx”, “onnxrt_integerops”, “keras”
-“onnxrt_qlinearops”, “onnxruntime”].</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.Filter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">Filter</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.Filter" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The base class for transform.</p>
-<p>__call__ method is needed when write user specific transform.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.experimental.data.filter_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.</span></span><span class="sig-name descname"><span class="pre">filter_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/data.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filter_registry" title="Permalink to this definition"></a></dt>
-<dd><p>Register all transform subclasses.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filter_type</strong> (<em>str</em>) – fILTER registration name.</p></li>
-<li><p><strong>framework</strong> (<em>str</em>) – support 4 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’, ‘onnxrt’.</p></li>
-<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The class of register.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>cls</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 </section>
 </section>

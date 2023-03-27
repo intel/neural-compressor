@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: Example
 
-   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
 
    INC Bench examples' table representation.
 
-   .. 
+

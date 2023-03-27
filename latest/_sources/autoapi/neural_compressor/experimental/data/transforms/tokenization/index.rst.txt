@@ -57,57 +57,22 @@ Functions
 
 .. py:class:: FullTokenizer(vocab_file, do_lower_case=True)
 
-   Bases: :py:obj:`object`
+
 
    Run end-to-end tokenziation.
-
-   ..    .. py:method:: tokenize(text)
-
-      Tokenize text.
-
-
-   .. py:method:: convert_tokens_to_ids(tokens)
-
-      Convert tokens to ids.
-
-
-   .. py:method:: convert_ids_to_tokens(ids)
-
-      Convert ids to tokens.
-
 
 
 .. py:class:: BasicTokenizer(do_lower_case=True)
 
-   Bases: :py:obj:`object`
+
 
    Run basic tokenization (punctuation splitting, lower casing, etc.).
-
-   ..    .. py:method:: tokenize(text)
-
-      Tokenizes a piece of text.
-
 
 
 .. py:class:: WordpieceTokenizer(vocab, unk_token='[UNK]', max_input_chars_per_word=200)
 
-   Bases: :py:obj:`object`
+
 
    Run WordPiece tokenziation.
-
-   ..    .. py:method:: tokenize(text)
-
-      Tokenize a piece of text into its word pieces.
-
-      This uses a greedy longest-match-first algorithm to perform tokenization
-      using the given vocabulary.
-      For example:
-        input = "unaffable"
-        output = ["un", "##aff", "##able"]
-      :param text: A single token or whitespace separated tokens. This should have
-                   already been passed through `BasicTokenizer.
-
-      :returns: A list of wordpiece tokens.
-
 
 

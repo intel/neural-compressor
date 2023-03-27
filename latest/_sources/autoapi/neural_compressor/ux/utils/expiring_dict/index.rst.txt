@@ -27,16 +27,11 @@ Classes
 
    Item that knows it it's already expired.
 
-   ..    .. py:method:: is_expired() -> bool
-
-      Check if item is already expired.
-
-
 
 .. py:class:: ExpiringDict(initial_value: Optional[dict] = None, ttl: int = 120)
 
-   Bases: :py:obj:`collections.UserDict`
+
 
    Dict with items expiring after given time.
 
-   .. 
+

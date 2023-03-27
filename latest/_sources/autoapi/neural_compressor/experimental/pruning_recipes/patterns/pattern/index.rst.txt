@@ -46,7 +46,7 @@ Functions
 
 .. py:class:: PATTERNS
 
-   Bases: :py:obj:`object`
+
 
    Class that contain all registered pattern types.
 
@@ -54,31 +54,9 @@ Functions
 
       A dict which stores registered Pruning Pattern subclasses.
 
-   ..    .. py:method:: support_pattern()
-      :classmethod:
-
-      Support patterns.
-
-
 
 .. py:class:: PatternBase(mask_shape, is_contiguous=True)
 
    Base class of pruning pattern.
-
-   ..    .. py:method:: compute_sparsity(tensor)
-      :abstractmethod:
-
-      To be implemented in subclasses.
-
-
-   .. py:method:: reduce(tensor, method='abs_sum')
-
-      Reshaped tensor, support 'abs_max', 'abs_sum'.
-
-
-   .. py:method:: reshape(tensor)
-
-      Reshape tensor into dims+2.
-
 
 

@@ -110,8 +110,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.metric.bleu.UnicodeRegex">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.bleu.</span></span><span class="sig-name descname"><span class="pre">UnicodeRegex</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/metric/bleu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.bleu.UnicodeRegex" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Ad-hoc hack to recognize all punctuation and symbols.</p>
+<dd><p>Ad-hoc hack to recognize all punctuation and symbols.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.experimental.metric.bleu.UnicodeRegex.nondigit_punct_re">
 <span class="sig-name descname"><span class="pre">nondigit_punct_re</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/metric/bleu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.bleu.UnicodeRegex.nondigit_punct_re" title="Permalink to this definition"></a></dt>
@@ -158,8 +157,7 @@ punctuation followed by a digit.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.metric.bleu.BLEU">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.bleu.</span></span><span class="sig-name descname"><span class="pre">BLEU</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/metric/bleu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.bleu.BLEU" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Computes the BLEU (Bilingual Evaluation Understudy) score.</p>
+<dd><p>Computes the BLEU (Bilingual Evaluation Understudy) score.</p>
 <p>BLEU is an algorithm for evaluating the quality of text which has
 been machine-translated from one natural language to another.
 This implementent approximate the BLEU score since we do not
@@ -176,40 +174,6 @@ Also, this does not have beam search.</p>
 <dt class="sig sig-object py" id="neural_compressor.experimental.metric.bleu.BLEU.labels">
 <span class="sig-name descname"><span class="pre">labels</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/metric/bleu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.bleu.BLEU.labels" title="Permalink to this definition"></a></dt>
 <dd><p>List of the reference corresponding to the prediction result.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.metric.bleu.BLEU.update">
-<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prediction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/metric/bleu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.bleu.BLEU.update" title="Permalink to this definition"></a></dt>
-<dd><p>Add the prediction and label.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>prediction</strong> – The prediction result.</p></li>
-<li><p><strong>label</strong> – The reference corresponding to the prediction result.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>ValueError</strong> – An error occurred when the length of the prediction</p></li>
-<li><p><strong>and label are different.</strong> – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.metric.bleu.BLEU.result">
-<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/metric/bleu.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.bleu.BLEU.result" title="Permalink to this definition"></a></dt>
-<dd><p>Compute the BLEU score.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The approximate BLEU score.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bleu_score</p>
-</dd>
-</dl>
 </dd></dl>
 
 </dd></dl>

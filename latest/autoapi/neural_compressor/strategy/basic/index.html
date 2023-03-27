@@ -97,45 +97,9 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.strategy.basic.BasicTuneStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.basic.</span></span><span class="sig-name descname"><span class="pre">BasicTuneStrategy</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/basic.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.basic.BasicTuneStrategy" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
-<p>The basic tuning strategy.</p>
+<dd><p>The basic tuning strategy.</p>
 <p>There are three stages executed by Basic strategy sequentially,
 and the tuning process ends once the condition meets the exit policy.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.basic.BasicTuneStrategy.next_tune_cfg">
-<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/basic.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.basic.BasicTuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Generate and yield the next tuning config with below order.</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><dl class="simple">
-<dt>OP Type Wise Tuning: tries to quantize the OPs as many as possible</dt><dd><p>and traverse all OP type wise tuning configs</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Fallback OP One by One: it performs high-precision OP (FP32, BF16 …)</dt><dd><p>fallbacks one by one based on the tuning config with the best result
-in the previous stage, and records the impact of each OP.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Fallback Multiple OPs Accumulated: first sorted the OPs list</dt><dd><p>according to the impact score in stage II, and tries to incrementally
-fallback multiple OPs to high precision according to the sorted OP list.</p>
-</dd>
-</dl>
-</li>
-</ol>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dict containing the tuning configuration for quantization.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tune_config (dict)</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>

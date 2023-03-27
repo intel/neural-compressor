@@ -97,32 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.</span></span><span class="sig-name descname"><span class="pre">FoldBatchNormNodesOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fold_batch_norm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Folding BatchNorm nodes into Conv.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.do_transformation">
-<span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fold_batch_norm.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.do_transformation" title="Permalink to this definition"></a></dt>
-<dd><p>Removes batch normalization ops by folding them into convolutions.</p>
-<p>Batch normalization during training has multiple dynamic parameters that are
-updated, but once the graph is finalized these become constants. That means
-there’s an opportunity to reduce the computations down to a scale and
-addition, rather than the more expensive multiple ops, and even bake the
-scaling into the convolution weights. This function identifies the typical
-pattern of batch normalization subgraphs, and performs the transformation to
-fold the computations down into a simpler form. It currently only spots batch
-normalization that’s performed by the BatchNormWithGlobalNormalization, FusedBatchNorm,
-FusedBatchNormV3 and _FusedBatchNormEx ops, and will need to be extended in the future to handle the
-newer style.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Modified graph with BN ops removed, and modified weights.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the graph is badly formed with duplicate node names.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<dd><p>Folding BatchNorm nodes into Conv.</p>
 </dd></dl>
 
 </section>

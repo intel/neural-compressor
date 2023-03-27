@@ -26,24 +26,4 @@ Classes
 
    Database manager class.
 
-   ..    .. .. py:property:: engine
-      :type: sqlalchemy.engine.Engine
-
-      Ensure that SQLAlchemy engine is created.
-
-   ..    .. py:method:: initialize_database() -> None
-
-      Initialize database by creating engine and session.
-
-
-   .. py:method:: create_sqlalchemy_engine() -> sqlalchemy.engine.Engine
-
-      Create SQLAlchemy engine.
-
-
-   .. py:method:: create_all() -> None
-
-      Make a call to database to create all tables.
-
-
 

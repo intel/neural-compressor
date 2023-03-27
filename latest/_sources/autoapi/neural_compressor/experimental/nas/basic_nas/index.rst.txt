@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: BasicNAS(conf_fname_or_obj, search_space=None, model_builder=None)
 
-   Bases: :py:obj:`neural_compressor.experimental.nas.nas.NASBase`, :py:obj:`neural_compressor.experimental.component.Component`
+
 
    Basic NAS approach.
 
@@ -37,31 +37,5 @@ Classes
    :param model_builder: A function to build model instance with the specified
                          model architecture parameters.
    :type model_builder: function obj
-
-   ..    .. py:method:: execute()
-
-      Execute the search process.
-
-      :returns: Best model architectures found in the search process.
-
-
-   .. py:method:: estimate(model)
-
-      Estimate performance of the model.
-
-      Depends on specific NAS algorithm. Here we use train and evaluate.
-
-      :returns: Evaluated metrics of the model.
-
-
-   .. py:method:: init_by_cfg(conf_fname_or_obj)
-
-      Initialize the configuration.
-
-
-   .. py:method:: pre_process()
-
-      Initialize the train and evaluation settings.
-
 
 

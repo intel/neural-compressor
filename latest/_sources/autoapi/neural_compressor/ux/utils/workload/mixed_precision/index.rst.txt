@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: MixedPrecision(data: Optional[Dict[str, Any]] = None)
 
-   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
 
    Configuration Mixed Precision class.
-
-   ..    .. py:method:: set_precisions(precisions: Union[str, List[str]]) -> None
-
-      Update mixed_precision precisions in config.
-
 
 

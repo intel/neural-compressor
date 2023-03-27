@@ -51,36 +51,6 @@ Functions
            eval_func=eval_func,
        )
 
-   ..    .. .. py:property:: precisions
-
-      Get private member variable `precisions` of `MixedPrecision` class.
-
-   ..    .. .. py:property:: eval_dataloader
-
-      Get eval_dataloader.
-
-   ..    .. .. py:property:: model
-
-      Get model.
-
-   ..    .. .. py:property:: metric
-
-      Get metric.
-
-   ..    .. .. py:property:: eval_func
-
-      Get evaluation function.
-
-   ..    .. py:method:: pre_process()
-
-      Create strategy object for tuning.
-
-
-   .. py:method:: execute()
-
-      Execute routinue based on strategy design.
-
-
 
 .. py:function:: fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
 

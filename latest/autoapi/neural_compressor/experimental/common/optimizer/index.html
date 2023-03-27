@@ -125,22 +125,19 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.TensorflowOptimizers">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">TensorflowOptimizers</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.TensorflowOptimizers" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class to get all registered TensorFlow Optimizers once only.</p>
+<dd><p>Class to get all registered TensorFlow Optimizers once only.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.PyTorchOptimizers">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">PyTorchOptimizers</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.PyTorchOptimizers" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class to get all registered PyTorch Optimizers once only.</p>
+<dd><p>Class to get all registered PyTorch Optimizers once only.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.Optimizers">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">Optimizers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.Optimizers" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Main entry to get the specific type of optimizer.</p>
+<dd><p>Main entry to get the specific type of optimizer.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -169,8 +166,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.TensorFlowSGD">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">TensorFlowSGD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.TensorFlowSGD" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>TensorFlow keras SGD optimizer.</p>
+<dd><p>TensorFlow keras SGD optimizer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>param_dict</strong> (<em>dict</em>) – The dict of parameters setting by user for SGD optimizer</p>
@@ -181,8 +177,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.TensorFlowAdamW">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">TensorFlowAdamW</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.TensorFlowAdamW" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>tensorflow_addons AdamW optimizer.</p>
+<dd><p>tensorflow_addons AdamW optimizer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>param_dict</strong> (<em>dict</em>) – The dict of parameters setting by user for AdamW optimizer</p>
@@ -193,8 +188,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.TensorFlowAdam">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">TensorFlowAdam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.TensorFlowAdam" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>tensorflow Adam optimizer.</p>
+<dd><p>tensorflow Adam optimizer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>param_dict</strong> (<em>dict</em>) – The dict of parameters setting by user for Adam optimizer</p>
@@ -205,8 +199,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.common.optimizer.PyTorchSGD">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.common.optimizer.</span></span><span class="sig-name descname"><span class="pre">PyTorchSGD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/common/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.common.optimizer.PyTorchSGD" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>PyTorch SGD optimizer.</p>
+<dd><p>PyTorch SGD optimizer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>param_dict</strong> (<em>dict</em>) – The dict of parameters setting by user for SGD optimizer</p>

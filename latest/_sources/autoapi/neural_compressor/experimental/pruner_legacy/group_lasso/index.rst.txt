@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: GroupLassoPruner(model, local_config, global_config)
 
-   Bases: :py:obj:`neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner`
+
 
    Group Lasso pruner class.
 
@@ -34,10 +34,5 @@ Classes
    :type local_config: Conf
    :param global_config: global configs which may be overwritten by local_config.
    :type global_config: Conf
-
-   ..    .. py:method:: on_before_optimizer_step()
-
-      Update gradient to prune the weights by back propagation.
-
 
 

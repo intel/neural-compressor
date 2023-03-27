@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: ConvertLayoutOptimizer(model, outputs)
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    The layout convertion optimizer, convert NCHW to NHWC format.
 
@@ -34,10 +34,5 @@ Classes
          outputs: output name list
 
    Return: converted graph_def
-
-   ..    .. py:method:: do_transformation()
-
-      Execute converting layout.
-
 
 

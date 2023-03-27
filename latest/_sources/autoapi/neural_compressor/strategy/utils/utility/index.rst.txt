@@ -34,11 +34,11 @@ Functions
 
 .. py:class:: OrderedDefaultDict
 
-   Bases: :py:obj:`collections.OrderedDict`
+
 
    Ordered default dict.
 
-   .. 
+
 .. py:function:: extract_data_type(data_type: str) -> str
 
    Extract data type and signed from data type.

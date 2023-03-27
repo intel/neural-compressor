@@ -24,21 +24,13 @@ Classes
 
 .. py:class:: HAWQ_V2TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The HAWQ V2 tuning strategy.
 
    HAWQ_V2 implements the "Hawq-v2: Hessian aware trace-weighted quantization of neural networks".
    We made a small change to it by using the hessian trace to score the op impact and then
    fallback the OPs according to the scoring result.
-
-
-   ..    .. py:method:: next_tune_cfg()
-
-      Generate and yield the next tuning config using HAWQ v2 search in tuning space.
-
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
 
 
 

@@ -26,10 +26,4 @@ Classes
 
    Class with details about Neural Compressor github repository.
 
-   ..    .. py:method:: tag() -> str
-      :classmethod:
-
-      Get Neural Compressor release tag.
-
-
 

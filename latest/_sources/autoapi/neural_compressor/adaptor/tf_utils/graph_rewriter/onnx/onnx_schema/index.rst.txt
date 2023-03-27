@@ -33,36 +33,9 @@ Functions
 
 .. py:class:: OnnxOpSchema(name, domain, since_version, attributes)
 
-   Bases: :py:obj:`object`
+
 
    Wrapper for Onnx schema.
-
-   ..    .. .. py:property:: attributes
-
-      Get valid attributes.
-
-   ..    .. .. py:property:: domain
-
-      Get domain info.
-
-   ..    .. .. py:property:: name
-
-      Get op name.
-
-   ..    .. .. py:property:: since_version
-
-      Get opset version.
-
-   ..    .. py:method:: from_onnx_schema(onnx_schema)
-      :staticmethod:
-
-      Static method to construct OnnxOpSchema.
-
-
-   .. py:method:: has_attribute(attr)
-
-      Check if has the attribute.
-
 
 
 .. py:function:: get_schema(name, max_inclusive_opset_version, domain=None)

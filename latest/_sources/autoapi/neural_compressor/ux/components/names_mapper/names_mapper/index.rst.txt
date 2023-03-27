@@ -25,38 +25,13 @@ Classes
 
 .. py:class:: MappingDirection
 
-   Bases: :py:obj:`enum.Enum`
+
 
    Mapping directions enumeration.
 
-   .. 
+
 .. py:class:: NamesMapper(direction: MappingDirection)
 
    Names Mapper class.
-
-   ..    .. .. py:property:: framework_mappings
-      :type: dict
-
-      Get framework mappings.
-
-   ..    .. .. py:property:: domain_mappings
-      :type: dict
-
-      Get domain mappings.
-
-   ..    .. .. py:property:: domain_flavour_mappings
-      :type: dict
-
-      Get domain flavour mappings.
-
-   ..    .. .. py:property:: precision_mappings
-      :type: dict
-
-      Get precision mappings.
-
-   ..    .. py:method:: map_name(parameter_type: str, value: str) -> str
-
-      Map specified value to correct direction.
-
 
 

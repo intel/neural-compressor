@@ -27,170 +27,29 @@ Classes
 
 .. py:class:: PyTorchBaseModel(model, **kwargs)
 
-   Bases: :py:obj:`torch`, :py:obj:`neural_compressor.model.base_model.BaseModel`
+
 
    Build PyTorch base model.
-
-   ..    .. .. py:property:: model
-
-      Getter to model.
-
-   ..    .. .. py:property:: fp32_model
-
-      Getter to model.
-
-   ..    .. py:method:: forward(*args, **kwargs)
-
-      Pytorch model forward func.
-
-
-   .. py:method:: register_forward_pre_hook()
-
-      Register forward pre hook.
-
-
-   .. py:method:: remove_hooks()
-
-      Remove hooks.
-
-
-   .. py:method:: generate_forward_pre_hook()
-
-      Generate forward pre hook.
-
-
-   .. py:method:: framework()
-
-      Return framework.
-
-
-   .. py:method:: get_all_weight_names()
-
-      Get weight names.
-
-
-   .. py:method:: get_weight(tensor_name)
-
-      Get weight value.
-
-
-   .. py:method:: update_weights(tensor_name, new_tensor)
-
-      Update weight value.
-
-      :param tensor_name: weight name.
-      :type tensor_name: string
-      :param new_tensor: weight value.
-      :type new_tensor: ndarray
-
-
-   .. py:method:: update_gradient(grad_name, new_grad)
-
-      Update grad value.
-
-      :param grad_name: grad name.
-      :type grad_name: str
-      :param new_grad: grad value.
-      :type new_grad: ndarray
-
-
-   .. py:method:: prune_weights_(tensor_name, mask)
-
-      Prune weight in place according to tensor_name with mask.
-
-      :param tensor_name: weight name.
-      :type tensor_name: str
-      :param mask: pruning mask.
-      :type mask: tensor
-
-
-   .. py:method:: get_inputs(input_name=None)
-
-      Get inputs of model.
-
-      :param input_name: name of input tensor. Defaults to None.
-      :type input_name: str, optional
-
-      :returns: input tensor
-      :rtype: tensor
-
-
-   .. py:method:: get_gradient(input_tensor)
-
-      Get gradients of specific tensor.
-
-      :param input_tensor: weight name or a tensor.
-      :type input_tensor: string or tensor
-
-      :returns: gradient tensor array
-      :rtype: ndarray
-
-
-   .. py:method:: report_sparsity()
-
-      Get sparsity of the model.
-
-      :returns: DataFrame of sparsity of each weight.
-                total_sparsity (float): total sparsity of model.
-      :rtype: df (DataFrame)
-
 
 
 .. py:class:: PyTorchModel(model, **kwargs)
 
-   Bases: :py:obj:`PyTorchBaseModel`
+
 
    Build PyTorchModel object.
-
-   ..    .. .. py:property:: workspace_path
-
-      Return workspace path.
-
-   ..    .. .. py:property:: graph_info
-
-      Return graph info.
-
-   ..    .. py:method:: save(root=None)
-
-      Save configure file and weights.
-
-
-   .. py:method:: quantized_state_dict()
-
-      Load quantized state dict.
-
-
-   .. py:method:: load_quantized_state_dict(stat_dict)
-
-      Load quantized state with given dict.
-
-
-   .. py:method:: export(save_path: str, conf)
-
-      Export PyTorch model to ONNX model.
-
 
 
 .. py:class:: PyTorchFXModel(model, **kwargs)
 
-   Bases: :py:obj:`PyTorchModel`
+
 
    Build PyTorchFXModel object.
 
-   .. 
+
 .. py:class:: IPEXModel(model, **kwargs)
 
-   Bases: :py:obj:`PyTorchBaseModel`
+
 
    Build IPEXModel object.
-
-   ..    .. .. py:property:: workspace_path
-
-      Return workspace path.
-
-   ..    .. py:method:: save(root=None)
-
-      Save PyTorch IPEX model.
-
 
 

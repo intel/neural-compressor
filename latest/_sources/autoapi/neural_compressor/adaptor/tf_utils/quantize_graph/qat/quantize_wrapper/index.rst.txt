@@ -25,100 +25,17 @@ Classes
 
 .. py:class:: QuantizeWrapperBase(layer, **kwargs)
 
-   Bases: :py:obj:`tensorflow.keras.layers.Wrapper`
+
 
    Base class for quantize wrapper.
-
-   ..    .. .. py:property:: trainable
-
-      Get trainable attribute for the layer and its sublayers.
-
-   ..    .. .. py:property:: trainable_weights
-
-      List of all trainable weights tracked by this layer.
-
-      Trainable weights are updated via gradient descent during training.
-
-      :returns: A list of trainable variables.
-      :rtype: trainable_weights (list)
-
-   ..    .. .. py:property:: non_trainable_weights
-
-      List of all non-trainable weights tracked by this layer.
-
-      Non-trainable weights are *not* updated during training. They are
-      expected to be updated manually in `call()`.
-
-      :returns: A list of non-trainable variables.
-      :rtype: non_trainable_weights (list)
-
-   ..    .. .. py:property:: updates
-
-      Update layer.
-
-   ..    .. .. py:property:: losses
-
-      List of losses added using the `add_loss()` API.
-
-      Variable regularization tensors are created when this property is
-      accessed, so it is eager safe: accessing `losses` under a
-      `tf.GradientTape` will propagate gradients back to the corresponding
-      variables.
-
-      :returns: A list of tensors.
-      :rtype: losses (list)
-
-   ..    .. py:method:: build(input_shape)
-
-      Creates the variables of the layer.
-
-      :param input_shape: shapes of input tensors
-      :type input_shape: tf.TensorShape or list
-
-
-   .. py:method:: query_input_index()
-
-      Query QuantizeConfig to check if there is any designated input index for this layer.
-
-
-   .. py:method:: call(inputs, training=None)
-      :abstractmethod:
-
-      This is where the quantize wrapper's logic lives.
-
-      :param inputs: Inputs of the wrapped layer.
-      :type inputs: tf.Tensor or dict/list/tuple
-
-      :returns: Outputs of the wrapped layer.
-      :rtype: outputs (tf.Tensor or dict/list/tuple)
-
 
 
 .. py:class:: QuantizeWrapper(layer, **kwargs)
 
-   Bases: :py:obj:`QuantizeWrapperBase`
+
 
    General QuantizeWrapper for quantizable layers.
 
    Weights and inputs will be quantized according to the layer type and quantize config.
-
-   ..    .. py:method:: build(input_shape)
-
-      Creates the variables of the layer.
-
-      :param input_shape: shapes of input tensors
-      :type input_shape: tf.TensorShape or list
-
-
-   .. py:method:: call(inputs, training=None)
-
-      This is where the quantize wrapper's logic lives.
-
-      :param inputs: Inputs of the wrapped layer.
-      :type inputs: tf.Tensor or dict/list/tuple
-
-      :returns: Outputs of the wrapped layer.
-      :rtype: outputs (tf.Tensor or dict/list/tuple)
-
 
 

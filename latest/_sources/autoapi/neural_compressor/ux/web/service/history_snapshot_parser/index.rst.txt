@@ -26,24 +26,4 @@ Classes
 
    History Snapshot Parser.
 
-   ..    .. py:method:: parse_history_snapshot() -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
-
-      Parse provided history snapshot.
-
-
-   .. py:method:: parse_history_item(history_item: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface
-
-      Parse single item from history.
-
-
-   .. py:method:: extract_accuracy(measurements: Optional[tuple]) -> Optional[List[float]]
-
-      Extract accuracy metric from result.
-
-
-   .. py:method:: extract_performance(measurements: Optional[tuple]) -> Optional[List[float]]
-
-      Extract performance metric from result if needed.
-
-
 

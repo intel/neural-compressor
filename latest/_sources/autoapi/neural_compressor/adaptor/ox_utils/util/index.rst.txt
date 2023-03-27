@@ -68,11 +68,11 @@ Functions
 
 .. py:class:: QuantType
 
-   Bases: :py:obj:`enum.Enum`
+
 
    Represent QuantType value.
 
-   .. 
+
 .. py:function:: make_quant_node(name, inputs, outputs)
 
    Make a QuantizeLinear node.
@@ -193,38 +193,38 @@ Functions
 
    Represents a casted tensor info.
 
-   .. 
+
 .. py:class:: QuantizedValue(name, new_quantized_name, scale_name, zero_point_name, quantized_value_type, axis=None, qType=QuantType.QUInt8)
 
    Represents a linearly quantized value (input/output/intializer).
 
-   .. 
+
 .. py:class:: QuantizedInitializer(name, initializer, rmins, rmaxs, zero_points, scales, data=[], quantized_data=[], axis=None, qType=QuantType.QUInt8)
 
    Represents a linearly quantized weight input from ONNX operators.
 
-   .. 
+
 .. py:class:: QuantizationMode
 
-   Bases: :py:obj:`enum.Enum`
+
 
    Represent QuantizationMode value.
 
-   .. 
+
 .. py:class:: QuantizedValueType
 
-   Bases: :py:obj:`enum.Enum`
+
 
    Represent QuantizedValueType value.
 
-   .. 
+
 .. py:class:: QuantFormat
 
-   Bases: :py:obj:`enum.Enum`
+
 
    Represent QuantFormat value.
 
-   .. 
+
 .. py:function:: quantize_nparray(qtype, arr, scale, zero_point, low=None, high=None)
 
    Quantize numpy array.

@@ -14,8 +14,8 @@ Module Contents
 
 .. py:exception:: ServiceNotFoundException
 
-   Bases: :py:obj:`neural_compressor.ux.utils.exceptions.NotFoundException`
+
 
    Unknown Service requested.
 
-   .. 
+

@@ -102,8 +102,7 @@ NASBase class defines the common methods of different NAS approaches.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NAS">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.nas.</span></span><span class="sig-name descname"><span class="pre">NAS</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NAS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Create object of different NAS approaches.</p>
+<dd><p>Create object of different NAS approaches.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or the object of NASConfig.</p>
@@ -117,8 +116,7 @@ NASBase class defines the common methods of different NAS approaches.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.nas.</span></span><span class="sig-name descname"><span class="pre">NASBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_space</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_builder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Base class for defining the common methods of different NAS approaches.</p>
+<dd><p>Base class for defining the common methods of different NAS approaches.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -128,87 +126,6 @@ model architecture parameters.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.search">
-<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res_save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.search" title="Permalink to this definition"></a></dt>
-<dd><p>NAS search process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Best model architecture found in search process.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.estimate">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.estimate" title="Permalink to this definition"></a></dt>
-<dd><p>Estimate performance of the model. Depends on specific NAS algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Evaluated metrics of the model.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.count_model_parameters">
-<span class="sig-name descname"><span class="pre">count_model_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.count_model_parameters" title="Permalink to this definition"></a></dt>
-<dd><p>Count number of model parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number of model parameters.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.load_search_results">
-<span class="sig-name descname"><span class="pre">load_search_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.load_search_results" title="Permalink to this definition"></a></dt>
-<dd><p>Load previous search results if exist.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.dump_search_results">
-<span class="sig-name descname"><span class="pre">dump_search_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.dump_search_results" title="Permalink to this definition"></a></dt>
-<dd><p>Save search results.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.params_vec2params_dict">
-<span class="sig-name descname"><span class="pre">params_vec2params_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paras_vec</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.params_vec2params_dict" title="Permalink to this definition"></a></dt>
-<dd><p>Convert the parameters vector to parameters dictionary.</p>
-<p>Where parameters vector and parameters dictionary both define the model architecture.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Parameters dictionary defining the model architecture.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.find_best_model_archs">
-<span class="sig-name descname"><span class="pre">find_best_model_archs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.find_best_model_archs" title="Permalink to this definition"></a></dt>
-<dd><p>Find the best model architectures.</p>
-<p>Find the best model architectures which lie on the pareto front.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.metrics_conversion">
-<span class="sig-name descname"><span class="pre">metrics_conversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.metrics_conversion" title="Permalink to this definition"></a></dt>
-<dd><p>Convert the metrics to specific format.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Converted metrics.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.nas.NASBase.init_search_cfg">
-<span class="sig-name descname"><span class="pre">init_search_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.nas.NASBase.init_search_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize the search configuration.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

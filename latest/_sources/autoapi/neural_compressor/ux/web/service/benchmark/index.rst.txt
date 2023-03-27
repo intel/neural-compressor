@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: BenchmarkService
 
-   Bases: :py:obj:`neural_compressor.ux.web.service.workload.WorkloadService`
+
 
    Benchmark related services.
 
-   .. 
+

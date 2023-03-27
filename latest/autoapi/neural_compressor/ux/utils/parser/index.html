@@ -112,47 +112,25 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.Parser">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.parser.</span></span><span class="sig-name descname"><span class="pre">Parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.Parser" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>Parser abstract class.</p>
+<dd><p>Parser abstract class.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.OptimizationParser">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.parser.</span></span><span class="sig-name descname"><span class="pre">OptimizationParser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.OptimizationParser" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.ux.utils.parser.Parser" title="neural_compressor.ux.utils.parser.Parser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Parser</span></code></a></p>
-<p>Parser class is responsible for parsing optimization log files.</p>
+<dd><p>Parser class is responsible for parsing optimization log files.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.PerformanceParser">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.parser.</span></span><span class="sig-name descname"><span class="pre">PerformanceParser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.PerformanceParser" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.ux.utils.parser.Parser" title="neural_compressor.ux.utils.parser.Parser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Parser</span></code></a></p>
-<p>Parser class is responsible for parsing performance benchmark log files.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.PerformanceParser.update_partial">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_partial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.PerformanceParser.update_partial" title="Permalink to this definition"></a></dt>
-<dd><p>Update partial entries.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.PerformanceParser.summarize_partial">
-<span class="sig-name descname"><span class="pre">summarize_partial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.PerformanceParser.summarize_partial" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate final values.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.PerformanceParser.summarize_value">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">summarize_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.PerformanceParser.summarize_value" title="Permalink to this definition"></a></dt>
-<dd><p>Calculate final value.</p>
-</dd></dl>
-
+<dd><p>Parser class is responsible for parsing performance benchmark log files.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.AccuracyParser">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.parser.</span></span><span class="sig-name descname"><span class="pre">AccuracyParser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.AccuracyParser" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.ux.utils.parser.Parser" title="neural_compressor.ux.utils.parser.Parser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Parser</span></code></a></p>
-<p>Parser class is responsible for parsing accuracy benchmark log files.</p>
+<dd><p>Parser class is responsible for parsing accuracy benchmark log files.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -164,14 +142,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.ProfilingParser">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.parser.</span></span><span class="sig-name descname"><span class="pre">ProfilingParser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.ProfilingParser" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.ux.utils.parser.Parser" title="neural_compressor.ux.utils.parser.Parser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Parser</span></code></a></p>
-<p>Parser class is responsible for parsing profiling log files.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.ux.utils.parser.ProfilingParser.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/ux/utils/parser.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.ux.utils.parser.ProfilingParser.process" title="Permalink to this definition"></a></dt>
-<dd><p>Process profiling logs.</p>
-</dd></dl>
-
+<dd><p>Parser class is responsible for parsing profiling log files.</p>
 </dd></dl>
 
 </section>

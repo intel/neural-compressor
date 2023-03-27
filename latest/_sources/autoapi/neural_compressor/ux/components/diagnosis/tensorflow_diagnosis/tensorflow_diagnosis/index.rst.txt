@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: TensorflowDiagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
 
-   Bases: :py:obj:`neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis`
+
 
    OnnxRuntime diagnosis class.
 
-   ..    .. .. py:property:: model
-      :type: neural_compressor.ux.components.model.tensorflow.model.TensorflowModel
 
-      Get Neural Compressor Model instance.
-
-   .. 

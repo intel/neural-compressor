@@ -85,67 +85,12 @@ Functions
 
 .. py:class:: Benchmark(conf_fname_or_obj=None)
 
-   Bases: :py:obj:`object`
+
 
    Benchmark class is used to evaluate the model performance with the objective settings.
 
    Users can use the data that they configured in YAML
    NOTICE: neural_compressor Benchmark will use the original command to run sub-process, which
    depends on the user's code and has the possibility to run unnecessary code
-
-   ..    .. .. py:property:: results
-
-      Get the results of benchmarking.
-
-   ..    .. .. py:property:: b_dataloader
-
-      Get the dataloader for the benchmarking.
-
-   ..    .. .. py:property:: b_func
-
-      Not support getting b_func.
-
-   ..    .. .. py:property:: model
-
-      Get the model.
-
-   ..    .. .. py:property:: metric
-
-      Not support getting metric.
-
-   ..    .. .. py:property:: postprocess
-
-      Not support getting postprocess.
-
-   ..    .. py:method:: summary_benchmark()
-
-      Get the summary of the benchmark.
-
-
-   .. py:method:: call_one(cmd, log_file)
-
-      Execute one command for one instance in one thread and dump the log (for Windows).
-
-
-   .. py:method:: config_instance()
-
-      Configure the multi-instance commands and trigger benchmark with sub process.
-
-
-   .. py:method:: generate_prefix(core_list)
-
-      Generate the command prefix with numactl.
-
-      :param core_list: a list of core indexes bound with specific instances
-
-
-   .. py:method:: run_instance(mode)
-
-      Run the instance with the configuration.
-
-      :param mode: 'performance' or 'accuracy'
-      :param 'performance' mode runs benchmarking with numactl on specific cores and instances set: by user config and returns model performance
-      :param 'accuracy' mode runs benchmarking with full cores and returns model accuracy:
-
 
 

@@ -25,15 +25,15 @@ Classes
 
 .. py:class:: Node(id: str, label: str, highlight: bool = False, properties: Dict[str, Any] = {}, attributes: List[neural_compressor.ux.components.graph.attribute.Attribute] = [], groups: List[str] = [])
 
-   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
 
    Single Node in graph.
 
-   .. 
+
 .. py:class:: GroupNode(id: str, group_name: str)
 
-   Bases: :py:obj:`Node`
+
 
    Node being a group of Nodes in Graph.
 
-   .. 
+

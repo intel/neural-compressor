@@ -97,8 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruner_legacy.pattern_lock.</span></span><span class="sig-name descname"><span class="pre">PatternLockPruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pattern_lock.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../pruner/index.html#neural_compressor.experimental.pruner_legacy.pruner.Pruner" title="neural_compressor.experimental.pruner_legacy.pruner.Pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruner_legacy.pruner.Pruner</span></code></a></p>
-<p>Pattern lock pruner class.</p>
+<dd><p>Pattern lock pruner class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -108,36 +107,6 @@
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.on_step_begin">
-<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pattern_lock.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.on_step_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the beginning of steps.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.on_epoch_end">
-<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pattern_lock.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.on_epoch_end" title="Permalink to this definition"></a></dt>
-<dd><p>Be called on the end of epochs.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.on_step_end">
-<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pattern_lock.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.on_step_end" title="Permalink to this definition"></a></dt>
-<dd><p>Update weights.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.compute_mask">
-<span class="sig-name descname"><span class="pre">compute_mask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pattern_lock.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.compute_mask" title="Permalink to this definition"></a></dt>
-<dd><p>Compute masks according to current sparsity pattern.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.update_weights">
-<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruner_legacy/pattern_lock.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner.update_weights" title="Permalink to this definition"></a></dt>
-<dd><p>Update weights according to the masks.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

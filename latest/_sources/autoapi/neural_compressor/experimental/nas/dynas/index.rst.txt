@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: DyNAS(conf_fname_or_obj)
 
-   Bases: :py:obj:`neural_compressor.experimental.nas.nas.NASBase`
+
 
    DyNAS approach.
 
@@ -32,22 +32,5 @@ Classes
 
    :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
    :type conf_fname_or_obj: string or obj
-
-   ..    .. py:method:: search()
-
-      Execute the search process.
-
-      :returns: Best model architectures found in the search process.
-
-
-   .. py:method:: select_model_arch()
-
-      Select the model architecture.
-
-
-   .. py:method:: init_cfg(conf_fname_or_obj)
-
-      Initialize the configuration.
-
 
 

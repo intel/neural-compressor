@@ -24,13 +24,8 @@ Classes
 
 .. py:class:: PostHostConstConverter(model)
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Support HostConst as default for all devices, not just for GPU.
-
-   ..    .. py:method:: do_transformation()
-
-      Convert Const to HostConst as default.
-
 
 

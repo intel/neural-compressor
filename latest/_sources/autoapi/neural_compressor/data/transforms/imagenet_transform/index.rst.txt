@@ -32,7 +32,7 @@ Classes
 
 .. py:class:: QuantizedInput(dtype, scale=None)
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Convert the dtype of input to quantize it.
 
@@ -43,10 +43,10 @@ Classes
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: LabelShift(label_shift=0)
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Convert label to label - label_shift.
 
@@ -55,26 +55,26 @@ Classes
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ParseDecodeImagenet
 
    Parse features in Example proto.
 
    :returns: tuple of parsed image and label
 
-   .. 
+
 .. py:class:: ParseDecodeImagenetTransform
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Imagenet decoding will be performed automatically from Neural Compressor v1.4.
 
    :returns: sample
 
-   .. 
+
 .. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -95,10 +95,10 @@ Classes
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: BilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -113,10 +113,10 @@ Classes
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: OnnxBilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -131,10 +131,10 @@ Classes
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ONNXResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, mean_value=[0.0, 0.0, 0.0], std_value=[0.229, 0.224, 0.225], resize_method='bilinear', data_format='channels_last', subpixels='RGB')
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -149,13 +149,13 @@ Classes
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ResizeWithAspectRatio(height, width, scale=87.5, inter_pol=cv2.INTER_AREA)
 
-   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
 
    Resize the image with aspect ratio.
 
    :returns: image and label
 
-   .. 
+

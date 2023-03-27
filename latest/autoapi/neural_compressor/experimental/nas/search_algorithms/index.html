@@ -106,38 +106,18 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.Searcher">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.search_algorithms.</span></span><span class="sig-name descname"><span class="pre">Searcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_space</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.Searcher" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Base class for defining the common methods of different search algorithms.</p>
+<dd><p>Base class for defining the common methods of different search algorithms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>search_space</strong> (<em>dict</em>) – A dictionary for defining the search space.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.Searcher.get_feedback">
-<span class="sig-name descname"><span class="pre">get_feedback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.Searcher.get_feedback" title="Permalink to this definition"></a></dt>
-<dd><p>Get metric feedback for the search algorithm.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.Searcher.params_vec2params_dict">
-<span class="sig-name descname"><span class="pre">params_vec2params_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">para_vec</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.Searcher.params_vec2params_dict" title="Permalink to this definition"></a></dt>
-<dd><p>Convert the parameters vector to parameters dictionary.</p>
-<p>Where parameters vector and parameters dictionary both define the model architecture.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Parameters dictionary defining the model architecture.</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.GridSearcher">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.search_algorithms.</span></span><span class="sig-name descname"><span class="pre">GridSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_space</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.GridSearcher" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.nas.search_algorithms.Searcher" title="neural_compressor.experimental.nas.search_algorithms.Searcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Searcher</span></code></a></p>
-<p>Grid search.</p>
+<dd><p>Grid search.</p>
 <p>Search the whole search space exhaustively.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -149,8 +129,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.RandomSearcher">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.search_algorithms.</span></span><span class="sig-name descname"><span class="pre">RandomSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.RandomSearcher" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.nas.search_algorithms.Searcher" title="neural_compressor.experimental.nas.search_algorithms.Searcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Searcher</span></code></a></p>
-<p>Random search.</p>
+<dd><p>Random search.</p>
 <p>Search the whole search space randomly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -162,26 +141,13 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.search_algorithms.</span></span><span class="sig-name descname"><span class="pre">BayesianOptimizationSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.nas.search_algorithms.Searcher" title="neural_compressor.experimental.nas.search_algorithms.Searcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Searcher</span></code></a></p>
-<p>Bayesian Optimization.</p>
+<dd><p>Bayesian Optimization.</p>
 <p>Search the search space with Bayesian Optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>search_space</strong> (<em>dict</em>) – A dictionary for defining the search space.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher.get_feedback">
-<span class="sig-name descname"><span class="pre">get_feedback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher.get_feedback" title="Permalink to this definition"></a></dt>
-<dd><p>Get metric feedback and register this metric.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher.indices2params_vec">
-<span class="sig-name descname"><span class="pre">indices2params_vec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/search_algorithms.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher.indices2params_vec" title="Permalink to this definition"></a></dt>
-<dd><p>Convert indices to parameters vector.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

@@ -69,20 +69,10 @@ Functions
    :param config: A config dict object that includes information of the regularizer.
    :param pattern: A config dict object that includes information of the pattern.
 
-   ..    .. py:method:: on_before_optimizer_step()
-
-      Implement before optimizer.step().
-
-
-   .. py:method:: on_after_optimizer_step()
-
-      Implement after optimizer.step().
-
-
 
 .. py:class:: GroupLasso(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern, coeff)
 
-   Bases: :py:obj:`BaseReg`
+
 
    Regularizer.
 
@@ -100,15 +90,5 @@ Functions
    .. attribute:: alpha
 
       A float representing the coeffient related to group lasso.
-
-   ..    .. py:method:: on_before_optimizer_step()
-
-      Calculate the group-lasso score map.
-
-
-   .. py:method:: on_after_optimizer_step()
-
-      Perform group lasso regularization after optimization.
-
 
 

@@ -24,19 +24,8 @@ Classes
 
 .. py:class:: FrozenPbModel(path: str)
 
-   Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
+
 
    Frozen pb model.
-
-   ..    .. .. py:property:: supports_profiling
-      :type: bool
-
-      Check if profiling is supported for the model.
-
-   ..    .. py:method:: supports_path(path: str) -> bool
-      :staticmethod:
-
-      Check if given path is of supported model.
-
 
 

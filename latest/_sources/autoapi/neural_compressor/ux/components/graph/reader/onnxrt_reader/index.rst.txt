@@ -26,9 +26,4 @@ Classes
 
    Graph Reader for Onnxrt.
 
-   ..    .. py:method:: read() -> neural_compressor.ux.components.graph.graph.Graph
-
-      Read a graph.
-
-
 

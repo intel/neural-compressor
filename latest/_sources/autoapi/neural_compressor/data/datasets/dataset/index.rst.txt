@@ -75,46 +75,46 @@ Attributes
 
 .. py:class:: TensorflowDatasets
 
-   Bases: :py:obj:`object`
+
 
    The base class of Tensorflow datasets class.
 
-   .. 
+
 .. py:class:: PyTorchDatasets
 
-   Bases: :py:obj:`object`
+
 
    The base class of PyTorch datasets class.
 
-   .. 
+
 .. py:class:: MXNetDatasets
 
-   Bases: :py:obj:`object`
+
 
    The base class of MXNet datasets class.
 
-   .. 
+
 .. py:class:: ONNXRTQLDatasets
 
-   Bases: :py:obj:`object`
+
 
    The base class of ONNXRT QLinear datasets class.
 
-   .. 
+
 .. py:class:: ONNXRTITDatasets
 
-   Bases: :py:obj:`object`
+
 
    The base class of ONNXRT IT datasets class.
 
-   .. 
+
 .. py:class:: PytorchMxnetWrapDataset(datafunc)
 
    The base class for PyTorch and MXNet frameworks.
 
    :param datafunc: The datasets class of PyTorch or MXNet.
 
-   .. 
+
 .. py:class:: PytorchMxnetWrapFunction(dataset, transform, filter, *args, **kwargs)
 
    The Helper class for PytorchMxnetWrapDataset.
@@ -127,7 +127,7 @@ Attributes
                   conditions.
    :type filter: Filter objects
 
-   .. 
+
 .. py:data:: framework_datasets
 
    The datasets supported by neural_compressor, it's model specific and can be configured by yaml file.
@@ -141,7 +141,7 @@ Attributes
 
 .. py:class:: Datasets(framework)
 
-   Bases: :py:obj:`object`
+
 
    A base class for all framework datasets.
 
@@ -150,7 +150,7 @@ Attributes
                      "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
    :type framework: str
 
-   .. 
+
 .. py:function:: dataset_registry(dataset_type, framework, dataset_format='')
 
    Register dataset subclasses.
@@ -170,24 +170,24 @@ Attributes
 
 .. py:class:: Dataset
 
-   Bases: :py:obj:`object`
+
 
    The base class of dataset.
 
    Subclass datasets should overwrite two methods:
    `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
 
-   .. 
+
 .. py:class:: IterableDataset
 
-   Bases: :py:obj:`object`
+
 
    An iterable Dataset.
 
    Subclass iterable dataset should also implement a method:
    `__iter__` for interating over the samples of the dataset.
 
-   .. 
+
 .. py:function:: download_url(url, root, filename=None, md5=None)
 
    Download from url.
@@ -219,7 +219,7 @@ Attributes
 
 .. py:class:: CIFAR10(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`Dataset`
+
 
    The CIFAR10 and CIFAR100 database.
 
@@ -247,41 +247,31 @@ Attributes
                     downloaded, it is not downloaded again.
    :type download: bool, default=True
 
-   ..    .. py:method:: load_meta()
-
-      Load meta.
-
-
-   .. py:method:: download()
-
-      Download a file.
-
-
 
 .. py:class:: PytorchCIFAR10(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR10`
+
 
    The PyTorch datasets for CIFAR10.
 
-   .. 
+
 .. py:class:: MXNetCIFAR10(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR10`
+
 
    The MXNet datasets for CIFAR10.
 
-   .. 
+
 .. py:class:: TensorflowCIFAR10(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR10`
+
 
    The Tensorflow datasets for CIFAR10.
 
-   .. 
+
 .. py:class:: CIFAR100(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR10`
+
 
    CIFAR100 database.
 
@@ -305,31 +295,31 @@ Attributes
                     downloaded, it is not downloaded again.
    :type download: bool, default=True
 
-   .. 
+
 .. py:class:: PytorchCIFAR100(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR100`
+
 
    The PyTorch datasets for CIFAR100.
 
-   .. 
+
 .. py:class:: MXNetCIFAR100(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR100`
+
 
    The MXNet datasets for CIFAR100.
 
-   .. 
+
 .. py:class:: TensorflowCIFAR100(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`CIFAR100`
+
 
    The Tensorflow datasets for CIFAR100.
 
-   .. 
+
 .. py:class:: MNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`Dataset`
+
 
    Modified National Institute of Standards and Technology database and FashionMNIST database.
 
@@ -355,45 +345,31 @@ Attributes
                     downloaded, it is not downloaded again.
    :type download: bool, default=True
 
-   ..    .. .. py:property:: class_to_idx
-
-      Return a dict of class.
-
-   ..    .. py:method:: read_data()
-
-      Read data from a file.
-
-
-   .. py:method:: download()
-
-      Download a file.
-
-
 
 .. py:class:: PytorchMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`MNIST`
+
 
    The PyTorch datasets for MNIST.
 
-   .. 
+
 .. py:class:: MXNetMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`MNIST`
+
 
    The MXNet datasets for MNIST.
 
-   .. 
+
 .. py:class:: TensorflowMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`MNIST`
+
 
    The Tensorflow datasets for MNIST.
 
-   .. 
+
 .. py:class:: FashionMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`MNIST`
+
 
    FashionMNIST database.
 
@@ -417,36 +393,31 @@ Attributes
                     downloaded, it is not downloaded again.
    :type download: bool, default=True
 
-   ..    .. py:method:: read_data()
-
-      Read data from a file.
-
-
 
 .. py:class:: PytorchFashionMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`FashionMNIST`
+
 
    The PyTorch datasets for FashionMNIST.
 
-   .. 
+
 .. py:class:: MXNetFashionMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`FashionMNIST`
+
 
    The MXNet Dataset for FashionMNIST.
 
-   .. 
+
 .. py:class:: TensorflowFashionMNIST(root, train=False, transform=None, filter=None, download=True)
 
-   Bases: :py:obj:`FashionMNIST`
+
 
    The Tensorflow Dataset for FashionMNIST.
 
-   .. 
+
 .. py:class:: ImageFolder(root, transform=None, filter=None)
 
-   Bases: :py:obj:`Dataset`
+
 
    The base class for ImageFolder.
 
@@ -468,10 +439,10 @@ Attributes
          filter (Filter objects, default=None): filter out examples according to specific
                                                 conditions.
 
-   .. 
+
 .. py:class:: MXNetImageFolder(root, transform=None, filter=None)
 
-   Bases: :py:obj:`ImageFolder`
+
 
    The MXNet Dataset for image folder.
 
@@ -493,10 +464,10 @@ Attributes
          filter (Filter objects, default=None): filter out examples according to specific
                                                 conditions.
 
-   .. 
+
 .. py:class:: Tensorflow(root, transform=None, filter=None)
 
-   Bases: :py:obj:`ImageFolder`
+
 
    The Tensorflow Dataset for image folder.
 
@@ -518,10 +489,10 @@ Attributes
          filter (Filter objects, default=None): filter out examples according to specific
                                                 conditions.
 
-   .. 
+
 .. py:class:: TensorflowTFRecordDataset
 
-   Bases: :py:obj:`IterableDataset`
+
 
    The Tensorflow TFRecord Dataset.
 
@@ -532,10 +503,10 @@ Attributes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-   .. 
+
 .. py:class:: TensorflowImageRecord
 
-   Bases: :py:obj:`IterableDataset`
+
 
    Tensorflow imageNet database in tf record format.
 
@@ -551,10 +522,10 @@ Attributes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-   .. 
+
 .. py:class:: TensorflowVOCRecord
 
-   Bases: :py:obj:`IterableDataset`
+
 
    The Tensorflow PASCAL VOC 2012 database in tf record format.
 
@@ -570,4 +541,4 @@ Attributes
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
 
-   .. 
+

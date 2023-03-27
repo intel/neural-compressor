@@ -24,8 +24,8 @@ Classes
 
 .. py:class:: Attribute(name: str, attribute_type: str, value: Any)
 
-   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
 
    Graph Node Attribute.
 
-   .. 
+

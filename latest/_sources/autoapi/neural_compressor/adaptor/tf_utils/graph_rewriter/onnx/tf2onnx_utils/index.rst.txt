@@ -134,7 +134,7 @@ Functions
 
    Wrap around TensorProto.* to signify a tensor sequence of a given type.
 
-   .. 
+
 .. py:function:: make_onnx_inputs_outputs(name, elem_type, shape, **kwargs)
 
    Wrapper for creating onnx graph inputs or outputs.

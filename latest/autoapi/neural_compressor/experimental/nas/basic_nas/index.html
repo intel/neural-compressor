@@ -97,8 +97,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.nas.basic_nas.BasicNAS">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.basic_nas.</span></span><span class="sig-name descname"><span class="pre">BasicNAS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_space</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_builder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/basic_nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.basic_nas.BasicNAS" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../nas/index.html#neural_compressor.experimental.nas.nas.NASBase" title="neural_compressor.experimental.nas.nas.NASBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.nas.NASBase</span></code></a>, <a class="reference internal" href="../../component/index.html#neural_compressor.experimental.component.Component" title="neural_compressor.experimental.component.Component"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.component.Component</span></code></a></p>
-<p>Basic NAS approach.</p>
+<dd><p>Basic NAS approach.</p>
 <p>Defining the pipeline for basic NAS approach.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -110,30 +109,6 @@ model architecture parameters.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.basic_nas.BasicNAS.estimate">
-<span class="sig-name descname"><span class="pre">estimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/basic_nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.basic_nas.BasicNAS.estimate" title="Permalink to this definition"></a></dt>
-<dd><p>Estimate performance of the model.</p>
-<p>Depends on specific NAS algorithm. Here we use train and evaluate.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Evaluated metrics of the model.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.basic_nas.BasicNAS.init_by_cfg">
-<span class="sig-name descname"><span class="pre">init_by_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/basic_nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.basic_nas.BasicNAS.init_by_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize the configuration.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.experimental.nas.basic_nas.BasicNAS.pre_process">
-<span class="sig-name descname"><span class="pre">pre_process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/nas/basic_nas.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.nas.basic_nas.BasicNAS.pre_process" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize the train and evaluation settings.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

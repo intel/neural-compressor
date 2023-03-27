@@ -24,23 +24,8 @@ Classes
 
 .. py:class:: LSTMOperator(onnx_quantizer, onnx_node)
 
-   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
 
    LSTM Operator.
-
-   ..    .. py:method:: quantize()
-
-      Do quantizaion.
-
-
-   .. py:method:: convert_check(convert_format)
-
-      Check if conversion can be done.
-
-
-   .. py:method:: convert(convert_format)
-
-      Convert to QOperator format.
-
 
 

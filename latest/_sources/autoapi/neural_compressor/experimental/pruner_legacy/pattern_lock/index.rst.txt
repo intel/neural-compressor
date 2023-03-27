@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: PatternLockPruner(model, local_config, global_config)
 
-   Bases: :py:obj:`neural_compressor.experimental.pruner_legacy.pruner.Pruner`
+
 
    Pattern lock pruner class.
 
@@ -34,35 +34,5 @@ Classes
    :type local_config: Conf
    :param global_config: global configs which may be overwritten by local_config.
    :type global_config: Conf
-
-   ..    .. py:method:: on_epoch_begin(epoch)
-
-      Be called on the beginning of epochs.
-
-
-   .. py:method:: on_step_begin(batch_id)
-
-      Be called on the beginning of steps.
-
-
-   .. py:method:: on_epoch_end()
-
-      Be called on the end of epochs.
-
-
-   .. py:method:: on_step_end()
-
-      Update weights.
-
-
-   .. py:method:: compute_mask()
-
-      Compute masks according to current sparsity pattern.
-
-
-   .. py:method:: update_weights()
-
-      Update weights according to the masks.
-
 
 

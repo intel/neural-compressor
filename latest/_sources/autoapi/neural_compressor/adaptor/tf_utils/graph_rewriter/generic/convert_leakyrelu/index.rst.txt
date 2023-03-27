@@ -24,7 +24,7 @@ Classes
 
 .. py:class:: ConvertLeakyReluOptimizer(model)
 
-   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
 
    Convert below subgraph to Node A + LeakyRelu.
 
@@ -36,10 +36,5 @@ Classes
        |   x               |
        Maximum           LeakyRelu
    Note, the coefficient of Mul should be less than 1 or the conversion is not valid.
-
-   ..    .. py:method:: do_transformation()
-
-      Fuse small ops to LeakyRelu.
-
 
 

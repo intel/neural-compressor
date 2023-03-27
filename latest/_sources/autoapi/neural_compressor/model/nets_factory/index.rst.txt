@@ -24,22 +24,8 @@ Classes
 
 .. py:class:: TFSlimNetsFactory
 
-   Bases: :py:obj:`object`
+
 
    TF-Slim nets factory.
-
-   ..    .. py:method:: register(name, model_func, input_shape, arg_scope, **kwargs)
-
-      Register a model to TFSlimNetsFactory.
-
-      :param name: name of a model.
-      :type name: str
-      :param model_func: model that built from slim.
-      :type model_func: _type_
-      :param input_shape: input tensor shape.
-      :type input_shape: _type_
-      :param arg_scope: slim arg scope that needed.
-      :type arg_scope: _type_
-
 
 

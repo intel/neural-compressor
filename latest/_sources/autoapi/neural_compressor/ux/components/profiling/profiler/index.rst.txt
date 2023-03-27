@@ -26,10 +26,4 @@ Classes
 
    Profiler class.
 
-   ..    .. py:method:: profile_model() -> None
-      :abstractmethod:
-
-      Profile model.
-
-
 

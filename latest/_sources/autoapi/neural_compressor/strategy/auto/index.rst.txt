@@ -24,29 +24,11 @@ Classes
 
 .. py:class:: AutoTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
 
-   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
 
    The auto tuning strategy.
 
    There are three stages executed by auto strategy sequentially,
    and the tuning process ends once the condition meets the exit policy.
-
-   ..    .. py:method:: sequential_traverse()
-
-      Try different strategies sequentially.
-
-
-   .. py:method:: next_tune_cfg()
-
-      Generate and yield the default tuning config.
-
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
-
-
-   .. py:method:: traverse()
-
-      Traverse the tuning space.
-
 
 

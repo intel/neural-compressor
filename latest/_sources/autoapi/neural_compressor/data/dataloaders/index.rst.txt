@@ -44,11 +44,5 @@ Attributes
    neural_compressor.data.dataloaders.DATALOADERS
 
 
-.. py:class:: DataLoader
 
-   Bases: :py:obj:`object`
-
-   Entrance of all configured DataLoaders.
-
-   .. 
 

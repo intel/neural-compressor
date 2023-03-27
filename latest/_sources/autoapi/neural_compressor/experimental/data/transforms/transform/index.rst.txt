@@ -100,67 +100,57 @@ Functions
 
 .. py:class:: Transforms(process, concat_general=True)
 
-   Bases: :py:obj:`object`
+
 
    INC supports built-in preprocessing, postprocessing and general methods on different framework backends.
 
    Transforms base class provides the abstract methods.
    Users can also register their own Transforms classes by inheriting this base class.
 
-   .. 
+
 .. py:class:: TensorflowTransforms(process, concat_general=True)
 
-   Bases: :py:obj:`Transforms`
+
 
    Tensorflow Transforms subclass.
 
-   .. 
+
 .. py:class:: MXNetTransforms(process, concat_general=True)
 
-   Bases: :py:obj:`Transforms`
+
 
    Mxnet Transforms subclass.
 
-   .. 
+
 .. py:class:: PyTorchTransforms(process, concat_general=True)
 
-   Bases: :py:obj:`Transforms`
+
 
    Pytorch Transforms subclass.
 
-   .. 
+
 .. py:class:: ONNXRTQLTransforms(process, concat_general=True)
 
-   Bases: :py:obj:`Transforms`
+
 
    Onnxrt_qlinearops Transforms subclass.
 
-   .. 
+
 .. py:class:: ONNXRTITTransforms(process, concat_general=True)
 
-   Bases: :py:obj:`Transforms`
+
 
    Onnxrt_integerops Transforms subclass.
 
-   .. 
+
 .. py:class:: TRANSFORMS(framework, process)
 
-   Bases: :py:obj:`object`
+
 
    Transforms collection class.
 
    Provide register method to register new Transforms
    and provide __getitem__ method to get Transforms according to Transforms type.
-
-   ..    .. py:method:: register(name, transform_cls)
-
-      Register new Transform according to Transforms type.
-
-      :param name: process name
-      :type name: str
-      :param transform_cls: process function wrapper class
-      :type transform_cls: class
-
 
 
 .. py:function:: transform_registry(transform_type, process, framework)
@@ -182,39 +172,39 @@ Functions
 
 .. py:class:: BaseTransform
 
-   Bases: :py:obj:`object`
+
 
    The base class for transform.
 
-   .. 
+
 .. py:class:: TensorflowWrapFunction(transform_func)
 
-   Bases: :py:obj:`object`
+
 
    Tensorflow wrapper function class.
 
-   .. 
+
 .. py:class:: TensorflowTransform(transform_func, **kwargs)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Tensorflow transform class, the subclass of BaseTransform.
 
-   .. 
+
 .. py:class:: PytorchMxnetWrapFunction(transform_func)
 
-   Bases: :py:obj:`object`
+
 
    Pytorch and MXNet wrapper function class.
 
-   .. 
+
 .. py:class:: PytorchMxnetTransform(transform_func)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Pytorch and Mxnet transform class, the subclass of BaseTransform.
 
-   .. 
+
 .. py:function:: get_torchvision_map(interpolation)
 
    Get torchvision interpolation map.
@@ -222,7 +212,7 @@ Functions
 
 .. py:class:: ComposeTransform(transform_list)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Composes several transforms together.
 
@@ -232,10 +222,10 @@ Functions
    :returns: tuple of processed image and label
    :rtype: sample (tuple)
 
-   .. 
+
 .. py:class:: CropToBoundingBox(offset_height, offset_width, target_height, target_width)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crops an image to a specified bounding box.
 
@@ -250,10 +240,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: MXNetCropToBoundingBox(offset_height, offset_width, target_height, target_width)
 
-   Bases: :py:obj:`CropToBoundingBox`
+
 
    Crops an image to a specified bounding box.
 
@@ -268,10 +258,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ONNXRTCropToBoundingBox(offset_height, offset_width, target_height, target_width)
 
-   Bases: :py:obj:`CropToBoundingBox`
+
 
    Crops an image to a specified bounding box.
 
@@ -286,10 +276,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: TensorflowCropToBoundingBox(offset_height, offset_width, target_height, target_width)
 
-   Bases: :py:obj:`CropToBoundingBox`
+
 
    Crops an image to a specified bounding box.
 
@@ -304,10 +294,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Resize image with aspect ratio and pad it to max shape(optional).
 
@@ -323,10 +313,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: TensorflowResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Resize image with aspect ratio and pad it to max shape(optional).
 
@@ -342,10 +332,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: Transpose(perm)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Transpose image according to perm.
 
@@ -354,10 +344,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: TensorflowTranspose(perm)
 
-   Bases: :py:obj:`Transpose`
+
 
    Transpose image according to perm.
 
@@ -366,10 +356,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: MXNetTranspose(perm)
 
-   Bases: :py:obj:`Transpose`
+
 
    Transpose image according to perm.
 
@@ -378,10 +368,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: PyTorchTranspose(perm)
 
-   Bases: :py:obj:`Transpose`
+
 
    Transpose image according to perm.
 
@@ -390,55 +380,55 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomVerticalFlip
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Vertically flip the given image randomly.
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: TensorflowRandomVerticalFlip
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Vertically flip the given image randomly.
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomHorizontalFlip
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Horizontally flip the given image randomly.
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: TensorflowRandomHorizontalFlip
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Horizontally flip the given image randomly.
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ToArray
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Convert PIL Image or NDArray to numpy array.
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CastTFTransform(dtype='float32')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Convert image to given dtype.
 
@@ -447,10 +437,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CastONNXTransform(dtype='float32')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Convert image to given dtype.
 
@@ -459,10 +449,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CastPyTorchTransform(dtype='float32')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Convert image to given dtype.
 
@@ -471,10 +461,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CenterCropTFTransform(size)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crops the given image at the center to the given size.
 
@@ -483,10 +473,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: PaddedCenterCropTransform(size, crop_padding=0)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crops the given image at the center to the given size with padding.
 
@@ -497,10 +487,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ResizeTFTransform(size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Resize the input image to the given size.
 
@@ -512,10 +502,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ResizePytorchTransform(size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Resize the input image to the given size.
 
@@ -527,10 +517,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomCropTFTransform(size)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the image at a random location to the given size.
 
@@ -539,10 +529,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomResizedCropPytorchTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the given image to random size and aspect ratio.
 
@@ -557,10 +547,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomResizedCropMXNetTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the given image to random size and aspect ratio.
 
@@ -575,10 +565,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomResizedCropTFTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the given image to random size and aspect ratio.
 
@@ -593,15 +583,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   ..    .. py:method:: get_params(image, scale, ratio)
-
-      Get the image prameters: position, height and width.
-
-
 
 .. py:class:: NormalizeTFTransform(mean=[0.0], std=[1.0], rescale=None)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Normalize a image with mean and standard deviation.
 
@@ -614,37 +599,37 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RescaleKerasPretrainTransform(rescale=None)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Scale the values of image to [0,1].
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RescaleTFTransform
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Scale the values of image to [0,1].
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RescaleTransform
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Scale the values of image to [0,1].
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: AlignImageChannelTransform(dim=3)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and [H,W,3]->[H,W].
 
@@ -652,10 +637,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: PyTorchAlignImageChannel(dim=3)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Align image channel, now just support [H,W,4]->[H,W,3] and [H,W,3]->[H,W].
 
@@ -663,19 +648,19 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ToNDArrayTransform
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Convert np.array to NDArray.
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ResizeMXNetTransform(size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Resize the input image to the given size.
 
@@ -687,10 +672,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: ResizeTransform(size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Resize the input image to the given size.
 
@@ -704,10 +689,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CropResizeTFTransform(x, y, width, height, size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the input image with given location and resize it.
 
@@ -727,10 +712,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: PyTorchCropResizeTransform(x, y, width, height, size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the input image with given location and resize it.
 
@@ -750,10 +735,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: MXNetCropResizeTransform(x, y, width, height, size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the input image with given location and resize it.
 
@@ -773,10 +758,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CropResizeTransform(x, y, width, height, size, interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the input image with given location and resize it.
 
@@ -796,10 +781,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: CenterCropTransform(size)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crops the given image at the center to the given size.
 
@@ -808,10 +793,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: MXNetNormalizeTransform(mean=[0.0], std=[1.0])
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Normalize a image with mean and standard deviation.
 
@@ -824,10 +809,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: PyTorchNormalizeTransform(mean=[0.0], std=[1.0])
 
-   Bases: :py:obj:`MXNetNormalizeTransform`
+
 
    Normalize a image with mean and standard deviation.
 
@@ -840,10 +825,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: NormalizeTransform(mean=[0.0], std=[1.0])
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Normalize a image with mean and standard deviation.
 
@@ -856,10 +841,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomCropTransform(size)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the image at a random location to the given size.
 
@@ -868,10 +853,10 @@ Functions
 
    :returns: tuple of processed image and label
 
-   .. 
+
 .. py:class:: RandomResizedCropTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Crop the given image to random size and aspect ratio.
 
@@ -886,11 +871,6 @@ Functions
 
    :returns: tuple of processed image and label
 
-   ..    .. py:method:: get_params(image, scale, ratio)
-
-      Get the image prameters: position, height and width.
-
-
 
 .. py:function:: get_final_text(pred_text, orig_text, do_lower_case)
 
@@ -899,20 +879,20 @@ Functions
 
 .. py:class:: SquadExample(qas_id, question_text, doc_tokens, orig_answer_text=None, start_position=None, end_position=None, is_impossible=False)
 
-   Bases: :py:obj:`object`
+
 
    A single training/test example for simple sequence classification.
 
    For examples without an answer, the start and end position are -1.
 
-   .. 
+
 .. py:class:: InputFeatures(unique_id, example_index, doc_span_index, tokens, token_to_orig_map, token_is_max_context, input_ids, input_mask, segment_ids, start_position=None, end_position=None, is_impossible=None)
 
-   Bases: :py:obj:`object`
+
 
    A single set of features of data.
 
-   .. 
+
 .. py:function:: read_squad_examples(input_file)
 
    Read a SQuAD json file into a list of SquadExample.
@@ -925,14 +905,14 @@ Functions
 
 .. py:class:: CollectTransform(length=10833)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Postprocess the predictions, collect data.
 
-   .. 
+
 .. py:class:: TFSquadV1PostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Postprocess the predictions of bert on SQuAD.
 
@@ -960,39 +940,29 @@ Functions
 
    :returns: tuple of processed prediction and label
 
-   ..    .. py:method:: process_result(results)
-
-      Get the processed results.
-
-
-   .. py:method:: get_postprocess_result(sample)
-
-      Get the post processed results.
-
-
 
 .. py:class:: TFModelZooCollectTransform(length=10833)
 
-   Bases: :py:obj:`CollectTransform`
+
 
    Postprocess the predictions of model zoo, collect data.
 
-   .. 
+
 .. py:class:: TFSquadV1ModelZooPostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
 
-   Bases: :py:obj:`TFSquadV1PostTransform`
+
 
    Postprocess the predictions of bert on SQuADV1.1.
 
    See class TFSquadV1PostTransform for more details
 
-   .. 
+
 .. py:class:: ParseDecodeVocTransform
 
-   Bases: :py:obj:`BaseTransform`
+
 
    Parse features in Example proto.
 
    :returns: tuple of parsed image and labels
 
-   .. 
+
