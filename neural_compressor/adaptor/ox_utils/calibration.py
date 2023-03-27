@@ -407,7 +407,7 @@ class ONNXRTAugment:
             q_config (dict): op-wise quantization config
             min_max (dict, optional): min/max values of tensors
         """
-        return self.calculate_quantization_params(q_config, self.dump_minmax()) if min_max is None \
+        return self.calculate_quantization_params(q_config, self.dump_minmax(q_config)) if min_max is None \
             else self.calculate_quantization_params(q_config, min_max)
 
     def calculate_quantization_params(self, q_config, quantization_thresholds):
