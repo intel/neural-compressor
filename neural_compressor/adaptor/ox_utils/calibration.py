@@ -139,12 +139,7 @@ class ONNXRTAugment:
                              (node.name in self.white_nodes)
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    for inp in node.input:
-                        initializer = find_by_name(inp, model.graph.initializer)
-                        if initializer is None:
-                            tensors_to_dump.update([inp])
-                        if inp in [input.name for input in model.graph.input]:
-                            tensors_to_dump.update([inp])
+                    tensors_to_dump.update(node.input)
                     tensors_to_dump.update(node.output)
                 elif weight_only:
                     for input in node.input:
@@ -154,6 +149,12 @@ class ONNXRTAugment:
                         elif not self.already_quantized and input in initializers:
                             tensors_to_dump.add(input)
                 elif activation_only:
+                    for inp in node.input:
+                        initializer = find_by_name(inp, model.graph.initializer)
+                        if initializer is None:
+                            tensors_to_dump.update([inp])
+                        if inp in [input.name for input in model.graph.input]:
+                            tensors_to_dump.update([inp])
                     tensors_to_dump.update(node.output)
 
         model_inputs = [i.name for i in model.graph.input]
@@ -212,7 +213,7 @@ class ONNXRTAugment:
                             location="weights.pb",
                             convert_attribute=False)
 
-    def get_intermediate_outputs(self, q_config, calib_mode=None):
+    def get_intermediate_outputs(self, q_config=None):
         """Gather intermediate model outputs after running inference."""
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
@@ -263,37 +264,36 @@ class ONNXRTAugment:
                     intermediate_outputs.append(session.run(None, ort_inputs))
             else:
                 intermediate_outputs.append(session.run(None, ort_inputs))
-
+        
         merged_dict = {}
         for intermediate_output in intermediate_outputs:
             for (data, name) in zip(intermediate_output, node_output_names):
                 merged_dict.setdefault(name, []).append(data)
         intermediate_outputs = []
-        if calib_mode == 'naive':
-            ranges_dict = {}
-            for data_name in merged_dict.keys():    
-                input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-                output_name_to_node = self.model_wrapper.output_name_to_node
-                node = None
-                if data_name in output_name_to_node:
-                    node = output_name_to_node[data_name]
-                elif data_name in input_name_to_nodes:
-                    node = input_name_to_nodes[data_name][0]
-                assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
+        del intermediate_outputs
 
-                # initialize a calibrater according to 'algorithm' in q_config
-                # and collect ranges of the intermediate output
-                calib_method = q_config[node.name]['activation']['algorithm'] \
-                    if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
-                assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
-                calibrator = CALIBRATOR[calib_method]()
-                calibrator.collect(merged_dict[data_name])
-                ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
-                calibrator.clear()
-                del calibrator
-            return list(ranges_dict.keys()), ranges_dict
-        elif calib_mode == None: # pragma: no cover
-            return list(merged_dict.keys()), merged_dict
+        ranges_dict = {}
+        for data_name in merged_dict.keys():    
+            input_name_to_nodes = self.model_wrapper.input_name_to_nodes
+            output_name_to_node = self.model_wrapper.output_name_to_node
+            node = None
+            if data_name in output_name_to_node:
+                node = output_name_to_node[data_name]
+            elif data_name in input_name_to_nodes:
+                node = input_name_to_nodes[data_name][0]
+            assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
+
+            # initialize a calibrater according to 'algorithm' in q_config
+            # and collect ranges of the intermediate output
+            calib_method = q_config[node.name]['activation']['algorithm'] \
+                if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
+            assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
+            calibrator = CALIBRATOR[calib_method]()
+            calibrator.collect(merged_dict[data_name])
+            ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
+            calibrator.clear()
+            del calibrator
+        return list(ranges_dict.keys()), ranges_dict
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
         """Helper function to dequantize tensor."""
@@ -374,7 +374,7 @@ class ONNXRTAugment:
         added_nodes = [pre_transpose_node, dequantize_node, post_transpose_node]
         return added_nodes, tensor_name + '_output'
 
-    def _map_calibration(self, node_output_names, output_dicts, calib_mode='naive'):
+    def _map_calibration(self, node_output_names, output_dicts):
         """Map tensor names and min/max values."""
         merged_dict = {}
         for name, minmaxs in output_dicts.items():
@@ -384,40 +384,30 @@ class ONNXRTAugment:
 
         # Characterizing distribution of a node's values across test data sets
         clean_merged_dict = dict((i, merged_dict[i]) for i in merged_dict)
-        if calib_mode == 'naive':
-            pairs = [
-                tuple([
-                    float(min(clean_merged_dict[name + '_Min'])),
-                    float(max(clean_merged_dict[name + '_Max']))
-                ]) for name in node_output_names
-            ]
-        else:
-            raise ValueError('Unknown value for calib_mode. \
-                             Currently only naive mode is supported.')
+        pairs = [
+            tuple([
+                float(min(clean_merged_dict[name + '_Min'])),
+                float(max(clean_merged_dict[name + '_Max']))
+            ]) for name in node_output_names
+        ]
 
         final_dict = dict(zip(node_output_names, pairs))
         return final_dict
 
-    def dump_minmax(self, q_config, calib_mode='naive'):
+    def dump_minmax(self, q_config):
         """Get min/max values of tensors."""
-        self.augment_graph()
-        node_output_names, output_dicts = self.get_intermediate_outputs(q_config, calib_mode)
-        return self._map_calibration(node_output_names, output_dicts,
-                                     calib_mode=calib_mode)
+        self.augment_graph(activation_only=True, weight_only=False)
+        node_output_names, output_dicts = self.get_intermediate_outputs(q_config)
+        return self._map_calibration(node_output_names, output_dicts)
 
-    def dump_calibration(self, q_config, calib_mode='naive', min_max=None):
+    def dump_calibration(self, q_config, min_max=None):
         """Gather calibration params for quantization.
 
         Args:
             q_config (dict): op-wise quantization config
-            calib_mode (str, optional): type 'naive' gives (Min, Max) pairs
-                                        for each intermediate model output across
-                                        test data sets, where the first element is
-                                        a minimum of all values and the second element
-                                        is a maximum of all values. Defaults to 'naive'.
             min_max (dict, optional): min/max values of tensors
         """
-        return self.calculate_quantization_params(q_config, self.dump_minmax(calib_mode)) if min_max is None \
+        return self.calculate_quantization_params(q_config, self.dump_minmax()) if min_max is None \
             else self.calculate_quantization_params(q_config, min_max)
 
     def calculate_quantization_params(self, q_config, quantization_thresholds):
@@ -467,7 +457,7 @@ class ONNXRTAugment:
 
         return quantization_params
 
-    def dump_tensor(self, q_config=None, activation=True, weight=False):
+    def dump_tensor(self, activation=True, weight=False):
         """Dump activation or weight or both from the model."""
         if "QuantizeLinear" in [node.op_type for node in self.model.graph.node] or \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]:
@@ -476,7 +466,7 @@ class ONNXRTAugment:
             self.dynamically_quantized = \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
         self.augment_graph(activation_only=not weight, weight_only=not activation)
-        _, output_dicts = self.get_intermediate_outputs(q_config)
+        _, output_dicts = self.get_intermediate_outputs()
         iters = len(list(output_dicts.values())[-1])
         map_node_activation = [{} for _ in range(iters)]
         map_node_weight = {}
