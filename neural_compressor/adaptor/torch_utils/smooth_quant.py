@@ -34,7 +34,7 @@ def model_forward(model, dataloader, iters):
         for idx, input in enumerate(dataloader):
             if isinstance(input, dict):
                 out = model(**input)
-            elif isinstance(input,list) or isinstance(input, tuple):
+            elif isinstance(input, list) or isinstance(input, tuple):
                 out = model(*input)
             else:
                 out = model(input)
@@ -42,14 +42,38 @@ def model_forward(model, dataloader, iters):
             if cnt >= iters:
                 break
 
-def quant_dequant_w(x, num_bits=8):
-    q_min, q_max = 0, 2. ** num_bits - 1.
-    scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
-    scale = torch.clip(scale, min=1e-5)
-    bias = torch.round(0 - (torch.min(x, dim=0).values) / scale)
-    q_x = x / scale + bias
-    q_x.clamp_(q_min, q_max).round_()
-    return scale * (q_x - bias)
+
+def quant_dequant_w(m, num_bits=8):
+    if isinstance(m, torch.nn.Linear):
+        x = m.weight
+        q_min, q_max = 0, 2. ** num_bits - 1.
+        scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
+        scale = torch.clip(scale, min=1e-5)
+        bias = torch.round(0 - (torch.min(x, dim=1).values) / scale)
+        scale = scale.unsqueeze(dim=-1)
+        bias = bias.unsqueeze(dim=-1)
+        q_x = x / scale + bias
+        q_x.clamp_(q_min, q_max).round_()
+        return (q_x - bias) * scale
+    elif isinstance(m, torch.nn.Conv2d):
+        x = m.weight
+        x = torch.permute(x, (0, 2, 3, 1))
+        x = x.reshape(-1, x.shape[-1])
+        q_min, q_max = 0, 2. ** num_bits - 1.
+        scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
+        scale = torch.clip(scale, min=1e-5)
+        bias = torch.round(0 - (torch.min(x, dim=0).values) / scale)
+        scale = scale.unsqueeze(dim=0)
+        bias = bias.unsqueeze(dim=0)
+        q_x = x / scale + bias
+        q_x.clamp_(q_min, q_max).round_()
+        q_dq_x = (q_x - bias) * scale
+        q_dq_x = q_dq_x.view(m.weight.shape[0], m.weight.shape[2], m.weight.shape[3], m.weight.shape[1])
+        q_dq_x = torch.permute(q_dq_x, (0, 3, 1, 2))
+        return q_dq_x
+    else:
+        logger.warning("unspport layer type, please have a check")
+
 
 def quant_dequant_x(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
@@ -59,6 +83,7 @@ def quant_dequant_x(x, num_bits=8):
     q_x = x / scale + bias
     q_x.clamp_(q_min, q_max).round_()
     return scale * (q_x - bias)
+
 
 class TorchSmoothQuant:
     """
@@ -87,7 +112,6 @@ class TorchSmoothQuant:
         self.input_values = {}
         self.output_values = {}
         self.input_maxes = {}
-        self.hook_values_handles = []
         self.hook_layer_names = []
         self.traced_model = traced_model
         if self.traced_model == None:
@@ -119,7 +143,7 @@ class TorchSmoothQuant:
                 module = getattr(module, attr)
         return module
 
-    def _save_input_pc_hook(self, name):
+    def _save_input_pc_hook(self, name, save_input_output=False):
         """
         A forward hook to save input max of a module
         :param name: the module name
@@ -130,45 +154,28 @@ class TorchSmoothQuant:
             if name not in self.input_maxes.keys():
                 self.input_maxes[name] = []
             input = inputs[0]
+            if save_input_output:
+                self.input_values[name] = input
+                self.output_values[name] = outputs
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not suppoted now, need better way
                 input = input.permute(0, 2, 3, 1)
             input = input.reshape(-1, input.shape[-1])
             max_tensor = torch.max(input, dim=0)[0]
             self.input_maxes[name].append(max_tensor)
-            self.input_values[name] = input
-            self.output_values[name] = outputs
 
         return save_input_hook
 
-    def _save_input_output_hook(self, name):
-        """
-        A forward hook to save input and output values of a module
-            param name: the module name
-            return: A hook function
-        """
-        def save_input_output_hook(module, inputs, outputs):
-            input = inputs[0]
-            input = input.reshape(-1, input.shape[-1]) #making input 2-d tensorS
-            self.input_values[name] = input
-            self.output_values[name] = outputs
-        return save_input_output_hook
-
-    def _add_observer(self, modules, input_output_modules=None):
+    def _add_observer(self, modules, save_input_output=False):
         """
         :param modules: the modules which the observer will insert to
         :return:
         """
         self.hook_handles = []
         for key in modules.keys():
-            hook_func = self._save_input_pc_hook(key)
+            hook_func = self._save_input_pc_hook(key, save_input_output=save_input_output)
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
-        if input_output_modules:
-            for key in input_output_modules.keys():
-                hook_func = self._save_input_output_hook(key)
-                hook_handle = input_output_modules[key].register_forward_hook(hook_func)
-                self.hook_values_handles.append(hook_handle)
 
     def _remove_observer(self):
         """
@@ -177,9 +184,6 @@ class TorchSmoothQuant:
         """
         for hook_handle in self.hook_handles:
             hook_handle.remove()
-        if self.hook_values_handles:
-            for hook_handle in self.hook_values_handles:
-                hook_handle.remove()
 
     # ##https://gist.github.com/sailfish009/28b54c8aa6398148a6358b8f03c0b611
     # def percentile(t: torch.tensor, q: float):
@@ -202,7 +206,7 @@ class TorchSmoothQuant:
     #     result = t.view(-1).kthvalue(k).values.item()
     #     return result
 
-    def _calibrate(self, absorb_to_layer, calib_iter):
+    def _calibrate(self, absorb_to_layer, calib_iter, save_input_output=False):
         """
         :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
         :param calib_iter: Data size for calibration
@@ -230,11 +234,7 @@ class TorchSmoothQuant:
         if len(hook_modules) == 0:
             return {}
 
-        hook_modules_input_output = {}
-        for name in self.hook_layer_names:
-            hook_modules_input_output[name] = self._get_module(name)
-
-        self._add_observer(hook_modules, hook_modules_input_output)
+        self._add_observer(hook_modules, save_input_output)
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
         return self.input_maxes
@@ -423,7 +423,7 @@ class TorchSmoothQuant:
         import copy
         alpha_scale = 100
         alpha_values = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
-                         round(alpha_step * alpha_scale)))
+                                  round(alpha_step * alpha_scale)))
         ans_layer2absorb, self.layer_to_absorb, ans = {}, {}, {}
         ## Searching optimal alphas
         for idx, key in enumerate(self.absorb_to_layer):
@@ -431,7 +431,7 @@ class TorchSmoothQuant:
             absorb_key = key
             absorb_to_layer_sample[absorb_key] = self.absorb_to_layer[absorb_key]
             loss_all_layers = {}
-            for layer_key in self.absorb_to_layer[absorb_key]: 
+            for layer_key in self.absorb_to_layer[absorb_key]:
                 if layer_key not in self.layer_to_absorb.values():
                     if layer_key in input_maxes:
                         self.layer_to_absorb[absorb_key] = layer_key
@@ -440,21 +440,21 @@ class TorchSmoothQuant:
                 loss_alpha = {}
                 for alpha in alpha_values:
                     alpha = alpha / alpha_scale
-                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample, 
-                                                                            input_max_op, alpha)
+                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
+                                                                                              input_max_op, alpha)
                     input_op, output_op = self.input_values[layer_key], self.output_values[layer_key]
-                    if output_op.ndim == 3:
-                        output_op = output_op[0]
+                    # if output_op.ndim == 3:
+                    #     output_op = output_op[0]
                     input_op_S = quant_dequant_x(input_op * self.absorb_scales_info[absorb_key])
                     layer = self._get_module(layer_key)
-                    weight_S = quant_dequant_w(torch.t(layer.weight))
+                    weight_S = quant_dequant_w(layer)
                     layer_S = copy.deepcopy(layer)
-                    layer_S.weight.data = torch.t(weight_S)
+                    layer_S.weight.data = weight_S
                     output_S = layer_S(input_op_S)
                     self.recover()
                     loss = torch.sum(torch.abs(output_op - output_S) ** 2)
                     loss_alpha[alpha] = loss
-                    if layer_key not in ans: # Update alpha results
+                    if layer_key not in ans:  # Update alpha results
                         ans[layer_key] = alpha
                     else:
                         ans[layer_key] = alpha if loss < loss_alpha[ans[layer_key]] else ans[layer_key]
@@ -475,28 +475,26 @@ class TorchSmoothQuant:
                     mean_loss[alpha] = 0
                     for key in loss_all_layers.keys():
                         mean_loss[alpha] += loss_all_layers[key][alpha]
-                min_alpha = min(mean_loss, key = mean_loss.get)
+                min_alpha = min(mean_loss, key=mean_loss.get)
                 if len(loss_all_layers) > 1:
                     ans_layer2absorb[absorb_key] = min_alpha
 
-        for idx, key in enumerate(self.absorb_to_layer): # Adjust parameters according to optimal alphas.
+        for idx, key in enumerate(self.absorb_to_layer):  # Adjust parameters according to optimal alphas.
             absorb_to_layer_sample, input_max_op = {}, {}
             absorb_key = key
             absorb_to_layer_sample[absorb_key] = self.absorb_to_layer[absorb_key]
             layer_key_ = self.layer_to_absorb[absorb_key]
             input_max_op[layer_key_] = input_maxes[layer_key_]
             if key in ans_layer2absorb:
-                op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op, 
-                                                                            alpha=ans_layer2absorb[key])
+                op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op,
+                                                                           alpha=ans_layer2absorb[key])
             else:
                 op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op)
             self.weight_scale_info.update(op_weight_scale)
             self.absorb_scales_info.update(op_absorb_scale)
         self.input_values, self.output_values = {}, {}
 
-
-
-    def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d', 'ConvTranspose2d'],
+    def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100):
         """
         The main entry of smooth quant
@@ -527,15 +525,18 @@ class TorchSmoothQuant:
                                    "you could set torchscript to True "
                                    "when loading the model or set the return_dict to False")
                     return self.model
+                save_input_output = False
+                if alpha == "auto":
+                    save_input_output = True
 
-                input_maxes = self._calibrate(self.absorb_to_layer, calib_iter)
+                input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
 
             self.recover()
             if alpha == 'auto':
                 self.auto_tune_alpha(input_maxes)
             else:
-                self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, 
-                                                                        input_maxes, alpha)
+                self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
+                                                                                          input_maxes, alpha)
             return self.model
 
     def recover(self):
