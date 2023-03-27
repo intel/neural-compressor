@@ -9,7 +9,7 @@
     },
     "resnet50_fashion": {
       "model_src_dir": "image_recognition/resnet50_fashion/quantization/ptq",
-      "dataset_location": "",
+      "dataset_location": "./data_dir",
       "input_model": "/tf_dataset2/models/tensorflow/resnet50_fashion",
       "main_script": "main.py",
       "batch_size": 32
