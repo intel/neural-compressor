@@ -1347,7 +1347,17 @@ class ExportConfig:
         self._dynamic_axes = dynamic_axes
 
 class ONNXQlinear2QDQConfig:
-    """Config Class for ONNXQlinear2QDQ."""
+    """Config Class for ONNXQlinear2QDQ.
+    
+    Example::
+
+        from neural_compressor.config import ONNXQlinear2QDQConfig
+        from neural_compressor.model import Model
+        
+        conf = ONNXQlinear2QDQConfig()
+        model = Model(model)
+        model.export('new_model.onnx', conf)
+    """
     def __init__(self):
         """Init an ONNXQlinear2QDQConfig object."""
         pass
