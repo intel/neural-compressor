@@ -999,7 +999,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 # get first Conv or MatMul node
                 if len(first_quantizable_node) == 0:
                     first_quantizable_node.append(node)
-
+                
                 # get last Conv or MatMul node
                 if len(last_quantizable_node) != 0:
                     last_quantizable_node.pop()

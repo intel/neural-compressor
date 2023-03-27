@@ -25,7 +25,7 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 ## 3. Prepare Model
 
-Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/notebooks/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export.
+Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/notebooks/bert/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export.
 
 Run the `prepare_model.sh` script
 

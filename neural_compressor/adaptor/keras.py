@@ -438,7 +438,10 @@ class KerasAdaptor(Adaptor):
                         metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
-        return results
+
+        acc = 0 if metrics is None else [metric.result() for metric in metrics]
+
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def query_fw_capability(self, model):
         '''The function is used to return framework tuning capability.

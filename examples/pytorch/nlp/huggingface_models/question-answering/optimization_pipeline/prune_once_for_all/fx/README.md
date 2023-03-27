@@ -53,7 +53,7 @@ For example, bash command of stage 1 for SQuAD task will look like the following
 Also please note that to use CPU for training in each node with multi nodes settings, argument `--no_cuda` is mandatory. In multi nodes setting, following command needs to be lanuched in each node, and all the commands should be the same except for *`<NODE_RANK>`*, which should be integer from 0 to *`<NUM_NODES>`*`-1` assigned to each node.
 
 ```bash
-python -m torch.distributed.launch --master_addr=<MASTER_ADDRESS> --nproc_per_node=<NUM_PROCESSES_PER_NODE> --nnodes=<NUM_NODES> --node_rank=<NODE_RANK> \
+torchrun --master_addr=<MASTER_ADDRESS> --nproc_per_node=<NUM_PROCESSES_PER_NODE> --nnodes=<NUM_NODES> --node_rank=<NODE_RANK> \
       run_qa_no_trainer_pruneOFA.py --dataset_name squad \
       --model_name_or_path Intel/bert-base-uncased-sparse-90-unstructured-pruneofa \
       --teacher_model_name_or_path csarron/bert-base-uncased-squad-v1 \

@@ -57,5 +57,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = RobertaForSequenceClassification.from_pretrained(args.input_dir)
-    print(model)
-    # export_onnx_model(args, model, args.output_model)
+    export_onnx_model(args, model, args.output_model)

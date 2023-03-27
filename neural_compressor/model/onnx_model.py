@@ -474,7 +474,7 @@ class ONNXModel(BaseModel):
         from collections import deque
         from onnx import NodeProto
 
-        # process start and stop node list
+        # process start node list
         start_node = deque()
         for node in start:
             if isinstance(node, str):
@@ -485,6 +485,7 @@ class ONNXModel(BaseModel):
                 assert False, "'get_nodes_chain' function only support list[string]" \
                               "or list[NodeProto] params"
         
+         # process stop node list
         stop_node = []
         for node in stop:
             if isinstance(node, str):
