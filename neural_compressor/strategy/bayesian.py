@@ -101,7 +101,7 @@ class BayesianTuneStrategy(TuneStrategy):
             return
         if self.bayes_opt is None:
             self.bayes_opt = BayesianOptimization(
-                pbounds=pbounds, random_seed=self.cfg.tuning.random_seed)
+                pbounds=pbounds, random_seed=self.conf.options.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
             logger.debug("Dump current bayesian params:")

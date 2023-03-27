@@ -117,7 +117,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             self.trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and self.trials_count < self.cfg.tuning.exit_policy.max_trials:
+            if tuning_history and self.trials_count < self.conf.quantization.tuning_criterion.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
