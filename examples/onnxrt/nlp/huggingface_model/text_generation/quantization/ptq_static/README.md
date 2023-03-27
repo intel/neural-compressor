@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 
 ```bash
-python -m transformers.onnx --model=EleutherAI/gpt-j-6B onnx_gptj/ --framework pt --opset 13 --feature=causal-lm-with-past
+python -m transformers.onnx --model=EleutherAI/gpt-j-6B model/ --framework pt --opset 13 --feature=causal-lm-with-past
 ```
 
 # Run
