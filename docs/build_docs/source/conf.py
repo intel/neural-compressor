@@ -69,8 +69,6 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 def skip_util_classes(app, what, name, obj, skip, options):
-    if obj.docstring.find("no_api_doc")>-1 :
-        skip = True
     if what=='property' or what=='method':
         skip = True
     return skip
