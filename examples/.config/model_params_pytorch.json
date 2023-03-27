@@ -528,21 +528,21 @@
       "batch_size": 1,
       "new_benchmark": false
     },
-    "ssd_resnet34_fx": {
+    "ssd-resnet34": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/resized_1200x1200/coconpy",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/resnet34-ssd1200.pytorch",
       "main_script": "python/main.py",
       "batch_size": 100
     },
-    "ssd_resnet34_ipex": {
+    "ssd-resnet34_ipex": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/ipex",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34_ipex/resnet34-ssd1200.pth",
       "main_script": "infer.py",
       "batch_size": 100
     },
-    "ssd_resnet34_qat_fx": {
+    "ssd-resnet34_qat": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/qat/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/ssd_resnet34_qat_fx.pt",

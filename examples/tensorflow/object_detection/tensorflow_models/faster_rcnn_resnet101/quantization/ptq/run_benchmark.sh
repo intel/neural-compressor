@@ -10,6 +10,8 @@ function main {
 
 # init params
 function init_params {
+  batch_size=32
+  iters=100
   for var in "$@"
   do
     case $var in
@@ -21,6 +23,12 @@ function init_params {
       ;;
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
+      ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -35,6 +43,8 @@ function run_benchmark {
             --input-graph ${input_model} \
             --mode ${mode} \
             --dataset_location "${dataset_location}" \
+            --batch_size ${batch_size} \
+            --iters ${iters} \
             --benchmark
 }
 

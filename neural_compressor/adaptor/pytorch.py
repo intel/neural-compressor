@@ -315,7 +315,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                         if key[1] in ['Embedding', 'EmbeddingBag']:
                             qconfig = torch.quantization.float_qparams_weight_only_qconfig
                         else:
-                            qconfig = torch.quantization.default_dynamic_qconfig
+                            qconfig = torch.quantization.per_channel_dynamic_qconfig
                     else:
                         qconfig = torch.quantization.QConfigDynamic(
                                 activation=activation_observer, weight=weights_observer)
@@ -332,7 +332,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                     if key[1] in ['Embedding', 'EmbeddingBag']:
                         qconfig = torch.quantization.float_qparams_weight_only_qconfig
                     else:
-                        qconfig = torch.quantization.default_dynamic_qconfig
+                        qconfig = torch.quantization.per_channel_dynamic_qconfig
                 else:
                     qconfig = torch.quantization.QConfigDynamic(activation=activation_observer,
                                                                 weight=weights_observer)
