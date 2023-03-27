@@ -43,15 +43,23 @@ def model_forward(model, dataloader, iters):
                 break
 
 
-def quant_dequant_w(m, num_bits=8):
+def quant_dequant_w(m, num_bits=8, scheme='sym'):
     if isinstance(m, torch.nn.Linear):
         x = m.weight
-        q_min, q_max = 0, 2. ** num_bits - 1.
-        scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
+        if scheme == 'sym':
+            q_min, q_max = -2. ** (num_bits - 1), 2. ** (num_bits - 1) - 1.
+            scale = torch.abs(torch.max(x, dim=1).values) / (2 ** (num_bits - 1) - 1)
+        else:
+            q_min, q_max = 0, 2. ** num_bits - 1.
+            scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
         scale = torch.clip(scale, min=1e-5)
-        bias = torch.round(0 - (torch.min(x, dim=1).values) / scale)
         scale = scale.unsqueeze(dim=-1)
-        bias = bias.unsqueeze(dim=-1)
+        if scheme == 'sym':
+            bias = 0
+        else:
+            bias = torch.round(0 - (torch.min(x, dim=1).values) / scale)
+            bias = bias.unsqueeze(dim=-1)
+
         q_x = x / scale + bias
         q_x.clamp_(q_min, q_max).round_()
         return (q_x - bias) * scale
@@ -59,12 +67,20 @@ def quant_dequant_w(m, num_bits=8):
         x = m.weight
         x = torch.permute(x, (0, 2, 3, 1))
         x = x.reshape(-1, x.shape[-1])
-        q_min, q_max = 0, 2. ** num_bits - 1.
-        scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
+        if scheme == 'sym':
+            q_min, q_max = -2. ** (num_bits - 1), 2. ** (num_bits - 1) - 1.
+            scale = torch.abs(torch.max(x, dim=0).values) / (2 ** (num_bits - 1) - 1)
+        else:
+            q_min, q_max = 0, 2. ** num_bits - 1.
+            scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
         scale = torch.clip(scale, min=1e-5)
-        bias = torch.round(0 - (torch.min(x, dim=0).values) / scale)
+        if scheme == 'sym':
+            bias = 0
+        else:
+            bias = torch.round(0 - (torch.min(x, dim=0).values) / scale)
+            bias = bias.unsqueeze(dim=0)
         scale = scale.unsqueeze(dim=0)
-        bias = bias.unsqueeze(dim=0)
+
         q_x = x / scale + bias
         q_x.clamp_(q_min, q_max).round_()
         q_dq_x = (q_x - bias) * scale
@@ -72,7 +88,7 @@ def quant_dequant_w(m, num_bits=8):
         q_dq_x = torch.permute(q_dq_x, (0, 3, 1, 2))
         return q_dq_x
     else:
-        logger.warning("unspport layer type, please have a check")
+        logger.warning("unsupported layer type, please have a check")
 
 
 def quant_dequant_x(x, num_bits=8):
@@ -113,6 +129,7 @@ class TorchSmoothQuant:
         self.output_values = {}
         self.input_maxes = {}
         self.hook_layer_names = []
+        self.hook_values_handles = []
         self.traced_model = traced_model
         if self.traced_model == None:
             self.traced_model = self.model
@@ -143,7 +160,7 @@ class TorchSmoothQuant:
                 module = getattr(module, attr)
         return module
 
-    def _save_input_pc_hook(self, name, save_input_output=False):
+    def _save_input_pc_hook(self, name):
         """
         A forward hook to save input max of a module
         :param name: the module name
@@ -154,28 +171,50 @@ class TorchSmoothQuant:
             if name not in self.input_maxes.keys():
                 self.input_maxes[name] = []
             input = inputs[0]
-            if save_input_output:
-                self.input_values[name] = input
-                self.output_values[name] = outputs
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not suppoted now, need better way
                 input = input.permute(0, 2, 3, 1)
             input = input.reshape(-1, input.shape[-1])
             max_tensor = torch.max(input, dim=0)[0]
             self.input_maxes[name].append(max_tensor)
+            # self.input_values[name] = input
+            # self.output_values[name] = outputs
 
         return save_input_hook
 
-    def _add_observer(self, modules, save_input_output=False):
+    def _save_input_output_hook(self, name):
+        """
+        A forward hook to save input and output values of a module
+            param name: the module name
+            return: A hook function
+        """
+
+        def save_input_output_hook(module, inputs, outputs):
+            input = inputs[0]
+            if name in self.input_values:
+                self.input_values[name].append(input)
+                self.output_values[name].append(outputs)
+            else:
+                self.input_values[name] = [input]
+                self.output_values[name] = [outputs]
+
+        return save_input_output_hook
+
+    def _add_observer(self, modules, input_output_modules=None):
         """
         :param modules: the modules which the observer will insert to
         :return:
         """
         self.hook_handles = []
         for key in modules.keys():
-            hook_func = self._save_input_pc_hook(key, save_input_output=save_input_output)
+            hook_func = self._save_input_pc_hook(key)
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
+        if input_output_modules:
+            for key in input_output_modules.keys():
+                hook_func = self._save_input_output_hook(key)
+                hook_handle = input_output_modules[key].register_forward_hook(hook_func)
+                self.hook_values_handles.append(hook_handle)
 
     def _remove_observer(self):
         """
@@ -184,6 +223,9 @@ class TorchSmoothQuant:
         """
         for hook_handle in self.hook_handles:
             hook_handle.remove()
+        if self.hook_values_handles:
+            for hook_handle in self.hook_values_handles:
+                hook_handle.remove()
 
     # ##https://gist.github.com/sailfish009/28b54c8aa6398148a6358b8f03c0b611
     # def percentile(t: torch.tensor, q: float):
@@ -233,8 +275,10 @@ class TorchSmoothQuant:
                 hook_modules[name] = module
         if len(hook_modules) == 0:
             return {}
-
-        self._add_observer(hook_modules, save_input_output)
+        hook_modules_input_output = {}
+        for name in self.hook_layer_names:
+            hook_modules_input_output[name] = self._get_module(name)
+        self._add_observer(hook_modules, hook_modules_input_output)
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
         return self.input_maxes
@@ -253,6 +297,9 @@ class TorchSmoothQuant:
             val = torch.stack(val, dim=0)
             val = torch.max(torch.abs(val), dim=0)[0]  ##FIXME should add abs
             self.input_maxes[key] = val
+        for key in self.input_values.keys():
+            self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
+            self.output_values[key] = torch.cat(self.output_values[key], dim=0)
 
     def _reshape_in_channel_to_last(self, layer_name):
         """
@@ -442,17 +489,17 @@ class TorchSmoothQuant:
                     alpha = alpha / alpha_scale
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
                                                                                               input_max_op, alpha)
-                    input_op, output_op = self.input_values[layer_key], self.output_values[layer_key]
-                    # if output_op.ndim == 3:
-                    #     output_op = output_op[0]
-                    input_op_S = quant_dequant_x(input_op * self.absorb_scales_info[absorb_key])
+                    input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
+                    # if output_of_op.ndim == 3:
+                    #     output_of_op = output_of_op[0]
+                    input_of_op_q = quant_dequant_x(input_of_op * self.absorb_scales_info[absorb_key])
                     layer = self._get_module(layer_key)
                     weight_S = quant_dequant_w(layer)
                     layer_S = copy.deepcopy(layer)
                     layer_S.weight.data = weight_S
-                    output_S = layer_S(input_op_S)
+                    output_of_op_q = layer_S(input_of_op_q)
                     self.recover()
-                    loss = torch.sum(torch.abs(output_op - output_S) ** 2)
+                    loss = torch.sum(torch.abs(output_of_op - output_of_op_q) ** 2)
                     loss_alpha[alpha] = loss
                     if layer_key not in ans:  # Update alpha results
                         ans[layer_key] = alpha
@@ -493,6 +540,7 @@ class TorchSmoothQuant:
             self.weight_scale_info.update(op_weight_scale)
             self.absorb_scales_info.update(op_absorb_scale)
         self.input_values, self.output_values = {}, {}
+        del self.input_values, self.output_values
 
     def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100):
@@ -598,7 +646,7 @@ class GraphTrace:
             "LayerNorm": "aten::layer_norm",
             "BatchNorm2d": "aten::batch_norm",
             "GroupNorm": "aten::group_norm",
-            "InstanceNorm2d": "instance_norm",
+            "InstanceNorm2d": "aten::instance_norm",
             "LlamaRMSNorm": "aten::mul",
             "T5LayerNorm": "aten::mul",
         }

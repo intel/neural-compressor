@@ -1,40 +1,45 @@
 import unittest
 import torch
-
+from neural_compressor.data import Datasets
+from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+import torchvision
+class TestSqConvOpFuseAuto(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                pass
 
-# class TestSqConvOpFuseAuto(unittest.TestCase):
-#     @classmethod
-#     def setUpClass(self):
-#         class RandDataloader:
-#             def __init__(self):
-#                 pass
-#
-#             def __iter__(self):
-#                 yield torch.rand((1, 3, 1, 1))
-#
-#         self.conv_dl = RandDataloader()
-#
-#     @classmethod
-#     def test_sq_conv_relu6(self):
-#         class Model(torch.nn.Module):
-#             def __init__(self):
-#                 super(Model, self).__init__()
-#                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
-#                 self.act = torch.nn.ReLU6()
-#                 self.conv2 = torch.nn.Conv2d(4, 3, 1, 1)
-#
-#             def forward(self, x):
-#                 out = self.conv1(x)
-#                 out = self.act(out)
-#                 out = self.conv2(out)
-#                 return out
-#
-#         model = Model()
-#
-#         sq = TorchSmoothQuant(model, self.conv_dl)
-#         sq.transform(alpha='auto')
-#         assert len(sq.absorb_to_layer) == 1
+            def __iter__(self):
+                yield torch.rand((1, 3, 1, 1))
+
+        self.conv_dl = RandDataloader()
+
+    @classmethod
+    def test_sq_conv_relu6(self):
+
+        datasets = Datasets('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
+                self.act = torch.nn.ReLU6()
+                self.conv2 = torch.nn.Conv2d(4, 3, 1, 1)
+
+            def forward(self, x):
+                out = self.conv1(x)
+                out = self.act(out)
+                out = self.conv2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, dummy_dataloader)
+        sq.transform(alpha='auto', calib_iter=3)
+        assert len(sq.absorb_to_layer) == 1
 
 
 class TestSqConvOpFuse(unittest.TestCase):
