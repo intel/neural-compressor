@@ -43,7 +43,7 @@ def model_forward(model, dataloader, iters):
                 break
 
 
-def quant_dequant_w(m, num_bits=8, scheme='asym'):
+def quant_dequant_w(m, num_bits=8, scheme='asym'):##TODO take sym as default
     if isinstance(m, torch.nn.Linear):
         x = m.weight
         if scheme == 'sym':
@@ -195,8 +195,8 @@ class TorchSmoothQuant:
             #     self.input_values[name].append(input)
             #     self.output_values[name].append(outputs)
             # else:
-            self.input_values[name] = [input]
-            self.output_values[name] = [outputs]
+            self.input_values[name] = [input]##TODO save more,like 8
+            self.output_values[name] = [outputs]##TODO do not save output
 
         return save_input_output_hook
 
@@ -495,10 +495,10 @@ class TorchSmoothQuant:
                     #     output_of_op = output_of_op[0]
                     input_of_op_q = quant_dequant_x(input_of_op * self.absorb_scales_info[absorb_key])
                     layer = self._get_module(layer_key)
-                    weight_S = quant_dequant_w(layer)
-                    layer_S = copy.deepcopy(layer)
-                    layer_S.weight.data = weight_S
-                    output_of_op_q = layer_S(input_of_op_q)
+                    weight_qdq = quant_dequant_w(layer)
+                    layer_cp = copy.deepcopy(layer)
+                    layer_cp.weight.data = weight_qdq
+                    output_of_op_q = layer_cp(input_of_op_q)
                     self.recover()
                     loss = torch.sum(torch.abs(output_of_op - output_of_op_q) ** 2)
                     loss_alpha[alpha] = loss
