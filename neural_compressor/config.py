@@ -990,7 +990,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
 
 class WeightPruningConfig:
-     """Config Class for Pruning. Define a single or a sequence of pruning configs.
+    """Config Class for Pruning. Define a single or a sequence of pruning configs.
     
     Args:
         pruning_configs: a list of dicts. These dicts' keys are identical to WeightPruningConfig's.
