@@ -149,12 +149,6 @@ class ONNXRTAugment:
                         elif not self.already_quantized and input in initializers:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    for inp in node.input:
-                        initializer = find_by_name(inp, model.graph.initializer)
-                        if initializer is None:
-                            tensors_to_dump.update([inp])
-                        if inp in [input.name for input in model.graph.input]:
-                            tensors_to_dump.update([inp])
                     tensors_to_dump.update(node.output)
 
         model_inputs = [i.name for i in model.graph.input]
@@ -273,7 +267,9 @@ class ONNXRTAugment:
         del intermediate_outputs
 
         ranges_dict = {}
-        for data_name in merged_dict.keys():    
+        for data_name, datas in merged_dict.items():
+            if any([data is None for data in datas]):
+                continue
             input_name_to_nodes = self.model_wrapper.input_name_to_nodes
             output_name_to_node = self.model_wrapper.output_name_to_node
             node = None
@@ -289,7 +285,7 @@ class ONNXRTAugment:
                 if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
             assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
             calibrator = CALIBRATOR[calib_method]()
-            calibrator.collect(merged_dict[data_name])
+            calibrator.collect(datas)
             ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
             calibrator.clear()
             del calibrator
@@ -396,7 +392,7 @@ class ONNXRTAugment:
 
     def dump_minmax(self, q_config):
         """Get min/max values of tensors."""
-        self.augment_graph(activation_only=True, weight_only=False)
+        self.augment_graph()
         node_output_names, output_dicts = self.get_intermediate_outputs(q_config)
         return self._map_calibration(node_output_names, output_dicts)
 
