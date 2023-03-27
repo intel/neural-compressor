@@ -128,7 +128,7 @@ model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
 model.eval()
 
 if args.int8:
-    calib_dataset = load_dataset('lambada', split='train')
+    calib_dataset = load_dataset('lambada', split='validation')
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
 
