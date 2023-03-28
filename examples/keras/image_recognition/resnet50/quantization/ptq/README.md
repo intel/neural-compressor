@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to enable Tensorflow Keras resnetv2_101 model quantization and benchmark using Intel® Neural Compressor.
+This document is used to enable Tensorflow Keras Resnet50 model quantization and benchmark using Intel® Neural Compressor.
 This example can run on Intel CPUs and GPUs.
 
 
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
-python prepare_model.py   --output_model=/path/to/model
+ prepare_model.py --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
@@ -39,33 +39,20 @@ python prepare_model.py   --output_model=/path/to/model
   ```shell
   cd examples/tensorflow/image_recognition/keras_models/
   # convert validation subset
-  bash prepare_dataset.sh --output_dir=/resnetv2_101/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  bash prepare_dataset.sh --output_dir=./resnet50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
-  bash prepare_dataset.sh --output_dir=/resnetv2_101/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-  cd resnetv2_101/quantization/ptq
+  bash prepare_dataset.sh --output_dir=./resnet50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd resnet50/quantization/ptq
   ```
 
-
 # Run Command
-
-## Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
-
-## Quantization
+## 1 Tune
   ```shell
-  bash run_tuning.sh --input_model=./vgg16_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_tuning.sh --input_model=./resnet50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
 ## Benchmark
   ```shell
-  bash run_benchmark.sh --input_model=./result --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=32
-  bash run_benchmark.sh --input_model=./result --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=1
+  bash run_benchmark.sh --input_model=./result --dataset_location=/path/to/evaluation/dataset --mode=performance --batch_size=1
+  bash run_benchmark.sh --input_model=./result --dataset_location=/path/to/evaluation/dataset --mode=accuracy --batch_size=32
   ```
