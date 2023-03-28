@@ -40,6 +40,32 @@ class PostCompressionUtils(object):
         return mask_reduce
 
     @staticmethod
+    def get_mha_output_indice(tensor, hidden_size, head_nums):
+        """Obtain a lower dimension mask for an sparse weight matrix."""
+        head_size = hidden_size // head_nums
+        tensor_reduce = torch.sum(tensor.abs(), 1)
+        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        mask_reduce_headwise = mask_reduce.reshape(mask_reduce.shape[0] // head_size, head_size).sum(1) / head_size
+        mask_reduce_indice = torch.nonzero(torch.where(mask_reduce_headwise <= 0.00001, 1, 0) == 1).squeeze().tolist()
+        if isinstance(mask_reduce_indice, int): 
+            # only one channel is pruned
+            return [mask_reduce_indice]
+        return mask_reduce_indice
+
+    @staticmethod
+    def get_mha_input_indice(tensor, hidden_size, head_nums):
+        """Obtain a lower dimension mask for an sparse weight matrix."""
+        head_size = hidden_size // head_nums
+        tensor_reduce = torch.sum(tensor.abs(), 0)
+        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        mask_reduce_headwise = mask_reduce.reshape(mask_reduce.shape[0] // head_size, head_size).sum(1) / head_size
+        mask_reduce_indice = torch.nonzero(torch.where(mask_reduce_headwise <= 0.00001, 1, 0) == 1).squeeze().tolist()
+        if isinstance(mask_reduce_indice, int): 
+            # only one channel is pruned
+            return [mask_reduce_indice]
+        return mask_reduce_indice
+
+    @staticmethod
     def get_mask_indices(mask):
         """Obtain the masks' 0 elements' indice."""
         # return the indices of elements whose values are zero

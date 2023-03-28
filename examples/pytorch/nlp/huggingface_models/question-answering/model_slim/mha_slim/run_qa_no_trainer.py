@@ -980,39 +980,24 @@ def main():
     pruning_configs=[]
 
     # import pdb;pdb.set_trace()
-
+    # 
     if args.prune_heads>0 and args.prune_heads<1:
         # do multi-head-attention pruning (head-wise)
         # setup pruning head config
-        hidden_size = model.config.hidden_size
-        head_size = model.config.hidden_size // model.config.num_attention_heads
-        qkv_pattern = str(head_size) + "xchannel"
-        ffn_pattern = "channelx" + str(head_size)
         from neural_compressor.compression.pruner.model_slim.pattern_analyzer import SelfMHASearcher
         searcher = SelfMHASearcher(model)
+        qkv_pattern, ffn_pattern = searcher.get_head_pattern()
         qkv_layers, ffn_layers = searcher.search()
         mha_pruning_config = [
             {
-                "pruning_type": "snip_momentum",
-                "pruning_scope": "local",
-                "sparsity_decay_type": "exp",
-                "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
                 "op_names": qkv_layers,
                 "pattern": qkv_pattern,
                 "target_sparsity": args.prune_heads,
-                "pruning_op_types": ["Linear"],
-                "max_sparsity_ratio_per_op": 0.98
             },
             {
-                "pruning_type": "snip_momentum",
-                "pruning_scope": "local",
-                "sparsity_decay_type": "exp",
-                "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
                 "op_names": ffn_layers,
                 "pattern": ffn_pattern,
                 "target_sparsity": args.prune_heads,
-                "pruning_op_types": ["Linear"],
-                "max_sparsity_ratio_per_op": 0.98
             }
         ]
         pruning_configs += mha_pruning_config

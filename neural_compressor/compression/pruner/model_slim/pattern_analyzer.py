@@ -418,6 +418,14 @@ class SelfMHASearcher(JitBasicSearcher):
     def __init__(self, model):
         """Initialize."""
         super(SelfMHASearcher, self).__init__(model)
+
+    def get_head_pattern(self):
+        """Obtain head block sizes."""
+        hidden_size = self.model.config.hidden_size
+        head_size = self.model.config.hidden_size // self.model.config.num_attention_heads
+        qkv_pattern = str(head_size) + "xchannel"
+        ffn_pattern = "channelx" + str(head_size)
+        return qkv_pattern, ffn_pattern
     
     def gather_mha_inputs(self):
         """Search the multi-head attention modules' query, key, as well as value layers."""
@@ -498,7 +506,9 @@ class SelfMHASearcher(JitBasicSearcher):
         qkv_clusters = self.gather_qkv_from_input(input_names_for_linears)
         qkv_clusters_main = {}
         for input_name in qkv_clusters:
-            qkv_clusters_main[input_name] = [JitBasicSearcher.get_layer_name(self, scope_code) for scope_code in qkv_clusters[input_name]]
+            qkv_clusters_main[input_name] = [
+            JitBasicSearcher.get_layer_name(self, scope_code) for scope_code in qkv_clusters[input_name]
+        ]
         self_attn_list = self.search_ffn_from_qkv(qkv_clusters_main)
         if not split_qkv_ffn:
             return self_attn_list, None
