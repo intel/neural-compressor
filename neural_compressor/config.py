@@ -153,8 +153,8 @@ class BenchmarkConfig:
     """Config Class for Benchmark.
 
     Args:
-        inputs (List, optional): A list of strings containing the inputs of model. Default is an empty list.
-        outputs (List, optional): A list of strings containing the outputs of model. Default is an empty list.
+        inputs (list, optional): A list of strings containing the inputs of model. Default is an empty list.
+        outputs (list, optional): A list of strings containing the outputs of model. Default is an empty list.
         backend (str, optional): Backend name for model execution. Supported values include: 'default', 'itex',
                                 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default value is 'default'.
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
@@ -1218,18 +1218,18 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
     """Config Class for MixedPrecision.
     
     Args:
-        device (String, optional): device for execution. Support 'cpu' and 'gpu', default is 'cpu'
-        backend (String, optional): backend for model execution. Support 'default', 'itex', 'ipex',
+        device (str, optional): device for execution. Support 'cpu' and 'gpu', default is 'cpu'
+        backend (str, optional): backend for model execution. Support 'default', 'itex', 'ipex',
                                     'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'
-        precision (String, optional): target precision for mix precision conversion.
+        precision (str, optional): target precision for mix precision conversion.
                                       Support 'bf16' and 'fp16', default is 'bf16'
-        inputs (List, optional): inputs of model, default is []
-        outputs (List, optional): outputs of model, default is []
+        inputs (list, optional): inputs of model, default is []
+        outputs (list, optional): outputs of model, default is []
         tuning_criterion (TuningCriterion object, optional): accuracy tuning settings, it won't work
                                                              if there is no accuracy tuning process
         accuracy_criterion (AccuracyCriterion object, optional): accuracy constraint settings, it won't
                                                                  work if there is no accuracy tuning process
-        excluded_precisions (List, optional): precisions to be excluded during mix precision conversion, 
+        excluded_precisions (list, optional): precisions to be excluded during mix precision conversion, 
                                               default is []
 
     Example::
