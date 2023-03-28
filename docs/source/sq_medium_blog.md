@@ -45,13 +45,15 @@ def quant_dequant_x(x, num_bits=8):
 ```
 **TODO**
 
-1 add example(yintong/guoheng)
+1 per tensor add example(guoheng)
 
-2 add per-channel code example to show low loss (yintong/guoheng)
+2 add per-channel code example to show low loss (guoheng)
 
-3 add mutmul example to show the activation can't be quantized with per channel (guoheng/wenhua)
+3 matmul activation and weight quant(heng)
 
-4 to show activation quantization loss is important to some models(guoheng/wenhua)
+4 matmul example to show the activation can't be quantized with per channel (wenhua), normally we use per-channel for weight quantization and per-tensor for activation quantization
+
+5 to show activation quantization loss is important to some models(heng)
 
 ### Granularity
 There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
