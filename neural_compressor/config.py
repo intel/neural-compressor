@@ -1234,7 +1234,7 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
 
     Example::
-    
+
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
 
@@ -1371,7 +1371,7 @@ class ExportConfig:
 class ONNXQlinear2QDQConfig:
     """Config Class for ONNXQlinear2QDQ.
     
-    Example:
+    Example::
 
         from neural_compressor.config import ONNXQlinear2QDQConfig
         from neural_compressor.model import Model
