@@ -156,13 +156,17 @@ class BenchmarkConfig:
     inputs (List, optional): A list of strings containing the inputs of model. Default is an empty list.
     outputs (List, optional): A list of strings containing the outputs of model. Default is an empty list.
     backend (str, optional): backend name for model execution. Supported values include: 'default', 'itex',
-                             'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default is 'default'.
-    warmup (int, optional): The number of iterations to perform warmup before running performance tests. Default is 5.
+                             'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default value is 'default'.
+    warmup (int, optional): The number of iterations to perform warmup before running performance tests.
+                            Default value is 5.
     iteration (int, optional): The number of iterations to run performance tests. Default is -1.
     cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
-    num_of_instance (int, optional): The number of instances to use for performance testing. Default value is None.
-    inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations. Default value is None.
-    intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations. Default value is None.
+    num_of_instance (int, optional): The number of instances to use for performance testing.
+                                     Default value is None.
+    inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
+                                          Default value is None.
+    intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
+                                          Default value is None.
 
     Example::
 
