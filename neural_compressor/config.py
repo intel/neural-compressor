@@ -1221,7 +1221,8 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
-                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'.
+                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
+                                 default is 'default'.
         precision (str, optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         inputs (list, optional): Inputs of model, default is [].
