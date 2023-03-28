@@ -305,8 +305,8 @@ class MHACompression(object):
         print(all_indice_to_prune)
         prune_indice = self.find_common_indice(all_indice_to_prune)
         print(prune_indice)
-
-        _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, self.head_nums, self.head_size) # 1 refer to channel-wise pruning
+        # 1 refer to channel-wise pruning
+        _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, self.head_nums, self.head_size)
         # prune qkv, outputs
         # Prune linear layers
         PostCompressionUtils.prune_linear(self.query, indice_to_keep, self.device, dim=0, prune_bias=True)
