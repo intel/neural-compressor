@@ -91,7 +91,7 @@ def _check_value(name, src, supported_type, supported_value=[]):
     return True
 
 
-class _Options:
+class Options:
     """Option Class for configs.
 
     This class is used for configuring global variables. The global variable options is created with this class.
@@ -176,7 +176,7 @@ class _Options:
             self._tensorboard = tensorboard
 
 
-options = _Options()
+options = Options()
 
 
 class BenchmarkConfig:
