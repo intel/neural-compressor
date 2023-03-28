@@ -81,6 +81,7 @@ function run_benchmark {
         --source_lang en \
         --target_lang ro \
         --dataset_config_name ro-en \
+        --source_prefix "translate English to Romanian: "\
         --dataset_name wmt16 \
         ${mode_cmd} \
         ${extra_cmd}
