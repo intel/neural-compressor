@@ -900,6 +900,8 @@ def main():
         num_training_steps=args.max_train_steps,
     )
 
+    train_dataloader, eval_dataloader = accelerator.prepare(train_dataloader, eval_dataloader)
+
     confs = []
     if args.do_prune:
         from neural_compressor.config import WeightPruningConfig
@@ -927,10 +929,7 @@ def main():
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
 
-    # Prepare everything with our `accelerator`.
-    model._model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
-        model._model, optimizer, train_dataloader, eval_dataloader
-    )
+    model._model, optimizer  = accelerator.prepare(model._model, optimizer)
 
     train(args,
           model,
