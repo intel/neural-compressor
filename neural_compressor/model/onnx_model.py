@@ -485,7 +485,7 @@ class ONNXModel(BaseModel):
                 assert False, "'get_nodes_chain' function only support list[string]" \
                               "or list[NodeProto] params"
         
-         # process stop node list
+        # process stop node list
         stop_node = []
         for node in stop:
             if isinstance(node, str):
