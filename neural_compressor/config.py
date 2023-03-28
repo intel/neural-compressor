@@ -1060,19 +1060,28 @@ class WeightPruningConfig:
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss.
 
+    Args:
+        temperature (float, optional): Hyperparameters that control the entropy
+            of probability distributions. Defaults to 1.0.
+        loss_types (list[str], optional): loss types, should be a list of length 2.
+            First item is the loss type for student model output and groundtruth label,
+            second item is the loss type for student model output and teacher model output.
+            Supported tpyes for first item are "CE", "MSE". 
+            Supported tpyes for second item are "CE", "MSE", "KL".
+            Defaults to ['CE', 'CE'].
+        loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.
+            First item is the weight multipled to the loss of student model output and groundtruth label,
+            second item is the weight multipled to the loss of student model output and teacher model output.
+            Defaults to [0.5, 0.5].
+
     Example::
 
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-        from neural_compressor import QuantizationAwareTrainingConfig
         from neural_compressor.training import prepare_compression
 
-        combs = []
-        distillation_criterion = KnowledgeDistillationLossConfig()
-        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
-        combs.append(d_conf)
-        q_conf = QuantizationAwareTrainingConfig()
-        combs.append(q_conf)
-        compression_manager = prepare_compression(model, combs)
+        criterion_conf = KnowledgeDistillationLossConfig()
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=criterion_conf)
+        compression_manager = prepare_compression(model, d_conf)
         model = compression_manager.model
     """
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
@@ -1088,19 +1097,51 @@ class KnowledgeDistillationLossConfig:
 
 class IntermediateLayersKnowledgeDistillationLossConfig:
     """Config Class for Intermediate Layers Knowledge Distillation Loss.
-    
+
+    Args:
+        layer_mappings (list): A list for specifying the layer mappings relationship between
+            the student model and the teacher model. Each item in layer_mappings should be a
+            list with the format [(student_layer_name, student_layer_output_process),
+            (teacher_layer_name, teacher_layer_output_process)], where the student_layer_name
+            and the teacher_layer_name are the layer names of the student and the teacher models,
+            e.g. 'bert.layer1.attention'. The student_layer_output_process and teacher_layer_output_process
+            are output process method to get the desired output from the layer specified in the layer
+            name, its value can be either a function or a string, in function case, the function
+            takes output of the specified layer as input, in string case, when output of the
+            specified layer is a dict, this string will serve as key to get corresponding value,
+            when output of the specified layer is a list or tuple, the string should be numeric and
+            will serve as the index to get corresponding value. 
+            When output process is not needed, the item in layer_mappings can be abbreviated to
+            [(student_layer_name, ), (teacher_layer_name, )], if student_layer_name and teacher_layer_name
+            are the same, it can be abbreviated further to [(layer_name, )].
+            Some examples of the item in layer_mappings are listed below:
+              [('student_model.layer1.attention', '1'), ('teacher_model.layer1.attention', '1')]
+              [('student_model.layer1.output', ), ('teacher_model.layer1.output', )].
+              [('model.layer1.output', )].
+        loss_types (list[str], optional): loss types, should be a list with the same length of
+            layer_mappings. Each item is the loss type for each layer mapping specified in the
+            layer_mappings. Supported tpyes for each item are "MSE", "KL", "L1". Defaults to
+            ["MSE", ]*len(layer_mappings).
+        loss_weights (list[float], optional): loss weights, should be a list with the same length of
+            layer_mappings. Each item is the weight multipled to the loss of each layer mapping specified
+            in the layer_mappings. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).
+        add_origin_loss (bool, optional): Whether to add origin loss of the student model. Defaults to False.
+
     Example::
 
         from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
+        from neural_compressor.training import prepare_compression
         
-        distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
-            layer_mappings=layer_mappings,
+        criterion_conf = IntermediateLayersKnowledgeDistillationLossConfig(
+            layer_mappings=[['layer1.0', ],
+                            [['layer1.1.conv1', ], ['layer1.1.conv1', '0']],],
             loss_types=['MSE']*len(layer_mappings),
             loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
             add_origin_loss=True
         )
-        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
-        confs.append(d_conf)
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=criterion_conf)
+        compression_manager = prepare_compression(model, d_conf)
+        model = compression_manager.model
     """
     def __init__(self, layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False):
         """Init an IntermediateLayersKnowledgeDistillationLossConfig object."""
@@ -1116,14 +1157,40 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
 
 class SelfKnowledgeDistillationLossConfig:
     """Config Class for Self Knowledge Distillation Loss.
-    
+
+    Args:
+        layer_mappings (list): layers of distillation. Format like
+                [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],
+                [[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
+        temperature (float, optional): use to calculate the soft label CE.
+        loss_types (list, optional):  loss types, should be a list with the same length of
+            layer_mappings. Each item is the loss type for each layer mapping specified in the
+            layer_mappings. Supported tpyes for each item are "CE", "KL", "L2". Defaults to
+            ["CE", ]*len(layer_mappings).
+        loss_weights (list, optional): loss weights. Defaults to [1.0 / len(layer_mappings)] *
+            len(layer_mappings).
+        add_origin_loss (bool, optional): whether to add origin loss for hard label loss.
+
     Example::
 
         from neural_compressor.training import prepare_compression
         from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
 
-        distil_loss = SelfKnowledgeDistillationLossConfig()
-        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        criterion_conf = SelfKnowledgeDistillationLossConfig(
+            layer_mappings=[
+                [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
+                ['resblock.2.feature.output','resblock.deepst.feature.output']],
+                [['resblock.2.fc','resblock.deepst.fc'],
+                ['resblock.3.fc','resblock.deepst.fc']],
+                [['resblock.1.fc','resblock.deepst.fc'],
+                ['resblock.2.fc','resblock.deepst.fc'],
+                ['resblock.3.fc','resblock.deepst.fc']]
+            ],
+            temperature=3.0,
+            loss_types=['L2', 'KL', 'CE'],
+            loss_weights=[0.5, 0.05, 0.02],
+            add_origin_loss=True,)
+        conf = DistillationConfig(teacher_model=model, criterion=criterion_conf)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
         compression_manager = prepare_compression(model, conf)
