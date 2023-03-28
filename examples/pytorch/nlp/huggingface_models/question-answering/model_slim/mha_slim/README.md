@@ -1,24 +1,36 @@
 # Step by Step
-## Channel Pruning for Consecutive Linear Layers
-An interesting thing for pruning is that if we do [channel pruning](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner#pruning-patterns) for some linear layers in NLP models, we can permanently remove these all-zero channels without changing their accuracy. 
+## Head Pruning for Self-Attention Layers
+Self attention modules are common in all Transformer-based models. These models use multi-head attention (also known as MHA) to enhance their abilities of linking contextual information. Transformer-based models usually stack a sequence of MHA modules, and this makes MHA takes a noticable storage and memory bandwith. As an optimization method, head pruning removes attention heads which make minor contribution to model's contextual analysis. This method does not lead to much accuracy loss, but provides us with much opportunity for model acceleration. 
 
-To be specific, if the model has two consecutive linear layers, which is common in both **Bert series** and **GPT series** models' FFN parts, and we conduct the input channel pruning for the second linear layer (masking weights by column). We can remove these all-zero channels. Plus, we also remove the same indices output channels in the first linear layers (masking weights by row), since their contribution for activation will be masked by the second layer's. 
-
-This leads to no change for model's accuracy, but can obtain a significant acceleration for model's inference, because the transformer models' FFN parts take nearly 50% of entire computing overhead. Thus, compressing weights in FFN parts is really useful.
-
-## API for Consecutive Linear Compression
-We provide an API function to process your sparsity model if you have done channel pruning for linear layers described above. Here is how you call our API function. Our API integrate the function of searching consecutive linear layers automatically and compress their weights if channel sparsity is detected. 
+## API for MHA Head Pruning
+We provide an API designed for head pruning. The API can automatically search MHA modules (indluding query, key, value layers and their subsequent feedword layers) in your models. pruning structured pattern for attention heads will also be calculated at the same time. Add layers and patterns to initialize your pruning configs and start head pruning with our [universal pruning API](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner).
 ```python
-from neural_compressor.training import PruningCallbacks
-# automatically slim your model. 
-model = PruningCallbacks.model_slim(model)
+from neural_compressor.compression.pruner.model_slim.pattern_analyzer import SelfMHASearcher
+searcher = SelfMHASearcher(model)
+qkv_pattern, ffn_pattern = searcher.get_head_pattern()
+qkv_layers, ffn_layers = searcher.search()
+mha_pruning_config = [
+    {
+        "op_names": qkv_layers,
+        "pattern": qkv_pattern,
+        "target_sparsity": args.prune_heads,
+    },
+    {
+        "op_names": ffn_layers,
+        "pattern": ffn_pattern,
+        "target_sparsity": args.prune_heads,
+    }
+]
+pruning_configs += mha_pruning_config
+configs = WeightPruningConfig(
+   pruning_configs,
+   ...
+)
 ```
 
 ## Run Examples
-We provides an example of Bert-Base to demonstrate how we slim Transformer-based models. simply run the following script:
+We provides an example of Bert-Base to demonstrate how we do head pruning in Transformer-based models. simply run the following script:
 ```bash
 sh run_qa.sh
 ```
-After FFN compression, the inference speed of the model will be significantly improved on both CPU and GPU.
-
 For more information about pruning, please refer to our [INC Pruning API](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner).
