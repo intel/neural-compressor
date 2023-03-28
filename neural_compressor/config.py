@@ -1200,6 +1200,16 @@ class DistillationConfig:
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     """Config Class for MixedPrecision.
+    
+    Args:
+        device (String, optional): device for execution. Support 'cpu' and 'gpu', default is 'cpu'
+        backend (String, optional): backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'
+        precision (String, optional): target precision for mix precision conversion. Support 'bf16' and 'fp16', default is 'bf16'
+        inputs (List, optional): inputs of model, default is []
+        outputs (List, optional): outputs of model, default is []
+        tuning_criterion (TuningCriterion object, optional): accuracy tuning settings, it won't work if there is no accuracy tuning process
+        accuracy_criterion (AccuracyCriterion object, optional): accuracy constraint settings, it won't work if there is no accuracy tuning process
+        excluded_precisions (List, optional): precisions to be excluded during mix precision conversion, default is []
 
     Example::
 
@@ -1337,7 +1347,17 @@ class ExportConfig:
         self._dynamic_axes = dynamic_axes
 
 class ONNXQlinear2QDQConfig:
-    """Config Class for ONNXQlinear2QDQ."""
+    """Config Class for ONNXQlinear2QDQ.
+    
+    Example::
+
+        from neural_compressor.config import ONNXQlinear2QDQConfig
+        from neural_compressor.model import Model
+        
+        conf = ONNXQlinear2QDQConfig()
+        model = Model(model)
+        model.export('new_model.onnx', conf)
+    """
     def __init__(self):
         """Init an ONNXQlinear2QDQConfig object."""
         pass
