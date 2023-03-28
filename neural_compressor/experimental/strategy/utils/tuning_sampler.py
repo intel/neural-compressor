@@ -23,7 +23,7 @@ from collections import deque, OrderedDict, defaultdict
 from typing import List, Dict, Any
 from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
-from ...utils import logger
+from ....utils import logger
 
 TUNING_ITEM_PRIORITY = [('activation','scheme'), ('activation','algorithm'),('activation','granularity'), 
                         ('activation','compute_dtype'), ('weight','scheme'), ('weight','algorithm'), \

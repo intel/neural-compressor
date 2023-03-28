@@ -38,7 +38,7 @@ from ...utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MOD
 from ...utils.create_obj_from_config import create_eval_func, create_train_func
 from ...utils.utility import LazyImport
 from ...utils import logger
-from ..version import __version__
+from ...version import __version__
 from ...conf.dotdict import DotDict, deep_get, deep_set
 from ...algorithm import AlgorithmScheduler, ALGORITHMS
 
