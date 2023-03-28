@@ -149,11 +149,27 @@ class Options:
 class BenchmarkConfig:
     """Config Class for Benchmark.
 
+    Args:
+    inputs (List, optional): A list of strings containing the inputs of model. Default is an empty list.
+    outputs (List, optional): A list of strings containing the outputs of model. Default is an empty list.
+    backend (str, optional): backend name for model execution. Supported values include: 'default', 'itex',
+                             'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default value is 'default'.
+    warmup (int, optional): The number of iterations to perform warmup before running performance tests.
+                            Default value is 5.
+    iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+    cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
+    num_of_instance (int, optional): The number of instances to use for performance testing.
+                                     Default value is None.
+    inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
+                                          Default value is None.
+    intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
+                                          Default value is None.
+
     Example::
 
         # Run benchmark according to config
-        from neural_compressor.benchmark import fit
 
+        from neural_compressor.benchmark import fit
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
         fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
     """
@@ -1201,6 +1217,16 @@ class DistillationConfig:
 
 class MixedPrecisionConfig(_BaseQuantizationConfig):
     """Config Class for MixedPrecision.
+    
+    Args:
+        device (String, optional): device for execution. Support 'cpu' and 'gpu', default is 'cpu'
+        backend (String, optional): backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'
+        precision (String, optional): target precision for mix precision conversion. Support 'bf16' and 'fp16', default is 'bf16'
+        inputs (List, optional): inputs of model, default is []
+        outputs (List, optional): outputs of model, default is []
+        tuning_criterion (TuningCriterion object, optional): accuracy tuning settings, it won't work if there is no accuracy tuning process
+        accuracy_criterion (AccuracyCriterion object, optional): accuracy constraint settings, it won't work if there is no accuracy tuning process
+        excluded_precisions (List, optional): precisions to be excluded during mix precision conversion, default is []
 
     Example::
 
@@ -1340,7 +1366,17 @@ class ExportConfig:
 
 
 class ONNXQlinear2QDQConfig:
-    """Config Class for ONNXQlinear2QDQ."""
+    """Config Class for ONNXQlinear2QDQ.
+    
+    Example::
+
+        from neural_compressor.config import ONNXQlinear2QDQConfig
+        from neural_compressor.model import Model
+        
+        conf = ONNXQlinear2QDQConfig()
+        model = Model(model)
+        model.export('new_model.onnx', conf)
+    """
     def __init__(self):
         """Init an ONNXQlinear2QDQConfig object."""
         pass
@@ -1375,7 +1411,28 @@ class Torch2ONNXConfig(ExportConfig):
 
 
 class TF2ONNXConfig(ExportConfig):
-    """Config Class for TF2ONNX."""
+    """Config Class for TF2ONNX.
+
+    Args:
+        dtype (str, optional): The data type of export target model. Supports 'fp32' and 'int8'.
+                               Defaults to "int8".
+        opset_version (int, optional): The version of the ONNX operator set to use. Defaults to 14.
+        quant_format (str, optional): The quantization format for the export target model.
+                                      Supports 'default', 'QDQ' and 'QOperator'. Defaults to "QDQ".
+        example_inputs (list, optional): A list example inputs to use for tracing the model.
+                                        Defaults to None.
+        input_names (list, optional): A list of model input names. Defaults to None.
+        output_names (list, optional): A list of model output names. Defaults to None.
+        dynamic_axes (dict, optional): A dictionary of dynamic axis information. Defaults to None.
+        **kwargs: Additional keyword arguments.
+
+    Examples::
+
+        # tensorflow QDQ int8 model 'q_model' export to ONNX int8 model
+        from neural_compressor.config import TF2ONNXConfig
+        config = TF2ONNXConfig()
+        q_model.export(output_graph, config)
+    """
     def __init__(
        self,
        dtype="int8",
