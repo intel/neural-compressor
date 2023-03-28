@@ -699,6 +699,20 @@
       "input_model": "/tf_dataset2/models/onnx/hf_roberta-large_dynamic/roberta-large-squad2.onnx",
       "main_script": "main.py",
       "batch_size": 1
+    },
+    "gpt-j-6B": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/quantization/ptq_static",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/gpt-j-6b/model.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "gpt-j-6B_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/quantization/ptq_dynamic",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/gpt-j-6b/model.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
     }
   }
 }
