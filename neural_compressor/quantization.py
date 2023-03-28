@@ -116,8 +116,9 @@ class PostTrainingQuant:
             self.conf,
             self._calib_dataloader,
             self._train_func,
-            self._eval_dataloader,
             self._eval_func,
+            self._eval_dataloader,
+            self._eval_metric,
             _resume,
             self.callbacks.hooks if self.callbacks is not None else None)
 
