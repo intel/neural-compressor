@@ -31,22 +31,22 @@ import numpy as np
 from typing import OrderedDict as T_OrderedDict
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from ..objective import MultiObjective
-from ..adaptor import FRAMEWORKS
-from ..utils.utility import Statistics, dump_data_to_local
-from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
-from ..utils.create_obj_from_config import create_eval_func, create_train_func
-from ..utils.utility import LazyImport
-from ..utils import logger
+from ...objective import MultiObjective
+from ...adaptor import FRAMEWORKS
+from ...utils.utility import Statistics, dump_data_to_local
+from ...utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
+from ...utils.create_obj_from_config import create_eval_func, create_train_func
+from ...utils.utility import LazyImport
+from ...utils import logger
 from ..version import __version__
-from ..conf.dotdict import DotDict, deep_get, deep_set
-from ..algorithm import AlgorithmScheduler, ALGORITHMS
+from ...conf.dotdict import DotDict, deep_get, deep_set
+from ...algorithm import AlgorithmScheduler, ALGORITHMS
 
 import copy
 import numpy as np
 from collections import OrderedDict
 from time import time
-from ..utils import logger
+from ...utils import logger
 import sys
 
 
@@ -55,7 +55,7 @@ from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
 
 
-STRATEGIES = {}
+EXP_STRATEGIES = {}
 
 
 def strategy_registry(cls):
@@ -70,9 +70,9 @@ def strategy_registry(cls):
     assert cls.__name__.endswith(
         'TuneStrategy'
     ), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
-    if cls.__name__[:-len('TuneStrategy')].lower() in STRATEGIES:
+    if cls.__name__[:-len('TuneStrategy')].lower() in EXP_STRATEGIES:
         raise ValueError('Cannot have two strategies with the same name')
-    STRATEGIES[cls.__name__[:-len('TuneStrategy')].lower()] = cls
+    EXP_STRATEGIES[cls.__name__[:-len('TuneStrategy')].lower()] = cls
     return cls
 
 @strategy_registry

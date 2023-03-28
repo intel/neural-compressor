@@ -23,7 +23,7 @@ from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import TUNING_ITEMS_LST
-from ..utils import logger
+from ...utils import logger
 
 @strategy_registry
 class HAWQ_V2TuneStrategy(TuneStrategy):

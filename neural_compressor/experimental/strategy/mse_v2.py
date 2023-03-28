@@ -21,7 +21,7 @@ import numpy as np
 from collections import OrderedDict
 from typing import Dict, Any, List
 from .strategy import strategy_registry, TuneStrategy
-from ..utils import logger
+from ...utils import logger
 from time import time 
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler

@@ -27,7 +27,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from collections import OrderedDict
 from copy import deepcopy
 
-from ..utils import logger
+from ...utils import logger
 from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_sampler import OpWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig

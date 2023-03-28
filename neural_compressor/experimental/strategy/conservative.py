@@ -26,9 +26,9 @@ from typing import Dict, List, Tuple, OrderedDict
 
 from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_space import TuningItem
-from ..utils import logger
-from ..utils.utility import Statistics
-from ..algorithm import AlgorithmScheduler
+from ...utils import logger
+from ...utils.utility import Statistics
+from ...algorithm import AlgorithmScheduler
 
 @strategy_registry
 class ConservativeTuneStrategy(TuneStrategy):

@@ -19,7 +19,7 @@ import copy
 import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
-from ..utils import logger
+from ...utils import logger
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig

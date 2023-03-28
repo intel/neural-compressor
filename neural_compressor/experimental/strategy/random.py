@@ -21,7 +21,7 @@ from collections import OrderedDict
 
 from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-from ..utils import logger
+from ...utils import logger
 
 @strategy_registry
 class RandomTuneStrategy(TuneStrategy):

@@ -20,7 +20,7 @@ from .strategy import strategy_registry, TuneStrategy
 
 from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-from ..utils import logger
+from ...utils import logger
 
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):

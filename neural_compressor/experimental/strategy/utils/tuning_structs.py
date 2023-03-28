@@ -19,7 +19,7 @@
 
 from typing import Dict
 from .constant import QUANT_MODE_SET, TUNING_ITEMS_LST, PRECISION_SET
-from ...utils import logger
+from ....utils import logger
 
 class OpTuningConfig:
     """Op tuning config."""
