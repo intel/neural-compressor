@@ -295,18 +295,31 @@ Default value is None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.KnowledgeDistillationLossConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">KnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CE',</span> <span class="pre">'CE']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.5]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.KnowledgeDistillationLossConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Knowledge Distillation Loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature</strong> (<em>float</em><em>, </em><em>optional</em>) – Hyperparameters that control the entropy
+of probability distributions. Defaults to 1.0.</p></li>
+<li><p><strong>loss_types</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – loss types, should be a list of length 2.
+First item is the loss type for student model output and groundtruth label,
+second item is the loss type for student model output and teacher model output.
+Supported tpyes for first item are “CE”, “MSE”.
+Supported tpyes for second item are “CE”, “MSE”, “KL”.
+Defaults to [‘CE’, ‘CE’].</p></li>
+<li><p><strong>loss_weights</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – loss weights, should be a list of length 2 and sum to 1.0.
+First item is the weight multipled to the loss of student model output and groundtruth label,
+second item is the weight multipled to the loss of student model output and teacher model output.
+Defaults to [0.5, 0.5].</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
-<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
 
-<span class="n">combs</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
-<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distillation_criterion</span><span class="p">)</span>
-<span class="n">combs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_conf</span><span class="p">)</span>
-<span class="n">q_conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
-<span class="n">combs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_conf</span><span class="p">)</span>
-<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">combs</span><span class="p">)</span>
+<span class="n">criterion_conf</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">criterion_conf</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">d_conf</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
 </pre></div>
 </div>
@@ -316,17 +329,56 @@ Default value is None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">IntermediateLayersKnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_origin_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Intermediate Layers Knowledge Distillation Loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer_mappings</strong> (<em>list</em>) – <p>A list for specifying the layer mappings relationship between
+the student model and the teacher model. Each item in layer_mappings should be a
+list with the format [(student_layer_name, student_layer_output_process),
+(teacher_layer_name, teacher_layer_output_process)], where the student_layer_name
+and the teacher_layer_name are the layer names of the student and the teacher models,
+e.g. ‘bert.layer1.attention’. The student_layer_output_process and teacher_layer_output_process
+are output process method to get the desired output from the layer specified in the layer
+name, its value can be either a function or a string, in function case, the function
+takes output of the specified layer as input, in string case, when output of the
+specified layer is a dict, this string will serve as key to get corresponding value,
+when output of the specified layer is a list or tuple, the string should be numeric and
+will serve as the index to get corresponding value.
+When output process is not needed, the item in layer_mappings can be abbreviated to
+[(student_layer_name, ), (teacher_layer_name, )], if student_layer_name and teacher_layer_name
+are the same, it can be abbreviated further to [(layer_name, )].
+Some examples of the item in layer_mappings are listed below:</p>
+<blockquote>
+<div><p>[(‘student_model.layer1.attention’, ‘1’), (‘teacher_model.layer1.attention’, ‘1’)]
+[(‘student_model.layer1.output’, ), (‘teacher_model.layer1.output’, )].
+[(‘model.layer1.output’, )].</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>loss_types</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – loss types, should be a list with the same length of
+layer_mappings. Each item is the loss type for each layer mapping specified in the
+layer_mappings. Supported tpyes for each item are “MSE”, “KL”, “L1”. Defaults to
+[“MSE”, ]*len(layer_mappings).</p></li>
+<li><p><strong>loss_weights</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – loss weights, should be a list with the same length of
+layer_mappings. Each item is the weight multipled to the loss of each layer mapping specified
+in the layer_mappings. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).</p></li>
+<li><p><strong>add_origin_loss</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to add origin loss of the student model. Defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
 
-<span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">(</span>
-    <span class="n">layer_mappings</span><span class="o">=</span><span class="n">layer_mappings</span><span class="p">,</span>
+<span class="n">criterion_conf</span> <span class="o">=</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">(</span>
+    <span class="n">layer_mappings</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;layer1.0&#39;</span><span class="p">,</span> <span class="p">],</span>
+                    <span class="p">[[</span><span class="s1">&#39;layer1.1.conv1&#39;</span><span class="p">,</span> <span class="p">],</span> <span class="p">[</span><span class="s1">&#39;layer1.1.conv1&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">]],],</span>
     <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MSE&#39;</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">),</span>
     <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">)]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">),</span>
     <span class="n">add_origin_loss</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
-<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distillation_criterion</span><span class="p">)</span>
-<span class="n">confs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_conf</span><span class="p">)</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">criterion_conf</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">d_conf</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -335,12 +387,42 @@ Default value is None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.SelfKnowledgeDistillationLossConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">SelfKnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_origin_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.SelfKnowledgeDistillationLossConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Self Knowledge Distillation Loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer_mappings</strong> (<em>list</em>) – layers of distillation. Format like
+[[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],
+[[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]</p></li>
+<li><p><strong>temperature</strong> (<em>float</em><em>, </em><em>optional</em>) – use to calculate the soft label CE.</p></li>
+<li><p><strong>loss_types</strong> (<em>list</em><em>, </em><em>optional</em>) – loss types, should be a list with the same length of
+layer_mappings. Each item is the loss type for each layer mapping specified in the
+layer_mappings. Supported tpyes for each item are “CE”, “KL”, “L2”. Defaults to
+[“CE”, ]*len(layer_mappings).</p></li>
+<li><p><strong>loss_weights</strong> (<em>list</em><em>, </em><em>optional</em>) – loss weights. Defaults to [1.0 / len(layer_mappings)] *
+len(layer_mappings).</p></li>
+<li><p><strong>add_origin_loss</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to add origin loss for hard label loss.</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">SelfKnowledgeDistillationLossConfig</span>
 
-<span class="n">distil_loss</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">()</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss</span><span class="p">)</span>
+<span class="n">criterion_conf</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">(</span>
+    <span class="n">layer_mappings</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">[[</span><span class="s1">&#39;resblock.1.feature.output&#39;</span><span class="p">,</span> <span class="s1">&#39;resblock.deepst.feature.output&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;resblock.2.feature.output&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.feature.output&#39;</span><span class="p">]],</span>
+        <span class="p">[[</span><span class="s1">&#39;resblock.2.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;resblock.3.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">]],</span>
+        <span class="p">[[</span><span class="s1">&#39;resblock.1.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;resblock.2.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;resblock.3.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">]]</span>
+    <span class="p">],</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+    <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;L2&#39;</span><span class="p">,</span> <span class="s1">&#39;KL&#39;</span><span class="p">,</span> <span class="s1">&#39;CE&#39;</span><span class="p">],</span>
+    <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">],</span>
+    <span class="n">add_origin_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,)</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">criterion_conf</span><span class="p">)</span>
 <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
 <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
 <span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
