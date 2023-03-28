@@ -25,6 +25,16 @@ Billions or more paramaters make LLMs perform well in various tasks, howerever, 
 ## Quantization Fundamentals
 
 Quantization is a common compression operation to reduce memory and accelerate inference, therefore, the difficulty of LLM deployment can be alleviate. Quantization convert the floating point matrix to an integer matrix.  `Affine quantization` and `Scale quantization`, also called `asymmetric quantization` and `symmetric quantization`, are two common range mapping techniques used in tensor conversion between different data types.
+The math equation of quantization is like:
+$$
+X_{int8} = round(X_{fp32}/S) + Z
+$$
+
+where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
+### Granularity
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
+
+However, considering the model accuracy and computational consumption, we use per-tensor or per-channel for weight quantization and per-tensor for activation quantization.
 
 ## SmoothQuant and our enhancement
 
