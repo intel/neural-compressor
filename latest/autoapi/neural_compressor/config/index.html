@@ -173,27 +173,24 @@
 <dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">BenchmarkConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores_per_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_of_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Benchmark.</p>
-<p>Args:
-inputs (List, optional): A list of strings containing the inputs of model. Default is an empty list.
-outputs (List, optional): A list of strings containing the outputs of model. Default is an empty list.
-backend (str, optional): backend name for model execution. Supported values include: ‘default’, ‘itex’,</p>
-<blockquote>
-<div><p>‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’. Default value is ‘default’.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>warmup (int, optional): The number of iterations to perform warmup before running performance tests.</dt><dd><p>Default value is 5.</p>
-</dd>
-</dl>
-<p>iteration (int, optional): The number of iterations to run performance tests. Default is -1.
-cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
-num_of_instance (int, optional): The number of instances to use for performance testing.</p>
-<blockquote>
-<div><p>Default value is None.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.</dt><dd><p>Default value is None.</p>
-</dd>
-<dt>intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.</dt><dd><p>Default value is None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the inputs of model. Default is an empty list.</p></li>
+<li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the outputs of model. Default is an empty list.</p></li>
+<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend name for model execution. Supported values include: ‘default’, ‘itex’,
+‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’. Default value is ‘default’.</p></li>
+<li><p><strong>warmup</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to perform warmup before running performance tests.
+Default value is 5.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to run performance tests. Default is -1.</p></li>
+<li><p><strong>cores_per_instance</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of CPU cores to use per instance. Default value is None.</p></li>
+<li><p><strong>num_of_instance</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of instances to use for performance testing.
+Default value is None.</p></li>
+<li><p><strong>inter_num_of_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of threads to use for inter-thread operations.
+Default value is None.</p></li>
+<li><p><strong>intra_num_of_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of threads to use for intra-thread operations.
+Default value is None.</p></li>
+</ul>
 </dd>
 </dl>
 <p>Example:</p>
@@ -388,14 +385,19 @@ Defaults to None.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>device</strong> (<em>String</em><em>, </em><em>optional</em>) – device for execution. Support ‘cpu’ and ‘gpu’, default is ‘cpu’</p></li>
-<li><p><strong>backend</strong> (<em>String</em><em>, </em><em>optional</em>) – backend for model execution. Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, default is ‘default’</p></li>
-<li><p><strong>precision</strong> (<em>String</em><em>, </em><em>optional</em>) – target precision for mix precision conversion. Support ‘bf16’ and ‘fp16’, default is ‘bf16’</p></li>
-<li><p><strong>inputs</strong> (<em>List</em><em>, </em><em>optional</em>) – inputs of model, default is []</p></li>
-<li><p><strong>outputs</strong> (<em>List</em><em>, </em><em>optional</em>) – outputs of model, default is []</p></li>
-<li><p><strong>tuning_criterion</strong> (<em>TuningCriterion object</em><em>, </em><em>optional</em>) – accuracy tuning settings, it won’t work if there is no accuracy tuning process</p></li>
-<li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – accuracy constraint settings, it won’t work if there is no accuracy tuning process</p></li>
-<li><p><strong>excluded_precisions</strong> (<em>List</em><em>, </em><em>optional</em>) – precisions to be excluded during mix precision conversion, default is []</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – device for execution. Support ‘cpu’ and ‘gpu’, default is ‘cpu’</p></li>
+<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – backend for model execution. Support ‘default’, ‘itex’, ‘ipex’,
+‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, default is ‘default’</p></li>
+<li><p><strong>precision</strong> (<em>str</em><em>, </em><em>optional</em>) – target precision for mix precision conversion.
+Support ‘bf16’ and ‘fp16’, default is ‘bf16’</p></li>
+<li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – inputs of model, default is []</p></li>
+<li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – outputs of model, default is []</p></li>
+<li><p><strong>tuning_criterion</strong> (<em>TuningCriterion object</em><em>, </em><em>optional</em>) – accuracy tuning settings, it won’t work
+if there is no accuracy tuning process</p></li>
+<li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – accuracy constraint settings, it won’t
+work if there is no accuracy tuning process</p></li>
+<li><p><strong>excluded_precisions</strong> (<em>list</em><em>, </em><em>optional</em>) – precisions to be excluded during mix precision conversion,
+default is []</p></li>
 </ul>
 </dd>
 </dl>
@@ -444,10 +446,10 @@ Defaults to None.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – The data type of export target model. Supports ‘fp32’ and ‘int8’.
-Defaults to “int8”.</p></li>
+Defaults to ‘int8’.</p></li>
 <li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The version of the ONNX operator set to use. Defaults to 14.</p></li>
 <li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format for the export target model.
-Supports ‘default’, ‘QDQ’ and ‘QOperator’. Defaults to “QDQ”.</p></li>
+Supports ‘default’, ‘QDQ’ and ‘QOperator’. Defaults to ‘QDQ’.</p></li>
 <li><p><strong>example_inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list example inputs to use for tracing the model.
 Defaults to None.</p></li>
 <li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
