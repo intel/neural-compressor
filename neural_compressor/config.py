@@ -149,6 +149,22 @@ class Options:
 class BenchmarkConfig:
     """Config Class for Benchmark.
 
+    Args:
+        inputs (list, optional): A list of strings containing the inputs of model. Default is an empty list.
+        outputs (list, optional): A list of strings containing the outputs of model. Default is an empty list.
+        backend (str, optional): Backend name for model execution. Supported values include: 'default', 'itex',
+                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default value is 'default'.
+        warmup (int, optional): The number of iterations to perform warmup before running performance tests.
+                                Default value is 5.
+        iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+        cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
+        num_of_instance (int, optional): The number of instances to use for performance testing.
+                                         Default value is None.
+        inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
+                                              Default value is None.
+        intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
+                                              Default value is None.
+
     Example::
 
         # Run benchmark according to config
@@ -364,6 +380,11 @@ class AccuracyCriterion:
         """Get criterion."""
         return self.criterion
 
+    def keys(self):
+        return ('higher_is_better', 'criterion', 'tolerable_loss')
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
 accuracy_criterion = AccuracyCriterion()
 
@@ -388,12 +409,14 @@ class TuningCriterion:
             strategy_kwargs=None,
         )
     """
-    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
+    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, 
+                 max_trials=100, objective="performance", multi_objectives={}):
         """Init a TuningCriterion object."""
         self.strategy = strategy
         self.timeout = timeout
         self.max_trials = max_trials
         self.objective = objective
+        self.multi_objectives = multi_objectives
         self.strategy_kwargs = strategy_kwargs
 
     @property
@@ -425,10 +448,23 @@ class TuningCriterion:
 
     @objective.setter
     def objective(self, objective):
-        """Set objective."""
         if check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
+
+    @property
+    def multi_objectives(self):
+        """Get multi-objectives."""
+        return self._multi_objectives
+
+    @multi_objectives.setter
+    def multi_objectives(self, multi_objectives):
+        if check_value('multi_objectives', multi_objectives, dict):
+            for k, v in multi_objectives.items():
+                check_value('multi_objectives', k, str, ['objective', 'weight', 'higher_is_better'])
+                if k == 'objective':
+                    check_value('objective', v, str, ['performance', 'accuracy', 'modelsize', 'footprint'])
+            self._multi_objectives = multi_objectives
 
     @property
     def strategy(self):
@@ -466,7 +502,6 @@ class _BaseQuantizationConfig:
                     explicitly specified quantization settings will override the automatic setting.
                     If users set domain as auto, automatic detection for domain will be executed.
             model_name: name of model
-            metric: dict of metric that will be used
             recipes: recipes for quantiztaion, support list is as below.
                      'smooth_quant': whether do smooth quant
                      'smooth_quant_args': parameters for smooth_quant
@@ -486,7 +521,6 @@ class _BaseQuantizationConfig:
             calibration_sampling_size: number of calibration sample
             op_type_dict: tuning constraints on optype-wise
             op_name_dict: tuning constraints on op-wise
-            performance_only: whether do evaluation
             reduce_range: whether use 7 bit
             excluded_precisions: precisions to be excluded, support 'bf16'
             quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
@@ -500,14 +534,12 @@ class _BaseQuantizationConfig:
                  backend="default",
                  domain="auto",
                  model_name="",
-                 metric={},
                  recipes={},
                  quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
                  op_type_dict=None,
                  op_name_dict=None,
-                 performance_only=False,
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level="auto",
@@ -521,13 +553,11 @@ class _BaseQuantizationConfig:
         self.backend = backend
         self.domain = domain
         self.model_name = model_name
-        self.metric=metric
         self.recipes = recipes
         self.quant_format = quant_format
         self.device = device
         self.op_type_dict = op_type_dict
         self.op_name_dict = op_name_dict
-        self.performance_only = performance_only
         self.reduce_range = reduce_range
         self.excluded_precisions = excluded_precisions
         self.use_bf16 = "bf16" not in self.excluded_precisions
@@ -560,18 +590,6 @@ class _BaseQuantizationConfig:
         """Set model name."""
         if check_value("model_name", model_name, str):
             self._model_name = model_name
-
-    @property
-    def metric(self):
-        """Get metric."""
-        return self._metric
-
-    @metric.setter
-    def metric(self, metric):
-        """Set metric."""
-        if metric is not None and not isinstance(metric, dict):
-            raise ValueError("metric should be a dict.")
-        self._metric = metric
 
     @property
     def recipes(self):
@@ -738,61 +756,6 @@ class _BaseQuantizationConfig:
             self._reduce_range = reduce_range
 
     @property
-    def performance_only(self):
-        return self._performance_only
-
-    @performance_only.setter
-    def performance_only(self, performance_only):
-        if check_value('performance_only', performance_only, bool):
-            self._performance_only = performance_only
-
-    @property
-    def max_trials(self):
-        return self._max_trials
-
-    @max_trials.setter
-    def max_trials(self, max_trials):
-        if check_value('max_trials', max_trials, int):
-            self._max_trials = max_trials
-
-    @property
-    def timeout(self):
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, timeout):
-        if check_value('timeout', timeout, int):
-            self._timeout = timeout
-
-    @property
-    def objective(self):
-        return self._objective
-
-    @objective.setter
-    def objective(self, objective):
-        if check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
-            self._objective = objective
-
-    @property
-    def strategy(self):
-        return self._strategy
-
-    @strategy.setter
-    def strategy(self, strategy):
-        if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
-            self._strategy = strategy
-
-    @property
-    def strategy_kwargs(self):
-        return self._strategy_kwargs
-
-    @strategy_kwargs.setter
-    def strategy_kwargs(self, strategy_kwargs):
-        self._strategy_kwargs = strategy_kwargs
-
-    @property
     def op_name_dict(self):
         return self._op_name_dict
 
@@ -881,6 +844,10 @@ class _BaseQuantizationConfig:
     def inputs(self, inputs):
         if check_value('inputs', inputs, str):
             self._inputs = inputs
+    
+    @property
+    def framework(self):
+        return self._framework
 
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
@@ -971,7 +938,9 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_dict=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 quant_level="auto"):
+                 quant_level="auto",
+                 accuracy_criterion=accuracy_criterion,
+                 tuning_criterion=tuning_criterion):
         """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -981,7 +950,9 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          op_name_dict=op_name_dict,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
-                         quant_level=quant_level)
+                         quant_level=quant_level,
+                         accuracy_criterion=accuracy_criterion,
+                         tuning_criterion=tuning_criterion)
         self._approach = 'quant_aware_training'
 
     @property
@@ -1201,6 +1172,21 @@ class DistillationConfig:
 
 class MixedPrecisionConfig(_BaseQuantizationConfig):
     """Config Class for MixedPrecision.
+    
+    Args:
+        device (str, optional): device for execution. Support 'cpu' and 'gpu', default is 'cpu'
+        backend (str, optional): backend for model execution. Support 'default', 'itex', 'ipex',
+                                    'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'
+        precision (str, optional): target precision for mix precision conversion.
+                                      Support 'bf16' and 'fp16', default is 'bf16'
+        inputs (list, optional): inputs of model, default is []
+        outputs (list, optional): outputs of model, default is []
+        tuning_criterion (TuningCriterion object, optional): accuracy tuning settings, it won't work
+                                                             if there is no accuracy tuning process
+        accuracy_criterion (AccuracyCriterion object, optional): accuracy constraint settings, it won't
+                                                                 work if there is no accuracy tuning process
+        excluded_precisions (list, optional): precisions to be excluded during mix precision conversion, 
+                                              default is []
 
     Example::
 
@@ -1375,7 +1361,28 @@ class Torch2ONNXConfig(ExportConfig):
 
 
 class TF2ONNXConfig(ExportConfig):
-    """Config Class for TF2ONNX."""
+    """Config Class for TF2ONNX.
+
+    Args:
+        dtype (str, optional): The data type of export target model. Supports 'fp32' and 'int8'.
+                               Defaults to 'int8'.
+        opset_version (int, optional): The version of the ONNX operator set to use. Defaults to 14.
+        quant_format (str, optional): The quantization format for the export target model.
+                                      Supports 'default', 'QDQ' and 'QOperator'. Defaults to 'QDQ'.
+        example_inputs (list, optional): A list example inputs to use for tracing the model.
+                                        Defaults to None.
+        input_names (list, optional): A list of model input names. Defaults to None.
+        output_names (list, optional): A list of model output names. Defaults to None.
+        dynamic_axes (dict, optional): A dictionary of dynamic axis information. Defaults to None.
+        **kwargs: Additional keyword arguments.
+
+    Examples::
+
+        # tensorflow QDQ int8 model 'q_model' export to ONNX int8 model
+        from neural_compressor.config import TF2ONNXConfig
+        config = TF2ONNXConfig()
+        q_model.export(output_graph, config)
+    """
     def __init__(
        self,
        dtype="int8",
@@ -1398,55 +1405,6 @@ class TF2ONNXConfig(ExportConfig):
             dynamic_axes=dynamic_axes,
         )
         self.kwargs = kwargs
-
-
-class QuantizationConfig(_BaseQuantizationConfig):
-    def __init__(self,
-                 inputs=[],
-                 outputs=[],
-                 backend='default',
-                 device='cpu',
-                 approach='post_training_static_quant',
-                 calibration_sampling_size=[100],
-                 op_type_dict=None,
-                 op_name_dict=None,
-                 performance_only=False,
-                 reduce_range=None,
-                 use_bf16=True,
-                 quant_level="auto",
-                 accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion,
-                 use_distributed_tuning=False):
-        excluded_precisions = ["bf16"] if not use_bf16 else []
-        super().__init__(
-            inputs=inputs,
-            outputs=outputs,
-            backend=backend,
-            device=device,
-            calibration_sampling_size=calibration_sampling_size,
-            op_type_dict=op_type_dict,
-            op_name_dict=op_name_dict,
-            performance_only=performance_only,
-            reduce_range=reduce_range,
-            excluded_precisions=excluded_precisions,
-            accuracy_criterion=accuracy_criterion,
-            tuning_criterion=tuning_criterion,
-            quant_level=quant_level,
-            use_distributed_tuning=use_distributed_tuning
-        )
-        self.approach = approach
-
-    @property
-    def approach(self):
-        return self._approach
-
-    @approach.setter
-    def approach(self, approach):
-        if check_value(
-            'approach', approach, str,
-            ['post_training_static_quant', 'post_training_dynamic_quant', 'quant_aware_training']
-        ):
-            self._approach = approach
 
 
 class NASConfig:
@@ -1529,7 +1487,17 @@ class PyTorch(MXNet):
         super().__init__(precisions)
 
 
-quantization = QuantizationConfig()
+class Metric():
+    def __init__(self, metric_cfg=None):
+        self._metric_cfg = metric_cfg
+
+    @property
+    def metric_cfg(self):
+        return self._metric_cfg
+
+
+quantization = PostTrainingQuantConfig()
+qat_quantization = QuantizationAwareTrainingConfig()
 benchmark = BenchmarkConfig()
 options = Options()
 mixed_precision = MixedPrecisionConfig()
@@ -1541,7 +1509,7 @@ tensorflow_config = TensorFlow()
 keras_config = Keras()
 pytorch_config = PyTorch()
 mxnet_config = MXNet()
-
+metric_config = Metric()
 
 class Config:
     def __init__(self,
@@ -1557,6 +1525,7 @@ class Config:
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
                  keras=keras_config,
+                 metric=metric_config
                  ):
         self._quantization = quantization
         self._benchmark = benchmark
@@ -1570,6 +1539,7 @@ class Config:
         self._pytorch = pytorch
         self._mxnet = mxnet
         self._keras = keras
+        self._metric = metric
 
     @property
     def distillation(self):
@@ -1618,5 +1588,9 @@ class Config:
     @property
     def onnxruntime(self):
         return self._onnxruntime
+    
+    @property
+    def metric(self):
+        return self._metric
 
 config = Config()

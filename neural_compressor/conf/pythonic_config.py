@@ -17,121 +17,15 @@
 
 import logging
 from .dotdict import DotDict
-from ..config import BenchmarkConfig, \
+from ..config import ops_schema, AccuracyCriterion, accuracy_criterion, BenchmarkConfig, \
                      check_value, DistillationConfig, options, WeightPruningConfig
 
 logger = logging.getLogger("neural_compressor")
 
-class AccuracyCriterion:
-    """Class of Accuracy Criterion.
-    
-    Example::
-        from neural_compressor.config import AccuracyCriterion
-        
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,  # optional. 
-            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
-            tolerable_loss=0.01,  # optional.
-        )
-    """
-    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
-        """Init an AccuracyCriterion object."""
-        self.higher_is_better = higher_is_better
-        self.criterion = criterion
-        self.tolerable_loss = tolerable_loss
-
-    @property
-    def higher_is_better(self):
-        """Get higher_is_better."""
-        return self._higher_is_better
-
-    @higher_is_better.setter
-    def higher_is_better(self, higher_is_better):
-        """Set higher_is_better."""
-        if check_value('higher_is_better', higher_is_better, bool):
-            self._higher_is_better = higher_is_better
-
-    @property
-    def relative(self):
-        """Get tolerable_loss when criterion is relative."""
-        if self.criterion != 'relative':
-            return None
-        return self.tolerable_loss
-
-    @relative.setter
-    def relative(self, relative):
-        """Set tolerable_loss and criterion to relative."""
-        self.criterion = 'relative'
-        self.tolerable_loss = relative
-
-    @property
-    def absolute(self):
-        """Get tolerable_loss when criterion is absolute."""
-        if self.criterion != 'absolute':
-            return None
-        return self.tolerable_loss
-
-    @absolute.setter
-    def absolute(self, absolute):
-        """Set tolerable_loss and criterion to absolute."""
-        self.criterion = 'absolute'
-        self.tolerable_loss = absolute
-
-    @property
-    def criterion(self):
-        """Get criterion."""
-        return self._criterion
-
-    @criterion.setter
-    def criterion(self, criterion):
-        """Set criterion."""
-        if check_value('criterion', criterion, str, ['relative', 'absolute']):
-            self._criterion = criterion
-
-    @property
-    def tolerable_loss(self):
-        """Get tolerable_loss."""
-        return self._tolerable_loss
-
-    @tolerable_loss.setter
-    def tolerable_loss(self, tolerable_loss):
-        """Set tolerable_loss."""
-        if check_value('tolerable_loss', tolerable_loss, float):
-            self._tolerable_loss = tolerable_loss
-
-    def __str__(self):
-        """Get criterion."""
-        return self.criterion
-
-
 accuracy_criterion = AccuracyCriterion()
 
 class _BaseQuantizationConfig:
-    def __init__(self,
-                 inputs=[],
-                 outputs=[],
-                 backend="default",
-                 domain="auto",
-                 recipes={},
-                 quant_format="default",
-                 device="cpu",
-                 calibration_sampling_size=[100],
-                 op_type_dict=None,
-                 op_name_dict=None,
-                 strategy="basic",
-                 strategy_kwargs=None,
-                 objective="performance",
-                 timeout=0,
-                 max_trials=100,
-                 performance_only=False,
-                 reduce_range=None,
-                 example_inputs=None,
-                 excluded_precisions=[],
-                 quant_level="auto",
-                 accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False):
-        """Initialize _BaseQuantizationConfig class.
-        Args:
+    """Args:
             inputs: inputs of model
             outputs: outputs of model
             backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
@@ -171,6 +65,31 @@ class _BaseQuantizationConfig:
                          strategy, auto (default) is the combination of 0 and 1.
             accuracy_criterion: accuracy constraint settings
             use_distributed_tuning: whether use distributed tuning or not
+    """
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend="default",
+                 domain="auto",
+                 recipes={},
+                 quant_format="default",
+                 device="cpu",
+                 calibration_sampling_size=[100],
+                 op_type_dict=None,
+                 op_name_dict=None,
+                 strategy="basic",
+                 strategy_kwargs=None,
+                 objective="performance",
+                 timeout=0,
+                 max_trials=100,
+                 performance_only=False,
+                 reduce_range=None,
+                 example_inputs=None,
+                 excluded_precisions=[],
+                 quant_level="auto",
+                 accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False):
+        """Initialize _BaseQuantizationConfig class.
         """
         self.inputs = inputs
         self.outputs = outputs
@@ -295,7 +214,7 @@ class _BaseQuantizationConfig:
                 return check_value("dedicated_qdq_pair", val, bool)
             else:
                 return False
-
+        
         RECIPES = {"smooth_quant": smooth_quant,
                    "smooth_quant_args": smooth_quant_args,
                    "fast_bias_correction": fast_bias_correction,
@@ -515,7 +434,6 @@ class _BaseQuantizationConfig:
     def example_inputs(self, example_inputs):
         """Set example_inputs."""
         self._example_inputs = example_inputs
-
 
 
 class QuantizationConfig(_BaseQuantizationConfig):

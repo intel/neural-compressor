@@ -50,7 +50,7 @@ main() {
         run_performance
     else
         max_loop=3
-        gap=(0.05 0.05 0.1)
+        gap=(0.1 0.1 0.1)
         for ((iter = 0; iter < ${max_loop}; iter++)); do
             run_performance
             {
