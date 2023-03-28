@@ -387,8 +387,8 @@ class TestAugment(unittest.TestCase):
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
         added_node_names = ['attention_quant', 'attn_output_QuantizeLinear']
         added_outputs = ['attn_output', 'output']
-        self.assertEqual(len(augmented_model_node_names), 2)
-        self.assertEqual(len(augmented_model_outputs), 2)
+        self.assertEqual(len(augmented_model_node_names), 3)
+        self.assertEqual(len(augmented_model_outputs), 5)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -452,7 +452,7 @@ class TestAugment(unittest.TestCase):
         added_node_names = ['A_QuantizeLinear', 'conv_quant', 'D_DequantizeLinear', 'D_quantized_DequantizeLinear']
         added_outputs = ['D', 'D_quantized_output']
         self.assertEqual(len(augmented_model_node_names), 4)
-        self.assertEqual(len(augmented_model_outputs), 2)
+        self.assertEqual(len(augmented_model_outputs), 5)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -503,7 +503,7 @@ class TestAugment(unittest.TestCase):
         #test calculation of quantization params
         #TO_DO: check rmin/rmax
         quantization_params_dict = augment.dump_calibration({})
-        node_output_names, output_dicts_list = augment.get_intermediate_outputs(q_config=None)
+        node_output_names, output_dicts_list = augment.get_intermediate_outputs({})
         dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary
         self.assertEqual(len(quantization_params_dict), 6)

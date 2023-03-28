@@ -149,6 +149,12 @@ class ONNXRTAugment:
                         elif not self.already_quantized and input in initializers:
                             tensors_to_dump.add(input)
                 elif activation_only:
+                    for inp in node.input:
+                        initializer = find_by_name(inp, model.graph.initializer)
+                        if initializer is None:
+                            tensors_to_dump.update([inp])
+                        if inp in [input.name for input in model.graph.input]:
+                            tensors_to_dump.update([inp])
                     tensors_to_dump.update(node.output)
 
         model_inputs = [i.name for i in model.graph.input]
@@ -265,31 +271,33 @@ class ONNXRTAugment:
                 merged_dict.setdefault(name, []).append(data)
         intermediate_outputs = []
         del intermediate_outputs
+        if q_config is not None:
+            ranges_dict = {}
+            for data_name, datas in merged_dict.items():
+                if any([data is None for data in datas]):
+                    continue
+                input_name_to_nodes = self.model_wrapper.input_name_to_nodes
+                output_name_to_node = self.model_wrapper.output_name_to_node
+                node = None
+                if data_name in output_name_to_node:
+                    node = output_name_to_node[data_name]
+                elif data_name in input_name_to_nodes:
+                    node = input_name_to_nodes[data_name][0]
+                assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
 
-        ranges_dict = {}
-        for data_name, datas in merged_dict.items():
-            if any([data is None for data in datas]):
-                continue
-            input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-            output_name_to_node = self.model_wrapper.output_name_to_node
-            node = None
-            if data_name in output_name_to_node:
-                node = output_name_to_node[data_name]
-            elif data_name in input_name_to_nodes:
-                node = input_name_to_nodes[data_name][0]
-            assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
-
-            # initialize a calibrater according to 'algorithm' in q_config
-            # and collect ranges of the intermediate output
-            calib_method = q_config[node.name]['activation']['algorithm'] \
-                if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
-            assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
-            calibrator = CALIBRATOR[calib_method]()
-            calibrator.collect(datas)
-            ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
-            calibrator.clear()
-            del calibrator
-        return list(ranges_dict.keys()), ranges_dict
+                # initialize a calibrater according to 'algorithm' in q_config
+                # and collect ranges of the intermediate output
+                calib_method = q_config[node.name]['activation']['algorithm'] \
+                    if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
+                assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
+                calibrator = CALIBRATOR[calib_method]()
+                calibrator.collect(datas)
+                ranges_dict.setdefault(data_name, []).append(list(calibrator.calib_range))
+                calibrator.clear()
+                del calibrator 
+            return list(ranges_dict.keys()), ranges_dict
+        else:
+            return list(merged_dict.keys()), merged_dict
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
         """Helper function to dequantize tensor."""
@@ -392,7 +400,7 @@ class ONNXRTAugment:
 
     def dump_minmax(self, q_config):
         """Get min/max values of tensors."""
-        self.augment_graph()
+        self.augment_graph(activation_only=True, weight_only=False)
         node_output_names, output_dicts = self.get_intermediate_outputs(q_config)
         return self._map_calibration(node_output_names, output_dicts)
 
