@@ -39,7 +39,7 @@ function init_params {
 function run_tuning {
     extra_cmd=""
     if [ -n "$output_model" ];then
-        extra_cmd = $extra_cmd"--tuned_checkpoint ${output_model}"
+        extra_cmd=$extra_cmd"--tuned_checkpoint ${output_model}"
     fi
     extra_cmd=$extra_cmd" ${dataset_location}"
 
