@@ -108,7 +108,7 @@
 <td><p>Config Class for Quantization Aware Training.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.WeightPruningConfig" title="neural_compressor.config.WeightPruningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a></p></td>
-<td><p>Similiar to torch optimizer's interface.</p></td>
+<td><p>Config Class for Pruning. Define a single or a sequence of pruning configs.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.KnowledgeDistillationLossConfig" title="neural_compressor.config.KnowledgeDistillationLossConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationLossConfig</span></code></a></p></td>
 <td><p>Config Class for Knowledge Distillation Loss.</p></td>
@@ -252,12 +252,75 @@ Default value is None.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.WeightPruningConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">WeightPruningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{}]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'snip_momentum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'4x1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_decay_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Conv',</span> <span class="pre">'Linear']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.WeightPruningConfig" title="Permalink to this definition"></a></dt>
-<dd><p>Similiar to torch optimizer’s interface.</p>
+<dd><p>Config Class for Pruning. Define a single or a sequence of pruning configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pruning_configs</strong> (<em>list</em><em> of </em><em>dicts</em><em>, </em><em>optional</em>) – Local pruning configs only valid to linked layers.
+Parameters defined out of pruning_configs are valid for all layers.
+By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
+Defaults to [{}].</p></li>
+<li><p><strong>target_sparsity</strong> (<em>float</em><em>, </em><em>optional</em>) – Sparsity ratio the model can reach after pruning.
+Supports a float between 0 and 1.
+Default to 0.90.</p></li>
+<li><p><strong>pruning_type</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>A string define the criteria for pruning.
+Supports “magnitude”, “snip”, “snip_momentum”,</p>
+<blockquote>
+<div><p>”magnitude_progressive”, “snip_progressive”, “snip_momentum_progressive”, “pattern_lock”</p>
+</div></blockquote>
+<p>Default to “snip_momentum”, which is the most feasible pruning criteria under most situations.</p>
+</p></li>
+<li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – Sparsity’s structure (or unstructure) types.
+Supports “NxM” (e.g “4x1”, “8x1”), “channelx1” &amp; “1xchannel”(channel-wise), “N:M” (e.g “2:4”).
+Default to “4x1”, which can be directly processed by our kernels in ITREX.</p></li>
+<li><p><strong>op_names</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Layers contains some specific names to be included for pruning.
+Defaults to [].</p></li>
+<li><p><strong>excluded_op_names</strong> – Layers contains some specific names to be excluded for pruning.
+Defaults to [].</p></li>
+<li><p><strong>start_step</strong> (<em>int</em><em>, </em><em>optional</em>) – The step to start pruning.
+Supports an integer.
+Default to 0.</p></li>
+<li><p><strong>end_step</strong> – (int, optional): The step to end pruning.
+Supports an integer.
+Default to 0.</p></li>
+<li><p><strong>pruning_scope</strong> (<em>str</em><em>, </em><em>optional</em>) – Determine layers’ scores should be gather together to sort
+Supports “global” and “local”.
+Default: “global”, since this leads to less accuracy loss.</p></li>
+<li><p><strong>pruning_frequency</strong> – the frequency of pruning operation.
+Supports an integer.
+Default to 1.</p></li>
+<li><p><strong>min_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum restriction for every layer’s sparsity.
+Supports a float between 0 and 1.
+Default to 0.0.</p></li>
+<li><p><strong>max_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum restriction for every layer’s sparsity.
+Supports a float between 0 and 1.
+Default to 0.98.</p></li>
+<li><p><strong>sparsity_decay_type</strong> (<em>str</em><em>, </em><em>optional</em>) – how to schedule the sparsity increasing methods.
+Supports “exp”, “cube”, “cube”, “linear”.
+Default to “exp”.</p></li>
+<li><p><strong>pruning_op_types</strong> (<em>list</em><em> of </em><em>str</em>) – Operator types currently support for pruning.
+Supports [‘Conv’, ‘Linear’].
+Default to [‘Conv’, ‘Linear’].</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">WeightPruningConfig</span>
-
+<span class="n">local_configs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;pruning_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span>
+        <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;channelx1&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;pruning_type&quot;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum_progressive&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;self.attention.dense&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">]</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">(</span>
-    <span class="n">local_configs</span><span class="p">,</span>
+    <span class="n">pruning_configs</span> <span class="o">=</span> <span class="n">local_configs</span><span class="p">,</span>
     <span class="n">target_sparsity</span><span class="o">=</span><span class="mf">0.8</span>
 <span class="p">)</span>
 <span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>

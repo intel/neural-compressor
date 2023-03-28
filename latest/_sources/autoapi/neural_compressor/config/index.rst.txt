@@ -151,14 +151,80 @@ Classes
 
 .. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], **kwargs)
 
-   Similiar to torch optimizer's interface.
+   Config Class for Pruning. Define a single or a sequence of pruning configs.
+
+   :param pruning_configs: Local pruning configs only valid to linked layers.
+                           Parameters defined out of pruning_configs are valid for all layers.
+                           By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
+                           Defaults to [{}].
+   :type pruning_configs: list of dicts, optional
+   :param target_sparsity: Sparsity ratio the model can reach after pruning.
+                           Supports a float between 0 and 1.
+                           Default to 0.90.
+   :type target_sparsity: float, optional
+   :param pruning_type: A string define the criteria for pruning.
+                        Supports "magnitude", "snip", "snip_momentum",
+                                 "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
+                        Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
+   :type pruning_type: str, optional
+   :param pattern: Sparsity's structure (or unstructure) types.
+                   Supports "NxM" (e.g "4x1", "8x1"), "channelx1" & "1xchannel"(channel-wise), "N:M" (e.g "2:4").
+                   Default to "4x1", which can be directly processed by our kernels in ITREX.
+   :type pattern: str, optional
+   :param op_names: Layers contains some specific names to be included for pruning.
+                    Defaults to [].
+   :type op_names: list of str, optional
+   :param excluded_op_names: Layers contains some specific names to be excluded for pruning.
+                             Defaults to [].
+   :param start_step: The step to start pruning.
+                      Supports an integer.
+                      Default to 0.
+   :type start_step: int, optional
+   :param end_step: (int, optional): The step to end pruning.
+                    Supports an integer.
+                    Default to 0.
+   :param pruning_scope: Determine layers' scores should be gather together to sort
+                         Supports "global" and "local".
+                         Default: "global", since this leads to less accuracy loss.
+   :type pruning_scope: str, optional
+   :param pruning_frequency: the frequency of pruning operation.
+                             Supports an integer.
+                             Default to 1.
+   :param min_sparsity_ratio_per_op: Minimum restriction for every layer's sparsity.
+                                     Supports a float between 0 and 1.
+                                     Default to 0.0.
+   :type min_sparsity_ratio_per_op: float, optional
+   :param max_sparsity_ratio_per_op: Maximum restriction for every layer's sparsity.
+                                     Supports a float between 0 and 1.
+                                     Default to 0.98.
+   :type max_sparsity_ratio_per_op: float, optional
+   :param sparsity_decay_type: how to schedule the sparsity increasing methods.
+                               Supports "exp", "cube", "cube", "linear".
+                               Default to "exp".
+   :type sparsity_decay_type: str, optional
+   :param pruning_op_types: Operator types currently support for pruning.
+                            Supports ['Conv', 'Linear'].
+                            Default to ['Conv', 'Linear'].
+   :type pruning_op_types: list of str
 
    Example::
 
        from neural_compressor.config import WeightPruningConfig
-
+       local_configs = [
+           {
+               "pruning_scope": "local",
+               "target_sparsity": 0.6,
+               "op_names": ["query", "key", "value"],
+               "pattern": "channelx1",
+           },
+           {
+               "pruning_type": "snip_momentum_progressive",
+               "target_sparsity": 0.5,
+               "op_names": ["self.attention.dense"],
+           }
+       ]
        config = WeightPruningConfig(
-           local_configs,
+           pruning_configs = local_configs,
            target_sparsity=0.8
        )
        prune = Pruning(config)
