@@ -173,10 +173,33 @@
 <dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">BenchmarkConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores_per_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_of_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Benchmark.</p>
+<p>Args:
+inputs (List, optional): A list of strings containing the inputs of model. Default is an empty list.
+outputs (List, optional): A list of strings containing the outputs of model. Default is an empty list.
+backend (str, optional): backend name for model execution. Supported values include: ‘default’, ‘itex’,</p>
+<blockquote>
+<div><p>‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’. Default value is ‘default’.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>warmup (int, optional): The number of iterations to perform warmup before running performance tests.</dt><dd><p>Default value is 5.</p>
+</dd>
+</dl>
+<p>iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
+num_of_instance (int, optional): The number of instances to use for performance testing.</p>
+<blockquote>
+<div><p>Default value is None.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.</dt><dd><p>Default value is None.</p>
+</dd>
+<dt>intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.</dt><dd><p>Default value is None.</p>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run benchmark according to config</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
 
+<span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
 <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;./int8.pb&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
 </pre></div>
@@ -417,6 +440,30 @@ Defaults to None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.TF2ONNXConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">TF2ONNXConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.TF2ONNXConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for TF2ONNX.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – The data type of export target model. Supports ‘fp32’ and ‘int8’.
+Defaults to “int8”.</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The version of the ONNX operator set to use. Defaults to 14.</p></li>
+<li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format for the export target model.
+Supports ‘default’, ‘QDQ’ and ‘QOperator’. Defaults to “QDQ”.</p></li>
+<li><p><strong>example_inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list example inputs to use for tracing the model.
+Defaults to None.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model output names. Defaults to None.</p></li>
+<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dynamic axis information. Defaults to None.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># tensorflow QDQ int8 model &#39;q_model&#39; export to ONNX int8 model</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TF2ONNXConfig</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">TF2ONNXConfig</span><span class="p">()</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">output_graph</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
