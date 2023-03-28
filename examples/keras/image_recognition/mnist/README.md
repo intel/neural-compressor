@@ -27,7 +27,7 @@ pip install -r requirements.txt
 ```
 
 #### Quantizing the model on Intel CPU(Experimental)
-Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]

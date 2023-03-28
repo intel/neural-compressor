@@ -20,7 +20,7 @@ In addition, the tool showcases the key features, typical examples, and broad co
 
 * Support a wide range of Intel hardware such as [Intel Xeon Scalable processor](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
 
-* Validate more than 10,000 models such as [Stable Diffusion](/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [GPT-J](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [BERT-Large](/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](/neural_coder#what-do-we-offer) and automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
+* Validate more than 10,000 models such as [Bloom-176B](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant), [OPT-30B](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant), [Stable Diffusion](/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [GPT-J](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [BERT-Large](/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](/neural_coder#what-do-we-offer) and automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
 
 * Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) and [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
@@ -77,8 +77,8 @@ q_model = fit(
       <td colspan="1" align="center"><a href="./docs/source/bench.md">GUI</a></td>
     </tr>
     <tr>
-      <td colspan="2" align="center"><a href="./examples#notebook-examples">Notebook</a></td>
-      <td colspan="1" align="center"><a href="./examples">Examples</a></td>
+      <td colspan="2" align="center"><a href="examples/README.md#notebook-examples">Notebook</a></td>
+      <td colspan="1" align="center"><a href="examples/README.md">Examples</a></td>
       <td colspan="1" align="center"><a href="./docs/source/validated_model_list.md">Results</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
     </tr>
@@ -125,12 +125,13 @@ q_model = fit(
           <td colspan="1" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
           <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
           <td colspan="3" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-          <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
+          <td colspan="3" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
   </tbody>
 </table>
 
 ## Selected Publications/Events
+* Post on Social Media: [Adopt with Tencent TACO: Heterogeneous optimization is also key to improving AI computing power](https://mp.weixin.qq.com/s/I-FQqOuW7HTnwXegLGNAtw) (Mar 2023)
 * Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
 * Blog by Intel: [Intel® AMX Enhances AI Inference Performance](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/alibaba-solution-brief.html) (Jan 2023)
 * Blog by TensorFlow: [Optimizing TensorFlow for 4th Gen Intel Xeon Processors](https://blog.tensorflow.org/2023/01/optimizing-tensorflow-for-4th-gen-intel-xeon-processors.html) (Jan 2023)

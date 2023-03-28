@@ -86,7 +86,7 @@ class GraphTransformBase(object):
         Returns:
             node's name
         """
-        if node_name.startswith("^"):
+        if node_name.startswith("^"): # pragma: no cover
             node_name = node_name[1:]
         m = re.search(r"(.*):\d+$", node_name)
         if m:

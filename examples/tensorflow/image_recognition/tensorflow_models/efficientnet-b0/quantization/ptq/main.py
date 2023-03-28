@@ -120,7 +120,7 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-            op_name_list={
+            op_name_dict={
                 'efficientnet-b0/model/stem/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
                 'efficientnet-b0/model/blocks_0/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
                 'efficientnet-b0/model/blocks_1/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
@@ -131,15 +131,15 @@ class eval_classifier_optimized_graph:
             }
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
                                            inputs=['truediv'], outputs=['Squeeze'],
-                                           op_name_list=op_name_list)
+                                           op_name_dict=op_name_dict)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader)
             q_model.save(args.output_graph)
 
         if args.benchmark:
             from neural_compressor.utils.create_obj_from_config import create_dataloader
-            data_path = os.path.join(args.dataset_location, 'raw_images')
-            label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
+            data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
+            label_path = os.path.join(args.dataset_location, 'val.txt')
             dataloader_args = {
                 'batch_size': args.batch_size,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
@@ -160,7 +160,7 @@ class eval_classifier_optimized_graph:
                 from neural_compressor.config import BenchmarkConfig
                 conf = BenchmarkConfig(inputs=['truediv'], outputs=['Squeeze'],
                                        warmup=10, iteration=100, cores_per_instance=4,
-                                       num_of_instance=7)
+                                       num_of_instance=1)
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)

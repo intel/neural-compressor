@@ -34,10 +34,9 @@ from datasets import load_dataset
 from transformers import AutoTokenizer, EvalPrediction, HfArgumentParser, PreTrainedTokenizer, TrainingArguments
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
-from onnxruntime import InferenceSession
+import onnxruntime
 
 from evaluate import load
-# from optimum.onnxruntime.model import ORTModel
 from utils_model import ORTModel
 from utils_qa import postprocess_qa_predictions
 
@@ -52,8 +51,6 @@ require_version(
 )
 
 logger = logging.getLogger(__name__)
-
-FP32_CONFIG = {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}
 
 @dataclass
 class ModelArguments:
@@ -236,7 +233,8 @@ class SQuADDataset():
     ):  
         self.dataset = dataset
         self.label_names = ["labels"] if label_names is None else label_names
-        self.session = InferenceSession(model.SerializeToString())
+        self.session = onnxruntime.InferenceSession(model.SerializeToString(), 
+                                                    providers=onnxruntime.get_available_providers())
         self.onnx_input_names = {input_key.name: idx for idx, input_key in enumerate(self.session.get_inputs())}
         self._process_dataset()
     
@@ -446,7 +444,6 @@ def main():
 
         ort_model = ORTModel(
             model,
-            execution_provider='CPUExecutionProvider',
             compute_metrics=compute_metrics,
             label_names=["start_positions", "end_positions"],
         )
@@ -456,26 +453,28 @@ def main():
         return metrics['f1']
 
     if model_args.tune:
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
-        opt_options.enable_embed_layer_norm = False
+        if onnxruntime.__version__ <= '1.13.1':
+            from onnxruntime.transformers import optimizer
+            from onnxruntime.transformers.fusion_options import FusionOptions
+            opt_options = FusionOptions('bert')
+            opt_options.enable_embed_layer_norm = False
 
-        model_optimizer = optimizer.optimize_model(
-            model_args.input_model,
-            'bert',
-            num_heads=model_args.num_heads,
-            hidden_size=model_args.hidden_size,
-            optimization_options=opt_options)
-        model = model_optimizer.model
+            model_optimizer = optimizer.optimize_model(
+                model_args.input_model,
+                'bert',
+                num_heads=model_args.num_heads,
+                hidden_size=model_args.hidden_size,
+                optimization_options=opt_options)
+            model = model_optimizer.model
+        else:
+            model = onnx.load(model_args.input_model)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func
-                                   )
+                                   eval_func=eval_func)
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:

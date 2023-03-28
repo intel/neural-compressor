@@ -26,11 +26,11 @@ Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, th
 
 # Supported Framework Model Matrix
 
-| Export | Post-training Dynamic Quantization | Post-training Static Quantization | Quantization Aware Training |
-| :---: | :---: | :---: | :---: |
-| FP32 PyTorch Model -> FP32 ONNX Model | &#10004; | &#10004; | &#10004; |
-| INT8 PyTorch Model -> INT8 QDQ ONNX Model | &#10004; | &#10004; | &#10004; |
-| INT8 PyTorch Model -> INT8 QLinear ONNX Model | &#10004; | &#10004; | &#10004; |
+| Export | PyTorch | TensorFlow |
+| :---: | :---: |:----------:|
+| FP32 Model -> FP32 ONNX Model | &#10004; |  &#10004;  |
+| INT8 Model -> INT8 QDQ ONNX Model | &#10004; |  &#10004;  |
+| INT8 Model -> INT8 QLinear ONNX Model | &#10004; | :x: |
 
 # Examples
 
@@ -67,6 +67,9 @@ int8_onnx_config = Torch2ONNXConfig(
 )
 q_model.export('int8-model.onnx', int8_onnx_config)
 ```
+> **Note**: Two export examples covering computer vision and natural language processing tasks exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.
+ - [Image recognition](/examples/pytorch/image_recognition/torchvision_models/export/fx/)
+ - [Text classification](/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/)
 
 # Appendix
 

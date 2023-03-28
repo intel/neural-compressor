@@ -23,16 +23,43 @@ from ..adaptor.pytorch import PyTorch_FXAdaptor
 from ..adaptor.torch_utils import util
 from . import logger
 from packaging.version import Version
-from torch.quantization import add_observer_, convert
+from torch.quantization import convert
 import torch
 import torch.quantization as tq
 import yaml
 import os
-import copy
+
 
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
                                  lambda loader, node: tuple(loader.construct_sequence(node)))
 
+
+def is_int8_model(model):
+    """Check whether the input model is a int8 model.
+
+    Args:
+        model (torch.nn.Module): input model
+
+    Returns:
+        result(bool): Return True if the input model is a int8 model.
+    """
+    def _is_int8_value(value):
+        """Check whether the input tensor is a int8 tensor."""
+        if hasattr(value, 'dtype') and 'int8' in str(value.dtype):
+            return True
+        else:
+            return False
+
+    stat_dict = dict(model.state_dict())
+    for name, value in stat_dict.items():
+        if _is_int8_value(value):
+            return True
+        # value maybe a tuple, such as 'linear._packed_params._packed_params'
+        if isinstance(value, tuple):
+            for v in value:
+                if _is_int8_value(v):
+                    return True
+    return False
 
 def _set_sub_module_scale_zeropoint(model, tune_cfg, prefix=''):
     """Set activation scale and zero_point for converted sub modules recursively.
@@ -108,7 +135,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
         from torch.quantization.quantize_fx import prepare_qat_fx, convert_fx
         quantized_ops = {op[0]: q_cfgs for op in tune_cfg['quantizable_ops']}
         version = get_torch_version()
-        if version < Version("1.11.0-rc1"):
+        if version.release < Version("1.11.0").release:
             quantized_ops["default_qconfig"] = None
         else:
             from torch.ao.quantization import default_embedding_qat_qconfig
@@ -238,19 +265,19 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             op_cfg['activation']['quant_mode'] = approach_quant_mode
 
     if tune_cfg['approach'] != "post_training_dynamic_quant":
-        if version < Version("1.7.0-rc1"):   # pragma: no cover
+        if version.release < Version("1.7.0").release:   # pragma: no cover
             q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
-        elif version < Version("1.8.0-rc1"):   # pragma: no cover
+        elif version.release < Version("1.8.0").release:   # pragma: no cover
             q_mapping = \
                 tq.quantization_mappings.get_static_quant_module_mappings()
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_static_quant_module_mappings()
     else:
-        if version < Version("1.7.0-rc1"):   # pragma: no cover
+        if version.release < Version("1.7.0").release:   # pragma: no cover
             q_mapping = \
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
-        elif version < Version("1.8.0-rc1"):   # pragma: no cover
+        elif version.release < Version("1.8.0").release:   # pragma: no cover
             q_mapping = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
@@ -259,7 +286,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     if tune_cfg['framework'] == "pytorch_fx":             # pragma: no cover
         # For torch.fx approach
-        assert version >= Version("1.8.0-rc1"), \
+        assert version.release >= Version("1.8.0").release, \
                       "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         if kwargs is None:
@@ -275,7 +302,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             tmp_model = model
             if tune_cfg['approach'] == "quant_aware_training":
                 model.train()
-                if version > Version("1.12.1"):  # pragma: no cover
+                if version.release > Version("1.12.1").release:  # pragma: no cover
                     # pylint: disable=E1123
                     model = prepare_qat_fx(model,
                                            fx_op_cfgs,
@@ -286,7 +313,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
                                            fx_op_cfgs,
                                            prepare_custom_config_dict=prepare_custom_config_dict)
             else:
-                if version > Version("1.12.1"):  # pragma: no cover
+                if version.release > Version("1.12.1").release:  # pragma: no cover
                     # pylint: disable=E1123
                     model = prepare_fx(model,
                                        fx_op_cfgs,
@@ -296,7 +323,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
                     model = prepare_fx(model,
                                        fx_op_cfgs,
                                        prepare_custom_config_dict=prepare_custom_config_dict)
-            if version > Version("1.12.1"):  # pragma: no cover
+            if version.release > Version("1.12.1").release:  # pragma: no cover
                 # pylint: disable=E1123
                 model = convert_fx(model,
                   convert_custom_config=convert_custom_config_dict)
@@ -335,6 +362,10 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
                         "passed correct configuration through `qconfig_dict` or "
                         "by assigning the `.qconfig` attribute directly on submodules")
         if tune_cfg['approach'] != "post_training_dynamic_quant":
+            if version.release < Version("2.0.0").release:
+                from torch.quantization.quantize import add_observer_
+            else:
+                from torch.quantization.quantize import _add_observer_ as add_observer_
             add_observer_(model)
         model = convert(model, mapping=q_mapping, inplace=True)
 
@@ -342,9 +373,17 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     if len(bf16_ops_list) > 0 and (version >= Version("1.11.0-rc1")):
         from ..adaptor.torch_utils.bf16_convert import Convert
         model = Convert(model, tune_cfg)
+    if not is_int8_model(model):   # pragma: no cover
+        logger.warning("The loaded model is not a int8 model.")
     if checkpoint_dir is None and history_cfg is not None:
         _set_activation_scale_zeropoint(model, history_cfg)
     else:
-        model.load_state_dict(stat_dict)
+        try:
+            model.load_state_dict(stat_dict)
+        except:
+            # set strict=False to avoid loading linked tensors, ignore missing_keys.
+            mismatch_log = model.load_state_dict(stat_dict, strict=False)
+            assert len(mismatch_log.unexpected_keys) == 0, \
+              "Loading state_dict failed: {}".format(mismatch_log)
     util.get_embedding_contiguous(model)
     return model

@@ -36,6 +36,7 @@ arg_parser.add_argument('--dataset_location', type=str, default='')
 arg_parser.add_argument('--output_model', type=str, default='')
 arg_parser.add_argument('--mode', type=str, default='performance')
 arg_parser.add_argument('--batch_size', type=int, default=10)
+arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='iterations')
 arg_parser.add_argument('--tune', action='store_true', default=False)
 arg_parser.add_argument('--benchmark', dest='benchmark',
                     action='store_true', help='run benchmark')
@@ -62,7 +63,7 @@ def evaluate(model):
     warmup = 5
     iteration = -1
     if args.benchmark and args.mode == 'performance':
-        iteration = 100
+        iteration = args.iters
     metric = COCOmAPv2(output_index_mapping={'num_detections':0, 'boxes':1, 'scores':2, 'classes':3})
 
     def eval_func(dataloader):
@@ -117,7 +118,7 @@ def main(_):
             conf = BenchmarkConfig(
                 inputs=["image_tensor"],
                 outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-                cores_per_instance=28, 
+                cores_per_instance=4,
                 num_of_instance=1)
             fit(args.input_graph, conf, b_func=evaluate)
         else:

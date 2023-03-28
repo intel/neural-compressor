@@ -681,19 +681,37 @@ def torch_to_fp32_onnx(
         do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
         verbose (bool, optional): dump verbose or not. Defaults to True.
     """
-    if input_names:
-        example_input_names = input_names
-    else:
-        example_input_names = ['input']
-        if isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
-            example_input_names = list(example_inputs.keys())
+    from neural_compressor.utils.pytorch import is_int8_model
+    assert is_int8_model(fp32_model) == False, "The fp32 model is replaced during quantization. " + \
+        "please customize a eval_func when quantizing, if not, such as `lambda x: 1`."
+    if input_names is None and \
+      (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
+        input_names = list(example_inputs.keys())
+        example_inputs = list(example_inputs.values())
+    elif isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
+        example_inputs = list(example_inputs.values())
+    # match input_names with inspected input_order, especailly for bert in hugginface.
+    if input_names and len(input_names) > 1:
+        import inspect
+        input_order = inspect.signature(fp32_model.forward).parameters.keys()
+        flag = [name in input_order for name in input_names] # whether should be checked
+        if all(flag):
+            new_input_names = []
+            new_example_inputs = []
+            for name in input_order:
+                if name in input_names:
+                    new_input_names.append(name)
+                    id = input_names.index(name)
+                    new_example_inputs.append(example_inputs[id])
+            input_names = new_input_names
+            example_inputs = new_example_inputs
 
     torch.onnx.export(
         fp32_model,
         input2tuple(example_inputs),
         save_path,
         opset_version=opset_version,
-        input_names=example_input_names,
+        input_names=input_names,
         output_names=output_names,
         dynamic_axes=dynamic_axes,
         do_constant_folding=do_constant_folding,
@@ -747,6 +765,7 @@ def torch_to_int8_onnx(
     else:
         op_types_to_quantize=['MatMul', 'Gemm', 'Gather', 'Conv']
 
+    quant_format = quant_format.upper()
     if quant_format == 'QDQ' and opset_version < 13:   # pragma: no cover 
         opset_version = 13
         logger.warning("QDQ format requires opset_version >= 13, " + 

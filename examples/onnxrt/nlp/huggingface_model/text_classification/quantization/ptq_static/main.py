@@ -324,12 +324,13 @@ if __name__ == "__main__":
         type=str,
         choices=['Intel/bert-base-uncased-mrpc',
                 'Intel/roberta-base-mrpc',
-                'Intel/xlm-roberta-base-mrpc',
-                'Intel/camembert-base-mrpc',
                 'distilbert-base-uncased-finetuned-sst-2-english',
-                'Alireza1044/albert-base-v2-sst2',
                 'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc'],
+                'Intel/MiniLM-L12-H384-uncased-mrpc',
+                'bert-base-cased-finetuned-mrpc',
+                'Intel/electra-small-discriminator-mrpc',
+                'M-FAC/bert-mini-finetuned-mrpc',
+                'Intel/xlnet-base-cased-mrpc'],
         help="pretrained model name or path"
     )
     parser.add_argument(
@@ -349,6 +350,13 @@ if __name__ == "__main__":
         default=768,
         type=int,
     )
+    parser.add_argument(
+        '--quant_format',
+        type=str,
+        default='QOperator', 
+        choices=['QOperator', 'QDQ'],
+        help="quantization format"
+    )
  
     args = parser.parse_args()
 
@@ -361,8 +369,8 @@ if __name__ == "__main__":
 
     def eval_func(model, *args):
         metric.reset()
-        import tqdm
-        session = ort.InferenceSession(model.SerializeToString(), None)
+        session = ort.InferenceSession(model.SerializeToString(), 
+                                       providers=ort.get_available_providers())
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -392,22 +400,25 @@ if __name__ == "__main__":
 
 
     if args.tune:
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
-        opt_options.enable_embed_layer_norm = False
+        if ort.__version__ <= '1.13.1':
+            from onnxruntime.transformers import optimizer
+            from onnxruntime.transformers.fusion_options import FusionOptions
+            opt_options = FusionOptions('bert')
+            opt_options.enable_embed_layer_norm = False
 
-        model_optimizer = optimizer.optimize_model(
-            args.model_path,
-            'bert',
-            num_heads=args.num_heads,
-            hidden_size=args.hidden_size,
-            optimization_options=opt_options)
-        model = model_optimizer.model
+            model_optimizer = optimizer.optimize_model(
+                args.model_path,
+                'bert',
+                num_heads=args.num_heads,
+                hidden_size=args.hidden_size,
+                optimization_options=opt_options)
+            model = model_optimizer.model
+        else:
+            model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(approach='static',
-                                         quant_level=0)
+                                         quant_format=args.quant_format)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

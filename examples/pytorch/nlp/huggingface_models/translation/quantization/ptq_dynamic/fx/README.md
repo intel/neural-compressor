@@ -1,19 +1,14 @@
 Step-by-Step
 ============
 
-This document is used to list the steps of reproducing quantization and benchmarking results.
-Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/seq2seq/README.md).
-
-> **Note**
->
-> Dynamic Quantization is the recommended method for huggingface models. 
+This document is used to list the steps of quantizing the model with `PostTrainingDynamic` on the translation task.
 
 # Prerequisite
 ## 1. Environment
 Python 3.6 or higher version is recommended.
-The dependent packages are all in requirements, please install as following.
+The dependent packages are listed in requirements, please install them as follows,
 ```shell
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx
+cd examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx
 pip install -r requirements.txt
 ```
 
@@ -23,9 +18,6 @@ pip install -r requirements.txt
 cd examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ```
-> NOTE
->
-> topology_name can be:{"t5_WMT_en_ro", "marianmt_WMT_en_ro"}
 ## 2. Benchmark
 ```bash
 # int8
@@ -44,8 +36,8 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 </thead>
 <tbody align="center">
   <tr>
-    <td>t5_WMT_en_ro</td>
-    <td><a href="https://huggingface.co/aretw0/t5-small-finetuned-en-to-ro-dataset_20">aretw0/t5-small-finetuned-en-to-ro-dataset_20</a></td>
+    <td>t5-small</td>
+    <td><a href="https://huggingface.co/t5-small">t5-small</a></td>
     <td><a href="https://huggingface.co/datasets/wmt16">wmt16</a></td>
   </tr>
   <tr>
@@ -57,12 +49,11 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 </table>
 
 ## 4. Saving and Loading Model
-### Saving model:
+### Saving model
 ```python
-from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
+from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor import quantization
-accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=0.5)
-conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
+conf = PostTrainingQuantConfig(approach="dynamic")
 q_model = quantization.fit(model,
                            conf,
                            calib_dataloader=dataloader(),
@@ -74,7 +65,7 @@ Here, `q_model` is the Neural Compressor model class, so it has "save" API:
 ```python
 q_model.save("Path_to_save_quantized_model")
 ```
-### Loading model:
+### Loading model
 ```python
 from neural_compressor.utils.pytorch import load
 quantized_model = load(tuned_checkpoint,

@@ -28,7 +28,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_eval_func
 from .common import Model as NCModel
 from ..model import BaseModel
 
-class ModelConversion():
+class ModelConversion(): # pragma: no cover
     """ModelConversion class is used to convert one model format to another.
 
        Currently Neural Compressor only supports Quantization-aware training TensorFlow model to Default

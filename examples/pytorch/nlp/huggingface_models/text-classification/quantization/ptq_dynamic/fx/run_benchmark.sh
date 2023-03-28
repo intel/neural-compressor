@@ -54,6 +54,7 @@ function init_params {
 function run_benchmark {
     extra_cmd=''
     MAX_SEQ_LENGTH=128
+    TASK_NAME='mrpc'
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
@@ -63,17 +64,17 @@ function run_benchmark {
         exit 1
     fi
 
-    if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
+    if  [[ "${topology}" = "bert_large_RTE"* ]]; then
         TASK_NAME='rte'
-    elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
-        TASK_NAME='mrpc'
     fi
 
-    extra_cmd='--model_name_or_path '${input_model}
     if [[ ${int8} == "true" ]]; then
         extra_cmd='--model_name_or_path '${tuned_checkpoint}
         extra_cmd=$extra_cmd" --int8"
+    else
+        extra_cmd='--model_name_or_path '${input_model}
     fi
+    
     echo $extra_cmd
 
     python -u run_glue.py \

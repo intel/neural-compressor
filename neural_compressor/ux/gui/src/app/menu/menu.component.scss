@@ -19,7 +19,6 @@
 
 .create-new-btn {
   background-color: $accent-yellow;
-  float: right;
   font-size: 100%;
 }
 
@@ -53,7 +52,7 @@
 }
 
 .time {
-  color: $light-gray;
+  color: white;
   position: relative;
   top: -20px;
   text-align: left;
@@ -84,4 +83,9 @@ img {
 
 .project-list {
   padding: 10px;
+  overflow-y: auto;
+  width: 100%;
+  position: absolute;
+  top: 100px;
+  bottom: 50px;
 }

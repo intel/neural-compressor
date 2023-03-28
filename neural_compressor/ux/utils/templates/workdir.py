@@ -57,6 +57,14 @@ class Workdir:
                 os.remove(file)
 
     @staticmethod
+    def clean_cache_files(workdir_path: str) -> None:
+        """Clean cache files."""
+        cache_files = [os.path.join(workdir_path, "saved_mse.pkl")]
+        for file in cache_files:
+            if os.path.exists(file):
+                os.remove(file)
+
+    @staticmethod
     def clean_status(status_to_clean: ExecutionStatus) -> None:
         """Clean statuses in database for workloads according to passed parameters."""
         OptimizationAPIInterface.clean_status(status_to_clean)

@@ -36,7 +36,7 @@ arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ne
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
-arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
+arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='iterations')
 args = arg_parser.parse_args()
 
 def evaluate(model, eval_dataloader, metric, postprocess=None):
@@ -133,7 +133,7 @@ class eval_classifier_optimized_graph:
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)

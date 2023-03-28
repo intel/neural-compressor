@@ -40,6 +40,7 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
+    approach='post_training_static_quant'
 
     if [ "${topology}" = "bert_large_SQuAD" ]; then
         TASK_NAME='squad'

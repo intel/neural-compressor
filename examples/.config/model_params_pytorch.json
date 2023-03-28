@@ -1,15 +1,13 @@
 {
   "pytorch": {
-    "resnet18": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+    "resnet50": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "resnet50",
+      "main_script": "main.py",
+      "batch_size": 100
     },
-    "resnet18_fx": {
+    "resnet18": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
@@ -23,35 +21,33 @@
      "main_script": "main.py",
      "batch_size": 100
     },
-    "efficientnet_b0_fx": {
+    "resnext_101":{
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "resnext101_32x8d",
+      "main_script": "main.py",
+      "batch_size": 100
+     },
+    "efficientnet_b0": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b0",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "efficientnet_b3_fx": {
+    "efficientnet_b3": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b3",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "efficientnet_b7_fx": {
+    "efficientnet_b7": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b7",
       "main_script": "main.py",
       "batch_size": 100
-    },
-    "resnet50": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
     },
     "resnet50_ipex": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
@@ -90,52 +86,21 @@
       "batch_size": 100,
       "new_benchmark": false
     },
-    "resnext101_32x8d": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
     "inception_v3": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "inception_v3",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "mobilenet_v2": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "mobilenet_v2",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "resnet18_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet18_buildin_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet18_qat_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
@@ -143,63 +108,39 @@
       "batch_size": 100
     },
     "resnet50_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet50_qat_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet50",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "resnet101_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
+    "resnext101_qat": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "resnext101_32x8d",
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "mobilenet_v2_qat": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "peleenet": {
-      "model_src_dir": "image_recognition/peleenet/quantization/ptq/fx",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "/tf_dataset/pytorch/peleenet/peleenet_acc7208.pth.tar",
+      "input_model": "mobilenet_v2",
       "main_script": "main.py",
       "batch_size": 100
     },
     "resnest50": {
-      "model_src_dir": "image_recognition/resnest/quantization/ptq/eager",
+      "model_src_dir": "image_recognition/resnest/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "resnest50",
+      "main_script": "verify.py",
+      "batch_size": 100
     },
     "se_resnext50_32x4d": {
-      "model_src_dir": "image_recognition/se_resnext/quantization/ptq/eager",
+      "model_src_dir": "image_recognition/se_resnext/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "input_model": "se_resnext50_32x4d",
+      "main_script": "run_eval.py",
+      "batch_size": 100
     },
     "yolo_v3": {
       "model_src_dir": "object_detection/yolo_v3/quantization/ptq_static/fx",
@@ -211,35 +152,35 @@
     "bert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/base_weights/bert_MRPC_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-mrpc",
       "main_script": "run_glue.py",
       "batch_size": 64
     },
     "bert_base_CoLA": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/base_weights/bert_CoLA_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-CoLA",
       "main_script": "run_glue.py",
       "batch_size": 64
     },
     "bert_base_STS-B": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/base_weights/bert_STS-B_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-STS-B",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
     "bert_base_SST-2": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/base_weights/bert_SST-2_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-cased-finetuned-sst2",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
     "bert_base_RTE": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/base_weights/bert_RTE_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-rte",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
@@ -260,7 +201,7 @@
     "bert_large_QNLI": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/weights/bert_QNLI_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-QNLI",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
@@ -281,7 +222,7 @@
     "bert_large_CoLA": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/glue_data/weights/bert_CoLA_output",
+      "input_model": "/tf_dataset2/models/huggingface/bert-large-uncased-cola",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
@@ -343,40 +284,25 @@
       "new_benchmark": false
     },
     "xlnet_base_cased_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlnet_output",
-      "yaml": "xlnet-base-cased.yaml",
-      "strategy": "basic",
+      "input_model": "/tf_dataset2/models/huggingface/xlnet-base-cased-mrpc",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
     "roberta_base_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/roberta_output",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "input_model": "/tf_dataset2/models/huggingface/roberta-base-MRPC",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
     "camembert_base_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/camembert_output",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "input_model": "/tf_dataset2/models/huggingface/camembert-base-mrpc",
       "batch_size": 64,
-      "new_benchmark": false
-    },
-    "3dunet": {
-      "model_src_dir": "image_recognition/3d-unet/quantization/ptq/eager",
-      "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build",
-      "input_model": "/tf_dataset/pytorch/mlperf_3dunet/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
     "rnnt": {
       "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/eager",
@@ -412,30 +338,26 @@
        "main_script": "run_asr.py",
        "batch_size": 1
     },
-    "distilbert_base_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
+    "distilbert_base_MRPC_dynamic": {
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/distilbert_mrpc",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "input_model": "/tf_dataset2/models/huggingface/distilbert-base-uncased-MRPC",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
-    "distilbert_base_MRPC_fx": {
+    "distilbert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/distilbert_mrpc",
+      "input_model": "/tf_dataset2/models/huggingface/distilbert-base-uncased-MRPC",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
     "albert_base_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/albert_mrpc",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "input_model": "/tf_dataset2/models/huggingface/albert-base-v2-MRPC",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
     "funnel_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
@@ -471,10 +393,10 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "t5_WMT_en_ro": {
+    "t5-small": {
       "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/wmt16",
-      "input_model": "/tf_dataset2/models/huggingface/t5-small-finetuned-en-to-ro-dataset_20",
+      "input_model": "/tf_dataset2/models/huggingface/t5-small",
       "batch_size": 64,
       "main_script": "run_translation.py"
     },
@@ -486,13 +408,11 @@
       "main_script": "run_translation.py"
     },
     "pegasus_samsum": {
-      "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": false
+      "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/fx",
+      "dataset_location": "/tf_dataset/pytorch/billsum",
+      "input_model": "/tf_dataset2/models/huggingface/pegasus-samsum",
+      "main_script": "run_summarization.py",
+      "batch_size": 64
     },
     "dialogpt_wikitext": {
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/eager",
@@ -514,6 +434,13 @@
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
+      "main_script": "run_clm.py",
+      "batch_size": 8
+    },
+    "gpt_neox":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
+      "dataset_location": "/tf_dataset/pytorch/glue_data_new/oscar",
+      "input_model": "/tf_dataset2/models/huggingface/gpt-neox-japanese-2.7b",
       "main_script": "run_clm.py",
       "batch_size": 8
     },
@@ -560,14 +487,12 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "deberta_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
+    "deberta_MNLI": {
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/deberta_mrpc",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "input_model": "/tf_dataset2/models/huggingface/deberta-base-mnli",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
     "squeezebert_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
@@ -580,28 +505,10 @@
     },
     "xlm-roberta-base_MRPC_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
-      "dataset_location": "/tf_dataset/pytorch/glue_data_new",
+      "dataset_location": "",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm_roberta_MRPC",
       "batch_size": 16,
       "main_script": "run_glue.py"
-    },
-    "xlnet_base_MRPC(rm)": {
-      "model_src_dir": "eager/huggingface_models",
-      "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlnet_base_MRPC",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
-    },
-    "gpt2_MRPC(rm)": {
-      "model_src_dir": "eager/huggingface_models",
-      "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/gpt2_MRPC",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
     },
     "transfo_xl_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
@@ -621,30 +528,21 @@
       "batch_size": 1,
       "new_benchmark": false
     },
-    "xlm_MRPC(rm)": {
-      "model_src_dir": "eager/huggingface_models",
-      "dataset_location": "/tf_dataset/pytorch/glue_data_new",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm_mrpc_dynamic",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
-    },
-    "ssd_resnet34_fx": {
+    "ssd-resnet34": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/resized_1200x1200/coconpy",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/resnet34-ssd1200.pytorch",
       "main_script": "python/main.py",
       "batch_size": 100
     },
-    "ssd_resnet34_ipex": {
+    "ssd-resnet34_ipex": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/ipex",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34_ipex/resnet34-ssd1200.pth",
       "main_script": "infer.py",
       "batch_size": 100
     },
-    "ssd_resnet34_qat_fx": {
+    "ssd-resnet34_qat": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/qat/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/ssd_resnet34_qat_fx.pt",
@@ -663,9 +561,9 @@
     "bert_base_MRPC_qat": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC/",
-      "input_model": "/tf_dataset2/models/pytorch/bert_model",
-      "batch_size": 8,
-      "main_script": "run_glue.py"
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-mrpc",
+      "main_script": "run_glue.py",
+      "batch_size": 64
     },
     "bloom-560m_sq": {
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",

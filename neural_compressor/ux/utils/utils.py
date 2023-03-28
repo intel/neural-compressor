@@ -23,7 +23,9 @@ from copy import copy
 from functools import wraps
 from importlib.util import find_spec
 from pathlib import Path
+from tarfile import TarFile
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from zipfile import ZipFile
 
 from werkzeug.utils import secure_filename
 
@@ -678,3 +680,21 @@ def parse_version(string_version: Optional[str]) -> str:
     if version == "":
         raise InternalException("Could not parse version.")
     return version
+
+
+def are_archive_filenames_valid(filenames: list) -> bool:
+    """Validate if archive filenames are not malicious."""
+    for file in filenames:
+        if f"..{os.sep}" in file:
+            return False
+    return True
+
+
+def safe_extract_archive(
+    file: Union[ZipFile, TarFile],
+    destination_dir: str,
+    members: list,
+) -> None:
+    """Extract archive in safe way."""
+    if are_archive_filenames_valid(members):
+        file.extractall(destination_dir)

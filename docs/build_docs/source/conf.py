@@ -14,6 +14,8 @@ release = version
 with open("version.txt", "w") as f:
     f.write(version)
 
+repo_url = "https://github.com/intel/neural-compressor/blob/v{}".format(version)
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -33,7 +35,8 @@ extensions = [
         'sphinx_md',
         'autoapi.extension',
         'sphinx.ext.napoleon',
-        'sphinx.ext.githubpages'
+        'sphinx.ext.githubpages',
+        "sphinx.ext.linkcode"
         ]
 
 autoapi_dirs = ['../../neural_compressor']
@@ -41,8 +44,8 @@ autoapi_root = "autoapi"
 autoapi_keep_files = True
 autoapi_add_toctree_entry = False
 autosummary_generate = True
-autoapi_options = ['members',  'show-inheritance',
-                   'show-module-summary', 'imported-members', ]
+autoapi_options = ['members',
+                   'show-module-summary']
 autoapi_ignore = []
 
 templates_path = ['_templates']
@@ -64,5 +67,20 @@ html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
 
+def skip_util_classes(app, what, name, obj, skip, options):
+    if what=='property' or what=='method':
+        skip = True
+    return skip
+
 def setup(app):
    app.add_css_file("custom.css")
+   app.connect("autoapi-skip-member", skip_util_classes)
+
+
+def linkcode_resolve(domain, info):
+    if domain != 'py':
+        return None
+    if not info['module']:
+        return None
+    filename = info['module'].replace('.', '/')
+    return "{}/{}.py".format(repo_url, filename)

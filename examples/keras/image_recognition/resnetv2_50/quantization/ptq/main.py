@@ -74,8 +74,7 @@ def evaluate(model):
     Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-        measurer (object, optional): for benchmark measurement of duration.
+        model (tf.keras.Model): The input model will be the class of tf.keras.Model.
 
     Returns:
         accuracy (float): evaluation result, the larger is better.
@@ -133,7 +132,7 @@ def main(_):
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(backend='itex', cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(backend='itex', cores_per_instance=4, num_of_instance=1)
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model.model import Model

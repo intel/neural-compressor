@@ -11,48 +11,50 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Inject, Input, OnChanges, OnInit, Optional, ViewChild } from '@angular/core';
+
+/* eslint no-underscore-dangle: 0 */
+import { Component, EventEmitter, Inject, Input, OnChanges, OnDestroy, OnInit, Optional, Output, ViewEncapsulation } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatSidenav } from '@angular/material/sidenav';
-import { Subject } from 'rxjs';
 import { ModelService } from '../services/model.service';
+
+const cytoscape = require('cytoscape');
+const dagre = require('cytoscape-dagre');
+cytoscape.use(dagre);
+const nodeHtmlLabel = require('cytoscape-node-html-label');
+nodeHtmlLabel(cytoscape);
 
 @Component({
   selector: 'app-graph',
   templateUrl: './graph.component.html',
-  styleUrls: ['./graph.component.scss']
+  styleUrls: ['./graph.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
-export class GraphComponent implements OnChanges, OnInit {
+export class GraphComponent implements OnChanges, OnInit, OnDestroy {
 
   @Input() modelPath: string;
   @Input() showOps?: boolean;
   @Input() diagnosisTabParams?: { Pattern: { sequence: string[] } };
+  @Output() showNodeDetails = new EventEmitter<Node>();
 
-  @ViewChild('sidenav') sidenav: MatSidenav;
+  cy;
+  nav;
 
   edges: Edge[] = [];
   nodes: Node[] = [];
-  nodeDetails: Node;
   expandedNodesArray = [];
   showSpinner = false;
-  miniMapMaxHeight = window.innerHeight;
 
-  layoutSettings = { orientation: 'TB' };
-  panToNodeObservable: Subject<string> = new Subject<string>();
-  updateObservable: Subject<string> = new Subject<string>();
-  center$: Subject<boolean> = new Subject();
-  zoomToFit$: Subject<boolean> = new Subject();
-
+  //bright
   customColor = [
-    '#005B85',
-    '#0095CA',
-    '#00C7FD',
-    '#047271',
-    '#07b3b0',
-    '#9E8A87',
-    '#333471',
-    '#5153B0',
-    '#ED6A5E ',
+    '#5B69FF',
+    '#FF848A',
+    '#EDB200',
+    '#1E2EB8',
+    '#FF5662',
+    '#C98F00',
+    '#000F8A',
+    '#C81326',
+    '#000864',
     '#9D79BC',
     '#A14DA0',
   ];
@@ -65,14 +67,150 @@ export class GraphComponent implements OnChanges, OnInit {
   ngOnInit() {
     this.showSpinner = true;
     this.getGraph();
+    this.modelService.projectChanged$
+      .subscribe((response: { id: number; tab: string }) => {
+        this.showSpinner = true;
+        setTimeout(() => {
+          this.getGraph();
+        }, 500);
+      });
+  }
+
+  cytoGraph(elements) {
+    this.cy = cytoscape({
+
+      container: document.getElementById('cy'),
+      elements,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'background-color': 'data(color)',
+            'border-color': 'data(border_color)',
+            'border-width': '3px',
+            color: '#fff',
+            label: 'data(label)',
+            shape: 'round-rectangle',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            width: (node: any) => node.data('label').length * 10,
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'font-size': '10px',
+            'source-text-offset': '10px',
+            'target-text-offset': '10px',
+            width: 3,
+            'line-color': '#ccc',
+            'target-arrow-color': '#ccc',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'taxi',
+          }
+        },
+        {
+          selector: 'node',
+          css: {
+            'font-family': 'IntelClearRg',
+          }
+        },
+        {
+          selector: 'node.selected',
+          css: {
+            'border-color': '#00c7fd'
+          }
+        },
+        {
+          selector: 'node.hover',
+          css: {
+            'border-color': '#B1BABF',
+            'border-style': 'dashed',
+          }
+        },
+        {
+          selector: 'node[node_type = \'group_node\']',
+          css: {
+            color: 'black'
+          }
+        },
+        {
+          selector: 'node[highlight = \'true\']',
+          css: {
+            'border-color': '#FEC91B'
+          }
+        }
+      ],
+      layout: {
+        name: 'dagre',
+        padding: 24,
+        spacingFactor: 1.5,
+        animate: true
+      },
+    });
+
+    this.cy.nodeHtmlLabel([
+      {
+        query: 'node[node_type = "group_node"]',
+        halign: 'right',
+        valign: 'bottom',
+        cssClass: 'plus-sign',
+        tpl: (data) => '<div>&#65291;</div>'
+      }
+    ]);
+
+    this.cy.on('click', (event) => {
+      if (event.target._private.data.node_type === 'group_node') {
+        this.expand(event.target._private.data.id);
+      }
+    });
+
+    this.cy.on('mouseover', 'node', e => {
+      e.target.addClass('hover');
+    });
+
+    this.cy.on('mouseout', 'node', e => {
+      e.target.removeClass('hover');
+    });
+
+    this.cy.on('tap', 'node', e => {
+      this.cy.elements('node:selected').removeClass('selected');
+      if (e.target._private.data.node_type === 'node') {
+        e.target.addClass('selected');
+        this.showNodeDetails.next(e.target._private.data);
+      }
+    });
+
+    setTimeout(() => {
+      if (this.cy.elements('node[highlight = \'true\']').length) {
+        this.cy.reset();
+        this.cy.center(this.cy.elements('node[highlight = \'true\']')[0]);
+      } else {
+        this.cy.zoom({
+          level: 2.0
+        });
+        this.cy.center();
+      }
+    }, 1000);
+
+    this.showSpinner = false;
+  }
+
+  ngOnDestroy(): void {
+    this.cy.destroy();
   }
 
   ngOnChanges(): void {
-    this.showSpinner = true;
-    if (this.diagnosisTabParams?.Pattern) {
-      this.highlightPatternInGraph();
-    } else {
-      this.getGraph();
+    if (this.showOps) {
+      setTimeout(() => {
+        if (this.cy) {
+          this.cy.fit();
+          this.cy.zoom();
+        }
+      }, 1000);
+      if (this.diagnosisTabParams?.Pattern) {
+        this.highlightPatternInGraph();
+      }
     }
   }
 
@@ -86,7 +224,6 @@ export class GraphComponent implements OnChanges, OnInit {
         (response: { graph: any; groups: any }) => {
           this.updateGraph(response.graph);
           this.expandedNodesArray = response.groups;
-          this.panToNodeObservable.next(this.diagnosisTabParams['OP name']);
         },
         error => {
           this.modelService.openErrorDialog(error);
@@ -108,57 +245,68 @@ export class GraphComponent implements OnChanges, OnInit {
   }
 
   center() {
-    this.center$.next(true);
+    this.cy.center();
   }
 
   zoomToFit() {
-    this.zoomToFit$.next(true);
+    this.cy.fit();
+  }
+
+  reset() {
+    this.cy.reset();
   }
 
   updateGraph(graph: any) {
+    const elements = [];
     const nodes = [];
     const edges = [];
     graph.nodes.forEach(node => {
       nodes.push({
-        id: node.id,
-        label: node.label,
-        attributes: node.attributes,
-        properties: node.properties,
-        node_type: node.node_type,
-        highlight: node.highlight,
-        color: node.label.includes('Relu') ? this.customColor[1] : this.customColor[0]
+        data: {
+          id: node.id,
+          label: this.getLabel(node.label),
+          parent: node.parent,
+          attributes: node.attributes,
+          properties: node.properties,
+          node_type: node.node_type,
+          highlight: String(node.highlight),
+          border_color: node.node_type === 'group_node' ? '#5B69FF' : this.customColor[node.label.length % this.customColor.length],
+          color: node.node_type === 'group_node' ? '#fff' : this.customColor[node.label.length % this.customColor.length],
+        },
+        grabbable: false,
       });
     });
     graph.edges.forEach(edge => {
       edges.push({
-        source: edge.source,
-        target: edge.target,
+        data: {
+          source: edge.source,
+          target: edge.target,
+          // source_label: edge.source_label,
+          // target_label: edge.target_label,
+        }
       });
     });
     this.nodes = nodes;
     this.edges = edges;
-    this.showSpinner = false;
+    elements.push(... this.nodes);
+    elements.push(... this.edges);
+    this.cytoGraph(elements);
   }
 
-  getDetails(node: Node) {
-    if (this.showOps) {
-      this.modelService.getNodeDetails$.next(node.id);
+  getLabel(label: string) {
+    if (label.includes('/')) {
+      return label.replace(/^.*[\\\/]/, '');
     } else {
-      this.nodeDetails = node;
-      this.sidenav.open();
+      return label;
     }
   }
 
-  close() {
-    this.sidenav.close();
-  }
-
-  expand(id: string) {
+  expand(nodeId: string) {
     this.showSpinner = true;
-    if (this.expandedNodesArray.includes(id)) {
-      this.collapse(id);
+    if (this.expandedNodesArray.includes(nodeId)) {
+      this.collapse(nodeId);
     } else {
-      this.expandedNodesArray.push(id);
+      this.expandedNodesArray.push(nodeId);
     }
     this.modelService.getModelGraph(this.modelPath, this.expandedNodesArray)
       .subscribe(

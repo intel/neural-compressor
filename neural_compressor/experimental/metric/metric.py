@@ -70,7 +70,7 @@ class MXNetMetrics(object):
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         from ...adaptor.mxnet_utils.util import check_mx_version
-        if check_mx_version('2.0.0'):
+        if check_mx_version('2.0.0'): # pragma: no cover
             import mxnet.gluon.metric as mx_metrics
         else:
             import mxnet.metric as mx_metrics
@@ -158,7 +158,7 @@ class METRICS(object):
         Args:
             framework: The framwork name.
         """
-        assert framework in ("tensorflow", "tensorflow_itex","keras",
+        assert framework in ("tensorflow", "tensorflow_itex", "keras",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
                              "onnxruntime"), \
@@ -218,7 +218,7 @@ def metric_registry(metric_type: str, framework: str):
                 "pytorch_fx",
                 ], "The framework support tensorflow mxnet pytorch onnxrt"
 
-            if metric_type in registry_metrics[single_framework].keys():
+            if metric_type in registry_metrics[single_framework].keys(): # pragma: no cover
                 raise ValueError('Cannot have two metrics with the same name')
             registry_metrics[single_framework][metric_type] = cls
         return cls
@@ -288,7 +288,7 @@ class BaseMetric(object):
         Returns:
             The metric class.
         """
-        return self._metric
+        return self._metric_cls
 
     @property
     def hvd(self):
@@ -320,19 +320,19 @@ class WrapPyTorchMetric(BaseMetric):
             labels: The reference. Defaults to None.
             sample_weight: The sampling weight. Defaults to None.
         """
-        if self._single_output:
+        if self._single_output: # pragma: no cover
             output = torch.as_tensor(preds)
         else:
             output = (torch.as_tensor(preds), torch.as_tensor(labels))
-        self._metric.update(output)
+        self._metric_cls.update(output)
 
     def reset(self):
         """Clear the predictions and labels."""
-        self._metric.reset()
+        self._metric_cls.reset()
 
     def result(self):
         """Evaluate the difference between predictions and labels."""
-        return self._metric.compute()
+        return self._metric_cls.result()
 
 
 class WrapMXNetMetric(BaseMetric):
@@ -376,11 +376,11 @@ class WrapONNXRTMetric(BaseMetric):
         """
         preds = np.array(preds)
         labels = np.array(labels)
-        self._metric.update(labels=labels, preds=preds)
+        self._metric_cls.update(labels=labels, preds=preds)
 
     def reset(self):
         """Clear the predictions and labels."""
-        self._metric.reset()
+        self._metric_cls.reset()
 
     def result(self):
         """Evaluate the difference between predictions and labels.
@@ -388,7 +388,7 @@ class WrapONNXRTMetric(BaseMetric):
         Returns:
             acc: The evaluated result.
         """
-        acc_name, acc = self._metric.get()
+        acc_name, acc = self._metric_cls.result()
         return acc
 
 def _topk_shape_validate(preds, labels):
@@ -611,7 +611,7 @@ class Accuracy(BaseMetric):
         """Compute the accuracy."""
         correct_num = np.sum(
             np.array(self.pred_list) == np.array(self.label_list))
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             allghter_correct_num = sum(self._hvd.allgather_object(correct_num))
             allgather_sample = sum(self._hvd.allgather_object(self.sample))
             return allghter_correct_num / allgather_sample
@@ -700,7 +700,7 @@ class Loss(BaseMetric):
         Returns:
             The dummy loss.
         """
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             allgather_sum = sum(self._hvd.allgather_object(self.sum))
             allgather_sample = sum(self._hvd.allgather_object(self.sample))
             return allgather_sum / allgather_sample
@@ -759,7 +759,7 @@ class MAE(BaseMetric):
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
         assert aes_size, "predictions shouldn't be none"
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             aes_sum = sum(self._hvd.allgather_object(aes_sum))
             aes_size = sum(self._hvd.allgather_object(aes_size))       
         return aes_sum / aes_size
@@ -803,7 +803,7 @@ class RMSE(BaseMetric):
         Returns:
             The RMSE score.
         """
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             self.mse._hvd = self._hvd
         return np.sqrt(self.mse.result())
 
@@ -862,7 +862,7 @@ class MSE(BaseMetric):
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
         assert squares_size, "predictions should't be None"
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             squares_sum = sum(self._hvd.allgather_object(squares_sum))
             squares_size = sum(self._hvd.allgather_object(squares_size))       
         return squares_sum / squares_size
@@ -928,7 +928,7 @@ class TensorflowTopK(BaseMetric):
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
-        elif getattr(self, '_hvd', None) is not None:
+        elif getattr(self, '_hvd', None) is not None: # pragma: no cover
             allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
             allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
             return allgather_num_correct / allgather_num_sample 
@@ -996,7 +996,7 @@ class GeneralTopK(BaseMetric):
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
-        elif getattr(self, '_hvd', None) is not None:
+        elif getattr(self, '_hvd', None) is not None: # pragma: no cover
             allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
             allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
             return allgather_num_correct / allgather_num_sample
@@ -1221,7 +1221,7 @@ class TensorflowMAP(BaseMetric):
             labels: The labels corresponding to the predictions.
             sample_weight: The sample weight.
         """
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             raise NotImplementedError("Metric TensorflowMAP currently do not support distribued inference.")
 
         from .coco_tools import ExportSingleImageGroundtruthToCoco,\
@@ -1402,7 +1402,7 @@ class SquadF1(BaseMetric):
         """
         if preds:
             from .evaluate_squad import evaluate
-            if getattr(self, '_hvd', None) is not None:
+            if getattr(self, '_hvd', None) is not None: # pragma: no cover
                 gathered_preds_list = self._hvd.allgather_object(preds)
                 gathered_labels_list = self._hvd.allgather_object(labels)
                 temp_preds_list, temp_labels_list = [], []
@@ -1448,7 +1448,7 @@ class mIOU(BaseMetric):
         labels = labels.flatten()
         p_dtype = preds.dtype
         l_dtype = labels.dtype
-        if getattr(self, '_hvd', None) is not None:
+        if getattr(self, '_hvd', None) is not None: # pragma: no cover
             preds = self._hvd.allgather_object(preds)
             labels = self._hvd.allgather_object(labels)
             preds_list, labels_list = np.array([], dtype = p_dtype), np.array([], dtype = l_dtype)
@@ -1536,7 +1536,7 @@ class ONNXRTGLUE(BaseMetric):
 
         if output_mode == "classification":
             processed_preds = np.argmax(self.pred_list, axis=1)
-        elif output_mode == "regression":
+        elif output_mode == "regression": # pragma: no cover
             processed_preds = np.squeeze(self.pred_list)
         result = transformers.glue_compute_metrics(\
             self.task, processed_preds, self.label_list)

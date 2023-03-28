@@ -44,7 +44,6 @@ import { FileBrowserComponent } from './file-browser/file-browser.component';
 import { AuthenticationInterceptor } from './authentication/authentication.interceptor';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { GraphComponent } from './graph/graph.component';
-import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { APP_BASE_HREF, CommonModule } from '@angular/common';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -89,6 +88,7 @@ import { MatTreeModule } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { DynamicFormFieldComponent } from './dynamic-form-field/dynamic-form-field.component';
 import { CapitalLetterPipe } from './pipes/capitalLetter.pipe';
+import { JobsQueueComponent } from './jobs-queue/jobs-queue.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefix }}'
@@ -130,6 +130,7 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     GenerateConfigDialogComponent,
     PruningComponent,
     DynamicFormFieldComponent,
+    JobsQueueComponent,
   ],
   imports: [
     DragDropModule,
@@ -167,7 +168,6 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     MatTreeModule,
     NgDatePipesModule,
     NgxChartsModule,
-    NgxGraphModule,
     PlotlyModule,
     ReactiveFormsModule,
     KeyboardShortcutsModule.forRoot()
