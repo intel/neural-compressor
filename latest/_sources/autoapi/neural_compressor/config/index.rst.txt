@@ -36,27 +36,6 @@ Classes
 
 
 
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.config.check_value
-
-
-
-.. py:function:: check_value(name, src, supported_type, supported_value=[])
-
-   Check if the given object is the given supported type and in the given supported value.
-
-   Example::
-
-       from neural_compressor.config import check_value
-
-       def datatype(self, datatype):
-           if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
-               self._datatype = datatype
-
 
 .. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
 

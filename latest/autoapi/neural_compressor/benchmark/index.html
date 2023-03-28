@@ -85,16 +85,6 @@
 <p>Benchmark is used for evaluating the model performance.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.Benchmark" title="neural_compressor.benchmark.Benchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Benchmark</span></code></a></p></td>
-<td><p>Benchmark class can be used to evaluate the model performance.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
@@ -178,18 +168,6 @@
 <dt class="sig sig-object py" id="neural_compressor.benchmark.get_bounded_threads">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_bounded_threads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sockets</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_bounded_threads" title="Permalink to this definition"></a></dt>
 <dd><p>Return the threads id list that we will bind instances to.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">Benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.Benchmark" title="Permalink to this definition"></a></dt>
-<dd><p>Benchmark class can be used to evaluate the model performance.</p>
-<p>With the objective setting, user can get the data of what they configured in yaml.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conf</strong> (<em>obj</em>) – The config.BenchmarkConfig class containing accuracy goal, tuning objective etc.</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">

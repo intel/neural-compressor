@@ -12,14 +12,6 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.quantization.PostTrainingQuant
-
-
 
 Functions
 ~~~~~~~~~
@@ -28,28 +20,6 @@ Functions
 
    neural_compressor.quantization.fit
 
-
-
-.. py:class:: PostTrainingQuant(conf, **kwargs)
-
-   Post Training Quantization class.
-
-   It automatically searches for optimal quantization recipes for low precision model inference,
-   achieving best tuning objectives like inference performance within accuracy loss constraints.
-   Tuner abstracts out the differences of quantization APIs across various DL frameworks
-   and brings a unified API for automatic quantization that works on frameworks including
-   tensorflow, pytorch and mxnet.
-   Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
-   (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
-
-   Example::
-
-       conf = PostTrainingQuantConfig()
-       quantizer = PostTrainingQuant(conf)
-       quantizer.model = model
-       quantizer.eval_func = eval_func
-       quantizer.calib_dataloader = calib_dataloader
-       q_model = quantizer.fit()
 
 
 .. py:function:: fit(model, conf, calib_dataloader=None, calib_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
