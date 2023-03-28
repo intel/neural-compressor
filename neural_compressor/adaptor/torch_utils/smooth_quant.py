@@ -541,7 +541,6 @@ class TorchSmoothQuant:
             self.weight_scale_info.update(op_weight_scale)
             self.absorb_scales_info.update(op_absorb_scale)
         self.input_values, self.output_values = {}, {}
-        del self.input_values, self.output_values
 
     def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100):
