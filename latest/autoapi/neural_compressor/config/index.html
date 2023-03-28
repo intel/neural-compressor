@@ -385,19 +385,20 @@ Defaults to None.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – device for execution. Support ‘cpu’ and ‘gpu’, default is ‘cpu’</p></li>
-<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – backend for model execution. Support ‘default’, ‘itex’, ‘ipex’,
-‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, default is ‘default’</p></li>
-<li><p><strong>precision</strong> (<em>str</em><em>, </em><em>optional</em>) – target precision for mix precision conversion.
-Support ‘bf16’ and ‘fp16’, default is ‘bf16’</p></li>
-<li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – inputs of model, default is []</p></li>
-<li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – outputs of model, default is []</p></li>
-<li><p><strong>tuning_criterion</strong> (<em>TuningCriterion object</em><em>, </em><em>optional</em>) – accuracy tuning settings, it won’t work
-if there is no accuracy tuning process</p></li>
-<li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – accuracy constraint settings, it won’t
-work if there is no accuracy tuning process</p></li>
-<li><p><strong>excluded_precisions</strong> (<em>list</em><em>, </em><em>optional</em>) – precisions to be excluded during mix precision conversion,
-default is []</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – Device for execution.
+Support ‘cpu’ and ‘gpu’, default is ‘cpu’.</p></li>
+<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend for model execution.
+Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’,
+default is ‘default’.</p></li>
+<li><p><strong>precision</strong> (<em>str</em><em>, </em><em>optional</em>) – Target precision for mix precision conversion.
+Support ‘bf16’ and ‘fp16’, default is ‘bf16’.</p></li>
+<li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – Inputs of model, default is [].</p></li>
+<li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – Outputs of model, default is [].</p></li>
+<li><p><strong>tuning_criterion</strong> (<em>TuningCriterion object</em><em>, </em><em>optional</em>) – Accuracy tuning settings,
+it won’t work if there is no accuracy tuning process.</p></li>
+<li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – Accuracy constraint settings,
+it won’t work if there is no accuracy tuning process.</p></li>
+<li><p><strong>excluded_precisions</strong> (<em>list</em><em>, </em><em>optional</em>) – Precisions to be excluded during mix precision conversion, default is [].</p></li>
 </ul>
 </dd>
 </dl>
