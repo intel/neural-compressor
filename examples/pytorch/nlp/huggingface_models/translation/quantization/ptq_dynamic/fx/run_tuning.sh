@@ -55,7 +55,9 @@ function run_tuning {
         --source_lang en \
         --target_lang ro \
         --dataset_config_name ro-en \
+        --source_prefix "translate English to Romanian: "\
         --dataset_name wmt16 \
+        --overwrite_cache \
         --tune \
         --overwrite_output_dir \
         ${extra_cmd}
