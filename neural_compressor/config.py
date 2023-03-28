@@ -61,15 +61,15 @@ ops_schema = Schema({
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
 
 
-def check_value(name, src, supported_type, supported_value=[]):
+def _check_value(name, src, supported_type, supported_value=[]):
     """Check if the given object is the given supported type and in the given supported value.
 
     Example::
 
-        from neural_compressor.config import check_value
+        from neural_compressor.config import _check_value
 
         def datatype(self, datatype):
-            if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
+            if _check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
                 self._datatype = datatype
     """
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
@@ -109,7 +109,7 @@ class Options:
     @random_seed.setter
     def random_seed(self, random_seed):
         """Set random seed."""
-        if check_value('random_seed', random_seed, int):
+        if _check_value('random_seed', random_seed, int):
             self._random_seed = random_seed
 
     @property
@@ -120,7 +120,7 @@ class Options:
     @workspace.setter
     def workspace(self, workspace):
         """Set workspace."""
-        if check_value('workspace', workspace, str):
+        if _check_value('workspace', workspace, str):
             self._workspace = workspace
 
     @property
@@ -131,7 +131,7 @@ class Options:
     @resume_from.setter
     def resume_from(self, resume_from):
         """Set resume_from."""
-        if resume_from is None or check_value('resume_from', resume_from, str):
+        if resume_from is None or _check_value('resume_from', resume_from, str):
             self._resume_from = resume_from
 
     @property
@@ -142,7 +142,7 @@ class Options:
     @tensorboard.setter
     def tensorboard(self, tensorboard):
         """Set tensorboard."""
-        if check_value('tensorboard', tensorboard, bool):
+        if _check_value('tensorboard', tensorboard, bool):
             self._tensorboard = tensorboard
 
 
@@ -205,7 +205,7 @@ class BenchmarkConfig:
     @backend.setter
     def backend(self, backend):
         """Set backend."""
-        if check_value('backend', backend, str, [
+        if _check_value('backend', backend, str, [
                 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
@@ -217,7 +217,7 @@ class BenchmarkConfig:
     @outputs.setter
     def outputs(self, outputs):
         """Set outputs."""
-        if check_value('outputs', outputs, str):
+        if _check_value('outputs', outputs, str):
             self._outputs = outputs
 
     @property
@@ -228,7 +228,7 @@ class BenchmarkConfig:
     @inputs.setter
     def inputs(self, inputs):
         """Set inputs."""
-        if check_value('inputs', inputs, str):
+        if _check_value('inputs', inputs, str):
             self._inputs = inputs
 
     @property
@@ -239,7 +239,7 @@ class BenchmarkConfig:
     @warmup.setter
     def warmup(self, warmup):
         """Set warmup."""
-        if check_value('warmup', warmup, int):
+        if _check_value('warmup', warmup, int):
             self._warmup = warmup
 
     @property
@@ -250,7 +250,7 @@ class BenchmarkConfig:
     @iteration.setter
     def iteration(self, iteration):
         """Set iteration."""
-        if check_value('iteration', iteration, int):
+        if _check_value('iteration', iteration, int):
             self._iteration = iteration
 
     @property
@@ -261,7 +261,7 @@ class BenchmarkConfig:
     @cores_per_instance.setter
     def cores_per_instance(self, cores_per_instance):
         """Set cores_per_instance."""
-        if cores_per_instance is None or check_value('cores_per_instance', cores_per_instance,
+        if cores_per_instance is None or _check_value('cores_per_instance', cores_per_instance,
                                                      int):
             self._cores_per_instance = cores_per_instance
 
@@ -273,7 +273,7 @@ class BenchmarkConfig:
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
         """Set num_of_instance."""
-        if num_of_instance is None or check_value('num_of_instance', num_of_instance, int):
+        if num_of_instance is None or _check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
@@ -284,7 +284,7 @@ class BenchmarkConfig:
     @inter_num_of_threads.setter
     def inter_num_of_threads(self, inter_num_of_threads):
         """Set inter_num_of_threads."""
-        if inter_num_of_threads is None or check_value('inter_num_of_threads',
+        if inter_num_of_threads is None or _check_value('inter_num_of_threads',
                                                        inter_num_of_threads, int):
             self._inter_num_of_threads = inter_num_of_threads
 
@@ -296,7 +296,7 @@ class BenchmarkConfig:
     @intra_num_of_threads.setter
     def intra_num_of_threads(self, intra_num_of_threads):
         """Get intra_num_of_threads."""
-        if intra_num_of_threads is None or check_value('intra_num_of_threads',
+        if intra_num_of_threads is None or _check_value('intra_num_of_threads',
                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
 
@@ -328,7 +328,7 @@ class AccuracyCriterion:
     @higher_is_better.setter
     def higher_is_better(self, higher_is_better):
         """Set higher_is_better."""
-        if check_value('higher_is_better', higher_is_better, bool):
+        if _check_value('higher_is_better', higher_is_better, bool):
             self._higher_is_better = higher_is_better
 
     @property
@@ -365,7 +365,7 @@ class AccuracyCriterion:
     @criterion.setter
     def criterion(self, criterion):
         """Set criterion."""
-        if check_value('criterion', criterion, str, ['relative', 'absolute']):
+        if _check_value('criterion', criterion, str, ['relative', 'absolute']):
             self._criterion = criterion
 
     @property
@@ -376,7 +376,7 @@ class AccuracyCriterion:
     @tolerable_loss.setter
     def tolerable_loss(self, tolerable_loss):
         """Set tolerable_loss."""
-        if check_value('tolerable_loss', tolerable_loss, float):
+        if _check_value('tolerable_loss', tolerable_loss, float):
             self._tolerable_loss = tolerable_loss
 
     def __str__(self):
@@ -486,7 +486,7 @@ class _BaseQuantizationConfig:
     @domain.setter
     def domain(self, domain):
         """Set domain."""
-        if check_value("domain", domain, str,
+        if _check_value("domain", domain, str,
             ["auto", "cv", "object_detection", "nlp", "recommendation_system"]):
             self._domain = domain
 
@@ -503,66 +503,66 @@ class _BaseQuantizationConfig:
 
         def smooth_quant(val=None):
             if val is not None:
-                return check_value("smooth_quant", val, bool)
+                return _check_value("smooth_quant", val, bool)
             else:
                 return False
 
         def smooth_quant_args(val=None):
             if val is not None:
-                check_value("smooth_quant_args", val, dict)
+                _check_value("smooth_quant_args", val, dict)
                 for k, v in val.items():
                     if k == "alpha":
-                        check_value("alpha", v, float)
+                        _check_value("alpha", v, float)
                 return True
             else:
                 return {}
 
         def fast_bias_correction(val=None):
             if val is not None:
-                return check_value("fast_bias_correction", val, bool)
+                return _check_value("fast_bias_correction", val, bool)
             else:
                 return False
 
         def weight_correction(val=None):
             if val is not None:
-                return check_value("weight_correction", val, bool)
+                return _check_value("weight_correction", val, bool)
             else:
                 return False
 
         def gemm_to_matmul(val=None):
             if val is not None:
-                return check_value("gemm_to_matmul", val, bool)
+                return _check_value("gemm_to_matmul", val, bool)
             else:
                 return True
 
         def graph_optimization_level(val=None):
             if val is not None:
-                return check_value("graph_optimization_level", val, str,
+                return _check_value("graph_optimization_level", val, str,
                     ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
             else:
                 return None
 
         def first_conv_or_matmul_quantization(val=None):
             if val is not None:
-                return check_value("first_conv_or_matmul_quantization", val, bool)
+                return _check_value("first_conv_or_matmul_quantization", val, bool)
             else:
                 return True
 
         def last_conv_or_matmul_quantization(val=None):
             if val is not None:
-                return check_value("last_conv_or_matmul_quantization", val, bool)
+                return _check_value("last_conv_or_matmul_quantization", val, bool)
             else:
                 return True
 
         def pre_post_process_quantization(val=None):
             if val is not None:
-                return check_value("pre_post_process_quantization", val, bool)
+                return _check_value("pre_post_process_quantization", val, bool)
             else:
                 return True
 
         def add_qdq_pair_to_weight(val=None):
             if val is not None:
-                return check_value("add_qdq_pair_to_weight", val, bool)
+                return _check_value("add_qdq_pair_to_weight", val, bool)
             else:
                 return False
 
@@ -574,7 +574,7 @@ class _BaseQuantizationConfig:
 
         def dedicated_qdq_pair(val=None):
             if val is not None:
-                return check_value("dedicated_qdq_pair", val, bool)
+                return _check_value("dedicated_qdq_pair", val, bool)
             else:
                 return False
 
@@ -604,7 +604,7 @@ class _BaseQuantizationConfig:
 
     @accuracy_criterion.setter
     def accuracy_criterion(self, accuracy_criterion):
-        if check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
+        if _check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
             self._accuracy_criterion = accuracy_criterion
 
     @property
@@ -613,7 +613,7 @@ class _BaseQuantizationConfig:
 
     @excluded_precisions.setter
     def excluded_precisions(self, excluded_precisions):
-        if check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
+        if _check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions
 
@@ -631,7 +631,7 @@ class _BaseQuantizationConfig:
 
     @use_distributed_tuning.setter
     def use_distributed_tuning(self, use_distributed_tuning):
-        if check_value('use_distributed_tuning', use_distributed_tuning, bool):
+        if _check_value('use_distributed_tuning', use_distributed_tuning, bool):
             self._use_distributed_tuning = use_distributed_tuning
 
     @property
@@ -640,7 +640,7 @@ class _BaseQuantizationConfig:
 
     @reduce_range.setter
     def reduce_range(self, reduce_range):
-        if reduce_range is None or check_value('reduce_range', reduce_range, bool):
+        if reduce_range is None or _check_value('reduce_range', reduce_range, bool):
             self._reduce_range = reduce_range
 
     @property
@@ -649,7 +649,7 @@ class _BaseQuantizationConfig:
 
     @performance_only.setter
     def performance_only(self, performance_only):
-        if check_value('performance_only', performance_only, bool):
+        if _check_value('performance_only', performance_only, bool):
             self._performance_only = performance_only
 
     @property
@@ -658,7 +658,7 @@ class _BaseQuantizationConfig:
 
     @max_trials.setter
     def max_trials(self, max_trials):
-        if check_value('max_trials', max_trials, int):
+        if _check_value('max_trials', max_trials, int):
             self._max_trials = max_trials
 
     @property
@@ -667,7 +667,7 @@ class _BaseQuantizationConfig:
 
     @timeout.setter
     def timeout(self, timeout):
-        if check_value('timeout', timeout, int):
+        if _check_value('timeout', timeout, int):
             self._timeout = timeout
 
     @property
@@ -676,7 +676,7 @@ class _BaseQuantizationConfig:
 
     @objective.setter
     def objective(self, objective):
-        if check_value('objective', objective, str,
+        if _check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
@@ -686,7 +686,7 @@ class _BaseQuantizationConfig:
 
     @strategy.setter
     def strategy(self, strategy):
-        if check_value('strategy', strategy, str,
+        if _check_value('strategy', strategy, str,
             ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
@@ -736,7 +736,7 @@ class _BaseQuantizationConfig:
 
     @calibration_sampling_size.setter
     def calibration_sampling_size(self, sampling_size):
-        if check_value('calibration_sampling_size', sampling_size, int):
+        if _check_value('calibration_sampling_size', sampling_size, int):
             if isinstance(sampling_size, int):
                 sampling_size =[sampling_size]
             self._calibration_sampling_size = sampling_size
@@ -747,7 +747,7 @@ class _BaseQuantizationConfig:
 
     @device.setter
     def device(self, device):
-        if check_value('device', device, str, ['cpu', 'gpu']):
+        if _check_value('device', device, str, ['cpu', 'gpu']):
             self._device = device
 
     @property
@@ -756,7 +756,7 @@ class _BaseQuantizationConfig:
 
     @quant_format.setter
     def quant_format(self, quant_format):
-        if check_value('quant_format', quant_format, str,
+        if _check_value('quant_format', quant_format, str,
             ['default', 'QDQ', 'QOperator']):
             self._quant_format = quant_format
 
@@ -766,7 +766,7 @@ class _BaseQuantizationConfig:
 
     @backend.setter
     def backend(self, backend):
-        if check_value('backend', backend, str, [
+        if _check_value('backend', backend, str, [
                 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
@@ -776,7 +776,7 @@ class _BaseQuantizationConfig:
 
     @outputs.setter
     def outputs(self, outputs):
-        if check_value('outputs', outputs, str):
+        if _check_value('outputs', outputs, str):
             self._outputs = outputs
 
     @property
@@ -785,7 +785,7 @@ class _BaseQuantizationConfig:
 
     @inputs.setter
     def inputs(self, inputs):
-        if check_value('inputs', inputs, str):
+        if _check_value('inputs', inputs, str):
             self._inputs = inputs
 
     @property
@@ -830,7 +830,7 @@ class TuningCriterion:
     @max_trials.setter
     def max_trials(self, max_trials):
         """Set max_trials."""
-        if check_value('max_trials', max_trials, int):
+        if _check_value('max_trials', max_trials, int):
             self._max_trials = max_trials
 
     @property
@@ -841,7 +841,7 @@ class TuningCriterion:
     @timeout.setter
     def timeout(self, timeout):
         """Set timeout."""
-        if check_value('timeout', timeout, int):
+        if _check_value('timeout', timeout, int):
             self._timeout = timeout
 
     @property
@@ -852,7 +852,7 @@ class TuningCriterion:
     @objective.setter
     def objective(self, objective):
         """Set objective."""
-        if check_value('objective', objective, str,
+        if _check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
@@ -864,7 +864,7 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         """Set strategy."""
-        if check_value('strategy', strategy, str,
+        if _check_value('strategy', strategy, str,
             ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
@@ -948,7 +948,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     @approach.setter
     def approach(self, approach):
         """Set approach."""
-        if check_value("approach", approach, str, ["static", "dynamic", "auto"]):
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
@@ -959,7 +959,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     @tuning_criterion.setter
     def tuning_criterion(self, tuning_criterion):
         """Set tuning_criterion."""
-        if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
+        if _check_value("tuning_criterion", tuning_criterion, TuningCriterion):
             self._tuning_criterion = tuning_criterion
 
 
