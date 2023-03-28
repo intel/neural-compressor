@@ -993,48 +993,48 @@ class WeightPruningConfig:
     """Config Class for Pruning. Define a single or a sequence of pruning configs.
     
     Args:
-        pruning_configs: a list of dicts. These dicts' keys are identical to WeightPruningConfig's.
-            a dict in pruning_config refers to a local pruning config. It is only valid to its linked layers.
-            On the contrast, configs defined out of pruning_configs are valid for all layers.
+        pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
+            Parameters defined out of pruning_configs are valid for all layers.
             By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
-        target_sparsity: target sparsity ratio.
-            Support: a float between 0 and 1
-            Default: 0.90
-        pruning_type: a string define the criteria for pruning. 
-            Support: "magnitude", "snip", "snip_momentum", 
+            Defaults to [{}].
+        target_sparsity (float, optional): Sparsity ratio the model can reach after pruning.
+            Supports a float between 0 and 1.
+            Default to 0.90.
+        pruning_type (str, optional): A string define the criteria for pruning. 
+            Supports "magnitude", "snip", "snip_momentum", 
                      "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
-            Default: "snip_momentum", which is the most feasible pruning criteria under most situations.
-        pattern: the sparsity's structure (or unstructure) type/
-            Support: NxM (block-wise: 4x1, 2x1, 8x1), channelx1 & 1xchannel(channel-wise), N:M (block-wise: 2:4, 4:8).
-            Default: "4x1", which can be directly processed by our kernels in ITREX.
-        op_names: layers contains some specific names will be included for pruning.
-        excluded_op_names: layers contains some specific names will be excluded for pruning.
-        start_step: 
-            Support: an integer
-            Default: 0
-        end_step: 
-            Support: an integer
-            Default: 0
-        pruning_scope: determine layers' sharing the same pruning strategy to have the same sparsity ratio.
-            Support:
-                "global": layers can have different sparsity after pruning.
-                "local": all layers sharing the same pruning strategy will also have same sparsity ratio.
-            Default: "global", since this can lead to less accuracy loss.
+            Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
+        pattern (str, optional): Sparsity's structure (or unstructure) types.
+            Supports "NxM" (e.g "4x1", "8x1"), "channelx1" & "1xchannel"(channel-wise), "N:M" (e.g "2:4").
+            Default to "4x1", which can be directly processed by our kernels in ITREX.
+        op_names (list of str, optional): Layers contains some specific names to be included for pruning.
+            Defaults to [].
+        excluded_op_names: Layers contains some specific names to be excluded for pruning.
+            Defaults to [].
+        start_step (int, optional): The step to start pruning.
+            Supports an integer.
+            Default to 0.
+        end_step: (int, optional): The step to end pruning.
+            Supports an integer.
+            Default to 0.
+        pruning_scope (str, optional): Determine layers' scores should be gather together to sort 
+            Supports "global" and "local". 
+            Default: "global", since this leads to less accuracy loss.
         pruning_frequency: the frequency of pruning operation.
-            Support: an integer
-            Default: 1
-        min_sparsity_ratio_per_op: minimum restriction for every layer's sparsity.
-            Support: a float between 0 and 1
-            Default: 0.0    
-        max_sparsity_ratio_per_op: maximum restriction for every layer's sparsity.
-            Support: a float between 0 and 1
-            Default: 0.98      
-        sparsity_decay_type: how to schedule the sparsity increasing methods.
-            Support: "exp", "cube", "cube", "linear"
-            Default: "exp"
-        pruning_op_types: Op types currently support for pruning
-            Support: ['Conv', 'Linear']
-            Default: ['Conv', 'Linear']
+            Supports an integer.
+            Default to 1.
+        min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer's sparsity.
+            Supports a float between 0 and 1.
+            Default to 0.0.  
+        max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer's sparsity.
+            Supports a float between 0 and 1.
+            Default to 0.98.
+        sparsity_decay_type (str, optional): how to schedule the sparsity increasing methods.
+            Supports "exp", "cube", "cube", "linear".
+            Default to "exp".
+        pruning_op_types (list of str): Operator types currently support for pruning.
+            Supports ['Conv', 'Linear'].
+            Default to ['Conv', 'Linear'].
 
     Example::
 
