@@ -43,13 +43,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/quantization/ptq">pb</a> / <a href="./keras/image_recognition/resnet50/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet101/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet101/quantization/ptq">pb</a> / <a href="./keras/image_recognition/resnet101/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>MobileNet V1</td>
@@ -85,7 +85,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Inception V3</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/inception_v3/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/inception_v3/quantization/ptq">pb</a> / <a href="./keras/image_recognition/inception_v3/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>Inception V4</td>
@@ -97,19 +97,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Inception ResNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/inception_resnet_v2/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/inception_resnet_v2/quantization/ptq">pb</a> / <a href="./keras/image_recognition/inception_resnet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>VGG16</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/quantization/ptq">pb</a> / <a href="./keras/image_recognition/vgg16/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>VGG19</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg19/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg19/quantization/ptq">pb</a> / <a href="./keras/image_recognition/vgg19/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 50</td>

@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to enable Tensorflow Keras model mobilenet_v2 quantization and benchmark using Intel® Neural Compressor.
+This document is used to enable Tensorflow Keras resnet101 model quantization and benchmark using Intel® Neural Compressor.
 This example can run on Intel CPUs and GPUs.
 
 
@@ -39,10 +39,10 @@ python prepare_model.py   --output_model=/path/to/model
   ```shell
   cd examples/tensorflow/image_recognition/keras_models/
   # convert validation subset
-  bash prepare_dataset.sh --output_dir=/mobilenet_v2/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  bash prepare_dataset.sh --output_dir=/resnet101/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
-  bash prepare_dataset.sh --output_dir=/mobilenet_v2/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-  cd mobilenet_v2/quantization/ptq
+  bash prepare_dataset.sh --output_dir=/resnet101/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd resnet101/quantization/ptq
   ```
 
 # Run Command
@@ -60,7 +60,7 @@ config = PostTrainingQuantConfig(
 
 ## Quantization
   ```shell
-  bash run_tuning.sh --input_model=./mobilenet_v2_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_tuning.sh --input_model=./resnet101_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
 ## Benchmark
