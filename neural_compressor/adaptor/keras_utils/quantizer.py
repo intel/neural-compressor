@@ -20,9 +20,10 @@ import tensorflow as tf
 from tensorflow.keras.layers import Layer
 
 class FakeQuant(Layer):
-    def __init__(self, mode='per_tensor', **kwargs):
+    def __init__(self, mode='per_tensor', T='s8', **kwargs):
         super(FakeQuant, self).__init__(**kwargs)
         self.mode = mode
+        self.T = T
         self.axis = 1 if mode == 'per_channel' else 0
         self.min_value = tf.constant(np.finfo(np.float32).max, dtype=tf.float32)
         self.max_value = tf.constant(np.finfo(np.float32).min, dtype=tf.float32)
@@ -44,16 +45,18 @@ class FakeQuant(Layer):
         return {'mode': self.mode,
                 'min_value': self.min_value.numpy(),
                 'max_value': self.max_value.numpy(),
+                'T': self.T,
                 'name': self.name}
 
 class Quantize(Layer):
-    def __init__(self, min_range, max_range, T=tf.qint8, mode='SCALED',
+    def __init__(self, min_range, max_range, T='s8', mode='SCALED',
                  round_mode='HALF_AWAY_FROM_ZERO', narrow_range=False,
                  axis=None, **kwargs):
         super(Quantize, self).__init__(**kwargs)
+        T_map = {'s8': tf.qint8, 'u8': tf.quint8}
         self.min_range = float(min_range)
         self.max_range = float(max_range)
-        self.T = T
+        self.T = T_map[T]
         self.mode = mode
         self.round_mode = round_mode
         self.narrow_range = narrow_range
