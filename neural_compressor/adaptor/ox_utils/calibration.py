@@ -149,12 +149,6 @@ class ONNXRTAugment:
                         elif not self.already_quantized and input in initializers:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    for inp in node.input:
-                        initializer = find_by_name(inp, model.graph.initializer)
-                        if initializer is None:
-                            tensors_to_dump.update([inp])
-                        if inp in [input.name for input in model.graph.input]:
-                            tensors_to_dump.update([inp])
                     tensors_to_dump.update(node.output)
 
         model_inputs = [i.name for i in model.graph.input]
@@ -400,7 +394,7 @@ class ONNXRTAugment:
 
     def dump_minmax(self, q_config):
         """Get min/max values of tensors."""
-        self.augment_graph(activation_only=True, weight_only=False)
+        self.augment_graph()
         node_output_names, output_dicts = self.get_intermediate_outputs(q_config)
         return self._map_calibration(node_output_names, output_dicts)
 

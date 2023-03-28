@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/yuwenzho/calibration/neural-compressor/')
 import os
 import shutil
 import sys
@@ -506,7 +508,7 @@ class TestAugment(unittest.TestCase):
         node_output_names, output_dicts_list = augment.get_intermediate_outputs({})
         dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary
-        self.assertEqual(len(quantization_params_dict), 6)
+        self.assertEqual(len(quantization_params_dict), 12)
         
         #check the computation of zp and scale
         for key, value in quantization_params_dict.items():
