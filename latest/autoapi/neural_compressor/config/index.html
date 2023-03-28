@@ -362,6 +362,20 @@ Defaults to None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.MixedPrecisionConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">MixedPrecisionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.MixedPrecisionConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for MixedPrecision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>String</em><em>, </em><em>optional</em>) – device for execution. Support ‘cpu’ and ‘gpu’, default is ‘cpu’</p></li>
+<li><p><strong>backend</strong> (<em>String</em><em>, </em><em>optional</em>) – backend for model execution. Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, default is ‘default’</p></li>
+<li><p><strong>precision</strong> (<em>String</em><em>, </em><em>optional</em>) – target precision for mix precision conversion. Support ‘bf16’ and ‘fp16’, default is ‘bf16’</p></li>
+<li><p><strong>inputs</strong> (<em>List</em><em>, </em><em>optional</em>) – inputs of model, default is []</p></li>
+<li><p><strong>outputs</strong> (<em>List</em><em>, </em><em>optional</em>) – outputs of model, default is []</p></li>
+<li><p><strong>tuning_criterion</strong> (<em>TuningCriterion object</em><em>, </em><em>optional</em>) – accuracy tuning settings, it won’t work if there is no accuracy tuning process</p></li>
+<li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – accuracy constraint settings, it won’t work if there is no accuracy tuning process</p></li>
+<li><p><strong>excluded_precisions</strong> (<em>List</em><em>, </em><em>optional</em>) – precisions to be excluded during mix precision conversion, default is []</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
@@ -382,6 +396,15 @@ Defaults to None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.ONNXQlinear2QDQConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">ONNXQlinear2QDQConfig</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.ONNXQlinear2QDQConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for ONNXQlinear2QDQ.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">ONNXQlinear2QDQConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.model</span> <span class="kn">import</span> <span class="n">Model</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">ONNXQlinear2QDQConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s1">&#39;new_model.onnx&#39;</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py class">

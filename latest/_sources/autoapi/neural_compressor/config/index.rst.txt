@@ -251,6 +251,23 @@ Functions
 
    Config Class for MixedPrecision.
 
+   :param device: device for execution. Support 'cpu' and 'gpu', default is 'cpu'
+   :type device: String, optional
+   :param backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', default is 'default'
+   :type backend: String, optional
+   :param precision: target precision for mix precision conversion. Support 'bf16' and 'fp16', default is 'bf16'
+   :type precision: String, optional
+   :param inputs: inputs of model, default is []
+   :type inputs: List, optional
+   :param outputs: outputs of model, default is []
+   :type outputs: List, optional
+   :param tuning_criterion: accuracy tuning settings, it won't work if there is no accuracy tuning process
+   :type tuning_criterion: TuningCriterion object, optional
+   :param accuracy_criterion: accuracy constraint settings, it won't work if there is no accuracy tuning process
+   :type accuracy_criterion: AccuracyCriterion object, optional
+   :param excluded_precisions: precisions to be excluded during mix precision conversion, default is []
+   :type excluded_precisions: List, optional
+
    Example::
 
        from neural_compressor import mix_precision
@@ -268,6 +285,15 @@ Functions
 .. py:class:: ONNXQlinear2QDQConfig
 
    Config Class for ONNXQlinear2QDQ.
+
+   Example::
+
+       from neural_compressor.config import ONNXQlinear2QDQConfig
+       from neural_compressor.model import Model
+
+       conf = ONNXQlinear2QDQConfig()
+       model = Model(model)
+       model.export('new_model.onnx', conf)
 
 
 .. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, recipe='QDQ_OP_FP32_BIAS', **kwargs)
