@@ -36,7 +36,7 @@ class Evaluator:
         index = 1
         for input_ids, label, label_indices in tqdm(self.dataloader):
             outputs = model(input_ids)
-            last_token_logits = outputs[0][:, label_indices, :]
+            last_token_logits = outputs[0][torch.arange(len(label_indices)), label_indices, :]
             pred = last_token_logits.argmax(dim=-1)
             total += label.size(0)
             hit += (pred == label).sum().item()
@@ -148,7 +148,7 @@ if args.int8:
     if args.kl:
         op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
 
-    conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
+    conf = PostTrainingQuantConfig(quant_level=1, backend='ipex', excluded_precisions=["bf16"],##use basic tuning
                                    recipes=recipes,
                                    op_type_dict=op_type_dict)
 
