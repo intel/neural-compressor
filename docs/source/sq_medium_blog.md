@@ -31,12 +31,40 @@ X_{int8} = round(X_{fp32}/S) + Z
 $$
 
 where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
+
+```python
+## per-tensor quant dequant
+def quant_dequant_x(x, num_bits=8):
+    q_min, q_max = 0, 2. ** num_bits - 1.
+    scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
+    scale = torch.clip(scale, min=1e-5)
+    bias = torch.round(0 - (torch.min(x)) / scale)
+    q_x = x / scale + bias
+    q_x.clamp_(q_min, q_max).round_()
+    return scale * (q_x - bias)
+```
+**TODO**
+
+1 add example(yintong/guoheng)
+
+2 add per-channel code example to show low loss (yintong/guoheng)
+
+3 add mutmul example to show the activation can't be quantized with per channel (guoheng/wenhua)
+
+4 to show activation quantization loss is important to some models(guoheng/wenhua)
+
 ### Granularity
 There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
 
 However, considering the model accuracy and computational consumption, we use per-tensor or per-channel for weight quantization and per-tensor for activation quantization.
 
 ## SmoothQuant and our enhancement
+
+**TODO(wenhua)** introduce some former work with similar idea
+[202302-arxiv]Outlier Suppression Pushing the Limit of Low-bit Transformer Language Models
+SPIQ: Data-Free Per-Channel Static Input Quantization
+
+
 
 For LLMs, activations are much harder to quantize than weights due to the outliers. The activation variance is large amongst the channels for a given token but is small between magnitudes of a given channels. Therefore, the quantization error will decrease if we can use activation per-channel quantization. However, channel-wise activation quantization currently could not be performed because it can not map to hardware-accelerate GEMM kernels well.
 
@@ -54,9 +82,10 @@ $j = 1, 2, ...s, C_i$ where j correspond to j-th input channel.
 
 For most of models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.
 
-### Our enhancement: Layer-wise Auto-tuning of $\alpha$.
+### Our enhancement: 
+#### Layer-wise Auto-tuning of $\alpha$.(Yintong)
 Instead of using a fixed-value $\alpha$ to control how to split the quantization difficulty, we proposed a method to enable layer-wise auto-tuning of $\alpha$ values. A Layer-wise alpha value is calculated based on a user-defined $\alpha$-value range and then used for smoothing transformation of this layer. Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
-
+#### automatic/more patterns(wenhua)
 ## Results
 
 | Model\Accuracy        | FP32   | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) |
