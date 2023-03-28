@@ -994,17 +994,18 @@ class WeightPruningConfig:
     
     Args:
         pruning_configs: a list of dicts. These dicts' keys are identical to WeightPruningConfig's.
-            a dict in pruning_config refers to a local pruning config, whose config is only valid to this dict's bind layers.
+            a dict in pruning_config refers to a local pruning config. It is only valid to its linked layers.
             On the contrast, configs defined out of pruning_configs are valid for all layers.
-            By define a sequence of dicts in pruning_config, users can create different pruning strategies for corresponding layers.
+            By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
         target_sparsity: target sparsity ratio.
             Support: a float between 0 and 1
             Default: 0.90
         pruning_type: a string define the criteria for pruning. 
-            Support: "magnitude", "snip", "snip_momentum", "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
+            Support: "magnitude", "snip", "snip_momentum", 
+                     "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
             Default: "snip_momentum", which is the most feasible pruning criteria under most situations.
         pattern: the sparsity's structure (or unstructure) type/
-            Support: NxM (block-wise: 4x1, 2x1, 8x1), channelx1 (channel-wise), 1xchannel(channel-wise), N:M (block-wise: 2:4, 4:8).
+            Support: NxM (block-wise: 4x1, 2x1, 8x1), channelx1 & 1xchannel(channel-wise), N:M (block-wise: 2:4, 4:8).
             Default: "4x1", which can be directly processed by our kernels in ITREX.
         op_names: layers contains some specific names will be included for pruning.
         excluded_op_names: layers contains some specific names will be excluded for pruning.
