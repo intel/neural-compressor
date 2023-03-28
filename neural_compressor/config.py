@@ -91,8 +91,38 @@ def _check_value(name, src, supported_type, supported_value=[]):
     return True
 
 
-class Options:
-    """Option Class for configs."""
+class _Options:
+    """Option Class for configs.
+
+    This class is used for configuring global variables. The global variable options is created with this class.
+    If you want to change global variables, you should use functions from utils.utility.py:
+        set_random_seed(seed: int)
+        set_workspace(workspace: str)
+        set_resume_from(resume_from: str)
+        set_tensorboard(tensorboard: bool)
+
+    Args:
+        random_seed(int): Random seed used in neural compressor.
+                          Default value is 1978.
+        workspace(str): The directory where intermediate files and tuning history file are stored.
+                        Default value is:
+                            './nc_workspace/{}/'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')).
+        resume_from(str): The directory you want to resume tuning history file from.
+                          The tuning history was automatically saved in the workspace directory
+                               during the last tune process.
+                          Default value is None.
+        tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
+                               for visual display.
+                           Default value is False.
+
+    Example::
+
+        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        set_random_seed(2022)
+        set_workspace("workspace_path")
+        set_resume_from("workspace_path")
+        set_tensorboard(True)
+    """
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
         """Init an Option object."""
@@ -146,7 +176,7 @@ class Options:
             self._tensorboard = tensorboard
 
 
-options = Options()
+options = _Options()
 
 
 class BenchmarkConfig:
@@ -303,11 +333,19 @@ class BenchmarkConfig:
 
 class AccuracyCriterion:
     """Class of Accuracy Criterion.
-    
+
+    Args:
+        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
+                                          Default value is True.
+        criterion:(str, optional): This flag indicates whether the metric loss is 'relative' or 'absolute'.
+                                   Default value is 'relative'.
+        tolerable_loss(float, optional): This float indicates how much metric loss we can accept.
+                                         Default value is 0.01.
+
     Example::
 
         from neural_compressor.config import AccuracyCriterion
-        
+
         accuracy_criterion = AccuracyCriterion(
             higher_is_better=True,  # optional. 
             criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
@@ -388,6 +426,77 @@ accuracy_criterion = AccuracyCriterion()
 
 
 class _BaseQuantizationConfig:
+    """Basic class for quantization config. Inherited by PostTrainingQuantConfig and QuantizationAwareTrainingConfig.
+
+    Args:
+        inputs: Inputs of model, only required in tensorflow.
+        outputs: Outputs of model, only required in tensorflow.
+        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                Adaptor will use specific quantization settings for different domains automatically, and
+                explicitly specified quantization settings will override the automatic setting.
+                If users set domain as auto, automatic detection for domain will be executed.
+        recipes: Recipes for quantiztaion, support list is as below.
+                 'smooth_quant': whether do smooth quant
+                 'smooth_quant_args': parameters for smooth_quant
+                 'fast_bias_correction': whether do fast bias correction
+                 'weight_correction': whether do weight correction
+                 'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                 'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                           only valid for onnx models
+                 'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                 'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                 'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                 'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                 'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+        quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
+        device: Support 'cpu' and 'gpu'.
+        calibration_sampling_size: Number of calibration sample.
+        op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                      User can specify the quantization config by op type:
+                      example:
+                      {
+                          'Conv': {
+                              'weight': {
+                                  'dtype': ['fp32']
+                              },
+                              'activation': {
+                                  'dtype': ['fp32']
+                              }
+                          }
+                      }
+        op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                      User can specify the quantization config by op name:
+                      example:
+                      {
+                          "layer1.0.conv1": {
+                              "activation": {
+                                  "dtype": ["fp32"]
+                              },
+                              "weight": {
+                                  "dtype": ["fp32"]
+                              }
+                          },
+                      }
+        strategy: Strategy name used in tuning, Please refer to docs/source/tuning_strategies.md.
+        strategy_kwargs: Parameters for strategy, Please refer to docs/source/tuning_strategies.md.
+        objective: Objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'.
+                   Please refer to docs/source/objective.md.
+                   Default value is 'performance'.
+        timeout: Tuning timeout (seconds). default value is 0 which means early stop
+        max_trials: Max tune times. default value is 100. Combine with timeout field to decide when to exit
+        performance_only: Whether do evaluation
+        reduce_range: Whether use 7 bit to quantization.
+        example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
+        excluded_precisions: Precisions to be excluded, Default value is empty list.
+                             Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                     strategy, auto (default) is the combination of 0 and 1.
+        accuracy_criterion: Accuracy constraint settings.
+        use_distributed_tuning: Whether use distributed tuning or not.
+    """
     def __init__(self,
                  inputs=[],
                  outputs=[],
@@ -411,49 +520,7 @@ class _BaseQuantizationConfig:
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False):
-        """Initialize _BaseQuantizationConfig class.
-
-        Args:
-            inputs: inputs of model
-            outputs: outputs of model
-            backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
-            domain: model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
-                    Adaptor will use specific quantization settings for different domains automatically, and
-                    explicitly specified quantization settings will override the automatic setting.
-                    If users set domain as auto, automatic detection for domain will be executed.
-            recipes: recipes for quantiztaion, support list is as below.
-                     'smooth_quant': whether do smooth quant
-                     'smooth_quant_args': parameters for smooth_quant
-                     'fast_bias_correction': whether do fast bias correction
-                     'weight_correction': whether do weight correction
-                     'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
-                     'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
-                                               only valid for onnx models
-                     'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
-                     'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
-                     'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
-                     'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
-                     'optypes_to_exclude_output_quant': don't quantize output of specified optypes
-                     'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
-            quant_format: support 'default', 'QDQ' and 'QOperator'
-            device: support 'cpu' and 'gpu'
-            calibration_sampling_size: number of calibration sample
-            op_type_dict: tuning constraints on optype-wise
-            op_name_dict: tuning constraints on op-wise
-            strategy: strategy name
-            strategy_kwargs: parameters for strategy
-            objective: objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'
-            timeout: tuning timeout (seconds). default value is 0 which means early stop
-            max_trials: max tune times. default value is 100. Combine with timeout field to decide when to exit
-            performance_only: whether do evaluation
-            reduce_range: whether use 7 bit
-            example_inputs: used to trace PyTorch model with torch.jit/torch.fx
-            excluded_precisions: precisions to be excluded, support 'bf16'
-            quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
-                         strategy, auto (default) is the combination of 0 and 1.
-            accuracy_criterion: accuracy constraint settings
-            use_distributed_tuning: whether use distributed tuning or not
-        """
+        """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
@@ -738,7 +805,7 @@ class _BaseQuantizationConfig:
     def calibration_sampling_size(self, sampling_size):
         if _check_value('calibration_sampling_size', sampling_size, int):
             if isinstance(sampling_size, int):
-                sampling_size =[sampling_size]
+                sampling_size = [sampling_size]
             self._calibration_sampling_size = sampling_size
 
     @property
@@ -801,17 +868,31 @@ class _BaseQuantizationConfig:
 
 class TuningCriterion:
     """Class for Tuning Criterion.
-    
+
+    Args:
+        strategy(str, optional): Name of the tuning strategy. Please refer to docs/source/tuning_strategies.md.
+                                 Default is 'basic'.
+        strategy_kwargs(dict, optional): The strategy setting dictionary.
+                                         Please refer to docs/source/tuning_strategies.md.
+                                         Default value is None.
+        timeout(int, optional): Tuning timeout(seconds). When set to 0, early stopping is enabled.
+                                Default value is 0.
+        max_trials(int, optional): Max tuning times. Combined with the `timeout` field to decide when to exit tuning.
+                                   Default is 100.
+        objective(str, optinal): Objective with accuracy constraint guaranteed,
+                                     support 'performance', 'modelsize', 'footprint'.
+                                 Please refer to docs/source/objective.md.
+                                 Default value is 'performance'.
+
     Example::
 
         from neural_compressor.config import TuningCriterion
-        
+
         tuning_criterion=TuningCriterion(
-            timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-            max_trials=100, # optional. max tuning times. 
-                                # combined with the `timeout` field to decide when to exit tuning.
-            strategy="basic", # optional. name of the tuning strategy. 
-            strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+            strategy="basic",
+            strategy_kwargs=None,
+            timeout=0,
+            max_trials=100,
         )
     """
     def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
@@ -883,17 +964,91 @@ tuning_criterion = TuningCriterion()
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
     """Config Class for Post Training Quantization.
-    
+
+    Args:
+        device: Support 'cpu' and 'gpu'.
+        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                Adaptor will use specific quantization settings for different domains automatically, and
+                explicitly specified quantization settings will override the automatic setting.
+                If users set domain as auto, automatic detection for domain will be executed.
+        recipes: Recipes for quantiztaion, support list is as below.
+                 'smooth_quant': whether do smooth quant
+                 'smooth_quant_args': parameters for smooth_quant
+                 'fast_bias_correction': whether do fast bias correction
+                 'weight_correction': whether do weight correction
+                 'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                 'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                           only valid for onnx models
+                 'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                 'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                 'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                 'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                 'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+        quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
+        inputs: Inputs of model, only required in tensorflow.
+        outputs: Outputs of model, only required in tensorflow.
+        approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
+                  Default value is 'auto'.
+                  For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
+                      or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
+                      PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
+                      tuning configs meet the accuracy loss criteria.
+                  For strategy 'bayesian', 'mse', 'mse_v2' and 'HAWQ_V2', 'exhaustive', and 'random',
+                      'auto' means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
+                      if OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried, else PTQ dynamic
+                      will be tried.
+        calibration_sampling_size: Number of calibration sample.
+        op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                      User can specify the quantization config by op type:
+                      example:
+                      {
+                          'Conv': {
+                              'weight': {
+                                  'dtype': ['fp32']
+                              },
+                              'activation': {
+                                  'dtype': ['fp32']
+                              }
+                          }
+                      }
+        op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                      User can specify the quantization config by op name:
+                      example:
+                      {
+                          "layer1.0.conv1": {
+                              "activation": {
+                                  "dtype": ["fp32"]
+                              },
+                              "weight": {
+                                  "dtype": ["fp32"]
+                              }
+                          },
+                      }
+        reduce_range: Whether use 7 bit to quantization.
+        excluded_precisions: Precisions to be excluded, Default value is empty list.
+                             Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                     strategy, auto (default) is the combination of 0 and 1.
+        tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
+                              timeout, max_trials and objective.
+                          Please refer to docstring of TuningCriterion class.
+        accuracy_criterion: Instance of AccuracyCriterion class. In this class you can set higher_is_better,
+                                criterion and tolerable_loss.
+                            Please refer to docstring of AccuracyCriterion class.
+        use_distributed_tuning: Whether use distributed tuning or not.
+
     Example::
 
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
         conf = PostTrainingQuantConfig(
-            quant_level="auto",  # the quantization level.
+            quant_level="auto",
             tuning_criterion=TuningCriterion(
-                timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-                max_trials=100,  # optional. max tuning times.
-                                # combined with the `timeout` field to decide when to exit tuning.
+                timeout=0,
+                max_trials=100,
             ),
         )
     """
@@ -966,9 +1121,55 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     """Config Class for Quantization Aware Training.
 
+    Args:
+        device: Support 'cpu' and 'gpu'.
+        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        inputs: Inputs of model, only required in tensorflow.
+        outputs: Outputs of model, only required in tensorflow.
+        op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                      User can specify the quantization config by op type:
+                      example:
+                      {
+                          'Conv': {
+                              'weight': {
+                                  'dtype': ['fp32']
+                              },
+                              'activation': {
+                                  'dtype': ['fp32']
+                              }
+                          }
+                      }
+        op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                      User can specify the quantization config by op name:
+                      example:
+                      {
+                          "layer1.0.conv1": {
+                              "activation": {
+                                  "dtype": ["fp32"]
+                              },
+                              "weight": {
+                                  "dtype": ["fp32"]
+                              }
+                          },
+                      }
+        reduce_range: Whether use 7 bit to quantization.
+        excluded_precisions: Precisions to be excluded, Default value is empty list.
+                             Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                     strategy, auto (default) is the combination of 0 and 1.
+        tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
+                              timeout, max_trials and objective.
+                          Please refer to docstring of TuningCriterion class.
+                          This parameter only required by Quantization Aware Training with tuning.
+        accuracy_criterion: Instance of AccuracyCriterion class. In this class you can set higher_is_better,
+                                criterion and tolerable_loss.
+                            Please refer to docstring of AccuracyCriterion class.
+                            This parameter only required by Quantization Aware Training with tuning.
+
     Example::
 
-        from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
+        from neural_compressor.config import QuantizationAwareTrainingConfig
 
         if approach == "qat":
             model = copy.deepcopy(model_origin)
@@ -986,7 +1187,9 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_dict=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 quant_level="auto"):
+                 quant_level="auto",
+                 tuning_criterion=tuning_criterion,
+                 accuracy_criterion=accuracy_criterion):
         """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -994,8 +1197,14 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          backend=backend,
                          op_type_dict=op_type_dict,
                          op_name_dict=op_name_dict,
+                         strategy=tuning_criterion.strategy,
+                         strategy_kwargs=tuning_criterion.strategy_kwargs,
+                         objective=tuning_criterion.objective,
+                         timeout=tuning_criterion.timeout,
+                         max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
+                         accuracy_criterion=accuracy_criterion,
                          quant_level=quant_level)
         self._approach = 'quant_aware_training'
 
@@ -1188,7 +1397,7 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
 
         from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
         from neural_compressor.training import prepare_compression
-        
+
         criterion_conf = IntermediateLayersKnowledgeDistillationLossConfig(
             layer_mappings=[['layer1.0', ],
                             [['layer1.1.conv1', ], ['layer1.1.conv1', '0']],],
@@ -1276,14 +1485,14 @@ criterion = KnowledgeDistillationLossConfig()
 
 class DistillationConfig:
     """Config of distillation.
-    
+
     Args:
         teacher_model (Callable): Teacher model for distillation. Defaults to None.
         features (optional): Teacher features for distillation, features and teacher_model are alternative.
                              Defaults to None.
         criterion (Callable, optional): Distillation loss configure.
         optimizer (dictionary, optional): Optimizer configure.
-    
+
     Example::
 
         from neural_compressor.training import prepare_compression

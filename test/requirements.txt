@@ -1,7 +1,7 @@
 intel-tensorflow
 onnx
 onnxruntime
---find-links https://download.pytorch.org/whl/torch_stable.html
+--index-url https://download.pytorch.org/whl/cpu
 torch
 torchvision
 mxnet-mkl
