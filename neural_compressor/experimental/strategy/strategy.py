@@ -199,8 +199,8 @@ class TuneStrategy(object):
     def _initialize_recipe(self):
         """Divide the recipe into two categories tuning/not tuning."""
         from .utils.utility import get_adaptor_name
-        from ..utils.constant import RECIPES as fwk_recipes
-        from ..utils.constant import RECIPES_PRIORITY as fwk_recipes_priority
+        from ...utils.constant import RECIPES as fwk_recipes
+        from ...utils.constant import RECIPES_PRIORITY as fwk_recipes_priority
         # get all recipes supported by adaptor.
         adaptor_name = get_adaptor_name(self.adaptor)
         adaptor_recipes = fwk_recipes['common']
