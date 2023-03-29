@@ -15,8 +15,8 @@ Intel® Neural Compressor
 <div align="left">
 
 Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as [TensorFlow](https://www.tensorflow.org/), [PyTorch](https://pytorch.org/), [ONNX Runtime](https://onnxruntime.ai/), and [MXNet](https://mxnet.apache.org/),
-as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). 
-In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
+as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
+In particular, the tool provides the key features, typical examples, and open collaborations as below:
 
 * Support a wide range of Intel hardware such as [Intel Xeon Scalable processor](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
 
@@ -24,7 +24,7 @@ In addition, the tool showcases the key features, typical examples, and broad co
 
 * Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) and [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
-**Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
+**The performance and accuracy results of typical models are available [here](https://github.com/intel/neural-compressor/blob/master/docs/source/validated_model_list.md). You may also want to visit the Intel® Neural Compressor [online document website](https://intel.github.io/neural-compressor) for more details.**   
 
 ## Installation
 
@@ -59,7 +59,7 @@ q_model = fit(
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
-> More quick samples and validated models can be find in [Get Started Page](./docs/source/get_started.md).
+> More quick samples can be found in [Get Started Page](./docs/source/get_started.md).
 
 ## Documentation
 
@@ -71,15 +71,14 @@ q_model = fit(
   </thead>
   <tbody>
     <tr>
-      <td colspan="4" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
-      <td colspan="3" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./docs/source/bench.md">GUI</a></td>
+      <td colspan="3" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/bench.md">GUI</a></td>
     </tr>
     <tr>
       <td colspan="2" align="center"><a href="examples/README.md#notebook-examples">Notebook</a></td>
-      <td colspan="1" align="center"><a href="examples/README.md">Examples</a></td>
-      <td colspan="1" align="center"><a href="./docs/source/validated_model_list.md">Results</a></td>
+      <td colspan="2" align="center"><a href="examples/README.md">Examples</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
     </tr>
   </tbody>
