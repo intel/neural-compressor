@@ -17,6 +17,7 @@
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
 import os
+import onnx
 import torch
 import logging
 import argparse
