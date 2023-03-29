@@ -223,9 +223,11 @@ So **the second question is how much difficulty to be migrated**, that is how to
 *Outlier suppression* adopts the scale of the preceding layernorm as the convention per-channel scale.
 
 *Smoothquant* introduces a hyperparameter $\alpha$ as a smooth factor to calculate the convention per-channel scale and balance the quantization difficulty of activation and weight.
+
 $$
 s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha}
 $$
+
 c is the index of the input channels.
 
 
