@@ -91,13 +91,13 @@
 </div><hr class="docutils" />
 <div align="left"><p>Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as <a class="reference external" href="https://www.tensorflow.org/">TensorFlow</a>, <a class="reference external" href="https://pytorch.org/">PyTorch</a>, <a class="reference external" href="https://onnxruntime.ai/">ONNX Runtime</a>, and <a class="reference external" href="https://mxnet.apache.org/">MXNet</a>,
 as well as Intel extensions such as <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow">Intel Extension for TensorFlow</a> and <a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch</a>.
-In addition, the tool showcases the key features, typical examples, and broad collaborations as below:</p>
+In particular, the tool provides the key features, typical examples, and open collaborations as below:</p>
 <ul class="simple">
 <li><p>Support a wide range of Intel hardware such as <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html">Intel Xeon Scalable processor</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html">Intel Xeon CPU Max Series</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html">Intel Data Center GPU Flex Series</a>, and <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html">Intel Data Center GPU Max Series</a> with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing</p></li>
 <li><p>Validate more than 10,000 models such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">Bloom-176B</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">OPT-30B</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-to-image/quantization">Stable Diffusion</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">GPT-J</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">BERT-Large</a>, and <a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">ResNet50</a> from popular model hubs such as <a class="reference external" href="https://huggingface.co/">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/vision/stable/index.html">Torch Vision</a>, and <a class="reference external" href="https://github.com/onnx/models#models">ONNX Model Zoo</a>, by leveraging zero-code optimization solution <a class="reference external" href="/neural_coder#what-do-we-offer">Neural Coder</a> and automatic [accuracy-driven]./design.html#workflow) quantization strategies</p></li>
 <li><p>Collaborate with cloud marketplace such as <a class="reference external" href="https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207">Google Cloud Platform</a>, <a class="reference external" href="https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support">Amazon Web Services</a>, and <a class="reference external" href="https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel">Azure</a>, software platforms such as <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html">Alibaba Cloud</a> and <a class="reference external" href="https://new.qq.com/rain/a/20221202A00B9S00">Tencent TACO</a>, and open AI ecosystem such as <a class="reference external" href="https://huggingface.co/blog/intel">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html">PyTorch</a>, <a class="reference external" href="https://github.com/onnx/models#models">ONNX</a>, and <a class="reference external" href="https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst">Lightning AI</a></p></li>
 </ul>
-<p><strong>Visit the Intel® Neural Compressor online document website at: <a class="reference external" href="https://intel.github.io/neural-compressor">https://intel.github.io/neural-compressor</a>.</strong></p>
+<p><strong>The performance and accuracy results of typical models are available <a class="reference external" href="https://github.com/intel/neural-compressor/blob/maste./validated_model_list.html">here</a>. You may also want to visit the Intel® Neural Compressor <a class="reference external" href="https://intel.github.io/neural-compressor">online document website</a> for more details.</strong></p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
 <section id="install-from-pypi">
@@ -137,7 +137,7 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
 </pre></div>
 </div>
 <blockquote>
-<div><p>More quick samples and validated models can be find in <a class="reference external" href="./get_started.html">Get Started Page</a>.</p>
+<div><p>More quick samples can be found in <a class="reference external" href="./get_started.html">Get Started Page</a>.</p>
 </div></blockquote>
 </section>
 </section>
@@ -151,15 +151,14 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
   </thead>
   <tbody>
     <tr>
-      <td colspan="4" align="center"><a href="./design.html#architecture">Architecture</a></td>
-      <td colspan="3" align="center"><a href="./design.html#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./bench.html">GUI</a></td>
+      <td colspan="3" align="center"><a href="./design.html#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="./design.html#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
+      <td colspan="2" align="center"><a href="./bench.html">GUI</a></td>
     </tr>
     <tr>
       <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/blob/master/examples/README.md#notebook-examples">Notebook</a></td>
-      <td colspan="1" align="center"><a href="https://github.com/intel/neural-compressor/blob/master/examples/README.md">Examples</a></td>
-      <td colspan="1" align="center"><a href="./validated_model_list.html">Results</a></td>
+      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/blob/master/examples/README.md">Examples</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
     </tr>
   </tbody>

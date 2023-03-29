@@ -1,6 +1,7 @@
 
 Validated Models
 ======
+Intel® Neural Compressor validated examples with multiple compression techniques. The typical examples link can be found in [example tables](https://github.com/intel/neural-compressor/blob/master/examples/README.md), and the performance/accuracy results is available here.
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
