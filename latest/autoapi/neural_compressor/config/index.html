@@ -143,6 +143,49 @@
 <dt class="sig sig-object py" id="neural_compressor.config.Options">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">Options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1978</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workspace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">default_workspace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resume_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.Options" title="Permalink to this definition"></a></dt>
 <dd><p>Option Class for configs.</p>
+<p>This class is used for configuring global variables. The global variable options is created with this class.
+If you want to change global variables, you should use functions from utils.utility.py:</p>
+<blockquote>
+<div><p>set_random_seed(seed: int)
+set_workspace(workspace: str)
+set_resume_from(resume_from: str)
+set_tensorboard(tensorboard: bool)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>random_seed</strong> (<em>int</em>) – Random seed used in neural compressor.
+Default value is 1978.</p></li>
+<li><p><strong>workspace</strong> (<em>str</em>) – <p>The directory where intermediate files and tuning history file are stored.
+Default value is:</p>
+<blockquote>
+<div><p>’./nc_workspace/{}/’.format(datetime.datetime.now().strftime(‘%Y-%m-%d_%H-%M-%S’)).</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>resume_from</strong> (<em>str</em>) – <p>The directory you want to resume tuning history file from.
+The tuning history was automatically saved in the workspace directory</p>
+<blockquote>
+<div><p>during the last tune process.</p>
+</div></blockquote>
+<p>Default value is None.</p>
+</p></li>
+<li><p><strong>tensorboard</strong> (<em>bool</em>) – <dl class="simple">
+<dt>This flag indicates whether to save the weights of the model and the inputs of each layer</dt><dd><p>for visual display.</p>
+</dd>
+</dl>
+<p>Default value is False.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.utils.utility</span> <span class="kn">import</span> <span class="n">set_random_seed</span><span class="p">,</span> <span class="n">set_workspace</span><span class="p">,</span> <span class="n">set_resume_from</span><span class="p">,</span> <span class="n">set_tensorboard</span>
+<span class="n">set_random_seed</span><span class="p">(</span><span class="mi">2022</span><span class="p">)</span>
+<span class="n">set_workspace</span><span class="p">(</span><span class="s2">&quot;workspace_path&quot;</span><span class="p">)</span>
+<span class="n">set_resume_from</span><span class="p">(</span><span class="s2">&quot;workspace_path&quot;</span><span class="p">)</span>
+<span class="n">set_tensorboard</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py class">
@@ -183,6 +226,18 @@ Default value is None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">AccuracyCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">higher_is_better</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relative'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion" title="Permalink to this definition"></a></dt>
 <dd><p>Class of Accuracy Criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>higher_is_better</strong> (<em>bool</em><em>, </em><em>optional</em>) – This flag indicates whether the metric higher is the better.
+Default value is True.</p></li>
+<li><p><strong>criterion</strong> – (str, optional): This flag indicates whether the metric loss is ‘relative’ or ‘absolute’.
+Default value is ‘relative’.</p></li>
+<li><p><strong>tolerable_loss</strong> (<em>float</em><em>, </em><em>optional</em>) – This float indicates how much metric loss we can accept.
+Default value is 0.01.</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">AccuracyCriterion</span>
 
@@ -199,15 +254,36 @@ Default value is None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">TuningCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'basic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'performance'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.TuningCriterion" title="Permalink to this definition"></a></dt>
 <dd><p>Class for Tuning Criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strategy</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the tuning strategy. Please refer to docs/source/tuning_strategies.md.
+Default is ‘basic’.</p></li>
+<li><p><strong>strategy_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – The strategy setting dictionary.
+Please refer to docs/source/tuning_strategies.md.
+Default value is None.</p></li>
+<li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Tuning timeout(seconds). When set to 0, early stopping is enabled.
+Default value is 0.</p></li>
+<li><p><strong>max_trials</strong> (<em>int</em><em>, </em><em>optional</em>) – Max tuning times. Combined with the <cite>timeout</cite> field to decide when to exit tuning.
+Default is 100.</p></li>
+<li><p><strong>objective</strong> (<em>str</em><em>, </em><em>optinal</em>) – <dl class="simple">
+<dt>Objective with accuracy constraint guaranteed,</dt><dd><p>support ‘performance’, ‘modelsize’, ‘footprint’.</p>
+</dd>
+</dl>
+<p>Please refer to docs/source/objective.md.
+Default value is ‘performance’.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
 
 <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
-    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="c1"># optional. max tuning times.</span>
-                        <span class="c1"># combined with the `timeout` field to decide when to exit tuning.</span>
-    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span> <span class="c1"># optional. name of the tuning strategy.</span>
-    <span class="n">strategy_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># optional. see concrete tuning strategy for available settings.</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span>
+    <span class="n">strategy_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -217,15 +293,125 @@ Default value is None.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.PostTrainingQuantConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">PostTrainingQuantConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approach</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_sampling_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_distributed_tuning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.PostTrainingQuantConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Post Training Quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – Support ‘cpu’ and ‘gpu’.</p></li>
+<li><p><strong>backend</strong> – Backend for model execution. Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’</p></li>
+<li><p><strong>domain</strong> – Model domain. Support ‘auto’, ‘cv’, ‘object_detection’, ‘nlp’ and ‘recommendation_system’.
+Adaptor will use specific quantization settings for different domains automatically, and
+explicitly specified quantization settings will override the automatic setting.
+If users set domain as auto, automatic detection for domain will be executed.</p></li>
+<li><p><strong>recipes</strong> – <p>Recipes for quantiztaion, support list is as below.
+‘smooth_quant’: whether do smooth quant
+‘smooth_quant_args’: parameters for smooth_quant
+‘fast_bias_correction’: whether do fast bias correction
+‘weight_correction’: whether do weight correction
+‘gemm_to_matmul’: whether convert gemm to matmul and add, only valid for onnx models
+‘graph_optimization_level’: support ‘DISABLE_ALL’, ‘ENABLE_BASIC’, ‘ENABLE_EXTENDED’, ‘ENABLE_ALL’</p>
+<blockquote>
+<div><p>only valid for onnx models</p>
+</div></blockquote>
+<p>’first_conv_or_matmul_quantization’: whether quantize the first conv or matmul
+‘last_conv_or_matmul_quantization’: whether quantize the last conv or matmul
+‘pre_post_process_quantization’: whether quantize the ops in preprocess and postprocess
+‘add_qdq_pair_to_weight’: whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+‘optypes_to_exclude_output_quant’: don’t quantize output of specified optypes
+‘dedicated_qdq_pair’: whether dedicate QDQ pair, only vaild for onnxrt_trt_ep</p>
+</p></li>
+<li><p><strong>quant_format</strong> – Support ‘default’, ‘QDQ’ and ‘QOperator’, only required in ONNXRuntime.</p></li>
+<li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
+<li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
+<li><p><strong>approach</strong> – <p>Post-Training Quantization method. Neural compressor support ‘static’, ‘dynamic’ and ‘auto’ method.
+Default value is ‘auto’.
+For strategy ‘basic’, ‘auto’ method means neural compressor will quantize all OPs support PTQ static</p>
+<blockquote>
+<div><p>or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
+PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
+tuning configs meet the accuracy loss criteria.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>For strategy ‘bayesian’, ‘mse’, ‘mse_v2’ and ‘HAWQ_V2’, ‘exhaustive’, and ‘random’,</dt><dd><p>’auto’ means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
+if OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried, else PTQ dynamic
+will be tried.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>calibration_sampling_size</strong> – Number of calibration sample.</p></li>
+<li><p><strong>op_type_dict</strong> – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
+User can specify the quantization config by op type:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>’Conv’: {</dt><dd><dl class="simple">
+<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+</dd>
+</dl>
+<p>},
+‘activation’: {</p>
+<blockquote>
+<div><p>’dtype’: [‘fp32’]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>op_name_dict</strong> – <p>Tuning constraints on op-wise for advance user to reduce tuning space.
+User can specify the quantization config by op name:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>”layer1.0.conv1”: {</dt><dd><dl class="simple">
+<dt>“activation”: {</dt><dd><p>“dtype”: [“fp32”]</p>
+</dd>
+</dl>
+<p>},
+“weight”: {</p>
+<blockquote>
+<div><p>”dtype”: [“fp32”]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>},</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>reduce_range</strong> – Whether use 7 bit to quantization.</p></li>
+<li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
+Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+If you want to disable bf16 data type, you can specify excluded_precisions = [‘bf16].</p></li>
+<li><p><strong>quant_level</strong> – Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
+strategy, auto (default) is the combination of 0 and 1.</p></li>
+<li><p><strong>tuning_criterion</strong> – <dl class="simple">
+<dt>Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,</dt><dd><p>timeout, max_trials and objective.</p>
+</dd>
+</dl>
+<p>Please refer to docstring of TuningCriterion class.</p>
+</p></li>
+<li><p><strong>accuracy_criterion</strong> – <dl class="simple">
+<dt>Instance of AccuracyCriterion class. In this class you can set higher_is_better,</dt><dd><p>criterion and tolerable_loss.</p>
+</dd>
+</dl>
+<p>Please refer to docstring of AccuracyCriterion class.</p>
+</p></li>
+<li><p><strong>use_distributed_tuning</strong> – Whether use distributed tuning or not.</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">quant_level</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>  <span class="c1"># the quantization level.</span>
+    <span class="n">quant_level</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
-        <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># optional. max tuning times.</span>
-                        <span class="c1"># combined with the `timeout` field to decide when to exit tuning.</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -234,10 +420,84 @@ Default value is None.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.QuantizationAwareTrainingConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.QuantizationAwareTrainingConfig" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.QuantizationAwareTrainingConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Quantization Aware Training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – Support ‘cpu’ and ‘gpu’.</p></li>
+<li><p><strong>backend</strong> – Backend for model execution. Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’</p></li>
+<li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
+<li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
+<li><p><strong>op_type_dict</strong> – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
+User can specify the quantization config by op type:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>’Conv’: {</dt><dd><dl class="simple">
+<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+</dd>
+</dl>
+<p>},
+‘activation’: {</p>
+<blockquote>
+<div><p>’dtype’: [‘fp32’]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>op_name_dict</strong> – <p>Tuning constraints on op-wise for advance user to reduce tuning space.
+User can specify the quantization config by op name:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>”layer1.0.conv1”: {</dt><dd><dl class="simple">
+<dt>“activation”: {</dt><dd><p>“dtype”: [“fp32”]</p>
+</dd>
+</dl>
+<p>},
+“weight”: {</p>
+<blockquote>
+<div><p>”dtype”: [“fp32”]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>},</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>reduce_range</strong> – Whether use 7 bit to quantization.</p></li>
+<li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
+Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+If you want to disable bf16 data type, you can specify excluded_precisions = [‘bf16].</p></li>
+<li><p><strong>quant_level</strong> – Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
+strategy, auto (default) is the combination of 0 and 1.</p></li>
+<li><p><strong>tuning_criterion</strong> – <dl class="simple">
+<dt>Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,</dt><dd><p>timeout, max_trials and objective.</p>
+</dd>
+</dl>
+<p>Please refer to docstring of TuningCriterion class.
+This parameter only required by Quantization Aware Training with tuning.</p>
+</p></li>
+<li><p><strong>accuracy_criterion</strong> – <dl class="simple">
+<dt>Instance of AccuracyCriterion class. In this class you can set higher_is_better,</dt><dd><p>criterion and tolerable_loss.</p>
+</dd>
+</dl>
+<p>Please refer to docstring of AccuracyCriterion class.
+This parameter only required by Quantization Aware Training with tuning.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">QuantizationAwareTrainingConfig</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
 
 <span class="k">if</span> <span class="n">approach</span> <span class="o">==</span> <span class="s2">&quot;qat&quot;</span><span class="p">:</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model_origin</span><span class="p">)</span>
