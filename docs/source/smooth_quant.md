@@ -44,18 +44,19 @@ For most of models, such as OPT and BLOOM, $\alpha = 0.5$ which means balance th
 | SmoothQuant   | ✔           | ✖              |
 
 ## Validated Models
+| Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
+|---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
+| bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76%                            |
+| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58%                            |
+| bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16%                            |
+| bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45%                            |
+| bigscience/bloom-176b | 84.17% |         82.13%         | 83.52% (alpha=0.6)    | -                                 |
+| facebook/opt-125m   | 63.89% |         63.48%         | 63.44% (alpha=0.5)    | 64.14%                            |
+| facebook/opt-1.3b   | 75.41% |         73.59%         | 70.94% (alpha=0.5)    | 74.80%                            |
+| facebook/opt-2.7b   | 77.79% |         78.57%         | 78.60%(alpha=0.5)     | 78.25%                            |
+| facebook/opt-6.7b   | 81.26% |         76.65%         | 81.58%(alpha=0.5)     | 81.39%                            |
+| EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29%                            |
 
-| Model\Accuracy        | FP32   | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) |
-| --------------------- | ------ | ---------------------- | --------------------- |
-| bigscience/bloom-560m | 65.16% | 64.96%                 | 66.52% (alpha=0.5)    |
-| bigscience/bloom-1b7  | 71.55% | 67.61%                 | 72.81% (alpha=0.5)    |
-| bigscience/bloom-3b   | 74.06% | 70.73%                 | 74.41% (alpha=0.5)    |
-| bigscience/bloom-7b1  | 77.59% | 76.28%                 | 77.18% (alpha=0.5)    |
-| bigscience/bloom-176b | 84.17% | 82.13%                 | 83.52% (alpha=0.6)    |
-| facebook/opt-125m     | 63.89% | 63.54%                 | 63.91% (alpha=0.5)    |
-| facebook/opt-2.7b     | 77.90% | 78.99%                 | 78.91% (alpha=0.5)    |
-| facebook/opt-6.7b     | 81.51% | 79.44%                 | 81.58% (alpha=0.5)    |
-| EleutherAI/gpt-j-6B   | 79.17% | 78.76%                 | 79.13% (alpha=0.5)    |
 
 ## Example
 
