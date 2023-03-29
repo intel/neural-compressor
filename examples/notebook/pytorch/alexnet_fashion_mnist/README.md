@@ -54,7 +54,7 @@ This demo could be executed on any Intel CPU. But it's recommended to use 2nd Ge
 
 3. Intel® DevCloud
 
-In case you dont have access to the latest Intel® Xeon® CPU's, you could use the Intel® DevCloud for running this sample.<br> 
+In case you don't have access to the latest Intel® Xeon® CPU's, you could use the Intel® DevCloud for running this sample.<br> 
 Intel® DevCloud offers free access to the newer Intel® hardware.<br>
 To learn more about working with Intel® DevCloud, please refer to [Intel® DevCloud](https://devcloud.intel.com/oneapi/home/)
 
