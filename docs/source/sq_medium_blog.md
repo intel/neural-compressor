@@ -9,12 +9,12 @@ Intel® Neural Compressor(INC) is an  open-source Python library supporting popu
 
 ## LLM 
 ### Introduction
-A Large language mode (LLM) is a language model with billions of weights or more, trained on massive data to solve natural language processing (NLP) and natural language generation (NLG) tasks. Base on large amount of training text such as wikipedia and corpora, LLMs can knowledge about the structure of sentence, the relationship between words and the meaning of whole documents. More complex network structures and more parameters provide LLMs ability to face the complexity and polysemy of natural language.
+A Large language model (LLM) is a language model with billions of weights or more, trained on massive data to solve natural language processing (NLP) and natural language generation (NLG) tasks. Base on large amount of training texts such as wikipedia and corpora, LLMs can learn knowledge about the structure of sentences, the relationship among words and the meaning of whole document. More complicated network structures and more parameters provide LLMs ability to face the complexity and polysemy of natural language.
 
 LLMs are used in a wide variety of applications. They can be used to generate text, such as chatbots and virtual assistants, or fine tuned with a task-specific training for application to downstream tasks, like machine translation, emotion analysis, text classification, fraud detection and etc. 
 
 ### Deployment challenges
-LLMs show excellent performance in many tasks, and research shows that LLMs with bigger number of parmaters can have better performance.
+LLMs show excellent performance in many tasks, and researches show that LLMs with bigger number of parmaters can have better performance.
 
 ![](./imgs/model_scale_accuracy.png)
 
@@ -53,7 +53,7 @@ S = \frac{X_{max} - X{min}}{2^b -1}\\
 Z = -round(X_{min/}/S)
 $$
 
- Therefore the per-tensor quantization function is:
+The per-tensor quantization function is:
 ```python
 def quantize(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
@@ -65,7 +65,7 @@ def quantize(x, num_bits=8):
     print(f'scale = {scale}, bias = {bias}')
     return q_x
 ```
-Then we can get the quantized $W$:
+Then we can get the quantized $W_{q}$:
 ```bash
 >>> W_q = quantize(W)
 scale = 0.00296431384049356, bias = -59.0
@@ -215,14 +215,18 @@ SPIQ: Data-Free Per-Channel Static Input Quantization
 For LLMs, activations are much harder to quantize than weights due to the outliers. The activation variance is large amongst the channels for a given token but is small between magnitudes of a given channels. Therefore, the quantization error will decrease if we can use activation per-channel quantization. However, channel-wise activation quantization currently could not be performed because it can not map to hardware-accelerate GEMM kernels well.
 
 SmoothQuant is an alternative method of per-channel activation quantization. It divides the input activation by a per-channel smoothing factor $s\in\mathbb R^{C_i} $ , where $C_i$ is the input channel. It also scales the weights accordingly to keep the mathematical equivalence.
+
 $$
 Y = (Xdiag(s)^{-1})\cdot(diag(s)W) = \hat{X}\hat{W}
 $$
+
 This formula migrates the quantization difficulty from activations to weights. In order to control how much difficulty is shifted to weights, a hyper-parameter named migration strength $\alpha$ is used. 
+
 $$
 s_j = max(|X_j|)^\alpha / max(|W_j|)^{1-\alpha}
 $$
-$j = 1, 2, ...s, C_i$ where j correspond to j-th input channel.
+
+$j = 1, 2, ...s, C_{i}$ where j correspond to j-th input channel.
 
 ![](./imgs/smoothquant.png)
 
