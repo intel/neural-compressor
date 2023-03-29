@@ -925,6 +925,10 @@ class _BaseQuantizationConfig:
     def framework(self):
         return self._framework
     
+    @framework.setter
+    def framework(self, framework):
+        self._framework = framework
+    
     @property
     def example_inputs(self):
         """Get strategy_kwargs."""

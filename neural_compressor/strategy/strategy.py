@@ -1142,43 +1142,28 @@ class TuneStrategy(object):
         return self.cur_best_acc, self.cur_best_tuning_cfg
 
     def deploy_config(self):
-        return
-        #TODO uncomment it after config ready
-    #     """Save the configuration locally for deployment."""
-    #     acc_dataloader_cfg = deep_get(self.cfg, 'evaluation.accuracy.dataloader')
-    #     perf_dataloader_cfg = deep_get(self.cfg, 'evaluation.performance.dataloader')
-    #     # use acc dataloader if perf dataloader is not configured
-    #     if perf_dataloader_cfg is None:
-    #         perf_dataloader_cfg = acc_dataloader_cfg
-
-    #     self.deploy_cfg = OrderedDict()
-    #     # int8 dataloader graph transform
-    #     if deep_get(perf_dataloader_cfg, 'transform.QuantizedInput') is not None \
-    #       or deep_get(acc_dataloader_cfg, 'transform.QuantizedInput') is not None:
-    #         self.best_qmodel, scale = self.adaptor.quantize_input(self.best_qmodel)
-    #         deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
-    #         deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
-    #         deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
-    #         deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
-
-    #     self.deploy_cfg['model'] = self.cfg.model
-    #     self.deploy_cfg['device'] = self.conf.quantization.device
-    #     if self.cfg.evaluation is not None:
-    #         deep_set(self.cfg, 'evaluation.performance.dataloader',\
-    #             perf_dataloader_cfg)
-    #         deep_set(self.cfg, 'evaluation.accuracy.dataloader', \
-    #             acc_dataloader_cfg)
-    #         self.deploy_cfg['evaluation'] = self.cfg.evaluation
-
-    #     def setup_yaml():
-    #         represent_dict_order = lambda self, \
-    #             data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
-    #         yaml.add_representer(OrderedDict, represent_dict_order)
-    #         yaml.add_representer(DotDict, represent_dict_order)
-    #     setup_yaml()
-    #     with open(self.deploy_path, 'w+') as f:
-    #         yaml.dump(self.deploy_cfg, f)
-    #         logger.info("Save deploy yaml to {}".format(self.deploy_path))
+        """Save the configuration locally for deployment."""
+        # TODO need to double check 
+        self.deploy_cfg = OrderedDict()
+        model_cfg = dict()
+        model_cfg['inputs'] = self.conf.quantization.inputs
+        model_cfg['outputs'] = self.conf.quantization.outputs
+        model_cfg['backend'] = self.conf.quantization.backend
+        model_cfg['quant_format'] = self.conf.quantization.quant_format
+        model_cfg['domain'] = self.conf.quantization.domain
+        model_cfg['backend'] = self.conf.quantization.backend
+        self.deploy_cfg['model'] = model_cfg
+        self.deploy_cfg['device'] = self.conf.quantization.device
+        
+        def setup_yaml():
+            represent_dict_order = lambda self, \
+                data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
+            yaml.add_representer(OrderedDict, represent_dict_order)
+            yaml.add_representer(DotDict, represent_dict_order)
+        setup_yaml()
+        with open(self.deploy_path, 'w+') as f:
+            yaml.dump(self.deploy_cfg, f)
+            logger.info("Save deploy yaml to {}".format(self.deploy_path))
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.
