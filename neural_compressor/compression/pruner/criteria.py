@@ -197,7 +197,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
     """Pruning criterion.
     
     The snip_momentum_block criterion_class is derived from PruningCriterion.
-    A momentum mechanism is used to calculate snip score, which determines if a block weight is to be pruned.
+    A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.
 
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
@@ -220,10 +220,6 @@ class SnipMomentumBlockCriterion(PruningCriterion):
             self.scores[key] = torch.zeros(mask.shape).to(mask.device)
         self.alpha = 1.0
         self.beta = 1.0
-        
-    def on_train_begin(self):
-        """Initiliaze the block shape scores."""
-        pass
 
     def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip_momentum_block criterion."""
@@ -235,3 +231,79 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(mask.data*mask.grad)
 
+
+@register_criterion('retrain_free')
+class RetrainFreeCriterion(PruningCriterion):
+    """Pruning criterion.
+    
+    The retrain_free criterion_class is derived from PruningCriterion.
+
+    Args:
+        config: A config dict object that includes information about pruner and pruning criterion.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+        beta: A parameter that determines how much of the snip score is updated at the current step.
+    
+    Attributes:
+        scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
+    """
+
+    def __init__(self, modules, config):
+        """Initiliaze a block_mask pruning criterion."""
+        super(RetrainFreeCriterion, self).__init__(modules, config)
+        assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
+        self.collected_grads = {}
+        for key in self.modules.keys():
+            for name, param in self.modules[key].named_parameters():
+                if 'block_mask' in name:
+                    continue
+                param.requires_grad_(False) # only for retrain-free criterion
+                
+            if not hasattr(self.modules[key], 'block_mask'):
+                continue # No corresponding block mask, skip.
+            mask = self.modules[key].block_mask
+            self.scores[key] = torch.zeros(mask.shape).to(mask.device)
+            self.collected_grads[key] = []
+
+    def on_before_optimizer_step(self):
+        """Calculate and store the pruning scores based on snip_momentum_block criterion."""
+        with torch.no_grad():
+            for key in self.modules.keys():
+                if not hasattr(self.modules[key], 'block_mask'):
+                    continue # No corresponding block mask, skip.
+                mask_grad = self.modules[key].block_mask.grad.clone()
+                self.collected_grads[key].append(mask_grad)
+                self.scores[key] += mask_grad.pow(2)
+                
+    def rearrange_masks(self, masks):
+        """Rearrange the masks with constant sparsity in each layer."""
+        new_masks = {}
+        with torch.no_grad():
+            for key in masks.keys():
+                block_mask = masks[key]
+                num_pruned = torch.sum(block_mask == 0.0).data.item()
+                grads = torch.stack(self.collected_grads[key], dim=0).squeeze()
+                # self.collected_grads[key] = [] # clear at the end of every pruning step
+                # self.scores[key] = torch.zeros(block_mask.shape).to(block_mask.device)
+                if not num_pruned:
+                    new_masks[key] = block_mask
+                    continue
+                grads = grads.permute(1, 0).contiguous()
+                grads_sq = grads.pow(2).sum(dim=1)
+                _, indicies = grads_sq.sort(descending=False)
+                indicies = indicies.tolist()
+                masked_indicies = indicies[:num_pruned]
+                for index in indicies[num_pruned:]:
+                    masked_indicies.append(index)
+                    grad_vectors = grads[masked_indicies]
+                    grad_sum = grad_vectors.sum(dim=0)
+                    complement = grad_sum - grad_vectors
+                    grad_sum_length = complement.pow(2).sum(dim=1)
+                    removed = grad_sum_length.argmin()
+                    del masked_indicies[removed]
+
+                new_masks[key] = torch.ones(len(indicies)).to(block_mask.device)
+                new_masks[key][masked_indicies] = 0
+                new_masks[key] = new_masks[key] * torch.ones_like(block_mask).to(block_mask.device)
+        return new_masks
+                
