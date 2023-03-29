@@ -140,7 +140,61 @@ And the loss is
 >>> loss.item()
 5.637690492221736e-07
 ```
-Through this example, we can see that per-channel is finer granularity and have lower loss.
+Through this example, we can see that per-channel quantization is finer granularity and has lower loss.
+
+### Weights and Activations
+For a linear layer in most model, $Y=X \cdot W$, we can quantize both the weights and activations in order to reduce the storage and accelerate inference.
+Using per-tensor scale quantization to show the process.
+```python
+def quantize_per_tensor_absmax(x, n_bits=8):
+    scales = x.abs().max()
+    q_max = 2**(n_bits-1)-1
+    scales.clamp_(min=1e-5).div_(q_max)
+    x.div_(scales).round_().mul_(scales)
+    return x
+
+def dequantize(q_x, scale):
+    return scale * q_x
+```
+Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
+```bash
+>>>W = torch.rand(2, 3, dtype=torch.float32)
+>>>X = torch.rand(3, 4, dtype=torch.float32)
+>>>W
+tensor([[0.0806, 0.7589, 0.6038],
+        [0.3815, 0.5040, 0.7174]])
+>>>X
+tensor([[0.5444, 0.5826, 0.7772, 0.5555],
+        [0.3740, 0.3253, 0.0698, 0.1381],
+        [0.5972, 0.0086, 0.0737, 0.8298]])
+>>>Y = torch.matmul(W, X)
+>>>Y
+tensor([[0.6883, 0.2991, 0.1601, 0.6506],
+        [0.8246, 0.3924, 0.3845, 0.8768]])
+```
+Quantize weight and activation, matmul(quantize(X), quantize(Y))
+```bash
+>>>W_q, W_scale = quantize_per_tensor_absmax(W)
+>>>X_q, X_scale = quantize_per_tensor_absmax(X)
+>>>print(f'{W_q}\n{W_scale.item()}')
+>>>print(f'{X_q}\n{X_scale.item()}')
+tensor([[ 13., 127., 101.],
+        [ 64.,  84., 120.]])
+0.0059755356051027775
+tensor([[ 83.,  89., 119.,  85.],
+        [ 57.,  50.,  11.,  21.],
+        [ 91.,   1.,  11., 127.]])
+0.006533813662827015
+
+>>>Y_q = torch.matmul(W_q, X_q)
+>>>Y_q
+tensor([[17509.,  7608.,  4055., 16599.],
+        [21020., 10016.,  9860., 22444.]])
+>>>Y_dq = dequantize(Y, W_scale * X_scale)
+>>>Y_dq
+tensor([[0.6836, 0.2970, 0.1583, 0.6481],
+        [0.8207, 0.3911, 0.3850, 0.8763]])
+```
 
 **TODO**
 
