@@ -27,7 +27,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from collections import OrderedDict
 from copy import deepcopy
 
-from ..utils import logger
+from ...utils import logger
 from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_sampler import OpWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
@@ -101,7 +101,7 @@ class BayesianTuneStrategy(TuneStrategy):
             return
         if self.bayes_opt is None:
             self.bayes_opt = BayesianOptimization(
-                pbounds=pbounds, random_seed=self.conf.options.random_seed)
+                pbounds=pbounds, random_seed=self.cfg.tuning.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
             logger.debug("Dump current bayesian params:")

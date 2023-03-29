@@ -15,14 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
-from .benchmark import Benchmark
-from .version import __version__
-from .contrib import *
-# we need to set a global 'NA' backend, or Model can't be used
-from .utils.utility import set_random_seed, set_tensorboard, set_workspace
-from .utils import options
-# from .config import conf
-from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    WeightPruningConfig, QuantizationAwareTrainingConfig, \
-                    MixedPrecisionConfig
+"""Intel Neural Compressor Strategy."""
+
+from .strategy import EXP_STRATEGIES
+from os.path import dirname, basename, isfile, join
+import glob
+
+modules = glob.glob(join(dirname(__file__), "*.py"))
+
+for f in modules:
+    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
+        __import__(basename(f)[:-3], globals(), locals(), level=1)
+
+__all__ = ["EXP_STRATEGIES"]

@@ -22,7 +22,7 @@ import os
 import re
 from typing import Dict, Tuple
 from copy import deepcopy
-from ...utils import logger
+from ....utils import logger
 from .utility import OrderedDefaultDict
 from .tuning_structs import OpTuningConfig
 
@@ -127,7 +127,7 @@ class TuningSpace:
         self.op_type_wise_items = defaultdict(list)  # op_type: {(op_name, op_type), ...}
         self.framework = framework
         self.ops_dtype = defaultdict(OrderedDict)
-        self._usr_cfg = self._init_usr_cfg()
+        usr_cfg = conf.usr_cfg if conf else None
         self.op_items = {}
         # {(op_name, op_type): {(path): data type}}
         self.ops_data_type = OrderedDefaultDict()
@@ -135,15 +135,7 @@ class TuningSpace:
         # {(op_name, op_type): {path1, path2, ...}
         self.ops_path_set = defaultdict(set)
         
-        self._create_tuning_space(capability, self._usr_cfg)
-        
-    def _init_usr_cfg(self):
-        """Init user config."""
-        usr_cfg = {'quantization': {}}
-        usr_cfg['quantization']['model_wise'] = None
-        usr_cfg['quantization']['optype_wise'] = self.conf.quantization.op_type_dict
-        usr_cfg['quantization']['op_wise'] = self.conf.quantization.op_name_dict
-        return usr_cfg
+        self._create_tuning_space(capability, usr_cfg)
         
     def _parse_capability(self, capability: Dict) -> None:
         """Parse the capability and construct the tuning space(a tree).
@@ -260,8 +252,7 @@ class TuningSpace:
 
     def _merge_optype_wise_cfg(self, cap: Dict, optype_wise_usr_cfg: Dict, fw_cap: Dict):
         for op_type, op_user_cfg in optype_wise_usr_cfg.items():
-            op_type_pattern = re.compile(op_type)
-            op_lst = [op_name_type for op_name_type in cap['op'] if op_type_pattern.fullmatch(op_name_type[1])]
+            op_lst = [op_name_type for op_name_type in cap['op'] if op_name_type[1] == op_type]
             for op_name_type in op_lst:
                 cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                              op_user_cfg,

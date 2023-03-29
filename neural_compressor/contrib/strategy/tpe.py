@@ -505,7 +505,7 @@ class TpeTuneStrategy(TuneStrategy):
 
         if timeout == 0 and self.best_tune_result:
             need_stop = True
-        elif trials_count >= self.cfg.tuning.exit_policy.max_trials:
+        elif trials_count >= self.conf.quantization.tuning_criterion.max_trials:
             need_stop = True
         else:
             need_stop = False

@@ -25,7 +25,7 @@ import numpy as np
 import yaml
 from ..conf.config import Graph_Optimization_Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
-from ..strategy import STRATEGIES
+from .strategy import EXP_STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
 from ..utils.utility import CpuInfo, time_limit
@@ -139,7 +139,7 @@ class Graph_Optimization():
 
         strategy = cfg.tuning.strategy.name.lower()
 
-        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
+        assert strategy in EXP_STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
@@ -152,7 +152,7 @@ class Graph_Optimization():
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
-        self.strategy = STRATEGIES[strategy](
+        self.strategy = EXP_STRATEGIES[strategy](
             self._model,
             self.conf,
             None,

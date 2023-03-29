@@ -34,8 +34,16 @@ class AutoTuneStrategy(TuneStrategy):
     and the tuning process ends once the condition meets the exit policy.
     """
     
-    def __init__(self, model, conf, q_dataloader=None, q_func=None, \
-        eval_dataloader=None, eval_func=None, resume=None, q_hooks=None):
+    def __init__(self, 
+                 model, 
+                 conf,
+                 q_dataloader=None,
+                 q_func=None, 
+                 eval_func=None,
+                 eval_dataloader=None, 
+                 eval_metric=None, 
+                 resume=None, 
+                 q_hooks=None):
         """Init an auto tuning strategy.
 
         Args:

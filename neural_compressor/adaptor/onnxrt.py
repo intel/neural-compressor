@@ -31,7 +31,7 @@ from neural_compressor.adaptor.ox_utils.util import PROVIDERS, ONNXRT_BACKENDS
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
                                             GLOBAL_STATE, MODE
 from neural_compressor.utils.utility import Statistics
-from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.utils.utility import CpuInfo
 import math

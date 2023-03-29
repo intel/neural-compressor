@@ -116,8 +116,9 @@ class PostTrainingQuant:
             self.conf,
             self._calib_dataloader,
             self._train_func,
-            self._eval_dataloader,
             self._eval_func,
+            self._eval_dataloader,
+            self._eval_metric,
             _resume,
             self.callbacks.hooks if self.callbacks is not None else None)
 
@@ -289,6 +290,7 @@ class PostTrainingQuant:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
+                     
                     }
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
