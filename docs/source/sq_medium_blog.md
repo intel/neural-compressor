@@ -256,14 +256,14 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 #### automatic/more patterns(wenhua)
 ## Results
 
-| Model\Accuracy        | FP32   | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) |
-| --------------------- | ------ | ---------------------- | --------------------- |
-| bigscience/bloom-560m | 65.16% | 64.96%                 | 66.52% (alpha=0.5)    |
-| bigscience/bloom-1b7  | 71.55% | 67.61%                 | 72.81% (alpha=0.5)    |
-| bigscience/bloom-3b   | 74.06% | 70.73%                 | 74.41% (alpha=0.5)    |
-| bigscience/bloom-7b1  | 77.59% | 76.28%                 | 77.18% (alpha=0.5)    |
-| bigscience/bloom-176b | 84.17% | 82.13%                 | 83.52% (alpha=0.6)    |
-| facebook/opt-125m     | 63.89% | 63.54%                 | 63.91% (alpha=0.5)    |
-| facebook/opt-2.7b     | 77.90% | 78.99%                 | 78.91% (alpha=0.5)    |
-| facebook/opt-6.7b     | 81.51% | 79.44%                 | 81.58% (alpha=0.5)    |
-| EleutherAI/gpt-j-6B   | 79.17% | 78.76%                 | 79.13% (alpha=0.5)    |
+| Model\Accuracy        | FP32   | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 SmoothQuant auto-tune | 
+| --------------------- | ------ | ---------------------- | --------------------- | -------- |
+| bigscience/bloom-560m | 65.16% | 64.96%                 | 66.52% (alpha=0.5)    |  |
+| bigscience/bloom-1b7  | 71.55% | 67.61%                 | 72.81% (alpha=0.5)    |  |
+| bigscience/bloom-3b   | 74.06% | 70.73%                 | 74.41% (alpha=0.5)    |  |
+| bigscience/bloom-7b1  | 77.59% | 76.28%                 | 77.18% (alpha=0.5)    |  |
+| bigscience/bloom-176b | 84.17% | 82.13%                 | 83.52% (alpha=0.6)    |  |
+| facebook/opt-125m     | 63.89% | 63.54%                 | 63.91% (alpha=0.5)    |  |
+| facebook/opt-2.7b     | 77.90% | 78.99%                 | 78.91% (alpha=0.5)    |  |
+| facebook/opt-6.7b     | 81.51% | 79.44%                 | 81.58% (alpha=0.5)    |  |
+| EleutherAI/gpt-j-6B   | 79.17% | 78.76%                 | 79.13% (alpha=0.5)    |  |
