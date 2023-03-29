@@ -25,7 +25,7 @@ where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integ
 
 ### Per-tenor & Per-channel
 
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrix and per channel for 3D matrix. Similarly, each element has individual parameters is the finest granularity. 
 
 However, considering the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
@@ -104,7 +104,7 @@ The difference between $W$ and $W_{dq}$ shows that quantization affects precisio
 
 #### Per-channel example
 
-Similary, the example of per-channel quantization as:
+Similarly, the example of per-channel quantization as:
 
 ```python
 def quantize_per_channel(x, num_bits=8):
@@ -273,7 +273,7 @@ For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced 
 
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
 
-Our propsed method consists of 5 major steps:
+Our proposed method consists of 5 major steps:
 
 -    Hook input and output values of all layers using register_forward_hook.
 -    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
@@ -305,7 +305,7 @@ please note that we rely on torch jit to analyze the model. If you are using hug
 linear->layernorm
 ```
 
-while we support the following pattens
+while we support the following patterns
 
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
