@@ -10,15 +10,17 @@ Intel® Neural Compressor(INC) is an  open-source Python library supporting popu
 
 **Visit the Intel® Neural Compressor online document website at: https://intel.github.io/neural-compressor.**
 
-## LLM introduction
-
+## LLM 
+### introduction
 A Large language mode (LLM) is a language model with billions of weights or more, trained on massive data to solve natural language processing (NLP) and natural language generation (NLG) tasks. Base on large amount of training text such as wikipedia and corpora, LLMs can knowledge about the structure of sentence, the relationship between words and the meaning of whole documents. More complex network structures and more parameters provide LLMs ability to face the complexity and polysemy of natural language.
 
 LLMs are used in a wide variety of applications. They can be used to generate text, such as chatbots and virtual assistants, or fine tuned with a task-specific training for application to downstream tasks, like machine translation, emotion analysis, text classification, fraud detection and etc. 
 
-## LLM deployment challenges
+### deployment challenges
 LLMs show excellent performance in many tasks, and research shows that LLMs with bigger number of parmaters can have better performance.
+
 ![](./imgs/model_scale_accuracy.png)
+
 Therefore, the scale of LLMs grows exponentially. For example, GPT-2, released in 2019, has 1.5 billion parameters and the number of parameters increase to 175 billions when GPT-3 released in 2020.
 
 Billions or more paramaters make LLMs perform well in various tasks, howerever, also make it more difficult to deploy. Models are usually loaded on servers which have limited memory for infering tasks. The large scale of LLM make the process of inference very slow and even worse, it cannot work if the infrastructure does not meet the requirement.
@@ -26,23 +28,120 @@ Billions or more paramaters make LLMs perform well in various tasks, howerever, 
 
 Quantization is a common compression operation to reduce memory and accelerate inference, therefore, the difficulty of LLM deployment can be alleviate. Quantization convert the floating point matrix to an integer matrix.  `Affine quantization` and `Scale quantization`, also called `asymmetric quantization` and `symmetric quantization`, are two common range mapping techniques used in tensor conversion between different data types.
 The math equation of quantization is like:
+
 $$
-X_{int8} = round(X_{fp32}/S) + Z
+X_{int8} = round(X_{fp32}/S) + Z \tag{1}
 $$
 
 where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
 
+### Granularity
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
+
+However, considering the model accuracy and computational consumption, we use per-tensor or per-channel for weight quantization and per-tensor for activation quantization.
+
+### example
+We will through the example to show how quantization works.
+
+Suppose the weight tensor is：
 ```python
-## per-tensor quant dequant
-def quant_dequant_x(x, num_bits=8):
+import torch
+W = torch.Tensor(
+    [[0.6839, 0.4741, 0.7451],
+    [0.9301, 0.1742, 0.6835]]
+    )
+```
+As the formula (1) showed, we need scale $S$ and zero point $Z$ to calculate the integer matrix.
+$$
+S = \frac{X_{max} - X{min}}{2^b -1}\\
+Z = -round(X_{min/}/S)
+$$
+ Therefore the per-tensor quantization function is:
+```python
+def quantize(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
     scale = torch.clip(scale, min=1e-5)
     bias = torch.round(0 - (torch.min(x)) / scale)
     q_x = x / scale + bias
     q_x.clamp_(q_min, q_max).round_()
+    print(f'scale = {scale}, bias = {bias}')
+    return q_x
+```
+Then we can get the quantized $W$:
+```bash
+>>> W_q = quantize(W)
+scale = 0.00296431384049356, bias = -59.0
+>>> W_q
+tensor([[172., 101., 192.],
+        [255.,   0., 172.]])
+```
+With the value of scale and bias, we can dequantize the tensor.
+```python
+def dequantize(q_x, scale, bias):
     return scale * (q_x - bias)
 ```
+```bash
+>>> W_dq = dequantize(W_dq, 0.001, -50)
+>>> W_dq
+tensor([[0.1220, 0.0500, 0.1430],
+        [0.2570, 0.0500, 0.1890]])
+>>> loss = torch.nn.MSELoss()(W_dq, W)
+>>> loss.item()
+0.1983354538679123
+
+>>> W_dq = dequantize(W_q, 0.0020850980654358864, -70)
+>>> W_dq
+tensor([[0.6848, 0.4743, 0.7440],
+        [0.9308, 0.1749, 0.6848]])
+>>> loss = torch.nn.MSELoss()(W_dq, W)
+>>> loss.item()
+
+```
+The difference between $W$ and $W_{dq}$ shows that quantization affects precision and choose appropriate value of scale and zero point will reduce the loss of precision. 
+
+Similary, the example of per-channel quantization as:
+```python
+def quantize_per_channel(x, num_bits=8):
+    q_min, q_max = 0, 2. ** num_bits - 1.
+    x_tmp = x.detach().reshape(x.shape[0], -1)
+    scales = x_tmp.max(dim=-1, keepdim=True)[0] / (2 ** num_bits - 1)
+    bias =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
+    q_x = x_tmp.divide(scales) + bias
+    q_x.clamp_(q_min, q_max).round_()
+    print(f'scale = {scales}, \nbias = {bias}')
+    return q_x
+
+def dequantize_per_channel(q_x, scales, bias):
+    print(q_x, scales, bias)
+    print(scales * (q_x - bias))
+    return scales * (q_x - bias)
+```
+```bash
+>>>W_q = quantize_per_channel(W)
+scale = tensor([[0.0029],
+        [0.0036]]), 
+bias = tensor([[-162.],
+        [ -48.]])
+>>>W_q
+tensor([[ 72.,   0.,  93.],
+        [207.,   0., 139.]])
+
+>>>scales = torch.tensor([[0.0027],[0.0017]])
+>>>bias = torch.tensor([[-66.],[-87.]]
+>>>W_dq = dequantize_per_channel(W_q, scales, bias)
+>>>W_dq
+tensor([[0.6837, 0.4734, 0.7451],
+        [0.9301, 0.1751, 0.6821]])
+```
+And the loss is
+```bash
+>>> loss = torch.nn.MSELoss()(W_dq, W)
+>>> loss.item()
+5.637690492221736e-07
+```
+Through this example, we can see that per-channel is finer granularity and have lower loss.
+
 **TODO**
 
 1 per tensor add example(guoheng)
@@ -55,10 +154,7 @@ def quant_dequant_x(x, num_bits=8):
 
 5 to show activation quantization loss is important to some models(heng)
 
-### Granularity
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
 
-However, considering the model accuracy and computational consumption, we use per-tensor or per-channel for weight quantization and per-tensor for activation quantization.
 
 ## SmoothQuant and our enhancement
 
