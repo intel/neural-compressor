@@ -211,7 +211,7 @@ In the previous subsection, we have explained why we couldn't apply per-channel 
 To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce three of them,  SPIQ[1], Outlier Suppression[2] and Smoothquant[3]. All these three methods share the same idea that migrating the difficulty from activation quantization to weight quantization, the differences are how much the transferred difficulty is.
 
 
-So **the first question is how to migrate the difficulty?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly. 
+So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly. 
 ![](./imgs/sq_convert.png)
 
 But please note that this conversion will make the quantization of weights more difficult, because the scales attached for weights are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
