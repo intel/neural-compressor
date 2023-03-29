@@ -12,9 +12,11 @@ A Large language model (LLM) is a language model with billions of weights or mor
 LLMs are used in a wide variety of applications. They can be used to generate text, such as chatbots and virtual assistants, or fine tuned with a task-specific training for application to downstream tasks, like machine translation, emotion analysis, text classification, fraud detection and etc. 
 
 ### Deployment challenges
-LLMs show excellent performance in many tasks, and researches show that LLMs with bigger number of parmaters can have better performance.
+LLMs show excellent performance in many tasks, and researches show that LLMs with bigger number of parmaters can have better performance [1].
 
-![](./imgs/model_scale_accuracy.png)
+<div align="center">
+    <img src="./imgs/model_scale_accuracy.png" />
+</div>
 
 Therefore, the scale of LLMs grows exponentially. For example, GPT-2, released in 2019, has 1.5 billion parameters and the number of parameters increase to 175 billions when GPT-3 released in 2020.
 
@@ -197,22 +199,24 @@ tensor([[0.6836, 0.2970, 0.1583, 0.6481],
 Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We prove it in the following image and we ignore the zero point of quantization for simplicity. 
 The left of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics.  On the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the  results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
-![](./imgs/sq_pc.png)
-
-
-
+<div align="center">
+    <img src="./imgs/sq_pc.png"/>
+</div>
 
 ## SmoothQuant and our enhancement
 ### SmoothQuant
-In the previous subsection, we have explained why we couldn't apply per-channel quantization for activation, even though it could bring lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[1,2,3]. 
+In the previous subsection, we have explained why we couldn't apply per-channel quantization for activation, even though it could bring lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[2,3,4]. 
 
 
 
-To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce three of them,  SPIQ[1], Outlier Suppression[2] and Smoothquant[3]. All these three methods share the same idea that migrating the difficulty from activation quantization to weight quantization, the differences are how much the transferred difficulty is.
+To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce three of them,  SPIQ[2], Outlier Suppression[3] and Smoothquant[4]. All these three methods share the same idea that migrating the difficulty from activation quantization to weight quantization, the differences are how much the transferred difficulty is.
 
 
 So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly. 
-![](./imgs/sq_convert.png)
+
+<div align="center">
+    <img src="./imgs/sq_convert.png"/>
+</div>
 
 But please note that this conversion will make the quantization of weights more difficult, because the scales attached for weights are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
 
@@ -231,7 +235,11 @@ $$
 j is the index of the input channels.
 
 
-![](./imgs/smoothquant.png)
+
+<div align="center">
+    <img src="./imgs/smoothquant.png" height="250"/>
+</div>
+
 
 For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.
 
@@ -289,8 +297,10 @@ For opt models, we could fuse one more layer than the official code, because the
 
 
 ## Reference
-[1]Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
+[1]Jason, Wei, et al. "Emergent Abilities of Large Language Models". Published in Transactions on Machine Learning Research (2022)
 
-[2]Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+[2]Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
 
-[3]Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
+[3]Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+
+[4]Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
