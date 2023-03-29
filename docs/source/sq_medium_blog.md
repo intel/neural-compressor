@@ -272,7 +272,7 @@ conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instan
 
 conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
 
-For opt models, we could fuse one more layer than the official code, because the fc2 layer in the block follows the linear->relu-->linear pattern.
+For opt models, we could fuse one more layer than the official code, because the fc2 layer in the block follows the linear->relu->linear pattern.
 ## Results
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
@@ -290,5 +290,7 @@ For opt models, we could fuse one more layer than the official code, because the
 
 ## Reference
 [1]Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
+
 [2]Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+
 [3]Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
