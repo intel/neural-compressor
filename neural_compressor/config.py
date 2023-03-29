@@ -512,7 +512,11 @@ class _BaseQuantizationConfig:
                 _check_value("smooth_quant_args", val, dict)
                 for k, v in val.items():
                     if k == "alpha":
-                        _check_value("alpha", v, float)
+                        if isinstance(v, str):
+                            assert v == "auto", "the alpha of sq only supports float and 'auto'"
+                        else:
+                            _check_value("alpha", v, float)
+
                 return True
             else:
                 return {}
