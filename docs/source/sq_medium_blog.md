@@ -2,21 +2,18 @@
 
 ## INC introduction
 
-Intel® Neural Compressor(INC) is an  open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as [TensorFlow](https://www.tensorflow.org/), [PyTorch](https://pytorch.org/), [ONNX Runtime](https://onnxruntime.ai/), and [MXNet](https://mxnet.apache.org/), as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
+Intel® Neural Compressor(INC) is an  open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
 
-- Support a wide range of Intel hardware such as [Intel Xeon Scalable processor](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
-- Validate more than 10,000 models such as [Stable Diffusion](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [GPT-J](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [BERT-Large](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](https://github.com/intel/neural-compressor/blob/master/neural_coder#what-do-we-offer) and automatic [accuracy-driven](https://github.com/intel/neural-compressor/blob/master/docs/source/design.md#workflow) quantization strategies
-- Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) and [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 **Visit the Intel® Neural Compressor online document website at: https://intel.github.io/neural-compressor.**
 
 ## LLM 
-### introduction
+### Introduction
 A Large language mode (LLM) is a language model with billions of weights or more, trained on massive data to solve natural language processing (NLP) and natural language generation (NLG) tasks. Base on large amount of training text such as wikipedia and corpora, LLMs can knowledge about the structure of sentence, the relationship between words and the meaning of whole documents. More complex network structures and more parameters provide LLMs ability to face the complexity and polysemy of natural language.
 
 LLMs are used in a wide variety of applications. They can be used to generate text, such as chatbots and virtual assistants, or fine tuned with a task-specific training for application to downstream tasks, like machine translation, emotion analysis, text classification, fraud detection and etc. 
 
-### deployment challenges
+### Deployment challenges
 LLMs show excellent performance in many tasks, and research shows that LLMs with bigger number of parmaters can have better performance.
 
 ![](./imgs/model_scale_accuracy.png)
@@ -26,7 +23,7 @@ Therefore, the scale of LLMs grows exponentially. For example, GPT-2, released i
 Billions or more paramaters make LLMs perform well in various tasks, howerever, also make it more difficult to deploy. Models are usually loaded on servers which have limited memory for infering tasks. The large scale of LLM make the process of inference very slow and even worse, it cannot work if the infrastructure does not meet the requirement.
 ## Quantization Fundamentals
 
-Quantization is a common compression operation to reduce memory and accelerate inference, therefore, the difficulty of LLM deployment can be alleviate. Quantization convert the floating point matrix to an integer matrix.  `Affine quantization` and `Scale quantization`, also called `asymmetric quantization` and `symmetric quantization`, are two common range mapping techniques used in tensor conversion between different data types.
+Quantization is a common compression operation to reduce memory and accelerate inference, therefore, the difficulty of LLM deployment can be alleviate. Quantization convert the floating point matrix to an integer matrix. 
 The math equation of quantization is like:
 
 $$
@@ -35,14 +32,12 @@ $$
 
 where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
 
-### Granularity
+### Per-tenor & Per-channel
 There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
 
-However, considering the model accuracy and computational consumption, we use per-tensor or per-channel for weight quantization and per-tensor for activation quantization.
+However, considering the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
-### example
-We will through the example to show how quantization works.
-
+#### Per-tensor example
 Suppose the weight tensor is：
 ```python
 import torch
@@ -52,10 +47,12 @@ W = torch.Tensor(
     )
 ```
 As the formula (1) showed, we need scale $S$ and zero point $Z$ to calculate the integer matrix.
+
 $$
 S = \frac{X_{max} - X{min}}{2^b -1}\\
 Z = -round(X_{min/}/S)
 $$
+
  Therefore the per-tensor quantization function is:
 ```python
 def quantize(x, num_bits=8):
@@ -100,6 +97,7 @@ tensor([[0.6848, 0.4743, 0.7440],
 ```
 The difference between $W$ and $W_{dq}$ shows that quantization affects precision and choose appropriate value of scale and zero point will reduce the loss of precision. 
 
+#### Per-channel example
 Similary, the example of per-channel quantization as:
 ```python
 def quantize_per_channel(x, num_bits=8):
@@ -142,7 +140,7 @@ And the loss is
 ```
 Through this example, we can see that per-channel quantization is finer granularity and has lower loss.
 
-### Weights and Activations
+#### Matmul quantization example
 For a linear layer in most model, $Y=X \cdot W$, we can quantize both the weights and activations in order to reduce the storage and accelerate inference.
 Using per-tensor scale quantization to show the process.
 ```python
@@ -196,15 +194,11 @@ tensor([[0.6836, 0.2970, 0.1583, 0.6481],
         [0.8207, 0.3911, 0.3850, 0.8763]])
 ```
 
-**TODO**
+#### Per-channel limitation
 
-1 per tensor add example(guoheng)
+Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We prove it in the following image and we ignore the zero point of quantization for simplicity. The left of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics.  On the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the  results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
-2 add per-channel code example to show low loss (guoheng)
-
-3 matmul activation and weight quant(heng)
-
-4 matmul example to show the activation can't be quantized with per channel (wenhua), normally we use per-channel for weight quantization and per-tensor for activation quantization
+![](./imgs/sq_pc.png)
 
 5 to show activation quantization loss is important to some models(heng)
 
