@@ -126,7 +126,7 @@
 <td><p>Config Class for MixedPrecision.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.ExportConfig" title="neural_compressor.config.ExportConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportConfig</span></code></a></p></td>
-<td><p>Config Class for Export.</p></td>
+<td><p>Common Base Config for Export.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.ONNXQlinear2QDQConfig" title="neural_compressor.config.ONNXQlinear2QDQConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXQlinear2QDQConfig</span></code></a></p></td>
 <td><p>Config Class for ONNXQlinear2QDQ.</p></td>
@@ -536,7 +536,22 @@ it won’t work if there is no accuracy tuning process.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.ExportConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">ExportConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.ExportConfig" title="Permalink to this definition"></a></dt>
-<dd><p>Config Class for Export.</p>
+<dd><p>Common Base Config for Export.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – The data type of the exported model, select from [“fp32”, “int8”].
+Defaults to “int8”.</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The ONNX opset version used for export. Defaults to 14.</p></li>
+<li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format of the exported int8 onnx model,
+select from [“QDQ”, “QLinear”]. Defaults to “QDQ”.</p></li>
+<li><p><strong>example_inputs</strong> (<em>optional</em>) – Example inputs used for tracing model. Defaults to None.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model output names. Defaults to None.</p></li>
+<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dynamic axes information. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -558,6 +573,42 @@ it won’t work if there is no accuracy tuning process.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.config.Torch2ONNXConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">Torch2ONNXConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ_OP_FP32_BIAS'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.Torch2ONNXConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Torch2ONNX.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – The data type of the exported model, select from [“fp32”, “int8”].
+Defaults to “int8”.</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The ONNX opset version used for export. Defaults to 14.</p></li>
+<li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format of the exported int8 onnx model,
+select from [“QDQ”, “QLinear”]. Defaults to “QDQ”.</p></li>
+<li><p><strong>example_inputs</strong> (<em>required</em>) – Example inputs used for tracing model. Defaults to None.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model output names. Defaults to None.</p></li>
+<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dynamic axes information. Defaults to None.</p></li>
+<li><p><strong>recipe</strong> (<em>str</em><em>, </em><em>optional</em>) – A string to select recipes used for Linear -&gt; Matmul + Add, select from
+[“QDQ_OP_FP32_BIAS”, “QDQ_OP_INT32_BIAS”, “QDQ_OP_FP32_BIAS_QDQ”].
+Defaults to ‘QDQ_OP_FP32_BIAS’.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p># resnet50
+from neural_compressor.config import Torch2ONNXConfig
+int8_onnx_config = Torch2ONNXConfig(</p>
+<blockquote>
+<div><p>dtype=”int8”,
+opset_version=14,
+quant_format=”QDQ”, # or QLinear
+example_inputs=torch.randn(1, 3, 224, 224),
+input_names=[‘input’],
+output_names=[‘output’],
+dynamic_axes={“input”: {0: “batch_size”},</p>
+<blockquote>
+<div><p>“output”: {0: “batch_size”}},</p>
+</div></blockquote>
+</div></blockquote>
+<p>)
+q_model.export(‘int8-model.onnx’, int8_onnx_config)</p>
 </dd></dl>
 
 <dl class="py class">
