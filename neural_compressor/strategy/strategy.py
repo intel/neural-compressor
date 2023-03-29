@@ -18,7 +18,6 @@
 """The base class for tuning strategy."""
 
 from abc import abstractmethod
-from enum import EnumMeta
 import os
 import math
 import copy
@@ -31,7 +30,8 @@ import numpy as np
 from typing import OrderedDict as T_OrderedDict
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from neural_compressor.config import PostTrainingQuantConfig 
+from neural_compressor.config import PostTrainingQuantConfig
+from ..config import MixedPrecisionConfig
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
 from ..utils.utility import Statistics, dump_data_to_local
@@ -94,8 +94,8 @@ class TuneStrategy(object):
                  q_dataloader=None,
                  q_func=None, 
                  eval_func=None,
-                 eval_dataloader=None, 
-                 eval_metric=None, 
+                 eval_dataloader=None,
+                 eval_metric=None,
                  resume=None, 
                  q_hooks=None):
         """Init the TuneStrategy.
@@ -122,12 +122,12 @@ class TuneStrategy(object):
         self.calib_dataloader = q_dataloader
         self.eval_dataloader = eval_dataloader
         self.eval_metric = eval_metric
-        self.q_func = q_func
-        self.q_hooks = q_hooks
         self.eval_func = eval_func
         # not tuning equals to performance only
         self._not_tuning = True
         self._check_tuning_status()
+        self.q_func = q_func
+        self.q_hooks = q_hooks
         GLOBAL_STATE.STATE = MODE.QUANTIZATION
         framework, framework_specific_info = self._set_framework_info(q_dataloader, q_func)
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
@@ -139,29 +139,7 @@ class TuneStrategy(object):
         self.tune_result_record = []
         self.tuning_history = []
         self.tuning_result_data = []
-        # The tuning history ever made, structured like below:
-        # [
-        #   {
-        #     'version': __version__,
-        #     'cfg': cfg1,
-        #     'framework': tensorflow
-        #     'baseline': baseline1,
-        #     'last_tune_result': last_tune_result1,
-        #     'best_tune_result': best_tune_result1,
-        #     'history': [
-        #                  # tuning history under same yaml config
-        #                  {'tune_cfg': tune_cfg1, 'tune_result': \
-        #                               tune_result1, 'q_config': q_config1, ...},
-
-        #                   ...,
-        #                ],
-        #     # new fields added by subclass for resuming
-        #     ...,
-        #   },
-        #   # tuning history under different yaml configs
-        #   ...,
-        # ]
-
+        
         self.baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
@@ -679,7 +657,7 @@ class TuneStrategy(object):
                     continue
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
-                if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
+                if self.conf.options.diagnosis:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
@@ -1013,14 +991,13 @@ class TuneStrategy(object):
         framework_specific_info = {'device': self.conf.quantization.device,
                                    'approach': self.conf.quantization.approach,
                                    'random_seed': self.conf.options.random_seed,
-                                   'performance_only': self._not_tuning,}
+                                   'performance_only': self._not_tuning}
         framework = self.conf.quantization.framework.lower()
         framework_specific_info.update({'backend': self.conf.quantization.backend})
         framework_specific_info.update({'format': self.conf.quantization.quant_format})
         framework_specific_info.update({'domain': self.conf.quantization.quant_format})
 
-        self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
-            bool('graph_optimization' in self.cfg)
+        self.mixed_precision_mode = isinstance(self.conf.quantization, MixedPrecisionConfig)
 
         if 'tensorflow' in framework:
             framework_specific_info.update(
@@ -1072,36 +1049,55 @@ class TuneStrategy(object):
                 framework_specific_info.update(
                     {"default_qconfig": self.conf.quantization.op_name_dict['default_qconfig']})
             framework_specific_info.update({"q_func": q_func})
-            framework_specific_info.update({"example_inputs": self.cfg.quantization.example_inputs})
+            framework_specific_info.update({"example_inputs": self.conf.quantization.example_inputs})
         return framework, framework_specific_info
 
     def _set_objectives(self):
+        # set objectives
         self.higher_is_better = bool(self.conf.quantization.accuracy_criterion.higher_is_better)
+        obj_higher_is_better = None
+        obj_weight = None
+        if self.conf.quantization.tuning_criterion.multi_objectives:
+            obj_higher_is_better = self.conf.quantization.tuning_criterion.multi_objectives.get('higher_is_better', None)
+            obj_weight = self.conf.quantization.tuning_criterion.multi_objectives.get('weight', None)
         obj_lst = self.conf.quantization.tuning_criterion.multi_objectives.get('objective', [])
         self.use_multi_objective = len(obj_lst) > 0
-        objectives = [i.lower() for i in obj_lst] if \
-            self.use_multi_objective else [self.conf.quantization.tuning_criterion.objective.lower()]
-        self.obj_weight = self.conf.quantization.tuning_criterion.multi_objectives.get('weight', [])
-        
-        #TODO depends metric config 
-        metric_name_lst = ['Accuracy']
-        if self.eval_metric and len(self.eval_metric.keys()) >= 1:
-            metric_name_lst = list(self.eval_metric.keys())
-        self.metric_name = metric_name_lst
-        if len(self.metric_name) == 1:
-            self.metric_criterion = [self.higher_is_better]
-        elif not deep_get(self.cfg, 'evaluation.accuracy.multi_metrics.higher_is_better'):
-            # default is True
-            self.metric_criterion = [True] * len(self.metric_name)
+        if self.use_multi_objective:
+            objectives = [i.lower() for i in obj_lst]
         else:
-            self.metric_criterion = self.conf.quantization.accuracy_criterion.higher_is_better
+            objectives = [self.conf.quantization.tuning_criterion.objective.lower()]
 
-        self.objectives = MultiObjective(objectives,
-                             self.conf.quantization.accuracy_criterion, #TODO object all need to change
-                             self.metric_criterion,
-                             self.metric_weight,
-                             self.conf.quantization.accuracy_criterion.higher_is_better,
-                             self.obj_weight)
+        # set metric
+        self.metric_name = ['Accuracy']
+        self.metric_criterion = [self.higher_is_better]
+        self.metric_weight = None
+        use_multi_metrics = False
+        if self.eval_metric:
+            # metric name
+            # 'weight','higher_is_better', 'metric1', 'metric2', ...
+            if len(self.eval_metric.keys()) >= 4:
+                self.metric_name = self.eval_metric.keys() - {'weight','higher_is_better'}
+                use_multi_metrics = True
+            metric_higher_is_better = self.eval_metric.get('higher_is_better', None)
+            # metric criterion
+            if use_multi_metrics:
+                if metric_higher_is_better is not None:
+                    self.metric_criterion = [metric_higher_is_better] * len(self.metric_name)
+                else:
+                    self.metric_criterion = [True] * len(self.metric_name)
+            # metric weight
+            self.metric_weight = self.eval_metric.get('weight', None)
+        
+        accuracy_criterion = {'relative': 0.01, 'higher_is_better': True}
+        accuracy_criterion_conf = self.conf.quantization.accuracy_criterion
+        accuracy_criterion[accuracy_criterion_conf.criterion] = accuracy_criterion_conf.tolerable_loss
+        accuracy_criterion['higher_is_better'] = accuracy_criterion_conf.higher_is_better
+        self.objectives = MultiObjective(objectives=objectives,
+                                         accuracy_criterion=accuracy_criterion,
+                                         metric_criterion=self.metric_criterion,
+                                         metric_weight=self.metric_weight,
+                                         obj_criterion=obj_higher_is_better,
+                                         obj_weight=obj_weight)
 
     def _same_yaml(self, src_yaml, dst_yaml):
         """Check if the two yamls are the same.
@@ -1149,42 +1145,43 @@ class TuneStrategy(object):
         logger.debug(f"Best acc is {self.cur_best_acc}.")
         return self.cur_best_acc, self.cur_best_tuning_cfg
 
-    def deploy_config(self):
-        """Save the configuration locally for deployment."""
-        acc_dataloader_cfg = deep_get(self.cfg, 'evaluation.accuracy.dataloader')
-        perf_dataloader_cfg = deep_get(self.cfg, 'evaluation.performance.dataloader')
-        # use acc dataloader if perf dataloader is not configured
-        if perf_dataloader_cfg is None:
-            perf_dataloader_cfg = acc_dataloader_cfg
+    #TODO uncomment it after config ready
+    # def deploy_config(self):
+    #     """Save the configuration locally for deployment."""
+    #     acc_dataloader_cfg = deep_get(self.cfg, 'evaluation.accuracy.dataloader')
+    #     perf_dataloader_cfg = deep_get(self.cfg, 'evaluation.performance.dataloader')
+    #     # use acc dataloader if perf dataloader is not configured
+    #     if perf_dataloader_cfg is None:
+    #         perf_dataloader_cfg = acc_dataloader_cfg
 
-        self.deploy_cfg = OrderedDict()
-        # int8 dataloader graph transform
-        if deep_get(perf_dataloader_cfg, 'transform.QuantizedInput') is not None \
-          or deep_get(acc_dataloader_cfg, 'transform.QuantizedInput') is not None:
-            self.best_qmodel, scale = self.adaptor.quantize_input(self.best_qmodel)
-            deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
-            deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
-            deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
-            deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
+    #     self.deploy_cfg = OrderedDict()
+    #     # int8 dataloader graph transform
+    #     if deep_get(perf_dataloader_cfg, 'transform.QuantizedInput') is not None \
+    #       or deep_get(acc_dataloader_cfg, 'transform.QuantizedInput') is not None:
+    #         self.best_qmodel, scale = self.adaptor.quantize_input(self.best_qmodel)
+    #         deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
+    #         deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
+    #         deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
+    #         deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
 
-        self.deploy_cfg['model'] = self.cfg.model
-        self.deploy_cfg['device'] = self.conf.quantization.device
-        if self.cfg.evaluation is not None:
-            deep_set(self.cfg, 'evaluation.performance.dataloader',\
-                perf_dataloader_cfg)
-            deep_set(self.cfg, 'evaluation.accuracy.dataloader', \
-                acc_dataloader_cfg)
-            self.deploy_cfg['evaluation'] = self.cfg.evaluation
+    #     self.deploy_cfg['model'] = self.cfg.model
+    #     self.deploy_cfg['device'] = self.conf.quantization.device
+    #     if self.cfg.evaluation is not None:
+    #         deep_set(self.cfg, 'evaluation.performance.dataloader',\
+    #             perf_dataloader_cfg)
+    #         deep_set(self.cfg, 'evaluation.accuracy.dataloader', \
+    #             acc_dataloader_cfg)
+    #         self.deploy_cfg['evaluation'] = self.cfg.evaluation
 
-        def setup_yaml():
-            represent_dict_order = lambda self, \
-                data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
-            yaml.add_representer(OrderedDict, represent_dict_order)
-            yaml.add_representer(DotDict, represent_dict_order)
-        setup_yaml()
-        with open(self.deploy_path, 'w+') as f:
-            yaml.dump(self.deploy_cfg, f)
-            logger.info("Save deploy yaml to {}".format(self.deploy_path))
+    #     def setup_yaml():
+    #         represent_dict_order = lambda self, \
+    #             data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
+    #         yaml.add_representer(OrderedDict, represent_dict_order)
+    #         yaml.add_representer(DotDict, represent_dict_order)
+    #     setup_yaml()
+    #     with open(self.deploy_path, 'w+') as f:
+    #         yaml.dump(self.deploy_cfg, f)
+    #         logger.info("Save deploy yaml to {}".format(self.deploy_path))
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.
@@ -1247,10 +1244,9 @@ class TuneStrategy(object):
                 "metric or multi_metrics field of accuracy field of evaluation" \
                 " section should not be empty"
 
-            postprocess_cfg = self.cfg.evaluation.accuracy.postprocess
+            postprocess_cfg = None
             metric_cfg = self.conf.quantization.metric
-            iteration = -1 if self.cfg.evaluation.accuracy.iteration is None \
-                else self.cfg.evaluation.accuracy.iteration
+            iteration = -1
             eval_func = create_eval_func(self.framework,
                 self.eval_dataloader,
                 self.adaptor,
@@ -1500,6 +1496,30 @@ class TuneStrategy(object):
 
     def _add_tuning_history(self, tune_cfg=None, tune_result=None, **kwargs):
         """Add tuning config to tuining history.
+
+
+        The tuning history ever made, structured like below:
+        [
+          {
+            'version': __version__,
+            'cfg': cfg1,
+            'framework': tensorflow
+            'baseline': baseline1,
+            'last_tune_result': last_tune_result1,
+            'best_tune_result': best_tune_result1,
+            'history': [
+                         # tuning history under same yaml config
+                         {'tune_cfg': tune_cfg1, 'tune_result': \
+                                      tune_result1, 'q_config': q_config1, ...},
+
+                          ...,
+                       ],
+            # new fields added by subclass for resuming
+            ...,
+          },
+          # tuning history under different yaml configs
+          ...,
+        ]
 
         Note this record is added under same yaml config.
         """

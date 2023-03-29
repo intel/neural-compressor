@@ -290,6 +290,7 @@ class PostTrainingQuant:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
+                     
                     }
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.

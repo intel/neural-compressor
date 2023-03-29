@@ -127,7 +127,7 @@ class TuningSpace:
         self.op_type_wise_items = defaultdict(list)  # op_type: {(op_name, op_type), ...}
         self.framework = framework
         self.ops_dtype = defaultdict(OrderedDict)
-        usr_cfg = conf.usr_cfg if conf else None
+        self._usr_cfg = self._init_usr_cfg()
         self.op_items = {}
         # {(op_name, op_type): {(path): data type}}
         self.ops_data_type = OrderedDefaultDict()
@@ -135,7 +135,15 @@ class TuningSpace:
         # {(op_name, op_type): {path1, path2, ...}
         self.ops_path_set = defaultdict(set)
         
-        self._create_tuning_space(capability, usr_cfg)
+        self._create_tuning_space(capability, self._usr_cfg)
+        
+    def _init_usr_cfg(self):
+        """Init user config."""
+        usr_cfg = {'quantization': {}}
+        usr_cfg['quantization']['model_wise'] = None
+        usr_cfg['quantization']['optype_wise'] = self.conf.quantization.op_type_dict
+        usr_cfg['quantization']['op_wise'] = self.conf.quantization.op_name_dict
+        return usr_cfg
         
     def _parse_capability(self, capability: Dict) -> None:
         """Parse the capability and construct the tuning space(a tree).
