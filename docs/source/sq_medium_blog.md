@@ -228,7 +228,7 @@ $$
 s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha}
 $$
 
-c is the index of the input channels.
+j is the index of the input channels.
 
 
 ![](./imgs/smoothquant.png)
