@@ -166,6 +166,8 @@ class CompressionManager:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
+                     weight: [0.5, 0.5],
+                     higher_is_better: [True, False]
                     }
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.

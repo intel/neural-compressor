@@ -26,18 +26,14 @@ import psutil
 from threading import Thread
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
-from .conf.config import BenchmarkConf
+from .config import Config, BenchmarkConfig
 from .utils import logger
 from .utils import OPTIONS
 from .utils.utility import GLOBAL_STATE, MODE
-from .conf.dotdict import deep_get, deep_set
 from .model import BaseModel
 from .model import Model as NCModel
 from .model.model import get_model_fwk_name
-from .conf.pythonic_config import Config
 from .utils import logger
-from .conf.pythonic_config import Config
-from .config import BenchmarkConfig
 from .utils.utility import Statistics
 
 
@@ -146,7 +142,7 @@ class _Benchmark(object):
     With the objective setting, user can get the data of what they configured in yaml.
 
     Args:
-        conf (obj): The config.BenchmarkConfig class containing accuracy goal, tuning objective etc.
+        conf (obj): The BenchmarkConfig class containing accuracy goal, tuning objective etc.
     """
 
     def __init__(self, conf):
@@ -158,11 +154,9 @@ class _Benchmark(object):
         self._results = {}
         assert isinstance(conf, BenchmarkConfig), \
             "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
-        conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
-        self.conf = BenchmarkConf()
-        self.conf.map_pyconfig_to_cfg(conf)
-        if self.conf.usr_cfg.model.framework != 'NA':
-            self.framework = self.conf.usr_cfg.model.framework.lower()
+        self.conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
+        if self.conf.quantization.framework is not None:
+            self.framework = self.conf.quantization.framework.lower()
 
     def __call__(self, raw_cmd=None):
         """Directly call a Benchmark object.
@@ -170,12 +164,10 @@ class _Benchmark(object):
         Args:
             raw_cmd: raw command used for benchmark
         """
-        cfg = self.conf.usr_cfg
-        assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
+        cfg = self.conf
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
-        set_all_env_var(deep_get(cfg, 'evaluation.performance.configs'))
         # disable multi-instance for running bechmark on GPU device
-        if cfg.device == 'gpu':
+        if cfg.quantization.device == 'gpu':
             set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
         logger.info("Start to run Benchmark.")
@@ -328,43 +320,36 @@ class _Benchmark(object):
                 by user config and returns model performance
         """
         if self._b_func is None:
-            cfg = self.conf.usr_cfg
+            cfg = self.conf
             GLOBAL_STATE.STATE = MODE.BENCHMARK
-            framework_specific_info = {'device': cfg.device, \
+            framework_specific_info = {'device': cfg.quantization.device, \
                                        'approach': cfg.quantization.approach, \
-                                       'random_seed': cfg.tuning.random_seed,
-                                       'backend': cfg.model.get('backend', 'default'),
-                                       'format': cfg.model.get('quant_format', 'default')}
-            framework = cfg.model.framework.lower()
+                                       'random_seed': cfg.options.random_seed,
+                                       'backend': cfg.quantization.backend \
+                                        if cfg.quantization.backend is not None else 'default',
+                                       'format': cfg.quantization.quant_format \
+                                        if cfg.quantization.backend is not None else 'default'}
+            framework = cfg.quantization.framework.lower()
             if 'tensorflow' in framework:
-                framework_specific_info.update({"inputs": cfg.model.inputs, \
-                                                "outputs": cfg.model.outputs, \
-                                                "recipes": cfg.model.recipes, \
-                                                'workspace_path': cfg.tuning.workspace.path})
+                framework_specific_info.update({"inputs": cfg.quantization.inputs, \
+                                                "outputs": cfg.quantization.outputs, \
+                                                "recipes": cfg.quantization.recipes, \
+                                                'workspace_path': cfg.options.workspace})
             if framework == 'keras':
-                framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
+                framework_specific_info.update({'workspace_path': cfg.options.workspace})
             if framework == 'mxnet':
                 framework_specific_info.update({"b_dataloader": self._b_dataloader})
-            if 'onnx' in framework.lower():
+            if 'onnx' in framework:
                 framework_specific_info.update(
-                                     {'workspace_path': cfg.tuning.workspace.path, \
+                                     {'workspace_path': cfg.options.workspace, \
                                      'graph_optimization': OPTIONS[framework].graph_optimization})
             if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
-                framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
+                framework_specific_info.update({"workspace_path": cfg.options.workspace,
                                                 "q_dataloader": None})
 
             assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for quantization....'
 
             adaptor = FRAMEWORKS[framework](framework_specific_info)
-
-            if deep_get(cfg, 'evaluation.performance.iteration') == -1 and 'dummy_v2' in \
-                deep_get(cfg, 'evaluation.performance.dataloader.dataset', {}):
-                deep_set(cfg, 'evaluation.performance.iteration', 10)
-
-            iteration = -1 if deep_get(cfg, 'evaluation.performance.iteration') is None \
-                else deep_get(cfg, 'evaluation.performance.iteration')
-
-            b_postprocess_cfg = deep_get(cfg, 'evaluation.performance.postprocess')
 
             assert self._b_dataloader is not None, "dataloader should not be None"
 
@@ -372,9 +357,7 @@ class _Benchmark(object):
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
                                     adaptor, \
-                                    None, \
-                                    b_postprocess_cfg,
-                                    iteration=iteration)
+                                    None)
 
             self.objectives = MultiObjective(["performance"],
                                              {'relative': 0.1},
@@ -385,7 +368,7 @@ class _Benchmark(object):
             # also measurer have result list among steps
             acc, _ = val
             batch_size = self._b_dataloader.batch_size
-            warmup = deep_get(cfg, "evaluation.performance.warmup")
+            warmup = cfg.benchmark.warmup
             if len(self.objectives.objectives[0].result_list()) < warmup:
                 if len(self.objectives.objectives[0].result_list()) > 1 and warmup != 0:
                     warmup = 1
@@ -489,43 +472,43 @@ class _Benchmark(object):
                        be careful of the name of the model configured in the yaml file,
                        make sure the name is in the supported slim model list.
         """
-        cfg = self.conf.usr_cfg
-        if cfg.model.framework == 'NA':
+        cfg = self.conf
+        if cfg.quantization.framework is None:
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "tensorflow":
                 from .model.tensorflow_model import get_model_type
-                if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
+                if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
                     self.framework = 'keras'
             if self.framework == "pytorch":
-                if cfg.model.backend == "default":
+                if cfg.quantization.backend == "default":
                     self.framework = "pytorch_fx"
-                elif cfg.model.backend == "ipex":
+                elif cfg.quantization.backend == "ipex":
                     self.framework = "pytorch_ipex"
                     import intel_extension_for_pytorch
-            cfg.model.framework = self.framework
+            cfg.quantization.framework = self.framework
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in self.framework or self.framework == "keras":
-                self._model = NCModel(user_model, backend=self.framework, device=cfg.device)
+                self._model = NCModel(user_model, backend=self.framework, device=cfg.quantization.device)
             else:
                 self._model = NCModel(user_model, backend=self.framework)
         else:
             # It is config of neural_compressor version < 2.0, no need in 2.0
-            if cfg.model.framework == "pytorch_ipex":
+            if cfg.quantization.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 if not isinstance(user_model, IPEXModel):
-                    self._model = NCModel(user_model.model, framework=cfg.model.framework)
+                    self._model = NCModel(user_model.model, framework=cfg.quantization.framework)
                     return
             self._model = user_model
 
         if 'tensorflow' in self.framework:
-            self._model.name = cfg.model.name
-            self._model.output_tensor_names = cfg.model.outputs
-            self._model.input_tensor_names = cfg.model.inputs
-            self._model.workspace_path = cfg.tuning.workspace.path
+            self._model.name = cfg.quantization.model_name
+            self._model.output_tensor_names = cfg.quantization.outputs
+            self._model.input_tensor_names = cfg.quantization.inputs
+            self._model.workspace_path = cfg.options.workspace
 
     def __repr__(self):
         """Get the object representation in string format."""

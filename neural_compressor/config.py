@@ -500,6 +500,9 @@ class TuningCriterion:
     @multi_objectives.setter
     def multi_objectives(self, multi_objectives):
         if _check_value('multi_objectives', multi_objectives, dict):
+            if 'weight' in multi_objectives.keys() and isinstance(multi_objectives['weight'], list):
+                assert len(multi_objectives['objective']) == len(multi_objectives['weight'])
+            
             for k, v in multi_objectives.items():
                 _check_value('multi_objectives', k, str, ['objective', 'weight', 'higher_is_better'])
                 if k == 'objective':
@@ -1036,6 +1039,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_type_dict=None,
                  op_name_dict=None,
                  reduce_range=None,
+                 example_inputs=None,
                  excluded_precisions=[],
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
@@ -1054,6 +1058,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          op_type_dict=op_type_dict,
                          op_name_dict=op_name_dict,
                          reduce_range=reduce_range,
+                         example_inputs=example_inputs,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
@@ -1152,11 +1157,6 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          backend=backend,
                          op_type_dict=op_type_dict,
                          op_name_dict=op_name_dict,
-                         strategy=tuning_criterion.strategy,
-                         strategy_kwargs=tuning_criterion.strategy_kwargs,
-                         objective=tuning_criterion.objective,
-                         timeout=tuning_criterion.timeout,
-                         max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,

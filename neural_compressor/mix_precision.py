@@ -22,10 +22,8 @@ import numpy as np
 import random
 from .utils.utility import time_limit, CpuInfo
 from .strategy import STRATEGIES
-from .conf.pythonic_config import Config
-from .conf.config import MixedPrecision_Conf
+from .config import Config
 from .utils import logger
-from .conf.dotdict import deep_get, deep_set, DotDict
 from .model.model import BaseModel, get_model_fwk_name, Model, MODELS
 
 class _MixedPrecision:
@@ -39,7 +37,7 @@ class _MixedPrecision:
         from neural_compressor.config import MixedPrecisionConfig
         def eval_func(model):
             ...
-        return accuracy
+            return accuracy
         
         conf = MixedPrecisionConfig()
         output_model = mix_precision.fit(
@@ -54,10 +52,8 @@ class _MixedPrecision:
         Args:
             conf (obj): The MixedPrecisionConfig class containing accuracy goal, tuning objective etc.
         """
-        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
-        self.conf = MixedPrecision_Conf()
-        self.conf.map_pyconfig_to_cfg(conf)
-        seed = self.conf.usr_cfg.tuning.random_seed
+        self.conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        seed = self.conf.options.random_seed
         random.seed(seed)
         np.random.seed(seed)
 
@@ -68,13 +64,13 @@ class _MixedPrecision:
 
     def pre_process(self):
         """Create strategy object for tuning."""
-        cfg = self.conf.usr_cfg
+        cfg = self.conf
         strategy = 'automixedprecision'
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
-                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
+        self.resume_file = os.path.abspath(os.path.expanduser(cfg.options.resume_from)) \
+                           if cfg.options.workspace and cfg.options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -88,12 +84,13 @@ class _MixedPrecision:
             None,
             self._eval_dataloader,
             self._eval_func,
+            self._eval_metric,
             _resume)
 
     def execute(self):
         """Execute routinue based on strategy design."""
         try:
-            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+            with time_limit(self.conf.quantization.tuning_criterion.timeout):
                 self.strategy.traverse()
         except KeyboardInterrupt:
             pass
@@ -137,7 +134,7 @@ class _MixedPrecision:
             self._precisions = sorted([i.strip() for i in customized_precisions])
         elif isinstance(customized_precisions, str):
             self._precisions = sorted([i.strip() for i in customized_precisions.split(',')])
-        self.conf.usr_cfg.mixed_precision.precisions = self._precisions
+        self.conf.mixed_precision.precision = self._precisions
 
     @property
     def eval_dataloader(self):
@@ -193,55 +190,55 @@ class _MixedPrecision:
                        of tensorflow, be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
         """
-        cfg = self.conf.usr_cfg
-        if cfg.model.framework == 'NA':
+        cfg = self.conf
+        if cfg.quantization.framework == 'NA':
             if isinstance(user_model, BaseModel):
-                cfg.model.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
-                if cfg.model.backend == "ipex":
-                    assert cfg.model.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
-                if cfg.model.backend == "itex":
+                cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
+                if cfg.quantization.backend == "ipex":
+                    assert cfg.quantization.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
+                if cfg.quantization.backend == "itex":
                     from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
-                        assert cfg.model.framework == "keras", "Please wrap the model with KerasModel class!"
+                        assert cfg.quantization.framework == "keras", "Please wrap the model with KerasModel class!"
                     else:
-                        assert cfg.model.framework == "pytorch_itex", \
+                        assert cfg.quantization.framework == "pytorch_itex", \
                             "Please wrap the model with TensorflowModel class!"
             else:
                 framework = get_model_fwk_name(user_model)
                 if framework == "tensorflow":
                     from .model.tensorflow_model import get_model_type
-                    if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
+                    if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
                         framework = 'keras'
                 if framework == "pytorch":
-                    if cfg.model.backend == "default":
+                    if cfg.quantization.backend == "default":
                         framework = "pytorch_fx"
-                    elif cfg.model.backend == "ipex":
+                    elif cfg.quantization.backend == "ipex":
                         framework = "pytorch_ipex"
-                cfg.model.framework = framework
+                cfg.quantization.framework = framework
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            if "tensorflow" in cfg.model.framework or cfg.model.framework == "keras":
-                self._model = Model(user_model, backend=cfg.model.framework, device=cfg.device)
+            if "tensorflow" in cfg.quantization.framework or cfg.quantization.framework == "keras":
+                self._model = Model(user_model, backend=cfg.quantization.framework, device=cfg.quantization.device)
             else:
-                self._model = Model(user_model, backend=cfg.model.framework)
+                self._model = Model(user_model, backend=cfg.quantization.framework)
         else:
-            if cfg.model.framework == "pytorch_ipex":
+            if cfg.quantization.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 assert type(user_model) == IPEXModel, \
                             "The backend is ipex, please wrap the model with IPEXModel class!"
-            elif cfg.model.framework == "pytorch_fx":
+            elif cfg.quantization.framework == "pytorch_fx":
                 from neural_compressor.model.torch_model import PyTorchFXModel
                 assert type(user_model) == PyTorchFXModel, \
                             "The backend is default, please wrap the model with PyTorchFXModel class!"
 
             self._model = user_model
 
-        if 'tensorflow' in cfg.model.framework:
-            self._model.name = cfg.model.name
-            self._model.output_tensor_names = cfg.model.outputs
-            self._model.input_tensor_names = cfg.model.inputs
-            self._model.workspace_path = cfg.tuning.workspace.path
+        if 'tensorflow' in cfg.quantization.framework:
+            self._model.name = cfg.quantization.model_name
+            self._model.output_tensor_names = cfg.quantization.outputs
+            self._model.input_tensor_names = cfg.quantization.inputs
+            self._model.workspace_path = cfg.options.workspace
 
     @property
     def metric(self):
@@ -261,6 +258,8 @@ class _MixedPrecision:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
+                     weight: [0.5, 0.5],
+                     higher_is_better: [True, False]
                     }
             Refer to this [file](../docs/source/metric.md#supported-built-in-metric-matrix) for built-in metric list
         2. User also can set specific metric through this api. The metric class should take the outputs of the model or
@@ -271,10 +270,6 @@ class _MixedPrecision:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
                 The object of Metric or a dict of built-in metric configurations.
         """
-        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning("Override the value of `metric` field defined in yaml file" \
-                           " as user defines the value of `metric` attribute by code.")
-
         from .metric import Metric as NCMetric, METRICS
         if isinstance(user_metric, dict):
             metric_cfg = user_metric
@@ -290,11 +285,11 @@ class _MixedPrecision:
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.usr_cfg.model.framework)
+            metrics = METRICS(self.conf.quantization.framework)
             metrics.register(name, metric_cls)
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+
         self._metric = user_metric
+
 
     @property
     def eval_func(self):
@@ -380,14 +375,14 @@ def fit(model,
     converter.precisions = precisions
     converter.model = model
 
-    if ('bf16' in precisions or 'fp16' in precisions) and converter.model.framework() == "onnxruntime":
+    if ('bf16' in precisions or 'fp16' in precisions) and converter.framework() == "onnxruntime":
         if config.device == "cpu":
             logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
             sys.exit(0)
         elif config.backend != "onnxrt_cuda_ep":
             logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
             sys.exit(0)
-    elif 'bf16' in precisions and not CpuInfo().bf16 and converter.model.framework() != "onnxruntime":
+    elif 'bf16' in precisions and not CpuInfo().bf16 and converter.framework() != "onnxruntime":
         if os.getenv('FORCE_BF16') == '1':
             logger.warning("Mix precision will generate bf16 graph although " \
                            "the hardware doesn't support bf16 instruction.")
@@ -395,7 +390,7 @@ def fit(model,
             logger.warning("Mix precision exits due to the hardware " \
                            "doesn't support bf16 instruction.")
             sys.exit(0)
-    elif 'fp16' in precisions and converter.model.framework() != "onnxruntime":
+    elif 'fp16' in precisions and converter.framework() != "onnxruntime":
         logger.warning("Currently mix precision only supports fp16 for onnx models.")
         sys.exit(0)
     if eval_func is not None:

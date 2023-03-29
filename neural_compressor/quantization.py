@@ -20,7 +20,6 @@ import os
 import pickle
 import random
 import numpy as np
-from .conf.dotdict import deep_get, deep_set, DotDict
 from .config import Config
 from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, MODELS
 from .strategy import STRATEGIES
@@ -52,7 +51,7 @@ class _PostTrainingQuant:
         """Initialize the parameters.
 
         Args:
-            conf (QuantizationConfig): A instance of QuantizationConfig to
+            conf (PostTrainingQuantConfig): A instance of PostTrainingQuantConfig to
                                             specify the quantization behavior.
         """
         self.conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
@@ -73,14 +72,7 @@ class _PostTrainingQuant:
         """Create strategy to optimize model."""
         cfg = self.conf
 
-        if os.environ.get("PERFORMANCE_ONLY") in ['0', '1']:
-            performance_only = bool(int(os.environ.get("PERFORMANCE_ONLY")))
-            deep_set(cfg, 'quantization.performance_only', performance_only)
-            logger.info("Get environ 'PERFORMANCE_ONLY={}'," \
-                " force setting 'quantization.performance_only = True'.".format(performance_only))
-
         strategy = cfg.quantization.tuning_criterion.strategy
-        
         
         if cfg.quantization.quant_level == "auto":
             strategy = "auto"
@@ -89,9 +81,9 @@ class _PostTrainingQuant:
             strategy = "conservative"
 
         if strategy == "mse_v2":
-            if not (cfg.quantization._framework.startswith("tensorflow") or cfg.quantization._framework == 'pytorch_fx'):
+            if not (cfg.quantization.framework.startswith("tensorflow") or cfg.quantization.framework == 'pytorch_fx'):
                 strategy = "basic"
-                logger.warning(f"MSE_v2 does not support {cfg.quantization._framework} now, use basic instead.")
+                logger.warning(f"MSE_v2 does not support {cfg.quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
@@ -108,7 +100,6 @@ class _PostTrainingQuant:
                 _resume = pickle.load(f).__dict__
 
         if self._eval_func is None and self._eval_dataloader is None:
-            self.conf.quantization.performance_only = True
             logger.info("Quantize model without tuning!")
 
         self.strategy = STRATEGIES[strategy](
@@ -183,48 +174,48 @@ class _PostTrainingQuant:
 
         """
         cfg = self.conf
-        if cfg.quantization._framework == None:
+        if cfg.quantization.framework == None:
             if isinstance(user_model, BaseModel):
-                cfg.quantization._framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
+                cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
                 if cfg.quantization.backend == "ipex":
-                    assert cfg.quantization._framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
+                    assert cfg.quantization.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
                 if cfg.quantization.backend == "itex":
                     if get_model_type(user_model.model) == 'keras':
-                        assert cfg.quantization._framework == "keras", "Please wrap the model with KerasModel class!"
+                        assert cfg.quantization.framework == "keras", "Please wrap the model with KerasModel class!"
                     else:
-                        assert cfg.quantization._framework == "pytorch_itex", \
+                        assert cfg.quantization.framework == "pytorch_itex", \
                             "Please wrap the model with TensorflowModel class!"
             else:
                 framework = get_model_fwk_name(user_model)
-                cfg.quantization._framework = framework
+                cfg.quantization.framework = framework
                 if framework == "tensorflow":
                     if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
-                        cfg.quantization._framework = 'keras'
+                        cfg.quantization.framework = 'keras'
                 if framework == "pytorch":
                     if cfg.quantization.backend == "default":
-                        cfg.quantization._framework = "pytorch_fx"
+                        cfg.quantization.framework = "pytorch_fx"
                     elif cfg.quantization.backend == "ipex":
-                        cfg.quantization._framework = "pytorch_ipex"
+                        cfg.quantization.framework = "pytorch_ipex"
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            if "tensorflow" in cfg.quantization._framework or cfg.quantization._framework == "keras":
-                self._model = Model(user_model, backend=cfg.quantization._framework, device=cfg.quantization.device)
+            if "tensorflow" in cfg.quantization.framework or cfg.quantization.framework == "keras":
+                self._model = Model(user_model, backend=cfg.quantization.framework, device=cfg.quantization.device)
             else:
-                self._model = Model(user_model, backend=cfg.quantization._framework)
+                self._model = Model(user_model, backend=cfg.quantization.framework)
         else:
-            if cfg.quantization._framework == "pytorch_ipex":
+            if cfg.quantization.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 assert type(user_model) == IPEXModel, \
                             "The backend is ipex, please wrap the model with IPEXModel class!"
-            elif cfg.quantization._framework == "pytorch_fx":
+            elif cfg.quantization.framework == "pytorch_fx":
                 from neural_compressor.model.torch_model import PyTorchFXModel
                 assert type(user_model) == PyTorchFXModel, \
                             "The backend is default, please wrap the model with PyTorchFXModel class!"
 
             self._model = user_model
 
-        if 'tensorflow' in cfg.quantization._framework:
+        if 'tensorflow' in cfg.quantization.framework:
             self._model.name = cfg.quantization.model_name
             self._model.output_tensor_names = cfg.quantization.outputs
             self._model.input_tensor_names = cfg.quantization.inputs
@@ -290,7 +281,8 @@ class _PostTrainingQuant:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
-                     
+                     weight: [0.5, 0.5],
+                     higher_is_better: [True, False]
                     }
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
@@ -304,10 +296,6 @@ class _PostTrainingQuant:
                 The object of Metric or a dict of built-in metric configurations.
 
         """
-        if deep_get(self.conf, "quantization.metric"):
-            logger.warning("Override the value of `metric` field defined in yaml file" \
-                           " as user defines the value of `metric` attribute by code.")
-
         from .metric import Metric as NCMetric, METRICS
         if isinstance(user_metric, dict):
             metric_cfg = user_metric
@@ -323,11 +311,8 @@ class _PostTrainingQuant:
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.quantization._framework)
+            metrics = METRICS(self.conf.quantization.framework)
             metrics.register(name, metric_cls)
-
-        deep_set(self.conf, "quantization.metric", metric_cfg)
-        self.conf = DotDict(self.conf)
 
         self._metric = user_metric
 
