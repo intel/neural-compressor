@@ -22,7 +22,6 @@ from ..config import ops_schema, AccuracyCriterion, accuracy_criterion, Benchmar
 
 logger = logging.getLogger("neural_compressor")
 
-accuracy_criterion = AccuracyCriterion()
 
 class _BaseQuantizationConfig:
     """Args:
