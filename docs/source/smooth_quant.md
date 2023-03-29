@@ -214,9 +214,9 @@ tensor([[0.6836, 0.2970, 0.1583, 0.6481],
 
 #### Per-channel limitation
 
-Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We prove it in the following image and we ignore the zero point of quantization for simplicity.
+Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.
 
-The left of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics.  On the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the  results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
+The left side of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
 <div align="center">
     <img src="./imgs/sq_pc.png"/>
