@@ -1,5 +1,3 @@
-# SmoothQunat
-
 ## INC introduction
 
 Intel® Neural Compressor(INC) is an  open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
@@ -196,48 +194,49 @@ tensor([[0.6836, 0.2970, 0.1583, 0.6481],
 
 #### Per-channel limitation
 
-Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We prove it in the following image and we ignore the zero point of quantization for simplicity. The left of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics.  On the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the  results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
+Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We prove it in the following image and we ignore the zero point of quantization for simplicity. 
+The left of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics.  On the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the  results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
 ![](./imgs/sq_pc.png)
 
-5 to show activation quantization loss is important to some models(heng)
 
 
 
 ## SmoothQuant and our enhancement
-
-**TODO(wenhua)** introduce some former work with similar idea
-[202302-arxiv]Outlier Suppression Pushing the Limit of Low-bit Transformer Language Models
-SPIQ: Data-Free Per-Channel Static Input Quantization
+### SmoothQuant
+In the previous subsection, we have explained why we couldn't apply per-channel quantization for activation, even though it could bring lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[1,2,3]. 
 
 
 
-For LLMs, activations are much harder to quantize than weights due to the outliers. The activation variance is large amongst the channels for a given token but is small between magnitudes of a given channels. Therefore, the quantization error will decrease if we can use activation per-channel quantization. However, channel-wise activation quantization currently could not be performed because it can not map to hardware-accelerate GEMM kernels well.
+To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce three of them,  SPIQ[1], Outlier Suppression[2] and Smoothquant[3]. All these three methods share the same idea that migrating the difficulty from activation quantization to weight quantization, the differences are how much the transferred difficulty is.
 
-SmoothQuant is an alternative method of per-channel activation quantization. It divides the input activation by a per-channel smoothing factor $s\in\mathbb R^{C_i} $ , where $C_i$ is the input channel. It also scales the weights accordingly to keep the mathematical equivalence.
 
+So **the first question is how to migrate the difficulty?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly. 
+![](./imgs/sq_convert.png)
+
+But please note that this conversion will make the quantization of weights more difficult, because the scales attached for weights are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
+
+So **the second question is how much difficulty to be migrated**, that is how to choose the **convention per-channel scale** $s_{x1}$ and $s_{x2}$ on the above image. Different works adopt different ways.
+
+*SPIQ* just adopts the quantization scale of activations as the convention per-channel scale.
+
+*Outlier suppression* adopts the scale of the preceding layernorm as the convention per-channel scale.
+
+*Smoothquant* introduces a hyperparameter $\alpha$ as a smooth factor to calculate the convention per-channel scale and balance the quantization difficulty of activation and weight.
 $$
-Y = (Xdiag(s)^{-1})\cdot(diag(s)W) = \hat{X}\hat{W}
+s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha}
 $$
+c is the index of the input channels.
 
-This formula migrates the quantization difficulty from activations to weights. In order to control how much difficulty is shifted to weights, a hyper-parameter named migration strength $\alpha$ is used. 
-
-$$
-s_j = max(|X_j|)^\alpha / max(|W_j|)^{1-\alpha}
-$$
-
-$j = 1, 2, ...s, C_{i}$ where j correspond to j-th input channel.
 
 ![](./imgs/smoothquant.png)
 
-For most of models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.
+For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.
+
 
 ### Our enhancement: 
-#### Layer-wise Auto-tuning of $\alpha$.(Yintong)
+#### Algorithm: Layer-wise Auto-tuning of $\alpha$.
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
-
-
-
 
 Our propsed method consists of 5 major steps:
 -    Hook input and output values of all layers using register_forward_hook.
@@ -251,7 +250,8 @@ Our propsed method consists of 5 major steps:
 Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block.
 
 In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
-#### automatic/more patterns(wenhua)
+#### Engineering 
+
 ## Results
 
 | Model\Accuracy        | FP32   | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 SmoothQuant auto-tune | 
@@ -265,3 +265,9 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 | facebook/opt-2.7b     | 77.90% | 78.99%                 | 78.91% (alpha=0.5)    |  |
 | facebook/opt-6.7b     | 81.51% | 79.44%                 | 81.58% (alpha=0.5)    |  |
 | EleutherAI/gpt-j-6B   | 79.17% | 78.76%                 | 79.13% (alpha=0.5)    |  |
+
+
+## Reference
+[1]Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
+[2]Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+[3]Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
