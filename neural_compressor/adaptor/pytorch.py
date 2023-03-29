@@ -2478,6 +2478,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             with open(self.ipex_config_path, 'r') as f:
                 model.tune_cfg = json.load(f)
             model.ipex_config_path = self.ipex_config_path
+            if self.version.release >= Version("1.12.0").release:
+                self._dump_model_op_stats(tune_cfg)
             return model
         else:
             if self.tmp_model is None:
@@ -2598,7 +2600,52 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             with open(self.ipex_config_path, 'r') as f:
                 self.tmp_model.tune_cfg = json.load(f)
             self.tmp_model.ipex_config_path = self.ipex_config_path
+            if self.version.release >= Version("1.12.0").release:
+                self._dump_model_op_stats(tune_cfg)
             return self.tmp_model
+
+    def _dump_model_op_stats(self, tune_cfg):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            tune_cfg (dict): quantization config
+        Returns:
+            None
+        """
+        res = dict()
+        for k, v in tune_cfg["op"].items():
+            op_type_list = k[-1].split("><")
+            op_type = ""
+            for op in op_type_list:
+                if "class" in op:
+                    op_type = op[op.rfind(".") + 1: op.rfind("'")] \
+                        if op_type == "" else op_type + "&" + op[op.rfind(".") + 1: op.rfind("'")]
+                elif "method" in op:
+                    start = op.find("'") + 1
+                    if start > 1:
+                        op_type = op[start: op.find("'", start)] \
+                            if op_type == "" else op_type + "&" + op[start: op.find("'", start)]
+                    else:
+                        start = op.find("method") + 7
+                        op_type = op[start: op.find(" ", start)] \
+                            if op_type == "" else op_type + "&" + op[start: op.find(" ", start)]
+                else:
+                    op_type = op if op_type == "" else op_type + "&" + op
+            if op_type not in res.keys():
+                res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
+            if v["weight"]["dtype"] == "int8":
+                res[op_type]["INT8"] += 1
+            elif v["weight"]["dtype"] == "fp32":
+                res[op_type]["FP32"] += 1
+
+        output_data = [[
+            op_type,
+            sum(res[op_type].values()), res[op_type]['INT8'], res[op_type]['BF16'],
+            res[op_type]['FP32']
+        ] for op_type in res.keys()]
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def _cfg_to_qconfig(self, tune_cfg):
         """Convert tune configure to quantization config for each op.
