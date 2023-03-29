@@ -44,8 +44,11 @@ W = torch.Tensor(
 As the formula (1) showed, we need scale $S$ and zero point $Z$ to calculate the integer matrix.
 
 $$
-S = \frac{X_{max} - X{min}}{2^b -1}\\
-Z = -round(X_{min/}/S)
+S = \frac{X_{max} - X{min}}{2^b -1} \tag{2}
+$$
+
+$$
+Z = -round(X_{min/}/S) \tag{3}
 $$
 
 The per-tensor quantization function is:
@@ -248,7 +251,7 @@ So **the second question is how much difficulty to be migrated**, that is how to
 *Smoothquant* introduces a hyperparameter $\alpha$ as a smooth factor to calculate the convention per-channel scale and balance the quantization difficulty of activation and weight.
 
 $$
-s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha}
+s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha} \tag{4}
 $$
 
 j is the index of the input channels.
