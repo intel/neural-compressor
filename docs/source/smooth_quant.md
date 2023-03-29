@@ -10,12 +10,13 @@
 
 ## Introduction
 
-Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  [SmoothQuant](https://arxiv.org/abs/2211.10438), an training free post-training quantization (PTQ) solution, offline migrate this difficulty from activations to weights with a mathematically equivalent transformation.
+Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  [SmoothQuant](https://arxiv.org/abs/2211.10438), a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.
 
 ## Quantization Fundamentals
 
-Quantization is a common compression operation to reduce memory and accelerate inference, therefore, the difficulty of LLM deployment can be alleviate. Quantization convert the floating point matrix to an integer matrix. 
-The math equation of quantization is like:
+Quantization is a common compression operation to reduce memory and accelerate inference; therefore, the difficulty of LLM deployment can be alleviated. Quantization converts the floating point matrix to an integer matrix.
+
+The equation of quantization is as follows:
 
 $$
 X_{int8} = round(X_{fp32}/S) + Z \tag{1}
@@ -25,9 +26,9 @@ where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integ
 
 ### Per-tenor & Per-channel
 
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, the finest granularity is that each element has an individual parameter.
 
-However, considering the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
+However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
 #### Per-tensor example
 
@@ -41,7 +42,7 @@ W = torch.Tensor(
     )
 ```
 
-As the formula (1) showed, we need scale $S$ and zero point $Z$ to calculate the integer matrix.
+According to the formula (1), we need to scale $S$ and zero point $Z$ to calculate the integer matrix.
 
 $$
 S = \frac{X_{max} - X{min}}{2^b -1} \tag{2}
@@ -100,11 +101,11 @@ tensor([[0.6848, 0.4743, 0.7440],
 
 ```
 
-The difference between $W$ and $W_{dq}$ shows that quantization affects precision and choose appropriate value of scale and zero point will reduce the loss of precision. 
+The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision. 
 
 #### Per-channel example
 
-Similary, the example of per-channel quantization as:
+Similarly, the example of per-channel quantization is as follows:
 
 ```python
 def quantize_per_channel(x, num_bits=8):
@@ -134,7 +135,7 @@ tensor([[ 72.,   0.,  93.],
         [207.,   0., 139.]])
 
 >>>scales = torch.tensor([[0.0027],[0.0017]])
->>>bias = torch.tensor([[-66.],[-87.]]
+>>>bias = torch.tensor([[-66.],[-87.]])
 >>>W_dq = dequantize_per_channel(W_q, scales, bias)
 >>>W_dq
 tensor([[0.6837, 0.4734, 0.7451],
@@ -149,7 +150,7 @@ And the loss is
 5.637690492221736e-07
 ```
 
-Through this example, we can see that per-channel quantization is finer granularity and has lower loss.
+Through this example, we can see that per-channel quantization has finer granularity and has lower loss.
 
 #### Matmul quantization example
 
@@ -273,7 +274,7 @@ For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced 
 
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
 
-Our propsed method consists of 5 major steps:
+Our proposed method consists of 5 major steps:
 
 -    Hook input and output values of all layers using register_forward_hook.
 -    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
@@ -305,7 +306,7 @@ please note that we rely on torch jit to analyze the model. If you are using hug
 linear->layernorm
 ```
 
-while we support the following pattens
+while we support the following patterns
 
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
