@@ -10,7 +10,7 @@ Intel® Neural Compressor
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 
-[Architecture](./design.html#architecture), [Workflow](./design.html#workflow), [Results](./validated_model_list.html), [Examples](./https://github.com/intel/neural-compressor/blob/master/examples/README.md), [IO Docs](https://intel.github.io/neural-compressor)
+[Architecture](./design.html#architecture)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Workflow](./design.html#workflow)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Results](./validated_model_list.html)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Examples](./https://github.com/intel/neural-compressor/blob/master/examples/README.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Documentations](https://intel.github.io/neural-compressor)
 </div>
 
 ---
