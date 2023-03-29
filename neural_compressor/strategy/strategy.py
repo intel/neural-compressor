@@ -1145,8 +1145,9 @@ class TuneStrategy(object):
         logger.debug(f"Best acc is {self.cur_best_acc}.")
         return self.cur_best_acc, self.cur_best_tuning_cfg
 
-    #TODO uncomment it after config ready
-    # def deploy_config(self):
+    def deploy_config(self):
+        return
+        #TODO uncomment it after config ready
     #     """Save the configuration locally for deployment."""
     #     acc_dataloader_cfg = deep_get(self.cfg, 'evaluation.accuracy.dataloader')
     #     perf_dataloader_cfg = deep_get(self.cfg, 'evaluation.performance.dataloader')
@@ -1240,12 +1241,10 @@ class TuneStrategy(object):
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
         else:
-            assert self.conf.quantization.metric, \
-                "metric or multi_metrics field of accuracy field of evaluation" \
-                " section should not be empty"
+            assert self._not_tuning, "Please set eval_dataloader and eval_metric for create eval_func"
 
             postprocess_cfg = None
-            metric_cfg = self.conf.quantization.metric
+            metric_cfg = self.eval_metric
             iteration = -1
             eval_func = create_eval_func(self.framework,
                 self.eval_dataloader,

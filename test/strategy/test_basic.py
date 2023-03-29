@@ -59,9 +59,12 @@ class TestBasicTuningStrategy(unittest.TestCase):
         dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
         
+        def fake_eval(model):
+            return 1
+        
         # tuning and accuracy criterion
         conf = PostTrainingQuantConfig()
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_func=fake_eval)
         self.assertIsNotNone(q_model)
 
     def test_no_tuning(self):
