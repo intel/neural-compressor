@@ -24,7 +24,6 @@ Classes
    neural_compressor.strategy.utils.tuning_sampler.OpTypeWiseTuningSampler
    neural_compressor.strategy.utils.tuning_sampler.OpWiseTuningSampler
    neural_compressor.strategy.utils.tuning_sampler.FallbackTuningSampler
-   neural_compressor.strategy.utils.tuning_sampler.SmoothQuantSampler
 
 
 
@@ -72,12 +71,5 @@ Classes
 
 
    Not displayed in API Docs.
-
-
-.. py:class:: SmoothQuantSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
-
-
-
-   Sampler for the hyperparameter tuning of smooth quantization.
 
 
