@@ -236,7 +236,23 @@ For most of models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced valu
 
 ### Our enhancement: 
 #### Layer-wise Auto-tuning of $\alpha$.(Yintong)
-Instead of using a fixed-value $\alpha$ to control how to split the quantization difficulty, we proposed a method to enable layer-wise auto-tuning of $\alpha$ values. A Layer-wise alpha value is calculated based on a user-defined $\alpha$-value range and then used for smoothing transformation of this layer. Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
+SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
+
+
+
+
+Our propsed method consists of 5 major steps:
+-    Hook input and output values of all layers using register_forward_hook.
+-    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
+-    Recalculate smoothing factor given an $\alpha$ value and adjust parameters(weights and activations).
+-    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of inputs to predict the layer-wise output corresponding to the given $\alpha$ value.
+-    Calculate the mean-squared loss with respect to the actual output value, recover the adjusted parameters and save the layer-wise optimal $\alpha$ values.
+
+
+
+Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block.
+
+In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
 #### automatic/more patterns(wenhua)
 ## Results
 
