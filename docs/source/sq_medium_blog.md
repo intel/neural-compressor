@@ -1,15 +1,15 @@
 ## Intel® Neural Compressor introduction
 
-Intel® Neural Compressor is an  open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
+Intel® Neural Compressor is an open-source Python library that supports popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
 
 
 **Visit the Intel® Neural Compressor online document website at: https://intel.github.io/neural-compressor.**
 
 ## LLM 
 ### Introduction
-A Large language model (LLM) is a language model with billions of weights or more, trained on massive data to solve natural language processing (NLP) and natural language generation (NLG) tasks. Base on large amount of training texts such as wikipedia and corpora, LLMs can learn knowledge about the structure of sentences, the relationship among words and the meaning of whole document. More complicated network structures and more parameters provide LLMs ability to face the complexity and polysemy of natural language.
+A Large language model (LLM) is a language model with more than billions of weights, that is trained on massive data to perform natural language processing (NLP) and natural language generation (NLG) tasks. Based on the immense amount of training corpus such as wikipedia and corpora, LLMs can learn sentence structures, entity relationship, polysemy and many other patterns in the language. More complicated network structures and larger number of parameters also enable LLMs to master the intrinsic complexity of natural language.
 
-LLMs are used in a wide variety of applications. They can be used to generate text, such as chatbots and virtual assistants, or fine tuned with a task-specific training for application to downstream tasks, like machine translation, emotion analysis, text classification, fraud detection and etc. 
+Once trained, an LLM could be fine-tuned for a wide variety of downstrean NLP tasks including conversational chatbots like ChatGPT, machine translation, text classification, fraud detection and sentiment analysis.
 
 ### Deployment challenges
 LLMs show excellent performance in many tasks, and researches show that LLMs with bigger number of parmaters can have better performance[^1].
@@ -18,24 +18,25 @@ LLMs show excellent performance in many tasks, and researches show that LLMs wit
     <img src="./imgs/model_scale_accuracy.png" />
 </div>
 
-Therefore, the scale of LLMs grows exponentially. For example, GPT-2, released in 2019, has 1.5 billion parameters and the number of parameters increase to 175 billions when GPT-3 released in 2020.
+As a consequence, the scale of LLMs has grown exponentially. For example, GPT-2 that was released in 2019 had 1.5 billion parameters and that number of parameters increased to 175 billions when GPT-3 was released in 2020.
 
-Billions or more paramaters make LLMs perform well in various tasks, howerever, also make it more difficult to deploy. Models are usually loaded on servers which have limited memory for infering tasks. The large scale of LLM make the process of inference very slow and even worse, it cannot work if the infrastructure does not meet the requirement.
+Billions and more paramaters make LLMs perform well in various tasks but more difficult to deploy. Models are usually loaded on servers which have limited memory for inference tasks. The growing scale of LLM significantly slows down the process of inference. In worst cases, a task might not be performed if the infrastructure fails to meet the requirement.
 ## Quantization Fundamentals
 
-Quantization is a common compression operation to reduce memory and accelerate inference, therefore, the difficulty of LLM deployment can be alleviate. Quantization convert the floating point matrix to an integer matrix. 
-The math equation of quantization is like:
+Quantization is a common compression operation to reduce memory and accelerate inference; therefore, the difficulty of LLM deployment can be alleviated. Quantization converts the floating point matrix to an integer matrix.
+
+The equation of quantization is as follows:
 
 $$
 X_{int8} = round(X_{fp32}/S) + Z \tag{1}
 $$
 
-where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
+where $X_{fp32}$, $S$ and $Z$ are the input matrix, scale factor, and integer zero point, respectively.
 
 ### Per-tenor & Per-channel
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity shared quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, each element has individual parameters is the finest granularity. 
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, the finest granularity is that each element has an individual parameter.
 
-However, considering the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
+However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show that per-channel could bring lower quantization loss but has some limitations; that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
 #### Per-tensor example
 Suppose the weight tensor is：
@@ -46,7 +47,7 @@ W = torch.Tensor(
     [0.9301, 0.1742, 0.6835]]
     )
 ```
-As the formula (1) showed, we need scale $S$ and zero point $Z$ to calculate the integer matrix.
+According to the formula (1), we need to scale $S$ and zero point $Z$ to calculate the integer matrix.
 
 $$
 S = \frac{X_{max} - X{min}}{2^b -1}\\
@@ -95,10 +96,10 @@ tensor([[0.6848, 0.4743, 0.7440],
 >>> loss.item()
 
 ```
-The difference between $W$ and $W_{dq}$ shows that quantization affects precision and choose appropriate value of scale and zero point will reduce the loss of precision. 
+The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision. 
 
 #### Per-channel example
-Similary, the example of per-channel quantization as:
+Similarly, the example of per-channel quantization is as follows:
 ```python
 def quantize_per_channel(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
@@ -126,7 +127,7 @@ tensor([[ 72.,   0.,  93.],
         [207.,   0., 139.]])
 
 >>>scales = torch.tensor([[0.0027],[0.0017]])
->>>bias = torch.tensor([[-66.],[-87.]]
+>>>bias = torch.tensor([[-66.],[-87.]])
 >>>W_dq = dequantize_per_channel(W_q, scales, bias)
 >>>W_dq
 tensor([[0.6837, 0.4734, 0.7451],
@@ -154,7 +155,7 @@ def quantize_per_tensor_absmax(x, n_bits=8):
 def dequantize(q_x, scale):
     return scale * q_x
 ```
-Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
+Randomly initialize the $W$ and $Y$; then calculate the result of $Y=X \cdot W$
 ```bash
 >>>W = torch.rand(2, 3, dtype=torch.float32)
 >>>X = torch.rand(3, 4, dtype=torch.float32)
@@ -196,9 +197,9 @@ tensor([[0.6836, 0.2970, 0.1583, 0.6481],
 
 #### Per-channel limitation
 
-Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We prove it in the following image and we ignore the zero point of quantization for simplicity.
+Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.
 
-The left of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics.  On the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the  results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
+The left side of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights, the results after quantization are denoted by $y_1$ and  $y_2$, which could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
 <div align="center">
     <img src="./imgs/sq_pc.png"/>
@@ -206,20 +207,20 @@ The left of the image presents a normal linear forward  with 1x2 input $x$ and 2
 
 ## SmoothQuant and our enhancement
 ### SmoothQuant
-In the previous subsection, we have explained why we couldn't apply per-channel quantization for activation, even though it could bring lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[^2][^3][^4]. 
+In the previous subsection, we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[^2][^3][^4]. 
 
 
 
-To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce three of them,  SPIQ[^2], Outlier Suppression[^3] and Smoothquant[^4]. All these three methods share the same idea that migrating the difficulty from activation quantization to weight quantization, the differences are how much the transferred difficulty is.
+To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce SPIQ[^2], Outlier Suppression[^3] and Smoothquant[^4]. All these three methods share a similar idea to migrate the difficulty from activation quantization to weight quantization but differ in how much difficulty to be transferred.
 
 
-So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly, similar to a fake per-channel activation quantization. 
+So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, similar to a fake per-channel activation quantization.
 
 <div align="center">
     <img src="./imgs/sq_convert.png"/>
 </div>
 
-But please note that this conversion will make the quantization of weights more difficult, because the scales attached for weights are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
+Please note that this conversion will make the quantization of weights more difficult, because the scales related to weights are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
 
 So **the second question is how much difficulty to be migrated**, that is how to choose the **convention per-channel scale** $s_{x1}$ and $s_{x2}$ on the above image. Different works adopt different ways.
 
