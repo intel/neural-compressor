@@ -34,15 +34,12 @@ $$
 where $X_{fp32}$, $S$ and $Z$ are the input matrix, scale factor, and integer zero point, respectively.
 
 ### Per-tenor & Per-channel
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, the finest granularity is that each element has an individual parameter.
 
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual parameter.
-
-However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
+However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show that per-channel could bring lower quantization loss but has some limitations; that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
 #### Per-tensor example
-
 Suppose the weight tensor is：
-
 ```python
 import torch
 W = torch.Tensor(
@@ -50,19 +47,14 @@ W = torch.Tensor(
     [0.9301, 0.1742, 0.6835]]
     )
 ```
-
 According to the formula (1), we need to scale $S$ and zero point $Z$ to calculate the integer matrix.
 
 $$
-S = \frac{X_{max} - X{min}}{2^b -1} \tag{2}
-$$
-
-$$
-Z = -round(X_{min/}/S) \tag{3}
+S = \frac{X_{max} - X{min}}{2^b -1}\\
+Z = -round(X_{min/}/S)
 $$
 
 The per-tensor quantization function is:
-
 ```python
 def quantize(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
@@ -74,9 +66,7 @@ def quantize(x, num_bits=8):
     print(f'scale = {scale}, bias = {bias}')
     return q_x
 ```
-
 Then we can get the quantized $W_{q}$:
-
 ```bash
 >>> W_q = quantize(W)
 scale = 0.00296431384049356, bias = -59.0
@@ -84,14 +74,11 @@ scale = 0.00296431384049356, bias = -59.0
 tensor([[172., 101., 192.],
         [255.,   0., 172.]])
 ```
-
 With the value of scale and bias, we can dequantize the tensor.
-
 ```python
 def dequantize(q_x, scale, bias):
     return scale * (q_x - bias)
 ```
-
 ```bash
 >>> W_dq = dequantize(W_dq, 0.001, -50)
 >>> W_dq
@@ -109,13 +96,10 @@ tensor([[0.6848, 0.4743, 0.7440],
 >>> loss.item()
 
 ```
-
 The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision. 
 
 #### Per-channel example
-
 Similarly, the example of per-channel quantization is as follows:
-
 ```python
 def quantize_per_channel(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
@@ -132,7 +116,6 @@ def dequantize_per_channel(q_x, scales, bias):
     print(scales * (q_x - bias))
     return scales * (q_x - bias)
 ```
-
 ```bash
 >>>W_q = quantize_per_channel(W)
 scale = tensor([[0.0029],
@@ -150,22 +133,17 @@ tensor([[ 72.,   0.,  93.],
 tensor([[0.6837, 0.4734, 0.7451],
         [0.9301, 0.1751, 0.6821]])
 ```
-
 And the loss is
-
 ```bash
 >>> loss = torch.nn.MSELoss()(W_dq, W)
 >>> loss.item()
 5.637690492221736e-07
 ```
-
-Through this example, we can see that per-channel quantization has finer granularity and has lower loss.
+Through this example, we can see that per-channel quantization is finer granularity and has lower loss.
 
 #### Matmul quantization example
-
 For a linear layer in most model, $Y=X \cdot W$, we can quantize both the weights and activations in order to reduce the storage and accelerate inference.
 Using per-tensor scale quantization to show the process.
-
 ```python
 def quantize_per_tensor_absmax(x, n_bits=8):
     scales = x.abs().max()
@@ -177,9 +155,7 @@ def quantize_per_tensor_absmax(x, n_bits=8):
 def dequantize(q_x, scale):
     return scale * q_x
 ```
-
-Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
-
+Randomly initialize the $W$ and $Y$; then calculate the result of $Y=X \cdot W$
 ```bash
 >>>W = torch.rand(2, 3, dtype=torch.float32)
 >>>X = torch.rand(3, 4, dtype=torch.float32)
@@ -195,9 +171,7 @@ tensor([[0.5444, 0.5826, 0.7772, 0.5555],
 tensor([[0.6883, 0.2991, 0.1601, 0.6506],
         [0.8246, 0.3924, 0.3845, 0.8768]])
 ```
-
 Quantize weight and activation, matmul(quantize(X), quantize(Y))
-
 ```bash
 >>>W_q, W_scale = quantize_per_tensor_absmax(W)
 >>>X_q, X_scale = quantize_per_tensor_absmax(X)
@@ -231,10 +205,8 @@ The left side of the image presents a normal linear forward  with 1x2 input $x$ 
     <img src="./imgs/sq_pc.png"/>
 </div>
 
-## SmoothQuant and Our Enhancement
-
+## SmoothQuant and our enhancement
 ### SmoothQuant
-
 In the previous subsection, we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[^2][^3][^4]. 
 
 
@@ -248,8 +220,7 @@ So **the first question is how to migrate the difficulty from activation to weig
     <img src="./imgs/sq_convert.png"/>
 </div>
 
-
-Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights showed above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
+Please note that this conversion will make the quantization of weights more difficult, because the scales related to weights are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
 
 So **the second question is how much difficulty to be migrated**, that is how to choose the **convention per-channel scale** $s_{x1}$ and $s_{x2}$ on the above image. Different works adopt different ways.
 
@@ -260,7 +231,7 @@ So **the second question is how much difficulty to be migrated**, that is how to
 *Smoothquant* introduces a hyperparameter $\alpha$ as a smooth factor to calculate the convention per-channel scale and balance the quantization difficulty of activation and weight.
 
 $$
-s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha} \tag{4}
+s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha}
 $$
 
 j is the index of the input channels.
@@ -272,32 +243,30 @@ j is the index of the input channels.
 </div>
 
 
-
 For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.
 
 
 ### Our enhancement: 
-
 #### Algorithm: Layer-wise Auto-tuning of $\alpha$.
-
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
 
-Our proposed method consists of 5 major steps:
+Our proposed method consists of 5 major steps and a pseudocode is listed below:
+-    Hook input and output values of all layers using register_forward_hook.
+-    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
+-    Recalculate smoothing factor given an $\alpha$ value and adjust parameters(weights and activations).
+-    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of inputs to predict the layer-wise output corresponding to the given $\alpha$ value.
+-    Calculate the mean-squared loss with respect to the actual output value, recover the adjusted parameters and save the layer-wise optimal $\alpha$ values.
 
--    Hook input and output values of all layers using register_forward_hook.
--    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
--    Recalculate smoothing factor given an $\alpha$ value and adjust parameters(weights and activations).
--    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of inputs to predict the layer-wise output corresponding to the given $\alpha$ value.
--    Calculate the mean-squared loss with respect to the actual output value, recover the adjusted parameters and save the layer-wise optimal $\alpha$ values.
 
+<div align="left">
+    <img src="./imgs/sq_alpha_tuning.png" height="250"/>
+</div>
 
 
 Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block.
 
 In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
-
 #### Engineering 
-
 *fully automated*: the user only needs to pass a model and dataloader
 
 ```python
@@ -305,25 +274,19 @@ from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 sq = TorchSmoothQuant(model, dataloader)
 sq.transform(alpha) ##alpha could be a float or a string ’auto‘
 ```
-
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
 *support lots of fusing patterns*: the official code only supports 
-
 ```bash
 linear->layernorm
 ```
-
-while we support the following patterns
-
+while we support the following pattens
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
 
 conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
 ```
-
 For opt models, we could fuse one more layer than the official code, because the fc2 layer in the block follows the linear->relu->linear pattern.
-
 ## Results
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
