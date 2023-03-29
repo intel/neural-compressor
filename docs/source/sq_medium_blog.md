@@ -1,6 +1,6 @@
-## INC introduction
+## Intel® Neural Compressor introduction
 
-Intel® Neural Compressor(INC) is an  open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
+Intel® Neural Compressor is an  open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
 
 
 **Visit the Intel® Neural Compressor online document website at: https://intel.github.io/neural-compressor.**
@@ -213,7 +213,7 @@ In the previous subsection, we have explained why we couldn't apply per-channel 
 To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce three of them,  SPIQ[2], Outlier Suppression[3] and Smoothquant[4]. All these three methods share the same idea that migrating the difficulty from activation quantization to weight quantization, the differences are how much the transferred difficulty is.
 
 
-So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly. 
+So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network, presented in the below image. Then apply quantization to this equivalent network. The intuition behind this is we can scale each channel of activation to make it more quantization friendly, similar to a fake per-channel activation quantization. 
 
 <div align="center">
     <img src="./imgs/sq_convert.png"/>
