@@ -1402,7 +1402,19 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
             self._precision = precision
 
 class ExportConfig:
-    """Config Class for Export."""
+    """Common Base Config for Export.
+
+    Args:
+        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"]. 
+                               Defaults to "int8".
+        opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
+        quant_format (str, optional): The quantization format of the exported int8 onnx model, 
+                                      select from ["QDQ", "QLinear"]. Defaults to "QDQ".
+        example_inputs (optional): Example inputs used for tracing model. Defaults to None.
+        input_names (list, optional): A list of model input names. Defaults to None.
+        output_names (list, optional): A list of model output names. Defaults to None.
+        dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
+    """
     def __init__(
         self,
         dtype="int8",
@@ -1509,7 +1521,37 @@ class ONNXQlinear2QDQConfig:
         pass
 
 class Torch2ONNXConfig(ExportConfig):
-    """Config Class for Torch2ONNX."""
+    """Config Class for Torch2ONNX.
+
+    Args:
+        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"]. 
+                               Defaults to "int8".
+        opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
+        quant_format (str, optional): The quantization format of the exported int8 onnx model, 
+                                      select from ["QDQ", "QLinear"]. Defaults to "QDQ".
+        example_inputs (required): Example inputs used for tracing model. Defaults to None.
+        input_names (list, optional): A list of model input names. Defaults to None.
+        output_names (list, optional): A list of model output names. Defaults to None.
+        dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
+        recipe (str, optional): A string to select recipes used for Linear -> Matmul + Add, select from 
+                                ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"]. 
+                                Defaults to 'QDQ_OP_FP32_BIAS'.
+
+    Example:
+        # resnet50
+        from neural_compressor.config import Torch2ONNXConfig
+        int8_onnx_config = Torch2ONNXConfig(
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ", # or QLinear
+            example_inputs=torch.randn(1, 3, 224, 224),
+            input_names=['input'],
+            output_names=['output'],
+            dynamic_axes={"input": {0: "batch_size"},
+                            "output": {0: "batch_size"}},
+        )
+        q_model.export('int8-model.onnx', int8_onnx_config)
+    """
     def __init__(
        self,
        dtype="int8",
