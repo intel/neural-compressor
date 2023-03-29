@@ -253,7 +253,7 @@ Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha
 
 In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
 #### Engineering 
-*fully automated*: the user only nees to pass a model and dataloader
+*fully automated*: the user only needs to pass a model and dataloader
 
 ```python
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
