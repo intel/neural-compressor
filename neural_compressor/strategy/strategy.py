@@ -1011,7 +1011,6 @@ class TuneStrategy(object):
                     framework_specific_info['recipes'].update({item: True})
             if self.conf.quantization.backend == 'itex':
                 #TODO replace it with when config ready
-                self.conf.quantization.framework = 'tensorflow_itex'
                 framework = 'tensorflow_itex'
         if 'keras' in framework:
             framework_specific_info.update({
@@ -1032,10 +1031,8 @@ class TuneStrategy(object):
                 framework = 'onnxrt_qdq'
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.conf.quantization.backend == 'ipex':
-                self.conf.quantization.framework = 'pytorch_ipex'
                 framework = 'pytorch_ipex'
             elif self.conf.quantization.backend == 'default':
-                self.conf.quantization.framework = 'pytorch_fx'
                 framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
