@@ -114,7 +114,7 @@ if __name__ == "__main__":
                         help='For benchmark measurement only.')
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
-    parser.add_argument('--accuracy_only', dest='benchmark', action='store_true',
+    parser.add_argument('--accuracy_only', dest='accuracy_only', action='store_true',
                         help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')

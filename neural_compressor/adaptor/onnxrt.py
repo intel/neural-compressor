@@ -174,6 +174,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return self.smooth_quant_model
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from onnx import numpy_helper
+        if isinstance(alpha, str):
+            logger.warning(f"onnx backend only support float alpha, reset alpha to 0.5 ")
+            alpha = 0.5
         black_nodes = []
         white_nodes = []
         if tune_cfg is not None:
@@ -1041,7 +1044,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             for _, node in enumerate(self.pre_optimized_model.nodes()):
                 if node.name not in backbone_nodes and node.op_type in optype_wise:
                     recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
-            
             if exclude_pre_post_process:
                 for _, node in enumerate(self.pre_optimized_model.nodes()):
                     if node.op_type in optype_wise:

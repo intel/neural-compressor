@@ -29,6 +29,8 @@ from utils import non_max_suppression
 
 flags.DEFINE_integer('batch_size', 1, "batch size")
 
+flags.DEFINE_integer('iters', 100, "iterations")
+
 flags.DEFINE_string("ground_truth", None, "ground truth file")
 
 flags.DEFINE_string("input_graph", None, "input graph")
@@ -111,7 +113,7 @@ def evaluate(model):
     warmup = 5
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        iteration = 100
+        iteration = FLAGS.iters
     postprocess = NMS(FLAGS.conf_threshold, FLAGS.iou_threshold)
     metric = COCOmAPv2(map_key='DetectionBoxes_Precision/mAP@.50IOU')
 
@@ -141,11 +143,11 @@ def evaluate(model):
     if FLAGS.mode == 'accuracy':
         eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=FLAGS.batch_size)
     else:
-        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=10)
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=FLAGS.batch_size)
 
     latency = eval_func(eval_dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        print("Batch size = {}".format(10))
+        print("Batch size = {}".format(FLAGS.batch_size))
         print("Latency: {:.3f} ms".format(latency * 1000))
         print("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()

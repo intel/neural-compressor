@@ -108,13 +108,13 @@ class FILTERS(object):
     Args:
         framework (str): frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
                                         "onnxrt_qdq", "pytorch", "pytorch_ipex",
-                                        "pytorch_fx", "onnxrt_integerops",
+                                        "pytorch_fx", "onnxrt_integerops", "keras"
                                         "onnxrt_qlinearops", "onnxruntime"].
     """
 
     def __init__(self, framework):
         """Initialize the attribute of class."""
-        assert framework in ["tensorflow", "tensorflow_itex",
+        assert framework in ["tensorflow", "tensorflow_itex", "keras",
                              "mxnet", "onnxrt_qdq", "pytorch", "pytorch_ipex", "pytorch_fx",
                              "onnxrt_integerops", "onnxrt_qlinearops", "onnxruntime"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
