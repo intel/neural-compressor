@@ -668,8 +668,8 @@ evaluation:                                          # optional. used to config 
 And then, the user can get the accuracy with,
 ```python
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
-from lpot.experimental import Benchmark, common
-from lpot.conf.config import BenchmarkConf
+from neural_compressor.experimental import Benchmark, common
+from neural_compressor.conf.config import BenchmarkConf
 conf = BenchmarkConf(config.yaml)
 evaluator = Benchmark(conf)
 evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)

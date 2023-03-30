@@ -9,7 +9,7 @@ import alexnet
 
 
 def infer_perf(index, model_file):
-    train_loader, test_loader = alexnet.data_loader(batch_size=10000)
+    train_loader, test_loader = alexnet.data_loader(batch_size=100)
 
     if index=='8':
         model = alexnet.load_int8_mod(model_file)
@@ -66,7 +66,7 @@ def save_res(index, result):
     res['throughput'] = throughput
     res['latency'] = latency
 
-    outfile = index + ".json"
+    outfile = "../output/" + str(index) + ".json"
     with open(outfile, 'w') as f:
         json.dump(res, f)
         print("Save result to {}".format(outfile))
