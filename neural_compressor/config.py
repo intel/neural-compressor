@@ -221,8 +221,11 @@ class BenchmarkConfig:
                  inputs=[],
                  outputs=[],
                  backend='default',
+                 device='cpu',
                  warmup=5,
                  iteration=-1,
+                 model=None,
+                 model_name='',
                  cores_per_instance=None,
                  num_of_instance=None,
                  inter_num_of_threads=None,
@@ -231,13 +234,25 @@ class BenchmarkConfig:
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
+        self.device=device
         self.warmup = warmup
         self.iteration = iteration
+        self.model = model
+        self.model_name = model_name
         self.cores_per_instance = cores_per_instance
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
+        self._framework=None
 
+    def keys(self):
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', 'model', \
+                'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
+                'inter_num_of_threads','intra_num_of_threads')
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+    
     @property
     def backend(self):
         """Get backend."""
@@ -249,6 +264,15 @@ class BenchmarkConfig:
         if _check_value('backend', backend, str, [
                 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
+
+    @property
+    def device(self):
+        return self._device
+
+    @device.setter
+    def device(self, device):
+        if _check_value('device', device, str, ['cpu', 'gpu']):
+            self._device = device
 
     @property
     def outputs(self):
@@ -340,6 +364,33 @@ class BenchmarkConfig:
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def model(self):
+        return self._model
+    
+    @model.setter
+    def model(self, model):
+        self._model = model
+
+    @property
+    def model_name(self):
+        """Get model name."""
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, model_name):
+        """Set model name."""
+        if _check_value("model_name", model_name, str):
+            self._model_name = model_name
+    
+    @property
+    def framework(self):
+        return self._framework
+    
+    @framework.setter
+    def framework(self, framework):
+        self._framework = framework
 
 
 class AccuracyCriterion:
@@ -1595,7 +1646,7 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
     @model.setter
     def model(self, model):
         self._model = model
-        
+
     @property
     def approach(self):
         return self._approach
