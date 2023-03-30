@@ -105,24 +105,23 @@ class TuneStrategy(object):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_func: The evaluation function provided by user. This function takes model as parameter, and 
                 evaluation dataset and metrics should be encapsulated in this function implementation and 
                 outputs a higher-is-better accuracy scalar value.
+            eval_dataloader: Data loader for evaluation. Defaults to None.
+            eval_metric: Metric for evaluation. Defaults to None.
             resume: The dict containing resume information. Defaults to None.
             q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
                 on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
-            last_qmodel: The quantized model that generated from the last tuning.
-            best_qmodel: The best quantized model that generated during the tuning process.
         """
         self.model = model
         self.conf = conf
         self.history_path = self._create_path(self.conf.options.workspace, './history.snapshot')
         self.deploy_path = self._create_path(self.conf.options.workspace, 'deploy.yaml')
         self.calib_dataloader = q_dataloader
+        self.eval_func = eval_func
         self.eval_dataloader = eval_dataloader
         self.eval_metric = eval_metric
-        self.eval_func = eval_func
         # not tuning equals to performance only
         self._not_tuning = True
         self._check_tuning_status()
@@ -178,8 +177,8 @@ class TuneStrategy(object):
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
         
-
-        if resume is not None: self.setup_resume(resume)
+        self._resume = resume
+        if self._resume is not None: self.setup_resume(resume)
 
 
     @abstractmethod
