@@ -129,7 +129,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
-            if self.cfg.tuning.exit_policy.performance_only:
+            if self._not_tuning:
                 self.best_qmodel = self.last_qmodel
                 self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
                 return
@@ -138,7 +138,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-                need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, self.trials_count)
+                need_stop = self.stop(self.conf.quantization.tuning_criterion.timeout, self.trials_count)
                 # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)

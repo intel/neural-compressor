@@ -125,8 +125,11 @@ class MSE_V2TuneStrategy(TuneStrategy):
             tune_cfg = deepcopy(self.cur_best_tuning_cfg)
             requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg))
             self.output_op_names = self.adaptor.get_output_op_names(self.last_qmodel)
-            self.confidence_batches = (self.cfg.tuning.strategy.confidence_batches
-                                       if self.cfg.tuning.strategy.confidence_batches != None else 2)
+            confidence_batches = 2
+            strategy_kwargs = self.conf.quantization.tuning_criterion.strategy_kwargs
+            if strategy_kwargs and strategy_kwargs.get('confidence_batches', None):
+                confidence_batches = strategy_kwargs.get('confidence_batches', None)
+
             tune_cfg_backup = deepcopy(tune_cfg)
             quant_ops_in_tune_cfg = self._collect_ops_by_quant_mode(tune_cfg, 'dynamic') + \
                                     self._collect_ops_by_quant_mode(tune_cfg, 'static')
@@ -140,7 +143,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                                                 self.calib_dataloader, 
                                                                 deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                 self.output_op_names,
-                                                                self.confidence_batches,
+                                                                confidence_batches,
                                                                 fallback=True)
                 logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                 select_op_info = ops_lst[0]
@@ -171,7 +174,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                                                 self.calib_dataloader, 
                                                                 deepcopy(self._tune_cfg_converter(tune_cfg)),
                                                                 self.output_op_names, 
-                                                                self.confidence_batches,
+                                                                confidence_batches,
                                                                 fallback=False,
                                                                 requantize_cfgs=requantize_cfg['op'])
                 logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")

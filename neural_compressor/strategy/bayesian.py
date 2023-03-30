@@ -51,7 +51,7 @@ class BayesianTuneStrategy(TuneStrategy):
             dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
+            if self._same_yaml(history['cfg'], self.conf):
                 history['bayes_opt'] = self.bayes_opt
         save_dict = super().__getstate__()
         return save_dict

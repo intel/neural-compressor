@@ -64,7 +64,10 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
         # Start compute the hessian trace
         logger.info(f"**************  Start compute the hessian trace  *****************")
         target_dtype = "fp32"  
-        hawq_v2_criterion =self.cfg.tuning.strategy.hawq_v2_loss
+        hawq_v2_criterion = None
+        strategy_kwargs = self.conf.quantization.tuning_criterion.strategy_kwargs
+        if strategy_kwargs:
+            hawq_v2_criterion = strategy_kwargs.get('hawq_v2_loss', None)
         # assert hawq_v2_criterion is not None, "HAWQ-V2 strategy needs model loss function to compute the gradient, \
         #     Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."
         op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model,

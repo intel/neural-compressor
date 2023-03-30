@@ -80,7 +80,7 @@ class BasicTuneStrategy(TuneStrategy):
             # stage 2: yield new_op_tuning_cfg_lst (length of stage 1)
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
-            if self.cfg.quantization.approach == 'post_training_auto_quant':
+            if self.conf.quantization.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                         item in tuning_space.query_items_by_quant_mode('dynamic')]
                 if static_dynamic_items:
@@ -211,7 +211,7 @@ class BasicTuneStrategy(TuneStrategy):
             
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
-            if self.cfg.quantization.approach == 'post_training_auto_quant':
+            if self.conf.quantization.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                         item in tuning_space.query_items_by_quant_mode('dynamic')]
                 if static_dynamic_items:

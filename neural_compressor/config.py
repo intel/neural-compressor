@@ -114,6 +114,8 @@ class Options:
         tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
                                for visual display.
                            Default value is False.
+        diagnosis(bool): This flag indicates whether to do diagnosis.
+                           Default value is False.
 
     Example::
 
@@ -122,14 +124,16 @@ class Options:
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
         set_tensorboard(True)
+        
     """
     def __init__(self, random_seed=1978, workspace=default_workspace,
-                 resume_from=None, tensorboard=False):
+                 resume_from=None, tensorboard=False, diagnosis=False):
         """Init an Option object."""
         self.random_seed = random_seed
         self.workspace = workspace
         self.resume_from = resume_from
         self.tensorboard = tensorboard
+        self.diagnosis = diagnosis # TODO expose the diagnosis to user
 
     @property
     def random_seed(self):
@@ -174,7 +178,17 @@ class Options:
         """Set tensorboard."""
         if _check_value('tensorboard', tensorboard, bool):
             self._tensorboard = tensorboard
+            
+    @property
+    def diagnosis(self):
+        """Get diagnosis."""
+        return self._diagnosis
 
+    @diagnosis.setter
+    def diagnosis(self, diagnosis):
+        """Set diagnosis."""
+        if _check_value('diagnosis', diagnosis, bool):
+            self._diagnosis = diagnosis
 
 class BenchmarkConfig:
     """Config Class for Benchmark.

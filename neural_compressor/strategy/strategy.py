@@ -1101,6 +1101,8 @@ class TuneStrategy(object):
         The check will exclude those keys which do not really impact the tuning result, such as 
         tensorboard, workspace, resume options under the tuning section of YAML.
         """
+        return False
+        # TODO rewrite the compare method for new API
         if equal_dicts(src_yaml, dst_yaml, ignore_keys=['tuning']) and \
            equal_dicts(src_yaml.tuning, src_yaml.tuning, compare_keys=['objective',
                                                                        'accuracy_criterion',
