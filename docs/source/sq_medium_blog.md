@@ -284,11 +284,9 @@ sq.transform(alpha) ##alpha could be a float or a string ’auto‘
 ```
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
-*support lots of fusing patterns*: the official code only supports 
-```bash
-linear->layernorm
-```
-while we support the following pattens
+*support lots of fusing patterns*: when applying the convention per-channel scales, a mul layer needs to be inserted,  which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2
+all the supported patten are shown below.
+
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
 
