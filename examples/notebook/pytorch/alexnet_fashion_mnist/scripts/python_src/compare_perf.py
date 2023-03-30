@@ -41,8 +41,8 @@ def load_res(json_file):
         data = json.load(f)
         return data
 
-res_32 = load_res('32.json')
-res_8 = load_res('8.json')
+res_32 = load_res('../output/32.json')
+res_8 = load_res('../output/8.json')
    
 accuracys = [res_32['accuracy'], res_8['accuracy']]
 throughputs = [res_32['throughput'], res_8['throughput']]             
@@ -61,8 +61,8 @@ plt.figure(figsize=(16,6))
 draw_bar(x, t, throughputs, 131, 'tab:green', 'Throughput(fps)', '', width=0.2)
 draw_bar(x, t,  latencys, 132, 'tab:blue', 'Latency(ms)', '', width=0.2)
 draw_bar(x, t,  accuracys_perc, 133, '#28a99d', 'Accuracys(%)', '', width=0.2)
-plt.savefig("fp32_int8_aboslute.png")
-print("\nSave to fp32_int8_aboslute.png\n")
+plt.savefig("../output/fp32_int8_aboslute.png")
+print("\n Comparison plot saved to output/fp32_int8_aboslute.png\n")
 
 throughputs_times = [1, throughputs[1]/throughputs[0]]
 latencys_times = [1, latencys[1]/latencys[0]]
@@ -78,5 +78,5 @@ draw_bar(x, t, throughputs_times, 131, 'tab:green', 'Throughput Normalized (big 
 draw_bar(x, t, latencys_times, 132, 'tab:blue', 'Latency Normalized (small is better)', '', width=0.2)
 draw_bar(x, t, accuracys_times, 133, '#28a99d', 'Accuracys Normalized (small is better)', '', width=0.2)
 
-plt.savefig("fp32_int8_times.png")
-print("\nSave to fp32_int8_times.png")
+plt.savefig("../output/fp32_int8_times.png")
+print("\n Comparison plot saved to output/fp32_int8_times.png")
