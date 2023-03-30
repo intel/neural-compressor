@@ -1569,6 +1569,8 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
         )
         self.precision = precision
         self.model = model
+        # For align with quant config
+        self._approach = None
     
     @property
     def precision(self):
@@ -1593,6 +1595,10 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
     @model.setter
     def model(self, model):
         self._model = model
+        
+    @property
+    def approach(self):
+        return self._approach
 
 
 class ExportConfig:

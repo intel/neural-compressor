@@ -46,8 +46,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
         # filter quantization dtype
         # TODO align with the old mixed-precison
-        target_dtypes = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
-            else self.cfg.mixed_precision.precisions
+        target_dtypes = self.conf.quantization.precisions
         target_dtypes = list(set(target_dtypes) - set(['fp32']))
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}

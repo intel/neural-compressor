@@ -78,14 +78,15 @@ class _MixedPrecision:
                 _resume = pickle.load(f).__dict__
 
         self.strategy = STRATEGIES[strategy](
-            self._model,
-            self.conf,
-            None,
-            None,
-            self._eval_dataloader,
-            self._eval_func,
-            self._eval_metric,
-            _resume)
+            model = self.model,
+            conf = self.conf,
+            q_dataloader=None,
+            q_func=None,
+            eval_func=self._eval_func,
+            eval_dataloader=self._eval_dataloader,
+            eval_metric=self._eval_metric,
+            resume=_resume,
+            q_hooks=None)
 
     def execute(self):
         """Execute routinue based on strategy design."""
@@ -373,7 +374,7 @@ def fit(model,
         sys.exit(0)
     precisions = list(set(config.precision) - set(config.excluded_precisions))
     converter.conf.quantization.precisions = precisions
-    converter.conf.quantization.model = model
+    converter.model = model
 
     if ('bf16' in precisions or 'fp16' in precisions) and \
         converter.conf.quantization.framework == "onnxruntime":

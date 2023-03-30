@@ -88,15 +88,15 @@ class TuneStrategy(object):
             self._not_tuning = False
             return
         
-    def __init__(self, 
-                 model, 
-                 conf: PostTrainingQuantConfig,
+    def __init__(self,
+                 model,
+                 conf,
                  q_dataloader=None,
-                 q_func=None, 
+                 q_func=None,
                  eval_func=None,
                  eval_dataloader=None,
                  eval_metric=None,
-                 resume=None, 
+                 resume=None,
                  q_hooks=None):
         """Init the TuneStrategy.
 

@@ -103,15 +103,15 @@ class _PostTrainingQuant:
             logger.info("Quantize model without tuning!")
 
         self.strategy = STRATEGIES[strategy](
-            self._model,
-            self.conf,
-            self._calib_dataloader,
-            self._train_func,
-            self._eval_func,
-            self._eval_dataloader,
-            self._eval_metric,
-            _resume,
-            self.callbacks.hooks if self.callbacks is not None else None)
+            model = self.model,
+            conf = self.conf,
+            q_dataloader=self._calib_dataloader,
+            q_func=self._train_func,
+            eval_func=self._eval_func,
+            eval_dataloader=self._eval_dataloader,
+            eval_metric=self._eval_metric,
+            resume=_resume,
+            q_hooks=self.callbacks.hooks if self.callbacks is not None else None)
 
     def execute(self):
         """Quantization execute routinue based on strategy design."""
