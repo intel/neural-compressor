@@ -190,19 +190,8 @@ class BasicTuneStrategy(TuneStrategy):
                 matches = [item for item in op_block if item in fallback_items_name_lst]
                 if matches:
                     op_block_fallback_lst.append(op_block)
-            if op_block_fallback_lst:
-                logger.info(f"Start to fallback op to {target_dtype} block by block")
 
             initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-            block_fallback_sampler = BlockFallbackTuningSampler(tuning_space=tuning_space,
-                                                                tuning_order_lst=[],
-                                                                initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                                op_block_lst=op_block_fallback_lst,
-                                                                accumulate=False,
-                                                                target_dtype=target_dtype)
-            for op_block_index, op_tuning_cfg in enumerate(block_fallback_sampler):
-                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                yield op_tuning_cfg
 
             # Fallback by accumulating blocks
             if op_block_fallback_lst:
