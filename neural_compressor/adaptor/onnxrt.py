@@ -994,7 +994,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if index + 2 < len(attention_matmul) and index + 3 < len(attention_matmul):
                     ffn_matmul.append([attention_matmul[index + 2], attention_matmul[index + 3]])
         block_info = []
-        for block in ffn_matmul:
+        for block in reversed(ffn_matmul):
             node_info = []
             for node in block:
                 node_info.append((node.name, node.op_type))

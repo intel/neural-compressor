@@ -199,7 +199,8 @@ def main():
 
     tokenizer = GPT2Tokenizer.from_pretrained(args.model_name_or_path,
                                                 use_fast=True,
-                                                cache_dir=args.cache_dir if args.cache_dir else None)
+                                                cache_dir=args.cache_dir if args.cache_dir else None,
+                                                use_auth_token='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')
     if args.block_size <= 0:
         args.block_size = tokenizer.max_len_single_sentence  # Our input block size will be the max possible for the model
     args.block_size = min(args.block_size, tokenizer.max_len_single_sentence)
@@ -240,20 +241,16 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model  
 
-        from neural_compressor import quantization
-        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-        from neural_compressor.utils.constant import FP32
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
-        accuracy_criterion.relative = 0.11
-        config = PostTrainingQuantConfig(approach='static', 
-                                         op_type_dict={'Add':FP32},
+        accuracy_criterion.relative = 0.05
+        config = PostTrainingQuantConfig(approach='dynamic', 
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func,
-                                   calib_dataloader=DefaultDataLoader(ds, args.eval_batch_size))
+                                   eval_func=eval_func)
         q_model.save(args.output_model)
 
 
