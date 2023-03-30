@@ -1591,6 +1591,12 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
                                                                  it won't work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
 
+yaml
+    quantization:
+        diagxx
+==
+QuantizationConfig(diagnosis=True)
+
     Example::
 
         from neural_compressor import mix_precision

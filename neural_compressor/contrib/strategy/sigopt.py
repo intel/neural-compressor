@@ -73,19 +73,43 @@ class SigOptTuneStrategy(TuneStrategy):
 
     """
 
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Initialize the SigOpt tuning strategy if the user specified to use it."""
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
-        strategy_name = conf.usr_cfg.tuning.strategy.name
+    def __init__(self,
+                 model,
+                 conf,
+                 q_dataloader=None,
+                 q_func=None,
+                 eval_func=None,
+                 eval_dataloader=None,
+                 eval_metric=None,
+                 resume=None,
+                 q_hooks=None):
+        """Initialize the SigOpt tuning strategy if the user specified to use it.
+
+        Args:
+            model: The FP32 model specified for low precision tuning.
+            conf: The Conf class instance includes all user configurations.
+            q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
+            q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
+                evaluation dataset and metrics should be encapsulated in this function implementation and 
+                outputs a higher-is-better accuracy scalar value.
+            eval_dataloader: Data loader for evaluation. Defaults to None.
+            eval_metric: Metric for evaluation. Defaults to None.
+            resume: The dict containing resume information. Defaults to None.
+            q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
+                on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
+        """
+        super().__init__(model=model,
+                         conf=conf,
+                         q_dataloader=q_dataloader,
+                         q_func=q_func,
+                         eval_func=eval_func,
+                         eval_dataloader=eval_dataloader,
+                         eval_metric=eval_metric,
+                         resume=resume,
+                         q_hooks=q_hooks)
+        logger.info(f"*** Initialize SigOpt tuning")
+        strategy_name = conf.quantization.tuning_criterion.strategy
         if strategy_name.lower() == "sigopt":
             try:
                 import sigopt

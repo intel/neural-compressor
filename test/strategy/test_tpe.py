@@ -109,14 +109,35 @@ class TestQuantization(unittest.TestCase):
             print("Error while deleting file ")
 
     def test_run_tpe_one_trial(self):
-        from neural_compressor.experimental import Quantization, common
+        # from neural_compressor.experimental import Quantization, common
 
-        quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        quantizer.fit()
+        # quantizer = Quantization('fake_yaml.yaml')
+        # dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        # quantizer.calib_dataloader = common.DataLoader(dataset)
+        # quantizer.eval_dataloader = common.DataLoader(dataset)
+        # quantizer.model = self.constant_graph
+        # quantizer.fit()
+        
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        
+        # tuning and accuracy criterion
+        tune_cri = TuningCriterion(strategy='tpe')
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
+        def eval_func(model):
+            return 1
+        conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
+        q_model = fit(model=self.constant_graph,
+                      conf=conf,
+                      calib_dataloader=dataloader,
+                      eval_func=eval_func)
+
+        
 
     def test_run_tpe_max_trials(self):
         from neural_compressor.experimental import Quantization, common

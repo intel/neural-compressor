@@ -23,3 +23,4 @@ from .utils import options
 from .config import DistillationConfig, PostTrainingQuantConfig, \
                     WeightPruningConfig, QuantizationAwareTrainingConfig, \
                     MixedPrecisionConfig
+from .contrib import *

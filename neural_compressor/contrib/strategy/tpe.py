@@ -82,13 +82,21 @@ class TpeTuneStrategy(TuneStrategy):
                                                Defaults to None.
 
     """
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
+    def __init__(self,
+                 model,
+                 conf,
+                 q_dataloader=None,
+                 q_func=None,
+                 eval_func=None,
+                 eval_dataloader=None,
+                 eval_metric=None,
+                 resume=None,
+                 q_hooks=None):
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        assert conf.usr_cfg.quantization.approach == 'post_training_static_quant', \
+        assert conf.quantization.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        strategy_name = conf.usr_cfg.tuning.strategy.name
+        strategy_name = conf.quantization.tuning_criterion.strategy
         if strategy_name.lower() == "tpe":
             try:
                 import hyperopt
@@ -106,14 +114,19 @@ class TpeTuneStrategy(TuneStrategy):
         self.warm_start = False
         self.cfg_evaluated = False
         self.hpopt_trials = hyperopt.Trials()
-        self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
+        self.max_trials = 200
+        if conf.quantization.tuning_criterion.max_trials:
+            self.max_trials = conf.quantization.tuning_criterion.max_trials
+        
         self.loss_function_config = {
-            'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
-                      conf.usr_cfg.tuning.accuracy_criterion and \
-                      conf.usr_cfg.tuning.accuracy_criterion.relative else 0.01,
-            'acc_weight': conf.usr_cfg.tuning.strategy.get('accuracy_weight', 1.0),
-            'lat_weight': conf.usr_cfg.tuning.strategy.get('latency_weight', 1.0)
+            'acc_th': 0.01,
+            'acc_weight': 1.0,
+            'lat_weight': 1.0
         }
+        accuracy_criterion = conf.quantization.accuracy_criterion
+        if accuracy_criterion.criterion == 'relative':
+            self.loss_function_config['acc_th'] = accuracy_criterion.tolerable_loss
+
         self.tpe_params = {
             'n_initial_point': 10,
             'gamma': 0.3,
@@ -127,15 +140,15 @@ class TpeTuneStrategy(TuneStrategy):
         }
         self._algo = None
 
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+        super().__init__(model=model,
+                         conf=conf,
+                         q_dataloader=q_dataloader,
+                         q_func=q_func,
+                         eval_func=eval_func,
+                         eval_dataloader=eval_dataloader,
+                         eval_metric=eval_metric,
+                         resume=resume,
+                         q_hooks=q_hooks)
 
     def __getstate__(self):
         """Magic method for pickle saving.
