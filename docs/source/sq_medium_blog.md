@@ -26,7 +26,7 @@ As a consequence, the scale of LLMs has grown exponentially. For example, GPT-2 
 
 Billions or more paramaters make LLMs perform well in various tasks but require more computing resources and more difficult to deploy. Models are usually loaded on servers which have limited memory for inference tasks. The growing scale of LLM significantly slows down the process of inference. In worst cases, a task might not be performed if the infrastructure fails to meet the requirement. 
 
-As such, reduct the model size for LLMs is an urgent request. One of the most popular and effective ways is quantization, especially post-training quantization (PTQ).
+As such, reducing the model size for LLMs is an urgent request. One of the most popular and effective ways is quantization, especially post-training quantization (PTQ).
 
 
 ## Quantization Fundamentals
@@ -42,7 +42,7 @@ $$
 where $X_{fp32}$, $S$ and $Z$ are the input matrix, scale factor, and integer zero point, respectively.
 
 ### Per-tenor & Per-channel
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrics and per channel for 3D matrics. Similarly, the finest granularity is that each element has an individual parameter.
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual parameter.
 
 However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show that per-channel could bring lower quantization loss but has some limitations; that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
