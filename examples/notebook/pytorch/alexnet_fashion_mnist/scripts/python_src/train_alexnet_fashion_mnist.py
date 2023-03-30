@@ -15,7 +15,7 @@ def main():
     alexnet.train_mod(model, train_loader, test_loader, optimizer, epochs)
     alexnet.test_mod(model, test_loader)
 
-    alexnet.save_mod(model, "alexnet_mnist_fp32_mod.pth")
+    alexnet.save_mod(model, "../output/alexnet_mnist_fp32_mod.pth")
 
 if __name__ == "__main__":
     main()
