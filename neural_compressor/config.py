@@ -1552,6 +1552,7 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
                  device="cpu",
                  backend="default",
                  precision="bf16",
+                 model=None,
                  inputs=[],
                  outputs=[],
                  tuning_criterion=tuning_criterion,
@@ -1567,6 +1568,7 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
                          excluded_precisions=excluded_precisions,
         )
         self.precision = precision
+        self.model = model
     
     @property
     def precision(self):
@@ -1582,7 +1584,15 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
         elif isinstance(precision, list):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
-            self._precision = precision  
+            self._precision = precision
+    
+    @property
+    def model(self):
+        return self._model
+    
+    @model.setter
+    def model(self, model):
+        self._model = model
 
 
 class ExportConfig:

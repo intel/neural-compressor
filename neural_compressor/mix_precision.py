@@ -191,7 +191,7 @@ class _MixedPrecision:
                        make sure the name is in supported slim model list.
         """
         cfg = self.conf
-        if cfg.quantization.framework == 'NA':
+        if cfg.quantization.framework is None:
             if isinstance(user_model, BaseModel):
                 cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
                 if cfg.quantization.backend == "ipex":
@@ -372,17 +372,19 @@ def fit(model,
             "please modify precision or excluded_precisions to make it understandable.")
         sys.exit(0)
     precisions = list(set(config.precision) - set(config.excluded_precisions))
-    converter.precisions = precisions
-    converter.model = model
+    converter.conf.quantization.precisions = precisions
+    converter.conf.quantization.model = model
 
-    if ('bf16' in precisions or 'fp16' in precisions) and converter.framework() == "onnxruntime":
+    if ('bf16' in precisions or 'fp16' in precisions) and \
+        converter.conf.quantization.framework == "onnxruntime":
         if config.device == "cpu":
             logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
             sys.exit(0)
         elif config.backend != "onnxrt_cuda_ep":
             logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
             sys.exit(0)
-    elif 'bf16' in precisions and not CpuInfo().bf16 and converter.framework() != "onnxruntime":
+    elif 'bf16' in precisions and not CpuInfo().bf16 and \
+        converter.conf.quantization.framework != "onnxruntime":
         if os.getenv('FORCE_BF16') == '1':
             logger.warning("Mix precision will generate bf16 graph although " \
                            "the hardware doesn't support bf16 instruction.")
@@ -390,7 +392,7 @@ def fit(model,
             logger.warning("Mix precision exits due to the hardware " \
                            "doesn't support bf16 instruction.")
             sys.exit(0)
-    elif 'fp16' in precisions and converter.framework() != "onnxruntime":
+    elif 'fp16' in precisions and converter.conf.quantization.framework != "onnxruntime":
         logger.warning("Currently mix precision only supports fp16 for onnx models.")
         sys.exit(0)
     if eval_func is not None:
