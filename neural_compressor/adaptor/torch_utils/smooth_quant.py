@@ -43,7 +43,7 @@ def model_forward(model, dataloader, iters):
                 break
 
 
-def quant_dequant_w(m, num_bits=8, scheme='asym'):##TODO take sym as default
+def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
     if isinstance(m, torch.nn.Linear):
         x = m.weight
         if scheme == 'sym':
@@ -195,8 +195,8 @@ class TorchSmoothQuant:
             #     self.input_values[name].append(input)
             #     self.output_values[name].append(outputs)
             # else:
-            self.input_values[name] = [input]##TODO save more,like 8
-            self.output_values[name] = [outputs]##TODO do not save output
+            self.input_values[name] = [input]  ##TODO save more,like 8
+            self.output_values[name] = [outputs]  ##TODO do not save output
 
         return save_input_output_hook
 
@@ -268,9 +268,9 @@ class TorchSmoothQuant:
                 if isinstance(module, torch.nn.Conv2d):
                     if module.groups > 1 and module.in_channels == module.out_channels and \
                             module.groups == module.in_channels:
-                        continue
-                    else:
                         pass
+                    elif module.groups > 1:
+                        continue
 
                 hook_modules[name] = module
         if len(hook_modules) == 0:
@@ -321,7 +321,10 @@ class TorchSmoothQuant:
         :return:
         """
         layer = self._get_module(layer_name)
-        if isinstance(layer, torch.nn.Conv2d) or isinstance(layer, torch.nn.ConvTranspose2d):
+        if isinstance(layer, torch.nn.Conv2d) and layer.groups > 1:  ##only depthwise conv could hit here
+            scale = scale.view(scale.shape[0], 1, 1, 1)  ##mount on output channel
+            layer.weight *= scale
+        elif isinstance(layer, torch.nn.Conv2d):
             scale = scale.view(1, scale.shape[0], 1, 1)
             layer.weight *= scale
         elif isinstance(layer, torch.nn.Linear):
