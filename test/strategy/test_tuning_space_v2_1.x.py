@@ -1,4 +1,4 @@
-from neural_compressor.strategy.utils.tuning_space import TuningItem, TuningSpace
+from neural_compressor.experimental.strategy.utils.tuning_space import TuningItem, TuningSpace
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.utils import logger
 from copy import deepcopy
@@ -189,7 +189,7 @@ class TestTuningSpaceV2(unittest.TestCase):
         
     def test_tuning_sampler_int4(self):
         # op-wise
-        conf = {}
+        conf = {'usr_cfg': { } }
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -215,7 +215,7 @@ class TestTuningSpaceV2(unittest.TestCase):
         from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
         from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler
         # op-wise
-        conf = {}
+        conf = {'usr_cfg': { } }
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -255,9 +255,11 @@ class TestTuningSpaceV2(unittest.TestCase):
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {
+            'usr_cfg': {
                 'quantization': {
-                    'op_name_dict': self.op_wise_user_cfg_for_fallback,
+                    'op_wise': self.op_wise_user_cfg_for_fallback,
                 }
+            }
 
         }
         conf = DotDict(conf)

@@ -140,7 +140,7 @@ class TuningSpace:
     def _init_usr_cfg(self):
         """Init user config."""
         usr_cfg = {'quantization': {}}
-        usr_cfg['quantization']['model_wise'] = None
+        usr_cfg['quantization']['model_wise'] =  None
         usr_cfg['quantization']['optype_wise'] = self.conf.quantization.op_type_dict if self.conf else None
         usr_cfg['quantization']['op_wise'] = self.conf.quantization.op_name_dict if self.conf else None
         return usr_cfg
