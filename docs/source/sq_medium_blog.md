@@ -60,24 +60,24 @@ def quantize(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
     scale = torch.clip(scale, min=1e-5)
-    bias = torch.round(0 - (torch.min(x)) / scale)
-    q_x = x / scale + bias
+    zp = torch.round(0 - (torch.min(x)) / scale)
+    q_x = x / scale + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scale}, bias = {bias}')
+    print(f'scale = {scale}, zp = {zp}')
     return q_x
 ```
 Then we can get the quantized $W_{q}$:
 ```bash
 >>> W_q = quantize(W)
-scale = 0.00296431384049356, bias = -59.0
+scale = 0.00296431384049356, zp = -59.0
 >>> W_q
 tensor([[172., 101., 192.],
         [255.,   0., 172.]])
 ```
-With the value of scale and bias, we can dequantize the tensor.
+With the value of scale and zero point, we can dequantize the tensor.
 ```python
-def dequantize(q_x, scale, bias):
-    return scale * (q_x - bias)
+def dequantize(q_x, scale, zp):
+    return scale * (q_x - zp)
 ```
 ```bash
 >>> W_dq = dequantize(W_dq, 0.001, -50)
@@ -105,30 +105,30 @@ def quantize_per_channel(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     x_tmp = x.detach().reshape(x.shape[0], -1)
     scales = x_tmp.max(dim=-1, keepdim=True)[0] / (2 ** num_bits - 1)
-    bias =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
-    q_x = x_tmp.divide(scales) + bias
+    zp =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
+    q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scales}, \nbias = {bias}')
+    print(f'scale = {scales}, \nzp = {zp}')
     return q_x
 
-def dequantize_per_channel(q_x, scales, bias):
-    print(q_x, scales, bias)
-    print(scales * (q_x - bias))
-    return scales * (q_x - bias)
+def dequantize_per_channel(q_x, scales, zp):
+    print(q_x, scales, zp)
+    print(scales * (q_x - zp))
+    return scales * (q_x - zp)
 ```
 ```bash
 >>>W_q = quantize_per_channel(W)
 scale = tensor([[0.0029],
         [0.0036]]), 
-bias = tensor([[-162.],
+zp = tensor([[-162.],
         [ -48.]])
 >>>W_q
 tensor([[ 72.,   0.,  93.],
         [207.,   0., 139.]])
 
 >>>scales = torch.tensor([[0.0027],[0.0017]])
->>>bias = torch.tensor([[-66.],[-87.]])
->>>W_dq = dequantize_per_channel(W_q, scales, bias)
+>>>zp = torch.tensor([[-66.],[-87.]])
+>>>W_dq = dequantize_per_channel(W_q, scales, zp)
 >>>W_dq
 tensor([[0.6837, 0.4734, 0.7451],
         [0.9301, 0.1751, 0.6821]])
