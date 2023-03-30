@@ -158,10 +158,11 @@ class SigOptTuneStrategy(TuneStrategy):
 
     def get_acc_target(self, base_acc):
         """Get the tuning target of the accuracy ceiterion."""
-        if self.cfg.tuning.accuracy_criterion.relative:
-            return base_acc * (1. - self.cfg.tuning.accuracy_criterion.relative)
+        accuracy_criterion_conf = self.conf.quantization.accuracy_criterion
+        if accuracy_criterion_conf.criterion == 'relative':
+            return base_acc * (1. - accuracy_criterion_conf.tolerable_loss)
         else:
-            return base_acc - self.cfg.tuning.accuracy_criterion.absolute
+            return base_acc - accuracy_criterion_conf.tolerable_loss
 
     def traverse(self):
         """The main traverse logic, which could be override by some concrete strategy which needs more hooks.
@@ -179,10 +180,9 @@ class SigOptTuneStrategy(TuneStrategy):
         trials_count = 0
         for tune_cfg in self.next_tune_cfg():
             # add tune_cfg here as quantize use tune_cfg
-            tune_cfg['advance'] = self.cfg.quantization.advance
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
+            if tuning_history and trials_count < self.conf.quantization.tuning_criterion.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -194,14 +194,14 @@ class SigOptTuneStrategy(TuneStrategy):
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
-            if self.cfg.tuning.exit_policy.performance_only:
+            if self._not_tuning:
                 self.best_qmodel = self.last_qmodel
                 self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
                 return
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
-            need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+            need_stop = self.stop(self.conf.quantization.tuning_criterion.timeout, trials_count)
 
             # record the tuning history
             saved_tune_cfg = copy.deepcopy(tune_cfg)

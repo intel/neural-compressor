@@ -144,7 +144,7 @@ class TpeTuneStrategy(TuneStrategy):
             dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
+            if self._same_yaml(history['cfg'], self.conf):
                 history['warm_start'] = True
                 history['hpopt_trials'] = self.hpopt_trials
                 history['loss_function_config'] = self.loss_function_config
@@ -293,7 +293,7 @@ class TpeTuneStrategy(TuneStrategy):
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
                 self._save()
-                if self.stop(self.cfg.tuning.exit_policy.timeout, trials_count):
+                if self.stop(self.conf.quantization.tuning_criterion.timeout, trials_count):
                     exit = True
         else:
             logger.warn("Can't create search space for input model.")
@@ -488,8 +488,8 @@ class TpeTuneStrategy(TuneStrategy):
                 del self.last_qmodel
 
         last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
-            self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
-            ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,self.cfg.quantization.dtype,y,z) \
+            'int8', self.last_tune_result[0], self.baseline[0]) + \
+            ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,'int8',y,z) \
             for x,y,z in zip(self.objectives.representation, \
             self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
             if self.last_tune_result else 'n/a'
