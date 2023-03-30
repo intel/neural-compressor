@@ -251,8 +251,8 @@ def main():
         accuracy_criterion.higher_is_better = False
         accuracy_criterion.relative = 0.11
         config = PostTrainingQuantConfig(approach='static', 
-                                         accuracy_criterion=accuracy_criterion,
-                                         op_type_dict={'Add':FP32})
+                                         op_type_dict={'Add':FP32},
+                                         accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
