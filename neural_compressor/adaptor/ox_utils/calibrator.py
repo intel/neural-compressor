@@ -99,18 +99,18 @@ class MinMaxCalibrator(CalibratorBase):
 
 @calib_registry(calib_method='percentile')
 class PercentileCalibrator(CalibratorBase):
-    """Percentile calibrator class."""
+    """Percentile calibrator class.
+    
+    Args:
+        num_bins (int, optional): number of bins to create a new histogram 
+                                    for collecting tensor values. Defaults to 2048.
+        percentile (float, optional): A float number between [0, 100]. Defaults to 99.999.
+    """
 
     def __init__(self, 
                  num_bins=2048,
                  percentile=99.999):
-        """Initialize percentile calibrator class.
-
-        Args:
-            num_bins (int, optional): number of bins to create a new histogram 
-                                      for collecting tensor values. Defaults to 2048.
-            percentile (float, optional): A float number between [0, 100]. Defaults to 99.999.
-        """
+        """Initialize percentile calibrator class."""
         super(PercentileCalibrator, self).__init__()
         self.collector = None
         self.num_bins = num_bins
@@ -149,18 +149,18 @@ class PercentileCalibrator(CalibratorBase):
 
 @calib_registry(calib_method='kl')
 class KLCalibrator(CalibratorBase):
-    """KL calibrator class."""
+    """KL calibrator class.
+    
+    Args:
+        num_bins (int, optional):number of bins to create a new histogram 
+                                    for collecting tensor values. Defaults to 128.
+        num_quantized_bins (int, optional): number of quantized bins. Defaults to 128.
+    """
 
     def __init__(self, 
                  num_bins=128,
                  num_quantized_bins=128):
-        """Initialize kl calibrator class.
-
-        Args:
-            num_bins (int, optional):number of bins to create a new histogram 
-                                     for collecting tensor values. Defaults to 128.
-            num_quantized_bins (int, optional): number of quantized bins. Defaults to 128.
-        """
+        """Initialize kl calibrator class."""
         super(KLCalibrator, self).__init__()
         self.collector = None
         self.num_bins = num_bins
