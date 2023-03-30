@@ -12,7 +12,11 @@ A Large language model (LLM) is a language model with more than billions of weig
 Once trained, an LLM could be fine-tuned for a wide variety of downstrean NLP tasks including conversational chatbots like ChatGPT, machine translation, text classification, fraud detection and sentiment analysis.
 
 ### Deployment challenges
-LLMs show excellent performance in many tasks, and researches show that LLMs with bigger number of parmaters can have better performance[^1].
+LLMs have two inference phases, i.e., prompt and generation, and the bottlenecks for these two phases are different. For the prompt stage, the foward pass is compute bounded, while the foward pass of generation phase with KV (key and value for attention) cache is primarily memory bounded. [^6]
+
+Acording to Gholami and et al[^5], the bandwidth of hardware increases about 1.4x every two years while the compute increases about 3.1x every two years. Additionally, multiple nodes are now required to serve extra large mdoels and bring the extra bandwith challenge between cross-node communication.
+
+On the other hand, researches show that LLMs with bigger number of parmaters can have better performance[^1].
 
 <div align="center">
     <img src="./imgs/model_scale_accuracy.png" />
@@ -20,7 +24,11 @@ LLMs show excellent performance in many tasks, and researches show that LLMs wit
 
 As a consequence, the scale of LLMs has grown exponentially. For example, GPT-2 that was released in 2019 had 1.5 billion parameters and that number of parameters increased to 175 billions when GPT-3 was released in 2020.
 
-Billions and more paramaters make LLMs perform well in various tasks but more difficult to deploy. Models are usually loaded on servers which have limited memory for inference tasks. The growing scale of LLM significantly slows down the process of inference. In worst cases, a task might not be performed if the infrastructure fails to meet the requirement.
+Billions or more paramaters make LLMs perform well in various tasks but require more computing resources and more difficult to deploy. Models are usually loaded on servers which have limited memory for inference tasks. The growing scale of LLM significantly slows down the process of inference. In worst cases, a task might not be performed if the infrastructure fails to meet the requirement. 
+
+As such, reduct the model size for LLMs is an urgent request. One of the most popular and effective ways is quantization, especially post-training quantization (PTQ).
+
+
 ## Quantization Fundamentals
 
 Quantization is a common compression operation to reduce memory and accelerate inference; therefore, the difficulty of LLM deployment can be alleviated. Quantization converts the floating point matrix to an integer matrix.
@@ -310,3 +318,7 @@ For opt models, we could fuse one more layer than the official code, because the
 [^3]: Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
 
 [^4]: Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
+
+[^5]: Amir Gholami, Zhewei Yao, Sehoon Kim, Michael W Mahoney, and Kurt Keutzer. Ai and memory wall. RiseLab Medium Post(2021).
+
+[^6]: Zhewe, Yao, et al. "A Comprehensive Study on Post-Training Quantization for Large Language Models".  arXiv preprint arXiv:2303.08302 (2023).
