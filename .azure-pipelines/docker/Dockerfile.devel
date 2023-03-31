@@ -16,9 +16,10 @@ ARG UBUNTU_VER=20.04
 FROM ubuntu:${UBUNTU_VER} as devel
 
 # See http://bugs.python.org/issue19846
-ENV LANG C.UTF-8 \
-    TZ=Asia/Shanghai \
-    DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
+
+RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     python3 \
