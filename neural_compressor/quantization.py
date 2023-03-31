@@ -111,7 +111,7 @@ class _PostTrainingQuant:
             q_func=self._train_func,
             eval_func=self._eval_func,
             eval_dataloader=self._eval_dataloader,
-            eval_metric=self._metric,
+            eval_metric=self._eval_metric,
             resume=_resume,
             q_hooks=self.callbacks.hooks if self.callbacks is not None else None)
 
@@ -320,7 +320,7 @@ class _PostTrainingQuant:
             metrics = METRICS(self.conf.quantization.framework)
             metrics.register(name, metric_cls)
 
-        self._metric = user_metric
+        self._eval_metric = user_metric
 
     @property
     def calib_func(self):
