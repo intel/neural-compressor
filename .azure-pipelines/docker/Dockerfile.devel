@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ARG UBUNTU_VER=20.04
-ARG DEBIAN_FRONTEND=noninteractive
 FROM ubuntu:${UBUNTU_VER} as devel
 
 # See http://bugs.python.org/issue19846
-ENV LANG C.UTF-8
-ENV TZ=Asia/Shanghai
+ENV LANG C.UTF-8 \
+    TZ=Asia/Shanghai \
+    DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     python3 \
