@@ -92,8 +92,9 @@ def get_pruner(config, modules):
     return PRUNERS[name](config, modules)
 
 def model_slim(model, round_multiplier=0):
-    model_slim_ffn2(model, round_multiplier)
-    model_slim_mha(model)
+    model = model_slim_ffn2(model, round_multiplier)
+    model = model_slim_mha(model)
+    return model
 
 def model_slim_ffn2(model, round_multiplier=0):
     """Remove some sparse part in the model permanently and obtain acceleration directly.
