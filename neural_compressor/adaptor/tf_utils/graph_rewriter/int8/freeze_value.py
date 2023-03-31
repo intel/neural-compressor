@@ -242,6 +242,11 @@ class FreezeValueTransformer(GraphRewriterBase):
             if not self.graph_info.get(in_node_name) or \
                 not in_node_name.endswith('_eightbit_quantized_in'):
                 in_node_name = None
+
+            if self.itex_mode and ('FusedBatchNormV3_eightbit_requant_range' in node_name or \
+                'FusedBatchNorm_eightbit_requant_range' in node_name):
+                bn_node_name = node_name[:-len("_eightbit_requant_range")]
+
             if node_name not in self.graph_info \
                 and bn_node_name not in self.graph_info \
                     and in_node_name not in self.graph_info:
@@ -280,16 +285,28 @@ class FreezeValueTransformer(GraphRewriterBase):
                     dtypes.float32, [])))
 
             if bn_node_name:
-                self.cur_graph.replace_const_node(
-                    min_node,
-                    [Helper.node_name_from_input(bn_node_name)],
-                    bn_node_name + '_input7_output_min'
-                )
-                self.cur_graph.replace_const_node(
-                    max_node,
-                    [Helper.node_name_from_input(bn_node_name)],
-                    bn_node_name + '_input8_output_max'
-                )
+                if self.itex_mode:
+                    self.cur_graph.replace_const_node(
+                        min_node,
+                        [Helper.node_name_from_input(bn_node_name+'_eightbit_quantize_bn')],
+                        bn_node_name + '_eightbit_input7_output_min'
+                    )
+                    self.cur_graph.replace_const_node(
+                        max_node,
+                        [Helper.node_name_from_input(bn_node_name+'_eightbit_quantize_bn')],
+                        bn_node_name + '_eightbit_input8_output_max'
+                    )
+                else:
+                    self.cur_graph.replace_const_node(
+                        min_node,
+                        [Helper.node_name_from_input(bn_node_name)],
+                        bn_node_name + '_input7_output_min'
+                    )
+                    self.cur_graph.replace_const_node(
+                        max_node,
+                        [Helper.node_name_from_input(bn_node_name)],
+                        bn_node_name + '_input8_output_max'
+                    )
             elif in_node_name:
                 self.cur_graph.replace_const_node(
                     min_node,
