@@ -155,7 +155,7 @@ class _Benchmark(object):
             "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
         self.conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
         if self.conf.benchmark.framework is not None:
-            self.framework = self.conf.benchmark.framework
+            self.framework = self.conf.benchmark.framework.lower()
 
     def __call__(self, raw_cmd=None):
         """Directly call a Benchmark object.
@@ -328,7 +328,7 @@ class _Benchmark(object):
                                        'backend': cfg.benchmark.backend \
                                         if cfg.benchmark.backend is not None else 'default',
                                        'format': None}
-            framework = cfg.benchmark.framework
+            framework = cfg.benchmark.framework.lower()
             if 'tensorflow' in framework:
                 framework_specific_info.update({"inputs": cfg.benchmark.inputs, \
                                                 "outputs": cfg.benchmark.outputs, \

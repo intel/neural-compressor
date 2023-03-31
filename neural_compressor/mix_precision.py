@@ -196,11 +196,13 @@ class _MixedPrecision:
             if isinstance(user_model, BaseModel):
                 cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
                 if cfg.quantization.backend == "ipex":
-                    assert cfg.quantization.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
+                    assert cfg.quantization.framework == "pytorch_ipex",\
+                          "Please wrap the model with correct Model class!"
                 if cfg.quantization.backend == "itex":
                     from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
-                        assert cfg.quantization.framework == "keras", "Please wrap the model with KerasModel class!"
+                        assert cfg.quantization.framework == "keras",\
+                              "Please wrap the model with KerasModel class!"
                     else:
                         assert cfg.quantization.framework == "pytorch_itex", \
                             "Please wrap the model with TensorflowModel class!"
@@ -220,7 +222,8 @@ class _MixedPrecision:
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in cfg.quantization.framework or cfg.quantization.framework == "keras":
-                self._model = Model(user_model, backend=cfg.quantization.framework, device=cfg.quantization.device)
+                self._model = Model(user_model, backend=cfg.quantization.framework
+                                    , device=cfg.quantization.device)
             else:
                 self._model = Model(user_model, backend=cfg.quantization.framework)
         else:
