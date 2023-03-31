@@ -407,8 +407,7 @@ def fit(model,
                                               instance.
                                               For MXNet model, it's mxnet.symbol.Symbol
                                               or gluon.HybirdBlock instance.
-        conf (QuantizationAwareTrainingConfig or PostTrainingQuantConfig):
-                                              The class of QuantizationAwareTrainingConfig
+        conf (PostTrainingQuantConfig):       The class of QuantizationAwareTrainingConfig
                                               and PostTrainingQuantConfig containing accuracy goal,
                                               tuning objective and preferred calibration &
                                               quantization tuning space etc.
