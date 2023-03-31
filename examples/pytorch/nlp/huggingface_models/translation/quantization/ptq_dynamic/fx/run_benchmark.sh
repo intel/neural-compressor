@@ -63,7 +63,8 @@ function run_benchmark {
     fi
 
     if [ "${topology}" = "t5-small" ];then
-        extra_cmd='--model_name_or_path '${input_model}
+        source_prefix=`--source_prefix 'translate English to Romanian: ' `
+        extra_cmd="--model_name_or_path ${input_model} ${source_prefix}"
     elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
         extra_cmd="--model_name_or_path Helsinki-NLP/opus-mt-en-ro"
     fi
