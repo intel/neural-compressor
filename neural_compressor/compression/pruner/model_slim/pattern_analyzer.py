@@ -340,7 +340,7 @@ class PathSearcher(JitBasicSearcher):
         # step 2: dfs  
         # execute dfs-based pattern matching
         dfs()
-        logger.warning(f"Matched {len(self.search_results)} pattern {self.target_pattern} in model {type(self.model).__name__}")
+        logger.info(f"Found {len(self.search_results)} pattern {self.target_pattern} in {type(self.model).__name__}")
         JitBasicSearcher.get_layer_for_all(self)
         return self.search_results
 
@@ -404,7 +404,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
             dfs()
             self.current_pattern.pop()
 
-        logger.warning(f"Found {len(self.search_results)} target pattern 'linear2linear' in model {type(self.model).__name__}")
+        logger.info(f"Found {len(self.search_results)} target pattern 'linear2linear' in {type(self.model).__name__}")
         if not return_name: 
             # return the module object instead of module name
             JitBasicSearcher.get_layer_for_all(self)
