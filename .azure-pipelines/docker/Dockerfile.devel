@@ -18,6 +18,7 @@ FROM ubuntu:${UBUNTU_VER} as devel
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
+ENV TZ=Asia/Shanghai
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     python3 \
