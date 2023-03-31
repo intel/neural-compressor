@@ -83,10 +83,8 @@ class TuneStrategy(object):
     def _check_tuning_status(self):
         if self.eval_func:
             self._not_tuning = False
-            return
-        elif self.eval_dataloader and self.eval_metric:
+        if self.eval_dataloader and self.eval_metric:
             self._not_tuning = False
-            return
         
     def __init__(self,
                  model,

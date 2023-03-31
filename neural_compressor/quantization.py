@@ -24,7 +24,7 @@ from .config import Config
 from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, MODELS
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.utility import time_limit
+from .utils.utility import time_limit, dump_class_attrs
 
 
 class _PostTrainingQuant:
@@ -109,7 +109,7 @@ class _PostTrainingQuant:
             q_func=self._train_func,
             eval_func=self._eval_func,
             eval_dataloader=self._eval_dataloader,
-            eval_metric=self._eval_metric,
+            eval_metric=self._metric,
             resume=_resume,
             q_hooks=self.callbacks.hooks if self.callbacks is not None else None)
 
@@ -118,7 +118,9 @@ class _PostTrainingQuant:
         try:
             with time_limit(self.conf.quantization.tuning_criterion.timeout):
                 logger.debug("Dump user configuration:")
-                logger.debug(self.conf)
+                conf_dict = {}
+                dump_class_attrs(self.conf, conf_dict)
+                logger.info(conf_dict)
                 self.strategy.traverse()
         except KeyboardInterrupt:
             pass

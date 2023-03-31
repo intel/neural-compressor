@@ -66,6 +66,23 @@ class TestBasicTuningStrategy(unittest.TestCase):
         conf = PostTrainingQuantConfig()
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_func=fake_eval)
         self.assertIsNotNone(q_model)
+        
+    def test_run_create_eval_from_metric_and_dataloader(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
+        
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        from neural_compressor.metric import METRICS
+        metrics = METRICS('tensorflow')
+        top1 = metrics['topk']()
+        
+        # tuning and accuracy criterion
+        conf = PostTrainingQuantConfig()
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader,\
+            eval_dataloader=dataloader, eval_metric=top1)
 
     def test_no_tuning(self):
         import torchvision
