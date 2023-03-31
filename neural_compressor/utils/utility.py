@@ -562,3 +562,24 @@ def show_memory_info(hint):
     info = p.memory_full_info()
     memory = info.uss / 1024. / 1024
     print('{} memory used: {} MB'.format(hint, memory))
+
+
+def dump_class_attrs(obj, result = {}):
+    """
+    Dump the attributes and values of a config class.
+
+    Args:
+        obj: An instance of a config class
+    """
+    obj_name = obj.__class__.__name__
+    if obj_name not in result:
+        result[obj_name] = {}
+    for attr in dir(obj):
+        if not attr.startswith("__"):
+            value = getattr(obj, attr)
+            value_class_name = value.__class__.__name__
+            if 'Config' in value_class_name or 'Criterion' in value_class_name:
+                dump_class_attrs(value, result=result[obj_name])
+            else:
+                attr = attr[1:] if attr.startswith('_') else attr
+                result[obj_name][attr] = value
