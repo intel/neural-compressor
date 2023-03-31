@@ -35,18 +35,18 @@ There are several choices of sharing quantization parameters among tensor elemen
 
 However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. 
 
-For more details, please refer to [INC docs](https://github.com/intel/neural-compressor/blob/master/docs/source/smooth_quant.md). In which 
+For more details, please refer to [INC docs](https://github.com/intel/neural-compressor/blob/master/docs/source/smooth_quant.md). **We show that per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
 ## SmoothQuant and our enhancement
 ### SmoothQuant
-In the previous subsection, we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[^2][^3][^4]. 
+In the [INC docs](https://github.com/intel/neural-compressor/blob/master/docs/source/smooth_quant.md), we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[^2][^3][^4]. 
 
 
 
 To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce SPIQ[^2], Outlier Suppression[^3] and Smoothquant[^4]. All these three methods share a similar idea to migrate the difficulty from activation quantization to weight quantization but differ in how much difficulty to be transferred.
 
 
-So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, similar to a fake per-channel activation quantization.
+So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, acting like a fake per-channel activation quantization.
 
 <div align="center">
     <img src="./imgs/sq_convert.png"/>
@@ -109,7 +109,7 @@ sq.transform(alpha) ##alpha could be a float or a string 'auto'
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
 *support lots of fusing patterns*: when applying the convention per-channel scales, a mul layer needs to be inserted,  which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2.
-All the supported patten are shown below.
+All the supported patten are shown below. We haven't handled the layers whoes scale could not be aboserbed for torch backend.
 
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
