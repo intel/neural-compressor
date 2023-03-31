@@ -28,14 +28,15 @@ import pickle
 import random
 from .distillation.criterions import Criterions
 from ..adaptor import FRAMEWORKS
-from ..config import Config, PostTrainingQuantConfig, DistillationConfig, WeightPruningConfig
+from ..config import Config
 from ..utils import logger
 from ..utils.utility import time_limit, LazyImport
 from ..model import BaseModel, Model
 from ..model.model import get_model_fwk_name
 from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
-from .pruner.utils import process_config, parse_to_prune, generate_pruner_config, get_sparsity_ratio
+from .pruner.utils import process_config, parse_to_prune, \
+    generate_pruner_config, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
 LazyImport('torch.nn')
 torch = LazyImport('torch')
@@ -54,7 +55,8 @@ class BaseCallbacks(object):
 
         Args:
             conf: A Config object which definds the compressor behavior.
-                  Just like: QuantizationAwareTrainingConfig, WeightPruningConfig and DistillationConfig.
+                  Just like: QuantizationAwareTrainingConfig, WeightPruningConfig \
+                    and DistillationConfig.
             model: Model to be compressed in this object.
         """
         self.conf = None
@@ -123,7 +125,8 @@ class BaseCallbacks(object):
         else:
             return None
 
-    def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
+    def on_after_compute_loss(self, input, student_output, \
+                              student_loss, teacher_output=None):
         """Be called on the end of loss computation."""
         if len(self.hooks_dict['on_after_compute_loss']) > 0:
             loss = student_loss
@@ -476,7 +479,8 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
             model: Model to be quantized in this object.
         """
         super(QuantizationAwareTrainingCallbacks, self).__init__(conf=None)
-        self.conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        self.conf = Config(quantization=conf, benchmark=None, \
+                           pruning=None, distillation=None, nas=None)
         self.cfg = self.conf
         self.model = model
 
@@ -488,14 +492,17 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
                                    'random_seed': self.cfg.options.random_seed,
                                    'workspace_path': self.cfg.options.workspace,
                                    'q_dataloader': None,
-                                   'backend': self.cfg.qat_quantization.backend if self.cfg.qat_quantization.backend is not None else 'default',
-                                   'format': self.cfg.qat_quantization.quant_format if self.cfg.qat_quantization.quant_format is not None else 'default'}
+                                   'backend': self.cfg.qat_quantization.backend if \
+                                    self.cfg.qat_quantization.backend is not None else 'default',
+                                   'format': self.cfg.qat_quantization.quant_format if \
+                                    self.cfg.qat_quantization.quant_format is not None else 'default'}
         if self.cfg.qat_quantization.approach is not None:
             framework_specific_info['approach'] = self.cfg.qat_quantization.approach
 
         if 'tensorflow' in self.framework:
             framework_specific_info.update(
-                {"inputs": self.cfg.qat_quantization.inputs, "outputs": self.cfg.qat_quantization.outputs})
+                {"inputs": self.cfg.qat_quantization.inputs, \
+                 "outputs": self.cfg.qat_quantization.outputs})
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
         self.adaptor.model = self.model
         self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
@@ -520,7 +527,8 @@ class PruningCallbacks(BaseCallbacks):
             model: Model to be Pruning in this object.
         """
         super(PruningCallbacks, self).__init__(conf=None)
-        self.conf = Config(pruning=conf, quantization=None, benchmark=None, distillation=None, nas=None)
+        self.conf = Config(pruning=conf, quantization=None, benchmark=None
+                           , distillation=None, nas=None)
         self.cfg = self.conf.pruning
         self.model = model
         self.pruners_info = process_config(self.cfg)
@@ -583,7 +591,8 @@ class DistillationCallbacks(BaseCallbacks):
     def __init__(self, conf=None, model=None):
         """Initialize the attributes."""
         super(DistillationCallbacks, self).__init__()
-        self.conf = Config(quantization=None, benchmark=None, pruning=None, distillation=conf, nas=None)
+        self.conf = Config(quantization=None, benchmark=None, pruning=None
+                           , distillation=conf, nas=None)
         self.cfg = self.conf.distillation
         self.model = model
 
@@ -595,7 +604,8 @@ class DistillationCallbacks(BaseCallbacks):
         self.best_score = 0
         self.best_model = None
         self.hooks_registered = False
-        assert hasattr(self.cfg, "teacher_model"), "Please assign teacher model in DistillationConfig."
+        assert hasattr(self.cfg, "teacher_model"),\
+              "Please assign teacher model in DistillationConfig."
         self.teacher_model = self.cfg.teacher_model
         self.generate_hooks()
         self.create_criterion()

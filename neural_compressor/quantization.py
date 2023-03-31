@@ -54,7 +54,8 @@ class _PostTrainingQuant:
             conf (PostTrainingQuantConfig): A instance of PostTrainingQuantConfig to
                                             specify the quantization behavior.
         """
-        self.conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        self.conf = Config(quantization=conf, benchmark=None
+                           , pruning=None, distillation=None, nas=None)
         seed = self.conf.options.random_seed
         random.seed(seed)
         np.random.seed(seed)
@@ -81,7 +82,8 @@ class _PostTrainingQuant:
             strategy = "conservative"
 
         if strategy == "mse_v2":
-            if not (cfg.quantization.framework.startswith("tensorflow") or cfg.quantization.framework == 'pytorch_fx'):
+            if not (cfg.quantization.framework.startswith("tensorflow")\
+                     or cfg.quantization.framework == 'pytorch_fx'):
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support {cfg.quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
@@ -178,10 +180,12 @@ class _PostTrainingQuant:
             if isinstance(user_model, BaseModel):
                 cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
                 if cfg.quantization.backend == "ipex":
-                    assert cfg.quantization.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
+                    assert cfg.quantization.framework == "pytorch_ipex",\
+                          "Please wrap the model with correct Model class!"
                 if cfg.quantization.backend == "itex":
                     if get_model_type(user_model.model) == 'keras':
-                        assert cfg.quantization.framework == "keras", "Please wrap the model with KerasModel class!"
+                        assert cfg.quantization.framework == "keras",\
+                              "Please wrap the model with KerasModel class!"
                     else:
                         assert cfg.quantization.framework == "pytorch_itex", \
                             "Please wrap the model with TensorflowModel class!"
