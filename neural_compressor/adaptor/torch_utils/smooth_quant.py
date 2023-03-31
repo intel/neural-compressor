@@ -470,7 +470,7 @@ class TorchSmoothQuant:
         alpha_step: step size of alpha search space.
         attn_method: criterion method used on attention ops; currently min, max and mean are supported.
         """
-        logger.info("enter auto")
+        logger.info("auto tuning alpha")
         import copy
         alpha_scale = 100
         alpha_values = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
@@ -544,9 +544,11 @@ class TorchSmoothQuant:
             self.weight_scale_info.update(op_weight_scale)
             self.absorb_scales_info.update(op_absorb_scale)
         self.input_values, self.output_values = {}, {}
+        logger.info("auto tuning alpha done")
 
     def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d'],
-                  scales_per_op=False, calib_iter=100):
+                  scales_per_op=False, calib_iter=100,
+                  auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
         """
         The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -558,6 +560,14 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization
         """
+        if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
+            logger.warning("alpha should be a float value in [0, 1] or 'auto' ")
+            if alpha < 0:
+                alpha = 0
+                logger.warning("reset alpha to 0 ")
+            if alpha > 1:
+                logger.warning("reset alpha to 1 ")
+
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
@@ -584,7 +594,7 @@ class TorchSmoothQuant:
 
             self.recover()
             if alpha == 'auto':
-                self.auto_tune_alpha(input_maxes)
+                self.auto_tune_alpha(input_maxes, **auto_alpha_args)
             else:
                 self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                           input_maxes, alpha)

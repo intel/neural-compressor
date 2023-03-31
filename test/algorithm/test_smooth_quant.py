@@ -19,7 +19,37 @@ class TestSqDepthwiseConv(unittest.TestCase):
         self.conv_dl = RandDataloader()
 
     @classmethod
-    def test_sq_conv_relu6(self):
+    def test_sq_dw_conv_relu6_auto(self):
+        datasets = Datasets('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
+                self.act = torch.nn.ReLU6()
+                self.conv2 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
+
+            def forward(self, x):
+                out = self.conv1(x)
+                out = self.act(out)
+                out = self.conv2(out)
+                return out
+
+        model = Model()
+
+        data = torch.rand((1, 3, 1, 1))
+        output = model(data)
+
+        sq = TorchSmoothQuant(model, dummy_dataloader)
+        sq.transform(alpha='auto', calib_iter=1)
+        output_sq = model(data)
+        assert torch.sum(torch.abs(output - output_sq)) < 1e-5
+        assert len(sq.absorb_to_layer) == 1
+
+    @classmethod
+    def test_sq_dw_conv_relu6(self):
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -47,6 +77,11 @@ class TestSqDepthwiseConv(unittest.TestCase):
         output_sq = model(data)
         assert torch.sum(torch.abs(output - output_sq)) < 1e-5
         assert len(sq.absorb_to_layer) == 1
+
+
+
+
+
 
 
 class TestSqConvOpFuseAuto(unittest.TestCase):
