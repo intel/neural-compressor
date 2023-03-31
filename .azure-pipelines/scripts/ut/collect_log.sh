@@ -43,7 +43,54 @@ coverage html -d log_dir/coverage_base/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_base/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_base/htmlcov
 
+get_coverage_data() {
+    # Input argument
+    local coverage_log="$1"
+
+    # Get coverage data
+    local coverage_data=$(xmllint --xpath '//coverage' "$coverage_log")
+    if [[ -z "$coverage_data" ]]; then
+        echo "Failed to get coverage data from $coverage_log."
+        exit 1
+    fi
+
+    # Get lines coverage
+    local lines_covered=$(echo "$coverage_data" | grep -o 'lines-covered="[0-9]*"' | cut -d '"' -f 2)
+    local lines_valid=$(echo "$coverage_data" | grep -o 'lines-valid="[0-9]*"' | cut -d '"' -f 2)
+    if [ $lines_valid == 0 ]; then
+        local lines_coverage=0
+    else
+        local lines_coverage=$(bc <<<"scale=6; 100*$lines_covered/$lines_valid")
+    fi
+
+    # Get branches coverage
+    local branches_covered=$(echo "$coverage_data" | grep -o 'branches-covered="[0-9]*"' | cut -d '"' -f 2)
+    local branches_valid=$(echo "$coverage_data" | grep -o 'branches-valid="[0-9]*"' | cut -d '"' -f 2)
+    if [ $branches_valid == 0 ]; then
+        local branches_coverage=0
+    else
+        local branches_coverage=$(bc <<<"scale=6; 100*$branches_covered/$branches_valid")
+    fi
+
+    # Return values
+    echo "$lines_covered $lines_valid $lines_coverage $branches_covered $branches_valid $branches_coverage"
+}
+
 $BOLD_YELLOW && echo "compare coverage" && $RESET
+
+coverage_PR_xml="log_dir/coverage_PR/coverage.xml"
+coverage_PR_data=$(get_coverage_data $coverage_PR_xml)
+read lines_PR_covered lines_PR_valid coverage_PR_lines branches_PR_covered branches_PR_valid coverage_PR_branches <<<"$coverage_PR_data"
+
+coverage_base_xml="log_dir/coverage_base/coverage.xml"
+coverage_base_data=$(get_coverage_data $coverage_base_xml)
+read lines_base_covered lines_base_valid coverage_base_lines branches_base_covered branches_base_valid coverage_base_branches <<<"$coverage_base_data"
+
+$BOLD_GREEN && echo "PR lines coverage: $lines_PR_covered/$lines_PR_valid ($coverage_PR_lines%)" && $RESET
+$BOLD_GREEN && echo "PR branches coverage: $branches_PR_covered/$branches_PR_valid ($coverage_PR_branches%)" && $RESET
+$BOLD_GREEN && echo "BASE lines coverage: $lines_base_covered/$lines_base_valid ($coverage_base_lines%)" && $RESET
+$BOLD_GREEN && echo "BASE branches coverage: $branches_base_covered/$branches_base_valid ($coverage_base_branches%)" && $RESET
+
 coverage_PR_total=$(cat ${coverage_log} | grep TOTAL | awk '{print $NF}' | sed "s|%||g")
 coverage_base_total=$(cat ${coverage_log_base} | grep TOTAL | awk '{print $NF}' | sed "s|%||g")
 
@@ -51,10 +98,41 @@ $BOLD_YELLOW && echo "clear upload path" && $RESET
 rm -fr log_dir/coverage_PR/.coverage*
 rm -fr log_dir/coverage_base/.coverage*
 rm -fr log_dir/ut-coverage-*
+
+# Declare an array to hold failed items
+declare -a fail_items=()
+
 if [[ ${coverage_PR_total} -lt ${coverage_base_total} ]]; then
-    decrease=$(($coverage_PR_total - $coverage_base_total))
-    rate=$(awk 'BEGIN{printf "%.2f%\n",'$decrease/100'}')
-    $BOLD_RED && echo "Unit Test failed with coverage decrease ${rate}%" && $RESET
+    fail_items+=("total")
+fi
+if [[ ${coverage_PR_lines} -lt ${coverage_base_lines} ]]; then
+    fail_items+=("lines")
+fi
+if [[ ${coverage_PR_branches} -lt ${coverage_base_branches} ]]; then
+    fail_items+=("branches")
+fi
+
+if [[ ${#fail_items[@]} -ne 0 ]]; then
+    fail_items_str=$(IFS=', '; echo "${fail_items[*]}")
+    for item in "${fail_items[@]}"; do
+        case "$item" in
+        total)
+            decrease=$(($coverage_PR_total - $coverage_base_total))
+            ;;
+        lines)
+            decrease=$(($coverage_PR_lines - $coverage_base_lines))
+            ;;
+        branches)
+            decrease=$(($coverage_PR_branches - $coverage_base_branches))
+            ;;
+        *)
+            echo "Unknown item: $item"
+            continue
+            ;;
+        esac
+        rate=$(awk 'BEGIN{printf "%.2f%\n",'$decrease/100'}')
+        $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${rate}%" && $RESET
+    done
     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
     bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED"
     exit 1
@@ -64,4 +142,3 @@ else
     bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS"
     #sed "1i\Unit Test success with coverage ${coverage_PR_total}\n" ${coverage_log}
 fi
-
