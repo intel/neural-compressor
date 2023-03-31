@@ -685,11 +685,10 @@ class TuneStrategy(object):
     def _eval_baseline(self):
         """Evaluate the fp32 model if needed."""
         if self._not_tuning:
-            logger.info("Neither evaluation function nor metric is defined." \
+            logger.info("Neither evaluation function nor metric and evaluation dataloader is defined." \
                         " Generate a quantized model with default quantization configuration.")
-            self._not_tuning = True
-            
-        if not self._not_tuning:
+            return
+        else:
             # get fp32 model baseline
             if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
