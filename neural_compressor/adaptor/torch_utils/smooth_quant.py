@@ -578,8 +578,9 @@ class TorchSmoothQuant:
             if alpha < 0:
                 alpha = 0
                 logger.warning("reset alpha to 0 ")
-            if alpha > 1:
-                logger.warning("reset alpha to 1 ")
+            if alpha > 1.0:
+                alpha = 1.0
+                logger.warning("reset alpha to 1.0 ")
 
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
