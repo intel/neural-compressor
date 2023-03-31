@@ -65,7 +65,11 @@ class RecipeSearcher(object):
 
     def __init__(self, model: torch.nn.Module, recipe: dict):
         """Initialize the attributes."""
-        self.model = model
+        if "PyTorchFXModel" in type(model).__name__:
+            # neural compressor build-in model type
+            self.model = model.model
+        else:
+            self.model = model
         self.recipe = recipe
         self.targets = list(self.recipe.keys())
         self.search_results = []
@@ -109,7 +113,11 @@ class JitBasicSearcher(object):
 
     def __init__(self, model):
         """Initialize the attributes."""
-        self.model = model
+        if "PyTorchFXModel" in type(model).__name__:
+            # neural compressor build-in model type
+            self.model = model.model
+        else:
+            self.model = model
         self.device = self.model.device
         # use torch.jit to generate static graph
         self.static_graph = None
@@ -361,7 +369,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
         self.target_op_lut = {}
         self.current_pattern = []
 
-    def search(self):
+    def search(self, return_name = False):
         """Operations called for entire searching process."""
         self.search_results.clear()
         self.target_op_lut.clear()
@@ -396,8 +404,17 @@ class Linear2LinearSearcher(JitBasicSearcher):
             self.current_pattern.pop()
 
         print(f"Found {len(self.search_results)} target pattern 'linear2linear' in model {type(self.model).__name__}")
-        JitBasicSearcher.get_layer_for_all(self)
-        return self.search_results
+        if not return_name: 
+            # return the module object instead of module name
+            JitBasicSearcher.get_layer_for_all(self)
+            return self.search_results
+        else:
+            name_results = []
+            for item in self.search_results:
+                name_item = [JitBasicSearcher.get_layer_name(self, layer_info['op_trace']) for layer_info in item]
+                name_results.append(name_item)
+            return name_results
+
 
 class SelfMHASearcher(JitBasicSearcher):
     """Static graph searcher for multi-head attention modules.

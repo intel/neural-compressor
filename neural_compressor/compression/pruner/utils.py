@@ -445,3 +445,52 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
+
+def parse_auto_slim_config(model, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
+    auto_slim_configs = []
+    if ffn2_sparsity > 0 and ffn2_sparsity < 1:
+        auto_slim_configs += generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
+    if mha_sparsity > 0 and mha_sparsity < 1:
+        auto_slim_configs += generate_mha_pruning_config(model, mha_sparsity, **kwargs)
+    return auto_slim_configs
+
+def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
+    """get ffn2 configs"""
+    from .model_slim.pattern_analyzer import Linear2LinearSearcher
+    searcher = Linear2LinearSearcher(model)
+    layers = searcher.search(return_name = True)
+    # extract the second linear layer
+    ffn_layers = [ffn2_module[-1] for ffn2_module in layers]
+    ffn2_pruning_config = [
+        {
+            "op_names": ffn_layers,
+            "pattern": "channelx1",
+            "target_sparsity": ffn2_sparsity
+        }
+    ]
+    # append kwargs to generated config
+    for item in ffn2_pruning_config:
+        item.update(kwargs)
+    return ffn2_pruning_config
+
+def generate_mha_pruning_config(model, mha_sparsity, **kwargs):
+    from .model_slim.pattern_analyzer import SelfMHASearcher
+    searcher = SelfMHASearcher(model)
+    qkv_pattern, ffn_pattern = searcher.get_head_pattern()
+    qkv_layers, ffn_layers = searcher.search()
+    mha_pruning_config = [
+        {
+            "op_names": qkv_layers,
+            "pattern": qkv_pattern,
+            "target_sparsity": mha_sparsity,
+        },
+        {
+            "op_names": ffn_layers,
+            "pattern": ffn_pattern,
+            "target_sparsity": mha_sparsity,
+        }
+    ]
+    # append kwargs to generated config
+    for item in mha_pruning_config:
+        item.update(kwargs)
+    return mha_pruning_config

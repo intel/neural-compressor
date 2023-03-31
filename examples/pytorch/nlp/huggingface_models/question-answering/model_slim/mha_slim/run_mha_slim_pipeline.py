@@ -25,8 +25,6 @@ import math
 import os
 import sys
 
-import time
-
 sys.path.insert(0, './')
 from pathlib import Path
 
@@ -58,7 +56,9 @@ from transformers.file_utils import get_full_repo_name
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
-from timers import CPUTimer, GPUTimer
+from neural_compressor.training import prepare_compression
+from neural_compressor.training import WeightPruningConfig
+
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0.dev0")
 
@@ -205,7 +205,7 @@ def parse_args():
     parser.add_argument(
         "--per_device_eval_batch_size",
         type=int,
-        default=16,
+        default=8,
         help="Batch size (per device) for the evaluation dataloader.",
     )
     parser.add_argument(
@@ -410,6 +410,20 @@ def parse_args():
         type=int, default=-1,
         help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
     )
+    parser.add_argument(
+        "--prune_ffn2_sparsity",
+        type=float, default=0.0,
+        help="If it is a positive (0, 1) number, automatically search ffn2 modules and prune their channels."
+    )
+    parser.add_argument(
+        "--prune_mha_sparsity",
+        type=float, default=0.0,
+        help="If it is a positive (0, 1) number, automatically search self-attention modules and prune their heads."
+    )
+    parser.add_argument(
+        "--auto_slim", action="store_true",
+        help="Whether or not to auto slim the model after pruning."
+    )
 
     args = parser.parse_args()
 
@@ -535,11 +549,25 @@ def main():
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
-    model = AutoModelForQuestionAnswering.from_pretrained(
-        args.model_name_or_path,
-        from_tf=bool(".ckpt" in args.model_name_or_path),
-        config=config,
-    )
+    if args.distill_loss_weight > 0:
+        teacher_path = args.teacher_model_name_or_path 
+        if teacher_path is None:
+            teacher_path = args.model_name_or_path
+        teacher_model = AutoModelForQuestionAnswering.from_pretrained(
+            teacher_path,
+            from_tf=bool(".ckpt" in args.model_name_or_path),
+            config=config,
+        )
+
+    if args.model_name_or_path:
+        model = AutoModelForQuestionAnswering.from_pretrained(
+            args.model_name_or_path,
+            from_tf=bool(".ckpt" in args.model_name_or_path),
+            config=config,
+        )
+    else:
+        logger.info("Training new model from scratch")
+        model = AutoModelForQuestionAnswering.from_config(config)
 
     # Preprocessing the datasets.
     # Preprocessing is slighlty different for training and evaluation.
@@ -838,105 +866,389 @@ def main():
 
         return logits_concat
 
-    model, train_dataloader, eval_dataloader = accelerator.prepare(
-        model, train_dataloader, eval_dataloader
+    # Optimizer
+    # Split weights in two groups, one with weight decay and the other not.
+    no_decay = ["bias", "LayerNorm.weight"]
+    no_decay_outputs = ["bias", "LayerNorm.weight", "qa_outputs"]
+    optimizer_grouped_parameters = [
+        {
+            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+            "weight_decay": args.weight_decay,
+        },
+        {
+            "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
+            "weight_decay": 0.0,
+        },
+    ]
+    if args.do_prune:
+        optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate, betas=[0.9, 0.9])
+    else:
+        optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+
+    # Scheduler and math around the number of training steps.
+    overrode_max_train_steps = False
+    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
+    if args.max_train_steps is None:
+        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
+        overrode_max_train_steps = True
+
+    lr_scheduler = get_scheduler(
+        name=args.lr_scheduler_type,
+        optimizer=optimizer,
+        num_warmup_steps=args.num_warmup_steps,
+        num_training_steps=args.max_train_steps,
     )
 
-    logger.info(f"***** Running Evaluation*****")
-    all_start_logits = []
-    all_end_logits = []
-
-    if torch.cuda.is_available():
-        my_timer = GPUTimer(timelogs = [])
+    if args.distill_loss_weight > 0:
+        teacher_model, model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
+            teacher_model, model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
+        )
+        teacher_model.eval()
     else:
-        my_timer = CPUTimer(timelogs = [])
-    warmup_steps = 10
+        # Prepare everything with our `accelerator`.
+        model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
+            model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
+        )
 
-    model.eval()
-    for step, batch in enumerate(eval_dataloader):
-        with torch.no_grad():
-            # timing
-            if step > warmup_steps: my_timer.__enter__()
-            outputs = model(**batch)
-            # outputs = model(**batch, head_mask = head_mask)
-            if step > warmup_steps: my_timer.__exit__()
-            
-            # get accuracy
-            start_logits = outputs.start_logits
-            end_logits = outputs.end_logits 
-            if not args.pad_to_max_length:  # necessary to pad predictions and labels for being gathered
-                start_logits = accelerator.pad_across_processes(start_logits, dim=1, pad_index=-100)
-                end_logits = accelerator.pad_across_processes(end_logits, dim=1, pad_index=-100)
+    # We need to recalculate our total training steps as the size of the training dataloader may have changed.
+    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
+    if overrode_max_train_steps:
+        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
+    # Afterwards we recalculate our number of training epochs
+    args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
 
-            all_start_logits.append(accelerator.gather(start_logits).cpu().numpy())
-            all_end_logits.append(accelerator.gather(end_logits).cpu().numpy())   
-    max_len = max([x.shape[1] for x in all_start_logits])  # Get the max_length of the tensor
-
-    # concatenate the numpy array
-    start_logits_concat = create_and_fill_np_array(all_start_logits, eval_dataset, max_len)
-    end_logits_concat = create_and_fill_np_array(all_end_logits, eval_dataset, max_len)
-    avg_latency = my_timer.get_avg_time()
-
-    # delete the list of numpy arrays
-    del all_start_logits
-    del all_end_logits
-    del my_timer
-
-    outputs_numpy = (start_logits_concat, end_logits_concat)
-    prediction = post_processing_function(eval_examples, eval_dataset, outputs_numpy)
-    eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
-    logger.info(f"Evaluation metrics: {eval_metric}")
-    logger.info(f"Average inference time: {avg_latency} ms")
-
-    #-----------------Following codes execute post-training compression---------------------------#
-    from neural_compressor.compression import model_slim
-    model = model_slim(model)
-    #---------------------------------------------------------------------------------------------#
-
-    logger.info(f"***** Running Evaluation after post-training compression*****")
-    all_start_logits = []
-    all_end_logits = []
-
-    if torch.cuda.is_available():
-        my_timer = GPUTimer(timelogs = [])
+    # Figure out how many steps we should save the Accelerator states
+    if hasattr(args.checkpointing_steps, "isdigit"):
+        checkpointing_steps = args.checkpointing_steps
+        if args.checkpointing_steps.isdigit():
+            checkpointing_steps = int(args.checkpointing_steps)
     else:
-        my_timer = CPUTimer(timelogs = [])
-    warmup_steps = 10
+        checkpointing_steps = None
 
-    model.eval()
-    for step, batch in enumerate(eval_dataloader):
-        with torch.no_grad():
-            # timing
-            if step > warmup_steps: my_timer.__enter__()
-            outputs = model(**batch)
-            if step > warmup_steps: my_timer.__exit__()
-            
-            # get accuracy
-            start_logits = outputs.start_logits
-            end_logits = outputs.end_logits 
-            if not args.pad_to_max_length:  # necessary to pad predictions and labels for being gathered
-                start_logits = accelerator.pad_across_processes(start_logits, dim=1, pad_index=-100)
-                end_logits = accelerator.pad_across_processes(end_logits, dim=1, pad_index=-100)
+    # We need to initialize the trackers we use, and also store our configuration.
+    # We initialize the trackers only on main process because `accelerator.log`
+    # only logs on main process and we don't want empty logs/runs on other processes.
+    if args.with_tracking:
+        if accelerator.is_main_process:
+            experiment_config = vars(args)
+            # TensorBoard cannot log Enums, need the raw value
+            experiment_config["lr_scheduler_type"] = experiment_config["lr_scheduler_type"].value
+            accelerator.init_trackers("qa_no_trainer", experiment_config)
 
-            all_start_logits.append(accelerator.gather(start_logits).cpu().numpy())
-            all_end_logits.append(accelerator.gather(end_logits).cpu().numpy())   
-    max_len = max([x.shape[1] for x in all_start_logits])  # Get the max_length of the tensor
+    # Train!
+    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
-    # concatenate the numpy array
-    start_logits_concat = create_and_fill_np_array(all_start_logits, eval_dataset, max_len)
-    end_logits_concat = create_and_fill_np_array(all_end_logits, eval_dataset, max_len)
-    avg_latency = my_timer.get_avg_time()
-    # delete the list of numpy arrays
-    del all_start_logits
-    del all_end_logits
-    del my_timer
+    logger.info("***** Running training *****")
+    logger.info(f"  Num examples = {len(train_dataset)}")
+    logger.info(f"  Num Epochs = {args.num_train_epochs}")
+    logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
+    logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
+    logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
+    logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
-    outputs_numpy = (start_logits_concat, end_logits_concat)
-    prediction = post_processing_function(eval_examples, eval_dataset, outputs_numpy)
-    eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
-    logger.info(f"Evaluation metrics: {eval_metric}")
-    logger.info(f"Average inference time: {avg_latency} ms")
-            
+    # Only show the progress bar once on each machine.
+    progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+    completed_steps = 0
+    starting_epoch = 0
+
+    # Potentially load in the weights and states from a previous save
+    if args.resume_from_checkpoint:
+        if args.resume_from_checkpoint is not None or args.resume_from_checkpoint != "":
+            accelerator.print(f"Resumed from checkpoint: {args.resume_from_checkpoint}")
+            accelerator.load_state(args.resume_from_checkpoint)
+            path = os.path.basename(args.resume_from_checkpoint)
+        else:
+            # Get the most recent checkpoint
+            dirs = [f.name for f in os.scandir(os.getcwd()) if f.is_dir()]
+            dirs.sort(key=os.path.getctime)
+            path = dirs[-1]  # Sorts folders by date modified, most recent checkpoint is the last
+        # Extract `epoch_{i}` or `step_{i}`
+        training_difference = os.path.splitext(path)[0]
+
+        if "epoch" in training_difference:
+            starting_epoch = int(training_difference.replace("epoch_", "")) + 1
+            resume_step = None
+        else:
+            resume_step = int(training_difference.replace("step_", ""))
+            starting_epoch = resume_step // len(train_dataloader)
+            resume_step -= starting_epoch * len(train_dataloader)
+
+    # Pruning preparation 
+    num_iterations = len(train_dataset) / total_batch_size
+    num_warm = int(args.warm_epochs * num_iterations) + args.num_warmup_steps
+    total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
+    frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
+                                                           else args.pruning_frequency
+    pruning_start = num_warm
+    pruning_end = total_iterations
+    if not args.do_prune:
+        pruning_start = num_iterations * args.num_train_epochs + 1
+        pruning_end = pruning_start
+
+    pruning_configs=[]
+
+    # auto slim config
+    from neural_compressor.compression import parse_auto_slim_config
+    auto_slim_configs = parse_auto_slim_config(
+        model, 
+        ffn2_sparsity = args.prune_ffn2_sparsity, 
+        mha_sparsity = args.prune_mha_sparsity,
+        pruning_scope="local",
+    )
+    pruning_configs += auto_slim_configs
+        
+    configs = WeightPruningConfig(
+        pruning_configs,
+        pruning_frequency=frequency,
+        start_step=pruning_start,
+        end_step=pruning_end
+    )
+    compression_manager = prepare_compression(model=model, confs=configs)
+    compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
+
+    for epoch in range(starting_epoch, args.num_train_epochs):
+        model.train()
+        if epoch >= args.warm_epochs:
+            if args.with_tracking:
+                total_loss = 0
+            for step, batch in enumerate(train_dataloader):
+                # pruner.on_step_begin(local_step=step)
+                compression_manager.callbacks.on_step_begin(step)
+                outputs = model(**batch)
+                loss = outputs.loss
+                # We keep track of the loss at each epoch
+                if args.with_tracking:
+                    total_loss += loss.detach().float()
+                if args.distill_loss_weight > 0:
+                    distill_loss_weight = args.distill_loss_weight
+                    with torch.no_grad():
+                        teacher_outputs = teacher_model(**batch)
+                    loss = (distill_loss_weight) / 2 * get_loss_one_logit(outputs['start_logits'],
+                                                                          teacher_outputs['start_logits']) \
+                            + (distill_loss_weight) / 2 * get_loss_one_logit(outputs['end_logits'],
+                                                                             teacher_outputs['end_logits'])
+
+                loss = loss / args.gradient_accumulation_steps
+                accelerator.backward(loss)
+                if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                    compression_manager.callbacks.on_before_optimizer_step()
+                    optimizer.step()
+                    compression_manager.callbacks.on_after_optimizer_step()
+                    lr_scheduler.step()
+                    optimizer.zero_grad()
+                    progress_bar.update(1)
+                    completed_steps += 1
+
+                if isinstance(checkpointing_steps, int):
+                    if completed_steps % checkpointing_steps == 0:
+                        output_dir = f"step_{completed_steps}"
+                        if args.output_dir is not None:
+                            output_dir = os.path.join(args.output_dir, output_dir)
+                        accelerator.save_state(output_dir)
+
+                if completed_steps >= args.max_train_steps:
+                    break
+        else:
+            for step, batch in enumerate(train_dataloader):
+                outputs = model(**batch)
+                loss = outputs.loss
+                loss = loss / args.gradient_accumulation_steps
+                accelerator.backward(loss)
+                if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                    optimizer.step()
+                    lr_scheduler.step()
+                    optimizer.zero_grad()
+                    progress_bar.update(1)
+                    completed_steps += 1
+
+                if completed_steps >= args.max_train_steps:
+                    break
+
+        if args.checkpointing_steps == "epoch":
+            output_dir = f"epoch_{epoch}"
+            if args.output_dir is not None:
+                output_dir = os.path.join(args.output_dir, output_dir)
+            accelerator.save_state(output_dir)
+
+        if args.push_to_hub and epoch < args.num_train_epochs - 1:
+            accelerator.wait_for_everyone()
+            # unwrapped_model = accelerator.unwrap_model(model)
+            # unwrapped_model.save_pretrained(
+            #     args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            # )
+            accelerator.save_state(args.output_dir)
+            if accelerator.is_main_process:
+                tokenizer.save_pretrained(args.output_dir)
+                config.save_pretrained(args.output_dir)
+                repo.push_to_hub(
+                    commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
+                )
+
+        # eval each epoch
+        logger.info(f"***** Running Evaluation*****")
+        all_start_logits = []
+        all_end_logits = []
+
+        model.eval()
+        for step, batch in enumerate(eval_dataloader):
+            with torch.no_grad():
+                outputs = model(**batch)
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+
+                if not args.pad_to_max_length:  # necessary to pad predictions and labels for being gathered
+                    start_logits = accelerator.pad_across_processes(start_logits, dim=1, pad_index=-100)
+                    end_logits = accelerator.pad_across_processes(end_logits, dim=1, pad_index=-100)
+
+                all_start_logits.append(accelerator.gather(start_logits).cpu().numpy())
+                all_end_logits.append(accelerator.gather(end_logits).cpu().numpy())
+
+        max_len = max([x.shape[1] for x in all_start_logits])  # Get the max_length of the tensor
+
+        # concatenate the numpy array
+        start_logits_concat = create_and_fill_np_array(all_start_logits, eval_dataset, max_len)
+        end_logits_concat = create_and_fill_np_array(all_end_logits, eval_dataset, max_len)
+
+        # delete the list of numpy arrays
+        del all_start_logits
+        del all_end_logits
+
+        outputs_numpy = (start_logits_concat, end_logits_concat)
+        prediction = post_processing_function(eval_examples, eval_dataset, outputs_numpy)
+        eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
+        logger.info(f"Evaluation metrics of epoch{epoch}: {eval_metric}")
+
+    compression_manager.callbacks.on_train_end()
+    # Prediction
+    if args.do_predict:
+        logger.info("***** Running Prediction *****")
+        logger.info(f"  Num examples = {len(predict_dataset)}")
+        logger.info(f"  Batch size = {args.per_device_eval_batch_size}")
+
+        all_start_logits = []
+        all_end_logits = []
+
+        model.eval()
+
+        for step, batch in enumerate(predict_dataloader):
+            with torch.no_grad():
+                outputs = model(**batch)
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+
+                if not args.pad_to_max_length:  # necessary to pad predictions and labels for being gathered
+                    start_logits = accelerator.pad_across_processes(start_logits, dim=1, pad_index=-100)
+                    end_logits = accelerator.pad_across_processes(end_logits, dim=1, pad_index=-100)
+
+                all_start_logits.append(accelerator.gather(start_logits).cpu().numpy())
+                all_end_logits.append(accelerator.gather(end_logits).cpu().numpy())
+
+        max_len = max([x.shape[1] for x in all_start_logits])  # Get the max_length of the tensor
+        # concatenate the numpy array
+        start_logits_concat = create_and_fill_np_array(all_start_logits, predict_dataset, max_len)
+        end_logits_concat = create_and_fill_np_array(all_end_logits, predict_dataset, max_len)
+
+        # delete the list of numpy arrays
+        del all_start_logits
+        del all_end_logits
+
+        outputs_numpy = (start_logits_concat, end_logits_concat)
+        prediction = post_processing_function(predict_examples, predict_dataset, outputs_numpy)
+        predict_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
+        logger.info(f"Predict metrics: {predict_metric}")
+
+    def eval_acc_and_latency(model, eval_dataloader):
+        all_start_logits = []
+        all_end_logits = []
+
+        if torch.cuda.is_available():
+            my_timer = GPUTimer(timelogs = [])
+        else:
+            my_timer = CPUTimer(timelogs = [])
+        warmup_steps = 10
+
+        model.eval()
+        for step, batch in enumerate(eval_dataloader):
+            with torch.no_grad():
+                # timing
+                if step > warmup_steps: my_timer.__enter__()
+                outputs = model(**batch)
+                # outputs = model(**batch, head_mask = head_mask)
+                if step > warmup_steps: my_timer.__exit__()
+                
+                # get accuracy
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits 
+                if not args.pad_to_max_length:  # necessary to pad predictions and labels for being gathered
+                    start_logits = accelerator.pad_across_processes(start_logits, dim=1, pad_index=-100)
+                    end_logits = accelerator.pad_across_processes(end_logits, dim=1, pad_index=-100)
+
+                all_start_logits.append(accelerator.gather(start_logits).cpu().numpy())
+                all_end_logits.append(accelerator.gather(end_logits).cpu().numpy())   
+        max_len = max([x.shape[1] for x in all_start_logits])  # Get the max_length of the tensor
+
+        # concatenate the numpy array
+        start_logits_concat = create_and_fill_np_array(all_start_logits, eval_dataset, max_len)
+        end_logits_concat = create_and_fill_np_array(all_end_logits, eval_dataset, max_len)
+        avg_latency = my_timer.get_avg_time()
+
+        # delete the list of numpy arrays
+        del all_start_logits
+        del all_end_logits
+        del my_timer
+
+        outputs_numpy = (start_logits_concat, end_logits_concat)
+        prediction = post_processing_function(eval_examples, eval_dataset, outputs_numpy)
+        eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
+        logger.info(f"Evaluation metrics: {eval_metric}")
+        logger.info(f"Average inference time: {avg_latency} ms")
+        return True
+
+    #-----------------------------start auto slim----------------------------------#
+    if args.auto_slim:
+        from timers import CPUTimer, GPUTimer
+        from neural_compressor.compression import model_slim
+
+        logger.info(f"***** Running Evaluation before post-training compression*****")
+        eval_acc_and_latency(model, eval_dataloader)
+
+        model = model_slim(model)
+
+        logger.info(f"***** Running Evaluation after post-training compression*****")
+        eval_acc_and_latency(model, eval_dataloader)
+    #-----------------------------finish auto slim---------------------------------#
+
+    if args.with_tracking:
+        log = {
+            "squad_v2" if args.version_2_with_negative else "squad": eval_metric,
+            "train_loss": total_loss.item() / len(train_dataloader),
+            "epoch": epoch,
+            "step": completed_steps,
+        }
+    if args.do_predict:
+        log["squad_v2_predict" if args.version_2_with_negative else "squad_predict"] = predict_metric
+
+        accelerator.log(log, step=completed_steps)
+
+    if args.output_dir is not None:
+        accelerator.wait_for_everyone()
+        # unwrapped_model = accelerator.unwrap_model(model)
+        # unwrapped_model.save_pretrained(
+        #     args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        # )
+        accelerator.save_state(args.output_dir)
+        if accelerator.is_main_process:
+            tokenizer.save_pretrained(args.output_dir)
+            config.save_pretrained(args.output_dir)
+            if args.push_to_hub:
+                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+
+            logger.info(json.dumps(eval_metric, indent=4))
+            save_prefixed_metrics(eval_metric, args.output_dir)
+
+
 if __name__ == "__main__":
     main()
+
 
