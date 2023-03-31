@@ -60,7 +60,7 @@ get_coverage_data() {
     if [ $lines_valid == 0 ]; then
         local lines_coverage=0
     else
-        local lines_coverage=$(bc <<<"scale=6; 100*$lines_covered/$lines_valid")
+        local lines_coverage=$(awk "BEGIN {printf \"%.3f\", 100 * $lines_covered / $lines_valid}")
     fi
 
     # Get branches coverage
@@ -69,7 +69,7 @@ get_coverage_data() {
     if [ $branches_valid == 0 ]; then
         local branches_coverage=0
     else
-        local branches_coverage=$(bc <<<"scale=6; 100*$branches_covered/$branches_valid")
+        local branches_coverage=$(awk "BEGIN {printf \"%.3f\", 100 * $branches_covered/$branches_valid}")
     fi
 
     # Return values
