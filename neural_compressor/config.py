@@ -18,7 +18,6 @@
 import datetime
 import logging
 from schema import Schema, And, Optional
-from .conf.dotdict import DotDict
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -89,6 +88,47 @@ def _check_value(name, src, supported_type, supported_value=[]):
                 src, name, str(supported_value)))
 
     return True
+
+
+class DotDict(dict):
+    """access yaml using attributes instead of using the dictionary notation.
+
+    Args:
+        value (dict): The dict object to access.
+
+    """
+
+    def __init__(self, value=None):
+        if value is None:
+            pass
+        elif isinstance(value, dict):
+            for key in value:
+                self.__setitem__(key, value[key])
+        else:
+            raise TypeError('expected dict')
+
+    def __getitem__(self, key):
+        value = self.get(key, None)
+        return value
+
+    def __setitem__(self, key, value):
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            value = DotDict(value)
+        if isinstance(value, list) and len(value) == 1 and isinstance(
+                value[0], dict):
+            value = DotDict(value[0])
+        if isinstance(value, list) and len(value) > 1 and all(isinstance(
+                v, dict) for v in value):
+            value = DotDict({k: v for d in value for k, v in d.items()})
+        super(DotDict, self).__setitem__(key, value)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+
+    __setattr__, __getattr__ = __setitem__, __getitem__
 
 
 class Options:
@@ -488,6 +528,7 @@ class AccuracyCriterion:
 
     def __getitem__(self, item):
         return getattr(self, item)
+
 
 accuracy_criterion = AccuracyCriterion()
 
@@ -1215,6 +1256,8 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_dict=None,
                  op_name_dict=None,
                  reduce_range=None,
+                 model_name="",
+                 quant_format="default",
                  excluded_precisions=[],
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
@@ -1227,16 +1270,27 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          op_type_dict=op_type_dict,
                          op_name_dict=op_name_dict,
                          reduce_range=reduce_range,
+                         model_name=model_name,
+                         quant_format=quant_format,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
                          tuning_criterion=tuning_criterion)
         self._approach = 'quant_aware_training'
+        self._framework = None
 
     @property
     def approach(self):
         """Get approach."""
         return self._approach
+    
+    @property
+    def framework(self):
+        return self._framework
+    
+    @framework.setter
+    def framework(self, framework):
+        self._framework = framework
 
 
 class WeightPruningConfig:
@@ -1972,6 +2026,7 @@ mxnet_config = MXNet()
 class Config:
     def __init__(self,
                  quantization=quantization,
+                 qat_quantization=qat_quantization,
                  benchmark=benchmark,
                  options=options,
                  mixed_precision=mixed_precision,
@@ -1983,8 +2038,11 @@ class Config:
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
                  keras=keras_config,
+                 accuracy_criterion=accuracy_criterion,
+                 tuning_criterion=tuning_criterion
                  ):
         self._quantization = quantization
+        self._qat_quantization = qat_quantization
         self._benchmark = benchmark
         self._options = options
         self._mixed_precision=mixed_precision
@@ -1996,6 +2054,8 @@ class Config:
         self._pytorch = pytorch
         self._mxnet = mxnet
         self._keras = keras
+        self._accuracy = accuracy_criterion
+        self._tuning = tuning_criterion
 
     @property
     def distillation(self):
@@ -2028,6 +2088,10 @@ class Config:
     @property
     def quantization(self):
         return self._quantization
+    
+    @property
+    def qat_quantization(self):
+        return self._qat_quantization
 
     @property
     def benchmark(self):
@@ -2045,5 +2109,12 @@ class Config:
     def onnxruntime(self):
         return self._onnxruntime
 
+    @property
+    def accuracy(self):
+        return self._accuracy
+    
+    @property
+    def tuning(self):
+        return self._tuning
 
 config = Config()

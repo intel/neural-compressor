@@ -174,7 +174,7 @@ class _PostTrainingQuant:
 
         """
         cfg = self.conf
-        if cfg.quantization.framework == None:
+        if cfg.quantization.framework is None:
             if isinstance(user_model, BaseModel):
                 cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
                 if cfg.quantization.backend == "ipex":
