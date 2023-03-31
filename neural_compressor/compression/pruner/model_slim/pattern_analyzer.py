@@ -18,6 +18,7 @@
 
 import torch
 import re
+from ..utils import logger
 
 JIT_SUPPORT_OPS = ['linear', 'gelu', 'mul'] # linear and all act_fn supported by pytorch-aten extension
 
@@ -129,7 +130,7 @@ class JitBasicSearcher(object):
 
     def generate_static_graph(self):
         """Operations called when generate the model's static graph."""
-        print(f"Generating jit tracing from original model.")
+        logger.info(f"Generating jit tracing from original model.")
         dummy_inputs = self.generate_dummy_inputs()
         self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
          # re-org from original static codes. 
@@ -242,7 +243,7 @@ class JitBasicSearcher(object):
         try:
             scope_part = scope_regex.search(scope_code)[0]
         except:
-            print(f"{scope_code} does contain wanted scope info.")
+            logger.warning(f"{scope_code} does contain wanted scope info.")
             return ""
         # strip scope keyword, only keep contrete items
         scope_part = scope_part[7:-2].strip()
@@ -263,7 +264,7 @@ class JitBasicSearcher(object):
         try:
             scope_part = scope_regex.search(scope_code)[0]
         except:
-            print(f"{scope_code} does contain wanted scope info.")
+            logger.warning(f"{scope_code} does contain wanted scope info.")
             return ""
         # strip scope keyword, only keep contrete items
         scope_part = scope_part[7:-2].strip()
@@ -339,7 +340,7 @@ class PathSearcher(JitBasicSearcher):
         # step 2: dfs  
         # execute dfs-based pattern matching
         dfs()
-        print(f"Matched {len(self.search_results)} pattern {self.target_pattern} in model {type(self.model).__name__}")
+        logger.warning(f"Matched {len(self.search_results)} pattern {self.target_pattern} in model {type(self.model).__name__}")
         JitBasicSearcher.get_layer_for_all(self)
         return self.search_results
 
@@ -403,7 +404,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
             dfs()
             self.current_pattern.pop()
 
-        print(f"Found {len(self.search_results)} target pattern 'linear2linear' in model {type(self.model).__name__}")
+        logger.warning(f"Found {len(self.search_results)} target pattern 'linear2linear' in model {type(self.model).__name__}")
         if not return_name: 
             # return the module object instead of module name
             JitBasicSearcher.get_layer_for_all(self)

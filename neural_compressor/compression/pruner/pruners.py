@@ -92,6 +92,7 @@ def get_pruner(config, modules):
     return PRUNERS[name](config, modules)
 
 def model_slim(model, round_multiplier=0):
+    """Slim the sparse model automatically."""
     model = model_slim_ffn2(model, round_multiplier)
     model = model_slim_mha(model)
     return model

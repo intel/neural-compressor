@@ -447,6 +447,7 @@ def generate_pruner_config(info):
                   )
 
 def parse_auto_slim_config(model, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
+    """Get model slim pruning configs."""
     auto_slim_configs = []
     if ffn2_sparsity > 0 and ffn2_sparsity < 1:
         auto_slim_configs += generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
@@ -455,7 +456,7 @@ def parse_auto_slim_config(model, ffn2_sparsity = .0, mha_sparsity = .0, **kwarg
     return auto_slim_configs
 
 def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
-    """get ffn2 configs"""
+    """Get consecutive linear layers pruning configs."""
     from .model_slim.pattern_analyzer import Linear2LinearSearcher
     searcher = Linear2LinearSearcher(model)
     layers = searcher.search(return_name = True)
@@ -474,6 +475,7 @@ def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
     return ffn2_pruning_config
 
 def generate_mha_pruning_config(model, mha_sparsity, **kwargs):
+    """Get multi-head attention layers pruning configs."""
     from .model_slim.pattern_analyzer import SelfMHASearcher
     searcher = SelfMHASearcher(model)
     qkv_pattern, ffn_pattern = searcher.get_head_pattern()

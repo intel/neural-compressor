@@ -19,6 +19,7 @@
 import torch
 import torch.nn as nn
 import random
+from ..utils import logger
 
 class PostCompressionUtils(object):
     """Operations library related to weight compression."""
@@ -211,8 +212,8 @@ class LinearCompression(object):
         # Summary:
         self.log['1_after'] = [self.layer_1.out_features, self.layer_1.in_features]
         self.log['2_after'] = [self.layer_2.out_features, self.layer_2.in_features]
-        print(f"layer_1 compression: {self.log['1_before']} -> {self.log['1_after']}")
-        print(f"layer_2 compression: {self.log['2_before']} -> {self.log['2_after']}")
+        logger.info(f"layer_1 compression: {self.log['1_before']} -> {self.log['1_after']}")
+        logger.info(f"layer_2 compression: {self.log['2_before']} -> {self.log['2_after']}")
 
 class LinearCompressionIterator(object):
     """Pruner of a sequence of consecutive linear patterns.
@@ -255,7 +256,7 @@ class LinearCompressionIterator(object):
                 linear_pruner(round_value=round_value)
             layer_idx += 1
             del linear_pruner
-        print(f"Post training compression finished.")
+        logger.info(f"Post pruning model slim finished.")
 
 class MHACompression(object):
     """
@@ -302,9 +303,9 @@ class MHACompression(object):
         }
         
         # alignment, take the least heads to prune
-        print(all_indice_to_prune)
+        logger.info(all_indice_to_prune)
         prune_indice = self.find_common_indice(all_indice_to_prune)
-        print(prune_indice)
+        logger.info(prune_indice)
         # 1 refer to channel-wise pruning
         _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, self.head_nums, self.head_size)
         # prune qkv, outputs
