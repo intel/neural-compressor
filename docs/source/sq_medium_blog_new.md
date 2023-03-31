@@ -1,6 +1,6 @@
 ## Intel® Neural Compressor introduction
 
-Intel® Neural Compressor is an open-source Python library that supports popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
+Intel® Neural Compressor is an open-source Python library that supports popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet). INC aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow, PyTorch, ONNX Runtime and MXNet, as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
 
 
 **Visit the Intel® Neural Compressor online document website at: https://intel.github.io/neural-compressor.**
@@ -35,7 +35,7 @@ There are several choices of sharing quantization parameters among tensor elemen
 
 However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. 
 
-For more details, please refer to [INC docs](https://github.com/intel/neural-compressor/blob/master/docs/source/smooth_quant.md).
+For more details, please refer to [INC docs](https://github.com/intel/neural-compressor/blob/master/docs/source/smooth_quant.md). In which 
 
 ## SmoothQuant and our enhancement
 ### SmoothQuant
