@@ -86,10 +86,10 @@ coverage_base_xml="log_dir/coverage_base/coverage.xml"
 coverage_base_data=$(get_coverage_data $coverage_base_xml)
 read lines_base_covered lines_base_valid coverage_base_lines branches_base_covered branches_base_valid coverage_base_branches <<<"$coverage_base_data"
 
-$BOLD_GREEN && echo "PR lines coverage: $lines_PR_covered/$lines_PR_valid ($coverage_PR_lines%)" && $RESET
-$BOLD_GREEN && echo "PR branches coverage: $branches_PR_covered/$branches_PR_valid ($coverage_PR_branches%)" && $RESET
-$BOLD_GREEN && echo "BASE lines coverage: $lines_base_covered/$lines_base_valid ($coverage_base_lines%)" && $RESET
-$BOLD_GREEN && echo "BASE branches coverage: $branches_base_covered/$branches_base_valid ($coverage_base_branches%)" && $RESET
+$BOLD_BLUE && echo "PR lines coverage: $lines_PR_covered/$lines_PR_valid ($coverage_PR_lines%)" && $RESET
+$BOLD_BLUE && echo "PR branches coverage: $branches_PR_covered/$branches_PR_valid ($coverage_PR_branches%)" && $RESET
+$BOLD_BLUE && echo "BASE lines coverage: $lines_base_covered/$lines_base_valid ($coverage_base_lines%)" && $RESET
+$BOLD_BLUE && echo "BASE branches coverage: $branches_base_covered/$branches_base_valid ($coverage_base_branches%)" && $RESET
 
 coverage_PR_total=$(cat ${coverage_log} | grep TOTAL | awk '{print $NF}' | sed "s|%||g")
 coverage_base_total=$(cat ${coverage_log_base} | grep TOTAL | awk '{print $NF}' | sed "s|%||g")
