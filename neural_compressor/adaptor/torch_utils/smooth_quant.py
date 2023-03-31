@@ -108,8 +108,8 @@ class TorchSmoothQuant:
     Post-Training Quantization for Large Language Models
     [2] SPIQ: Data-Free Per-Channel Static Input Quantization
     Currently, we only handle the layers whose smooth scale could be absorbed, we will support other layers later.
-    We only support inplace mode which means the model weights will be changed, you can call recover function only
-    once to recover the weights if needed
+    We only support inplace mode which means the model weights will be changed, you can call recover function
+    to recover the weights if needed
     """
 
     def __init__(self, model, dataloader, traced_model=None):
