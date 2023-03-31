@@ -48,7 +48,7 @@ get_coverage_data() {
     local coverage_log="$1"
 
     # Get coverage data
-    local coverage_data=$(xmllint --xpath '//coverage' "$coverage_log")
+    local coverage_data=$(python3 -c "import xml.etree.ElementTree as ET; root = ET.parse('$coverage_log').getroot(); print(ET.tostring(root).decode())")
     if [[ -z "$coverage_data" ]]; then
         echo "Failed to get coverage data from $coverage_log."
         exit 1
@@ -113,7 +113,10 @@ if [[ ${coverage_PR_branches} -lt ${coverage_base_branches} ]]; then
 fi
 
 if [[ ${#fail_items[@]} -ne 0 ]]; then
-    fail_items_str=$(IFS=', '; echo "${fail_items[*]}")
+    fail_items_str=$(
+        IFS=', '
+        echo "${fail_items[*]}"
+    )
     for item in "${fail_items[@]}"; do
         case "$item" in
         total)

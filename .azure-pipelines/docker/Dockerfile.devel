@@ -33,8 +33,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     wget \
     vim
 
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get update && apt-get install -y tzdata libxml2-utils
-
 RUN ln -sf $(which python3) /usr/bin/python
 
 RUN python -m pip --no-cache-dir install --upgrade pip
