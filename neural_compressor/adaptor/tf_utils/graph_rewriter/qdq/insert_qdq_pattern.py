@@ -358,9 +358,14 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             reduction_dims_node = Helper.create_constant_node(
                 reduction_dims_name, 0, dtypes.int32, [1])
             reshape_input_name = namespace_prefix + "_reshape_" + unique_input_name
-            min_input_name = namespace_prefix + "_min_" + unique_input_name
-            max_input_name = namespace_prefix + "_max_" + unique_input_name
-            quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
+            if self.itex_mode and self.graph_info[op_name].node.op == 'FusedBatchNormV3':
+                min_input_name = namespace_prefix + "_input7_output_min"
+                max_input_name = namespace_prefix + "_input8_output_max"
+                quantize_input_name = namespace_prefix + "_quantize_bn"
+            else:
+                min_input_name = namespace_prefix + "_min_" + unique_input_name
+                max_input_name = namespace_prefix + "_max_" + unique_input_name
+                quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
 
             reshape_input_node = Helper.create_node(
                 "Reshape", reshape_input_name,
@@ -649,9 +654,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         if not self.itex_mode and self.graph_info[matched_node_name].node.op == "MatMul": 
             if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
-        if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op:
+        if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op and not self.itex_mode:
             return True
-        if "_MklFusedInstanceNorm" == self.graph_info[matched_node_name].node.op:
+        if "_MklFusedInstanceNorm" == self.graph_info[matched_node_name].node.op and not self.itex_mode:
             return True
         return False
 
