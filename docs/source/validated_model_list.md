@@ -31,21 +31,21 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### TensorFlow Models with Intel TensorFlow 2.11.0
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Model</th>
     <th rowspan="2">Example</th>
     <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance<br>Throughput(samples/sec) <br></th>
+    <th colspan="3">Performance<br>Throughput(samples/sec)<br></th>
   </tr>
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Performance Ratio[INT8/FP32]</th>
+    <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center">
@@ -494,7 +494,7 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### PyTorch Models with Torch 1.13.0+cpu in PTQ Mode
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Model</th>
@@ -505,10 +505,10 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Performance Ratio[INT8/FP32]</th>
+    <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center">
@@ -947,7 +947,7 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### PyTorch Models with Torch 1.13.0+cpu in QAT Mode
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Model</th>
@@ -958,10 +958,10 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Performance Ratio[INT8/FP32]</th>
+    <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center">
@@ -1010,7 +1010,7 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.13.0+cpu
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Model</th>
@@ -1021,10 +1021,10 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Performance Ratio[INT8/FP32]</th>
+    <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center">
@@ -1083,7 +1083,7 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### ONNX Models with ONNX Runtime 1.13.1
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Model</th>
@@ -1094,10 +1094,10 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Performance Ratio[INT8/FP32]</th>
+    <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center"> 
@@ -1816,7 +1816,7 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### MXNet Models with MXNet 1.9.1
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Model</th>
@@ -1826,10 +1826,10 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Performance Ratio[INT8/FP32]</th>
+    <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center">
@@ -1927,7 +1927,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <th rowspan="2">Dense Accuracy<br>Sparse Accuracy</th>
     <th rowspan="2">Relative Drop</th>
     <th rowspan="2">Sparsity ratio<br>Sparsity Pattern</th>
-    <th rowspan="2">Comments<br>Balanced or unbalanced ratio</th>
+    <th rowspan="2">Comments<br>Balanced<br>or unbalanced ratio</th>
   </tr>
   <tr>
   </tr>
@@ -2255,7 +2255,8 @@ Performance varies by use, configuration and other factors. See [platform config
 </table>
 
 ## Validated Knowledge Distillation Examples
-|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  | Student With Distributed Distillation<br>(Metrics Improvement)  |
+
+|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  | Student With <br>Distributed Distillation<br>(Metrics Improvement)  |
 |---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
 | MobileNet example   | CIFAR-10  | MobileNetV2-0.35<br>(0.7965 ACC)     | WideResNet40-2<br>(0.9522 ACC)     |   0.8178 ACC<br>(0.0213 ACC)                        |   0.8235 ACC<br>(0.027 ACC)                        |
 | CNN example         | CIFAR-100 | CNN-2<br>(0.5494 ACC)                | CNN-10<br>(0.7153 ACC)             |   0.5540 ACC<br>(0.0046 ACC)                        |   0.5523 ACC<br>(0.0029 ACC)                        |
@@ -2270,14 +2271,14 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ## Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th class="tg-y3we">Model (ONNX QDQ)</th>
     <th class="tg-pm1l">AWS c6i.2xlarge (Intel)<br>CPU Execution Provider</th>
     <th class="tg-pm1l">AWS c6a.2xlarge (AMD)<br>CPU Execution Provider</th>
     <th class="tg-pm1l">AWS c6g.2xlarge (ARM)<br>CPU Execution Provider</th>
-    <th class="tg-8d8j">NVidia A100<br>CUDA Execution Provider</th>
+    <th class="tg-8d8j">NVidia A100<br>CUDA Execution<br>Provider</th>
   </tr>
 </thead>
 <tbody>
