@@ -136,6 +136,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
             fallback_records = []
             self.re_quant = True
             for target_dtype in PRECISION_LIST:
+                tune_cfg = deepcopy(tune_cfg_backup)
                 target_type_op_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
                 fallback_items_lst = [item for item in quant_ops if item in target_type_op_lst]
                 if fallback_items_lst:
@@ -154,12 +155,16 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                                                     fallback=True)
                     logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     select_op_info = ops_lst[0]
+                    logger.debug(f"*** ops_lst({len(ops_lst)}): {ops_lst} ")
                     logger.info(f"*** The op {select_op_info} have the highest sensitivity in the current state, \
-                        fallback it to fp32.")
+                        fallback it to {target_dtype}.")
                     tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0],
                                                                 select_op_info[1],
                                                                 target_dtype, 
                                                                 self.tuning_space)
+                    if len(ops_lst) <= 1:
+                        logger.debug(f" Try to fallback to next data type.")
+                        break
                     # Record the fallback history
                     if not fallback_records: 
                         fallback_records = [[select_op_info]]

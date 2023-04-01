@@ -723,8 +723,6 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
 
     from ..pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs, PyTorch_FXAdaptor
     op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg["approach"])
-    # TODO WA for only calculate the sensitivity with int8
-    op_cfgs.pop('bf16_ops_list', None)
     # insert hook to get output tesnor from last module
     last_module_name = list(op_cfgs.keys())[-1]
     module = fetch_module(model, last_module_name) # get last module
@@ -737,11 +735,14 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
     fallback_order = {}
     logger.info('Evaluate the sensitivity for each int8 operation')
     for op_name, qconfig in tqdm(op_cfgs.items()):
+        if op_name == "bf16_ops_list":
+            continue
         global op_cfg_mapping
         if op_name not in op_cfg_mapping:
             op_cfg_mapping[op_name] = qconfig
         tmp_model = copy.deepcopy(model)
         if not qconfig:
+            logger.debug(f"No qconfig for {op_name}, next op.")
             continue
         op_cfgs[op_name] = None
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg["approach"])
@@ -772,21 +773,23 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
         mse_val = (inner_output_fp32 - inner_output_int8).pow(2).sum()
         fallback_order[(op_name, op_type_dict[op_name])] = mse_val
 
-    ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], \
-                                    reverse=False)
+    logger.debug(f"fallback order: {fallback_order}")
+    ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], reverse=False)
+    
     min_mse, max_mse = fallback_order[ordered_ops[0]], fallback_order[ordered_ops[-1]]
 
     if min_mse < 0.8 * max_mse:
+        logger.debug("Return the sorted ops early.")
         return ordered_ops
-
 
     double_check_list = []
     for op_name in ordered_ops:
         if min_mse <= fallback_order[op_name] <= (max_mse - min_mse) * 0.1 + min_mse:
             double_check_list.append(op_name)
-
-    check_num = min(len(ordered_ops)//10, 5)
+    
+    check_num = min(len(ordered_ops)//10 + 1, 5)
     double_check_list = ordered_ops[:check_num]
+    logger.debug(f"double check list: {double_check_list}")
     worst_op_name = ordered_ops[-1]
     op_cfgs[worst_op_name[0]] = None # fallback worst module first
     new_fallback_order = {}
