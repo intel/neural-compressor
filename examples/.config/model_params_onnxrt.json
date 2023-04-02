@@ -759,14 +759,14 @@
     "hf_distilgpt2_dynamic": {
       "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_dynamic",
       "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
-      "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2_dynamic/distilgpt2-wikitext2.onnx",
+      "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2",
       "main_script": "main.py",
       "batch_size": 1
     },
     "hf_distilgpt2": {
       "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
-      "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2_dynamic/distilgpt2-wikitext2.onnx",
+      "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2",
       "main_script": "main.py",
       "batch_size": 1
     }

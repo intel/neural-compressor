@@ -56,7 +56,7 @@ function run_benchmark {
         model_name_or_path="gpt2"
     fi
     if [[ "${input_model}" =~ "distilgpt2" ]]; then
-        model_name_or_path="Intel/distilgpt2-wikitext2"
+        model_name_or_path="distilgpt2"
     fi
 
     python main.py --model_path ${input_model} \

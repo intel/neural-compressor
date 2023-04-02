@@ -19,7 +19,7 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |                 Model Identifier                |
 |:-----------------------------------------------:|
 |           gpt2          |
-|             Intel/distilgpt2-wikitext2             |
+|             distilgpt2           |
 
 Use `export.py` script for ONNX model conversion.
 Require transformers==3.2.0.
