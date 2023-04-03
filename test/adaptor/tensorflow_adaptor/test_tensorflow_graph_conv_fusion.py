@@ -241,6 +241,44 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_conv_fusion, True)
 
     @disable_random()
+    def test_conv_squeeze_biasadd_relu_fusion(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+
+        conv_weights2 = tf.compat.v1.get_variable("weight2", [3, 3, 16, 16],
+                                                  initializer=tf.compat.v1.random_normal_initializer())
+        conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
+        squeeze = tf.squeeze(conv2)
+        normed2 = tf.nn.bias_add(conv2, tf.constant([3.0, 1.2,1,2,3,4,5,6,7,8,9,0,12,2,3,4]))
+        relu = tf.nn.relu(normed2)
+        identity = tf.identity(relu, name='op_to_store')
+
+        out_name = identity.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+
+            correct_conv_fusion = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
+                    correct_conv_fusion = True
+                    break
+
+            self.assertEqual(correct_conv_fusion, True)
+
+    @disable_random()
     def test_conv_biasadd_addv2_relu_fallback_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.leaky_relu(x)
