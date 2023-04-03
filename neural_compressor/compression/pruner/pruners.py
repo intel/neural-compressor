@@ -518,7 +518,7 @@ class RetrainFreePruner(BasePruner):
         self.criterion = get_criterion(self.config, self.modules)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         
-        logger.info("Retrain-free pruner fixed the weights, please DO NOT turn on gradient update.")
+        logger.warning("Retrain-free pruner fixed the weights, please DO NOT turn on gradient update.")
         assert "channel" in self.pattern.pattern, \
                 "retrain-free pruner only supports large patterns like channel-wise pruning."
         
@@ -558,7 +558,7 @@ class RetrainFreePruner(BasePruner):
         # support iterative rearrangement
         if (self.end_step-self.global_step) / self.pruning_frequency < 1:
             self.mask_weights()
-            logger.info(f"mask weights at end_step{self.global_step}")
+            logger.info(f"mask weights at end_step: {self.global_step}")
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
@@ -595,7 +595,34 @@ class RetrainFreePruner(BasePruner):
     def rearrange_masks(self, masks):
         """Rearrange the masks of each layer with constant sparsity."""
         with torch.no_grad():
-            self.masks = self.criterion.rearrange_masks(masks)
+            new_masks = {}
+            for key in masks.keys():
+                block_mask = masks[key]
+                num_pruned = torch.sum(block_mask == 0.0).data.item()
+                grads = torch.stack(self.criterion.collected_grads[key], dim=0).squeeze()
+                # self.collected_grads[key] = [] # clear at the end of every pruning step
+                # self.scores[key] = torch.zeros(block_mask.shape).to(block_mask.device)
+                if not num_pruned:
+                    new_masks[key] = block_mask
+                    continue
+                grads = grads.permute(1, 0).contiguous()
+                grads_sq = grads.pow(2).sum(dim=1)
+                _, indicies = grads_sq.sort(descending=False)
+                indicies = indicies.tolist()
+                masked_indicies = indicies[:num_pruned]
+                for index in indicies[num_pruned:]:
+                    masked_indicies.append(index)
+                    grad_vectors = grads[masked_indicies]
+                    grad_sum = grad_vectors.sum(dim=0)
+                    complement = grad_sum - grad_vectors
+                    grad_sum_length = complement.pow(2).sum(dim=1)
+                    removed = grad_sum_length.argmin()
+                    del masked_indicies[removed]
+
+                new_masks[key] = torch.ones(len(indicies)).to(block_mask.device)
+                new_masks[key][masked_indicies] = 0
+                new_masks[key] = new_masks[key] * torch.ones_like(block_mask).to(block_mask.device)
+            self.masks = new_masks
             
     def zero_mask_grad(self):
         with torch.no_grad():

@@ -727,7 +727,8 @@ class PatternNxM(BasePattern):
                 assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
                 block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
                         self.weight.shape[1]//self.block_mask.shape[1]]
-                mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+                mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(\
+                                                         block_size[1], dim=-1).to(dtype=weight.dtype)
                 return F.linear(input, self.weight*mask, self.bias)
             module.forward = partial(forward, module)
             masks[key] = modules[key].block_mask.data

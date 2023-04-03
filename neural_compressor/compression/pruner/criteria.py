@@ -274,36 +274,5 @@ class RetrainFreeCriterion(PruningCriterion):
                 mask_grad = self.modules[key].block_mask.grad.clone()
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
-                
-    def rearrange_masks(self, masks):
-        """Rearrange the masks with constant sparsity in each layer."""
-        new_masks = {}
-        with torch.no_grad():
-            for key in masks.keys():
-                block_mask = masks[key]
-                num_pruned = torch.sum(block_mask == 0.0).data.item()
-                grads = torch.stack(self.collected_grads[key], dim=0).squeeze()
-                # self.collected_grads[key] = [] # clear at the end of every pruning step
-                # self.scores[key] = torch.zeros(block_mask.shape).to(block_mask.device)
-                if not num_pruned:
-                    new_masks[key] = block_mask
-                    continue
-                grads = grads.permute(1, 0).contiguous()
-                grads_sq = grads.pow(2).sum(dim=1)
-                _, indicies = grads_sq.sort(descending=False)
-                indicies = indicies.tolist()
-                masked_indicies = indicies[:num_pruned]
-                for index in indicies[num_pruned:]:
-                    masked_indicies.append(index)
-                    grad_vectors = grads[masked_indicies]
-                    grad_sum = grad_vectors.sum(dim=0)
-                    complement = grad_sum - grad_vectors
-                    grad_sum_length = complement.pow(2).sum(dim=1)
-                    removed = grad_sum_length.argmin()
-                    del masked_indicies[removed]
-
-                new_masks[key] = torch.ones(len(indicies)).to(block_mask.device)
-                new_masks[key][masked_indicies] = 0
-                new_masks[key] = new_masks[key] * torch.ones_like(block_mask).to(block_mask.device)
-        return new_masks
+    
                 
