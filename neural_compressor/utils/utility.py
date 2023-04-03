@@ -565,8 +565,7 @@ def show_memory_info(hint):
 
 
 def dump_class_attrs(obj, result = {}):
-    """
-    Dump the attributes and values of a config class.
+    """Dump the attributes and values of a config class.
 
     Args:
         obj: An instance of a config class

@@ -99,6 +99,7 @@ class DotDict(dict):
     """
 
     def __init__(self, value=None):
+        """Init a DotDict object."""
         if value is None:
             pass
         elif isinstance(value, dict):
@@ -108,10 +109,12 @@ class DotDict(dict):
             raise TypeError('expected dict')
 
     def __getitem__(self, key):
+        """Get the key."""
         value = self.get(key, None)
         return value
 
     def __setitem__(self, key, value):
+        """Set the value to the key."""
         if isinstance(value, dict) and not isinstance(value, DotDict):
             value = DotDict(value)
         if isinstance(value, list) and len(value) == 1 and isinstance(
@@ -123,9 +126,11 @@ class DotDict(dict):
         super(DotDict, self).__setitem__(key, value)
 
     def __getstate__(self):
+        """Get the dict."""
         return self.__dict__
 
     def __setstate__(self, d):
+        """Set the dict."""
         self.__dict__.update(d)
 
     __setattr__, __getattr__ = __setitem__, __getitem__
@@ -286,11 +291,13 @@ class BenchmarkConfig:
         self._framework=None
 
     def keys(self):
+        """Returns keys of the dict."""
         return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', 'model', \
                 'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
                 'inter_num_of_threads','intra_num_of_threads')
 
     def __getitem__(self, item):
+        """Get the dict."""
         return getattr(self, item)
     
     @property
@@ -307,6 +314,7 @@ class BenchmarkConfig:
 
     @property
     def device(self):
+        """Get device name."""
         return self._device
 
     @device.setter
@@ -407,10 +415,12 @@ class BenchmarkConfig:
 
     @property
     def model(self):
+        """Get model."""
         return self._model
     
     @model.setter
     def model(self, model):
+        """Set model."""
         self._model = model
 
     @property
@@ -426,10 +436,12 @@ class BenchmarkConfig:
     
     @property
     def framework(self):
+        """Set framework."""
         return self._framework
     
     @framework.setter
     def framework(self, framework):
+        """Get framework."""
         self._framework = framework
 
 
@@ -524,9 +536,11 @@ class AccuracyCriterion:
         return self.criterion
 
     def keys(self):
+        """Returns keys of the dict."""
         return ('higher_is_better', 'criterion', 'tolerable_loss')
 
     def __getitem__(self, item):
+        """Get the dict."""
         return getattr(self, item)
 
 
@@ -1286,10 +1300,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     
     @property
     def framework(self):
+        """Get framework."""
         return self._framework
     
     @framework.setter
     def framework(self, framework):
+        """Set framework."""
         self._framework = framework
 
 
@@ -1645,19 +1661,19 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
                                                                  it won't work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
 
-yaml
-    quantization:
-        diagxx
-==
-QuantizationConfig(diagnosis=True)
+        yaml
+            quantization:
+                diagxx
+        ==
+        QuantizationConfig(diagnosis=True)
 
-    Example::
+            Example::
 
-        from neural_compressor import mix_precision
-        from neural_compressor.config import MixedPrecisionConfig
+                from neural_compressor import mix_precision
+                from neural_compressor.config import MixedPrecisionConfig
 
-        conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+                conf = MixedPrecisionConfig()
+                converted_model = mix_precision.fit(model, config=conf)
     """
     def __init__(self,
                  device="cpu",
@@ -1701,14 +1717,17 @@ QuantizationConfig(diagnosis=True)
     
     @property
     def model(self):
+        """Get model."""
         return self._model
     
     @model.setter
     def model(self, model):
+        """Set model."""
         self._model = model
 
     @property
     def approach(self):
+        """Get approach."""
         return self._approach
 
 
@@ -1929,8 +1948,10 @@ class TF2ONNXConfig(ExportConfig):
 
 
 class NASConfig:
+    """Config class for NAS approaches."""
     def __init__(self, approach=None, search_space=None, search_algorithm=None,
                  metrics=[], higher_is_better=[], max_trials=3, seed=42, dynas=None):
+        """Init a NASConfig object."""
         self._approach = approach
         self._search = DotDict({
             'search_space': search_space,
@@ -1946,31 +1967,39 @@ class NASConfig:
 
     @property
     def approach(self):
+        """Get approach."""
         return self._approach
 
     @approach.setter
     def approach(self, approach):
+        """Set approach."""
         self._approach = approach
 
     @property
     def search(self):
+        """Get the setting dict for search."""
         return self._search
 
     @search.setter
     def search(self, search):
+        """Set the setting dict for search."""
         self._search = search
 
 
 class MXNet:
+    """Base config class for MXNet."""
     def __init__(self, precisions=None):
+        """Init an MXNet object."""
         self._precisions = precisions
 
     @property
     def precisions(self):
+        """Get precision."""
         return self._precisions
 
     @precisions.setter
     def precisions(self, precisions):
+        """Set precision."""
         if not isinstance(precisions, list):
             precisions = [precisions]
         if _check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
@@ -1978,33 +2007,43 @@ class MXNet:
 
 
 class ONNX(MXNet):
+    """Config class for ONNX."""
     def __init__(self, graph_optimization_level=None, precisions=None):
+        """Init an ONNX object."""
         super().__init__(precisions)
         self._graph_optimization_level = graph_optimization_level
 
     @property
     def graph_optimization_level(self):
+        """Get graph optimization level."""
         return self._graph_optimization_level
 
     @graph_optimization_level.setter
     def graph_optimization_level(self, graph_optimization_level):
+        """Set graph optimization level."""
         if _check_value('graph_optimization_level', graph_optimization_level, str,
             ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']):
             self._graph_optimization_level = graph_optimization_level
 
 
 class TensorFlow(MXNet):
+    """Config class for TensorFlow."""
     def __init__(self, precisions=None):
+        """Init a TensorFlow object."""
         super().__init__(precisions)
 
 
 class Keras(MXNet):
+    """Config class for Keras."""
     def __init__(self, precisions=None):
+        """Init a Keras object."""
         super().__init__(precisions)
 
 
 class PyTorch(MXNet):
+    """Config class for PyTorch."""
     def __init__(self, precisions=None):
+        """Init a PyTorch object."""
         super().__init__(precisions)
 
 
@@ -2024,6 +2063,7 @@ mxnet_config = MXNet()
 
 
 class Config:
+    """Main config class."""
     def __init__(self,
                  quantization=quantization,
                  qat_quantization=qat_quantization,
@@ -2041,6 +2081,7 @@ class Config:
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion
                  ):
+        """Init a config object."""
         self._quantization = quantization
         self._qat_quantization = qat_quantization
         self._benchmark = benchmark
@@ -2059,62 +2100,77 @@ class Config:
 
     @property
     def distillation(self):
+        """Get the distillation object."""
         return self._distillation
 
     @property
     def nas(self):
+        """Get the nas object."""
         return self._nas
 
     @property
     def tensorflow(self):
+        """Get the tensorflow object."""
         return self._tensorflow
 
     @property
     def keras(self):
+        """Get the keras object."""
         return self._keras
 
     @property
     def pytorch(self):
+        """Get the pytorch object."""
         return self._pytorch
 
     @property
     def mxnet(self):
+        """Get the mxnet object."""
         return self._mxnet
 
     @property
     def pruning(self):
+        """Get the pruning object."""
         return self._pruning
 
     @property
     def quantization(self):
+        """Get the quantization object."""
         return self._quantization
     
     @property
     def qat_quantization(self):
+        """Get the qat quantization object."""
         return self._qat_quantization
 
     @property
     def benchmark(self):
+        """Get the benchmark object."""
         return self._benchmark
 
     @property
     def options(self):
+        """Get the options object."""
         return self._options
     
     @property
     def mixed_precision(self):
+        """Get the mixed_precision object."""
         return self._mixed_precision
 
     @property
     def onnxruntime(self):
+        """Get the onnxruntime object."""
         return self._onnxruntime
 
     @property
     def accuracy(self):
+        """Get the accuracy object."""
         return self._accuracy
     
     @property
     def tuning(self):
+        """Get the tuning object."""
         return self._tuning
 
 config = Config()

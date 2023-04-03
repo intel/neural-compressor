@@ -263,7 +263,8 @@ class BaseCallbacks(object):
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
 
         if strategy == "mse_v2":
-            if not (self.cfg.qat_quantization.framework.startswith("tensorflow") or self.cfg.qat_quantization.framework == 'pytorch_fx'):
+            if not (self.cfg.qat_quantization.framework.startswith("tensorflow") \
+                    or self.cfg.qat_quantization.framework == 'pytorch_fx'):
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support {self.cfg.qat_quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")

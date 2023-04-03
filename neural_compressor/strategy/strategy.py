@@ -1050,7 +1050,8 @@ class TuneStrategy(object):
         obj_higher_is_better = None
         obj_weight = None
         if self.conf.quantization.tuning_criterion.multi_objectives:
-            obj_higher_is_better = self.conf.quantization.tuning_criterion.multi_objectives.get('higher_is_better', None)
+            obj_higher_is_better = self.conf.quantization.tuning_criterion\
+                .multi_objectives.get('higher_is_better', None)
             obj_weight = self.conf.quantization.tuning_criterion.multi_objectives.get('weight', None)
         obj_lst = self.conf.quantization.tuning_criterion.multi_objectives.get('objective', [])
         self.use_multi_objective = len(obj_lst) > 0
@@ -1474,7 +1475,6 @@ class TuneStrategy(object):
 
     def _add_tuning_history(self, tune_cfg=None, tune_result=None, **kwargs):
         """Add tuning config to tuining history.
-
 
         The tuning history ever made, structured like below:
         [

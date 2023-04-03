@@ -47,7 +47,7 @@ class BayesianTuneStrategy(TuneStrategy):
                  eval_metric=None,
                  resume=None,
                  q_hooks=None):
-        """Init the BaySian tuning strategy
+        """Init the BaySian tuning strategy.
 
         Args:
             model: The FP32 model specified for low precision tuning.
