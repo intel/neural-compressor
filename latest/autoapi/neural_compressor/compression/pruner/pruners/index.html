@@ -117,6 +117,15 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.get_pruner" title="neural_compressor.compression.pruner.pruners.get_pruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pruner</span></code></a>(config, modules)</p></td>
 <td><p>Get registered pruner class.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.model_slim" title="neural_compressor.compression.pruner.pruners.model_slim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_slim</span></code></a>(model[, round_multiplier])</p></td>
+<td><p>Slim the sparse model automatically.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.model_slim_ffn2" title="neural_compressor.compression.pruner.pruners.model_slim_ffn2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_slim_ffn2</span></code></a>(model[, round_multiplier])</p></td>
+<td><p>Remove some sparse part in the model permanently and obtain acceleration directly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.model_slim_mha" title="neural_compressor.compression.pruner.pruners.model_slim_mha"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_slim_mha</span></code></a>(model)</p></td>
+<td><p>Remove some sparse part in the model permanently and obtain acceleration directly.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -164,6 +173,37 @@ Make sure that the Pruner class decorated by this function can be registered in 
 </dd>
 </dl>
 <p>Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.model_slim">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.pruners.</span></span><span class="sig-name descname"><span class="pre">model_slim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.model_slim" title="Permalink to this definition"></a></dt>
+<dd><p>Slim the sparse model automatically.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.model_slim_ffn2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.pruners.</span></span><span class="sig-name descname"><span class="pre">model_slim_ffn2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.model_slim_ffn2" title="Permalink to this definition"></a></dt>
+<dd><p>Remove some sparse part in the model permanently and obtain acceleration directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – a sprase model.</p></li>
+<li><p><strong>round_multiplier</strong> (<em>int</em>) – the channel number after slimming should be multiple of this number.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.model_slim_mha">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.pruners.</span></span><span class="sig-name descname"><span class="pre">model_slim_mha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.model_slim_mha" title="Permalink to this definition"></a></dt>
+<dd><p>Remove some sparse part in the model permanently and obtain acceleration directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> – a sprase model.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">

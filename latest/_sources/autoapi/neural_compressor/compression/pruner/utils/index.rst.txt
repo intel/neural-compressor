@@ -29,6 +29,9 @@ Functions
    neural_compressor.compression.pruner.utils.process_config
    neural_compressor.compression.pruner.utils.parse_to_prune
    neural_compressor.compression.pruner.utils.generate_pruner_config
+   neural_compressor.compression.pruner.utils.parse_auto_slim_config
+   neural_compressor.compression.pruner.utils.generate_ffn2_pruning_config
+   neural_compressor.compression.pruner.utils.generate_mha_pruning_config
 
 
 
@@ -131,5 +134,20 @@ Functions
 
    :returns: A pruner config object.
    :rtype: pruner
+
+
+.. py:function:: parse_auto_slim_config(model, ffn2_sparsity=0.0, mha_sparsity=0.0, **kwargs)
+
+   Get model slim pruning configs.
+
+
+.. py:function:: generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
+
+   Get consecutive linear layers pruning configs.
+
+
+.. py:function:: generate_mha_pruning_config(model, mha_sparsity, **kwargs)
+
+   Get multi-head attention layers pruning configs.
 
 

@@ -32,6 +32,9 @@ Functions
    neural_compressor.compression.pruner.pruners.register_pruner
    neural_compressor.compression.pruner.pruners.parse_valid_pruner_types
    neural_compressor.compression.pruner.pruners.get_pruner
+   neural_compressor.compression.pruner.pruners.model_slim
+   neural_compressor.compression.pruner.pruners.model_slim_ffn2
+   neural_compressor.compression.pruner.pruners.model_slim_mha
 
 
 
@@ -67,6 +70,27 @@ Functions
    :returns: A Pruner object.
 
    Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
+
+
+.. py:function:: model_slim(model, round_multiplier=0)
+
+   Slim the sparse model automatically.
+
+
+.. py:function:: model_slim_ffn2(model, round_multiplier=0)
+
+   Remove some sparse part in the model permanently and obtain acceleration directly.
+
+   :param model: a sprase model.
+   :param round_multiplier: the channel number after slimming should be multiple of this number.
+   :type round_multiplier: int
+
+
+.. py:function:: model_slim_mha(model)
+
+   Remove some sparse part in the model permanently and obtain acceleration directly.
+
+   :param model: a sprase model.
 
 
 .. py:class:: BasePruner(config, modules)
