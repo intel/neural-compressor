@@ -653,7 +653,7 @@ class TuneStrategy(object):
                     continue
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
-                if self.conf.options.diagnosis:
+                if self.conf.quantization.diagnosis:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
