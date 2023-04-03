@@ -28,7 +28,7 @@ import pickle
 import random
 from .distillation.criterions import Criterions
 from ..adaptor import FRAMEWORKS
-from ..config import Config
+from ..config import Config, QuantizationAwareTrainingConfig, DistillationConfig, WeightPruningConfig
 from ..utils import logger
 from ..utils.utility import time_limit, LazyImport
 from ..model import BaseModel, Model
@@ -213,22 +213,28 @@ class BaseCallbacks(object):
         if user_model is None:
             return
 
-        if self.cfg.qat_quantization.framework is None:
-            self.framework = get_model_fwk_name(
-                user_model.model if isinstance(user_model, BaseModel) else user_model)
-            if self.framework == "tensorflow":
+        self.framework = get_model_fwk_name(
+            user_model.model if isinstance(user_model, BaseModel) else user_model)
+        if self.framework == "tensorflow":
+            try:
                 if self.cfg.qat_quantization.approach == "quant_aware_training":
                     self.framework = 'tensorflow_itex'
                 else:
                     from ..model.tensorflow_model import get_model_type
                     if get_model_type(user_model) == 'keras' and self.cfg.qat_quantization.backend == 'itex':
                         self.framework = 'keras'
-            if self.framework == "pytorch":
+            except Exception as e:
+                pass
+
+        if self.framework == "pytorch":
+            try:
                 if self.cfg.qat_quantization.backend == "default":
                     self.framework = "pytorch_fx"
                 elif self.cfg.qat_quantization.backend == "ipex":
                     self.framework = "pytorch_ipex"
-            self.cfg.qat_quantization.framework = self.framework
+                self.cfg.qat_quantization.framework = self.framework
+            except Exception as e:
+                pass
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
@@ -238,17 +244,26 @@ class BaseCallbacks(object):
                 else:
                     self._model = TensorflowQATModel(user_model._model)
             elif "tensorflow" in self.framework or self.framework == "keras":
-                self._model = Model(user_model, backend=self.framework, device=self.cfg.qat_quantization.device)
+                try:
+                    self._model = Model(user_model, backend=self.framework, device=self.cfg.qat_quantization.device)
+                except Exception as e:
+                    self._model = Model(user_model, backend=self.framework, device=None)
             else:
                 self._model = Model(user_model, backend=self.framework)
         else:
             self._model = user_model
 
         if 'tensorflow' in self.framework:
-            self._model.name = self.cfg.qat_quantization.model_name
-            self._model.output_tensor_names = self.cfg.qat_quantization.outputs
-            self._model.input_tensor_names = self.cfg.qat_quantization.inputs
-            self._model.workspace_path = self.cfg.options.workspace
+            try:
+                self._model.name = self.cfg.qat_quantization.model_name
+                self._model.output_tensor_names = self.cfg.qat_quantization.outputs
+                self._model.input_tensor_names = self.cfg.qat_quantization.inputs
+                self._model.workspace_path = self.cfg.options.workspace
+            except Exception as e:
+                self._model.name = None
+                self._model.output_tensor_names = None
+                self._model.input_tensor_names = None
+                self._model.workspace_path = None
 
     def pre_process(self):
         """Create strategy to optimize model."""
@@ -266,7 +281,8 @@ class BaseCallbacks(object):
             if not (self.cfg.qat_quantization.framework.startswith("tensorflow") \
                     or self.cfg.qat_quantization.framework == 'pytorch_fx'):
                 strategy = "basic"
-                logger.warning(f"MSE_v2 does not support {self.cfg.qat_quantization.framework} now, use basic instead.")
+                logger.warning(f"MSE_v2 does not support \
+                               {self.cfg.qat_quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
@@ -643,21 +659,21 @@ class DistillationCallbacks(BaseCallbacks):
         """Initialize the training configuration."""
         if self._train_cfg is None:
             # train section of distillation section in yaml file should be configured.
-            self._train_cfg = self.cfg.train
+            self._train_cfg = self.cfg.criterion
         assert self._train_cfg, "train field of distillation section in yaml file must " \
                                 "be configured for distillation if train_func is NOT set."
 
     def create_criterion(self):
         """Create the criterion for training."""
-        #self.init_train_cfg()
+        self.init_train_cfg()
         if self.criterion is None:
-            assert 'criterion' in self._train_cfg.keys(), \
+            assert self._train_cfg.config is not None, \
                 "criterion part in train field of distillation section in yaml file " \
                 "must be configured for distillation if criterion is NOT set."
-            criterion_cfg = self._train_cfg.criterion
+            criterion_cfg = self._train_cfg.config
             assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
                 "criterion part, instead got {} loss.".format(len(criterion_cfg))
-            loss = list(criterion_cfg.keys())[0]
+            loss = [i for i in criterion_cfg.keys()][0]
             loss_cfg = criterion_cfg[loss]
             criterion_builder = Criterions(self.framework)[loss](loss_cfg)
             criterion_tuple = criterion_builder()

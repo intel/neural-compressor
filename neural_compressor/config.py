@@ -1591,9 +1591,9 @@ class DistillationConfig:
     Example::
 
         from neural_compressor.training import prepare_compression
-        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 
-        distil_loss = SelfKnowledgeDistillationLossConfig()
+        distil_loss = KnowledgeDistillationLossConfig()
         conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -1607,7 +1607,7 @@ class DistillationConfig:
                      'learning_rate': 0.0001
                  }}):
         """Init a DistillationConfig object."""
-        self.criterion = criterion.config
+        self.criterion = criterion
         self.optimizer = optimizer
         self.teacher_model = teacher_model
 
