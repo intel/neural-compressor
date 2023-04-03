@@ -321,7 +321,7 @@ Dataset: lambda, task: text-generation, alpha (0.4, 0.6) is sweet spot region in
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
 | bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over 0.6, 4.1% in (0.4, 0.6))                           |
-| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58% (alpha: 55.1% over 0.6, 30.6% in (0.4,0.6), 14.3% under 0.4)                            |
+| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58% (alpha: 55.1% over 0.6, 30.6% in (0.4, 0.6), 14.3% under 0.4)                            |
 | bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16% (alpha: 100% over 0.6)                            |
 | bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45% (alpha: 91.8% over 0.6, 4.9% in (0.4, 0.6), 3.3% under 0.4)                           |
 | bigscience/bloom-176b | 84.17% |         82.13%         | 83.52% (alpha=0.6)    | -                                 |
