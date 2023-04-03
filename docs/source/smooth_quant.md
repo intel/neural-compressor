@@ -332,7 +332,6 @@ Dataset: lambda, task: text-generation, alpha [0.4, 0.6] is sweet spot region in
 | EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29% (alpha: 96.4% over 0.6, 3.6% in [0.4, 0.6])                           |
 
 
-
 ## Example
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md) on how to use smooth quant.
