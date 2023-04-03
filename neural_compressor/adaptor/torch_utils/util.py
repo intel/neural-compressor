@@ -775,7 +775,8 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
 
     logger.debug(f"fallback order: {fallback_order}")
     ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], reverse=False)
-    
+    if not ordered_ops:
+        return ordered_ops
     min_mse, max_mse = fallback_order[ordered_ops[0]], fallback_order[ordered_ops[-1]]
 
     if min_mse < 0.8 * max_mse:

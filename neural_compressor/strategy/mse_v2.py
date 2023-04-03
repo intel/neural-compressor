@@ -153,6 +153,9 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                                                     self.output_op_names,
                                                                     self.confidence_batches,
                                                                     fallback=True)
+                    if not ops_lst:
+                        logger.debug(f" Try to fallback to next data type.")
+                        break
                     logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     select_op_info = ops_lst[0]
                     logger.debug(f"*** ops_lst({len(ops_lst)}): {ops_lst} ")
@@ -162,9 +165,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                                                 select_op_info[1],
                                                                 target_dtype, 
                                                                 self.tuning_space)
-                    if len(ops_lst) <= 1:
-                        logger.debug(f" Try to fallback to next data type.")
-                        break
                     # Record the fallback history
                     if not fallback_records: 
                         fallback_records = [[select_op_info]]
