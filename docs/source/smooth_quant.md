@@ -320,16 +320,16 @@ For opt models, we could fuse one more layer than the official code, because the
 Dataset: lambda, task: text-generation, alpha (0.4, 0.6) is sweet spot region in SmoothQuant paper
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
-| bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (95.9% over sweet spot, 4.1% within sweet spot)                           |
-| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58% (55.1% over sweet spot, 30.6% within sweet spot, 14.3% under weet spot)                            |
-| bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16% (100% over sweet spot)                            |
-| bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45% (91.8% over sweet spot, 4.9% within sweet spot, 3.3% under weet spot)                           |
+| bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over sweet spot, 4.1% within sweet spot)                           |
+| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58% (alpha: 55.1% over sweet spot, 30.6% within sweet spot, 14.3% under weet spot)                            |
+| bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16% (alpha: 100% over sweet spot)                            |
+| bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45% (alpha: 91.8% over sweet spot, 4.9% within sweet spot, 3.3% under weet spot)                           |
 | bigscience/bloom-176b | 84.17% |         82.13%         | 83.52% (alpha=0.6)    | -                                 |
-| facebook/opt-125m   | 63.89% |         63.48%         | 63.44% (alpha=0.5)    | 64.14% (59.4% over sweet spot, 8.1% within sweet spot, 32.4% under weet spot)                           |
-| facebook/opt-1.3b   | 75.41% |         73.59%         | 70.94% (alpha=0.5)    | 74.80% (69.9% over sweet spot, 24.7% within sweet spot, 5.5% under weet spot)                            |
-| facebook/opt-2.7b   | 77.79% |         78.57%         | 78.60%(alpha=0.5)     | 78.25% (73.2% over sweet spot, 21.6% within sweet spot, 5.2% under weet spot)                           |
-| facebook/opt-6.7b   | 81.26% |         76.65%         | 81.58%(alpha=0.5)     | 81.39% (68.0% over sweet spot, 26.8% within sweet spot, 5.2% under weet spot)                           |
-| EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29% (96.4% over sweet spot, 3.6% within sweet spot)                           |
+| facebook/opt-125m   | 63.89% |         63.48%         | 63.44% (alpha=0.5)    | 64.14% (alpha: 59.4% over sweet spot, 8.1% within sweet spot, 32.4% under weet spot)                           |
+| facebook/opt-1.3b   | 75.41% |         73.59%         | 70.94% (alpha=0.5)    | 74.80% (alpha: 69.9% over sweet spot, 24.7% within sweet spot, 5.5% under weet spot)                            |
+| facebook/opt-2.7b   | 77.79% |         78.57%         | 78.60%(alpha=0.5)     | 78.25% (alpha: 73.2% over sweet spot, 21.6% within sweet spot, 5.2% under weet spot)                           |
+| facebook/opt-6.7b   | 81.26% |         76.65%         | 81.58%(alpha=0.5)     | 81.39% (alpha: 68.0% over sweet spot, 26.8% within sweet spot, 5.2% under weet spot)                           |
+| EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29% (alpha: 96.4% over sweet spot, 3.6% within sweet spot)                           |
 
 
 
