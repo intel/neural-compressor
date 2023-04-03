@@ -316,8 +316,8 @@ conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/g
 
 For opt models, we could fuse one more layer than the official code, because the fc2 layer in the block follows the linear->relu->linear pattern.
 
-## Validated Models (alpha (0.4, 0.6) is sweet spot region in SmoothQuant paper)
-Dataset: lambda, task: text-generation
+## Validated Models
+Dataset: lambda, task: text-generation, alpha (0.4, 0.6) is sweet spot region in SmoothQuant paper
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
 | bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (95.9% over sweet spot, 4.1% within sweet spot)                           |
