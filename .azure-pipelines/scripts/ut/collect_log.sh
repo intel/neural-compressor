@@ -99,10 +99,10 @@ rm -fr log_dir/ut-coverage-*
 # Declare an array to hold failed items
 declare -a fail_items=()
 
-if [[ ${coverage_PR_lines} -lt ${coverage_base_lines} ]]; then
+if (( $(bc -l <<< "${coverage_PR_lines} < ${coverage_base_lines}") )); then
     fail_items+=("lines")
 fi
-if [[ ${coverage_PR_branches} -lt ${coverage_base_branches} ]]; then
+if (( $(bc -l <<< "${coverage_PR_branches} < ${coverage_base_branches}") )); then
     fail_items+=("branches")
 fi
 
@@ -114,18 +114,17 @@ if [[ ${#fail_items[@]} -ne 0 ]]; then
     for item in "${fail_items[@]}"; do
         case "$item" in
         lines)
-            decrease=$(($coverage_PR_lines - $coverage_base_lines))
+            decrease=$(echo "$coverage_PR_lines - $coverage_base_lines" | bc -l)
             ;;
         branches)
-            decrease=$(($coverage_PR_branches - $coverage_base_branches))
+            decrease=$(echo "$coverage_PR_branches - $coverage_base_branches" | bc -l)
             ;;
         *)
             echo "Unknown item: $item"
             continue
             ;;
         esac
-        rate=$(awk 'BEGIN{printf "%.2f%\n",'$decrease/100'}')
-        $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${rate}%" && $RESET
+        $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${decrease}%" && $RESET
     done
     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
     bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED"
