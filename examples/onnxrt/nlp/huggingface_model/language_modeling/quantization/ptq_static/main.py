@@ -247,9 +247,15 @@ def main():
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
         accuracy_criterion.relative = 0.11
+        fp32_op_names = None
+        if args.model_name_or_path == 'distilgpt2':
+            fp32_op_names = ['Attention_5_matmul']
+        elif args.model_name_or_path == 'gpt2':
+            fp32_op_names = ['Attention_11_matmul']
         config = PostTrainingQuantConfig(approach='static', 
                                          op_type_dict={'Add':FP32},
-                                         accuracy_criterion=accuracy_criterion)
+                                         accuracy_criterion=accuracy_criterion,
+                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

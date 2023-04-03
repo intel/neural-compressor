@@ -988,11 +988,20 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             attention_matmul_optype = attention_matmul_optype[first_attention_index:]
             attention_matmul = attention_matmul[first_attention_index:]
             attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
-            for index in attention_index:
+            block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+            for idx in range(len(attention_index)):
                 # to find matmul in ffn
-                # (TODO) index + 2 and index + 3 may not be ffn matmul in all transformer based nlp model
-                if index + 2 < len(attention_matmul) and index + 3 < len(attention_matmul):
-                    ffn_matmul.append([attention_matmul[index + 2], attention_matmul[index + 3]])
+                if idx != len(attention_index) - 1:
+                    index = attention_index[idx + 1]
+                    if index - 2 >= 0 and index - 1 >= 0:
+                        ffn_matmul.append([attention_matmul[index - 2], 
+                                           attention_matmul[index - 1]])
+                else:
+                    index = attention_index[idx]
+                    if index + block_len - 2 < len(attention_matmul) and \
+                        index + block_len - 1 < len(attention_matmul):
+                        ffn_matmul.append([attention_matmul[index + block_len - 2], 
+                                        attention_matmul[index + block_len - 1]])
         block_info = []
         for block in reversed(ffn_matmul):
             node_info = []
@@ -1059,7 +1068,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         else: # pragma: no cover
                             op_wise.update(
                                 {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-        
+
         return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_info': block_info}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
