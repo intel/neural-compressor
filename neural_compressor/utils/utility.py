@@ -568,7 +568,8 @@ def dump_class_attrs(obj, result = {}):
     """Dump the attributes and values of a config class.
 
     Args:
-        obj: An instance of a config class
+        obj: An instance of a config class.
+        result: An dict for recording attributes and values.
     """
     obj_name = obj.__class__.__name__
     if obj_name not in result:
