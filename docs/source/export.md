@@ -78,7 +78,7 @@ Since there is a known quantization gap between PyTorch 'nn.Linear' module and O
 For different recipes and ONNX INT8 model formats, 'nn.quantized.Linear' will be exported to the following subgraph:
 
 
-<table class="tg">
+<table class="docutils">
  <thead>
    <tr>
      <th align="center">Recipe</th>

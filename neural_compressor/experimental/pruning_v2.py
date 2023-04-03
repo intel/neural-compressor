@@ -67,8 +67,8 @@ class Pruning(Component):
             self.cfg.map_pyconfig_to_cfg(conf_fname_or_obj)
             self.cfg = self.cfg.usr_cfg
             self.conf = conf_fname_or_obj.pruning
-        elif isinstance(conf_fname_or_obj, WeightPruningConfig):
-            self.conf = conf_fname_or_obj
+        # elif isinstance(conf_fname_or_obj, WeightPruningConfig):
+        #     self.conf = conf_fname_or_obj
         else:
             # yaml file
             raise NotImplementedError("Only WeightPruningConfig config is supported currently.")
@@ -124,17 +124,11 @@ class Pruning(Component):
 
         for n, param in self._model.model.named_parameters():
             param_cnt += param.numel()
-        if linear_conv_cnt == 0:
-            blockwise_over_matmul_gemm_conv = 0
-            elementwise_over_matmul_gemm_conv = 0
-        else:
-            blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
-            elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
-        if param_cnt == 0:
-            elementwise_over_all = 0
-        else:
-            elementwise_over_all = float(
-                element_sparsity_cnt) / param_cnt
+ 
+        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt if linear_conv_cnt != 0 else 0
+        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt if linear_conv_cnt != 0 else 0
+        
+        elementwise_over_all = float(element_sparsity_cnt) / param_cnt if param_cnt != 0 else 0
 
         logger.info(
             f"elementwise_over_matmul_gemm_conv:{elementwise_over_matmul_gemm_conv},"

@@ -207,8 +207,7 @@ class Proc(object):
         """
         Info contains information about process arguments start and stop time.
 
-        Example::
-
+        Example:
             "cmd": [
                 "docker",
                 "pull",

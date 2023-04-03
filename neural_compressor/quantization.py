@@ -29,7 +29,7 @@ from .utils import logger
 from .utils.utility import time_limit
 
 
-class PostTrainingQuant:
+class _PostTrainingQuant:
     """Post Training Quantization class.
 
     It automatically searches for optimal quantization recipes for low precision model inference,
@@ -43,7 +43,7 @@ class PostTrainingQuant:
     Example::
 
         conf = PostTrainingQuantConfig()
-        quantizer = PostTrainingQuant(conf)
+        quantizer = _PostTrainingQuant(conf)
         quantizer.model = model
         quantizer.eval_func = eval_func
         quantizer.calib_dataloader = calib_dataloader
@@ -447,7 +447,7 @@ def fit(model,
                                               supported metrics. If this parameter is
                                               not None, user needs to specify pre-defined
                                               evaluation metrics through configuration file
-                                              and should set "eval_func" paramter as None.
+                                              and should set "eval_func" parameter as None.
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.
@@ -472,7 +472,7 @@ def fit(model,
         # Saved quantized model in ./saved folder
         q_model.save("./saved")
     """
-    quantizer = PostTrainingQuant(conf)
+    quantizer = _PostTrainingQuant(conf)
     quantizer.model = model
     if eval_func is not None:
         quantizer.eval_func = eval_func

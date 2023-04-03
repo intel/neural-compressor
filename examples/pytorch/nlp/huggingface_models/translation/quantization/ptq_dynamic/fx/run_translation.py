@@ -571,10 +571,9 @@ def main():
         return eval_bleu
     
     if model_args.tune:
-        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
+        from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor import quantization
-        accuracy_criterion = AccuracyCriterion(higher_is_better=True, tolerable_loss=0.5)
-        conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
+        conf = PostTrainingQuantConfig(approach="dynamic")
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=trainer.get_eval_dataloader(),

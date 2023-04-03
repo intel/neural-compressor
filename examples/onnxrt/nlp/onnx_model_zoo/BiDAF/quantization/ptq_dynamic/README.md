@@ -17,7 +17,17 @@ pip install -r requirements.txt
 Download model from [ONNX Model Zoo](https://github.com/onnx/models).
 
 ```shell
-wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bidirectional_attention_flow/model/bidaf-11.onnx
+wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bidirectional_attention_flow/model/bidaf-9.onnx
+```
+
+Convert opset version to 11 for more quantization capability.
+```python
+import onnx
+from onnx import version_converter
+
+model = onnx.load('bidaf-9.onnx')
+model = version_converter.convert_version(model, 11)
+onnx.save_model(model, 'bidaf-11.onnx')
 ```
 
 ## 3. Prepare Dataset
