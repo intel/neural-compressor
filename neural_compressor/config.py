@@ -597,6 +597,7 @@ class TuningCriterion:
         if _check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
+            return
         
         if _check_value('objective', objective, dict):
             if 'weight' in objective.keys() and isinstance(objective['weight'], list):
