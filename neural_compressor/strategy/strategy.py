@@ -1221,7 +1221,7 @@ class TuneStrategy(object):
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
         else:
-            assert self._not_tuning, "Please set eval_dataloader and eval_metric for create eval_func"
+            assert not self._not_tuning, "Please set eval_dataloader and eval_metric for create eval_func"
 
             postprocess_cfg = None
             metric_cfg = self.eval_metric
