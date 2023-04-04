@@ -43,7 +43,7 @@ PT_VERSION = get_torch_version().release
 
 
 class QDQLinear(torch.nn.Module):
-    def __init__(self, module, scale=1, zero_point=0, dtype=torch.quint8):
+    def __init__(self, module, scale=1.0, zero_point=0, dtype=torch.quint8):
         super().__init__()
         if PT_VERSION < Version("1.13.0").release:
             import torch.nn.quantized as nnq
