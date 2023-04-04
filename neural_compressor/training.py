@@ -273,7 +273,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                                        resume path and tensorboard flag.
 
     Returns:
-        CompressionManager
+        An object of CompressionManager.
 
     Examples::
 

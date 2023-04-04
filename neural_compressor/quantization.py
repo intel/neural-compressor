@@ -407,8 +407,7 @@ def fit(model,
                                               instance.
                                               For MXNet model, it's mxnet.symbol.Symbol
                                               or gluon.HybirdBlock instance.
-        conf (PostTrainingQuantConfig):       The class of QuantizationAwareTrainingConfig
-                                              and PostTrainingQuantConfig containing accuracy goal,
+        conf (PostTrainingQuantConfig):       The class of PostTrainingQuantConfig containing accuracy goal,
                                               tuning objective and preferred calibration &
                                               quantization tuning space etc.
         calib_dataloader (generator):         Data loader for calibration, mandatory for
@@ -436,7 +435,10 @@ def fit(model,
                                                    input, label = dataloader()
                                                    output = model(input)
                                                    accuracy = metric(output, label)
-                                                   return accuracy
+                                                   return accuracy.
+                                              The user only needs to set eval_func or
+                                              eval_dataloader and eval_metric which is an alternative option
+                                              to tune the model accuracy.
         eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
                                               and should yield a tuple of (input, label).
                                               The input could be a object, list, tuple or
@@ -459,9 +461,6 @@ def fit(model,
         from neural_compressor import PostTrainingQuantConfig, set_workspace
         from neural_compressor import quantization
         conf = PostTrainingQuantConfig()
-
-        # saved intermediate files in ./saved folder
-        set_workspace("./saved")
 
         q_model = quantization.fit(model_origin,
                                    conf,
