@@ -917,3 +917,32 @@ def get_torch_version():
         assert False, 'Got an unknown version of torch: {}'.format(e)
     version = Version(torch_version)
     return version
+
+
+def match_datatype_pattern(datatype, pattern=None):
+    """Check the datatype pattern."""
+    import re
+    if not pattern:
+        pattern = r"(uint|int)([1-8])"
+    match = re.match(pattern, datatype)
+    return match
+    
+def _get_signed_and_bits(datatype):
+    """Parse sign and bits from datatype."""
+    unsigned = datatype[0] == 'u'
+    if unsigned:
+        num_bits = int(datatype[4:])
+    else:
+        num_bits = int(datatype[3:])
+    return unsigned, num_bits
+
+def calculate_quant_min_max(unsigned, num_bits):
+    """Calculate the qmin and qmax according to the datatype."""
+    # TODO handle reduce range
+    quant_min, quant_max = None, None
+    if unsigned:
+        quant_min, quant_max =0.0 , 2.0**(num_bits) - 1.0
+    else:
+        quant_min, quant_max = -1 * 2.0**(num_bits - 1), 2.0**(num_bits - 1) - 1
+    return quant_min, quant_max
+    
