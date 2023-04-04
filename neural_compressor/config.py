@@ -159,8 +159,6 @@ class Options:
         tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
                                for visual display.
                            Default value is False.
-        diagnosis(bool): This flag indicates whether to do diagnosis.
-                           Default value is False.
 
     Example::
 
@@ -172,13 +170,12 @@ class Options:
         
     """
     def __init__(self, random_seed=1978, workspace=default_workspace,
-                 resume_from=None, tensorboard=False, diagnosis=False):
+                 resume_from=None, tensorboard=False):
         """Init an Option object."""
         self.random_seed = random_seed
         self.workspace = workspace
         self.resume_from = resume_from
         self.tensorboard = tensorboard
-        self.diagnosis = diagnosis # TODO expose the diagnosis to user
 
     @property
     def random_seed(self):
@@ -223,17 +220,6 @@ class Options:
         """Set tensorboard."""
         if _check_value('tensorboard', tensorboard, bool):
             self._tensorboard = tensorboard
-            
-    @property
-    def diagnosis(self):
-        """Get diagnosis."""
-        return self._diagnosis
-
-    @diagnosis.setter
-    def diagnosis(self, diagnosis):
-        """Set diagnosis."""
-        if _check_value('diagnosis', diagnosis, bool):
-            self._diagnosis = diagnosis
 
 class BenchmarkConfig:
     """Config Class for Benchmark.
@@ -1137,7 +1123,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                                 criterion and tolerable_loss.
                             Please refer to docstring of AccuracyCriterion class.
         use_distributed_tuning: Whether use distributed tuning or not.
-
+        diagnosis(bool): This flag indicates whether to do diagnosis.
+                           Default value is False.
     Example::
 
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
@@ -1168,7 +1155,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion,
-                 use_distributed_tuning=False
+                 use_distributed_tuning=False,
+                 diagnosis=False
     ):
         """Init a PostTrainingQuantConfig object."""
         super().__init__(inputs=inputs,
@@ -1189,6 +1177,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          tuning_criterion=tuning_criterion,
                          use_distributed_tuning=use_distributed_tuning)
         self.approach = approach
+        self.diagnosis = diagnosis
 
     @property
     def approach(self):
@@ -1200,6 +1189,17 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         """Set approach."""
         if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
+
+    @property
+    def diagnosis(self):
+        """Get diagnosis."""
+        return self._diagnosis
+
+    @diagnosis.setter
+    def diagnosis(self, diagnosis):
+        """Set diagnosis."""
+        if _check_value('diagnosis', diagnosis, bool):
+            self._diagnosis = diagnosis
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
