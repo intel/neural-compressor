@@ -1,6 +1,6 @@
 ### SYSTEM CONFIGURATION
 
-<table class="tg">
+<table class="docutils">
 <thead>
   <tr>
     <th class="tg-za14">System Configuration</th>
