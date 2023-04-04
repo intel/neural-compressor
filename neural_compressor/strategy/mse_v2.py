@@ -154,7 +154,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     self.output_op_names,
-                                                                    self.confidence_batches,
+                                                                    confidence_batches,
                                                                     fallback=True)
                     if not ops_lst:
                         logger.debug(f" Try to fallback to next data type.")

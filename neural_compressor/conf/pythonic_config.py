@@ -1339,6 +1339,7 @@ class NASConfig:
 
 quantization = QuantizationConfig()
 benchmark = BenchmarkConfig()
+options = Options()
 pruning = WeightPruningConfig()
 distillation = DistillationConfig(teacher_model=None)
 nas = NASConfig()
