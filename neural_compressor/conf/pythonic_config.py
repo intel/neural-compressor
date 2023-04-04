@@ -14,13 +14,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Configs for Neural Compressor 1.x."""
 import logging
+import datetime
 from schema import Schema, And, Optional
 from .dotdict import DotDict
 
 
 logger = logging.getLogger("neural_compressor")
+default_workspace = './nc_workspace/{}/'.format(
+    datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
 
 ops_schema = Schema({
