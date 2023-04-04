@@ -6,9 +6,11 @@ This example load a language translation model and confirm its accuracy and spee
 # Prerequisite
 
 ## 1. Environment
-onnx: 1.12.0  
-onnxruntime: 1.13.1
-> Validated framework versions can be found in main readme.
+```shell
+pip install neural-compressor
+pip install -r requirements.txt
+```
+> Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
 
