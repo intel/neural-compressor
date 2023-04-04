@@ -171,6 +171,108 @@ class Options:
             self._tensorboard = tensorboard
 
 
+class AccuracyCriterion:
+    """Class of Accuracy Criterion.
+
+    Args:
+        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
+                                          Default value is True.
+        criterion:(str, optional): This flag indicates whether the metric loss is 'relative' or 'absolute'.
+                                   Default value is 'relative'.
+        tolerable_loss(float, optional): This float indicates how much metric loss we can accept.
+                                         Default value is 0.01.
+
+    Example::
+
+        from neural_compressor.config import AccuracyCriterion
+
+        accuracy_criterion = AccuracyCriterion(
+            higher_is_better=True,  # optional. 
+            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+            tolerable_loss=0.01,  # optional.
+        )
+    """
+    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
+        """Init an AccuracyCriterion object."""
+        self.higher_is_better = higher_is_better
+        self.criterion = criterion
+        self.tolerable_loss = tolerable_loss
+
+    @property
+    def higher_is_better(self):
+        """Get higher_is_better."""
+        return self._higher_is_better
+
+    @higher_is_better.setter
+    def higher_is_better(self, higher_is_better):
+        """Set higher_is_better."""
+        if _check_value('higher_is_better', higher_is_better, bool):
+            self._higher_is_better = higher_is_better
+
+    @property
+    def relative(self):
+        """Get tolerable_loss when criterion is relative."""
+        if self.criterion != 'relative':
+            return None
+        return self.tolerable_loss
+
+    @relative.setter
+    def relative(self, relative):
+        """Set tolerable_loss and criterion to relative."""
+        self.criterion = 'relative'
+        self.tolerable_loss = relative
+
+    @property
+    def absolute(self):
+        """Get tolerable_loss when criterion is absolute."""
+        if self.criterion != 'absolute':
+            return None
+        return self.tolerable_loss
+
+    @absolute.setter
+    def absolute(self, absolute):
+        """Set tolerable_loss and criterion to absolute."""
+        self.criterion = 'absolute'
+        self.tolerable_loss = absolute
+
+    @property
+    def criterion(self):
+        """Get criterion."""
+        return self._criterion
+
+    @criterion.setter
+    def criterion(self, criterion):
+        """Set criterion."""
+        if _check_value('criterion', criterion, str, ['relative', 'absolute']):
+            self._criterion = criterion
+
+    @property
+    def tolerable_loss(self):
+        """Get tolerable_loss."""
+        return self._tolerable_loss
+
+    @tolerable_loss.setter
+    def tolerable_loss(self, tolerable_loss):
+        """Set tolerable_loss."""
+        if _check_value('tolerable_loss', tolerable_loss, float):
+            self._tolerable_loss = tolerable_loss
+
+    def __str__(self):
+        """Get criterion."""
+        return self.criterion
+
+    def keys(self):
+        """Returns keys of the dict."""
+        return ('higher_is_better', 'criterion', 'tolerable_loss')
+
+    def __getitem__(self, item):
+        """Get the dict."""
+        return getattr(self, item)
+
+
+accuracy_criterion = AccuracyCriterion()
+
+
 class _BaseQuantizationConfig:
     """Args:
             inputs: inputs of model
@@ -791,108 +893,6 @@ class BenchmarkConfig:
     def framework(self, framework):
         """Get framework."""
         self._framework = framework
-
-
-class AccuracyCriterion:
-    """Class of Accuracy Criterion.
-
-    Args:
-        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
-                                          Default value is True.
-        criterion:(str, optional): This flag indicates whether the metric loss is 'relative' or 'absolute'.
-                                   Default value is 'relative'.
-        tolerable_loss(float, optional): This float indicates how much metric loss we can accept.
-                                         Default value is 0.01.
-
-    Example::
-
-        from neural_compressor.config import AccuracyCriterion
-
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,  # optional. 
-            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
-            tolerable_loss=0.01,  # optional.
-        )
-    """
-    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
-        """Init an AccuracyCriterion object."""
-        self.higher_is_better = higher_is_better
-        self.criterion = criterion
-        self.tolerable_loss = tolerable_loss
-
-    @property
-    def higher_is_better(self):
-        """Get higher_is_better."""
-        return self._higher_is_better
-
-    @higher_is_better.setter
-    def higher_is_better(self, higher_is_better):
-        """Set higher_is_better."""
-        if _check_value('higher_is_better', higher_is_better, bool):
-            self._higher_is_better = higher_is_better
-
-    @property
-    def relative(self):
-        """Get tolerable_loss when criterion is relative."""
-        if self.criterion != 'relative':
-            return None
-        return self.tolerable_loss
-
-    @relative.setter
-    def relative(self, relative):
-        """Set tolerable_loss and criterion to relative."""
-        self.criterion = 'relative'
-        self.tolerable_loss = relative
-
-    @property
-    def absolute(self):
-        """Get tolerable_loss when criterion is absolute."""
-        if self.criterion != 'absolute':
-            return None
-        return self.tolerable_loss
-
-    @absolute.setter
-    def absolute(self, absolute):
-        """Set tolerable_loss and criterion to absolute."""
-        self.criterion = 'absolute'
-        self.tolerable_loss = absolute
-
-    @property
-    def criterion(self):
-        """Get criterion."""
-        return self._criterion
-
-    @criterion.setter
-    def criterion(self, criterion):
-        """Set criterion."""
-        if _check_value('criterion', criterion, str, ['relative', 'absolute']):
-            self._criterion = criterion
-
-    @property
-    def tolerable_loss(self):
-        """Get tolerable_loss."""
-        return self._tolerable_loss
-
-    @tolerable_loss.setter
-    def tolerable_loss(self, tolerable_loss):
-        """Set tolerable_loss."""
-        if _check_value('tolerable_loss', tolerable_loss, float):
-            self._tolerable_loss = tolerable_loss
-
-    def __str__(self):
-        """Get criterion."""
-        return self.criterion
-
-    def keys(self):
-        """Returns keys of the dict."""
-        return ('higher_is_better', 'criterion', 'tolerable_loss')
-
-    def __getitem__(self, item):
-        """Get the dict."""
-        return getattr(self, item)
-
-
-accuracy_criterion = AccuracyCriterion()
 
 
 class QuantizationConfig(_BaseQuantizationConfig):
