@@ -295,29 +295,15 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 ```python
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 sq = TorchSmoothQuant(model, dataloader)
-sq.transform(alpha) ##alpha could be a float or a string ’auto‘
+sq.transform(alpha) ##alpha could be a float or a string 'auto'
 ```
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
-*support lots of fusing patterns*: the official code only supports 
-
-```bash
-linear->layernorm
-```
-
-while we support the following patterns
-
-```bash
-conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
-
-conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
-```
-
-For opt models, we could fuse one more layer than the official code, because the fc2 layer in the block follows the linear->relu->linear pattern.
+*support lots of fusing patterns*:supports more fusing patterns than the original one
 
 ## Validated Models
-Dataset: lambda, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
+Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
 | bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over 0.6, 4.1% in [0.4, 0.6])                           |
