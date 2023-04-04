@@ -16,11 +16,156 @@
 # limitations under the License.
 
 import logging
+from schema import Schema, And, Optional
 from .dotdict import DotDict
-from ..config import ops_schema, AccuracyCriterion, accuracy_criterion, BenchmarkConfig, \
-                     _check_value, DistillationConfig, options, WeightPruningConfig
+
 
 logger = logging.getLogger("neural_compressor")
+
+
+ops_schema = Schema({
+    Optional('weight', default=None): {
+        Optional('granularity'): And(
+            list,
+            lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+        Optional('scheme'): And(
+            list,
+            lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
+        Optional('dtype'): And(
+            list,
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+        Optional('algorithm'): And(
+            list,
+            lambda s: all(i in ['minmax'] for i in s))},
+    Optional('activation', default=None): {
+        Optional('granularity'): And(
+            list,
+            lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+        Optional('scheme'): And(
+            list,
+            lambda s: all(i in ['asym', 'sym'] for i in s)),
+        Optional('dtype'): And(
+            list,
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
+        Optional('algorithm'): And(
+            list,
+            lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
+
+
+def _check_value(name, src, supported_type, supported_value=[]):
+    """Check if the given object is the given supported type and in the given supported value.
+
+    Example::
+
+        from neural_compressor.config import _check_value
+
+        def datatype(self, datatype):
+            if _check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
+                self._datatype = datatype
+    """
+    if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
+        assert False, ("Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src]))
+    elif not isinstance(src, list) and not isinstance(src, supported_type):
+        assert False, ("Type of {} should be {} but not {}".format(
+            name, str(supported_type), type(src)))
+
+    if len(supported_value) > 0:
+        if isinstance(src, str) and src not in supported_value:
+            assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
+                src, name, str(supported_value)))
+        elif isinstance(src, list) and all([isinstance(i, str) for i in src]) and \
+            any([i not in supported_value for i in src]):
+            assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
+                src, name, str(supported_value)))
+
+    return True
+
+
+class Options:
+    """Option Class for configs.
+
+    This class is used for configuring global variables. The global variable options is created with this class.
+    If you want to change global variables, you should use functions from utils.utility.py:
+        set_random_seed(seed: int)
+        set_workspace(workspace: str)
+        set_resume_from(resume_from: str)
+        set_tensorboard(tensorboard: bool)
+
+    Args:
+        random_seed(int): Random seed used in neural compressor.
+                          Default value is 1978.
+        workspace(str): The directory where intermediate files and tuning history file are stored.
+                        Default value is:
+                            './nc_workspace/{}/'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')).
+        resume_from(str): The directory you want to resume tuning history file from.
+                          The tuning history was automatically saved in the workspace directory
+                               during the last tune process.
+                          Default value is None.
+        tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
+                               for visual display.
+                           Default value is False.
+
+    Example::
+
+        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        set_random_seed(2022)
+        set_workspace("workspace_path")
+        set_resume_from("workspace_path")
+        set_tensorboard(True)
+        
+    """
+    def __init__(self, random_seed=1978, workspace=default_workspace,
+                 resume_from=None, tensorboard=False):
+        """Init an Option object."""
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+        self.tensorboard = tensorboard
+
+    @property
+    def random_seed(self):
+        """Get random seed."""
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, random_seed):
+        """Set random seed."""
+        if _check_value('random_seed', random_seed, int):
+            self._random_seed = random_seed
+
+    @property
+    def workspace(self):
+        """Get workspace."""
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace):
+        """Set workspace."""
+        if _check_value('workspace', workspace, str):
+            self._workspace = workspace
+
+    @property
+    def resume_from(self):
+        """Get resume_from."""
+        return self._resume_from
+
+    @resume_from.setter
+    def resume_from(self, resume_from):
+        """Set resume_from."""
+        if resume_from is None or _check_value('resume_from', resume_from, str):
+            self._resume_from = resume_from
+
+    @property
+    def tensorboard(self):
+        """Get tensorboard."""
+        return self._tensorboard
+
+    @tensorboard.setter
+    def tensorboard(self, tensorboard):
+        """Set tensorboard."""
+        if _check_value('tensorboard', tensorboard, bool):
+            self._tensorboard = tensorboard
 
 
 class _BaseQuantizationConfig:
@@ -435,6 +580,318 @@ class _BaseQuantizationConfig:
         self._example_inputs = example_inputs
 
 
+class BenchmarkConfig:
+    """Config Class for Benchmark.
+
+    Args:
+        inputs (list, optional): A list of strings containing the inputs of model. Default is an empty list.
+        outputs (list, optional): A list of strings containing the outputs of model. Default is an empty list.
+        backend (str, optional): Backend name for model execution. Supported values include: 'default', 'itex',
+                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default value is 'default'.
+        warmup (int, optional): The number of iterations to perform warmup before running performance tests.
+                                Default value is 5.
+        iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+        cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
+        num_of_instance (int, optional): The number of instances to use for performance testing.
+                                         Default value is None.
+        inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
+                                              Default value is None.
+        intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
+                                              Default value is None.
+
+    Example::
+
+        # Run benchmark according to config
+        from neural_compressor.benchmark import fit
+
+        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+    """
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend='default',
+                 device='cpu',
+                 warmup=5,
+                 iteration=-1,
+                 model=None,
+                 model_name='',
+                 cores_per_instance=None,
+                 num_of_instance=None,
+                 inter_num_of_threads=None,
+                 intra_num_of_threads=None):
+        """Init a BenchmarkConfig object."""
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.device=device
+        self.warmup = warmup
+        self.iteration = iteration
+        self.model = model
+        self.model_name = model_name
+        self.cores_per_instance = cores_per_instance
+        self.num_of_instance = num_of_instance
+        self.inter_num_of_threads = inter_num_of_threads
+        self.intra_num_of_threads = intra_num_of_threads
+        self._framework=None
+
+    def keys(self):
+        """Returns keys of the dict."""
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', 'model', \
+                'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
+                'inter_num_of_threads','intra_num_of_threads')
+
+    def __getitem__(self, item):
+        """Get the dict."""
+        return getattr(self, item)
+    
+    @property
+    def backend(self):
+        """Get backend."""
+        return self._backend
+
+    @backend.setter
+    def backend(self, backend):
+        """Set backend."""
+        if _check_value('backend', backend, str, [
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            self._backend = backend
+
+    @property
+    def device(self):
+        """Get device name."""
+        return self._device
+
+    @device.setter
+    def device(self, device):
+        if _check_value('device', device, str, ['cpu', 'gpu']):
+            self._device = device
+
+    @property
+    def outputs(self):
+        """Get outputs."""
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, outputs):
+        """Set outputs."""
+        if _check_value('outputs', outputs, str):
+            self._outputs = outputs
+
+    @property
+    def inputs(self):
+        """Get inputs."""
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, inputs):
+        """Set inputs."""
+        if _check_value('inputs', inputs, str):
+            self._inputs = inputs
+
+    @property
+    def warmup(self):
+        """Get warmup."""
+        return self._warmup
+
+    @warmup.setter
+    def warmup(self, warmup):
+        """Set warmup."""
+        if _check_value('warmup', warmup, int):
+            self._warmup = warmup
+
+    @property
+    def iteration(self):
+        """Get iteration."""
+        return self._iteration
+
+    @iteration.setter
+    def iteration(self, iteration):
+        """Set iteration."""
+        if _check_value('iteration', iteration, int):
+            self._iteration = iteration
+
+    @property
+    def cores_per_instance(self):
+        """Get cores_per_instance."""
+        return self._cores_per_instance
+
+    @cores_per_instance.setter
+    def cores_per_instance(self, cores_per_instance):
+        """Set cores_per_instance."""
+        if cores_per_instance is None or _check_value('cores_per_instance', cores_per_instance,
+                                                     int):
+            self._cores_per_instance = cores_per_instance
+
+    @property
+    def num_of_instance(self):
+        """Get num_of_instance."""
+        return self._num_of_instance
+
+    @num_of_instance.setter
+    def num_of_instance(self, num_of_instance):
+        """Set num_of_instance."""
+        if num_of_instance is None or _check_value('num_of_instance', num_of_instance, int):
+            self._num_of_instance = num_of_instance
+
+    @property
+    def inter_num_of_threads(self):
+        """Get inter_num_of_threads."""
+        return self._inter_num_of_threads
+
+    @inter_num_of_threads.setter
+    def inter_num_of_threads(self, inter_num_of_threads):
+        """Set inter_num_of_threads."""
+        if inter_num_of_threads is None or _check_value('inter_num_of_threads',
+                                                       inter_num_of_threads, int):
+            self._inter_num_of_threads = inter_num_of_threads
+
+    @property
+    def intra_num_of_threads(self):
+        """Get intra_num_of_threads."""
+        return self._intra_num_of_threads
+
+    @intra_num_of_threads.setter
+    def intra_num_of_threads(self, intra_num_of_threads):
+        """Get intra_num_of_threads."""
+        if intra_num_of_threads is None or _check_value('intra_num_of_threads',
+                                                       intra_num_of_threads, int):
+            self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def model(self):
+        """Get model."""
+        return self._model
+    
+    @model.setter
+    def model(self, model):
+        """Set model."""
+        self._model = model
+
+    @property
+    def model_name(self):
+        """Get model name."""
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, model_name):
+        """Set model name."""
+        if _check_value("model_name", model_name, str):
+            self._model_name = model_name
+    
+    @property
+    def framework(self):
+        """Set framework."""
+        return self._framework
+    
+    @framework.setter
+    def framework(self, framework):
+        """Get framework."""
+        self._framework = framework
+
+
+class AccuracyCriterion:
+    """Class of Accuracy Criterion.
+
+    Args:
+        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
+                                          Default value is True.
+        criterion:(str, optional): This flag indicates whether the metric loss is 'relative' or 'absolute'.
+                                   Default value is 'relative'.
+        tolerable_loss(float, optional): This float indicates how much metric loss we can accept.
+                                         Default value is 0.01.
+
+    Example::
+
+        from neural_compressor.config import AccuracyCriterion
+
+        accuracy_criterion = AccuracyCriterion(
+            higher_is_better=True,  # optional. 
+            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+            tolerable_loss=0.01,  # optional.
+        )
+    """
+    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
+        """Init an AccuracyCriterion object."""
+        self.higher_is_better = higher_is_better
+        self.criterion = criterion
+        self.tolerable_loss = tolerable_loss
+
+    @property
+    def higher_is_better(self):
+        """Get higher_is_better."""
+        return self._higher_is_better
+
+    @higher_is_better.setter
+    def higher_is_better(self, higher_is_better):
+        """Set higher_is_better."""
+        if _check_value('higher_is_better', higher_is_better, bool):
+            self._higher_is_better = higher_is_better
+
+    @property
+    def relative(self):
+        """Get tolerable_loss when criterion is relative."""
+        if self.criterion != 'relative':
+            return None
+        return self.tolerable_loss
+
+    @relative.setter
+    def relative(self, relative):
+        """Set tolerable_loss and criterion to relative."""
+        self.criterion = 'relative'
+        self.tolerable_loss = relative
+
+    @property
+    def absolute(self):
+        """Get tolerable_loss when criterion is absolute."""
+        if self.criterion != 'absolute':
+            return None
+        return self.tolerable_loss
+
+    @absolute.setter
+    def absolute(self, absolute):
+        """Set tolerable_loss and criterion to absolute."""
+        self.criterion = 'absolute'
+        self.tolerable_loss = absolute
+
+    @property
+    def criterion(self):
+        """Get criterion."""
+        return self._criterion
+
+    @criterion.setter
+    def criterion(self, criterion):
+        """Set criterion."""
+        if _check_value('criterion', criterion, str, ['relative', 'absolute']):
+            self._criterion = criterion
+
+    @property
+    def tolerable_loss(self):
+        """Get tolerable_loss."""
+        return self._tolerable_loss
+
+    @tolerable_loss.setter
+    def tolerable_loss(self, tolerable_loss):
+        """Set tolerable_loss."""
+        if _check_value('tolerable_loss', tolerable_loss, float):
+            self._tolerable_loss = tolerable_loss
+
+    def __str__(self):
+        """Get criterion."""
+        return self.criterion
+
+    def keys(self):
+        """Returns keys of the dict."""
+        return ('higher_is_better', 'criterion', 'tolerable_loss')
+
+    def __getitem__(self, item):
+        """Get the dict."""
+        return getattr(self, item)
+
+
+accuracy_criterion = AccuracyCriterion()
+
+
 class QuantizationConfig(_BaseQuantizationConfig):
     def __init__(self,
                  inputs=[],
@@ -491,6 +948,116 @@ class QuantizationConfig(_BaseQuantizationConfig):
         ):
             self._approach = approach
 
+
+class WeightPruningConfig:
+    """Config Class for Pruning. Define a single or a sequence of pruning configs.
+    
+    Args:
+        pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
+            Parameters defined out of pruning_configs are valid for all layers.
+            By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
+            Defaults to [{}].
+        target_sparsity (float, optional): Sparsity ratio the model can reach after pruning.
+            Supports a float between 0 and 1.
+            Default to 0.90.
+        pruning_type (str, optional): A string define the criteria for pruning. 
+            Supports "magnitude", "snip", "snip_momentum", 
+                     "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
+            Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
+        pattern (str, optional): Sparsity's structure (or unstructure) types.
+            Supports "NxM" (e.g "4x1", "8x1"), "channelx1" & "1xchannel"(channel-wise), "N:M" (e.g "2:4").
+            Default to "4x1", which can be directly processed by our kernels in ITREX.
+        op_names (list of str, optional): Layers contains some specific names to be included for pruning.
+            Defaults to [].
+        excluded_op_names: Layers contains some specific names to be excluded for pruning.
+            Defaults to [].
+        start_step (int, optional): The step to start pruning.
+            Supports an integer.
+            Default to 0.
+        end_step: (int, optional): The step to end pruning.
+            Supports an integer.
+            Default to 0.
+        pruning_scope (str, optional): Determine layers' scores should be gather together to sort 
+            Supports "global" and "local". 
+            Default: "global", since this leads to less accuracy loss.
+        pruning_frequency: the frequency of pruning operation.
+            Supports an integer.
+            Default to 1.
+        min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer's sparsity.
+            Supports a float between 0 and 1.
+            Default to 0.0.  
+        max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer's sparsity.
+            Supports a float between 0 and 1.
+            Default to 0.98.
+        sparsity_decay_type (str, optional): how to schedule the sparsity increasing methods.
+            Supports "exp", "cube", "cube", "linear".
+            Default to "exp".
+        pruning_op_types (list of str): Operator types currently support for pruning.
+            Supports ['Conv', 'Linear'].
+            Default to ['Conv', 'Linear'].
+
+    Example::
+
+        from neural_compressor.config import WeightPruningConfig
+        local_configs = [
+            {
+                "pruning_scope": "local",
+                "target_sparsity": 0.6,
+                "op_names": ["query", "key", "value"],
+                "pattern": "channelx1",
+            },
+            {
+                "pruning_type": "snip_momentum_progressive",
+                "target_sparsity": 0.5,
+                "op_names": ["self.attention.dense"],
+            }
+        ]
+        config = WeightPruningConfig(
+            pruning_configs = local_configs,
+            target_sparsity=0.8
+        )
+        prune = Pruning(config)
+        prune.update_config(start_step=1, end_step=10)
+        prune.model = self.model
+    """
+
+    def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
+                 target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
+                 excluded_op_names=[],
+                 start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
+                 min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
+                 sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
+                 **kwargs):
+        """Init a WeightPruningConfig object."""
+        self.pruning_configs = pruning_configs
+        self._weight_compression = DotDict({
+            'target_sparsity': target_sparsity,
+            'pruning_type': pruning_type,
+            'pattern': pattern,
+            'op_names': op_names,
+            'excluded_op_names': excluded_op_names,  ##global only
+            'start_step': start_step,
+            'end_step': end_step,
+            'pruning_scope': pruning_scope,
+            'pruning_frequency': pruning_frequency,
+            'min_sparsity_ratio_per_op': min_sparsity_ratio_per_op,
+            'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
+            'sparsity_decay_type': sparsity_decay_type,
+            'pruning_op_types': pruning_op_types,
+        })
+        self._weight_compression.update(kwargs)
+
+    @property
+    def weight_compression(self):
+        """Get weight_compression."""
+        return self._weight_compression
+
+    @weight_compression.setter
+    def weight_compression(self, weight_compression):
+        """Set weight_compression."""
+        self._weight_compression = weight_compression
+
+
 class WeightConf:
     def __init__(self, datatype=None, scheme=None, granularity=None, algorithm=None):
         self._datatype = datatype
@@ -534,12 +1101,79 @@ class WeightConf:
         if _check_value('algorithm', algorithm, str, ['minmax', 'kl']):
             self._algorithm = algorithm if isinstance(algorithm, list) else [algorithm]
 
+
+class DistillationConfig:
+    """Config of distillation.
+
+    Args:
+        teacher_model (Callable): Teacher model for distillation. Defaults to None.
+        features (optional): Teacher features for distillation, features and teacher_model are alternative.
+                             Defaults to None.
+        criterion (Callable, optional): Distillation loss configure.
+        optimizer (dictionary, optional): Optimizer configure.
+
+    Example::
+
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+
+        distil_loss = KnowledgeDistillationLossConfig()
+        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+        compression_manager = prepare_compression(model, conf)
+        model = compression_manager.model
+    """
+    def __init__(self,
+                 teacher_model=None,
+                 criterion=criterion,
+                 optimizer={'SGD': {
+                     'learning_rate': 0.0001
+                 }}):
+        """Init a DistillationConfig object."""
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.teacher_model = teacher_model
+
+    @property
+    def criterion(self):
+        """Get criterion."""
+        return self._criterion
+
+    @criterion.setter
+    def criterion(self, criterion):
+        """Set criterion."""
+        self._criterion = criterion
+
+    @property
+    def optimizer(self):
+        """Get optimizer."""
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        """Set optimizer."""
+        self._optimizer = optimizer
+
+    @property
+    def teacher_model(self):
+        """Get teacher_model."""
+        return self._teacher_model
+
+    @teacher_model.setter
+    def teacher_model(self, teacher_model):
+        """Set teacher_model."""
+        self._teacher_model = teacher_model
+
+
 class ActivationConf(WeightConf):
     def __init__(self, datatype=None, scheme=None, granularity=None, algorithm=None):
         super().__init__(datatype, scheme, granularity, algorithm)
 
+
 weight = WeightConf()
 activation = ActivationConf()
+
 
 class OpQuantConf:
     def __init__(self, op_type=None, weight=weight, activation=activation):
@@ -564,6 +1198,7 @@ class OpQuantConf:
     def activation(self):
         return self._activation
 
+
 class MXNet:
     def __init__(self, precisions=None):
         self._precisions = precisions
@@ -578,6 +1213,7 @@ class MXNet:
             precisions = [precisions]
         if _check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
             self._precisions = precisions
+
 
 class ONNX(MXNet):
     def __init__(self, graph_optimization_level=None, precisions=None):
@@ -594,13 +1230,16 @@ class ONNX(MXNet):
             ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']):
             self._graph_optimization_level = graph_optimization_level
 
+
 class TensorFlow(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
 
+
 class Keras(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
+
 
 class PyTorch(MXNet):
     def __init__(self, precisions=None):
@@ -619,6 +1258,7 @@ class DyNASConfig:
             'dataset_path': dataset_path,
             'batch_size': batch_size,
         }
+
 
 class NASConfig:
     def __init__(self, approach=None, search_space=None, search_algorithm=None,
@@ -733,5 +1373,6 @@ class Config:
     @property
     def onnxruntime(self):
         return self._onnxruntime
+
 
 config = Config()
