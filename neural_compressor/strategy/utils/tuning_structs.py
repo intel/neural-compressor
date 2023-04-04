@@ -18,7 +18,7 @@
 """Tuning structure."""
 
 from typing import Dict
-from .constant import QUANT_MODE_SET, TUNING_ITEMS_LST, PRECISION_SET
+from .constant import QUANT_MODE_SET, TUNING_ITEMS_LST, PRECISION_LIST
 from ...utils import logger
 
 class OpTuningConfig:
@@ -46,7 +46,7 @@ class OpTuningConfig:
         
     def _set_dtype(self):
         """Set the date type."""
-        if self.op_quant_mode in PRECISION_SET:
+        if self.op_quant_mode in PRECISION_LIST:
             self.act_dtype, self.weight_dtype = self.op_quant_mode, self.op_quant_mode
         else:
             self.act_dtype = self.kwargs.get('activation_dtype', None)
