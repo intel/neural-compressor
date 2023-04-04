@@ -143,6 +143,12 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.get_torch_version" title="neural_compressor.adaptor.torch_utils.util.get_torch_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_torch_version</span></code></a>()</p></td>
 <td><p>Get torch version.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.match_datatype_pattern" title="neural_compressor.adaptor.torch_utils.util.match_datatype_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_datatype_pattern</span></code></a>(datatype[, pattern])</p></td>
+<td><p>Check the datatype pattern.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max" title="neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_quant_min_max</span></code></a>(unsigned, num_bits)</p></td>
+<td><p>Calculate the qmin and qmax according to the datatype.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -450,6 +456,18 @@ output_tensor_ids_op_name (dict): dictionary of output tensor op names.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.get_torch_version">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_torch_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.get_torch_version" title="Permalink to this definition"></a></dt>
 <dd><p>Get torch version.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.match_datatype_pattern">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">match_datatype_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datatype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.match_datatype_pattern" title="Permalink to this definition"></a></dt>
+<dd><p>Check the datatype pattern.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">calculate_quant_min_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unsigned</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the qmin and qmax according to the datatype.</p>
 </dd></dl>
 
 </section>

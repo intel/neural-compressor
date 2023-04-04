@@ -36,6 +36,8 @@ Functions
    neural_compressor.adaptor.torch_utils.util.get_mse_order_per_fp32
    neural_compressor.adaptor.torch_utils.util.get_mse_order_per_int8
    neural_compressor.adaptor.torch_utils.util.get_torch_version
+   neural_compressor.adaptor.torch_utils.util.match_datatype_pattern
+   neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max
 
 
 
@@ -260,5 +262,15 @@ Functions
 .. py:function:: get_torch_version()
 
    Get torch version.
+
+
+.. py:function:: match_datatype_pattern(datatype, pattern=None)
+
+   Check the datatype pattern.
+
+
+.. py:function:: calculate_quant_min_max(unsigned, num_bits)
+
+   Calculate the qmin and qmax according to the datatype.
 
 
