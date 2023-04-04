@@ -222,8 +222,12 @@ class _MixedPrecision:
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in cfg.quantization.framework or cfg.quantization.framework == "keras":
-                self._model = Model(user_model, backend=cfg.quantization.framework
-                                    , device=cfg.quantization.device)
+                if get_model_type(user_model) == 'keras':
+                    self._model = Model(user_model, backend=cfg.quantization.framework,
+                                        device=cfg.quantization.device, modelType="saved_model")
+                else:
+                    self._model = Model(user_model, backend=cfg.quantization.framework,\
+                                         device=cfg.quantization.device)
             else:
                 self._model = Model(user_model, backend=cfg.quantization.framework)
         else:

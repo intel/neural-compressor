@@ -221,6 +221,7 @@ class Options:
         if _check_value('tensorboard', tensorboard, bool):
             self._tensorboard = tensorboard
 
+
 class BenchmarkConfig:
     """Config Class for Benchmark.
 
@@ -1187,7 +1188,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     @approach.setter
     def approach(self, approach):
         """Set approach."""
-        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto",\
+                                                     "post_training_static_quant"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
@@ -1576,7 +1578,6 @@ class SelfKnowledgeDistillationLossConfig:
 
 
 criterion = KnowledgeDistillationLossConfig()
-
 
 class DistillationConfig:
     """Config of distillation.
