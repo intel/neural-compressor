@@ -1105,6 +1105,47 @@ class WeightConf:
             self._algorithm = algorithm if isinstance(algorithm, list) else [algorithm]
 
 
+class KnowledgeDistillationLossConfig:
+    """Config Class for Knowledge Distillation Loss.
+
+    Args:
+        temperature (float, optional): Hyperparameters that control the entropy
+            of probability distributions. Defaults to 1.0.
+        loss_types (list[str], optional): loss types, should be a list of length 2.
+            First item is the loss type for student model output and groundtruth label,
+            second item is the loss type for student model output and teacher model output.
+            Supported tpyes for first item are "CE", "MSE". 
+            Supported tpyes for second item are "CE", "MSE", "KL".
+            Defaults to ['CE', 'CE'].
+        loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.
+            First item is the weight multipled to the loss of student model output and groundtruth label,
+            second item is the weight multipled to the loss of student model output and teacher model output.
+            Defaults to [0.5, 0.5].
+
+    Example::
+
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+        from neural_compressor.training import prepare_compression
+
+        criterion_conf = KnowledgeDistillationLossConfig()
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=criterion_conf)
+        compression_manager = prepare_compression(model, d_conf)
+        model = compression_manager.model
+    """
+    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
+        """Init a KnowledgeDistillationLossConfig object."""
+        self.config = DotDict({
+            'KnowledgeDistillationLoss': {
+                'temperature': temperature,
+                'loss_types': loss_types,
+                'loss_weights': loss_weights
+            }
+        })
+
+
+criterion = KnowledgeDistillationLossConfig()
+
+
 class DistillationConfig:
     """Config of distillation.
 

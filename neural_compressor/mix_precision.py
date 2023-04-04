@@ -59,7 +59,6 @@ class _MixedPrecision:
 
         self._eval_func = None
         self._eval_dataloader = None
-        self._eval_metric = None
         self._model = None
 
     def pre_process(self):
@@ -84,7 +83,7 @@ class _MixedPrecision:
             q_func=None,
             eval_func=self._eval_func,
             eval_dataloader=self._eval_dataloader,
-            eval_metric=self._eval_metric,
+            eval_metric=self.metric,
             resume=_resume,
             q_hooks=None)
 
@@ -250,8 +249,8 @@ class _MixedPrecision:
 
     @property
     def metric(self):
-        """Get metric."""
-        assert False, 'Should not try to get the value of `metric` attribute.'
+        """Get `metric` attribute."""
+        return self._metric
 
     @metric.setter
     def metric(self, user_metric):
@@ -295,8 +294,7 @@ class _MixedPrecision:
                 metric_cfg = {name: id(user_metric)}
             metrics = METRICS(self.conf.quantization.framework)
             metrics.register(name, metric_cls)
-
-        self._metric = user_metric
+        self._metric = metric_cfg
 
 
     @property

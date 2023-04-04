@@ -71,7 +71,6 @@ class BaseCallbacks(object):
         self._train_dataloader = None
         self._eval_func = None
         self._eval_dataloader = None
-        self._eval_metric = None
         self._train_distributed = False
         self._evaluation_distributed = False
         self.adaptor = None
@@ -307,7 +306,7 @@ class BaseCallbacks(object):
             q_func=self._train_func,
             eval_func=self._eval_func,
             eval_dataloader=self._eval_dataloader,
-            eval_metric=self._eval_metric,
+            eval_metric=self.metric,
             resume=_resume,
             q_hooks=None)
 
@@ -427,8 +426,7 @@ class BaseCallbacks(object):
     @property
     def metric(self):
         """Get `metric` attribute."""
-        assert False, 'Should not try to get the value of `metric` attribute.'
-        return None
+        return self._metric
 
     @metric.setter
     def metric(self, user_metric):
@@ -474,8 +472,7 @@ class BaseCallbacks(object):
                 metric_cfg = {name: id(user_metric)}
             metrics = METRICS(self.conf.qat_quantization.framework)
             metrics.register(name, metric_cls)
-
-        self._metric = user_metric
+        self._metric = metric_cfg
 
     def remove_hook(self, scope, hook):
         """Remove hooks if user want to tune accuracy with train_func."""

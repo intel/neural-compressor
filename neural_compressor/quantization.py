@@ -63,7 +63,6 @@ class _PostTrainingQuant:
         self._calib_dataloader = None
         self._eval_func = None
         self._eval_dataloader = None
-        self._eval_metric = None
         self._model = None
         self._metric = None
         self.callbacks = None

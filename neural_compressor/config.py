@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Configs for Neural Compressor."""
+"""Configs for Neural Compressor 2.x."""
 import datetime
 import logging
 from schema import Schema, And, Optional
@@ -538,13 +538,13 @@ class TuningCriterion:
     """Class for Tuning Criterion.
     
     Args:
-        strategy: Strategy name used in tuning, Please refer to docs/source/tuning_strategies.md.
-        strategy_kwargs: Parameters for strategy, Please refer to docs/source/tuning_strategies.md.
-        objective: Objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'.
+        strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
+        strategy_kwargs: Parameters for strategy. Please refer to docs/source/tuning_strategies.md.
+        objective: String or dict. Objective with accuracy constraint guaranteed. String value supports
+                  'performance', 'modelsize', 'footprint'. Default value is 'performance'.
                    Please refer to docs/source/objective.md.
-                   Default value is 'performance'.
-        timeout: Tuning timeout (seconds). default value is 0 which means early stop
-        max_trials: Max tune times. default value is 100. Combine with timeout field to decide when to exit
+        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+        max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
     
     Example::
         from neural_compressor.config import TuningCriterion
@@ -557,13 +557,12 @@ class TuningCriterion:
         )
     """
     def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, 
-                 max_trials=100, objective="performance", multi_objectives={}):
+                 max_trials=100, objective="performance"):
         """Init a TuningCriterion object."""
         self.strategy = strategy
         self.timeout = timeout
         self.max_trials = max_trials
         self.objective = objective
-        self.multi_objectives = multi_objectives
         self.strategy_kwargs = strategy_kwargs
 
     @property
@@ -598,23 +597,15 @@ class TuningCriterion:
         if _check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
-
-    @property
-    def multi_objectives(self):
-        """Get multi-objectives."""
-        return self._multi_objectives
-
-    @multi_objectives.setter
-    def multi_objectives(self, multi_objectives):
-        if _check_value('multi_objectives', multi_objectives, dict):
-            if 'weight' in multi_objectives.keys() and isinstance(multi_objectives['weight'], list):
-                assert len(multi_objectives['objective']) == len(multi_objectives['weight'])
-            
-            for k, v in multi_objectives.items():
-                _check_value('multi_objectives', k, str, ['objective', 'weight', 'higher_is_better'])
+        
+        if _check_value('objective', objective, dict):
+            if 'weight' in objective.keys() and isinstance(objective['weight'], list):
+                assert len(objective['objective']) == len(objective['weight'])
+            for k, v in objective.items():
+                _check_value('objective', k, str, ['objective', 'weight', 'higher_is_better'])
                 if k == 'objective':
                     _check_value('objective', v, str, ['performance', 'accuracy', 'modelsize', 'footprint'])
-            self._multi_objectives = multi_objectives
+            self._objective = objective
 
     @property
     def strategy(self):
