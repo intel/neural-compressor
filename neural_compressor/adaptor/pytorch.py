@@ -1041,18 +1041,16 @@ class TemplateAdaptor(Adaptor):
         tmp_model = model
         tmp_model.eval()
         quantizable_ops = []
-
+        self.block_info =None
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        
-
         q_capability = {}
         q_capability['block_info'] = None
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
         # add block ops
-        self.block_info = None
-        logger.info(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
-        q_capability['block_info'] = None
+        if self.block_info:
+            logger.info(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
+        q_capability['block_info'] = self.block_info
         
         quant_datatypes = self.query_handler.get_quant_datatypes()
         if self.approach == "quant_aware_training":
@@ -3551,14 +3549,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
-        
-        from .torch_utils.block import get_block, get_other_blocks, show_nest_dict
-        attention_block = get_block(model)
-        logger.info(f"Blocks: {len(attention_block)}")
-        other_blocks = get_other_blocks(model)
-        logger.info(f"Other Blocks: {len(other_blocks)}")
-        show_nest_dict(other_blocks)
+        from .torch_utils.block import get_blocks
+        ffn_blocks, attention_block = get_blocks(model)
+        logger.info(f"Attention Blocks: {len(attention_block)}")
+        logger.info(f"FFN Blocks: {len(ffn_blocks)}")
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3576,8 +3570,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        block_info = [[(name,  self._get_op_type(module_dict[op_name])) for name, _, _ in block]  for block_index, block in other_blocks.items()]
-        
+        #TODO move it to utility
+        block_info = [[(name, self._get_op_type(module_dict[op_name])) for name in block] for block in ffn_blocks]
         self.block_info = block_info
         
     def _get_op_type(self, child):
