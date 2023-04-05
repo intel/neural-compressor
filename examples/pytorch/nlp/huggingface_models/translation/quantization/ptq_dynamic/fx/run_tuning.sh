@@ -40,8 +40,9 @@ function run_tuning {
     batch_size=16
     extra_cmd=''
 
-    if [ "${topology}" = "t5_WMT_en_ro" ];then
-        extra_cmd='--model_name_or_path '${input_model}
+    if [ "${topology}" = "t5-small" ];then
+        source_prefix=`--source_prefix 'translate English to Romanian: ' `
+        extra_cmd="--model_name_or_path ${input_model} ${source_prefix}"
     elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
         extra_cmd="--model_name_or_path Helsinki-NLP/opus-mt-en-ro"
     fi
@@ -56,6 +57,7 @@ function run_tuning {
         --target_lang ro \
         --dataset_config_name ro-en \
         --dataset_name wmt16 \
+        --overwrite_cache \
         --tune \
         --overwrite_output_dir \
         ${extra_cmd}

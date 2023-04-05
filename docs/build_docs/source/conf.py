@@ -44,10 +44,9 @@ autoapi_root = "autoapi"
 autoapi_keep_files = True
 autoapi_add_toctree_entry = False
 autosummary_generate = True
-autoapi_options = ['members',  'show-inheritance',
-                   'show-module-summary', 'imported-members', ]
+autoapi_options = ['members',
+                   'show-module-summary']
 autoapi_ignore = []
-autoapi_template_dir = './autoapi_templates'
 
 templates_path = ['_templates']
 
@@ -68,8 +67,14 @@ html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
 
+def skip_util_classes(app, what, name, obj, skip, options):
+    if what=='property' or what=='method':
+        skip = True
+    return skip
+
 def setup(app):
    app.add_css_file("custom.css")
+   app.connect("autoapi-skip-member", skip_util_classes)
 
 
 def linkcode_resolve(domain, info):

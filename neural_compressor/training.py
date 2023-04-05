@@ -24,7 +24,6 @@ from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConf
 from typing import Callable, List, Union
 from .compression import prepare_pruning
 
-
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
 

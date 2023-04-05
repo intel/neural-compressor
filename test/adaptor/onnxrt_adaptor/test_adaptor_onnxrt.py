@@ -1072,7 +1072,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
 
     def test_smooth_quant(self):
-        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True})
+        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
+            'smooth_quant_args': {'alpha': 0.5}})
         q_model = quantization.fit(self.conv_model, config,
             calib_dataloader=self.cv_dataloader)
         self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)

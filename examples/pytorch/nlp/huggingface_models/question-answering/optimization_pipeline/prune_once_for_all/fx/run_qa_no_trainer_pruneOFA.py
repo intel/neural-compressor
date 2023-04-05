@@ -883,11 +883,6 @@ def main():
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
 
-    # Prepare everything with our `accelerator`.
-    model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
-        model, optimizer, train_dataloader, eval_dataloader
-    )
-
     # Note -> the training dataloader needs to be prepared before we grab his length below (cause its length will be
     # shorter in multiprocess)
 
@@ -904,6 +899,8 @@ def main():
         num_warmup_steps=args.num_warmup_steps,
         num_training_steps=args.max_train_steps,
     )
+
+    train_dataloader, eval_dataloader = accelerator.prepare(train_dataloader, eval_dataloader)
 
     confs = []
     if args.do_prune:
@@ -931,6 +928,9 @@ def main():
     compression_manager = prepare_compression(model, confs)
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
+
+    model._model, optimizer  = accelerator.prepare(model._model, optimizer)
+
     train(args,
           model,
           train_dataloader=train_dataloader,
@@ -944,6 +944,7 @@ def main():
 
 
     if accelerator.local_process_index in [-1, 0]:
+        model._model = accelerator.unwrap_model(model._model)
         model.save(args.output_dir)
     # change to framework model for further use
     model = model.model

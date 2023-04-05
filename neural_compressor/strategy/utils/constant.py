@@ -17,7 +17,7 @@
 
 """Strategy constant."""
 
-PRECISION_SET = {'bf16', 'fp16' , 'fp32',}
+PRECISION_LIST = ['bf16', 'fp16' , 'fp32']
 QUANT_MODE_SET = {'static', 'dynamic'}
 QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
 
@@ -32,5 +32,5 @@ dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
 auto_query_order_o0 = ['bf16', 'fp16', 'fp32', 'static', 'dynamic']
 
 
-FALLBACK_RECIPES_SET = {'first_conv_or_matmul_quantization', 'last_conv_or_matmul_quantization' \
+FALLBACK_RECIPES_SET = {'first_conv_or_matmul_quantization', 'last_conv_or_matmul_quantization', \
     'pre_post_process_quantization'}

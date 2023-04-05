@@ -18,7 +18,7 @@
 import logging
 from .dotdict import DotDict
 from ..config import _BaseQuantizationConfig, accuracy_criterion, BenchmarkConfig, \
-                     check_value, DistillationConfig, options, WeightPruningConfig
+                     _check_value, DistillationConfig, options, WeightPruningConfig
 
 logger = logging.getLogger("neural_compressor")
 
@@ -73,7 +73,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
 
     @approach.setter
     def approach(self, approach):
-        if check_value(
+        if _check_value(
             'approach', approach, str,
             ['post_training_static_quant', 'post_training_dynamic_quant', 'quant_aware_training']
         ):
@@ -92,7 +92,7 @@ class WeightConf:
 
     @datatype.setter
     def datatype(self, datatype):
-        if check_value('datatype', datatype, str, ['fp32', 'bf16', 'uint8', 'int8']):
+        if _check_value('datatype', datatype, str, ['fp32', 'bf16', 'uint8', 'int8']):
             self._datatype = datatype if isinstance(datatype, list) else [datatype]
 
     @property
@@ -101,7 +101,7 @@ class WeightConf:
 
     @scheme.setter
     def scheme(self, scheme):
-        if check_value('scheme', scheme, str, ['sym', 'asym']):
+        if _check_value('scheme', scheme, str, ['sym', 'asym']):
             self._scheme = scheme if isinstance(scheme, list) else [scheme]
 
     @property
@@ -110,7 +110,7 @@ class WeightConf:
 
     @granularity.setter
     def granularity(self, granularity):
-        if check_value('granularity', granularity, str, ['per_channel', 'per_tensor']):
+        if _check_value('granularity', granularity, str, ['per_channel', 'per_tensor']):
             self._granularity = granularity if isinstance(granularity, list) else [granularity]
 
     @property
@@ -119,7 +119,7 @@ class WeightConf:
 
     @algorithm.setter
     def algorithm(self, algorithm):
-        if check_value('algorithm', algorithm, str, ['minmax', 'kl']):
+        if _check_value('algorithm', algorithm, str, ['minmax', 'kl']):
             self._algorithm = algorithm if isinstance(algorithm, list) else [algorithm]
 
 class ActivationConf(WeightConf):
@@ -141,7 +141,7 @@ class OpQuantConf:
 
     @op_type.setter
     def op_type(self, op_type):
-        if check_value('op_type', op_type, str):
+        if _check_value('op_type', op_type, str):
             self._op_type = op_type
 
     @property
@@ -164,7 +164,7 @@ class MXNet:
     def precisions(self, precisions):
         if not isinstance(precisions, list):
             precisions = [precisions]
-        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
+        if _check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
             self._precisions = precisions
 
 class ONNX(MXNet):
@@ -178,7 +178,7 @@ class ONNX(MXNet):
 
     @graph_optimization_level.setter
     def graph_optimization_level(self, graph_optimization_level):
-        if check_value('graph_optimization_level', graph_optimization_level, str,
+        if _check_value('graph_optimization_level', graph_optimization_level, str,
             ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']):
             self._graph_optimization_level = graph_optimization_level
 

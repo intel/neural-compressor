@@ -2165,6 +2165,9 @@ class TensorflowQuery(QueryBackendCapability):
         elif version1_gte_version2(tf.version.VERSION, '2.1.0'):
             patterns['int8'] = tf_int8_pattern_list
             patterns['uint8'] = tf_uint8_pattern_list
+            if self.itex_mode:
+                patterns['int8'].append("FusedBatchNormV3 + Relu")
+                patterns['int8'].append("FusedBatchNormV3 + LeakyRelu")
         elif version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
             patterns['int8'] = tf1_15_up3_int8_pattern_list
             patterns['uint8'] = tf1_15_up3_uint8_pattern_list

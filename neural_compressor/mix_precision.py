@@ -28,10 +28,10 @@ from .utils import logger
 from .conf.dotdict import deep_get, deep_set, DotDict
 from .model.model import BaseModel, get_model_fwk_name, Model, MODELS
 
-class MixedPrecision:
+class _MixedPrecision:
     """Class used for generating low precision model.
 
-    MixedPrecision class automatically generates low precision model across various DL
+    _MixedPrecision class automatically generates low precision model across various DL
     frameworks including tensorflow, pytorch and onnxruntime.
 
     Example::
@@ -127,12 +127,12 @@ class MixedPrecision:
 
     @property
     def precisions(self):
-        """Get private member variable `precisions` of `MixedPrecision` class."""
+        """Get private member variable `precisions` of `_MixedPrecision` class."""
         return self._precisions
 
     @precisions.setter
     def precisions(self, customized_precisions):
-        """Set private member variable `precisions` of `MixedPrecision` class."""
+        """Set private member variable `precisions` of `_MixedPrecision` class."""
         if isinstance(customized_precisions, list):
             self._precisions = sorted([i.strip() for i in customized_precisions])
         elif isinstance(customized_precisions, str):
@@ -222,7 +222,11 @@ class MixedPrecision:
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in cfg.model.framework or cfg.model.framework == "keras":
-                self._model = Model(user_model, backend=cfg.model.framework, device=cfg.device)
+                if get_model_type(user_model) == 'keras':
+                    self._model = Model(user_model, backend=cfg.model.framework,
+                                        device=cfg.device, modelType="saved_model")
+                else:
+                    self._model = Model(user_model, backend=cfg.model.framework, device=cfg.device)
             else:
                 self._model = Model(user_model, backend=cfg.model.framework)
         else:
@@ -358,7 +362,7 @@ def fit(model,
                                               quantization.
 
     Returns:
-        A MixedPrecision object that generates low precision model across various DL frameworks.
+        A _MixedPrecision object that generates low precision model across various DL frameworks.
 
     Raises:
         AssertionError.
@@ -367,11 +371,11 @@ def fit(model,
 
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
-        
+
         conf = MixedPrecisionConfig()
         converted_model = mix_precision.fit(model, config=conf)
     """
-    converter = MixedPrecision(config)
+    converter = _MixedPrecision(config)
     if config.precision in config.excluded_precisions:
         logger.warning("Target precision is in excluded_precisions, "\
             "please modify precision or excluded_precisions to make it understandable.")

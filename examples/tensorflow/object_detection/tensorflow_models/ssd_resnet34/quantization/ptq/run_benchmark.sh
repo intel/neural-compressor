@@ -10,6 +10,8 @@ function main {
 
 # init params
 function init_params {
+  batch_size=32
+  iters=100
   anno_path="./label_map.yaml"
   for var in "$@"
   do
@@ -26,6 +28,12 @@ function init_params {
       --anno_path=*)
           anno_path=$(echo "$var" |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -40,7 +48,9 @@ function run_benchmark {
             --mode ${mode} \
             --dataset_location "${dataset_location}" \
             --anno_path "${anno_path}" \
-            --benchmark
+            --batch_size ${batch_size} \
+            --benchmark \
+            --iters ${iters}
 }
 
 main "$@"
