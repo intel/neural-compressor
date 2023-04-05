@@ -34,11 +34,10 @@ Functions
                  For MXNet model, it's mxnet.symbol.Symbol
                  or gluon.HybirdBlock instance.
    :type model: torch.nn.Module
-   :param conf: The class of QuantizationAwareTrainingConfig
-                and PostTrainingQuantConfig containing accuracy goal,
+   :param conf: The class of PostTrainingQuantConfig containing accuracy goal,
                 tuning objective and preferred calibration &
                 quantization tuning space etc.
-   :type conf: QuantizationAwareTrainingConfig or PostTrainingQuantConfig
+   :type conf: PostTrainingQuantConfig
    :param calib_dataloader: Data loader for calibration, mandatory for
                             post-training quantization. It is iterable
                             and should yield a tuple (input, label) for
@@ -66,7 +65,10 @@ Functions
                           input, label = dataloader()
                           output = model(input)
                           accuracy = metric(output, label)
-                          return accuracy
+                          return accuracy.
+                     The user only needs to set eval_func or
+                     eval_dataloader and eval_metric which is an alternative option
+                     to tune the model accuracy.
    :type eval_func: function, optional
    :param eval_dataloader: Data loader for evaluation. It is iterable
                            and should yield a tuple of (input, label).
@@ -92,9 +94,6 @@ Functions
        from neural_compressor import PostTrainingQuantConfig, set_workspace
        from neural_compressor import quantization
        conf = PostTrainingQuantConfig()
-
-       # saved intermediate files in ./saved folder
-       set_workspace("./saved")
 
        q_model = quantization.fit(model_origin,
                                   conf,

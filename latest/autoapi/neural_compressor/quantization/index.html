@@ -108,8 +108,7 @@ For PyTorch model, it’s torch.nn.model
 instance.
 For MXNet model, it’s mxnet.symbol.Symbol
 or gluon.HybirdBlock instance.</p></li>
-<li><p><strong>conf</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.QuantizationAwareTrainingConfig" title="neural_compressor.config.QuantizationAwareTrainingConfig"><em>QuantizationAwareTrainingConfig</em></a><em> or </em><a class="reference internal" href="../config/index.html#neural_compressor.config.PostTrainingQuantConfig" title="neural_compressor.config.PostTrainingQuantConfig"><em>PostTrainingQuantConfig</em></a>) – The class of QuantizationAwareTrainingConfig
-and PostTrainingQuantConfig containing accuracy goal,
+<li><p><strong>conf</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.PostTrainingQuantConfig" title="neural_compressor.config.PostTrainingQuantConfig"><em>PostTrainingQuantConfig</em></a>) – The class of PostTrainingQuantConfig containing accuracy goal,
 tuning objective and preferred calibration &amp;
 quantization tuning space etc.</p></li>
 <li><p><strong>calib_dataloader</strong> (<em>generator</em>) – Data loader for calibration, mandatory for
@@ -138,8 +137,11 @@ def eval_func(model):</p>
 <div><p>input, label = dataloader()
 output = model(input)
 accuracy = metric(output, label)
-return accuracy</p>
+return accuracy.</p>
 </div></blockquote>
+<p>The user only needs to set eval_func or
+eval_dataloader and eval_metric which is an alternative option
+to tune the model accuracy.</p>
 </p></li>
 <li><p><strong>eval_dataloader</strong> (<em>generator</em><em>, </em><em>optional</em>) – Data loader for evaluation. It is iterable
 and should yield a tuple of (input, label).
@@ -164,9 +166,6 @@ and neural_compressor will initialize this class when evaluation.</p></li>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">set_workspace</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-
-<span class="c1"># saved intermediate files in ./saved folder</span>
-<span class="n">set_workspace</span><span class="p">(</span><span class="s2">&quot;./saved&quot;</span><span class="p">)</span>
 
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model_origin</span><span class="p">,</span>
                            <span class="n">conf</span><span class="p">,</span>

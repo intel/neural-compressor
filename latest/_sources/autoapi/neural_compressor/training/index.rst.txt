@@ -113,16 +113,15 @@ Functions
 
    :param model: The model to optimize.
    :type model: Callable, optional
-   :param confs: Config of Distillation, Quantization, Pruning,
-                 or list of config for orchestration optimization.
-                 The config class is QuantizationAwareTrainingConfig,
-                 PruningConfig, distillationConfig.
+   :param confs: The instance of QuantizationAwareTrainingConfig,
+                 PruningConfig and distillationConfig, or a list of
+                 config for orchestration optimization.
    :type confs: Union[Callable, List]
    :param options: The configure for random_seed, workspace,
                    resume path and tensorboard flag.
    :type options: Options, optional
 
-   :returns: CompressionManager
+   :returns: An object of CompressionManager.
 
    Examples::
 
