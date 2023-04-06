@@ -140,7 +140,7 @@ class ONNXModel(BaseModel):
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
             convert_model_to_external_data(self._model,
                                            all_tensors_to_one_file=True,
-                                           location="weights.pb",
+                                           location="int8_weights.pb",
                                            convert_attribute=False)
         onnx.save(self._model, root)
 
