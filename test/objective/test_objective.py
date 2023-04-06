@@ -165,7 +165,7 @@ def build_fake_model1():
 
 def build_fake_strategy():
     with open(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), \
-              'strategy/fake.py'), 'w', encoding='utf-8') as f:
+              'experimental/strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
@@ -221,7 +221,7 @@ class TestObjective(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_model_size.yaml')
         os.remove('fake_yaml_footprint.yaml')
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'experimental/strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_performance(self):
