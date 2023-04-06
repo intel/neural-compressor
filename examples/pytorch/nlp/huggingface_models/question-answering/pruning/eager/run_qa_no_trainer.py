@@ -970,7 +970,6 @@ def main():
     if not args.do_prune:
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
-    import pdb;pdb.set_trace()
     pruning_configs=[
         {
             "pruning_type": "snip_momentum",

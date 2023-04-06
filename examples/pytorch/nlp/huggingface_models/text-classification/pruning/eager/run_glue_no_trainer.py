@@ -511,7 +511,6 @@ def main():
             "max_sparsity_ratio_per_op": 0.98
         }
     ]
-    # import pdb;pdb.set_trace()
     configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
