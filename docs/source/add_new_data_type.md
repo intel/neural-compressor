@@ -10,7 +10,7 @@ New Data Type
  4. [Others](#others)
 
 ## Introduction
-PyTorch currently does not have native support for quantization with lower than 8-bit, such as 4-bit. However, it is possible to simulate it by setting the `quant_min` and `quant_max` parameters. In addition, INC provides flexibility that allows users to extend its functionality by adding these new data types.
+Currently, deep Learning frameworks such as PyTorch, ONNX, and Tensorflow do not have native support for quantization with lower than 8-bit, such as 4-bit. However, it is possible to simulate it by setting the value ranges of the data type. INC provides flexibility that allows users to extend its functionality by adding these new data types.
 
 This document provides instructions for adding 4-bit quantization to the `Conv2d` operator in the INC PyTorch backend.
 
@@ -51,7 +51,7 @@ The first step in adding a new data type to INC is to define the capabilities of
 
 ### Use the New Data Type
 
-After adding the new data type to INC, it can be used in the same manner as any other data type within the INC. For instance, to specify that all `Conv2d` operators utilize 4-bit quantization, we can follow these steps:
+After adding the new data type to INC, it can be used in the same manner as any other data type within the INC. For instance, to specify that all `Conv2d` operators utilize 4-bit quantization, we can do it as follows:
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig
@@ -66,6 +66,8 @@ op_type_dict = {
     }
 }
 conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
+...
+
 ```
 
 This code specifies quantization rules for all `Conv2d` operators, quantizing their weight with `int4` and their activation with `uint8`.
