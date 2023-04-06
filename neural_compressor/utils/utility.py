@@ -363,7 +363,10 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
     tuning_history = get_tuning_history(tuning_history_path)
     target_history = tuning_history[0]['history']
     q_config = target_history[num]['q_config']
-    framework = tuning_history[0]['cfg']['model']['framework']
+    try:
+        framework = tuning_history[0]['cfg']['model']['framework']
+    except Exception as e:
+        framework = tuning_history[0]['cfg'].quantization.framework
 
     if 'pytorch' in framework:
         from neural_compressor.utils.pytorch import load

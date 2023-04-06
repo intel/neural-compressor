@@ -274,46 +274,76 @@ accuracy_criterion = AccuracyCriterion()
 
 
 class _BaseQuantizationConfig:
-    """Args:
-            inputs: inputs of model
-            outputs: outputs of model
-            backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
-            domain: model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
-                    Adaptor will use specific quantization settings for different domains automatically, and
-                    explicitly specified quantization settings will override the automatic setting.
-                    If users set domain as auto, automatic detection for domain will be executed.
-            recipes: recipes for quantiztaion, support list is as below.
-                     'smooth_quant': whether do smooth quant
-                     'smooth_quant_args': parameters for smooth_quant
-                     'fast_bias_correction': whether do fast bias correction
-                     'weight_correction': whether do weight correction
-                     'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
-                     'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
-                                               only valid for onnx models
-                     'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
-                     'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
-                     'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
-                     'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
-                     'optypes_to_exclude_output_quant': don't quantize output of specified optypes
-                     'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
-            quant_format: support 'default', 'QDQ' and 'QOperator'
-            device: support 'cpu' and 'gpu'
-            calibration_sampling_size: number of calibration sample
-            op_type_dict: tuning constraints on optype-wise
-            op_name_dict: tuning constraints on op-wise
-            strategy: strategy name
-            strategy_kwargs: parameters for strategy
-            objective: objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'
-            timeout: tuning timeout (seconds). default value is 0 which means early stop
-            max_trials: max tune times. default value is 100. Combine with timeout field to decide when to exit
-            performance_only: whether do evaluation
-            reduce_range: whether use 7 bit
-            example_inputs: used to trace PyTorch model with torch.jit/torch.fx
-            excluded_precisions: precisions to be excluded, support 'bf16'
-            quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
-                         strategy, auto (default) is the combination of 0 and 1.
-            accuracy_criterion: accuracy constraint settings
-            use_distributed_tuning: whether use distributed tuning or not
+    """Basic class for quantization config. Inherited by PostTrainingQuantConfig and QuantizationAwareTrainingConfig.
+
+    Args:
+        inputs: Inputs of model, only required in tensorflow.
+        outputs: Outputs of model, only required in tensorflow.
+        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                Adaptor will use specific quantization settings for different domains automatically, and
+                explicitly specified quantization settings will override the automatic setting.
+                If users set domain as auto, automatic detection for domain will be executed.
+        recipes: Recipes for quantiztaion, support list is as below.
+                 'smooth_quant': whether do smooth quant
+                 'smooth_quant_args': parameters for smooth_quant
+                 'fast_bias_correction': whether do fast bias correction
+                 'weight_correction': whether do weight correction
+                 'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                 'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                           only valid for onnx models
+                 'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                 'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                 'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                 'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                 'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+        quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
+        device: Support 'cpu' and 'gpu'.
+        calibration_sampling_size: Number of calibration sample.
+        op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                      User can specify the quantization config by op type:
+                      example:
+                      {
+                          'Conv': {
+                              'weight': {
+                                  'dtype': ['fp32']
+                              },
+                              'activation': {
+                                  'dtype': ['fp32']
+                              }
+                          }
+                      }
+        op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                      User can specify the quantization config by op name:
+                      example:
+                      {
+                          "layer1.0.conv1": {
+                              "activation": {
+                                  "dtype": ["fp32"]
+                              },
+                              "weight": {
+                                  "dtype": ["fp32"]
+                              }
+                          },
+                      }
+        strategy: Strategy name used in tuning, Please refer to docs/source/tuning_strategies.md.
+        strategy_kwargs: Parameters for strategy, Please refer to docs/source/tuning_strategies.md.
+        objective: Objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'.
+                   Please refer to docs/source/objective.md.
+                   Default value is 'performance'.
+        timeout: Tuning timeout (seconds). default value is 0 which means early stop
+        max_trials: Max tune times. default value is 100. Combine with timeout field to decide when to exit
+        performance_only: Whether do evaluation
+        reduce_range: Whether use 7 bit to quantization.
+        example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
+        excluded_precisions: Precisions to be excluded, Default value is empty list.
+                             Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                     strategy, auto (default) is the combination of 0 and 1.
+        accuracy_criterion: Accuracy constraint settings.
+        use_distributed_tuning: Whether use distributed tuning or not.
     """
     def __init__(self,
                  inputs=[],
@@ -338,8 +368,7 @@ class _BaseQuantizationConfig:
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False):
-        """Initialize _BaseQuantizationConfig class.
-        """
+        """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
@@ -398,7 +427,11 @@ class _BaseQuantizationConfig:
                 _check_value("smooth_quant_args", val, dict)
                 for k, v in val.items():
                     if k == "alpha":
-                        _check_value("alpha", v, float)
+                        if isinstance(v, str):
+                            assert v == "auto", "the alpha of sq only supports float and 'auto'"
+                        else:
+                            _check_value("alpha", v, float)
+
                 return True
             else:
                 return {}
@@ -463,7 +496,7 @@ class _BaseQuantizationConfig:
                 return _check_value("dedicated_qdq_pair", val, bool)
             else:
                 return False
-        
+
         RECIPES = {"smooth_quant": smooth_quant,
                    "smooth_quant_args": smooth_quant_args,
                    "fast_bias_correction": fast_bias_correction,
@@ -624,7 +657,7 @@ class _BaseQuantizationConfig:
     def calibration_sampling_size(self, sampling_size):
         if _check_value('calibration_sampling_size', sampling_size, int):
             if isinstance(sampling_size, int):
-                sampling_size =[sampling_size]
+                sampling_size = [sampling_size]
             self._calibration_sampling_size = sampling_size
 
     @property

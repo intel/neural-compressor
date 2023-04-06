@@ -1180,6 +1180,10 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     @approach.setter
     def approach(self, approach):
         """Set approach."""
+        if 'static' in approach:
+            approach = 'static'
+        if 'dynamic' in approach:
+            approach = 'dynamic'
         if _check_value("approach", approach, str, ["static", "dynamic", "auto",\
                                                      "post_training_static_quant"]):
             self._approach = QUANTMAPPING[approach]

@@ -185,6 +185,7 @@ class _PostTrainingQuant:
                     assert cfg.quantization.framework == "pytorch_ipex",\
                           "Please wrap the model with correct Model class!"
                 if cfg.quantization.backend == "itex":
+                    from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
                         assert cfg.quantization.framework == "keras",\
                               "Please wrap the model with KerasModel class!"
@@ -193,15 +194,16 @@ class _PostTrainingQuant:
                             "Please wrap the model with TensorflowModel class!"
             else:
                 framework = get_model_fwk_name(user_model)
-                cfg.quantization.framework = framework
                 if framework == "tensorflow":
+                    from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
-                        cfg.quantization.framework = 'keras'
+                        framework = 'keras'
                 if framework == "pytorch":
                     if cfg.quantization.backend == "default":
-                        cfg.quantization.framework = "pytorch_fx"
+                        framework = "pytorch_fx"
                     elif cfg.quantization.backend == "ipex":
-                        cfg.quantization.framework = "pytorch_ipex"
+                        framework = "pytorch_ipex"
+                cfg.quantization.framework = framework
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
