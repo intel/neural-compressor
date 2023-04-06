@@ -268,20 +268,19 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
 
     Args:
         model (Callable, optional):    The model to optimize.
-        confs (Union[Callable, List]): Config of Distillation, Quantization, Pruning,
-                                       or list of config for orchestration optimization.
-                                       The config class is QuantizationAwareTrainingConfig,
-                                       PruningConfig, distillationConfig.
+        confs (Union[Callable, List]): The instance of QuantizationAwareTrainingConfig,
+                                       PruningConfig and distillationConfig, or a list of
+                                       config for orchestration optimization.
         options (Options, optional):   The configure for random_seed, workspace,
                                        resume path and tensorboard flag.
 
     Returns:
-        CompressionManager
+        An object of CompressionManager.
 
     Examples::
 
         import neural_compressor.training.prepare_compression
-        
+
         compression_manager = prepare_compression(conf, model)
         train_loop:
             compression_manager.on_train_begin()
