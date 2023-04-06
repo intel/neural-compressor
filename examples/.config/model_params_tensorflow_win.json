@@ -1,14 +1,14 @@
 {
     "tensorflow": {
         "inception_v3": {
-            "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
+            "model_src_dir": "image_recognition/tensorflow_models/inception_v3/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
             "input_model": "models/tensorflow/freezed_inceptionv3.pb",
             "main_script": "main.py",
             "batch_size": 100
         },
         "mobilenetv1": {
-            "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
+            "model_src_dir": "image_recognition/tensorflow_models/mobilenet_v1/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
             "input_model": "models/tensorflow/frozen_mobilenet_v1.pb",
             "main_script": "main.py",
