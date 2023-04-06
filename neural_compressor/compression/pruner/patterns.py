@@ -221,7 +221,7 @@ class BasePattern:
         for key in pre_masks.keys():
             pre_mask = pre_masks[key]
             zero_cnt += torch.sum(pre_mask == 0.0).data.item()
-            total_cnt += pre_masks[key].numel()  ##FIXME
+            total_cnt += pre_mask.numel()  ##FIXME
         if return_dict:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
@@ -269,7 +269,7 @@ class BasePattern:
             if self.keep_mask_layers.get(key, False):
                 zero_cnt = self.get_sparsity_ratio({key: masks[key]}, return_dict=True)["zero_cnt"]
                 to_prune_cnt -= zero_cnt
-
+                
         return to_prune_cnt
 
     def get_sparsity_ratio_each_layer(self, masks):
@@ -627,19 +627,23 @@ class PatternNxM(BasePattern):
         ##keep the masks if the layer exceed max sparsity ratio
 
         masks = pre_masks
-
         k_blockwise = self.update_residual_cnt(masks, cur_target_sparsity_ratio)
         if k_blockwise <= 0:
             return masks
         new_scores = scores if self.block else self.reduce_scores(scores)
-        global_scores = torch.cat([torch.flatten(v) for v in new_scores.values()])
+        not_exceed_layers = []
         residual_k = k_blockwise
-        not_exceed_layers = [key for key in new_scores.keys()]
         if self.min_sparsity_ratio_per_op > 0:
             sparsity_infos_perlayer, _ = self.get_sparsity_ratio_each_layer(masks)
 
         while True:
+            new_not_exceed_layers = [key for key in new_scores.keys() if not self.keep_mask_layers.get(key, False)]
+            if not_exceed_layers == new_not_exceed_layers or len(new_not_exceed_layers) == 0:
+                break
+            not_exceed_layers = new_not_exceed_layers
+            global_scores = torch.cat([torch.flatten(new_scores[key]) for key in not_exceed_layers])
             threshold, _ = torch.kthvalue(global_scores, residual_k)
+            
             for key in not_exceed_layers:
                 block_size = self.block_size[key]
                 score = new_scores[key]
@@ -666,11 +670,6 @@ class PatternNxM(BasePattern):
                     masks[key] = mask
             if not keep_exact_sparsity_ratio:
                 break
-            new_not_exceed_layers = [key for key in new_scores.keys() if not self.keep_mask_layers.get(key, False)]
-            if not_exceed_layers == new_not_exceed_layers or len(new_not_exceed_layers) == 0:
-                break
-            not_exceed_layers = new_not_exceed_layers
-            global_scores = torch.cat([torch.flatten(new_scores[key]) for key in not_exceed_layers])
 
         for key in masks.keys():
             if key in self.invalid_layers:
