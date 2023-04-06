@@ -586,6 +586,20 @@
       "batch_size": 1,
       "main_script": "eval_lambada.py"
     },
+    "opt-30b_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
+      "dataset_location": "",
+      "input_model": "facebook/opt-30b",
+      "batch_size": 1,
+      "main_script": "eval_lambada.py"
+    },
+    "opt-6.7b_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
+      "dataset_location": "",
+      "input_model": "facebook/opt-6.7b",
+      "batch_size": 1,
+      "main_script": "eval_lambada.py"
+    },
     "wide_resnet101_2_fx": {
       "model_src_dir": "oob_models/gen-efficientnet-pytorch",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
