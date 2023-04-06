@@ -39,6 +39,9 @@ from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, generate_pruner_config, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
+# model auto slim related
+from .pruner.pruners import model_slim
+from .pruner.utils import parse_auto_slim_config
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 

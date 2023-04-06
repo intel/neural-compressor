@@ -471,6 +471,11 @@ class ONNXModel(BaseModel):
 
     def get_nodes_chain(self, start_node, stop_node, result_chain=[]):
         """Get nodes chain with given start node and stop node."""
+        from collections import deque
+        if not all([isinstance(node, str) for node in start_node]):
+            start_node = deque([node.name for node in start_node])
+        if not all([isinstance(node, str) for node in stop_node]):
+            stop_node = [node.name for node in stop_node]
         while start_node:
             node_name = start_node.popleft()
             if node_name in stop_node:

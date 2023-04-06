@@ -29,18 +29,6 @@ python -m tf2onnx.convert --graphdef $MODEL/frozen_inference_graph.pb --output .
 
 Download [MS COCO 2017 dataset](https://cocodataset.org/#download).
 
-Dataset directories:
-
-```bash
-coco2017
-├── annotations
-|       ├── instances_val2017.json
-|       └── ...
-├── test2017
-├── train2017
-└── val2017
-```
-
 # Run
 
 ## 1. Quantization
@@ -50,7 +38,7 @@ Static quantization with QOperator format:
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
-                   --dataset_location=path/to/coco2017 \ # dataset path containing 'val2017' and 'annotations' folders
+                   --dataset_location=path/to/val2017 \
                    --quant_format="QOperator"
 ```
 
@@ -59,7 +47,7 @@ Static quantization with QDQ format:
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
-                   --dataset_location=path/to/coco2017 \ # dataset path containing 'val2017' and 'annotations' folders
+                   --dataset_location=path/to/val2017 \
                    --quant_format="QDQ"
 ```
 
@@ -67,6 +55,6 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model  \ # model path as *.onnx
-                      --dataset_location=path/to/coco2017 \ # dataset path containing 'val2017' and 'annotations' folders
+                      --dataset_location=path/to/val2017 \
                       --mode=performance # or accuracy
 ```

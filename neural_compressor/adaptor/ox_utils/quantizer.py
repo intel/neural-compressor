@@ -437,8 +437,8 @@ class Quantizer:
             if data_found == False:
                 raise ValueError(
                     "Quantization parameters are not specified for param {}."
-                    "In static mode quantization params for inputs and outputs \
-                    of nodes to be quantized are required.".format(tensor_name))
+                    "In static mode quantization params for inputs and outputs "
+                    "of nodes to be quantized are required.".format(tensor_name))
 
             node.output[idx] = tensor_name + "_QuantizeInput"
             q_input = node.output[idx]
@@ -540,8 +540,8 @@ class Quantizer:
                     if data_found == False:
                         raise ValueError(
                             "Quantization parameters are not specified for param {}."
-                            "In static mode quantization params for inputs and outputs \
-                            of nodes to be quantized are required.".format(tensor_name))
+                            "In static mode quantization params for inputs and outputs "
+                            "of nodes to be quantized are required.".format(tensor_name))
                     if direct_int8:
                         if node.input[0] not in self.quantized_value_map:
                             return
@@ -970,8 +970,8 @@ class Quantizer:
                if data_found == False:
                    raise ValueError(
                        "Quantization parameters are not specified for param {}."
-                       "In static mode quantization params for inputs and outputs \
-                       of nodes to be quantized are required.".format(value_name))
+                       "In static mode quantization params for inputs and outputs "
+                       "of nodes to be quantized are required.".format(value_name))
             dqlinear_name = value_name + "_DequantizeLinear"
             dqlinear_inputs = [value_name + '_quantized',
                                scale_name,

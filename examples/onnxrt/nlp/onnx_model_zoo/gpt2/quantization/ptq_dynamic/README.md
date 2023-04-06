@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 
 Use `export.py` script for ONNX model conversion.
-Require torch==1.10.2 and transformers==3.2.0.
+Require transformers==3.2.0.
 
 ```shell
 python export.py

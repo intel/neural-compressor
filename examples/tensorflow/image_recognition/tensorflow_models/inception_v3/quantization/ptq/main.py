@@ -111,7 +111,9 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
+            op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {
+               'activation':  {'dtype': ['fp32']}}}
+            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100], op_name_dict=op_name_dict)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader)
             q_model.save(args.output_graph)

@@ -315,7 +315,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                         if key[1] in ['Embedding', 'EmbeddingBag']:
                             qconfig = torch.quantization.float_qparams_weight_only_qconfig
                         else:
-                            qconfig = torch.quantization.default_dynamic_qconfig
+                            qconfig = torch.quantization.per_channel_dynamic_qconfig
                     else:
                         qconfig = torch.quantization.QConfigDynamic(
                                 activation=activation_observer, weight=weights_observer)
@@ -332,7 +332,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                     if key[1] in ['Embedding', 'EmbeddingBag']:
                         qconfig = torch.quantization.float_qparams_weight_only_qconfig
                     else:
-                        qconfig = torch.quantization.default_dynamic_qconfig
+                        qconfig = torch.quantization.per_channel_dynamic_qconfig
                 else:
                     qconfig = torch.quantization.QConfigDynamic(activation=activation_observer,
                                                                 weight=weights_observer)
@@ -434,6 +434,7 @@ def _observer(algorithm,
     Returns:
         oberser (object)
     """
+    from .torch_utils.util import match_datatype_pattern, calculate_quant_min_max, _get_signed_and_bits
     if observer_type == 'post_training_dynamic_quant' and \
                 get_torch_version().release >= Version("1.6.0").release:
         return torch.quantization.default_dynamic_quant_observer
@@ -444,16 +445,27 @@ def _observer(algorithm,
     else:  # pragma: no cover
         assert False, "Unsupport compute_dtype with {}".format(compute_dtype)
 
+    quant_min, quant_max = None, None 
     dtype_dict = {'int8': torch.qint8, 'uint8': torch.quint8, 'fp32': torch.float}
     if dtype in dtype_dict:
-        dtype = dtype_dict[dtype]
+        torch_dtype = dtype_dict[dtype]
     else:  # pragma: no cover
-        assert False, "Unsupport dtype with {}".format(dtype)
+        #TODO to handle int4
+        if match_datatype_pattern(dtype):
+            logger.info((f"Currently, PyTorch does not natively support {dtype},"+ \
+                f"it will simulate its numerics instead."))
+            unsigned, num_bits = _get_signed_and_bits(dtype)
+            torch_dtype = torch.quint8 if unsigned else torch.qint8
+            quant_min, quant_max = calculate_quant_min_max(unsigned, num_bits)
+            logger.info((f"For {dtype}, replace it with {torch_dtype} and " + \
+                f"set quant_min: {quant_min}, quant_max: {quant_max}"))
+        else:
+            assert False, "Unsupport dtype with {}".format(dtype)
 
-    if algorithm == 'placeholder' or dtype == torch.float:  # pragma: no cover
+    if algorithm == 'placeholder' or torch_dtype == torch.float:  # pragma: no cover
         return torch.quantization.PlaceholderObserver \
             if get_torch_version().release < Version("1.8.0").release \
-                else torch.quantization.PlaceholderObserver.with_args(dtype=dtype,
+                else torch.quantization.PlaceholderObserver.with_args(dtype=torch_dtype,
                                                                       compute_dtype=compute_dtype)
     if algorithm == 'minmax':
         if granularity == 'per_channel':
@@ -483,8 +495,10 @@ def _observer(algorithm,
             qscheme = torch.per_tensor_affine
 
     return observer.with_args(qscheme=qscheme,
-                              dtype=dtype,
-                              reduce_range=(REDUCE_RANGE and scheme == 'asym'))
+                              dtype=torch_dtype,
+                              reduce_range=(REDUCE_RANGE and scheme == 'asym'),
+                              quant_min=quant_min,
+                              quant_max=quant_max)
 
 
 def _fake_quantize(algorithm, scheme, granularity, dtype, compute_dtype='uint8'):
@@ -1028,67 +1042,104 @@ class TemplateAdaptor(Adaptor):
         tmp_model.eval()
         quantizable_ops = []
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        capability = self.query_handler.get_quantization_capability()['dynamic'] \
-            if self.approach == "post_training_dynamic_quant" else \
-            self.query_handler.get_quantization_capability()['quant_aware'] \
-            if self.approach == "quant_aware_training" else \
-            self.query_handler.get_quantization_capability()['static']
-
+        # capability = self.query_handler.get_quantization_capability()['dynamic'] \
+        #     if self.approach == "post_training_dynamic_quant" else \
+        #     self.query_handler.get_quantization_capability()['quant_aware'] \
+        #     if self.approach == "quant_aware_training" else \
+        #     self.query_handler.get_quantization_capability()['static']
+        
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
+        quant_datatypes = self.query_handler.get_quant_datatypes()
 
-        if self.approach == "post_training_dynamic_quant":
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
-        elif self.approach == "quant_aware_training":
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
-        elif self.approach == "post_training_static_quant":
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['static'], 'static')]
+        if self.approach == "quant_aware_training":
+            capability_pair = [(self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
+            fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
+            # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
+            # due to huge accuracy regression in PyTorch.
+            if isinstance(self, PyTorch_IPEXAdaptor):
+                additional_skipped_module_classes = {}
+            else:
+                additional_skipped_module_classes = {'LayerNorm', 'InstanceNorm3d', 'Dropout'}
+            no_fp32_ops = {'QuantStub'}
+            for pair in capability_pair:
+                capability, mode = pair
+                for q_op in quantizable_ops:
+                    if q_op not in q_capability['opwise']:
+                        q_capability['opwise'][q_op] = []
+                    if q_op[1] not in q_capability['optypewise']:
+                        q_capability['optypewise'][q_op[1]] = []
+
+                    op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
+                        else copy.deepcopy(capability['default'])
+
+                    op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
+                        ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
+
+                    # skip the op that only include fp32
+                    if q_op[1] not in additional_skipped_module_classes:
+                        if op_cfg not in q_capability['opwise'][q_op]:
+                            q_capability['opwise'][q_op].append(op_cfg)
+                        if op_cfg not in q_capability['optypewise'][q_op[1]]:
+                            q_capability['optypewise'][q_op[1]].append(op_cfg)
+
+                    if q_op[1] not in no_fp32_ops:
+                        if fp32_config not in q_capability['opwise'][q_op]:
+                            q_capability['opwise'][q_op].append(fp32_config)
+                        if fp32_config not in q_capability['optypewise'][q_op[1]]:
+                            q_capability['optypewise'][q_op[1]].append(fp32_config)
         else:
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['static'], 'static'),
-                (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
-        fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
-        # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
-        # due to huge accuracy regression in PyTorch.
-        if isinstance(self, PyTorch_IPEXAdaptor):
-            additional_skipped_module_classes = {}
-        else:
-            additional_skipped_module_classes = {'LayerNorm', 'InstanceNorm3d', 'Dropout'}
-        no_fp32_ops = {'QuantStub'}
-        for pair in capability_pair:
-            capability, mode = pair
-            for q_op in quantizable_ops:
-                if q_op not in q_capability['opwise']:
-                    q_capability['opwise'][q_op] = []
-                if q_op[1] not in q_capability['optypewise']:
-                    q_capability['optypewise'][q_op[1]] = []
+            for datatype in quant_datatypes:
+                if self.approach == "post_training_dynamic_quant":
+                    capability_pair = [
+                        (self.query_handler.get_quantization_capability(datatype).get('dynamic', {}), 'dynamic')]
+                elif self.approach == "post_training_static_quant":
+                    capability_pair = [
+                        (self.query_handler.get_quantization_capability(datatype).get('static', {}), 'static')]
+                else:
+                    capability_pair = [
+                        (self.query_handler.get_quantization_capability(datatype).get('static', {}), 'static'),
+                        (self.query_handler.get_quantization_capability(datatype).get('dynamic', {}), 'dynamic')]
 
-                if mode == 'static' and self.approach != "quant_aware_training" and \
-                    q_op[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
-                    continue
-                op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
-                    else copy.deepcopy(capability['default'])
+                fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
+                # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
+                # due to huge accuracy regression in PyTorch.
+                if isinstance(self, PyTorch_IPEXAdaptor):
+                    additional_skipped_module_classes = {}
+                else:
+                    additional_skipped_module_classes = {'LayerNorm', 'InstanceNorm3d', 'Dropout'}
+                no_fp32_ops = {'QuantStub'}
+                for pair in capability_pair:
+                    capability, mode = pair
+                    for q_op in quantizable_ops:
+                        op_cfg = None
+                        if q_op not in q_capability['opwise']:
+                            q_capability['opwise'][q_op] = []
+                        if q_op[1] not in q_capability['optypewise']:
+                            q_capability['optypewise'][q_op[1]] = []
 
-                op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
-                    ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
+                        if mode == 'static' and q_op[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
+                            continue
 
-                # skip the op that only include fp32
-                if q_op[1] not in additional_skipped_module_classes:
-                    if op_cfg not in q_capability['opwise'][q_op]:
-                        q_capability['opwise'][q_op].append(op_cfg)
-                    if op_cfg not in q_capability['optypewise'][q_op[1]]:
-                        q_capability['optypewise'][q_op[1]].append(op_cfg)
+                        op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
+                            else copy.deepcopy(capability.get('default', fp32_config))
 
-                if q_op[1] not in no_fp32_ops:
-                    if fp32_config not in q_capability['opwise'][q_op]:
-                        q_capability['opwise'][q_op].append(fp32_config)
-                    if fp32_config not in q_capability['optypewise'][q_op[1]]:
-                        q_capability['optypewise'][q_op[1]].append(fp32_config)
+                        op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
+                            ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
 
+                        # skip the op that only include fp32
+                        if q_op[1] not in additional_skipped_module_classes:
+                            if op_cfg not in q_capability['opwise'][q_op]:
+                                q_capability['opwise'][q_op].append(op_cfg)
+                            if op_cfg not in q_capability['optypewise'][q_op[1]]:
+                                q_capability['optypewise'][q_op[1]].append(op_cfg)
+
+                        if q_op[1] not in no_fp32_ops:
+                            if fp32_config not in q_capability['opwise'][q_op]:
+                                q_capability['opwise'][q_op].append(fp32_config)
+                            if fp32_config not in q_capability['optypewise'][q_op[1]]:
+                                q_capability['optypewise'][q_op[1]].append(fp32_config)
 
         # get bf16 capability
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
@@ -1098,7 +1149,6 @@ class TemplateAdaptor(Adaptor):
             self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
             mixed_capability = self._combine_capability(bf16_ops, q_capability)
             return mixed_capability
-
         return q_capability
 
     def _get_bf16_ops_recursively(self, model, prefix, bf16_ops):
@@ -3910,14 +3960,31 @@ class PyTorchQuery(QueryBackendCapability):
         if pytorch_config.precisions is not None:
             self.cur_config['precisions']['names'] = ','.join(pytorch_config.precisions)
 
-    def get_quantization_capability(self):
+    def get_quantization_capability(self, datatype='int8'):
         """Get the supported op types' quantization capability.
+
+        Args:
+            datatype: the data type. Defaults to 'int8'.
 
         Returns:
             [dictionary list]: A list composed of dictionary which key is precision
             and value is a dict that describes all op types' quantization capability.
         """
-        return self.cur_config['int8']
+        assert datatype in self.get_quant_datatypes(), \
+            f"The target data type should be one of {self.get_quant_datatypes()}"
+        return self.cur_config[datatype]
+
+    def get_quant_datatypes(self):
+        """Got low-precision data types for quantization.
+        
+        Collects all data types for quantization, such as int8, int4.
+        """
+        # TODO to handle other data types such FP8, FP8E4M3
+        datatype_lst = []
+        for key in self.cur_config:
+            if key.startswith('int'):
+                datatype_lst.append(key)
+        return datatype_lst
 
     def get_op_types(self):
         """Get the supported op types by all precisions.
