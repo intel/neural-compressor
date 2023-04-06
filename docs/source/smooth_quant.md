@@ -24,7 +24,7 @@ $$
 
 where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
 
-### Per-tenor & Per-channel
+### Per-tensor & Per-channel
 
 There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual parameter.
 
