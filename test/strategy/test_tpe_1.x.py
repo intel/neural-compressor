@@ -129,7 +129,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.fit()
 
     def test_loss_calculation(self):
-        from neural_compressor.contrib.strategy.tpe import TpeTuneStrategy
+        from neural_compressor.experimental.contrib.strategy.tpe import TpeTuneStrategy
         from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')

@@ -21,7 +21,7 @@ class TestConfig(unittest.TestCase):
 
 class TestPyConf(unittest.TestCase):
     def test_config(self):
-        from neural_compressor import conf
+        from neural_compressor.conf.config import conf
         from neural_compressor.conf.config import QuantConf, PruningConf, \
             GraphOptConf, BenchmarkConf, DistillationConf
         
