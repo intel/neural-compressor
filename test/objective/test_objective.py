@@ -282,7 +282,7 @@ class TestObjs(unittest.TestCase):
         
         model = build_matmul_model()
         
-        from neural_compressor import conf
+        from neural_compressor.conf.config import conf
         from neural_compressor.experimental import Quantization
         
         conf.model.framework = 'onnxrt_integerops'
