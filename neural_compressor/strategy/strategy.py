@@ -1049,17 +1049,18 @@ class TuneStrategy(object):
         self.higher_is_better = bool(self.conf.quantization.accuracy_criterion.higher_is_better)
         obj_higher_is_better = None
         obj_weight = None
-        if self.conf.quantization.tuning_criterion.multi_objectives:
-            obj_higher_is_better = self.conf.quantization.tuning_criterion\
-                .multi_objectives.get('higher_is_better', None)
-            obj_weight = self.conf.quantization.tuning_criterion.multi_objectives.get('weight', None)
-        obj_lst = self.conf.quantization.tuning_criterion.multi_objectives.get('objective', [])
-        self.use_multi_objective = len(obj_lst) > 0
-        if self.use_multi_objective:
+        obj = self.conf.quantization.tuning_criterion.objective
+        use_multi_objs = isinstance(obj, dict)
+        self.use_multi_objective = False
+        if use_multi_objs:
+            obj_higher_is_better = obj.get('higher_is_better', None)
+            obj_weight = obj.get('weight', None)
+            obj_lst = obj.get('objective', [])
             objectives = [i.lower() for i in obj_lst]
+            self.use_multi_objective = True
         else:
-            objectives = [self.conf.quantization.tuning_criterion.objective.lower()]
-
+            objectives = [obj.lower()]
+            
         # set metric
         self.metric_name = ['Accuracy']
         self.metric_criterion = [self.higher_is_better]
