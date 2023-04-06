@@ -2638,7 +2638,10 @@ class TFModelZooCollectTransform(CollectTransform):
     def __call__(self, sample):
         """Collect postprocess data."""
         all_results, label = sample
-        all_results = zip(all_results[0], all_results[1])
+        if len(all_results) == 1:
+            all_results = all_results[0]
+        else:
+            all_results = zip(all_results[0], all_results[1])
         for start_logits, end_logits in all_results:
             if len(self.unique_id) < self.length:
                 self.unique_id.append(self.idx)
