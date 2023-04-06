@@ -458,14 +458,20 @@ def fit(model,
     Example::
 
         # Quantization code for PTQ
-        from neural_compressor import PostTrainingQuantConfig, set_workspace
+        from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig()
+        def eval_func(model):
+            for input, label in dataloader:
+                output = model(input)
+                metric.update(output, label)
+            accuracy = metric.result()
+            return accuracy
 
+        conf = PostTrainingQuantConfig()
         q_model = quantization.fit(model_origin,
                                    conf,
                                    calib_dataloader=dataloader,
-                                   calib_func=eval_func)
+                                   eval_func=eval_func)
 
         # Saved quantized model in ./saved folder
         q_model.save("./saved")
