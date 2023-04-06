@@ -395,6 +395,18 @@ def process_config(config):
     else:
         assert False, f"not supported type {config}"
 
+def parse_last_linear(model):
+    """Locate the last linear layers of the model.
+    While pruning, the final linear often acts like classifier head, which might cause
+    accuracy drop.
+
+    Args:
+        model: The model to be pruned.
+    """
+    from .model_slim.pattern_analyzer import ClassifierHeadSearcher
+    searcher = ClassifierHeadSearcher(model)
+    layer = searcher.search(return_name = True)
+    return layer
 
 def parse_to_prune(config, model):
     """Keep target pruned layers.
@@ -404,6 +416,9 @@ def parse_to_prune(config, model):
         model: The model to be pruned.
     """
     modules = {}
+    classifier_head_name = parse_last_linear(model)
+    if classifier_head_name != None:
+        config["excluded_op_names"].append(classifier_head_name)
     if config["op_names"] == None or config["op_names"] == []:
         config["op_names"] = [".*"]
     for raw in config["op_names"]:

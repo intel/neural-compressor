@@ -970,12 +970,13 @@ def main():
     if not args.do_prune:
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
+    import pdb;pdb.set_trace()
     pruning_configs=[
         {
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
+            "excluded_op_names": ["pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }

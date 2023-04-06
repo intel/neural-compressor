@@ -327,6 +327,7 @@ def main():
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
         )
+    
     # Preprocessing the datasets
     if args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[args.task_name]
@@ -505,11 +506,12 @@ def main():
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "excluded_op_names": ["classifier", "pooler", ".*embeddings*"],
+            "excluded_op_names": ["pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }
     ]
+    # import pdb;pdb.set_trace()
     configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
