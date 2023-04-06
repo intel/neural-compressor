@@ -46,7 +46,7 @@ The first step in adding a new data type to INC is to define the capabilities of
   ...
 
 ```
-
+> Note: more details about the framework YAML can be found [here](./framework_yaml.md).
 
 
 ### Use the New Data Type
@@ -70,7 +70,7 @@ conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
 
 ```
 
-This code specifies quantization rules for all `Conv2d` operators, quantizing their weight with `int4` and their activation with `uint8`.
+This code specifies quantization rules for all `Conv2d` operators, quantizing their weight with `int4` and their activation with `uint4`.
 
 
 
