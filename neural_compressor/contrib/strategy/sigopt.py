@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -124,9 +123,10 @@ class SigOptTuneStrategy(TuneStrategy):
         else:
             pass
         # SigOpt init
-        client_token = conf.usr_cfg.tuning.strategy.sigopt_api_token
-        self.project_id = conf.usr_cfg.tuning.strategy.sigopt_project_id
-        self.experiment_name = conf.usr_cfg.tuning.strategy.sigopt_experiment_name
+        strategy_kwargs = conf.quantization.tuning_criterion.strategy_kwargs
+        client_token = strategy_kwargs.get('sigopt_api_token', None)
+        self.project_id = strategy_kwargs.get('sigopt_project_id', None)
+        self.experiment_name = strategy_kwargs.get('sigopt_experiment_name', None)
         try:
             assert client_token != None
         except(AssertionError):

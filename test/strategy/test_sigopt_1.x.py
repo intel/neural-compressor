@@ -5,7 +5,7 @@ import shutil
 import os
 import yaml
 if os.getenv('SIGOPT_API_TOKEN') is None or os.getenv('SIGOPT_PROJECT_ID') is None:
-    CONDITION = True
+    CONDITION = False
 else:
     CONDITION = False
 
@@ -140,27 +140,6 @@ class TestSigoptTuningStrategy(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
         quantizer.fit()
-        
-    def test_run_sigopt_one_trial_new_api(self):
-        from neural_compressor.quantization import fit
-        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
-        from neural_compressor.data import Datasets, DATALOADERS
-        
-        # dataset and dataloader
-        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
-        dataloader = DATALOADERS["tensorflow"](dataset)
-        
-        # tuning and accuracy criterion
-        accuracy_criterion = AccuracyCriterion(criterion='relative')
-        strategy_kwargs = {'sigopt_api_token': 'sigopt_api_token_test', 
-                           'sigopt_project_id': 'sigopt_project_id_test',
-                           'sigopt_experiment_name': 'nc-tune'}
-        tuning_criterion = TuningCriterion(strategy='sigopt', strategy_kwargs=strategy_kwargs, max_trials=3)
-        conf = PostTrainingQuantConfig(approach="static", 
-                                       tuning_criterion=tuning_criterion,
-                                       accuracy_criterion=accuracy_criterion)
-        self.assertEqual(conf.strategy_kwargs, strategy_kwargs)
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
 
 
 if __name__ == "__main__":
