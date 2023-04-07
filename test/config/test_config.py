@@ -69,7 +69,6 @@ class TestPyConf(unittest.TestCase):
         self.assertEqual(a.usr_cfg.graph_optimization.op_wise, {'weight': {'dtype': ['bf16']}, 'activation': {'dtype': ['bf16']}})
 
         conf.distillation.train.iteration = 900
-        import pdb; pdb.set_trace()
         a = DistillationConf(conf)
         self.assertEqual(a.usr_cfg.distillation.train.iteration, 900)
 
