@@ -81,8 +81,15 @@ class TuneStrategy(object):
     def _check_tuning_status(self):
         if self.eval_func:
             self._not_tuning = False
+            logger.info("Execute the tuning process due to detect the evaluation function.")
         if self.eval_dataloader and self.eval_metric:
             self._not_tuning = False
+            logger.info("Create evaluation function according to evaluation dataloader and metric\
+                and Execute the tuning process.")
+        if self._not_tuning:
+            logger.info("Quantize the model with default configuration without evaluating the model.\
+                To perform the tuning process, please either provide an eval_func or provide an\
+                    eval_dataloader an eval_metric.")
         
     def __init__(self,
                  model,
@@ -681,8 +688,8 @@ class TuneStrategy(object):
     def _eval_baseline(self):
         """Evaluate the fp32 model if needed."""
         if self._not_tuning:
-            logger.info("Neither evaluation function nor metric and evaluation dataloader is defined." \
-                        " Generate a quantized model with default quantization configuration.")
+            
+            logger.info("Do not evaluate the baseline and quantize the model with default configuration.")
             return
         else:
             # get fp32 model baseline
