@@ -586,3 +586,75 @@ def dump_class_attrs(obj, result = {}):
             else:
                 attr = attr[1:] if attr.startswith('_') else attr
                 result[obj_name][attr] = value
+                
+                
+                
+
+class DotDict(dict):
+    """access yaml using attributes instead of using the dictionary notation.
+
+    Args:
+        value (dict): The dict object to access.
+
+    """
+
+    def __init__(self, value=None):
+        if value is None:
+            pass
+        elif isinstance(value, dict):
+            for key in value:
+                self.__setitem__(key, value[key])
+        else:
+            raise TypeError('expected dict')
+
+    def __getitem__(self, key):
+        value = self.get(key, None)
+        return value
+
+    def __setitem__(self, key, value):
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            value = DotDict(value)
+        if isinstance(value, list) and len(value) == 1 and isinstance(
+                value[0], dict):
+            value = DotDict(value[0])
+        if isinstance(value, list) and len(value) > 1 and all(isinstance(
+                v, dict) for v in value):
+            value = DotDict({k: v for d in value for k, v in d.items()})
+        super(DotDict, self).__setitem__(key, value)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+
+    __setattr__, __getattr__ = __setitem__, __getitem__
+
+
+
+def compare_objects(obj1, obj2, ignore_attrs):
+    """
+    Compare two objects and ignore the specified attributes.
+
+    Args:
+        obj1: The first object to compare.
+        obj2: The second object to compare.
+        ignore_attrs: A list of attribute names to ignore during the comparison.
+
+    Returns:
+        True if the objects are equal ignoring the specified attributes, False otherwise.
+    """
+
+    # Check if the objects are of the same type
+    if type(obj1) != type(obj2):
+        return False
+
+    # Check if the objects have the same set of attributes
+    attrs1 = set(obj1.__dict__.keys())
+    attrs2 = set(obj2.__dict__.keys())
+    if attrs1 != attrs2:
+        return False
+    # Compare the attributes, ignoring the specified ones
+    for attr in attrs1 - set(ignore_attrs):
+        if getattr(obj1, attr) != getattr(obj2, attr):
+            return False

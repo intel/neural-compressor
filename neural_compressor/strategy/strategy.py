@@ -27,20 +27,18 @@ from collections import OrderedDict, defaultdict
 from pathlib import Path
 import yaml
 import numpy as np
-from typing import OrderedDict as T_OrderedDict
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from neural_compressor.config import PostTrainingQuantConfig
 from ..config import MixedPrecisionConfig
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
-from ..utils.utility import Statistics, dump_data_to_local
-from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
-from ..utils.create_obj_from_config import create_eval_func, create_train_func
+from ..utils.utility import Statistics
+from ..utils.utility import fault_tolerant_file, GLOBAL_STATE, MODE
+from ..utils.create_obj_from_config import create_eval_func
 from ..utils.utility import LazyImport
 from ..utils import logger
 from ..version import __version__
-from ..conf.dotdict import DotDict, deep_get, deep_set
+from ..utils.utility import DotDict
 from ..algorithm import AlgorithmScheduler, ALGORITHMS
 
 import copy
@@ -83,8 +81,15 @@ class TuneStrategy(object):
     def _check_tuning_status(self):
         if self.eval_func:
             self._not_tuning = False
+            logger.info("Execute the tuning process due to detect the evaluation function.")
         if self.eval_dataloader and self.eval_metric:
             self._not_tuning = False
+            logger.info("Create evaluation function according to evaluation dataloader and metric\
+                and Execute the tuning process.")
+        if self._not_tuning:
+            logger.info("Quantize the model with default configuration without evaluating the model.\
+                To perform the tuning process, please either provide an eval_func or provide an\
+                    eval_dataloader an eval_metric.")
         
     def __init__(self,
                  model,
@@ -683,8 +688,8 @@ class TuneStrategy(object):
     def _eval_baseline(self):
         """Evaluate the fp32 model if needed."""
         if self._not_tuning:
-            logger.info("Neither evaluation function nor metric and evaluation dataloader is defined." \
-                        " Generate a quantized model with default quantization configuration.")
+            
+            logger.info("Do not evaluate the baseline and quantize the model with default configuration.")
             return
         else:
             # get fp32 model baseline
@@ -954,7 +959,7 @@ class TuneStrategy(object):
         """
         self.__dict__.update(resume)
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.conf):
+            if self._same_conf(history['cfg'], self.conf):
                 self.__dict__.update({k: v for k, v in history.items() \
                                         if k not in ['version', 'history']})
                 logger.info("Start to resume tuning process.")
@@ -1005,7 +1010,6 @@ class TuneStrategy(object):
                 if item not in framework_specific_info['recipes']:
                     framework_specific_info['recipes'].update({item: True})
             if self.conf.quantization.backend == 'itex':
-                #TODO replace it with when config ready
                 framework = 'tensorflow_itex'
         if 'keras' in framework:
             framework_specific_info.update({
@@ -1092,23 +1096,11 @@ class TuneStrategy(object):
                                          metric_weight=self.metric_weight,
                                          obj_criterion=obj_higher_is_better,
                                          obj_weight=obj_weight)
-
-    def _same_yaml(self, src_yaml, dst_yaml):
-        """Check if the two yamls are the same.
-        
-        The check will exclude those keys which do not really impact the tuning result, such as 
-        tensorboard, workspace, resume options under the tuning section of YAML.
-        """
-        return False
-        # TODO rewrite the compare method for new API
-        if equal_dicts(src_yaml, dst_yaml, ignore_keys=['tuning']) and \
-           equal_dicts(src_yaml.tuning, src_yaml.tuning, compare_keys=['objective',
-                                                                       'accuracy_criterion',
-                                                                       'random_seed',
-                                                                       'exit_policy']):
-            return True
-
-        return False
+    
+    def _same_conf(self, src_conf, dst_conf):
+        """Check if the two configs are the same."""
+        from ..utils.utility import compare_objects
+        return compare_objects(src_conf, dst_conf, {'_options', '_tuning', '_accuracy'})
 
     def update_best_op_tuning_cfg(self, op_tuning_cfg):
         """Track and update the best tuning config with correspondence accuracy result.
@@ -1143,7 +1135,6 @@ class TuneStrategy(object):
 
     def deploy_config(self):
         """Save the configuration locally for deployment."""
-        # TODO need to double check 
         self.deploy_cfg = OrderedDict()
         model_cfg = dict()
         model_cfg['inputs'] = self.conf.quantization.inputs
@@ -1425,7 +1416,7 @@ class TuneStrategy(object):
             pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def _find_tuning_history(self, tune_cfg):
-        """Check if the specified tune_cfg is evaluated or not on same yaml config.
+        """Check if the specified tune_cfg is evaluated or not on same config.
 
         Args:
             tune_cfg (dict): The tune_cfg to check if evaluated before.
@@ -1434,10 +1425,9 @@ class TuneStrategy(object):
             tuning_history or None: The tuning history containing evaluated tune_cfg.
         """
         for tuning_history in self.tuning_history:
-            # only check if a tune_cfg is evaluated under same yam config, excluding
-            # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
-            # TODO double check
-            if self._same_yaml(tuning_history['cfg'], self.conf):
+            # only check if a tune_cfg is evaluated under same config, excluding
+            # some fields in tuning section of config, such as tensorboard, snapshot, resume.
+            if self._same_conf(tuning_history['cfg'], self.conf):
                 for history in tuning_history['history']:
                     if history and history['tune_cfg'] == tune_cfg:
                         return tuning_history
@@ -1445,16 +1435,15 @@ class TuneStrategy(object):
         return None
 
     def _find_history(self, tune_cfg):
-        """Check if the specified tune_cfg is evaluated or not on same yaml config.
+        """Check if the specified tune_cfg is evaluated or not on same config.
 
         Returns:
             history or None: The history containing evaluated tune_cfg.
         """
         for tuning_history in self.tuning_history:
-            # only check if a tune_cfg is evaluated under same yam config, excluding
-            # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
-            # TODO double check
-            if self._same_yaml(tuning_history['cfg'], self.conf):
+            # only check if a tune_cfg is evaluated under same config, excluding
+            # some fields in tuning section of config, such as tensorboard, snapshot, resume.
+            if self._same_conf(tuning_history['cfg'], self.conf):
                 for history in tuning_history['history']:
                     if history and history['tune_cfg'] == tune_cfg:
                         return history
@@ -1467,9 +1456,9 @@ class TuneStrategy(object):
             history or None: The history for self.
         """
         for tuning_history in self.tuning_history:
-            # only check if a tune_cfg is evaluated under same yam config, excluding
-            # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
-            if self._same_yaml(tuning_history['cfg'], self.conf):
+            # only check if a tune_cfg is evaluated under same config, excluding
+            # some fields in tuning section of config, such as tensorboard, snapshot, resume.
+            if self._same_conf(tuning_history['cfg'], self.conf):
                 return tuning_history
 
         return None
@@ -1487,7 +1476,7 @@ class TuneStrategy(object):
             'last_tune_result': last_tune_result1,
             'best_tune_result': best_tune_result1,
             'history': [
-                         # tuning history under same yaml config
+                         # tuning history under same config
                          {'tune_cfg': tune_cfg1, 'tune_result': \
                                       tune_result1, 'q_config': q_config1, ...},
 
@@ -1496,16 +1485,16 @@ class TuneStrategy(object):
             # new fields added by subclass for resuming
             ...,
           },
-          # tuning history under different yaml configs
+          # tuning history under different configs
           ...,
         ]
 
-        Note this record is added under same yaml config.
+        Note this record is added under same config.
         """
         found = False
         d = {'tune_cfg': tune_cfg, 'tune_result': tune_result}
         for tuning_history in self.tuning_history:
-            if self._same_yaml(tuning_history['cfg'], self.conf):
+            if self._same_conf(tuning_history['cfg'], self.conf):
                 d.update(kwargs)
                 tuning_history['history'].append(d)
                 tuning_history['last_tune_result'] = self.last_tune_result
