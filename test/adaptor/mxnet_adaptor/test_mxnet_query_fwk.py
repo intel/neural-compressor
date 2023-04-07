@@ -10,6 +10,7 @@ sys.path.append('..')
 
 import mxnet as mx
 import neural_compressor
+import neural_compressor.adaptor
 
 class TestMXNetQuery(unittest.TestCase):
 
@@ -17,7 +18,7 @@ class TestMXNetQuery(unittest.TestCase):
     def setUpClass(self):
         if platform.system().lower() == "windows":
             self.skipTest(self, "not support mxnet on windows yet")
-        self.yaml_path = os.path.join(os.getcwd() + "/../neural_compressor/adaptor/mxnet.yaml")
+        self.yaml_path = os.path.abspath(os.path.join(os.getcwd(), "../../../neural_compressor/adaptor/mxnet.yaml"))
         self.Queryhandler = neural_compressor.adaptor.mxnet.MXNetQuery(self.yaml_path)
         self.version = mx.__version__
 

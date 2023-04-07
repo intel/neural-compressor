@@ -14,7 +14,7 @@ from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.adaptor.pytorch import get_torch_version
-from neural_compressor import conf
+from neural_compressor.conf.config import conf
 from packaging.version import Version
 from neural_compressor import quantization, PostTrainingQuantConfig
 
