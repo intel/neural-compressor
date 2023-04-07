@@ -138,8 +138,8 @@ class eval_classifier_optimized_graph:
 
         if args.benchmark:
             from neural_compressor.utils.create_obj_from_config import create_dataloader
-            data_path = os.path.join(args.dataset_location, 'raw_images')
-            label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
+            data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
+            label_path = os.path.join(args.dataset_location, 'val.txt')
             dataloader_args = {
                 'batch_size': args.batch_size,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},

@@ -316,7 +316,7 @@ class TRANSFORMS(object):
             framework (str): different framework type like tensorflow, pytorch and so on
             process (str): process type, the value can be preprocess, postprocess or general
         """
-        assert framework in ("tensorflow", "tensorflow_itex", "onnxruntime", \
+        assert framework in ("tensorflow", "tensorflow_itex", "keras", "onnxruntime", \
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq", \
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt"

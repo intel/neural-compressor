@@ -216,16 +216,19 @@ class PreOptimization():
 
         self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
             self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = MoveSqueezeAfterReluOptimizer(
+            self._tmp_graph_def).do_transformation()
+
         if not self.new_api and not itex_mode:
             #TODO we need to remove below optimizer once the TF enabled the single
             # matmul op quantization
             self._tmp_graph_def = InjectDummyBiasAddOptimizer(
                 self._tmp_graph_def, output_node_names).do_transformation()
+                
         self._tmp_graph_def = FuseBiasAddAndAddOptimizer(
             self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = MoveSqueezeAfterReluOptimizer(
-            self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = ConvertNanToRandom(
             self._tmp_graph_def).do_transformation()

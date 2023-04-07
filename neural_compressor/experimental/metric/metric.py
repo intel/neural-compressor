@@ -158,7 +158,7 @@ class METRICS(object):
         Args:
             framework: The framwork name.
         """
-        assert framework in ("tensorflow", "tensorflow_itex","keras",
+        assert framework in ("tensorflow", "tensorflow_itex", "keras",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
                              "onnxruntime"), \

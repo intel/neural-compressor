@@ -22,10 +22,10 @@ Download [LibriSpeech](https://www.openslr.org/resources/12/) Raw audio to dir: 
 
 ```bash
 cd /path/to/speech_dataset
-wget https://www.openslr.org/resources/12/dev-clean.tar.gz
-wget https://www.openslr.org/resources/12/dev-other.tar.gz
-tar -zxvf dev-clean.tar.gz -C ./
-tar -zxvf dev-other.tar.gz -C ./
+wget http://us.openslr.org/resources/12/test-clean.tar.gz
+wget http://us.openslr.org/resources/12/test-other.tar.gz
+tar -zxvf test-clean.tar.gz -C ./
+tar -zxvf test-other.tar.gz -C ./
 
 ls /path/to/speech_dataset
 LibriSpeech  #folder_in_archive

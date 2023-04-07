@@ -97,6 +97,8 @@ sed -i 's/\"\/neural_coder\/extensions\/screenshots\/extmanager.png/\".\/neural_
 
 sed -i 's/\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/.\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/g' ./source/docs/source/get_started.md
 
+sed -i 's/\/examples\/README.md/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/get_started.md
+
 sed -i 's/.\/validated_model_list.md\#/.\/validated_model_list.html\#/g' ./source/docs/source/installation_guide.md
 
 make clean

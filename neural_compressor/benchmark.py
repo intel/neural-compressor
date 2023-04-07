@@ -140,7 +140,7 @@ def get_bounded_threads(core_ids, threads, sockets):
     return res
 
 
-class Benchmark(object):
+class _Benchmark(object):
     """Benchmark class can be used to evaluate the model performance.
 
     With the objective setting, user can get the data of what they configured in yaml.
@@ -555,7 +555,7 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
         fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
     """
-    benchmarker = Benchmark(config)
+    benchmarker = _Benchmark(config)
     benchmarker.model = model
     if b_func is not None:
         benchmarker.b_func = b_func
