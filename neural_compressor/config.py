@@ -325,7 +325,7 @@ class BenchmarkConfig:
 
     @intra_num_of_threads.setter
     def intra_num_of_threads(self, intra_num_of_threads):
-        """Get intra_num_of_threads."""
+        """Set intra_num_of_threads."""
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads

@@ -160,8 +160,16 @@ class _Benchmark(object):
             "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
         conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
         self.conf = BenchmarkConf()
-        self.bench_workspace_path = self.conf.usr_cfg.tuning.workspace.path + "benchmark/"
-        os.makedirs(self.bench_workspace_path, exist_ok=True)
+        if os.environ.get('NC_ENV_CONF') != 'True':
+            import datetime
+            bench_workspace = './nc_workspace/{}/benchmark/'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            os.makedirs(bench_workspace, exist_ok=True)
+            # set the benchmark log directory only once when the Benchmark is initialized for the first time
+            def dump_latest_bench_dir_path(bench_workspace):
+                with open("./nc_workspace/latest_bench_dir.txt", 'w+') as f:
+                    f.write(bench_workspace)
+            self.bench_workspace = bench_workspace
+            dump_latest_bench_dir_path(bench_workspace)
         self.conf.map_pyconfig_to_cfg(conf)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
@@ -176,7 +184,7 @@ class _Benchmark(object):
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.performance.configs'))
-        # disable multi-instance for running bechmark on GPU device
+        # disable multi-instance for running benchmark on GPU device
         if cfg.device == 'gpu':
             set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
@@ -191,6 +199,11 @@ class _Benchmark(object):
 
     fit = __call__
 
+    def get_latest_bench_dir(self):
+        with open("./nc_workspace/latest_bench_dir.txt", 'r') as f:
+            p = f.readline()
+        return p
+
     def summary_benchmark(self):
         """Get the summary of the benchmark."""
         if sys.platform in ['linux']:
@@ -199,7 +212,7 @@ class _Benchmark(object):
             latency_l = []
             throughput_l = []
             for i in range(0, num_of_instance):
-                log = '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, i)
+                log = '{}{}_{}_{}.log'.format(self.get_latest_bench_dir(), num_of_instance, cores_per_instance, i)
                 with open(log, "r") as f:
                     for line in f:
                         latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
@@ -265,7 +278,7 @@ class _Benchmark(object):
             instance_cmd = '{} {}'.format(prefix, raw_cmd)
             if sys.platform in ['linux']:
                 instance_log = '{}{}_{}_{}.log'.format(
-                    self.bench_workspace_path, num_of_instance, cores_per_instance, i)
+                    self.get_latest_bench_dir(), num_of_instance, cores_per_instance, i)
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
@@ -284,9 +297,9 @@ class _Benchmark(object):
                 # wrap each execution of windows bat file in one thread
                 # write the log to the log file of the corresponding instance
                 logger.info('Will dump to {}{}_{}_{}.log'.format(
-                    self.bench_workspace_path, num_of_instance, cores_per_instance, idx))
+                    self.get_latest_bench_dir(), num_of_instance, cores_per_instance, idx))
                 threads.append(Thread(target=self.call_one, args=(cmd,
-                    '{}{}_{}_{}.log'.format(self.bench_workspace_path, num_of_instance, cores_per_instance, idx))))
+                    '{}{}_{}_{}.log'.format(self.get_latest_bench_dir(), num_of_instance, cores_per_instance, idx))))
             for command_thread in threads:
                 command_thread.start()
                 logger.info("Worker threads start")

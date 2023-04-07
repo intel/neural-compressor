@@ -14,7 +14,7 @@ def build_benchmark():
     seq = '''
 from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
-arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
+arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')
 args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
 from neural_compressor.config import BenchmarkConfig
@@ -29,7 +29,7 @@ fit(args.input_model, conf, b_dataloader=b_dataloader)
     seq1 = '''
 from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
-arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
+arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')
 args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
 from neural_compressor.config import BenchmarkConfig
@@ -136,10 +136,15 @@ class TestObjective(unittest.TestCase):
             os.remove('fake_data_25.py')
         shutil.rmtree('nc_workspace', ignore_errors=True)
 
+    def get_latest_bench_dir(self):
+        with open("./nc_workspace/latest_bench_dir.txt", 'r') as f:
+            p = f.readline()
+        return p
+
     def test_benchmark(self):
         os.system("python fake.py --input_model={}".format(self.graph_path))
         for i in range(2):
-            with open(f'2_4_{i}.log', "r") as f:
+            with open(f'{self.get_latest_bench_dir()}2_4_{i}.log', "r") as f:
                 for line in f:
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
                 self.assertIsNotNone(throughput)
@@ -148,7 +153,7 @@ class TestObjective(unittest.TestCase):
     def test_benchmark_data_5(self):
         os.system("python fake_data_5.py --input_model={}".format(self.graph_path))
         for i in range(2):
-            with open(f'2_4_{i}.log', "r") as f:
+            with open(f'{self.get_latest_bench_dir()}2_4_{i}.log', "r") as f:
                 for line in f:
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
                 self.assertIsNotNone(throughput)
@@ -157,7 +162,7 @@ class TestObjective(unittest.TestCase):
     def test_benchmark_data_15(self):
         os.system("python fake_data_15.py --input_model={}".format(self.graph_path))
         for i in range(2):
-            with open(f'2_4_{i}.log', "r") as f:
+            with open(f'{self.get_latest_bench_dir()}2_4_{i}.log', "r") as f:
                 for line in f:
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
                 self.assertIsNotNone(throughput)
@@ -166,7 +171,7 @@ class TestObjective(unittest.TestCase):
     def test_benchmark_data_25(self):
         os.system("python fake_data_25.py --input_model={}".format(self.graph_path))
         for i in range(2):
-            with open(f'2_4_{i}.log', "r") as f:
+            with open(f'{self.get_latest_bench_dir()}2_4_{i}.log', "r") as f:
                 for line in f:
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
                 self.assertIsNotNone(throughput)
