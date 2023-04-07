@@ -340,7 +340,7 @@ The pruning technique  is validated on typical models across various domains (in
 
   Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
-- Language Translation (Experimental, sparsity 0.8, pattern 4x1, BLEU 25.63(dense) vs 24.35(saprse))
+- Language Translation (Experimental, sparsity 0.8, pattern 4x1, BLEU 25.63(dense) vs 24.35(sparse))
 
   Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
 
