@@ -127,24 +127,24 @@ $$</p>
     <span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">2.</span> <span class="o">**</span> <span class="n">num_bits</span> <span class="o">-</span> <span class="mf">1.</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">num_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
-    <span class="n">bias</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span>
-    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">+</span> <span class="n">bias</span>
+    <span class="n">zp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">+</span> <span class="n">zp</span>
     <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scale = </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s1">, bias = </span><span class="si">{</span><span class="n">bias</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">q_x</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scale = </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s1">, zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span>
 </pre></div>
 </div>
-<p>Then we can get the quantized $W_{q}$:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize<span class="o">(</span>W<span class="o">)</span>
-<span class="nv">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.00296431384049356,<span class="w"> </span><span class="nv">bias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-59.0
+<p>Then we can get the quantized $W_{q}$</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span>W_q,<span class="w"> </span>scale,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize<span class="o">(</span>W<span class="o">)</span>
+<span class="nv">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.00296431384049356,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-59.0
 &gt;&gt;&gt;<span class="w"> </span>W_q
 tensor<span class="o">([[</span><span class="m">172</span>.,<span class="w"> </span><span class="m">101</span>.,<span class="w"> </span><span class="m">192</span>.<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">255</span>.,<span class="w">   </span><span class="m">0</span>.,<span class="w"> </span><span class="m">172</span>.<span class="o">]])</span>
 </pre></div>
 </div>
-<p>With the value of scale and bias, we can dequantize the tensor.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">bias</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">bias</span><span class="p">)</span>
+<p>With the value of scale and zp, we can dequantize the tensor.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_dq,<span class="w"> </span><span class="m">0</span>.001,<span class="w"> </span>-50<span class="o">)</span>
@@ -155,12 +155,13 @@ tensor<span class="o">([[</span><span class="m">0</span>.1220,<span class="w"> <
 &gt;&gt;&gt;<span class="w"> </span>loss.item<span class="o">()</span>
 <span class="m">0</span>.1983354538679123
 
-&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_q,<span class="w"> </span><span class="m">0</span>.0020850980654358864,<span class="w"> </span>-70<span class="o">)</span>
+&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_q,<span class="w"> </span>scale,<span class="w"> </span>zp<span class="o">)</span>
 &gt;&gt;&gt;<span class="w"> </span>W_dq
 tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> </span><span class="m">0</span>.4743,<span class="w"> </span><span class="m">0</span>.7440<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">0</span>.9308,<span class="w"> </span><span class="m">0</span>.1749,<span class="w"> </span><span class="m">0</span>.6848<span class="o">]])</span>
 &gt;&gt;&gt;<span class="w"> </span><span class="nv">loss</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.nn.MSELoss<span class="o">()(</span>W_dq,<span class="w"> </span>W<span class="o">)</span>
 &gt;&gt;&gt;<span class="w"> </span>loss.item<span class="o">()</span>
+<span class="m">7</span>.385297635664756e-07
 </pre></div>
 </div>
 <p>The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision.</p>
@@ -172,30 +173,28 @@ tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> <
     <span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">2.</span> <span class="o">**</span> <span class="n">num_bits</span> <span class="o">-</span> <span class="mf">1.</span>
     <span class="n">x_tmp</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">num_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">bias</span> <span class="o">=</span>  <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span>
-    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">bias</span>
+    <span class="n">zp</span> <span class="o">=</span>  <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">zp</span>
     <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scale = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s1">, </span><span class="se">\n</span><span class="s1">bias = </span><span class="si">{</span><span class="n">bias</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">q_x</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scale = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s1">, </span><span class="se">\n</span><span class="s1"> zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span>
 
-<span class="k">def</span> <span class="nf">dequantize_per_channel</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">bias</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">bias</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">bias</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">dequantize_per_channel</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q<span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_channel<span class="o">(</span>W<span class="o">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q,<span class="w"> </span>scale,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_channel<span class="o">(</span>W<span class="o">)</span>
 <span class="nv">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span><span class="m">0</span>.0029<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">0</span>.0036<span class="o">]])</span>,<span class="w"> </span>
-<span class="nv">bias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span>-162.<span class="o">]</span>,
+<span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span>-162.<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="w"> </span>-48.<span class="o">]])</span>
 &gt;&gt;&gt;W_q
 tensor<span class="o">([[</span><span class="w"> </span><span class="m">72</span>.,<span class="w">   </span><span class="m">0</span>.,<span class="w">  </span><span class="m">93</span>.<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">207</span>.,<span class="w">   </span><span class="m">0</span>.,<span class="w"> </span><span class="m">139</span>.<span class="o">]])</span>
 
-&gt;&gt;&gt;scales<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.tensor<span class="o">([[</span><span class="m">0</span>.0027<span class="o">]</span>,<span class="o">[</span><span class="m">0</span>.0017<span class="o">]])</span>
-&gt;&gt;&gt;bias<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.tensor<span class="o">([[</span>-66.<span class="o">]</span>,<span class="o">[</span>-87.<span class="o">]])</span>
-&gt;&gt;&gt;W_dq<span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize_per_channel<span class="o">(</span>W_q,<span class="w"> </span>scales,<span class="w"> </span>bias<span class="o">)</span>
+&gt;&gt;&gt;W_dq<span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize_per_channel<span class="o">(</span>W_q,<span class="w"> </span>scales,<span class="w"> </span>zp<span class="o">)</span>
 &gt;&gt;&gt;W_dq
 tensor<span class="o">([[</span><span class="m">0</span>.6837,<span class="w"> </span><span class="m">0</span>.4734,<span class="w"> </span><span class="m">0</span>.7451<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">0</span>.9301,<span class="w"> </span><span class="m">0</span>.1751,<span class="w"> </span><span class="m">0</span>.6821<span class="o">]])</span>
@@ -207,7 +206,7 @@ tensor<span class="o">([[</span><span class="m">0</span>.6837,<span class="w"> <
 <span class="m">5</span>.637690492221736e-07
 </pre></div>
 </div>
-<p>Through this example, we can see that per-channel quantization has finer granularity and has lower loss.</p>
+<p>Through this example, we can see that per-channel quantization has finer granularity and has lower loss (loss 5.6376e-07 for per-channel quantization and 7.3852e-07 for per-tensor quantization).</p>
 </section>
 <section id="matmul-quantization-example">
 <h4>Matmul quantization example<a class="headerlink" href="#matmul-quantization-example" title="Permalink to this heading"></a></h4>
@@ -217,14 +216,15 @@ Using per-tensor scale quantization to show the process.</p>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
     <span class="n">q_max</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="n">n_bits</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
     <span class="n">scales</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span><span class="o">.</span><span class="n">div_</span><span class="p">(</span><span class="n">q_max</span><span class="p">)</span>
-    <span class="n">x</span><span class="o">.</span><span class="n">div_</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">x</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">scales</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="o">-</span><span class="n">q_max</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span>
 
 <span class="k">def</span> <span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">q_x</span>
 </pre></div>
 </div>
-<p>Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$</p>
+<p>Randomly initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.rand<span class="o">(</span><span class="m">2</span>,<span class="w"> </span><span class="m">3</span>,<span class="w"> </span><span class="nv">dtype</span><span class="o">=</span>torch.float32<span class="o">)</span>
 &gt;&gt;&gt;X<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.rand<span class="o">(</span><span class="m">3</span>,<span class="w"> </span><span class="m">4</span>,<span class="w"> </span><span class="nv">dtype</span><span class="o">=</span>torch.float32<span class="o">)</span>
 &gt;&gt;&gt;W
@@ -320,7 +320,12 @@ $$</p>
 </pre></div>
 </div>
 <p>please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False”</p>
-<p><em>support lots of fusing patterns</em>:supports more fusing patterns than the original one</p>
+<p><em>support lots of fusing patterns</em>: when applying the convention per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1-&gt;relu-&gt;linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conv2d/linear-&gt;relu/leakyrelu/hardtanh-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
+
+conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
+</pre></div>
+</div>
 </section>
 </section>
 </section>

@@ -59,28 +59,28 @@ def quantize(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
     scale = torch.clip(scale, min=1e-5)
-    bias = torch.round(0 - (torch.min(x)) / scale)
-    q_x = x / scale + bias
+    zp = torch.round(0 - (torch.min(x)) / scale)
+    q_x = x / scale + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scale}, bias = {bias}')
-    return q_x
+    print(f'scale = {scale}, zp = {zp}')
+    return q_x, scale, zp
 ```
 
-Then we can get the quantized $W_{q}$:
+Then we can get the quantized $W_{q}$
 
 ```bash
->>> W_q = quantize(W)
-scale = 0.00296431384049356, bias = -59.0
+>>> W_q, scale, zp = quantize(W)
+scale = 0.00296431384049356, zp = -59.0
 >>> W_q
 tensor([[172., 101., 192.],
         [255.,   0., 172.]])
 ```
 
-With the value of scale and bias, we can dequantize the tensor.
+With the value of scale and zp, we can dequantize the tensor.
 
 ```python
-def dequantize(q_x, scale, bias):
-    return scale * (q_x - bias)
+def dequantize(q_x, scale, zp):
+    return scale * (q_x - zp)
 ```
 
 ```bash
@@ -92,13 +92,13 @@ tensor([[0.1220, 0.0500, 0.1430],
 >>> loss.item()
 0.1983354538679123
 
->>> W_dq = dequantize(W_q, 0.0020850980654358864, -70)
+>>> W_dq = dequantize(W_q, scale, zp)
 >>> W_dq
 tensor([[0.6848, 0.4743, 0.7440],
         [0.9308, 0.1749, 0.6848]])
 >>> loss = torch.nn.MSELoss()(W_dq, W)
 >>> loss.item()
-
+7.385297635664756e-07
 ```
 
 The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision. 
@@ -112,31 +112,29 @@ def quantize_per_channel(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     x_tmp = x.detach().reshape(x.shape[0], -1)
     scales = x_tmp.max(dim=-1, keepdim=True)[0] / (2 ** num_bits - 1)
-    bias =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
-    q_x = x_tmp.divide(scales) + bias
+    zp =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
+    q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scales}, \nbias = {bias}')
-    return q_x
+    print(f'scale = {scales}, \n zp = {zp}')
+    return q_x, scale, zp
 
-def dequantize_per_channel(q_x, scales, bias):
-    print(q_x, scales, bias)
-    print(scales * (q_x - bias))
-    return scales * (q_x - bias)
+def dequantize_per_channel(q_x, scales, zp):
+    print(q_x, scales, zp)
+    print(scales * (q_x - zp))
+    return scales * (q_x - zp)
 ```
 
 ```bash
->>>W_q = quantize_per_channel(W)
+>>>W_q, scale, zp = quantize_per_channel(W)
 scale = tensor([[0.0029],
         [0.0036]]), 
-bias = tensor([[-162.],
+zp = tensor([[-162.],
         [ -48.]])
 >>>W_q
 tensor([[ 72.,   0.,  93.],
         [207.,   0., 139.]])
 
->>>scales = torch.tensor([[0.0027],[0.0017]])
->>>bias = torch.tensor([[-66.],[-87.]])
->>>W_dq = dequantize_per_channel(W_q, scales, bias)
+>>>W_dq = dequantize_per_channel(W_q, scales, zp)
 >>>W_dq
 tensor([[0.6837, 0.4734, 0.7451],
         [0.9301, 0.1751, 0.6821]])
@@ -150,7 +148,7 @@ And the loss is
 5.637690492221736e-07
 ```
 
-Through this example, we can see that per-channel quantization has finer granularity and has lower loss.
+Through this example, we can see that per-channel quantization has finer granularity and has lower loss (loss 5.6376e-07 for per-channel quantization and 7.3852e-07 for per-tensor quantization).
 
 #### Matmul quantization example
 
@@ -162,14 +160,15 @@ def quantize_per_tensor_absmax(x, n_bits=8):
     scales = x.abs().max()
     q_max = 2**(n_bits-1)-1
     scales.clamp_(min=1e-5).div_(q_max)
-    x.div_(scales).round_().mul_(scales)
-    return x
+    q_x = x / scales
+    q_x = q_x.clamp_(-q_max, q_max).round_()
+    return q_x, scales
 
 def dequantize(q_x, scale):
     return scale * q_x
 ```
 
-Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
+Randomly initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
 
 ```bash
 >>>W = torch.rand(2, 3, dtype=torch.float32)
@@ -300,7 +299,13 @@ sq.transform(alpha) ##alpha could be a float or a string 'auto'
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
-*support lots of fusing patterns*:supports more fusing patterns than the original one
+*support lots of fusing patterns*: when applying the convention per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.
+
+```bash
+conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
+
+conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
+```
 
 ## Validated Models
 Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
