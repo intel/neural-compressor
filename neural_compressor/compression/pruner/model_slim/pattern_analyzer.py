@@ -112,41 +112,70 @@ class JitBasicSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model):
+    def __init__(self, model, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
         else:
             self.model = model
-        self.device = self.model.device
+        try:
+            self.device = self.model.device
+        except:
+            self.device = next(self.model.parameters()).device
         # use torch.jit to generate static graph
+        self.placeholder_shape = placeholder_shape # dummy input
+        self.placeholder_dtype = placeholder_dtype # dummy input
         self.static_graph = None
         self.flatten_static_graph = None
+        self.analyze_dummy_input()
         self.generate_static_graph()
         # save the searching results
         self.target_layers = ['linear']
         self.search_results = []
+    
+    def analyze_dummy_input(self):
+        """Analyze the model's input type."""
+        # if the user already set the dummy inputs, no need to analyze the model
+        if self.placeholder_dtype != None and self.placeholder_dtype != None:
+            return
+        # analyze the model automatically
+        first_parameter = None
+        for n, p in self.model.named_parameters():
+            if first_parameter != None:
+                break
+            else:
+                first_parameter = p
+        if len(p.shape) == 4: 
+            # conv op, indicating that this is a cv model
+            self.placeholder_shape = [1, 3, 512, 512]
+            self.placeholder_dtype = torch.float32
+        elif len(p.shape) == 2:
+            # linear or embedding ops, indicating that this is a nlp model
+            self.placeholder_shape = [1, 16]
+            self.placeholder_dtype = torch.int64
+        else:
+            logger.warning("Cannot generate dummy input automatically, please set it manually when initialzation.")
+            self.placeholder_shape = [1, 16]
+            self.placeholder_dtype = torch.int64
+        return
 
     def generate_static_graph(self):
         """Operations called when generate the model's static graph."""
         logger.info(f"Generating jit tracing from original model.")
+        # static graph generation relies on shape
         dummy_inputs = self.generate_dummy_inputs()
         self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
          # re-org from original static codes. 
         self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
     
-    def generate_dummy_inputs(self, shape=[1, 16], dtype=torch.int64):
+    def generate_dummy_inputs(self):
         """Generate dummy inputs for the model's static graph.
-
-        Args:
-            shape: the dummy input's shape.
-            dtype: the dummy input's date type. For nlp tasks, it should be torch.int64 (long).
         
         Return:
-            A torch.Tensor.
+            A torch.Tensor passed into the model to generate static graph.
         """
-        return torch.ones(shape, dtype=dtype).to(self.device)
+        return torch.ones(self.placeholder_shape, dtype=self.placeholder_dtype).to(self.device)
 
     def filter_static_code(self, list_in, kw):
         """Obtain sub-list which contains some key words.
