@@ -10,13 +10,25 @@ New Data Type
  4. [Others](#others)
 
 ## Introduction
-Currently, deep Learning frameworks such as PyTorch, ONNX, and Tensorflow do not have native support for quantization with lower than 8-bit, such as 4-bit. However, it is possible to simulate it by setting the value ranges of the data type. INC provides flexibility that allows users to extend its functionality by adding these new data types.
+Currently, deep Learning frameworks such as PyTorch, ONNX Runtime, and Tensorflow do not have native support for quantization with lower than 8-bit precision. However, it is possible to simulate lower-precision quantization by specifying the value ranges of a given data type. INC provides flexibility that allows users to extend its functionality by adding these new data types.
 
-This document provides instructions for adding 4-bit quantization to the `Conv2d` operator in the INC PyTorch backend.
+This document provides guidance on how to add new data types to the INC, using the example of extending the PyTorch `Conv2d` operator to support 4-bit quantization.
 
 ## Defines the Quantization Ability of the Specific Operator
 
-The first step in adding a new data type to INC is to define the capabilities of the new data type itself add include it to the framwork YAML.  For example, let's add  4-bit quantization for `Conv2d` in the PyTorch backend. We can modify the `neural_compressor/adaptor/pytorch_cpu.yaml`  as follows:
+The first step in adding a new data type to INC is to define the capabilities of the new data type itself and include it to the framework YAML. 
+The capabilities include the quantized data types and quantization schemes of activation and weight(optional) respectively.
+
+
+| Field name | Options | Description |
+| -----------|---------------|------------
+| `dtype` | `uint4`, `int4` | Quantization data type |
+| `scheme` | `sym`, `asym`| Quantization scheme |
+|`granularity`| `per_channel`, `per_tensor`| Quantization granularity |
+|`algorithm`| `minmax`, `kl`| Calibration algorithm |
+
+
+For example, let's add  4-bit quantization for `Conv2d` in the PyTorch backend. We can modify the `neural_compressor/adaptor/pytorch_cpu.yaml` as follows:
 
 ```diff
   ...
@@ -46,6 +58,8 @@ The first step in adding a new data type to INC is to define the capabilities of
   ...
 
 ```
+The code states that the PyTorch Conv2d Operator has the ability to quantize weights to int4 using the `torch.per_channel_symmetric` quantization scheme, and the supported calibration algorithm for this is `minmax`. Additionally, the operator can quantize activations to `uint4` using the `torch.per_tensor_symmetric` quantization scheme, and the supported calibration algorithm for this is also `minmax`.
+
 > Note: more details about the framework YAML can be found [here](./framework_yaml.md).
 
 
@@ -74,7 +88,11 @@ This code specifies quantization rules for all `Conv2d` operators, quantizing th
 
 
 
-## Others
+### Support Matrix
 
-We can extend the INC's functionality to support various lower bit quantizations such as 2-bit, 6-bit, and beyond.
+| Field name | Description |
+| -----------|---------------
+| Support data types to extend | N-bit, N is an integer between 1 and 7, indicating the number of quantized bits|
+| Support Framework | PyTorch|
+
 
