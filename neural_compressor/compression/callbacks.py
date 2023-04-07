@@ -219,22 +219,22 @@ class BaseCallbacks(object):
             user_model.model if isinstance(user_model, BaseModel) else user_model)
         if self.framework == "tensorflow":
             try:
-                if self.cfg.qat_quantization.approach == "quant_aware_training":
+                if self.cfg.quantization.approach == "quant_aware_training":
                     self.framework = 'tensorflow_itex'
                 else:
                     from ..model.tensorflow_model import get_model_type
-                    if get_model_type(user_model) == 'keras' and self.cfg.qat_quantization.backend == 'itex':
+                    if get_model_type(user_model) == 'keras' and self.cfg.quantization.backend == 'itex':
                         self.framework = 'keras'
             except Exception as e:
                 pass
 
         if self.framework == "pytorch":
             try:
-                if self.cfg.qat_quantization.backend == "default":
+                if self.cfg.quantization.backend == "default":
                     self.framework = "pytorch_fx"
-                elif self.cfg.qat_quantization.backend == "ipex":
+                elif self.cfg.quantization.backend == "ipex":
                     self.framework = "pytorch_ipex"
-                self.cfg.qat_quantization.framework = self.framework
+                self.cfg.quantization.framework = self.framework
             except Exception as e:
                 pass
 
@@ -247,7 +247,7 @@ class BaseCallbacks(object):
                     self._model = TensorflowQATModel(user_model._model)
             elif "tensorflow" in self.framework or self.framework == "keras":
                 try:
-                    self._model = Model(user_model, backend=self.framework, device=self.cfg.qat_quantization.device)
+                    self._model = Model(user_model, backend=self.framework, device=self.cfg.quantization.device)
                 except Exception as e:
                     self._model = Model(user_model, backend=self.framework, device=None)
             else:
@@ -257,9 +257,9 @@ class BaseCallbacks(object):
 
         if 'tensorflow' in self.framework:
             try:
-                self._model.name = self.cfg.qat_quantization.model_name
-                self._model.output_tensor_names = self.cfg.qat_quantization.outputs
-                self._model.input_tensor_names = self.cfg.qat_quantization.inputs
+                self._model.name = self.cfg.quantization.model_name
+                self._model.output_tensor_names = self.cfg.quantization.outputs
+                self._model.input_tensor_names = self.cfg.quantization.inputs
                 self._model.workspace_path = self.cfg.options.workspace
             except Exception as e:
                 self._model.name = None
@@ -274,17 +274,17 @@ class BaseCallbacks(object):
             self.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
             self.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
 
-        strategy = self.cfg.qat_quantization.tuning_criterion.strategy.lower()
-        if self.cfg.qat_quantization.quant_level == 0:
+        strategy = self.cfg.quantization.tuning_criterion.strategy.lower()
+        if self.cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
 
         if strategy == "mse_v2":
-            if not (self.cfg.qat_quantization.framework.startswith("tensorflow") \
-                    or self.cfg.qat_quantization.framework == 'pytorch_fx'):
+            if not (self.cfg.quantization.framework.startswith("tensorflow") \
+                    or self.cfg.quantization.framework == 'pytorch_fx'):
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support \
-                               {self.cfg.qat_quantization.framework} now, use basic instead.")
+                               {self.cfg.quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
@@ -313,7 +313,7 @@ class BaseCallbacks(object):
     def execute(self):
         """Quantization Aware Training execute routinue based on strategy design."""
         try:
-            with time_limit(self.conf.qat_quantization.tuning_criterion.timeout):
+            with time_limit(self.conf.quantization.tuning_criterion.timeout):
                 logger.debug("Dump user yaml configuration:")
                 logger.debug(self.conf)
                 self.strategy.traverse()
@@ -470,7 +470,7 @@ class BaseCallbacks(object):
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.qat_quantization.framework)
+            metrics = METRICS(self.conf.quantization.framework)
             metrics.register(name, metric_cls)
         self._metric = metric_cfg
 
@@ -505,21 +505,21 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
         random.seed(seed)
         np.random.seed(seed)
 
-        framework_specific_info = {'device': self.cfg.qat_quantization.device,
+        framework_specific_info = {'device': self.cfg.quantization.device,
                                    'random_seed': self.cfg.options.random_seed,
                                    'workspace_path': self.cfg.options.workspace,
                                    'q_dataloader': None,
-                                   'backend': self.cfg.qat_quantization.backend if \
-                                    self.cfg.qat_quantization.backend is not None else 'default',
-                                   'format': self.cfg.qat_quantization.quant_format if \
-                                    self.cfg.qat_quantization.quant_format is not None else 'default'}
-        if self.cfg.qat_quantization.approach is not None:
-            framework_specific_info['approach'] = self.cfg.qat_quantization.approach
+                                   'backend': self.cfg.quantization.backend if \
+                                    self.cfg.quantization.backend is not None else 'default',
+                                   'format': self.cfg.quantization.quant_format if \
+                                    self.cfg.quantization.quant_format is not None else 'default'}
+        if self.cfg.quantization.approach is not None:
+            framework_specific_info['approach'] = self.cfg.quantization.approach
 
         if 'tensorflow' in self.framework:
             framework_specific_info.update(
-                {"inputs": self.cfg.qat_quantization.inputs, \
-                 "outputs": self.cfg.qat_quantization.outputs})
+                {"inputs": self.cfg.quantization.inputs, \
+                 "outputs": self.cfg.quantization.outputs})
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
         self.adaptor.model = self.model
         self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)

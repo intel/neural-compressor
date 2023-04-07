@@ -2045,7 +2045,6 @@ class PyTorch(MXNet):
 
 
 quantization = PostTrainingQuantConfig()
-qat_quantization = QuantizationAwareTrainingConfig()
 benchmark = BenchmarkConfig()
 options = Options()
 mixed_precision = MixedPrecisionConfig()
@@ -2063,7 +2062,6 @@ class Config:
     """Main config class."""
     def __init__(self,
                  quantization=quantization,
-                 qat_quantization=qat_quantization,
                  benchmark=benchmark,
                  options=options,
                  mixed_precision=mixed_precision,
@@ -2079,8 +2077,7 @@ class Config:
                  tuning_criterion=tuning_criterion
                  ):
         """Init a config object."""
-        self._quantization = quantization
-        self._qat_quantization = qat_quantization
+        self._quantization = None
         self._benchmark = benchmark
         self._options = options
         self._mixed_precision=mixed_precision
@@ -2134,11 +2131,6 @@ class Config:
     def quantization(self):
         """Get the quantization object."""
         return self._quantization
-    
-    @property
-    def qat_quantization(self):
-        """Get the qat quantization object."""
-        return self._qat_quantization
 
     @property
     def benchmark(self):

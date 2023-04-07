@@ -2,7 +2,7 @@
 import copy
 import unittest
 import os
-from neural_compressor import config
+from neural_compressor.conf.pythonic_config import config
 import onnxruntime as ort
 from onnx import helper, TensorProto
 import numpy as np

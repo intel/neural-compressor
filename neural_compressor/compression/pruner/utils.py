@@ -18,6 +18,7 @@
 
 import re
 import yaml
+from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
     from ...conf.pythonic_config import WeightPruningConfig
@@ -349,7 +350,7 @@ def process_and_check_config(val):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
-    if isinstance(val, WeightPruningConfig):
+    if isinstance(val, WeightPruningConfig) or isinstance(val, WeightPruningConf):
         global_configs = val.weight_compression
         pruning_configs = val.pruning_configs
         check_key_validity(default_config, pruning_configs)
@@ -390,7 +391,7 @@ def process_config(config):
                 "The yaml file format is not correct. Please refer to document."
             )
 
-    if isinstance(config, WeightPruningConfig):
+    if isinstance(config, WeightPruningConfig) or isinstance(config, WeightPruningConf):
         return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
