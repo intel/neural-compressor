@@ -81,7 +81,7 @@ class MSETuneStrategy(TuneStrategy):
             save_dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.conf):
+            if self._same_conf(history['cfg'], self.conf):
                 history['ordered_ops'] = self.ordered_ops
         save_dict = super().__getstate__()
         return save_dict

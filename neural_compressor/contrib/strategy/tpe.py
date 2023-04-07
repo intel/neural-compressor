@@ -157,7 +157,7 @@ class TpeTuneStrategy(TuneStrategy):
             dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.conf):
+            if self._same_conf(history['cfg'], self.conf):
                 history['warm_start'] = True
                 history['hpopt_trials'] = self.hpopt_trials
                 history['loss_function_config'] = self.loss_function_config

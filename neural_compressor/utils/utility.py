@@ -599,6 +599,11 @@ class DotDict(dict):
     """
 
     def __init__(self, value=None):
+        """Init DotDict.
+
+        Args:
+            value: The value to be initialized. Defaults to None.
+        """
         if value is None:
             pass
         elif isinstance(value, dict):
@@ -608,10 +613,21 @@ class DotDict(dict):
             raise TypeError('expected dict')
 
     def __getitem__(self, key):
+        """Get value by key.
+
+        Args:
+            key: The query item.
+        """
         value = self.get(key, None)
         return value
 
     def __setitem__(self, key, value):
+        """Add new key and value pair.
+
+        Args:
+            key: something like key in dict.
+            value: value assigned to key. 
+        """
         if isinstance(value, dict) and not isinstance(value, DotDict):
             value = DotDict(value)
         if isinstance(value, list) and len(value) == 1 and isinstance(
@@ -623,9 +639,11 @@ class DotDict(dict):
         super(DotDict, self).__setitem__(key, value)
 
     def __getstate__(self):
+        """Return self dict."""
         return self.__dict__
 
     def __setstate__(self, d):
+        """Update self dict."""
         self.__dict__.update(d)
 
     __setattr__, __getattr__ = __setitem__, __getitem__
@@ -633,8 +651,7 @@ class DotDict(dict):
 
 
 def compare_objects(obj1, obj2, ignore_attrs):
-    """
-    Compare two objects and ignore the specified attributes.
+    """Compare two objects and ignore the specified attributes.
 
     Args:
         obj1: The first object to compare.
