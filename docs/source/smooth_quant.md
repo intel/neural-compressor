@@ -168,7 +168,7 @@ def dequantize(q_x, scale):
     return scale * q_x
 ```
 
-Random initializes the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
+Randomly initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
 
 ```bash
 >>>W = torch.rand(2, 3, dtype=torch.float32)
