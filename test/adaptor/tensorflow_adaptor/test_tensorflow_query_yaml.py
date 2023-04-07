@@ -52,7 +52,9 @@ def build_fake_framework_yaml():
 ---
 -
   version:
-    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.7.0']  
+    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.7.0']
+
+  bf16: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool', 'DepthwiseConv2dNative']
 
   int8: { 
     'static': {
@@ -92,6 +94,8 @@ def build_fake_framework_yaml():
 -
   version:
     name: ['default']  
+
+  bf16: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool', 'DepthwiseConv2dNative']
 
   int8: { 
     'static': {
