@@ -25,6 +25,7 @@ Submodules
    :maxdepth: 1
 
    calibration/index.rst
+   calibrator/index.rst
    quantizer/index.rst
    util/index.rst
 
