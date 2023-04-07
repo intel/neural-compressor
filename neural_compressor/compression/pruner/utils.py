@@ -20,7 +20,7 @@ import re
 import yaml
 
 try:
-    from ...config import WeightPruningConfig
+    from ...conf.pythonic_config import WeightPruningConfig
     from ...conf.config import PrunerV2
     from ...utils.utility import LazyImport
     from neural_compressor.conf.dotdict import DotDict

@@ -165,10 +165,10 @@ class Distillation(Component):
             assert 'criterion' in self._train_cfg.keys(), \
                 "criterion part in train field of distillation section in yaml file " \
                 "must be configured for distillation if criterion is NOT set."
-            criterion_cfg = self._train_cfg.criterion
+            criterion_cfg = self._train_cfg.criterion.config
             assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
                 "criterion part, instead got {} loss.".format(len(criterion_cfg))
-            loss = list(criterion_cfg.keys())[0]
+            loss = [i for i in criterion_cfg.keys()][0]
             loss_cfg = criterion_cfg[loss]
             criterion_builder = Criterions(self.framework)[loss](loss_cfg)
             criterion_tuple = criterion_builder()

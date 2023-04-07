@@ -21,10 +21,10 @@ class TestConfig(unittest.TestCase):
 
 class TestPyConf(unittest.TestCase):
     def test_config(self):
-        from neural_compressor.conf.config import conf
+        from neural_compressor import conf
         from neural_compressor.conf.config import QuantConf, PruningConf, \
             GraphOptConf, BenchmarkConf, DistillationConf
-        
+
         conf.tuning.accuracy_criterion.relative = 0.2
         a = QuantConf(conf)
         self.assertEqual(a.usr_cfg.tuning.accuracy_criterion.relative, 0.2)
@@ -69,6 +69,7 @@ class TestPyConf(unittest.TestCase):
         self.assertEqual(a.usr_cfg.graph_optimization.op_wise, {'weight': {'dtype': ['bf16']}, 'activation': {'dtype': ['bf16']}})
 
         conf.distillation.train.iteration = 900
+        import pdb; pdb.set_trace()
         a = DistillationConf(conf)
         self.assertEqual(a.usr_cfg.distillation.train.iteration, 900)
 
