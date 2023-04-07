@@ -162,7 +162,8 @@ class _Benchmark(object):
         self.conf = BenchmarkConf()
         if os.environ.get('NC_ENV_CONF') != 'True':
             import datetime
-            bench_workspace = './nc_workspace/{}/benchmark/'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            bench_workspace = './nc_workspace/{}/benchmark/'.format(datetime.datetime.now()
+                                                                    .strftime('%Y-%m-%d_%H-%M-%S'))
             os.makedirs(bench_workspace, exist_ok=True)
             # set the benchmark log directory only once when the Benchmark is initialized for the first time
             def dump_latest_bench_dir_path(bench_workspace):
