@@ -82,10 +82,23 @@ class TuneStrategy(object):
         if self.eval_func:
             self._not_tuning = False
             logger.info("Execute the tuning process due to detect the evaluation function.")
+            if self.eval_dataloader:
+                logger.warning("Ignore the evaluation dataloader due to evaluation function exist.")
+            if self.eval_metric:
+                logger.warning("Ignore the evaluation metric due to evaluation function exist.")
+            return
         if self.eval_dataloader and self.eval_metric:
             self._not_tuning = False
             logger.info("Create evaluation function according to evaluation dataloader and metric\
                 and Execute the tuning process.")
+            return
+        else:
+            if self.eval_dataloader:
+                assert self.eval_metric, "Detected evaluation dataloader but no evaluation metric, " \
+                 "Please provide both to perform tuning process or neither for the default quantization."
+            if self.eval_metric:
+                assert self.eval_dataloader, "Detected evaluation metric but no evaluation dataloader, "\
+                    "Please provide both to perform tuning process or neither for the default quantization."
         if self._not_tuning:
             logger.info("Quantize the model with default configuration without evaluating the model.\
                 To perform the tuning process, please either provide an eval_func or provide an\
