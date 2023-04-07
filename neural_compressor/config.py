@@ -2077,10 +2077,10 @@ class Config:
                  tuning_criterion=tuning_criterion
                  ):
         """Init a config object."""
-        self._quantization = None
+        self._quantization = quantization
         self._benchmark = benchmark
         self._options = options
-        self._mixed_precision=mixed_precision
+        self._mixed_precision = mixed_precision
         self._onnxruntime = onnxruntime
         self._pruning = pruning
         self._distillation = distillation

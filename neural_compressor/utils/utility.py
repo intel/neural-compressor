@@ -661,7 +661,6 @@ def compare_objects(obj1, obj2, ignore_attrs):
     Returns:
         True if the objects are equal ignoring the specified attributes, False otherwise.
     """
-
     # Check if the objects are of the same type
     if type(obj1) != type(obj2):
         return False
