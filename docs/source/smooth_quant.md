@@ -299,7 +299,13 @@ sq.transform(alpha) ##alpha could be a float or a string 'auto'
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
-*support lots of fusing patterns*:supports more fusing patterns than the original one
+*support lots of fusing patterns*: when applying the convention per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patten are shown below. Currently we only handle the layer whoes scale could be fused, we are trying to support other layers, please stay tuned.
+
+```bash
+conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
+
+conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
+```
 
 ## Validated Models
 Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
