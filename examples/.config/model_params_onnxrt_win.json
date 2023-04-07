@@ -1,7 +1,7 @@
 {
     "onnxrt": {
         "resnet50_v1_5": {
-            "model_src_dir": "image_recognition/resnet50/quantization/ptq",
+            "model_src_dir": "image_recognition/resnet50_torchvision/quantization/ptq_static",
             "dataset_location": "imagenet/img_256_resize/ILSVRC2012_img_val",
             "input_model": "models/onnx/resnet50_export.onnx",
             "main_script": "main.py",
