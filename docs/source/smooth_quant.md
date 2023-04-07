@@ -66,7 +66,7 @@ def quantize(x, num_bits=8):
     return q_x, scale, zp
 ```
 
-Then we can get the quantized $W_{q}$:
+Then we can get the quantized $W_{q}$
 
 ```bash
 >>> W_q, scale, zp = quantize(W)
@@ -115,7 +115,7 @@ def quantize_per_channel(x, num_bits=8):
     zp =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
     q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scales}, \nzp = {zp}')
+    print(f'scale = {scales}, \n zp = {zp}')
     return q_x, scale, zp
 
 def dequantize_per_channel(q_x, scales, zp):
@@ -168,7 +168,7 @@ def dequantize(q_x, scale):
     return scale * q_x
 ```
 
-Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
+Random initializes the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
 
 ```bash
 >>>W = torch.rand(2, 3, dtype=torch.float32)
