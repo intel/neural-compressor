@@ -146,11 +146,11 @@ class JitBasicSearcher(object):
                 break
             else:
                 first_parameter = p
-        if len(p.shape) == 4: 
+        if len(first_parameter.shape) == 4: 
             # conv op, indicating that this is a cv model
             self.placeholder_shape = [1, 3, 512, 512]
             self.placeholder_dtype = torch.float32
-        elif len(p.shape) == 2:
+        elif len(first_parameter.shape) == 2:
             # linear or embedding ops, indicating that this is a nlp model
             self.placeholder_shape = [1, 16]
             self.placeholder_dtype = torch.int64

@@ -88,7 +88,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
   We name this process as <span id="click">**Model Auto Slim**</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
 
 - Multi-head Attention Pruning
-  Multi-head attention (MHA) mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads in MHA can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERTs, GPTs as well as other large language models. We provide an automatic way for users to do head pruning in transformer models. Please refer to [MHA pruning examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/mha_slim/)
+  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. We provide an automatic way for users to do head pruning in transformer models. Please refer to [multi-head attention pruning examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/)
 
 - Unstructured Pruning
   
