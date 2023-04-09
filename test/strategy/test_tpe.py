@@ -58,7 +58,7 @@ class TestQuantization(unittest.TestCase):
         dataloader = DATALOADERS["tensorflow"](dataset)
         
         # tuning and accuracy criterion
-        tune_cri = TuningCriterion(strategy='tpe')
+        tune_cri = TuningCriterion(strategy='tpe', max_trials=200)
         acc_cri = AccuracyCriterion(tolerable_loss=-0.01)
         def eval_func(model):
             return 1
