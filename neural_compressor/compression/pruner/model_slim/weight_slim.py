@@ -181,7 +181,7 @@ class LinearCompression(object):
             '2_before': [self.layer_2.out_features, self.layer_2.in_features],
         }
     
-    def __call__(self, mask=None, round_value=0):
+    def __call__(self, mask=None, round_value=32):
         """Operation to execute weight compression process.
 
         Args:
@@ -226,7 +226,7 @@ class LinearCompressionIterator(object):
         """Initialize."""
         self.linear_patterns = linear_patterns
 
-    def __call__(self, masks=None, round_value=0):
+    def __call__(self, masks=None, round_value=32):
         """Operation to execute weight compression process.
 
         Args:

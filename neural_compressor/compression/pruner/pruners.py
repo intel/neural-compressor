@@ -97,7 +97,7 @@ def model_slim(model, round_multiplier=0):
     model = model_slim_mha(model)
     return model
 
-def model_slim_ffn2(model, round_multiplier=0):
+def model_slim_ffn2(model, round_multiplier=32):
     """Remove some sparse part in the model permanently and obtain acceleration directly.
 
     Args:

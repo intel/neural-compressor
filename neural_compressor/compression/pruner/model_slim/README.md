@@ -28,8 +28,8 @@ Auto Slim
   Feed forward network mainly consists two consecutive linear layers. We conduct the input channel pruning for the second linear layer (masking weights by column). We can remove these all-zero channels. Plus, we also remove the same indices' output channels in the first linear layers (masking weights by row), since their contribution for activation will be masked by the second layer's. 
 
 <div align=center>
-<a target="_blank" href="./imgs/auto_slim_ffn.png">
-    <img src="./imgs/auto_slim_ffn.png" width=706 height=200 alt="ffn slim">
+<a target="_blank" href="./imgs/auto_slim_feed_forward_network.png">
+    <img src="./imgs/auto_slim_feed_forward_network.png" width=706 height=200 alt="auto_slim_feed_forward_network slim">
 </a>
 </div>
 
