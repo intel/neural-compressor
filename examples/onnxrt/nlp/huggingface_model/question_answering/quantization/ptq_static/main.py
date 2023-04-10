@@ -483,7 +483,7 @@ def main():
             fp32_op_names = ['MatMul_(660|566)', 'Unsqueeze_91']
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
             fp32_op_names = ['MatMul_(1[7-8]|2[6-7]|3[5-6]|4[3-4]|5[2-3])\d']
-        elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
+        elif model_args.model_name_or_path == 'roberta-large':
             fp32_op_names = ['MatMul_(138|240|342|[4-9]\d{2|1\d{3}|2[0-4]\d{2})',
                              'MatMul_(148|250|[3-9]\d{2}|1\d{3}|2[0-4]\d{2})']
         config = PostTrainingQuantConfig(approach='static',
