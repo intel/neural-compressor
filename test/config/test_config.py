@@ -21,8 +21,7 @@ class TestConfig(unittest.TestCase):
 
 class TestPyConf(unittest.TestCase):
     def test_config(self):
-        from neural_compressor import conf
-        from neural_compressor.conf.config import QuantConf, PruningConf, \
+        from neural_compressor.conf.config import conf, QuantConf, PruningConf, \
             GraphOptConf, BenchmarkConf, DistillationConf
 
         conf.tuning.accuracy_criterion.relative = 0.2
@@ -289,7 +288,7 @@ class TestConf(unittest.TestCase):
           framework: mxnet
         tuning:
           accuracy_criterion:
-            relative: 0.01
+          relative: 0.01
           strategy:
             name: fake
         '''
