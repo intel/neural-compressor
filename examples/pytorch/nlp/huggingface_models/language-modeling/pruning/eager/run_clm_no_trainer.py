@@ -537,8 +537,8 @@ def main():
     text_column_name = "text" if "text" in column_names else column_names[0]
 
     def tokenize_function(examples):
-        return tokenizer(examples[text_column_name], max_length=512, truncation=True) #padding
-    #   return tokenizer(examples[text_column_name])
+        # return tokenizer(examples[text_column_name], max_length=512, truncation=True) #padding
+      return tokenizer(examples[text_column_name])
     
 
     with accelerator.main_process_first():
@@ -730,32 +730,33 @@ def main():
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
         
-    # pruning_configs=[
-    #     {
-    #         "pruning_type": "retrain_free",
-    #         "pruning_scope": "global",
-    #         "op_names": ["fc_out"],
-    #         "excluded_op_names": [".attn"],
-    #         "sparsity_decay_type": "exp",
-    #         "pattern": "channelx1",
-    #         "pruning_op_types": ["Linear"],
-    #         "max_sparsity_ratio_per_op": 0.98,
-    #         "target_sparsity": 0.8
-    #     }
-    # ]
+    pruning_configs=[
+        {
+            "pruning_type": "retrain_free",
+            "pruning_scope": "global",
+            # "op_names": ["fc_out"], #for gptj
+            # "op_names": ["up_proj"], #for llama
+            "op_names": ["fc2"], #for opt
+            "excluded_op_names": [".attn"],
+            "sparsity_decay_type": "exp",
+            "pattern": "channelx1",
+            "pruning_op_types": ["Linear"],
+            "max_sparsity_ratio_per_op": 0.98,
+            "target_sparsity": 0.2,
+        }
+    ]
     
     # auto slim config
-    
-    from neural_compressor.compression import parse_auto_slim_config
-    pruning_configs=[]
-    auto_slim_configs = parse_auto_slim_config(
-        model,
-        ffn2_sparsity = args.target_sparsity,
-        mha_sparsity = 0,
-        pruning_scope = "global",
-        pruning_type = "retrain_free",
-    )
-    pruning_configs += auto_slim_configs
+    # from neural_compressor.compression import parse_auto_slim_config
+    # pruning_configs=[]
+    # auto_slim_configs = parse_auto_slim_config(
+    #     model,
+    #     ffn2_sparsity = args.target_sparsity,
+    #     mha_sparsity = 0,
+    #     pruning_scope = "global",
+    #     pruning_type = "retrain_free",
+    # )
+    # pruning_configs += auto_slim_configs
     configs = WeightPruningConfig(
         pruning_configs,
         # target_sparsity=args.target_sparsity,
@@ -763,7 +764,6 @@ def main():
         pruning_frequency=frequency,
         start_step=pruning_start,
         end_step=pruning_end,
-        
     )
     compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
@@ -886,7 +886,7 @@ def main():
         accuracy, avg_latency = eval_func(model)
         logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
         device = model.device
-        model = model_slim(model)
+        model = model_slim(model, round_multiplier=32)
 
         logger.info(f"***** Running Evaluation after ffn auto_slim*****")
         accuracy, avg_latency = eval_func(model)

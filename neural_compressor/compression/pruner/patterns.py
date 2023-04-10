@@ -16,9 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import torch, F, logger
+from .utils import torch, logger
 from collections import namedtuple
-from functools import partial
 
 PATTERNS = {}
 
@@ -722,14 +721,6 @@ class PatternNxM(BasePattern):
             weight = module.weight
             block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
             module.register_parameter("block_mask", block_mask)
-            assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
-            def forward(self, input): # only for linear
-                block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
-                        self.weight.shape[1]//self.block_mask.shape[1]]
-                mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(\
-                                                         block_size[1], dim=-1).to(self.weight.device)
-                return F.linear(input, self.weight*mask, self.bias)
-            module.forward = partial(forward, module)
             masks[key] = modules[key].block_mask.data
         return masks
     

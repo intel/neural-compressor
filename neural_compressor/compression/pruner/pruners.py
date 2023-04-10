@@ -17,7 +17,8 @@
 # limitations under the License.
 
 import copy
-from .utils import torch
+from .utils import torch, F
+from functools import partial
 from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
@@ -514,7 +515,7 @@ class BlockMaskPruner(BasePruner):
         with torch.no_grad():
             for key in self.masks.keys():
                 module = self.modules[key]
-                module.block_mask.data = masks[key].data
+                module.block_mask.data = masks[key].data.clone()
                 
     def zero_mask_grad(self):
         with torch.no_grad():
@@ -558,6 +559,7 @@ class RetrainFreePruner(BasePruner):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
         self.masks = self.pattern.get_block_masks(self.modules)
+        self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(self.config, self.modules)
         self.reg = get_reg(self.config, self.modules, self.pattern)
@@ -603,6 +605,7 @@ class RetrainFreePruner(BasePruner):
         if (self.end_step-self.global_step) / self.pruning_frequency < 1:
             self.mask_weights()
             logger.info(f"mask weights at end_step: {self.global_step}")
+            self.recover_forward()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
@@ -618,8 +621,33 @@ class RetrainFreePruner(BasePruner):
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_after_optimizer_step()
         self.zero_mask_grad()
-        # self.mask_weights() #done on step begin
+        # self.mask_weights() #done on update_masks
         self.global_step += 1
+        
+    def rewrite_forward(self):
+        """Rewrite forward to implement block mask operation"""
+        def forward(self, input):
+            block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
+                    self.weight.shape[1]//self.block_mask.shape[1]]
+            mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(\
+                                                        block_size[1], dim=-1).to(self.weight.device)
+            return F.linear(input, self.weight*mask, self.bias)
+        
+        for key in self.modules.keys():
+                if not hasattr(self.modules[key], 'block_mask'):
+                    continue # No corresponding block mask, skip.
+                module = self.modules[key]
+                assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
+                module.forward = partial(forward, module)
+                
+    def recover_forward(self):
+        """Restore the forward format at the end of pruning"""
+        with torch.no_grad():
+            for key in self.modules.keys():
+                if not hasattr(self.modules[key], 'block_mask'):
+                    continue # No corresponding block mask, skip.
+                module = self.modules[key]
+                module.forward = partial(torch.nn.Linear.forward, module)
                 
     def mask_weights(self):
         """Apply block masks to corresponding modules' weights.
