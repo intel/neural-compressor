@@ -227,27 +227,6 @@ class TorchSmoothQuant:
             for hook_handle in self.hook_values_handles:
                 hook_handle.remove()
 
-    # ##https://gist.github.com/sailfish009/28b54c8aa6398148a6358b8f03c0b611
-    # def percentile(t: torch.tensor, q: float):
-    #     """
-    #     Return the ``q``-th percentile of the flattened input tensor's data.
-    #
-    #     CAUTION:
-    #      * Needs PyTorch >= 1.1.0, as ``torch.kthvalue()`` is used.
-    #      * Values are not interpolated, which corresponds to
-    #        ``numpy.percentile(..., interpolation="nearest")``.
-    #
-    #     :param t: Input tensor.
-    #     :param q: Percentile to compute, which must be between 0 and 100 inclusive.
-    #     :return: Resulting value (scalar).
-    #     """
-    #     # Note that ``kthvalue()`` works one-based, i.e. the first sorted value
-    #     # indeed corresponds to k=1, not k=0! Use float(q) instead of q directly,
-    #     # so that ``round()`` returns an integer, even if q is a np.float32.
-    #     k = 1 + round(.01 * float(q) * (t.numel() - 1))
-    #     result = t.view(-1).kthvalue(k).values.item()
-    #     return result
-
     def _calibrate(self, absorb_to_layer, calib_iter, save_input_output=False):
         """
         :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
@@ -312,26 +291,50 @@ class TorchSmoothQuant:
             weight = weight.reshape(-1, weight.shape[-1])
         return weight
 
+    def _reshape_scale_for_weight(self, layer, scale):
+        """
+        reshape the scale for weight input channel, depthwise output channel
+        :param layer:  torch module
+        :param scale: orig scale
+        :return: reshaped scale
+        """
+        if isinstance(layer, torch.nn.Conv2d) and layer.groups > 1:  ##only depthwise conv could hit here
+            scale = scale.view(scale.shape[0], 1, 1, 1)  ##mount on output channel
+
+        elif isinstance(layer, torch.nn.Conv2d):
+            scale = scale.view(1, scale.shape[0], 1, 1)
+
+        elif isinstance(layer, torch.nn.Linear):
+            scale = scale.view(1, scale.shape[0])
+
+        return scale
+
+    def _reshape_scale_for_input(self, layer, scale):
+        """
+        reshape the scale for input feature in channel
+        :param layer:
+        :param scale:
+        :return:
+        """
+        if isinstance(layer, torch.nn.Conv2d):
+            scale = scale.view(1, scale.shape[0], 1, 1)
+
+        elif isinstance(layer, torch.nn.Linear):
+            scale = scale.view(1, scale.shape[0])
+
+        return scale
+
     def _scale_layer_weight(self, layer_name, scale):  ##input channel
         """
-        Scale the layer weights at input channel
+        Scale the layer weights at input channel, depthwise conv output channel
         :param layer_name: The layer name
         :param scale: The scale to be multiplied
         :return:
         """
         layer = self._get_module(layer_name)
-        if isinstance(layer, torch.nn.Conv2d) and layer.groups > 1:  ##only depthwise conv could hit here
-            scale = scale.view(scale.shape[0], 1, 1, 1)  ##mount on output channel
-            layer.weight *= scale
-        elif isinstance(layer, torch.nn.Conv2d):
-            scale = scale.view(1, scale.shape[0], 1, 1)
-            layer.weight *= scale
-        elif isinstance(layer, torch.nn.Linear):
-            scale = scale.view(1, scale.shape[0])
-            layer.weight *= scale
-        else:
-            logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale directly ")
-            layer.weight *= scale
+        scale = self._reshape_scale_for_weight(layer, scale)
+        layer.weight *= scale
+        return scale
 
     def _absorb_scales(self, layer_name, scale):  ##output channel
         """
@@ -408,7 +411,7 @@ class TorchSmoothQuant:
         weight_scales_info = {}
         absorb_scales_info = {}
         for index, key in enumerate(absorb_to_layer.keys()):
-            if isinstance(alpha,float):
+            if isinstance(alpha, float):
                 alpha_key = alpha
             elif isinstance(alpha, dict):
                 alpha_key = alpha[key]
@@ -439,30 +442,40 @@ class TorchSmoothQuant:
                 weight_scales_info[layer_name] = scale
         return weight_scales_info, absorb_scales_info
 
-    def _check_same_hyperparameters(self, percentile, op_types,
-                                    scales_per_op, calib_iter):
+    def _check_need_calibration(self, alpha, percentile, op_types,
+                                scales_per_op, calib_iter):
         """
-        :param percentile:
-        :param op_types:
-        :param scales_per_op:
-        :param calib_iter:
+        check need calibration or not
+        :param alpha: current alpha
+        :param percentile: current percentile
+        :param op_types: current op_types
+        :param scales_per_op: current scales_per_op
+        :param calib_iter:: current scales_per_op
         :return:
         """
-        if len(self.input_maxes) == 0:
+        need_calib = True
+        if len(self.input_maxes) == 0:  ## the first time
+            need_calib = True
+            self.alpha = alpha
             self.percentile = percentile
             self.op_types = op_types
             self.scales_per_op = scales_per_op
             self.calib_iter = calib_iter
-            return False
-        if self.percentile != percentile or self.op_types != op_types \
-                or self.scales_per_op != scales_per_op or self.calib_iter != calib_iter:
-            self.percentile = percentile
-            self.op_types = op_types
-            self.scales_per_op = scales_per_op
-            self.calib_iter = calib_iter
-            return False
-        else:
-            return True
+            return need_calib
+
+        if self.percentile == percentile and self.op_types == op_types \
+                and self.scales_per_op == scales_per_op and self.calib_iter != calib_iter:
+            if isinstance(alpha, float):
+                need_calib = False
+            elif self.alpha == "auto":
+                need_calib = False
+
+        self.alpha = alpha
+        self.percentile = percentile
+        self.op_types = op_types
+        self.scales_per_op = scales_per_op
+        self.calib_iter = calib_iter
+        return need_calib
 
     def _check_dw_conv(self, module):
         if not isinstance(module, torch.nn.Conv2d):
@@ -484,8 +497,8 @@ class TorchSmoothQuant:
         import copy
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
-                                  round(alpha_step * alpha_scale)))
-        alpha_space = [alpha/alpha_scale for alpha in alpha_space]
+                                 round(alpha_step * alpha_scale)))
+        alpha_space = [alpha / alpha_scale for alpha in alpha_space]
 
         ans_layer2absorb, self.layer_to_absorb, ans = {}, {}, {}
         ## Searching optimal alphas
@@ -507,8 +520,9 @@ class TorchSmoothQuant:
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
                                                                                               input_max_op, alpha)
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
-
-                    input_of_op_q = quant_dequant_x(input_of_op * self.absorb_scales_info[absorb_key])
+                    input_scale = self._reshape_scale_for_input(self._get_module(layer_key),
+                                                                self.absorb_scales_info[absorb_key])
+                    input_of_op_q = quant_dequant_x(input_of_op * input_scale)
                     layer = self._get_module(layer_key)
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
@@ -543,25 +557,9 @@ class TorchSmoothQuant:
         logger.info("auto tuning alpha done")
         return ans_layer2absorb
 
-        # for idx, key in enumerate(self.absorb_to_layer):  # Adjust parameters according to optimal alphas.
-        #     absorb_to_layer_sample, input_max_op = {}, {}
-        #     absorb_key = key
-        #     absorb_to_layer_sample[absorb_key] = self.absorb_to_layer[absorb_key]
-        #     layer_key_ = self.layer_to_absorb[absorb_key]
-        #     input_max_op[layer_key_] = input_maxes[layer_key_]
-        #     if key in ans_layer2absorb:
-        #         op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op,
-        #                                                                    alpha=ans_layer2absorb[key])
-        #     else:
-        #         op_weight_scale, op_absorb_scale = self._adjust_parameters(absorb_to_layer_sample, input_max_op)
-        #     self.weight_scale_info.update(op_weight_scale)
-        #     self.absorb_scales_info.update(op_absorb_scale)
-        # self.input_values, self.output_values = {}, {}
-        #
-
     def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100,
-                  auto_alpha_args = {'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
+                  auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
         """
         The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -585,11 +583,11 @@ class TorchSmoothQuant:
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
-        matched = self._check_same_hyperparameters(percentile, op_types, scales_per_op, calib_iter)
+        self.recover()
+        need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
             input_maxes = self.input_maxes
-            if matched == False:  ##avoid multiple calibaration during tuning if the only difference is alpha
-                self.recover()
+            if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 self.absorb_to_layer, no_absorb_layers = self._trace(
                     op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                 for key in self.absorb_to_layer:
@@ -597,21 +595,21 @@ class TorchSmoothQuant:
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
                     logger.warning("if you are using huggingface model,"
-                                   "you could set torchscript to True "
-                                   "when loading the model or set the return_dict to False")
+                                   "you could set torchscript to True ")
                     return self.model
                 save_input_output = False
                 if alpha == "auto":
                     save_input_output = True
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
+                if alpha == 'auto':
+                    self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
 
-            self.recover()
             if alpha == 'auto':
-                alpha = self._auto_tune_alpha(input_maxes, **auto_alpha_args)
+                alpha = self.alpha_per_layer
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
-                                                                                          input_maxes, alpha)
+                                                                                      input_maxes, alpha)
             self.input_values, self.output_values = {}, {}
             return self.model
 

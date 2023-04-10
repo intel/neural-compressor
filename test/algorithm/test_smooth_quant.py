@@ -99,7 +99,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
     @classmethod
     def test_sq_conv_relu6(self):
         datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 2, 2), low=0., high=1.0)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
