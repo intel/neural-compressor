@@ -24,7 +24,7 @@ $$
 
 where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
 
-### Per-tenor & Per-channel
+### Per-tensor & Per-channel
 
 There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual parameter.
 
@@ -59,28 +59,28 @@ def quantize(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
     scale = torch.clip(scale, min=1e-5)
-    bias = torch.round(0 - (torch.min(x)) / scale)
-    q_x = x / scale + bias
+    zp = torch.round(0 - (torch.min(x)) / scale)
+    q_x = x / scale + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scale}, bias = {bias}')
-    return q_x
+    print(f'scale = {scale}, zp = {zp}')
+    return q_x, scale, zp
 ```
 
-Then we can get the quantized $W_{q}$:
+Then we can get the quantized $W_{q}$
 
 ```bash
->>> W_q = quantize(W)
-scale = 0.00296431384049356, bias = -59.0
+>>> W_q, scale, zp = quantize(W)
+scale = 0.00296431384049356, zp = -59.0
 >>> W_q
 tensor([[172., 101., 192.],
         [255.,   0., 172.]])
 ```
 
-With the value of scale and bias, we can dequantize the tensor.
+With the value of scale and zp, we can dequantize the tensor.
 
 ```python
-def dequantize(q_x, scale, bias):
-    return scale * (q_x - bias)
+def dequantize(q_x, scale, zp):
+    return scale * (q_x - zp)
 ```
 
 ```bash
@@ -92,13 +92,13 @@ tensor([[0.1220, 0.0500, 0.1430],
 >>> loss.item()
 0.1983354538679123
 
->>> W_dq = dequantize(W_q, 0.0020850980654358864, -70)
+>>> W_dq = dequantize(W_q, scale, zp)
 >>> W_dq
 tensor([[0.6848, 0.4743, 0.7440],
         [0.9308, 0.1749, 0.6848]])
 >>> loss = torch.nn.MSELoss()(W_dq, W)
 >>> loss.item()
-
+7.385297635664756e-07
 ```
 
 The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision. 
@@ -112,31 +112,29 @@ def quantize_per_channel(x, num_bits=8):
     q_min, q_max = 0, 2. ** num_bits - 1.
     x_tmp = x.detach().reshape(x.shape[0], -1)
     scales = x_tmp.max(dim=-1, keepdim=True)[0] / (2 ** num_bits - 1)
-    bias =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
-    q_x = x_tmp.divide(scales) + bias
+    zp =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
+    q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scales}, \nbias = {bias}')
-    return q_x
+    print(f'scale = {scales}, \n zp = {zp}')
+    return q_x, scale, zp
 
-def dequantize_per_channel(q_x, scales, bias):
-    print(q_x, scales, bias)
-    print(scales * (q_x - bias))
-    return scales * (q_x - bias)
+def dequantize_per_channel(q_x, scales, zp):
+    print(q_x, scales, zp)
+    print(scales * (q_x - zp))
+    return scales * (q_x - zp)
 ```
 
 ```bash
->>>W_q = quantize_per_channel(W)
+>>>W_q, scale, zp = quantize_per_channel(W)
 scale = tensor([[0.0029],
         [0.0036]]), 
-bias = tensor([[-162.],
+zp = tensor([[-162.],
         [ -48.]])
 >>>W_q
 tensor([[ 72.,   0.,  93.],
         [207.,   0., 139.]])
 
->>>scales = torch.tensor([[0.0027],[0.0017]])
->>>bias = torch.tensor([[-66.],[-87.]])
->>>W_dq = dequantize_per_channel(W_q, scales, bias)
+>>>W_dq = dequantize_per_channel(W_q, scales, zp)
 >>>W_dq
 tensor([[0.6837, 0.4734, 0.7451],
         [0.9301, 0.1751, 0.6821]])
@@ -150,7 +148,7 @@ And the loss is
 5.637690492221736e-07
 ```
 
-Through this example, we can see that per-channel quantization has finer granularity and has lower loss.
+Through this example, we can see that per-channel quantization has finer granularity and has lower loss (loss 5.6376e-07 for per-channel quantization and 7.3852e-07 for per-tensor quantization).
 
 #### Matmul quantization example
 
@@ -162,14 +160,15 @@ def quantize_per_tensor_absmax(x, n_bits=8):
     scales = x.abs().max()
     q_max = 2**(n_bits-1)-1
     scales.clamp_(min=1e-5).div_(q_max)
-    x.div_(scales).round_().mul_(scales)
-    return x
+    q_x = x / scales
+    q_x = q_x.clamp_(-q_max, q_max).round_()
+    return q_x, scales
 
 def dequantize(q_x, scale):
     return scale * q_x
 ```
 
-Random initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
+Randomly initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$
 
 ```bash
 >>>W = torch.rand(2, 3, dtype=torch.float32)
@@ -295,18 +294,12 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 ```python
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 sq = TorchSmoothQuant(model, dataloader)
-sq.transform(alpha) ##alpha could be a float or a string ’auto‘
+sq.transform(alpha) ##alpha could be a float or a string 'auto'
 ```
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
-*support lots of fusing patterns*: the official code only supports 
-
-```bash
-linear->layernorm
-```
-
-while we support the following patterns
+*support lots of fusing patterns*: when applying the convention per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.
 
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
@@ -314,21 +307,20 @@ conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instan
 conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
 ```
 
-For opt models, we could fuse one more layer than the official code, because the fc2 layer in the block follows the linear->relu->linear pattern.
-
 ## Validated Models
+Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
-| bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76%                            |
-| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58%                            |
-| bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16%                            |
-| bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45%                            |
+| bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over 0.6, 4.1% in [0.4, 0.6])                           |
+| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58% (alpha: 55.1% over 0.6, 30.6% in [0.4, 0.6], 14.3% under 0.4)                            |
+| bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16% (alpha: 100% over 0.6)                            |
+| bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45% (alpha: 91.8% over 0.6, 4.9% in [0.4, 0.6], 3.3% under 0.4)                           |
 | bigscience/bloom-176b | 84.17% |         82.13%         | 83.52% (alpha=0.6)    | -                                 |
-| facebook/opt-125m   | 63.89% |         63.48%         | 63.44% (alpha=0.5)    | 64.14%                            |
-| facebook/opt-1.3b   | 75.41% |         73.59%         | 70.94% (alpha=0.5)    | 74.80%                            |
-| facebook/opt-2.7b   | 77.79% |         78.57%         | 78.60%(alpha=0.5)     | 78.25%                            |
-| facebook/opt-6.7b   | 81.26% |         76.65%         | 81.58%(alpha=0.5)     | 81.39%                            |
-| EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29%                            |
+| facebook/opt-125m   | 63.89% |         63.48%         | 63.44% (alpha=0.5)    | 64.14% (alpha: 59.4% over 0.6, 8.1% in [0.4, 0.6], 32.4% under 0.4)                           |
+| facebook/opt-1.3b   | 75.41% |         73.59%         | 70.94% (alpha=0.5)    | 74.80% (alpha: 69.9% over 0.6, 24.7% in [0.4, 0.6], 5.5% under 0.4)                            |
+| facebook/opt-2.7b   | 77.79% |         78.57%         | 78.60%(alpha=0.5)     | 78.25% (alpha: 73.2% over 0.6, 21.6% in [0.4, 0.6], 5.2% under 0.4)                           |
+| facebook/opt-6.7b   | 81.26% |         76.65%         | 81.58%(alpha=0.5)     | 81.39% (alpha: 68.0% over 0.6, 26.8% in [0.4, 0.6], 5.2% under 0.4)                           |
+| EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29% (alpha: 96.4% over 0.6, 3.6% in [0.4, 0.6])                                            |
 
 
 ## Example
