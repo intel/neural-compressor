@@ -7,7 +7,11 @@ Auto Slim
 
     - [Feed Forward Network Slim](#feed-forward-network-slim)
 
-    - [Multi-head attention pruning](#multi-head-attention-slim)
+    - [Multi-head Attention Slim (Experimental)](#multi-head-attention-slim-experimental)
+
+2. [API for Auto Slim](#api-for-auto-slim)
+
+3. [Run Examples](#run-examples)
 
 ## Introduction
 
@@ -29,7 +33,7 @@ Auto Slim
 </a>
 </div>
 
-  The demostrating figure above shows how we execute the slim process for FFN. (a) shows an FFN initial status with the second linear layer's input channel pruned. (b) shows projecting the sparse channel indice to the first layer's output channels. The channel with same index takes the same color, and white channels means their weights are pruned to be zero. Finally, in (c), we remove sparse channel in both linear layers and obtain two dense linear layers. 
+  The demostrating figure above shows how we execute the slim process for FFN. In three sub-figures, **row number and column number refers to output channels and input channels respectively**. (a) shows an FFN initial status with the second linear layer's input channel pruned. (b) shows projecting the sparse channel indice to the first layer's output channels. The channel with same index takes the same color, and white channels means their weights are pruned to be zero. Finally, in (c), we remove sparse channel in both linear layers and obtain two dense linear layers. 
 
   This leads to no change for model's accuracy, but can obtain a significant acceleration for model's inference, because the transformer models' FFN parts take nearly 50% of entire computing overhead. Thus, compressing weights in feed forward network is really useful.
 
@@ -39,7 +43,9 @@ Auto Slim
 
 ## API for Auto Slim
 
-Since FFN, MHA modules share similar structures in difference models, it would be more convenient if we can locate them automatically and execute the model slim schemes respectively. We provide API functions for you to complete the process above and slim your transformer models easily. Here is how to call our API functions. Simply provide a target sparsity value to our Our API function parse_auto_slim_config and it can generate the pruning_configs used by our pruning API. Such process is fully automatic and target multi-head attention layers will be included without manual setting. After pruning process finished, use API function model_slim to slim the model.
+  Since FFN, MHA modules share similar structures in difference models, it would be more convenient if we can locate them automatically and execute the model slim schemes respectively. We provide API functions for you to complete the process above and slim your transformer models easily. Here is how to call our API functions. Simply provide a target sparsity value to our Our API function parse_auto_slim_config and it can generate the pruning_configs used by our pruning API. Such process is fully automatic and target multi-head attention layers will be included without manual setting. After pruning process finished, use API function model_slim to slim the model.
+  
+  Since head pruning's slim process is still under refinement progress, its auto slim function is limited. We will update its function right away.
 
 ```python
 # auto slim config
