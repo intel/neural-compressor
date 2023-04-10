@@ -25,7 +25,7 @@ Auto Slim
 
 <div align=center>
 <a target="_blank" href="./imgs/auto_slim_ffn.png">
-    <img src="./imgs/auto_slim_ffn.png" width=353 height=100 alt="ffn slim">
+    <img src="./imgs/auto_slim_ffn.png" width=706 height=200 alt="ffn slim">
 </a>
 </div>
 
