@@ -3,62 +3,6 @@ import numpy as np
 import unittest
 import os
 import shutil
-import yaml
-
-
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: random
-            accuracy_criterion:
-              relative: 0.01
-            workspace:
-              path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
-
-def build_fake_yaml2():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-          strategy:
-            name: random
-          exit_policy:
-            max_trials: 3
-          accuracy_criterion:
-            relative: -0.01
-          workspace:
-            path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml2.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
 
 def build_fake_model():
     import tensorflow as tf
@@ -102,35 +46,58 @@ class TestQuantization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
-        build_fake_yaml()
-        build_fake_yaml2()
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
-        os.remove('fake_yaml2.yaml')
-
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_ru_random_one_trial(self):
-        from neural_compressor.experimental import Quantization, common
-
-        quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        quantizer.fit()
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        
+        # tuning and accuracy criterion
+        tune_cri = TuningCriterion(strategy='random', max_trials=1)
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
+        
+        conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
+        def fake_eval(model):
+            return 1
+        
+        q_model = fit(model=self.constant_graph,
+                      conf=conf,
+                      calib_dataloader=dataloader,
+                      eval_func=fake_eval)
+        self.assertNotEqual(q_model, None)
 
     def test_ru_random_max_trials(self):
-        from neural_compressor.experimental import Quantization, common
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        
+        # tuning and accuracy criterion
+        tune_cri = TuningCriterion(strategy='random', max_trials=3)
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
+        
+        acc = [0, 1, 0.9, 0.9, 1]
+        def fake_eval(model):
+            acc.pop(0)
+            return acc[0]
 
-        quantizer = Quantization('fake_yaml2.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        quantizer.fit()
+        conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
+        q_model = fit(model=self.constant_graph,
+                      conf=conf,
+                      calib_dataloader=dataloader,
+                      eval_func=fake_eval)
+        self.assertNotEqual(q_model, None)
 
 
 if __name__ == "__main__":

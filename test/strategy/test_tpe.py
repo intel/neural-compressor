@@ -59,7 +59,7 @@ class TestQuantization(unittest.TestCase):
         
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='tpe', max_trials=200)
-        acc_cri = AccuracyCriterion(tolerable_loss=-0.01)
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
         def eval_func(model):
             return 1
         conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
@@ -79,7 +79,7 @@ class TestQuantization(unittest.TestCase):
         
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='tpe', max_trials=5)
-        acc_cri = AccuracyCriterion(tolerable_loss=-0.01)
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
         
         from neural_compressor.metric import METRICS
         metrics = METRICS('tensorflow')

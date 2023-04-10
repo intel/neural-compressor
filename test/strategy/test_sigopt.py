@@ -3,7 +3,6 @@ import numpy as np
 import unittest
 import shutil
 import os
-import yaml
 if os.getenv('SIGOPT_API_TOKEN') is None or os.getenv('SIGOPT_PROJECT_ID') is None:
     CONDITION = True
 else:
