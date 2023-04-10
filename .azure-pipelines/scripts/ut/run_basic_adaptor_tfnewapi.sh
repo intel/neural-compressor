@@ -4,6 +4,7 @@ echo "run basic adaptor tfnewapi"
 
 echo "specify fwk version..."
 export tensorflow_version='spr-base'
+export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 # export FORCE_BF16=1
 
 echo "set up UT env..."
