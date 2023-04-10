@@ -54,8 +54,8 @@ pruning_configs = []
 from neural_compressor.compression import parse_auto_slim_config
 auto_slim_configs = parse_auto_slim_config(
     model, 
-    mha_sparsity = prune_mha_sparsity, 
-    ffn_sparsity = prune_ffn_sparsity
+    multi_head_attention_sparsity, 
+    feed_forward_sparsity
 )
 pruning_configs += auto_slim_configs
 
@@ -72,4 +72,4 @@ model = model_slim(model)
 
 ## Run Examples
 
-We have provided BERT-Base examples for both [feed forward networks](../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/ffn_slim) and [multi-head attention](../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/mha_slim). More examples related to popular large language models will be included right away.
+We have provided BERT-Base examples for both [feed forward networks](../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/feed_forward_network_slim) and [multi-head attention](../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/multi_heads_attention_slim). More examples related to popular large language models will be included right away.
