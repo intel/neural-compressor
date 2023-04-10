@@ -722,12 +722,12 @@ class PatternNxM(BasePattern):
             weight = module.weight
             block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
             module.register_parameter("block_mask", block_mask)
+            assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
             def forward(self, input): # only for linear
-                assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
                 block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
                         self.weight.shape[1]//self.block_mask.shape[1]]
                 mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(\
-                                                         block_size[1], dim=-1).to(dtype=weight.dtype)
+                                                         block_size[1], dim=-1).to(self.weight.device)
                 return F.linear(input, self.weight*mask, self.bias)
             module.forward = partial(forward, module)
             masks[key] = modules[key].block_mask.data
@@ -742,7 +742,7 @@ class PatternNxM(BasePattern):
             block_size = self.block_size[key]
             org_shape = module.weight.shape
             mask = module.block_mask.data.repeat_interleave(\
-                    block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+                    block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
             reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
             module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
             
