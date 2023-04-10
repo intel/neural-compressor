@@ -18,3 +18,4 @@
 from .callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
 from ..experimental.compression import prepare_pruning
 from .. import WeightPruningConfig
+from .callbacks import model_slim, parse_auto_slim_config

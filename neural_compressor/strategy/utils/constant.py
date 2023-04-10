@@ -17,7 +17,7 @@
 
 """Strategy constant."""
 
-PRECISION_SET = {'bf16', 'fp16' , 'fp32',}
+PRECISION_LIST = ['bf16', 'fp16' , 'fp32']
 QUANT_MODE_SET = {'static', 'dynamic'}
 QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
 
