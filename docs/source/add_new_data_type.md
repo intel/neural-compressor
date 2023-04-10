@@ -1,6 +1,6 @@
 
 
-New Data Type
+Add New Data Type
 =======
 
 
@@ -17,7 +17,7 @@ This document provides guidance on how to add new data types to the INC by using
 ## Defines the Quantization Ability of the Specific Operator
 
 The first step in adding a new data type to INC is to define the capabilities of the new data type itself and include it to the framework YAML. 
-The capabilities should include the quantized data types and quantization schemes of activation and weight(optional) respectively. The following table descript the detail of each filed:
+The capabilities should include the quantized data types and quantization schemes of activation and weight(if applicable). The following table describes the detail of each filed:
 
 
 | Field name | Options | Description |
@@ -28,7 +28,7 @@ The capabilities should include the quantized data types and quantization scheme
 | Calibration Algorithm (`algorithm`)| `minmax`, `kl`| 	The calibration algorithm used for the new data type. `minmax` represents the minimum-maximum algorithm, `kl` represents the Kullback-Leibler divergence algorithm. |
 
 
-For example, let's add  4-bit quantization for `Conv2d` in the PyTorch backend. We can modify the `neural_compressor/adaptor/pytorch_cpu.yaml` as follows:
+To add  4-bit quantization for `Conv2d` in the PyTorch backend. We can modify the `neural_compressor/adaptor/pytorch_cpu.yaml` as follows:
 
 ```diff
   ...
@@ -65,7 +65,7 @@ The code states that the PyTorch Conv2d Operator has the ability to quantize wei
 
 ### Use the New Data Type
 
-Once the new data type has been added to INC, it can be used in the same way as any other data type within the framework. To specify that all `Conv2d` operators should utilize 4-bit quantization, the following steps can be taken:
+Once the new data type has been added to INC, it can be used in the same way as any other data type within the framework. To specify that all `Conv2d` operators should utilize 4-bit quantization, here's an example of how to do it::
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig
@@ -84,8 +84,8 @@ conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
 
 ```
 
-This code specifies quantization rules for all `Conv2d` operators, quantizing their weight with `int4` and their activation with `uint4`.
+With this code, all `Conv2d` operators will be quantized to 4-bit, with weight using `int4` and activation using `uint4`.
 
 
 ### Others
-It is worth noting that currently, INC only supports the PyTorch backend with N-bit quantization, where N is an integer between 1 and 7. Other backends or quantization schemes may be added in the future.
+It's important to note that INC currently only supports N-bit quantization for the PyTorch backend, where N is an integer between 1 and 7. While other backends or quantization schemes may be added in the future.
