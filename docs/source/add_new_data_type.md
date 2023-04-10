@@ -65,7 +65,7 @@ The code states that the PyTorch Conv2d Operator has the ability to quantize wei
 
 ### Use the New Data Type
 
-Once the new data type has been added to INC, it can be used in the same way as any other data type within the framework. To specify that all `Conv2d` operators should utilize 4-bit quantization, here's an example of how to do it::
+Once the new data type has been added to INC, it can be used in the same way as any other data type within the framework. To specify that all `Conv2d` operators should utilize 4-bit quantization, here's an example of how to do it:
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig
