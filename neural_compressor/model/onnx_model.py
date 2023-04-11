@@ -469,13 +469,33 @@ class ONNXModel(BaseModel):
         self.model.graph.ClearField('node')
         self.model.graph.node.extend(nodes)
 
-    def get_nodes_chain(self, start_node, stop_node, result_chain=[]):
+    def get_nodes_chain(self, start, stop, result_chain=[]):
         """Get nodes chain with given start node and stop node."""
         from collections import deque
-        if not all([isinstance(node, str) for node in start_node]):
-            start_node = deque([node.name for node in start_node])
-        if not all([isinstance(node, str) for node in stop_node]):
-            stop_node = [node.name for node in stop_node]
+        from onnx import NodeProto
+
+        # process start node list
+        start_node = deque()
+        for node in start:
+            if isinstance(node, str):
+                start_node.append(node)
+            elif isinstance(node, NodeProto):
+                start_node.append(node.name)
+            else:
+                assert False, "'get_nodes_chain' function only support list[string]" \
+                              "or list[NodeProto] params"
+        
+        # process stop node list
+        stop_node = []
+        for node in stop:
+            if isinstance(node, str):
+                stop_node.append(node)
+            elif isinstance(node, NodeProto):
+                stop_node.append(node.name)
+            else:
+                assert False, "'get_nodes_chain' function only support list[string]" \
+                              "or list[NodeProto] params"
+
         while start_node:
             node_name = start_node.popleft()
             if node_name in stop_node:
