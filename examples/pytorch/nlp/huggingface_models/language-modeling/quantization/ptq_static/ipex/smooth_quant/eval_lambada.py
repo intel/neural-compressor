@@ -148,7 +148,7 @@ if args.int8:
     if args.kl:
         op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
 
-    conf = PostTrainingQuantConfig(quant_level=1, backend='ipex', excluded_precisions=["bf16"],##use basic tuning
+    conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
                                    recipes=recipes,
                                    op_type_dict=op_type_dict)
 
