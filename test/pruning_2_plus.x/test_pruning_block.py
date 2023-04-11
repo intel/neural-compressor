@@ -23,7 +23,6 @@ class TestPruning(unittest.TestCase):
                 "pruning_type": "block_mask",
                 "pruning_scope": "global",
                 "criterion_type": "snip_momentum_block",
-                "criterion_reduce_type": "mean",
                 "pruning_op_types": "Linear",
             },
             {
@@ -34,15 +33,15 @@ class TestPruning(unittest.TestCase):
                 "pruning_type": "block_mask",
                 "pruning_scope": "local",
                 "criterion_type": "snip_momentum_block",
-                "criterion_reduce_type": "sum",
-            },{
+            },
+            {
                 "op_names": ['encoder_layer_3.mlp*'],
-                'target_sparsity': 0.7,
-                'pattern': '5x1',
+                'target_sparsity': 0.4,
+                'pattern': 'channelx1',
                 "pruning_op_types": "Linear",
-                "pruning_type": "block_mask",
-                "criterion_type": "snip_momentum_block",
+                "pruning_type": "retrain_free",
                 "pruning_scope": "local",
+                "pruning_frequency": 2,
             }
         ]
         config = WeightPruningConfig(
@@ -73,3 +72,4 @@ class TestPruning(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
