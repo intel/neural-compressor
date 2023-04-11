@@ -131,8 +131,12 @@ class PreOptimization():
             else:
                 gpus = tf.config.list_physical_devices("GPU")
                 if len(gpus) == 0:
-                    cpus = tf.config.list_physical_devices("CPU")
-                    node_device = cpus[0].name.replace('physical_device:', '')
+                    xpus = tf.config.list_physical_devices("XPU")
+                    if len(xpus) == 0:
+                        cpus = tf.config.list_physical_devices("CPU")
+                        node_device = cpus[0].name.replace('physical_device:', '')
+                    else:
+                        node_device = xpus[0].name.replace('physical_device:', '')
                 else:
                     node_device = gpus[0].name.replace('physical_device:', '')
             for node_name in list(graph_info.keys()):
