@@ -476,20 +476,24 @@ def main():
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
-        fp32_op_names = None
+        other_config = {}
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
             fp32_op_names = ['Gather_94', 'MatMul_(660|754|848|1036)']
+            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
             fp32_op_names = ['MatMul_(660|566)', 'Unsqueeze_91']
+            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
             fp32_op_names = ['MatMul_(1[7-8]|2[6-7]|3[5-6]|4[3-4]|5[2-3])\d']
-        elif model_args.model_name_or_path == 'roberta-large':
-            fp32_op_names = ['MatMul_(138|240|342|[4-9]\d{2|1\d{3}|2[0-4]\d{2})',
-                             'MatMul_(148|250|[3-9]\d{2}|1\d{3}|2[0-4]\d{2})']
+            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
+        elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
+            fp32_op_names = ['MatMul_(1[34]\d|[2-6][45]\d|[7-9][56]\d)',
+                            'MatMul_(1[01][56]\d|1[2-6][67]\d|(1[7-9]|2[01])[78]\d|2[2-4][89]\d)']
+            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
+            other_config['calibration_sampling_size'] = [20]
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
-                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
-                                            if fp32_op_names is not None else None)
+                                         **other_config)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
