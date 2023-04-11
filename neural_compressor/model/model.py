@@ -172,15 +172,15 @@ class Model(object):
         elif backend == "ipex":
             backend = "pytorch_ipex"
 
-        if 'tensorflow' in backend:
-            if kwargs.get("approach", None) == "quant_aware_training":
-                return TensorflowQATModel(root, **kwargs)
+        if 'tensorflow' in backend or backend == 'keras':
+            if kwargs.get("approach", None) == "quant_aware_training" or backend == 'tensorflow_qat':
+                return MODELS['tensorflow_qat'](root, **kwargs)
 
             if 'modelType' in kwargs:
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
-            if model_type == 'keras':
+            if backend == 'keras' and model_type == 'keras':
                 return MODELS['keras'](root, **kwargs)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
         else:

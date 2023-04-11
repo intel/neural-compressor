@@ -218,8 +218,8 @@ class BaseCallbacks(object):
             self.framework = get_model_fwk_name(
                 user_model.model if isinstance(user_model, BaseModel) else user_model)
             if self.framework == "tensorflow":
-                if self.cfg.quantization.approach == "quant_aware_training":
-                    self.framework = 'tensorflow_itex'
+                if self.cfg.quantization and self.cfg.quantization.approach == "quant_aware_training":
+                    self.framework = 'tensorflow_qat'
                 else:
                     from ..model.tensorflow_model import get_model_type
                     if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
@@ -233,12 +233,7 @@ class BaseCallbacks(object):
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            if self.framework == 'tensorflow':
-                if type(user_model) == str:
-                    self._model = TensorflowQATModel(user_model)
-                else:
-                    self._model = TensorflowQATModel(user_model._model)
-            elif "tensorflow" in self.framework or self.framework == "keras":
+            if "tensorflow" in self.framework or self.framework == "keras":
                 self._model = Model(user_model, backend=self.framework, device=self.cfg.device)
             else:
                 self._model = Model(user_model, backend=self.framework)
