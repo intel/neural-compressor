@@ -31,6 +31,11 @@ from neural_compressor.utils import logger
 from tensorflow.python.client import timeline
 import os
 
+def boolean_string(s):
+    if s not in {'False', 'True'}:
+        raise ValueError('Not a valid boolean string')
+    return s == 'True'
+
 arg_parser = ArgumentParser(description="Distilbert inference")
 arg_parser.add_argument("--task-name", type=str,
                         help="Name of the task to run benchmark.",
@@ -62,12 +67,12 @@ arg_parser.add_argument("-m", "--mode", type=str,
                         dest="mode",
                         default="performance"
                         )
-arg_parser.add_argument("--tune", type=bool,
+arg_parser.add_argument("--tune", type=boolean_string,
                         help="whether to apply quantization",
                         dest="tune",
                         default=False
                         )
-arg_parser.add_argument("--benchmark", type=bool,
+arg_parser.add_argument("--benchmark", type=boolean_string,
                         help="whether to do benchmark",
                         dest="benchmark",
                         default=False
@@ -82,7 +87,7 @@ arg_parser.add_argument('-a', "--num-intra-threads", type=int,
                         dest="num_intra_threads",
                         default=28
                         )
-arg_parser.add_argument("--pad-to-max-length", type=bool,
+arg_parser.add_argument("--pad-to-max-length", type=boolean_string,
                         help="Padding option.",
                         dest="pad_to_max_length",
                         default=True
@@ -108,7 +113,7 @@ arg_parser.add_argument("--batch-size", type=int,
                         default=128
                         )
 arg_parser.add_argument("--profile", dest='profile',
-                        type=bool, help="profile",
+                        type=boolean_string, help="profile",
                         default=False)
 
 ARGS = arg_parser.parse_args()
