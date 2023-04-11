@@ -719,6 +719,9 @@ class PatternNxM(BasePattern):
                 continue # No corresponding block mask, skip.
             module = modules[key]
             weight = module.weight
+            if type(module).__name__ not in ["Linear"]:
+                logger.warning(f"Currently only support Linear block mask pruning, {type(module).__name__} won't be pruned.")
+                continue
             block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
             module.register_parameter("block_mask", block_mask)
             masks[key] = modules[key].block_mask.data

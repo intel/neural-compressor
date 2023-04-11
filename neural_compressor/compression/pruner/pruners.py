@@ -84,7 +84,9 @@ def get_pruner(config, modules):
     if name in CRITERIA:
         if config["progressive"] == False:
             config['criterion_type'] = name
-            if "block" not in name and "free" not in name:
+            if "block" in name or "free" in name:
+                assert ":" not in config["pattern"], f"{name} pruner type does not support {config['pattern']} pattern."
+            else :
                 name = "basic"  ##return the basic pruner
         else:
             config['criterion_type'] = name
@@ -297,7 +299,6 @@ class BasePruner:
                 if not hasattr(self.modules[key], 'block_mask'):
                     continue # No corresponding block mask, skip.
                 module = self.modules[key]
-                assert type(module).__name__ in ["Linear"], "Currently only linear block mask pruning is supported"
                 module.forward = partial(forward, module)
                 
     def recover_forward(self):
@@ -564,7 +565,8 @@ class BlockMaskPruner(BasePruner):
 class RetrainFreePruner(BasePruner):
     """Pruning Pruner.
     The retrain_free pruner_class is derived from BasePruner.
-    This pruner references the mask search and mask rearrangement strategies in fast retraining free, and supports iterative pruning.
+    This pruner references the mask search and mask rearrangement strategies in fast retraining free.
+    RetrainFreePruner supports one-shot pruning (same effect as fast retraining free) and iterative pruning.
     Please refer to A Fast Post-Training Pruning Framework for Transformers
         (https://arxiv.org/abs/2204.09656)
         
