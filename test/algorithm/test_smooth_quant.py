@@ -4,6 +4,86 @@ from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 import torchvision
+
+
+class TestSqDepthwiseConv(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                pass
+
+            def __iter__(self):
+                yield torch.rand((1, 3, 1, 1))
+
+        self.conv_dl = RandDataloader()
+
+    @classmethod
+    def test_sq_dw_conv_relu6_auto(self):
+        datasets = Datasets('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
+                self.act = torch.nn.ReLU6()
+                self.conv2 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
+
+            def forward(self, x):
+                out = self.conv1(x)
+                out = self.act(out)
+                out = self.conv2(out)
+                return out
+
+        model = Model()
+
+        data = torch.rand((1, 3, 1, 1))
+        output = model(data)
+
+        sq = TorchSmoothQuant(model, dummy_dataloader)
+        sq.transform(alpha='auto', calib_iter=1)
+        output_sq = model(data)
+        assert torch.sum(torch.abs(output - output_sq)) < 1e-5
+        assert len(sq.absorb_to_layer) == 1
+
+    @classmethod
+    def test_sq_dw_conv_relu6(self):
+        datasets = Datasets('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = torch.nn.Conv2d(3, 3, 1, 1)
+                self.act = torch.nn.ReLU6()
+                self.conv2 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
+
+            def forward(self, x):
+                out = self.conv1(x)
+                out = self.act(out)
+                out = self.conv2(out)
+                return out
+
+        model = Model()
+
+        data = torch.rand((1, 3, 1, 1))
+        output = model(data)
+
+        sq = TorchSmoothQuant(model, dummy_dataloader)
+        sq.transform(alpha=0.5, calib_iter=1)
+        output_sq = model(data)
+        assert torch.sum(torch.abs(output - output_sq)) < 1e-5
+        assert len(sq.absorb_to_layer) == 1
+
+
+
+
+
+
+
 class TestSqConvOpFuseAuto(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -18,10 +98,10 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
 
     @classmethod
     def test_sq_conv_relu6(self):
-
         datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 1, 1), low=0., high=1.0)
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 2, 2), low=0., high=1.0)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
         class Model(torch.nn.Module):
             def __init__(self):
                 super(Model, self).__init__()
@@ -174,17 +254,20 @@ class TestSqConvOpFuse(unittest.TestCase):
             def forward(self, x):
                 out = self.conv1(x)
                 out = self.act(out)
-                out = out+x
+                out = out + x
                 out = self.conv2(out)
                 return out
 
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.6,calib_iter=2)
+        sq.transform(alpha=0.6, calib_iter=2)
         assert len(sq.absorb_to_layer) == 0
 
+
 import torch.nn as nn
+
+
 class LlamaRMSNorm(nn.Module):
     def __init__(self, hidden_size, eps=1e-6):
         """
@@ -228,6 +311,7 @@ class T5LayerNorm(nn.Module):
             hidden_states = hidden_states.to(self.weight.dtype)
 
         return self.weight * hidden_states
+
 
 class TestSqListInput(unittest.TestCase):
     @classmethod
@@ -291,6 +375,7 @@ class TestSqListInput(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 1
 
+
 class TestAlphaAutoLinear(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -337,7 +422,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         self.linear_dl = RandDataloader()
 
-
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
@@ -380,7 +464,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 1
 
-
     @classmethod
     def test_sq_linear_relu6(self):
         class Model(torch.nn.Module):
@@ -401,7 +484,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 1
-
 
     @classmethod
     def test_sq_linear_norm(self):
@@ -469,7 +551,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 0
-
 
 
 if __name__ == '__main__':
