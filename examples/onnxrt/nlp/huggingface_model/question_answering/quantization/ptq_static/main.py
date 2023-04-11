@@ -490,6 +490,7 @@ def main():
             fp32_op_names = ['MatMul_(1[34]\d|[2-6][45]\d|[7-9][56]\d)',
                             'MatMul_(1[01][56]\d|1[2-6][67]\d|(1[7-9]|2[01])[78]\d|2[2-4][89]\d)']
             other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
+        if 'large' in model_args.model_name_or_path:
             other_config['calibration_sampling_size'] = [20]
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
