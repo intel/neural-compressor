@@ -17,6 +17,7 @@ parser.add_argument('--alpha', default=0.5, help="Set alpha=auto to use alpha tu
 parser.add_argument('--log_frequency', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--kl', action='store_true', default=False, help="whether to use kl divergence for calibration")
+parser.add_argument('--fallback_add', action='store_true', default=False, help="Whether to add fp32 fallback option" )
 args = parser.parse_args()
 
 from torch.nn.functional import pad
@@ -147,6 +148,8 @@ if args.int8:
     op_type_dict = None
     if args.kl:
         op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
+    if args.fallback_add:
+        op_type_dict["add"] = {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
 
     conf = PostTrainingQuantConfig(quant_level=1, backend='ipex', excluded_precisions=["bf16"],##use basic tuning
                                    recipes=recipes,

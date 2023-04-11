@@ -503,7 +503,7 @@ class TestAugment(unittest.TestCase):
         #test calculation of quantization params
         #TO_DO: check rmin/rmax
         quantization_params_dict = augment.dump_calibration({})
-        node_output_names, output_dicts_list = augment.get_intermediate_outputs('naive')
+        node_output_names, output_dicts_list = augment.get_intermediate_outputs({})
         dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary
         self.assertEqual(len(quantization_params_dict), 12)
