@@ -822,7 +822,8 @@ class TemplateAdaptor(Adaptor):
                     self.q_mapping = \
                         tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
             else:
-                assert False, "Unsupport approach: {}".format(self.approach)
+                if not self.benchmark:
+                    assert False, "Unsupport approach: {}".format(self.approach)
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
