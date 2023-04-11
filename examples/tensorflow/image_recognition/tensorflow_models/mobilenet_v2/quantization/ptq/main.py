@@ -112,8 +112,10 @@ class eval_classifier_optimized_graph:
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50])
+            from neural_compressor.metric import TensorflowTopK
+            top1 = TensorflowTopK(k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                        eval_dataloader=eval_dataloader)
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
             q_model.save(args.output_graph)
 
         if args.benchmark:

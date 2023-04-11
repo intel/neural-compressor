@@ -132,8 +132,10 @@ class eval_classifier_optimized_graph:
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
                                            inputs=['truediv'], outputs=['Squeeze'],
                                            op_name_dict=op_name_dict)
+            from neural_compressor.metric import TensorflowTopK
+            top1 = TensorflowTopK(k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                        eval_dataloader=eval_dataloader)
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
             q_model.save(args.output_graph)
 
         if args.benchmark:

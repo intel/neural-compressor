@@ -76,12 +76,15 @@ def main():
     if args.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.metric import TensorflowTopK
+        top1 = TensorflowTopK(k=1)
         config = PostTrainingQuantConfig(calibration_sampling_size=[20])
         quantized_model = fit(
             model="./mobilenet_v1_1.0_224_frozen.pb",
             conf=config,
             calib_dataloader=calib_dataloader,
-            eval_dataloader=eval_dataloader)
+            eval_dataloader=eval_dataloader,
+            eval_metric=top1)
         tf.io.write_graph(graph_or_graph_def=quantized_model.model,
                           logdir='./',
                           name='int8.pb',
