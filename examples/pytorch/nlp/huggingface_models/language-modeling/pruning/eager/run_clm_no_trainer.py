@@ -62,7 +62,7 @@ from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 from timers import CPUTimer, GPUTimer
 from neural_compressor.compression import model_slim
-
+from neural_compressor.compression import parse_auto_slim_config
 set_seed(42)
     
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -500,11 +500,12 @@ def main():
     else:
         config = CONFIG_MAPPING[args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
-
+        
+    is_llama = bool("llama" in args.model_name_or_path)
     if args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, use_fast=not args.use_slow_tokenizer)
     elif args.model_name_or_path:
-        if "llama" in args.model_name_or_path:
+        if is_llama:
             tokenizer = transformers.LlamaTokenizer.from_pretrained(args.model_name_or_path)
         else :
             tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
@@ -720,46 +721,45 @@ def main():
     # Pruning preparation 
     num_iterations = num_update_steps_per_epoch
     num_warm = args.num_warmup_steps
-    total_iterations = args.max_train_steps - num_iterations * args.cooldown_epochs
+    total_iterations = args.max_train_steps
     frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
                                                            else args.pruning_frequency
-    pruning_start = num_warm
+    pruning_start = max(num_warm, 1)
     pruning_end = total_iterations
-    # pruning_end = pruning_start
     if not args.do_prune:
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
         
-    pruning_configs=[
-        {
-            "pruning_type": "retrain_free",
-            "pruning_scope": "global",
-            # "op_names": ["fc_out"], #for gptj
-            # "op_names": ["up_proj"], #for llama
-            "op_names": ["fc2"], #for opt
-            "excluded_op_names": [".attn"],
-            "sparsity_decay_type": "exp",
-            "pattern": "channelx1",
-            "pruning_op_types": ["Linear"],
-            "max_sparsity_ratio_per_op": 0.98,
-            "target_sparsity": 0.2,
-        }
-    ]
-    
-    # auto slim config
-    # from neural_compressor.compression import parse_auto_slim_config
-    # pruning_configs=[]
-    # auto_slim_configs = parse_auto_slim_config(
-    #     model,
-    #     ffn2_sparsity = args.target_sparsity,
-    #     mha_sparsity = 0,
-    #     pruning_scope = "global",
-    #     pruning_type = "retrain_free",
-    # )
-    # pruning_configs += auto_slim_configs
+    if is_llama or not args.auto_slim:
+        pruning_configs=[
+            {
+                "pruning_type": "retrain_free",
+                "pruning_scope": "global",
+                # "op_names": ["fc_out"], #for gptj
+                # "op_names": ["down_proj"], #for llama
+                "op_names": ["fc2"], #for opt
+                "excluded_op_names": [".attn"],
+                "sparsity_decay_type": "exp",
+                "pattern": "channelx1",
+                "pruning_op_types": ["Linear"],
+                "max_sparsity_ratio_per_op": 0.98,
+            }
+        ]
+    else:
+        # auto slim config
+        pruning_configs=[]
+        auto_slim_configs = parse_auto_slim_config(
+            model,
+            ffn2_sparsity = args.target_sparsity,
+            mha_sparsity = 0,
+            pruning_scope = "global",
+            pruning_type = "retrain_free",
+        )
+        pruning_configs += auto_slim_configs
+        
     configs = WeightPruningConfig(
         pruning_configs,
-        # target_sparsity=args.target_sparsity,
+        target_sparsity=args.target_sparsity,
         # pattern=args.pruning_pattern,
         pruning_frequency=frequency,
         start_step=pruning_start,
@@ -818,8 +818,6 @@ def main():
             acc, avg_latency = evaluator.evaluate(model)
             return acc, avg_latency
         
-        # acc = eval_func(model)
-        # logger.info(f"epoch {epoch} accuracy:{acc}")
         # losses = []
         # total, hit = 0, 0
         # for step, batch in enumerate(eval_dataloader):
@@ -878,20 +876,31 @@ def main():
             accelerator.save_state(output_dir)
 
     compression_manager.callbacks.on_train_end()
+    if args.output_dir is not None:
+        accelerator.wait_for_everyone()
+        unwrapped_model = accelerator.unwrap_model(model)
+        unwrapped_model.save_pretrained(
+            args.output_dir+"_noslim", is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        )
+        if accelerator.is_main_process:
+            tokenizer.save_pretrained(args.output_dir+"_noslim")
+            if args.push_to_hub:
+                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
     
-    #-----------------------------start auto slim----------------------------------#
-    if args.auto_slim:
+    if is_llama or not args.auto_slim:
+        # only eval
+        logger.info(f"***** Running Evaluation *****")
+        acc, _ = eval_func(model)
+        logger.info(f"total_steps:{completed_steps} accuracy:{acc}")
+    else:
         logger.info(f"***** Running Evaluation before ffn auto slim*****")
-        
         accuracy, avg_latency = eval_func(model)
         logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-        device = model.device
         model = model_slim(model, round_multiplier=32)
 
         logger.info(f"***** Running Evaluation after ffn auto_slim*****")
         accuracy, avg_latency = eval_func(model)
         logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-    #-----------------------------finish auto slim---------------------------------#
     
     if args.with_tracking:
         accelerator.end_training()
@@ -900,10 +909,10 @@ def main():
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
         unwrapped_model.save_pretrained(
-            args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            args.output_dir+"_slimed", is_main_process=accelerator.is_main_process, save_function=accelerator.save
         )
         if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir)
+            tokenizer.save_pretrained(args.output_dir+"_slimed")
             if args.push_to_hub:
                 repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 

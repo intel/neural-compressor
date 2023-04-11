@@ -218,7 +218,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                 continue # No corresponding block mask, skip.
             mask = self.modules[key].block_mask
             self.scores[key] = torch.zeros(mask.shape).to(mask.device)
-        self.alpha = 1.0
+        self.alpha = 0.9
         self.beta = 1.0
 
     def on_before_optimizer_step(self):
@@ -229,7 +229,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                     continue # No corresponding block mask, skip.
                 mask = self.modules[key].block_mask
                 self.scores[key] *= self.alpha
-                self.scores[key] += self.beta * torch.abs(mask.data*mask.grad)
+                self.scores[key] += self.beta * torch.abs(mask.grad)
 
 
 @register_criterion('retrain_free')
@@ -275,4 +275,3 @@ class RetrainFreeCriterion(PruningCriterion):
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
     
-                
