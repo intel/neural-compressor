@@ -554,7 +554,7 @@ class TuneStrategy(object):
             if 'folding' not in smooth_quant_args:
                 smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx'] \
                   else False
-                logger.info("SmoothQuant args 'folding' is not set, It's {} now.".format(smooth_quant_args['folding']))
+                logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
                 if self.framework == 'pytorch_ipex':
                     smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args['folding']
