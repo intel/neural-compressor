@@ -40,5 +40,5 @@ sh run_tuning.sh --dataset_location=/path/to/imagenet --input_model=weights/pele
 # int8
 sh run_benchmark.sh --dataset_location=/path/to/imagenet --mode=performance --int8=true
 # fp32
-sh run_benchmark.sh --dataset_location=/path/to/imagenet --mode=performance
+sh run_benchmark.sh --dataset_location=/path/to/imagenet --mode=performance --input_model=weights/peleenet_acc7208.pth.tar
 ```

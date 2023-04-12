@@ -62,13 +62,12 @@ function run_benchmark {
     fi
 
     if [[ ${int8} == "true" ]]; then
-        extra_cmd="--int8 ${dataset_location}"
+        extra_cmd="--int8 ${dataset_location} --tuned_checkpoint ${tuned_checkpoint}"
     else
-        extra_cmd="--pretrained ${dataset_location}"
+        extra_cmd="--pretrained ${dataset_location} --weights ${input_model}"
     fi
 
     python main.py \
-            --tuned_checkpoint ${tuned_checkpoint} \
             -j 1 \
             -b ${batch_size} \
             ${mode_cmd} \
