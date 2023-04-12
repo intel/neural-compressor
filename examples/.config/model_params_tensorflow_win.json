@@ -1,22 +1,18 @@
 {
     "tensorflow": {
         "inception_v3": {
-            "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
+            "model_src_dir": "image_recognition/tensorflow_models/inception_v3/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
             "input_model": "models/tensorflow/freezed_inceptionv3.pb",
-            "yaml": "inception_v3.yaml",
-            "strategy": "basic",
-            "batch_size": 100,
-            "new_benchmark": true
+            "main_script": "main.py",
+            "batch_size": 100
         },
         "mobilenetv1": {
-            "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
+            "model_src_dir": "image_recognition/tensorflow_models/mobilenet_v1/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
             "input_model": "models/tensorflow/frozen_mobilenet_v1.pb",
-            "yaml": "mobilenet_v1.yaml",
-            "strategy": "basic",
-            "batch_size": 100,
-            "new_benchmark": true
+            "main_script": "main.py",
+            "batch_size": 100
         },
         "3d-pose-baseline": {
             "model_src_dir": "oob_models/quantization/ptq",
@@ -151,13 +147,13 @@
             "main_script": "main.py",
             "batch_size": 32
         },
-	"ssd_resnet50_v1": {
-      	    "model_src_dir": "object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq",
+        "ssd_resnet50_v1": {
+            "model_src_dir": "object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq",
             "dataset_location": "coco_val.record",
             "input_model": "models/tensorflow/ssd_resnet50_v1/frozen_inference_graph.pb",
-            "main_script": "main.py",       
+            "main_script": "main.py",
             "batch_size": 10
-    	},
+        },
         "resnet50v1.0": {
             "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
