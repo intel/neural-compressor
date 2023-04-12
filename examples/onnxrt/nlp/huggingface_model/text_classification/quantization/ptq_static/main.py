@@ -417,7 +417,7 @@ if __name__ == "__main__":
         elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
             fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
             other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
-        if 'large' in model_args.model_name_or_path:
+        if 'large' in args.model_name_or_path:
             other_config['calibration_sampling_size'] = [20]
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=args.quant_format,
