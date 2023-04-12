@@ -1255,7 +1255,8 @@ class TemplateAdaptor(Adaptor):
             model: A modified fp32 model, inplace=True.
         """
         # Note: we should make sure smoothquant is only executed once with inplacing fp32 model.
-        if hasattr(model, '_smoothquant_optimized') and model._smoothquant_optimized:
+        if hasattr(model._model, '_smoothquant_optimized') and model._model._smoothquant_optimized:
+            logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
         if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and folding is None:
             if self.version.release < Version("2.1").release:
@@ -1278,7 +1279,7 @@ class TemplateAdaptor(Adaptor):
             calib_iter=calib_iter,
             **kwargs
         )
-        model._smoothquant_optimized = True
+        model._model._smoothquant_optimized = True
         return model
 
     def qdq_quantize(self, model, tune_cfg):
@@ -3098,6 +3099,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             self.tmp_model.tune_cfg = json.load(f)
         self.tmp_model.ipex_config_path = self.ipex_config_path
         return self.tmp_model
+
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path=None):
         """The function is used by tune strategy class for set best configure in Neural Compressor model.
