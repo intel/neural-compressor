@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source ${ONEAPI_ROOT}/intelpython/python3.9/etc/profile.d/conda.sh
-ENV_NAME=env_inc_devcloud
+ENV_NAME=env_inc
 conda deactivate
 conda env remove -n $ENV_NAME -y 
 conda create -n $ENV_NAME python=3.9 -y
