@@ -224,15 +224,29 @@ class ONNXRTAugment:
                     so,
                     provider=self.backend)
 
-        intermediate_outputs = []
+        
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
-        output_dicts = {}
-
+        
         node_output_names = [output.name if output.name not in self.dequantized_output \
                                  else self.dequantized_output[output.name] \
                              for output in session.get_outputs()]
+        
+        input_name_to_nodes = self.model_wrapper.input_name_to_nodes
+        output_name_to_node = self.model_wrapper.output_name_to_node
+        name_to_node = {}
+        for data_name in node_output_names:
+            node = None
+            if data_name in output_name_to_node:
+                node = output_name_to_node[data_name]
+            elif data_name in input_name_to_nodes:
+                node = input_name_to_nodes[data_name][0]
+            assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
+            name_to_node[data_name] = node.name
 
+        output_dicts = {}
+        intermediate_tensor = {}
+        name_to_calibrator = {}
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
             if len_inputs == 1:
@@ -251,47 +265,56 @@ class ONNXRTAugment:
                         else:
                             ort_inputs.update({inputs_names[i]: inputs[i]})
 
+            def _collect_data():
+                for output_idx, output in enumerate(session.run(None, ort_inputs)): 
+                    if q_config is not None and output.size != 0:
+                        node_name = name_to_node[node_output_names[output_idx]]
+                        if node_output_names[output_idx] not in name_to_calibrator:
+                            calib_method = q_config[node_name]['activation']['algorithm'] \
+                                if q_config and node_name in q_config \
+                                and 'activation' in q_config[node_name] else 'minmax'
+                            assert calib_method in CALIBRATOR, \
+                                'Calibration method {} is not registerd.'.format(calib_method)
+                            calibrator = CALIBRATOR[calib_method]()
+                        else:
+                            calibrator = name_to_calibrator[node_output_names[output_idx]]
+                        
+                        # currently, the calibration range for each iteration is collected if 
+                        # the calibration method is minmax, otherwise the tensor data is collected.
+                        # TODO: for kl and percentile method, need to support range collection 
+                        # per iteration in the future.
+                        if calibrator.method_name == 'minmax':
+                            calibrator.collect(output)
+                            output_dicts[node_output_names[output_idx]] = [list(calibrator.calib_range)]
+                            name_to_calibrator[node_output_names[output_idx]] = calibrator
+                        else:
+                            intermediate_tensor.setdefault(
+                                (node_output_names[output_idx], node_name), []).append(output)
+                    else:
+                        output_dicts.setdefault(node_output_names[output_idx], \
+                            []).append(output)
+                            
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break
                 if idx in self.iterations:
-                    intermediate_outputs.append(session.run(None, ort_inputs))
+                    _collect_data()
             else:
-                intermediate_outputs.append(session.run(None, ort_inputs))
-        
-        merged_dict = {}
-        for intermediate_output in intermediate_outputs:
-            for (data, name) in zip(intermediate_output, node_output_names):
-                merged_dict.setdefault(name, []).append(data)
-        intermediate_outputs = []
-        del intermediate_outputs
-        if q_config is not None:
-            ranges_dict = {}
-            for data_name, datas in merged_dict.items():
-                if any([data is None for data in datas]):
-                    continue
-                input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-                output_name_to_node = self.model_wrapper.output_name_to_node
-                node = None
-                if data_name in output_name_to_node:
-                    node = output_name_to_node[data_name]
-                elif data_name in input_name_to_nodes:
-                    node = input_name_to_nodes[data_name][0]
-                assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
+                _collect_data()
 
-                # initialize a calibrater according to 'algorithm' in q_config
-                # and collect ranges of the intermediate output
-                calib_method = q_config[node.name]['activation']['algorithm'] \
-                    if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
-                assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
-                calibrator = CALIBRATOR[calib_method]()
-                calibrator.collect(datas)
-                ranges_dict.setdefault(data_name, []).append(list(calibrator.calib_range))
-                calibrator.clear()
-                del calibrator 
-            return list(ranges_dict.keys()), ranges_dict
-        else:
-            return list(merged_dict.keys()), merged_dict
+        # for kl and percentile method, collect calibration range after all tensors are collected.
+        merged_dict = intermediate_tensor
+        for (output_name, node_name), datas in merged_dict.items():
+            if any([data is None for data in datas]):
+                continue
+            calib_method = q_config[node_name]['activation']['algorithm'] \
+                if q_config and node_name in q_config and 'activation' in q_config[node_name] else 'minmax'
+            calibrator = CALIBRATOR[calib_method]()
+            calibrator.collect(datas)
+            output_dicts.setdefault(output_name, []).append(list(calibrator.calib_range))
+            calibrator.clear()
+            del calibrator 
+        return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
         """Helper function to dequantize tensor."""

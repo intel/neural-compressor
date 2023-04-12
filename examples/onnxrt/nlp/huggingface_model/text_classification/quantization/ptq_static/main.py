@@ -27,7 +27,6 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
 from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-from neural_compressor.data.datasets.dummy_dataset import DummyDataset
 
 
 class ONNXRTBertDataset:
@@ -410,18 +409,15 @@ if __name__ == "__main__":
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
-        other_config = {}
+        fp32_op_names = None
         if args.model_name_or_path == 'Intel/bart-large-mrpc':
             fp32_op_names = ['/model/(en|de)coder/layers.*/fc(1|2)/MatMul']
-            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
             fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
-            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
-        if 'large' in args.model_name_or_path:
-            other_config['calibration_sampling_size'] = [20]
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=args.quant_format,
-                                         **other_config)
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
+                                            if fp32_op_names else None,)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

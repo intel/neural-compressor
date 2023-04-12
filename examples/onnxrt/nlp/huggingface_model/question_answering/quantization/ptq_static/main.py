@@ -21,7 +21,7 @@ Fine-tuning the library models for question answering.
 import numpy as np
 import logging
 import os
-from typing import Callable, Dict, List, Optional
+from typing import List, Optional
 import onnx
 import sys
 from dataclasses import dataclass, field
@@ -39,7 +39,6 @@ import onnxruntime
 from evaluate import load
 from utils_model import ORTModel
 from utils_qa import postprocess_qa_predictions
-
 from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
 
 
@@ -476,25 +475,20 @@ def main():
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
-        other_config = {}
+        fp32_op_names = None
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
             fp32_op_names = ['Gather_94', 'MatMul_(660|754|848|1036)']
-            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
             fp32_op_names = ['MatMul_(660|566)', 'Unsqueeze_91']
-            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
             fp32_op_names = ['MatMul_(1[7-8]|2[6-7]|3[5-6]|4[3-4]|5[2-3])\d']
-            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
             fp32_op_names = ['MatMul_(1[34]\d|[2-6][45]\d|[7-9][56]\d)',
-                            'MatMul_(1[01][56]\d|1[2-6][67]\d|(1[7-9]|2[01])[78]\d|2[2-4][89]\d)']
-            other_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
-        if 'large' in model_args.model_name_or_path:
-            other_config['calibration_sampling_size'] = [20]
+                             'MatMul_(1[01][56]\d|1[2-6][67]\d|(1[7-9]|2[01])[78]\d|2[2-4][89]\d)']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
-                                         **other_config)
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
+                                            if fp32_op_names else None,)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
