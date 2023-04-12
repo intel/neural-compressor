@@ -46,7 +46,7 @@ class SmoothQuant(Algorithm):
         # scales_per_op: True, each op will have an individual scale, mainly for accuracy
         #                False, ops with the same input will share a scale, mainly for performance
         self.alpha = alpha
-        self.mode = 'aggressive'
+        self.folding = False
         self.percentile = None
         self.op_types = None
         self.scales_per_op = None
@@ -83,7 +83,7 @@ class SmoothQuant(Algorithm):
             calib_iter,
             self.tune_cfg,
             self.alpha,
-            self.mode,
+            self.folding,
             **kwargs,
         )
         return q_model

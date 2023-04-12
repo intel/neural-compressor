@@ -668,7 +668,7 @@ class TorchSmoothQuant:
         logger.info("auto tuning alpha done")
         return ans_layer2absorb
 
-    def transform(self, alpha=0.5, mode='aggressive', percentile=99.999, op_types=['Linear', 'Conv2d'],
+    def transform(self, alpha=0.5, folding=False, percentile=99.999, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100,
                   auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
         """
@@ -682,13 +682,10 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization
         """
-        if mode == 'aggressive':
-            self.insert_mul, self.allow_absorb = True, False
-        elif mode == 'moderate':
+        if folding:
             self.insert_mul, self.allow_absorb = False, True
         else:
-            logger.error("Not allowed mode: {} for SmoothQuant".format(mode))
-
+            self.insert_mul, self.allow_absorb = True, False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("alpha should be a float value in [0, 1] or 'auto' ")
             if alpha < 0:

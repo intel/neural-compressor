@@ -1234,7 +1234,7 @@ class TemplateAdaptor(Adaptor):
                                 enable_act=enable_act)
         return op_to_traces
 
-    def smooth_quant(self, model, dataloader, calib_iter, tune_cfg=None, alpha=0.5, mode='aggressive',
+    def smooth_quant(self, model, dataloader, calib_iter, tune_cfg=None, alpha=0.5, folding=False,
                      percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False):
         """ convert the model by smooth quant.
 
@@ -1252,8 +1252,18 @@ class TemplateAdaptor(Adaptor):
         Returns:
             model: A modified fp32 model
         """
+        if self.performance_only:
+            q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
+
         if not hasattr(self, 'sq') or force_re_smooth:
-            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+            self.sq = TorchSmoothQuant(q_model._model, dataloader=dataloader)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types
@@ -1263,7 +1273,7 @@ class TemplateAdaptor(Adaptor):
             kwargs['scales_per_op'] = scales_per_op
         model._model = self.sq.transform(
             alpha=alpha,
-            mode=mode,
+            folding=folding,
             calib_iter=calib_iter,
             **kwargs
         )
