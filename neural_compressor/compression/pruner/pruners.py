@@ -107,6 +107,7 @@ def model_slim_ffn2(model, round_multiplier=32):
     logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
     pa_obj = Linear2LinearSearcher(model)
     layers = pa_obj.search()
+    layers = pa_obj.from_layer_name_to_object(layers)
     linear_pruner = LinearCompressionIterator(layers)
     linear_pruner(masks=None, round_value=round_multiplier)
     return model

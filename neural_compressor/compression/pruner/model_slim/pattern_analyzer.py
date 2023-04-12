@@ -20,7 +20,7 @@ import torch
 import re
 from ..utils import logger
 
-JIT_SUPPORT_OPS = ['linear', 'gelu', 'mul'] # linear and all act_fn supported by pytorch-aten extension
+JIT_SUPPORT_OPS = ['linear', 'gelu', 'silu', 'relu', 'mul', 'add'] # linear and all act_fn supported by pytorch-aten extension
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
@@ -222,8 +222,55 @@ class JitBasicSearcher(object):
         op_trace_pattern = re.compile('scope\:.*\#')
         op_trace = op_trace_pattern.search(code)[0]
         res = {
-            "output_name": output_name,
-            "input_name": input_name,
+            "output_name": output_name, # should be a list
+            "input_name": input_name, # shoule be a list
+            "op_type": op_type,
+            "op_trace": op_trace,
+        }
+        return res
+    
+    def refine_strings(self, string_list):
+        return [s.strip() for s in string_list]
+
+    def analyze_jit_code(self, code):
+        """Analyzes and extracts static graph str style's critical information.
+
+        Args:
+            code: a str presenting static graph forwarding code
+        
+        Return:
+            A dict:
+                {
+                    output_name: "the output node name for this op",
+                    input_name: "the input node name for this op",
+                    op_type: "the aten::op name",
+                    op_trace: "the absolute dir to get this model, in torch.nn.Module's attribute style."
+                }
+        """
+        def remove_weight_or_bias_getattr_op(input_name):
+            # %weight and %bias are not related to graph search, therefore skip
+            return "%weight" not in input_name and "bias" not in input_name
+        # step1 : find outputs' name
+        output_names = code.split(":")[0].strip().split(',')
+        output_names = self.refine_strings(output_names)
+        # step2: find inputs' name
+        # use pattern match to find aten::op which includes inputs' name
+        aten_pattern = re.compile('aten::.*,')
+        aten_regex = aten_pattern.search(code)[0]
+        input_pattern = re.compile("\(.*\)")
+        input_names = input_pattern.search(aten_regex)[0][1:-1].split(",")
+        input_names = filter(remove_weight_or_bias_getattr_op, input_names)
+        input_names = self.refine_strings(input_names)
+        # step3: find the op name (linear, or a act type)
+        aten_op_pattern = re.compile('aten::.*\(')
+        op_type = aten_op_pattern.search(code)[0][6:-1]
+        # step4: find the 
+        op_trace_pattern = re.compile('scope\:.*\#')
+        op_trace = self.get_layer_path_from_jit_code(op_trace_pattern.search(code)[0])
+        # step5: compile all information in a dict and return
+        res = {
+            "output_names": output_names, # should be a list
+            "input_names": input_names, # shoule be a list
             "op_type": op_type,
             "op_trace": op_trace,
         }
@@ -246,14 +293,14 @@ class JitBasicSearcher(object):
             pattern_layer = []
             for layer in pattern:
                 if layer['op_type'] in self.target_layers: 
-                    pattern_layer.append(self.get_layers(layer['op_trace']))
+                    pattern_layer.append(self.get_layer_object_from_jit_codes(layer['op_trace']))
                 else:
                     continue
             results.append(pattern_layer)
         self.search_results.clear()
         self.search_results += results
 
-    def get_layers(self, scope_code):
+    def get_layer_object_from_jit_codes(self, scope_code):
         """Obtain the specific layer from jit code.
 
         In jit, scope keyword is a item which use to trace a layer from a model
@@ -285,7 +332,7 @@ class JitBasicSearcher(object):
             sub_module = getattr(sub_module, attr)
         return sub_module
     
-    def get_layer_name(self, scope_code):
+    def get_layer_path_from_jit_code(self, scope_code):
         """
         Get the module name from its static graph scope code.
         """
@@ -301,77 +348,6 @@ class JitBasicSearcher(object):
         level_names = scope_contents.split('.')
         level_names_main =  ".".join(level_names[1:])
         return level_names_main
-
-class PathSearcher(JitBasicSearcher):
-    """Static graph searcher.
-
-    Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
-    Need to provide a string to indicate the structure/sequence of the target pattern.
-    
-    Args:
-        model (torch.nn.Module): The PyTorch model for searching.
-        target_pattern (str): a string presenting the pattern to search (use '/' to link different layer names.)
-            
-    Attributes:
-        model: The PyTorch model for searching.
-        device: The model's current device type.
-        static_graph: The static graph of original model.
-        flatten_static_graph: A list of string with the model's static graph inference details.
-        target_layers: The layer types the searcher will extract.
-        searching_results: The list/dict which store matched patterns.
-        target_path: a string presenting the pattern to search (use '/' to link different layer names.)
-        target_op: a set containing target operators' names.
-        target_op_lut: a lookup table for target operators and their corresponding jit codes.
-        current_pattern: a searching path to store searching status.
-    """
-
-    def __init__(self, model, target_pattern='linear/gelu/linear'):
-        """Initialize."""
-        super(PathSearcher, self).__init__(model)
-        # some search related attribuites
-        self.target_pattern = target_pattern
-        # re-org target_pattern to obtain target ops
-        self.target_path = self.target_pattern.split('/')
-        self.target_ops = set(self.target_path)
-        self.target_op_lut = {}
-        self.current_pattern = []
-    
-    def search(self):
-        """Operations called for entire searching process."""
-        # step 1: establish search space within all interested ops, saved in self.target_op_lut
-        self.search_results.clear()
-        self.target_op_lut.clear()
-        self.current_pattern.clear()
-        for op in self.target_ops:
-            self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
-        def dfs():
-            """Operations called for one single search step."""
-            # if target pattern is found
-            if len(self.current_pattern) == len(self.target_path):
-                # find the target pattern
-                self.search_results.append(self.current_pattern[:])
-                return
-            # else continue searching
-            next_op_type = self.target_path[len(self.current_pattern)]
-            for op_code in self.target_op_lut[next_op_type]:
-                op_info = JitBasicSearcher.analyze_code(self, op_code)
-                if len(self.current_pattern) == 0: 
-                    self.current_pattern.append(op_info)
-                    dfs()
-                    self.current_pattern.pop()
-                else:
-                    if op_info['input_name'] == self.current_pattern[-1]['output_name']:
-                        self.current_pattern.append(op_info)
-                        dfs()
-                        self.current_pattern.pop()
-                    else:
-                        continue 
-        # step 2: dfs  
-        # execute dfs-based pattern matching
-        dfs()
-        logger.info(f"Found {len(self.search_results)} pattern {self.target_pattern} in {type(self.model).__name__}")
-        JitBasicSearcher.get_layer_for_all(self)
-        return self.search_results
 
 class Linear2LinearSearcher(JitBasicSearcher):
     """Static graph searcher for consecutive linear layers.
@@ -398,53 +374,120 @@ class Linear2LinearSearcher(JitBasicSearcher):
         super(Linear2LinearSearcher, self).__init__(model)
         self.target_op_lut = {}
         self.current_pattern = []
-
-    def search(self, return_name = False):
-        """Operations called for entire searching process."""
-        self.search_results.clear()
-        self.target_op_lut.clear()
-        self.current_pattern.clear()
+        # initialize target_op_lut
         for op in JIT_SUPPORT_OPS:
             self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
 
-        def dfs():
-            """Operations called for one single search step."""
-            # ends up with another linear layer, successfully obtain a linear2linear pattern
-            if len(self.current_pattern) > 1 and self.current_pattern[-1]['op_type'] == "linear":
-                self.search_results.append(self.current_pattern[:])
-                return
-            # continue searching
-            lastest_ops = self.current_pattern[-1]
-            lastest_ops_outputs = lastest_ops['output_name']
-            for next_op_type, next_op_codes in self.target_op_lut.items():
-                for next_op_code in next_op_codes:
-                    next_op_info = JitBasicSearcher.analyze_code(self, next_op_code)
-                    next_op_info_input = next_op_info['input_name']
-                    if next_op_info_input == lastest_ops_outputs:
-                        self.current_pattern.append(next_op_info)
-                        dfs()
-                        self.current_pattern.pop()
+    # def search(self, return_name = False):
+    #     """Operations called for entire searching process."""
+    #     self.search_results.clear()
+    #     self.target_op_lut.clear()
+    #     self.current_pattern.clear()
+    #     for op in JIT_SUPPORT_OPS:
+    #         self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
+
+    #     def dfs():
+    #         """Operations called for one single search step."""
+    #         # ends up with another linear layer, successfully obtain a linear2linear pattern
+    #         if len(self.current_pattern) > 1 and self.current_pattern[-1]['op_type'] == "linear":
+    #             self.search_results.append(self.current_pattern[:])
+    #             return
+    #         # continue searching
+    #         lastest_ops = self.current_pattern[-1]
+    #         lastest_ops_outputs = lastest_ops['output_name']
+    #         for next_op_type, next_op_codes in self.target_op_lut.items():
+    #             for next_op_code in next_op_codes:
+    #                 next_op_info = JitBasicSearcher.analyze_code(self, next_op_code)
+    #                 next_op_info_input = next_op_info['input_name']
+    #                 if next_op_info_input == lastest_ops_outputs:
+    #                     self.current_pattern.append(next_op_info)
+    #                     dfs()
+    #                     self.current_pattern.pop()
+    #                 else:
+    #                     continue
+
+    #     for init_op_code in self.target_op_lut['linear']:
+    #         init_op_info = JitBasicSearcher.analyze_code(self, init_op_code)
+    #         self.current_pattern.append(init_op_info)
+    #         dfs()
+    #         self.current_pattern.pop()
+
+    #     logger.info(f"Found {len(self.search_results)} target pattern 'linear2linear' in {type(self.model).__name__}")
+    #     if not return_name: 
+    #         # return the module object instead of module name
+    #         JitBasicSearcher.get_layer_for_all(self)
+    #         return self.search_results
+    #     else:
+    #         name_results = []
+    #         for item in self.search_results:
+    #             name_item = [JitBasicSearcher.get_layer_path_from_jit_code(self, layer_info['op_trace']) for layer_info in item]
+    #             name_results.append(name_item)
+    #         return name_results
+
+    def search_frontier_ops_from_node(self, node_name):
+        # node_name is a member in output_names and input_names: %xxx for example
+        target_frontier_ops = []
+        for op_type, op_codes in self.target_op_lut.items():
+            for op_code in op_codes:
+                output_names = JitBasicSearcher.analyze_jit_code(self, op_code)['output_names']
+                if output_names.__len__() == 1 and node_name == output_names[0]:
+                    target_frontier_ops.append(op_code)
+                else:
+                    continue
+        return target_frontier_ops
+
+    def search_from_root_linear(self, linear_code):
+        # obtain linear tree from one root linear, search from latter to frontier
+        self.current_pattern.clear()
+        linear_info = JitBasicSearcher.analyze_jit_code(self, linear_code)
+        root_linear_trace = linear_info['op_trace']
+        # data structure to save the results
+        results = {
+            "root_linear": root_linear_trace,
+            "target_frontier_linears": [],
+        }
+        # start dfs
+        def dfs(root_op_code):
+            op_info = JitBasicSearcher.analyze_jit_code(self, root_op_code)
+            op_inputs = op_info['input_names']
+            for op_input in op_inputs:
+                frontier_ops = self.search_frontier_ops_from_node(op_input)
+                # retrively search the ops
+                for frontier_op in frontier_ops:
+                    frontier_op_info = JitBasicSearcher.analyze_jit_code(self, frontier_op)
+                    if frontier_op_info['op_type'] == 'linear':
+                        results['target_frontier_linears'].append(frontier_op_info['op_trace'])
                     else:
-                        continue
+                        dfs(frontier_op)
+        dfs(linear_code)
+        return results
 
-        for init_op_code in self.target_op_lut['linear']:
-            init_op_info = JitBasicSearcher.analyze_code(self, init_op_code)
-            self.current_pattern.append(init_op_info)
-            dfs()
-            self.current_pattern.pop()
-
-        logger.info(f"Found {len(self.search_results)} target pattern 'linear2linear' in {type(self.model).__name__}")
-        if not return_name: 
-            # return the module object instead of module name
-            JitBasicSearcher.get_layer_for_all(self)
-            return self.search_results
-        else:
-            name_results = []
-            for item in self.search_results:
-                name_item = [JitBasicSearcher.get_layer_name(self, layer_info['op_trace']) for layer_info in item]
-                name_results.append(name_item)
-            return name_results
-
+    def search(self):
+        all_linear_structure_results = []
+        for linear_code in self.target_op_lut['linear']:
+            search_res = self.search_from_root_linear(linear_code)
+            if search_res['target_frontier_linears'].__len__() > 0:
+                all_linear_structure_results.append(search_res)
+        #import pdb;pdb.set_trace()
+        # Summary
+        for item in all_linear_structure_results:
+            logger.info(item)
+        logger.info(f"Found {all_linear_structure_results.__len__()} linear2linear structures")
+        return all_linear_structure_results
+    
+    def from_layer_name_to_object(self, l2l_search_layers):
+        layer_objs = []
+        for item in l2l_search_layers:
+            layer_obj = {
+                "root_linear": None,
+                "target_frontier_linears": [],
+            }
+            layer_obj['root_linear'] = get_attributes(self.model, item['root_linear'])
+            layer_obj['target_frontier_linears'] = [
+                get_attributes(self.model, linfo) for linfo in item['target_frontier_linears']
+            ]
+            layer_objs.append(layer_obj)
+        return layer_objs
 
 class SelfMHASearcher(JitBasicSearcher):
     """Static graph searcher for multi-head attention modules.
@@ -554,9 +597,11 @@ class SelfMHASearcher(JitBasicSearcher):
         qkv_clusters_main = {}
         for input_name in qkv_clusters:
             qkv_clusters_main[input_name] = [
-            JitBasicSearcher.get_layer_name(self, scope_code) for scope_code in qkv_clusters[input_name]
+            JitBasicSearcher.get_layer_path_from_jit_code(self, scope_code) for scope_code in qkv_clusters[input_name]
         ]
         self_attn_list = self.search_ffn_from_qkv(qkv_clusters_main)
+        # summary
+        logger.info(f"Found {self_attn_list.__len__()} MHA modules")
         if not split_qkv_ffn:
             return self_attn_list, None
         else:

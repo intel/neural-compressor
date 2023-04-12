@@ -476,9 +476,9 @@ def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
     """Get consecutive linear layers pruning configs."""
     from .model_slim.pattern_analyzer import Linear2LinearSearcher
     searcher = Linear2LinearSearcher(model)
-    layers = searcher.search(return_name = True)
+    layers = searcher.search()
     # extract the second linear layer
-    ffn_layers = [ffn2_module[-1] for ffn2_module in layers]
+    ffn_layers = [ffn2_module['root_linear'] for ffn2_module in layers]
     ffn2_pruning_config = [
         {
             "op_names": ffn_layers,
