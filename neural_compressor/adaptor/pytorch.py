@@ -1252,26 +1252,19 @@ class TemplateAdaptor(Adaptor):
                            False, ops with the same input will share a scale, mainly for performance
 
         Returns:
-            model: A modified fp32 model
+            model: A modified fp32 model, inplace=True.
         """
+        # Note: we should make sure smoothquant is only executed once with inplacing fp32 model.
+        if hasattr(model, '_smoothquant_optimized') and model._smoothquant_optimized:
+            return model
         if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and folding is None:
             if self.version.release < Version("2.1").release:
                 folding = True
                 logger.info(
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
 
-        if self.performance_only:
-            q_model = model
-        else:
-            try:
-                q_model = copy.deepcopy(model)
-            except Exception as e:  # pragma: no cover
-                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                    repr(e)))
-                q_model = model
-
         if not hasattr(self, 'sq') or force_re_smooth:
-            self.sq = TorchSmoothQuant(q_model._model, dataloader=dataloader)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types
@@ -1285,24 +1278,80 @@ class TemplateAdaptor(Adaptor):
             calib_iter=calib_iter,
             **kwargs
         )
+        model._smoothquant_optimized = True
         return model
 
     def qdq_quantize(self, model, tune_cfg):
+        """insert quant, dequant pairs before linear to simulate quantization.
+
+        Args:
+            model (torch.nn.Module): smoothquant optimized model.
+            tune_cfg (dict): quantization config.
+
+        Returns:
+            model: qdq quantized model.
+        """
+        q_model = model._model
         from .torch_utils.smooth_quant import QDQLinear, SQLinearWrapper, set_module
         smoothquant_scale_info = {}
-        for name, module in model.named_modules():
+        fallback_op_name_list = []
+        stats_result = {}
+        for (op_name, op_type), qconfig in tune_cfg['op'].items():
+            if op_type == 'Linear' and qconfig['weight']['dtype'] != 'int8':
+                # rstrip is for auto strategy, the model passed to the second strategy is already optimized.
+                op_name = op_name.rstrip('.sq_linear') 
+                fallback_op_name_list.append(op_name)
+
+        stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
+        for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
-                smoothquant_scale_info[name] = {
-                    'input_scale_for_mul': module.input_scale,
-                    'quant_scale': module.scale,
-                    'quant_zero_point': module.zero_point,
-                    'quant_dtype': module.dtype,
-                    }
-                new_module = QDQLinear(module.sq_linear, module.scale, module.zero_point, module.dtype)
-                set_module(model, name+'.sq_linear', new_module)
+                if name not in fallback_op_name_list:
+                    smoothquant_scale_info[name] = {
+                        'input_scale_for_mul': module.input_scale,
+                        'quant_scale': module.scale,
+                        'quant_zero_point': module.zero_point,
+                        'quant_dtype': module.dtype,
+                        }
+                    new_module = QDQLinear(module.sq_linear, module.scale, module.zero_point, module.dtype)
+                    set_module(q_model, name+'.sq_linear', new_module)
+                    stats_result['SQLinearWrapper']['INT8(QDQ)'] += 1
+                else:
+                    stats_result['SQLinearWrapper']['FP32'] += 1
+
         tune_cfg['recipe_cfgs']['smoothquant_scale_info'] = smoothquant_scale_info
+        model._model = q_model
         model.q_config = copy.deepcopy(tune_cfg)
+        field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
+        output_data = [[
+                op_type, sum(stats_result[op_type].values()), stats_result[op_type]['INT8(QDQ)'], 
+                stats_result[op_type]['BF16'], stats_result[op_type]['FP32']]
+                    for op_type in stats_result.keys()]
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=field_names).print_stat()
+
         return model
+
+    def _wrapper_sq_linear(self, tmp_model):
+        """Help function for _get_quantizable_ops_recursively to align smoothquant processed model"""
+        class SQLinearWrapper(torch.nn.Module):
+            def __init__(self, module):
+                super().__init__()
+                self.add_module('sq_linear', module)
+
+            def forward(self, X):
+                return self.sq_linear(X)
+
+        module_name_list = []
+        from .torch_utils.smooth_quant import get_module, set_module
+        for name, module in tmp_model.named_modules():
+            if 'Linear' == str(module.__class__.__name__):
+                module_name_list.append(name)
+        for name in module_name_list:
+            module = get_module(tmp_model, name)
+            new_module = SQLinearWrapper(module)
+            set_module(tmp_model, name, new_module)
+        return tmp_model
 
 
 unify_op_type_mapping = {
@@ -1381,15 +1430,24 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             (object): quantized model
         """
+        assert isinstance(model._model, torch.nn.Module), \
+               "The model passed in is not the instance of torch.nn.Module"
+        if self.performance_only:
+            q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
+
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-            return self.qdq_quantize(model, tune_cfg)
-
-        assert isinstance(model._model, torch.nn.Module), \
-               "The model passed in is not the instance of torch.nn.Module"
+            return self.qdq_quantize(q_model, tune_cfg)
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
@@ -1405,16 +1463,6 @@ class PyTorchAdaptor(TemplateAdaptor):
             from torch.quantization.quantize import add_observer_
         else:
             from torch.quantization.quantize import _add_observer_ as add_observer_
-
-        if self.performance_only:
-            q_model = model
-        else:
-            try:
-                q_model = copy.deepcopy(model)
-            except Exception as e:  # pragma: no cover
-                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                    repr(e)))
-                q_model = model
 
         if self.approach == 'quant_aware_training':
             q_model._model.train()
@@ -3047,28 +3095,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             self.tmp_model.tune_cfg = json.load(f)
         self.tmp_model.ipex_config_path = self.ipex_config_path
         return self.tmp_model
-
-    def _wrapper_sq_linear(self, tmp_model):
-        """Help function for _get_quantizable_ops_recursively to align smoothquant processed model"""
-        class SQLinearWrapper(torch.nn.Module):
-            def __init__(self, module):
-                super().__init__()
-                self.add_module('sq_linear', module)
-
-            def forward(self, X):
-                return self.sq_linear(X)
-
-        module_name_list = []
-        from .torch_utils.smooth_quant import get_module, set_module
-        for name, module in tmp_model.named_modules():
-            if 'Linear' == str(module.__class__.__name__):
-                module_name_list.append(name)
-        for name in module_name_list:
-            module = get_module(tmp_model, name)
-            new_module = SQLinearWrapper(module)
-            set_module(tmp_model, name, new_module)
-        return tmp_model
-
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path=None):
         """The function is used by tune strategy class for set best configure in Neural Compressor model.
@@ -3166,15 +3192,27 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             (object): quantized model
         """
 
+        assert isinstance(model._model, torch.nn.Module), \
+               "The model passed in is not the instance of torch.nn.Module"
+        if self.performance_only:
+            q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+                q_model.fp32_model = model.fp32_model
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
+        q_model._model.eval()
+
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-                return self.qdq_quantize(model, tune_cfg)
+                return self.qdq_quantize(q_model, tune_cfg)
 
-        assert isinstance(model._model, torch.nn.Module), \
-               "The model passed in is not the instance of torch.nn.Module"
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["reduce_range"] = REDUCE_RANGE
@@ -3183,7 +3221,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
         # so set it to None.
         self.example_inputs = None
-
         if self.default_qconfig is not None:
             default_qconfig = copy.deepcopy(self.default_qconfig)
             default_qconfig['activation']['dtype'] = \
@@ -3196,17 +3233,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         gc.collect()
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
-        if self.performance_only:
-            q_model = model
-        else:
-            try:
-                q_model = copy.deepcopy(model)
-                q_model.fp32_model = model.fp32_model
-            except Exception as e:  # pragma: no cover
-                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                    repr(e)))
-                q_model = model
-        q_model._model.eval()
         if q_model.kwargs is not None:
             self.prepare_custom_config_dict = q_model.kwargs.get('prepare_custom_config_dict',
                                                                  None)
