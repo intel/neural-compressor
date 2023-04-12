@@ -71,11 +71,12 @@ def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
         x = m.weight
         if scheme == 'sym':
             q_min, q_max = -2. ** (num_bits - 1), 2. ** (num_bits - 1) - 1.
-            scale = torch.abs(torch.max(x, dim=1).values) / (2 ** (num_bits - 1) - 1)
+            scale = torch.max(torch.abs(x), dim=1).values / (float(q_max - q_min) / 2)
         else:
             q_min, q_max = 0, 2. ** num_bits - 1.
             scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
-        scale = torch.clip(scale, min=1e-5)
+        eps = torch.finfo(torch.float32).eps
+        scale = torch.clip(scale, min=eps)
 
         if scheme == 'sym':
             bias = 0
