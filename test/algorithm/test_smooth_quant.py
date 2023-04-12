@@ -3,16 +3,13 @@ import torch
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant, SQLinearWrapper
-import neural_compressor.adaptor.pytorch as nc_torch
-from packaging.version import Version
+
 
 try:
     import intel_extension_for_pytorch as ipex
     TEST_IPEX = True
 except:
     TEST_IPEX = False
-
-PT_VERSION = nc_torch.get_torch_version().release
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -623,8 +620,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         )
         self.assertTrue(float(q_model.model.fc1.bias[0]) != origin_bias)
 
-    @unittest.skipIf(PT_VERSION < Version("2.1").release or not TEST_IPEX,
-                 "Please use Intel extension for Pytorch version higher or equal to 1.12")
+    @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
     def test_sq_quant_ipex(self):
         class Model(torch.nn.Module):
             def __init__(self):

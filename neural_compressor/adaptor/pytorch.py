@@ -1244,6 +1244,7 @@ class TemplateAdaptor(Adaptor):
             calib_iter: calib iters
             tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile:Percentile of calibration to remove outliers, not supported now
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
@@ -1252,6 +1253,12 @@ class TemplateAdaptor(Adaptor):
         Returns:
             model: A modified fp32 model
         """
+        if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and folding is None:
+            if self.version.release < Version("2.1").release:
+                folding = True
+                logger.info(
+                    "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
+
         if self.performance_only:
             q_model = model
         else:
@@ -2414,7 +2421,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and self.version.release >= Version("2.1").release:
             return self.qdq_quantize(model, tune_cfg, dataloader)
 
         assert self.approach != 'quant_aware_training', \
@@ -2859,7 +2867,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     # For smoothquant optimized model
-                    if self.recipes and self.recipes.get('smooth_quant', False):
+                    if self.recipes and self.recipes.get('smooth_quant', False) \
+                      and self.version.release >= Version("2.1").release:
                         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                     else:
                         static_qconfig = QConfig(activation=MinMaxObserver.with_args(

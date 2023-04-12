@@ -82,8 +82,8 @@ class SmoothQuant(Algorithm):
             dataloader,
             calib_iter,
             self.tune_cfg,
-            self.alpha,
-            self.folding,
+            alpha=self.alpha,
+            folding=self.folding,
             **kwargs,
         )
         return q_model
