@@ -777,7 +777,6 @@ class TemplateAdaptor(Adaptor):
         self.bf16_ops = []
         self.use_bf16 = framework_specific_info.get('use_bf16', True)
         self.device = framework_specific_info['device']
-        self.recipes = framework_specific_info['recipes']
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.q_func = framework_specific_info.get('q_func', None)
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
@@ -790,6 +789,8 @@ class TemplateAdaptor(Adaptor):
         self.default_qconfig = framework_specific_info.get('default_qconfig', None)
         self.performance_only = framework_specific_info.get("performance_only", False)
         self.example_inputs = framework_specific_info.get("example_inputs", None)
+        if 'recipes' in framework_specific_info:
+            self.recipes = framework_specific_info['recipes']
 
         if 'approach' in framework_specific_info:  # pragma: no cover
             self.approach = framework_specific_info['approach']
@@ -1382,9 +1383,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         """
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
-            if self.approach != 'post_training_dynamic_quant':
-                return self.qdq_quantize(model, tune_cfg)
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and not recipe_cfgs['smooth_quant_args']['folding'] \
+          and self.approach != 'post_training_dynamic_quant':
+            return self.qdq_quantize(model, tune_cfg)
 
         assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
@@ -2422,7 +2424,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and self.version.release >= Version("2.1").release:
+          and self.version.release >= Version("2.1").release \
+          and self.approach != 'post_training_dynamic_quant':
             return self.qdq_quantize(model, tune_cfg, dataloader)
 
         assert self.approach != 'quant_aware_training', \
@@ -3141,8 +3144,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
-            if self.approach != 'post_training_dynamic_quant':
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and not recipe_cfgs['smooth_quant_args']['folding'] \
+          and self.approach != 'post_training_dynamic_quant':
                 return self.qdq_quantize(model, tune_cfg)
 
         assert isinstance(model._model, torch.nn.Module), \
