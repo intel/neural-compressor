@@ -3067,11 +3067,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
     def __init__(self, framework_specific_info):
         super(PyTorch_FXAdaptor, self).__init__(framework_specific_info)
         assert self.version.release >= Version("1.8.0").release, \
-                      "Please use PyTroch 1.8 or higher version with pytorch_fx backend??"
+                      "Please use PyTroch 1.8 or higher version with pytorch_fx backend!"
         if self.approach == 'post_training_dynamic_quant':
             assert self.version.release >= Version("1.9.0").release, \
                         "Please use PyTroch 1.9 or higher version for dynamic " \
-                        "quantization with pytorch_fx backend??"
+                        "quantization with pytorch_fx backend!"
         import torch.quantization as tq
         """
         # Map for swapping float module to quantized ones,
