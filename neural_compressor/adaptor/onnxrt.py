@@ -153,7 +153,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.optype_statistics = None
 
     def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=False,
-                                    percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True):
+            percentile=99.999, op_types=['FusedConv', 'MatMul', 'Linear', 'Conv'], scales_per_op=False):
         """Get augmented model with smooth quant.
 
         Args:
@@ -199,7 +199,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         for name in max_vals_per_channel.keys():
             curr_tensor_to_weight = []
             curr_tensor_to_weight_nodes = []
-            nodes = self.pre_optimized_model.input_name_to_nodes[name]
+            nodes = [i for i in self.pre_optimized_model.nodes() if name in i.input]
             for node in nodes:
                 if node.op_type not in op_types:
                     continue
@@ -215,18 +215,18 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if scales_per_op:
             from neural_compressor.adaptor.ox_utils.util import get_smooth_scales_per_op, \
                 insert_smooth_mul_op_per_op, adjust_weights_per_op
-            scales = get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
+            self.scales = get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
                                                     input_tensors_2_weights_nodes, alpha)
-            new_added_mul_nodes, new_init_tensors, op_nodes = insert_smooth_mul_op_per_op(scales, shape_infos,
+            new_added_mul_nodes, new_init_tensors, op_nodes = insert_smooth_mul_op_per_op(self.scales, shape_infos,
                                                                                 input_tensors_2_weights_nodes)
-            adjust_weights_per_op(self.pre_optimized_model, op_nodes, scales)
+            adjust_weights_per_op(self.pre_optimized_model, op_nodes, self.scales)
         else:
             from neural_compressor.adaptor.ox_utils.util import get_smooth_scales_per_input, \
                 insert_smooth_mul_op_per_input, adjust_weights_per_input
-            scales = get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
-            new_added_mul_nodes, new_init_tensors = insert_smooth_mul_op_per_input(scales, shape_infos,
+            self.scales = get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
+            new_added_mul_nodes, new_init_tensors = insert_smooth_mul_op_per_input(self.scales, shape_infos,
                                                                             input_tensors_2_weights_nodes)
-            adjust_weights_per_input(self.pre_optimized_model, input_tensors_2_weights_nodes, scales)
+            adjust_weights_per_input(self.pre_optimized_model, input_tensors_2_weights_nodes, self.scales)
 
         self.pre_optimized_model.add_nodes(new_added_mul_nodes)
         self.pre_optimized_model.add_initializers(new_init_tensors)
@@ -327,8 +327,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         else:
             quantize_params = None
         self.quantize_params = quantize_params
+
+        if self.smooth_quant_model is not None:
+            from neural_compressor.adaptor.ox_utils.util import absorb_scale
+            absorb_scale(tmp_model, self.scales)
+
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options
+
         quantizer = Quantizer(tmp_model,
             quantize_config,
             format,
@@ -350,7 +356,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
         self.quantize_config = quantize_config # update so other methods can know current configs
-
         self._dump_model_op_stats(tmp_model)
         tmp_model.topological_sort()
         return tmp_model

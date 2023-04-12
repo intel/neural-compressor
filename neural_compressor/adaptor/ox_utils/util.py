@@ -740,6 +740,62 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
                     node.input[index] = mul_output_name
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
+def absorb_scale(model, scales):
+    """
+    Absorb the scale to the operator at output channel
+    :param model: The neural_compressor model object
+    :param scales: A dict, tensor: smooth quant scale
+    :return:
+    """
+    from onnx import numpy_helper
+    def norm(node, scale):
+        for idx in [1, 2]:
+            tensor = model.get_initializer(node.inp[idx])
+            model.set_initializer(node.inp[idx], numpy_helper.to_array(tensor) * scale)
+        
+    def mul(node, scale):
+        for inp in node.input:
+            if model.get_initializer(inp) is not None:
+                tensor = model.get_initializer(inp)
+                model.set_initializer(inp, numpy_helper.to_array(tensor) * scale)
+ 
+    def conv(node, scale):
+        if len(node.input) > 2:
+            if model.get_initializer(node.input[2]) is not None:
+                tensor = model.get_initializer(node.input[2])
+                model.set_initializer(node.input[2], numpy_helper.to_array(tensor) * scale)
+            scale = scale.reshape(-1, 1, 1, 1)
+
+            tensor = model.get_initializer(node.input[1])
+            model.set_initializer(node.input[1], numpy_helper.to_array(tensor) * scale)
+ 
+    could_absorb_optype = {"LayerNormalization": norm,
+                           "BatchNormalization": norm,
+                           "InstanceNormalization": norm,
+                           "MatMul": mul, 
+                           "Gemm": mul,
+                           "Conv": conv,
+                           "FusedConv": conv,
+                           "Mul": mul
+                           }
+    remove_nodes = []
+
+    for node in model.nodes():
+        if node.op_type == "Mul" and node.name.endswith("_smooth_mul"):
+            parent = model.get_parent(node, 0)
+            if parent is None:
+                continue
+            if parent.op_type in could_absorb_optype:
+                if node.output[0].split("_smooth_output")[0] in scales:
+                    could_absorb_optype[parent.op_type](parent, 1.0 / scales[node.output[0].split("_smooth_output")[0]])
+                    remove_nodes.append(node)
+                    children = [i for i in model.nodes() if node.output[0] in i.input]
+                    for child in children:
+                        for idx, inp in enumerate(child.input):
+                            if inp == node.output[0]:
+                                child.input[idx] = node.input[0]
+    model.remove_nodes(remove_nodes)
+
 def trt_env_setup(model):
     """Set environment variable for Tensorrt Execution Provider."""
     is_int8 = False
