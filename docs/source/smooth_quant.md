@@ -240,11 +240,11 @@ So **the first question is how to migrate the difficulty from activation to weig
 </div>
 
 
-Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights showed above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
+Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights shown above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
 
 So **the second question is how much difficulty to be migrated**, that is how to choose the **convention per-channel scale** $s_{x1}$ and $s_{x2}$ on the above image. Different works adopt different ways.
 
-*SPIQ* just adopts the quantization scale of activations as the convention per-channel scale.
+*SPIQ* just adopts the quantization scale of activations as the conversion per-channel scale.
 
 *Outlier suppression* adopts the scale of the preceding layernorm as the convention per-channel scale.
 
