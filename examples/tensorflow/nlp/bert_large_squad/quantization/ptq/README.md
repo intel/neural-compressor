@@ -61,6 +61,8 @@ bash prepare_model.sh --output_dir=./model
   ```
 
 ## 3. Prepare Dataset
+Please choose one way to prepare the dataset from the manual approach and the automatic approach.
+### Manual approach
 ```shell
 wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip
 ```
@@ -83,7 +85,8 @@ cd examples/tensorflow/nlp/bert_large_squad/quantization/ptq
 bash prepare_dataset.sh --output_dir=./data
 ```
 
-Then create the tf_record file and you need to config the tf_record path in yaml file.
+### Convert the dataset to TF Record format
+After the dataset is downloaded by either of ways above, the dataset should be converted to files of TF Record format.
 ```shell
 python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
 ```
@@ -94,7 +97,7 @@ python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v
 
 ## Quantization
   ```shell
-  bash run_tuning.sh --input_model=./bert_fp32.pb --output_model=./bert_int8.pb --dataset_location=/path/to/evaluation/dataset
+  bash run_tuning.sh --input_model=./bert_fp32.pb --output_model=./bert_int8.pb --dataset_location=./eval.tf_record
   ```
 
 ### Quantization Config
