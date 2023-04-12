@@ -41,7 +41,8 @@ class SmoothQuant(Algorithm):
             alpha:Alpha value to balance the quantization difficulty of activation and weight,
                 please refer to the paper for more details
         """
-        # percentile:Percentile of calibration to remove outliers,float(0->100)
+        # folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
+        # percentile: Percentile of calibration to remove outliers,float(0->100)
         # op_types: The op types whose input tensor will be dumped,['Conv', 'Linear']
         # scales_per_op: True, each op will have an individual scale, mainly for accuracy
         #                False, ops with the same input will share a scale, mainly for performance

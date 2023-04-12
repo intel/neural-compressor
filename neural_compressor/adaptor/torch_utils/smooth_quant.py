@@ -675,6 +675,7 @@ class TorchSmoothQuant:
         The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
         to the paper for more details
+        :param folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
         :param percentile: Not supported now
         :param op_types: The op typed to be smooth quantized
         :param scales_per_op: Not supported now
