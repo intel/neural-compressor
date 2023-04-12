@@ -20,21 +20,48 @@ import json
 
 torch = LazyImport('torch')
 from ...utils import logger
+from collections import UserDict
 
 
-def model_forward(model, dataloader, iters):
-    from ..pytorch import pytorch_forward_wrapper
+def forward_wrapper(model, input, device='cpu'):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        if device == 'cpu':
+            output = model(**input)
+        else:  # pragma: no cover
+            for inp in input.keys():
+                input[inp] = input[inp].to(device) \
+                    if isinstance(input[inp], torch.Tensor) else input[inp]
+            output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if device == 'cpu':
+            output = model(*input)
+
+        else:  # pragma: no cover
+            input = [inp.to(device) \
+                    if isinstance(inp, torch.Tensor) else inp
+                    for inp in input] # pylint: disable=E1133
+            output = model(*input)
+    else:
+        if device == 'cpu' or not isinstance(input, torch.Tensor):
+            output = model(input)
+        else:  # pragma: no cover
+            input = input.to(device)  # pylint: disable=no-member
+            output = model(input)
+    return output
+
+
+def model_forward(model, dataloader, iters, device):
     try:
         cnt = 0
         for idx, (input, label) in enumerate(dataloader):
-            output = pytorch_forward_wrapper(model, input)
+            output = forward_wrapper(model, input, device)
             cnt += 1
             if cnt >= iters:
                 break
     except Exception as e:
         cnt = 0
         for idx, input in enumerate(dataloader):
-            out = pytorch_forward_wrapper(model, input)
+            output = forward_wrapper(model, input, device)
             cnt += 1
             if cnt >= iters:
                 break
@@ -363,7 +390,7 @@ class TorchSmoothQuant:
         :param calib_iter: Sample size for calibration
         :return:
         """
-        model_forward(self.model, self.dataloader, calib_iter)
+        model_forward(self.model, self.dataloader, calib_iter, self.device)
         ##stack
         for key in self.input_maxes.keys():
             max_val = self.input_maxes[key]
