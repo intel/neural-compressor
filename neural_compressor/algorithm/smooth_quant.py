@@ -46,6 +46,7 @@ class SmoothQuant(Algorithm):
         # scales_per_op: True, each op will have an individual scale, mainly for accuracy
         #                False, ops with the same input will share a scale, mainly for performance
         self.alpha = alpha
+        self.mode = 'aggressive'
         self.percentile = None
         self.op_types = None
         self.scales_per_op = None
@@ -69,13 +70,20 @@ class SmoothQuant(Algorithm):
         Returns:
             model: A modified onnx model
         """
-        args = {}  ##different backends may have different default values
+        kwargs = {}  ##different backends may have different default values
         if self.op_types != None:
-            args["op_types"] = self.op_types
+            kwargs["op_types"] = self.op_types
         if self.percentile != None:
-            args['percentile'] = self.percentile
+            kwargs['percentile'] = self.percentile
         if self.scales_per_op != None:
-            args['scales_per_op'] = self.scales_per_op
-        q_model = adaptor.smooth_quant(origin_model, dataloader, calib_iter, self.tune_cfg, self.alpha,
-                                       **args)
+            kwargs['scales_per_op'] = self.scales_per_op
+        q_model = adaptor.smooth_quant(
+            origin_model,
+            dataloader,
+            calib_iter,
+            self.tune_cfg,
+            self.alpha,
+            self.mode,
+            **kwargs,
+        )
         return q_model

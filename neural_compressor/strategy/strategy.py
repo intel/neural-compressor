@@ -548,9 +548,10 @@ class TuneStrategy(object):
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
             # skip assign alpha to sq first.
             # set the alpha to 0.5 by default
-            smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
+            smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5, 'mode': 'aggressive'})
             sq_algo = ALGORITHMS()['smooth_quant']
             sq_algo.alpha = smooth_quant_args['alpha']
+            sq_algo.mode = smooth_quant_args['mode']
             #logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
             
@@ -708,7 +709,7 @@ class TuneStrategy(object):
             if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
                 self._fp32_model = self.model
-                self.baseline = self._evaluate(self.model)       
+                self.baseline = self._evaluate(self.model)
                 self.objectives.baseline = self.baseline
                 # record the FP32 baseline
                 self._add_tuning_history()
@@ -1059,6 +1060,7 @@ class TuneStrategy(object):
                 framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
+            framework_specific_info.update({'recipes': self.cfg.quantization.get('recipes', {})})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update({"use_bf16": self.cfg.use_bf16 \
                             if self.cfg.use_bf16 is not None else True})

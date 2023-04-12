@@ -16,28 +16,25 @@
 # limitations under the License.
 #
 from neural_compressor.utils.utility import LazyImport
+import json
 
 torch = LazyImport('torch')
 from ...utils import logger
 
 
 def model_forward(model, dataloader, iters):
+    from ..pytorch import pytorch_forward_wrapper
     try:
         cnt = 0
         for idx, (input, label) in enumerate(dataloader):
-            output = model(input)
+            output = pytorch_forward_wrapper(model, input)
             cnt += 1
             if cnt >= iters:
                 break
     except Exception as e:
         cnt = 0
         for idx, input in enumerate(dataloader):
-            if isinstance(input, dict):
-                out = model(**input)
-            elif isinstance(input, list) or isinstance(input, tuple):
-                out = model(*input)
-            else:
-                out = model(input)
+            out = pytorch_forward_wrapper(model, input)
             cnt += 1
             if cnt >= iters:
                 break
@@ -101,6 +98,111 @@ def quant_dequant_x(x, num_bits=8):
     return scale * (q_x - bias)
 
 
+def get_module(model, key):
+    """Get module from model by key name
+
+    Args:
+        model (torch.nn.Module): original model
+        key (str): module name to be replaced
+    """
+    attrs = key.split('.')
+    module = model
+    for attr in attrs:
+        try:
+            attr = int(attr)
+            module = module[attr]
+        except:
+            module = getattr(module, attr)
+    return module
+
+
+def set_module(model, key, new_module):
+    """Set new module into model by key name
+
+    Args:
+        model (torch.nn.Module): original model
+        key (str): module name to be replaced
+        new_module (torch.nn.Module): new module to be inserted
+    """
+    attrs = key.split('.')
+    module = model
+    for attr in attrs[:-1]:
+        try:
+            attr = int(attr)
+            module = module[attr]
+        except:
+            module = getattr(module, attr)
+    setattr(module, attrs[-1], new_module)
+
+
+class QDQLinear(torch.nn.Module):
+    def __init__(self, module, scale, zero_point, dtype):
+        super().__init__()
+        import torch.ao.nn.quantized as nnq
+        self.add_module('quant', nnq.Quantize(scale, zero_point, dtype))
+        self.add_module('dequant', nnq.DeQuantize())
+        self.add_module('module', module)
+        self.qdq_weight()
+
+    def forward(self, X):
+        X = self.quant(X)
+        X = self.dequant(X)
+        X = self.module(X)
+        return X
+
+    def qdq_weight(self):
+        # update weight w/ QDQ
+        weith_qdq = quant_dequant_w(self.module)
+        self.module.weight = torch.nn.Parameter(weith_qdq)
+
+
+class SQLinearWrapper(torch.nn.Module):
+    def __init__(self, module, input_scale, input_minmax, dtype=torch.quint8):
+        super().__init__()
+        self.input_scale = input_scale
+        self.dtype = dtype
+        # calculate and only save scale, zero_point to avoid memory usage
+        self.scale, self.zero_point = self._calculate_qparams(input_scale, input_minmax, dtype)
+        self.add_module('sq_linear', module)
+        self.ipex = False  # a flag used for ipex inference
+
+    def forward(self, X):
+        if self.ipex:
+            X = self.sq_linear(X)
+        else:
+            X = torch.mul(X, self.input_scale)
+            X = self.sq_linear(X)
+        return X
+
+    def _calculate_qparams(self, input_scale, input_minmax, dtype=torch.quint8):
+        # calculate scale and zero_point
+        if dtype == torch.quint8:
+            quant_min, quant_max = 0, 255
+        min_val = torch.min(input_minmax[0] * input_scale)
+        max_val = torch.max(input_minmax[1] * input_scale)
+        # work when min_val bigger than zero.
+        min_val_neg = torch.min(min_val, torch.zeros_like(min_val))
+        max_val_pos = torch.max(max_val, torch.zeros_like(max_val))
+        scale = (max_val_pos - min_val_neg) / float(quant_max - quant_min)
+        scale = torch.max(scale, torch.tensor([torch.finfo(torch.float32).eps]))
+        zero_point = quant_min - torch.round(min_val_neg / scale).to(torch.int)
+        zero_point = torch.clamp(zero_point, quant_min, quant_max)
+        return scale, zero_point
+
+    def _get_weight_scale(self):
+        # get weight scale and zero_point
+        from torch.ao.quantization.observer import default_per_channel_weight_observer
+        obs = default_per_channel_weight_observer()
+        obs(self.sq_linear.weight)
+        scale, _ = obs.calculate_qparams()
+        return scale
+
+    def _recover_sq_linear(self):
+        # remove mul and reset sq_linear for ipex inference
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.sq_linear.weight *= scale
+
 class TorchSmoothQuant:
     """
     Fake input channel quantization, for more details please refer to
@@ -128,6 +230,8 @@ class TorchSmoothQuant:
         self.input_values = {}
         self.output_values = {}
         self.input_maxes = {}
+        self.input_mines = {}
+        self.input_abs_maxes = {}
         self.hook_layer_names = []
         self.hook_values_handles = []
         self.traced_model = traced_model
@@ -135,6 +239,10 @@ class TorchSmoothQuant:
             self.traced_model = self.model
         self.weight_scale_info = {}
         self.absorb_scales_info = {}
+        self.insert_mul = True
+        self.allow_absorb = False
+        self.self_absorb_layers = {}
+        self.absorb_to_layer = {}
 
     def _get_device(self):
         """
@@ -143,22 +251,6 @@ class TorchSmoothQuant:
         """
         for _, p in self.model.named_parameters():
             return p.data.device, p.data.dtype
-
-    def _get_module(self, key):
-        """
-        Get the module by the name parsed by jit
-        :param key: the module name with the jit format
-        :return: the module in original model
-        """
-        attrs = key.split('.')
-        module = self.model
-        for attr in attrs:
-            try:
-                attr = int(attr)
-                module = module[attr]
-            except:
-                module = getattr(module, attr)
-        return module
 
     def _save_input_pc_hook(self, name):
         """
@@ -170,13 +262,16 @@ class TorchSmoothQuant:
         def save_input_hook(module, inputs, outputs):
             if name not in self.input_maxes.keys():
                 self.input_maxes[name] = []
+                self.input_mines[name] = []
             input = inputs[0]
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not supported now, need better way
                 input = input.permute(0, 2, 3, 1)
             input = input.reshape(-1, input.shape[-1])
             max_tensor = torch.max(input, dim=0)[0]
+            min_tensor = torch.min(input, dim=0)[0]
             self.input_maxes[name].append(max_tensor)
+            self.input_mines[name].append(min_tensor)
             # self.input_values[name] = input
             # self.output_values[name] = outputs
 
@@ -241,7 +336,7 @@ class TorchSmoothQuant:
         hook_modules = {}
 
         for index, name in enumerate(hook_module_names_tmp):
-            module = self._get_module(name)
+            module = get_module(self.model, name)
             if isinstance(module, torch.nn.Linear) or isinstance(module,
                                                                  torch.nn.Conv2d):
                 if isinstance(module, torch.nn.Conv2d):
@@ -255,11 +350,11 @@ class TorchSmoothQuant:
             return {}
         hook_modules_input_output = {}
         for name in self.hook_layer_names:
-            hook_modules_input_output[name] = self._get_module(name)
+            hook_modules_input_output[name] = get_module(self.model, name)
         self._add_observer(hook_modules, hook_modules_input_output)
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
-        return self.input_maxes
+        return self.input_abs_maxes
 
     def _dump_min_max(self, calibration_method="min_max", calib_iter=100):
         """
@@ -271,10 +366,14 @@ class TorchSmoothQuant:
         model_forward(self.model, self.dataloader, calib_iter)
         ##stack
         for key in self.input_maxes.keys():
-            val = self.input_maxes[key]
-            val = torch.stack(val, dim=0)
-            val = torch.max(torch.abs(val), dim=0)[0]  ##FIXME should add abs
-            self.input_maxes[key] = val
+            max_val = self.input_maxes[key]
+            max_val = torch.stack(max_val, dim=0)
+            min_val = self.input_mines[key]
+            min_val = torch.stack(min_val, dim=0)
+            self.input_maxes[key] = torch.max(max_val, dim=0)[0]
+            self.input_mines[key] = torch.min(min_val, dim=0)[0]
+            abs_max_val = torch.max(torch.abs(self.input_mines[key]), torch.abs(self.input_maxes[key]))
+            self.input_abs_maxes[key] = abs_max_val
         for key in self.input_values.keys():
             self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
             self.output_values[key] = torch.cat(self.output_values[key], dim=0)
@@ -285,7 +384,7 @@ class TorchSmoothQuant:
         :param layer_name: Layer name
         :return: The reshaped weight
         """
-        weight = self._get_module(layer_name).weight  ##TODO oc*ic, support transposed conv
+        weight = get_module(self.model, layer_name).weight  ##TODO oc*ic, support transposed conv
         if len(weight.shape) == 4:
             weight = weight.permute(0, 2, 3, 1)
             weight = weight.reshape(-1, weight.shape[-1])
@@ -331,7 +430,9 @@ class TorchSmoothQuant:
         :param scale: The scale to be multiplied
         :return:
         """
-        layer = self._get_module(layer_name)
+        layer = get_module(self.model, layer_name)
+        if isinstance(layer, SQLinearWrapper):
+            layer = layer.sq_linear
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight *= scale
         return scale
@@ -343,57 +444,65 @@ class TorchSmoothQuant:
         :param scale: The scale to be absorbed
         :return:
         """
-        layer = self._get_module(layer_name)
-        if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
-                isinstance(layer, torch.nn.InstanceNorm2d):
-            if layer.affine:
-                layer.weight *= scale
-                layer.bias *= scale
+        layer = get_module(self.model, layer_name)
+        if self.insert_mul:
+            if isinstance(layer, SQLinearWrapper):
+                set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
-                layer.affine = True
-                weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
-                layer.weight = torch.nn.Parameter(
-                    weight, requires_grad=False)
-                bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
-                layer.bias = torch.nn.Parameter(bias, requires_grad=False
-                                                )
-        elif isinstance(layer, torch.nn.LayerNorm):
-            if layer.elementwise_affine:
+                input_minmax = [self.input_mines[layer_name], self.input_maxes[layer_name]]
+                new_module = SQLinearWrapper(layer, scale, input_minmax)
+                set_module(self.model, layer_name, new_module)
+
+        elif self.allow_absorb:
+            if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
+                    isinstance(layer, torch.nn.InstanceNorm2d):
+                if layer.affine:
+                    layer.weight *= scale
+                    layer.bias *= scale
+                else:
+                    layer.affine = True
+                    weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
+                    layer.weight = torch.nn.Parameter(
+                        weight, requires_grad=False)
+                    bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
+                    layer.bias = torch.nn.Parameter(bias, requires_grad=False
+                                                    )
+            elif isinstance(layer, torch.nn.LayerNorm):
+                if layer.elementwise_affine:
+                    layer.weight *= scale
+                    layer.bias *= scale
+                else:
+                    layer.elementwise_affine = True
+                    weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
+                    layer.weight = torch.nn.Parameter(
+                        torch.ones(weight, requires_grad=False))
+                    bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
+                    layer.bias = torch.nn.Parameter(
+                        bias, requires_grad=False)
+
+            elif isinstance(layer, torch.nn.Conv2d):
+                ##the order could not be changed
+                if hasattr(layer, "bias") and (layer.bias != None):
+                    layer.bias *= scale
+                scale = scale.view(scale.shape[0], 1, 1, 1)
                 layer.weight *= scale
-                layer.bias *= scale
+
+            elif isinstance(layer, torch.nn.Linear):
+                if hasattr(layer, "bias") and (layer.bias != None):
+                    layer.bias *= scale
+                scale = scale.view(scale.shape[0], 1)
+                layer.weight *= scale
+
+            elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+                layer.weight *= scale
+
             else:
-                layer.elementwise_affine = True
-                weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
-                layer.weight = torch.nn.Parameter(
-                    torch.ones(weight, requires_grad=False))
-                bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
-                layer.bias = torch.nn.Parameter(
-                    bias, requires_grad=False)
-
-        elif isinstance(layer, torch.nn.Conv2d):
-            ##the order could not be changed
-            if hasattr(layer, "bias") and (layer.bias != None):
-                layer.bias *= scale
-            scale = scale.view(scale.shape[0], 1, 1, 1)
-            layer.weight *= scale
-
-        elif isinstance(layer, torch.nn.Linear):
-            if hasattr(layer, "bias") and (layer.bias != None):
-                layer.bias *= scale
-            scale = scale.view(scale.shape[0], 1)
-            layer.weight *= scale
-
-        elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
-            layer.weight *= scale
-
-
-        else:
-            logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to weight and bias directly, "
-                           f"this may introduce accuracy issue, please have a check ")
-            if hasattr(layer, "weight") and layer.weight != None:
-                layer.weight *= scale
-            if hasattr(layer, "bias") and layer.bias != None:
-                layer.bias *= scale
+                logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to weight and bias directly, "
+                            f"this may introduce accuracy issue, please have a check ")
+                if hasattr(layer, "weight") and layer.weight != None:
+                    layer.weight *= scale
+                if hasattr(layer, "bias") and layer.bias != None:
+                    layer.bias *= scale
 
     def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5):
         """
@@ -520,10 +629,12 @@ class TorchSmoothQuant:
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
                                                                                               input_max_op, alpha)
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
-                    input_scale = self._reshape_scale_for_input(self._get_module(layer_key),
+                    input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
                                                                 self.absorb_scales_info[absorb_key])
                     input_of_op_q = quant_dequant_x(input_of_op * input_scale)
-                    layer = self._get_module(layer_key)
+                    layer = get_module(self.model, layer_key)
+                    if isinstance(layer, SQLinearWrapper):
+                        layer = layer.sq_linear
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
                     layer_cp.weight.data = weight_qdq
@@ -557,7 +668,7 @@ class TorchSmoothQuant:
         logger.info("auto tuning alpha done")
         return ans_layer2absorb
 
-    def transform(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d'],
+    def transform(self, alpha=0.5, mode='aggressive', percentile=99.999, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100,
                   auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
         """
@@ -571,6 +682,13 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization
         """
+        if mode == 'aggressive':
+            self.insert_mul, self.allow_absorb = True, False
+        elif mode == 'moderate':
+            self.insert_mul, self.allow_absorb = False, True
+        else:
+            logger.error("Not allowed mode: {} for SmoothQuant".format(mode))
+
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("alpha should be a float value in [0, 1] or 'auto' ")
             if alpha < 0:
@@ -588,10 +706,27 @@ class TorchSmoothQuant:
         with torch.no_grad():
             input_maxes = self.input_maxes
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
-                self.absorb_to_layer, no_absorb_layers = self._trace(
-                    op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
+                if self.insert_mul:
+                    self.self_absorb_layers = self._get_all_layer_names()   # TODO: only support linear now.
+                if self.allow_absorb:
+                    self.absorb_to_layer, no_absorb_layers = self._trace(
+                        op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
+                    if self.absorb_to_layer == None and no_absorb_layers == None:
+                        logger.warning("sorry, could not trace the model, smooth quant is ignored")
+                        logger.warning("if you are using huggingface model,"
+                                    "you could set torchscript to True "
+                                    "when loading the model or set the return_dict to False")
+                        return self.model
+
+                # remove self.self_absorb_layers if it exists in self.absorb_to_layer
+                for k, v in self.absorb_to_layer.items():
+                    for i in v:
+                        if i in self.self_absorb_layers:
+                            self.self_absorb_layers.pop(i)
+                self.absorb_to_layer.update(self.self_absorb_layers)
                 for key in self.absorb_to_layer:
                     self.hook_layer_names += self.absorb_to_layer[key]
+
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
                     logger.warning("if you are using huggingface model,"
@@ -625,6 +760,20 @@ class TorchSmoothQuant:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
+ 
+    def _get_all_layer_names(self, op_types=['Linear']):
+        """
+        Try the model to find the layers which can be smooth quantized.
+        :param op_types: The op types to be smooth quantized
+        :return:
+        self_absorb_layer: A dict, absorb layer name (itself): layers to be smooth quantized
+        """
+        self_absorb_layer = {}
+        for name, module in self.model.named_modules():
+            for op_type in op_types:
+                if op_type == str(module.__class__.__name__):
+                    self_absorb_layer[name] = [name]
+        return self_absorb_layer
 
     def _trace(self, op_types):
         """
@@ -646,18 +795,6 @@ def get_parent(node):
     if node.inputs() == None:
         return None
     return list(node.inputs())[0].node()
-
-
-def get_module(model, key):
-    attrs = key.split('.')
-    module = model
-    for attr in attrs:
-        try:
-            attr = int(attr)
-            module = module[attr]
-        except:
-            module = getattr(module, attr)
-    return module
 
 
 class GraphTrace:
@@ -789,3 +926,28 @@ class GraphTrace:
             if supported:
                 res[key] = absorb_to_layer[key]
         return res
+
+def update_sq_scale(ipex_config_path, smoothquant_scale_info):
+    with open(ipex_config_path, 'r') as f:
+        ipex_config = json.load(f)
+        for module_name, v in ipex_config.items():
+            if 'q_op_infos' in v and v['q_op_infos']:
+                for op_num, v1 in v['q_op_infos'].items():
+                    if 'weight_tensor_infos' in v1 and v1['weight_tensor_infos']:
+                        op_name = v1['fqn']
+                        if op_name in smoothquant_scale_info:
+                            input_scale_for_mul = smoothquant_scale_info[op_name]['input_scale_for_mul'].tolist()
+                            input_scale_after_mul = smoothquant_scale_info[op_name]['input_scale_after_mul'].tolist()
+                            input_zero_point_after_mul = smoothquant_scale_info[op_name]['input_zero_point_after_mul'].tolist()
+                            weight_scale_for_mul = (1 / smoothquant_scale_info[op_name]['input_scale_for_mul']).tolist()
+                            weight_scale_after_mul = smoothquant_scale_info[op_name]['weight_scale_after_mul'].tolist()
+                            v1['input_tensor_infos'][0]['smooth_quant_scaling_factor'] = input_scale_for_mul
+                            v1['input_tensor_infos'][0]['scale'] = input_scale_after_mul
+                            v1['input_tensor_infos'][0]['zero_point'] = input_zero_point_after_mul
+                            v1['weight_tensor_infos'][0]['smooth_quant_scaling_factor'] = weight_scale_for_mul
+                            v1['weight_tensor_infos'][0]['scale'] = weight_scale_after_mul
+        f.close()
+    # overwrite ipex_config_path
+    with open(ipex_config_path, 'w') as f1:
+        json.dump(ipex_config, f1, indent = 4)
+        f1.close()

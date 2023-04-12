@@ -2,8 +2,17 @@ import unittest
 import torch
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-import torchvision
+from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant, SQLinearWrapper
+import neural_compressor.adaptor.pytorch as nc_torch
+from packaging.version import Version
+
+try:
+    import intel_extension_for_pytorch as ipex
+    TEST_IPEX = True
+except:
+    TEST_IPEX = False
+
+PT_VERSION = nc_torch.get_torch_version().release
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -77,11 +86,6 @@ class TestSqDepthwiseConv(unittest.TestCase):
         output_sq = model(data)
         assert torch.sum(torch.abs(output - output_sq)) < 1e-5
         assert len(sq.absorb_to_layer) == 1
-
-
-
-
-
 
 
 class TestSqConvOpFuseAuto(unittest.TestCase):
@@ -551,6 +555,98 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 0
+
+    def test_sq_linear(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1)
+        assert isinstance(sq.model.fc1, SQLinearWrapper)
+
+    def test_sq_quant(self):
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(
+            calibration_sampling_size=8,
+            recipes={"smooth_quant": True, 
+                     "smooth_quant_args": {'alpha': 'auto', 'mode':'aggressive'}} # or moderate
+        )
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                return out
+
+        input_ids = torch.randn([1, 3])
+        fp32_model = Model()
+        output1 = fp32_model(input_ids)
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
+
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=CalibDataloader(),
+            eval_func=lambda x: 0.1,
+        )
+        output2 = q_model(input_ids)
+
+    @unittest.skipIf(PT_VERSION < Version("2.1").release or not TEST_IPEX,
+                 "Please use Intel extension for Pytorch version higher or equal to 1.12")
+    def test_sq_quant_ipex(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                return out
+
+        input_ids = torch.randn([1, 3])
+        fp32_model = Model()
+        output1 = fp32_model(input_ids)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            calibration_sampling_size=8,
+            excluded_precisions=['bf16'],
+            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}}
+        )
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
+
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=CalibDataloader(),
+            eval_func=lambda x: 0.1,
+        )
+        output2 = q_model.model(input_ids)
 
 
 if __name__ == '__main__':
