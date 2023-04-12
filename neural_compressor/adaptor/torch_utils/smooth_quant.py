@@ -493,12 +493,13 @@ class TorchSmoothQuant:
                 scale = scale.view(scale.shape[0], 1)
                 layer.weight *= scale
 
-            elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+            elif layer.__class__.__name__ == "LlamaRMSNorm" \
+              or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
                 layer.weight *= scale
 
             else:
-                logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to weight and bias directly, "
-                            f"this may introduce accuracy issue, please have a check ")
+                logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to "
+                  f"weight and bias directly, this may introduce accuracy issue, please have a check ")
                 if hasattr(layer, "weight") and layer.weight != None:
                     layer.weight *= scale
                 if hasattr(layer, "bias") and layer.bias != None:
@@ -940,11 +941,16 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
                     if 'weight_tensor_infos' in v1 and v1['weight_tensor_infos']:
                         op_name = v1['fqn']
                         if op_name in smoothquant_scale_info:
-                            input_scale_for_mul = smoothquant_scale_info[op_name]['input_scale_for_mul'].tolist()
-                            input_scale_after_mul = smoothquant_scale_info[op_name]['input_scale_after_mul'].tolist()
-                            input_zero_point_after_mul = smoothquant_scale_info[op_name]['input_zero_point_after_mul'].tolist()
-                            weight_scale_for_mul = (1 / smoothquant_scale_info[op_name]['input_scale_for_mul']).tolist()
-                            weight_scale_after_mul = smoothquant_scale_info[op_name]['weight_scale_after_mul'].tolist()
+                            input_scale_for_mul = \
+                                    smoothquant_scale_info[op_name]['input_scale_for_mul'].tolist()
+                            input_scale_after_mul = \
+                                    smoothquant_scale_info[op_name]['input_scale_after_mul'].tolist()
+                            input_zero_point_after_mul = \
+                                    smoothquant_scale_info[op_name]['input_zero_point_after_mul'].tolist()
+                            weight_scale_for_mul = \
+                                    (1 / smoothquant_scale_info[op_name]['input_scale_for_mul']).tolist()
+                            weight_scale_after_mul = \
+                                    smoothquant_scale_info[op_name]['weight_scale_after_mul'].tolist()
                             v1['input_tensor_infos'][0]['smooth_quant_scaling_factor'] = input_scale_for_mul
                             v1['input_tensor_infos'][0]['scale'] = input_scale_after_mul
                             v1['input_tensor_infos'][0]['zero_point'] = input_zero_point_after_mul
