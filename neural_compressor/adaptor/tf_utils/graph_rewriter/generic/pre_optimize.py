@@ -17,6 +17,7 @@
 """Pre Optimization Entrance."""
 
 import logging
+import copy
 import tensorflow as tf
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -264,8 +265,12 @@ class PreOptimization():
             node = graph_info[node_name].node
             node.device = node_device
         self._tmp_graph_def = cur_graph.dump_graph()
-        origin_model.graph_def = self._tmp_graph_def
 
+        for function_def in self.model.graph_def.library.function:
+            if function_def.signature.name == 'swish_f32':
+                self._tmp_graph_def.library.function.extend([copy.deepcopy(function_def)])
+
+        origin_model.graph_def = self._tmp_graph_def
         return origin_model
 
     def get_matched_nodes(self, patterns):
