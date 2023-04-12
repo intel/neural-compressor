@@ -139,7 +139,7 @@ def merge_with_cap(block_lst, cap):
 
 
 # test
-test = 1
+test = 0
 if test:
     from transformers import BertTokenizer, BertModel
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
