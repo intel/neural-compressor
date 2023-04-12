@@ -128,6 +128,13 @@
       "main_script": "main.py",
       "batch_size": 100
     },
+    "peleenet": {
+      "model_src_dir": "image_recognition/peleenet/quantization/ptq/fx",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "/tf_dataset/pytorch/peleenet/peleenet_acc7208.pth.tar",
+      "main_script": "main.py",
+      "batch_size": 100
+    },
     "resnest50": {
       "model_src_dir": "image_recognition/resnest/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
