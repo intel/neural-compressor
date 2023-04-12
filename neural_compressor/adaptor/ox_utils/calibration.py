@@ -266,7 +266,7 @@ class ONNXRTAugment:
                             ort_inputs.update({inputs_names[i]: inputs[i]})
 
             def _collect_data():
-                for output_idx, output in enumerate(session.run(None, ort_inputs)): 
+                for output_idx, output in enumerate(session.run(None, ort_inputs)):
                     if q_config is not None and output.size != 0:
                         node_name = name_to_node[node_output_names[output_idx]]
                         if node_output_names[output_idx] not in name_to_calibrator:
@@ -290,7 +290,7 @@ class ONNXRTAugment:
                         else:
                             intermediate_tensor.setdefault(
                                 (node_output_names[output_idx], node_name), []).append(output)
-                    else:
+                    elif q_config is None:
                         output_dicts.setdefault(node_output_names[output_idx], \
                             []).append(output)
                             
@@ -313,7 +313,7 @@ class ONNXRTAugment:
             calibrator.collect(datas)
             output_dicts.setdefault(output_name, []).append(list(calibrator.calib_range))
             calibrator.clear()
-            del calibrator 
+            del calibrator
         return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
@@ -400,6 +400,8 @@ class ONNXRTAugment:
         merged_dict = {}
         for name, minmaxs in output_dicts.items():
             for minmax in minmaxs:
+                if len(minmax) < 2:
+                    continue
                 merged_dict.setdefault(name + '_Min', []).append(minmax[0])
                 merged_dict.setdefault(name + '_Max', []).append(minmax[1])
 
