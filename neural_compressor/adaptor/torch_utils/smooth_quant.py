@@ -67,6 +67,7 @@ def model_forward(model, dataloader, iters, device):
 
 
 def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
+    eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
         x = m.weight
         if scheme == 'sym':
@@ -75,7 +76,7 @@ def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
         else:
             q_min, q_max = 0, 2. ** num_bits - 1.
             scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
-        eps = torch.finfo(torch.float32).eps
+
         scale = torch.clip(scale, min=eps)
 
         if scheme == 'sym':
@@ -93,11 +94,11 @@ def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
         x = x.reshape(-1, x.shape[-1])
         if scheme == 'sym':
             q_min, q_max = -2. ** (num_bits - 1), 2. ** (num_bits - 1) - 1.
-            scale = torch.abs(torch.max(x, dim=0).values) / (2 ** (num_bits - 1) - 1)
+            scale = torch.max(torch.abs(x), dim=0).values / (2 ** (num_bits - 1) - 1)
         else:
             q_min, q_max = 0, 2. ** num_bits - 1.
             scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
-        scale = torch.clip(scale, min=1e-5)
+        scale = torch.clip(scale, min=eps)
         if scheme == 'sym':
             bias = 0
         else:
@@ -116,9 +117,10 @@ def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
 
 
 def quant_dequant_x(x, num_bits=8):
+    eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2. ** num_bits - 1.
     scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
-    scale = torch.clip(scale, min=1e-5)
+    scale = torch.clip(scale, min=eps)
     bias = torch.round(0 - (torch.min(x)) / scale)
     q_x = x / scale + bias
     q_x.clamp_(q_min, q_max).round_()
