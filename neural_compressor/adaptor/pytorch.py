@@ -2921,7 +2921,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:
                         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-                        tmp_model = self._wrapper_sq_linear(tmp_model)
+                        if not hasattr(tmp_model, '_smoothquant_optimized') \
+                          or not tmp_model._smoothquant_optimized:
+                            # to make sure ipex_config.json is based on pre-optimized model
+                            tmp_model = self._wrapper_sq_linear(tmp_model)
                     else:
                         static_qconfig = QConfig(activation=MinMaxObserver.with_args(
                             qscheme=torch.per_tensor_affine, dtype=torch.quint8),
