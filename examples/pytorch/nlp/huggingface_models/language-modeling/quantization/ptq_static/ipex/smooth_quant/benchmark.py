@@ -145,5 +145,5 @@ else:
                                                               torchscript=True  ##FIXME
                                                               )
     model.eval()
-conf = BenchmarkConfig(backend='ipex')
+conf = BenchmarkConfig()
 fit(model, conf, b_func=evaluator.evaluate)
