@@ -218,7 +218,8 @@ class BaseCallbacks(object):
                 user_model.model if isinstance(user_model, BaseModel) else user_model)
             if self.framework == "tensorflow":
                 from ..model.tensorflow_model import get_model_type
-                if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
+                if not isinstance(user_model, BaseModel) and get_model_type(user_model) == 'keras'\
+                     and self.cfg.model.backend == 'itex':
                     self.framework = 'keras'
             if self.framework == "pytorch":
                 if self.cfg.model.backend == "default":
