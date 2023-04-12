@@ -2873,6 +2873,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:
                         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+                        tmp_model = self._wrapper_sq_linear(tmp_model)
                     else:
                         static_qconfig = QConfig(activation=MinMaxObserver.with_args(
                             qscheme=torch.per_tensor_affine, dtype=torch.quint8),
@@ -3008,6 +3009,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         # update ipex_config.json with smoothquant_scale_info
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+        # enable fallback
+        self._cfg_to_qconfig(tune_cfg)
         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
@@ -3044,6 +3047,27 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             self.tmp_model.tune_cfg = json.load(f)
         self.tmp_model.ipex_config_path = self.ipex_config_path
         return self.tmp_model
+
+    def _wrapper_sq_linear(self, tmp_model):
+        """Help function for _get_quantizable_ops_recursively to align smoothquant processed model"""
+        class SQLinearWrapper(torch.nn.Module):
+            def __init__(self, module):
+                super().__init__()
+                self.add_module('sq_linear', module)
+
+            def forward(self, X):
+                return self.sq_linear(X)
+
+        module_name_list = []
+        from .torch_utils.smooth_quant import get_module, set_module
+        for name, module in tmp_model.named_modules():
+            if 'Linear' == str(module.__class__.__name__):
+                module_name_list.append(name)
+        for name in module_name_list:
+            module = get_module(tmp_model, name)
+            new_module = SQLinearWrapper(module)
+            set_module(tmp_model, name, new_module)
+        return tmp_model
 
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path=None):
