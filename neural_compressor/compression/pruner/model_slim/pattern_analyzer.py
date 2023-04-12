@@ -20,7 +20,7 @@ import torch
 import re
 from ..utils import logger
 
-JIT_SUPPORT_OPS = ['linear', 'gelu', 'silu', 'relu', 'mul', 'add'] # linear and all act_fn supported by pytorch-aten extension
+JIT_SUPPORT_OPS = ['linear', 'gelu', 'silu', 'relu', 'mul', 'add']
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
@@ -420,7 +420,9 @@ class Linear2LinearSearcher(JitBasicSearcher):
     #     else:
     #         name_results = []
     #         for item in self.search_results:
-    #             name_item = [JitBasicSearcher.get_layer_path_from_jit_code(self, layer_info['op_trace']) for layer_info in item]
+    #             name_item = [
+    #                 JitBasicSearcher.get_layer_path_from_jit_code(self, layer_info['op_trace']) for layer_info in item
+    #             ]
     #             name_results.append(name_item)
     #         return name_results
 

@@ -171,9 +171,9 @@ class LinearCompression(object):
 
     def __init__(self, root_linear, target_linears):
         """Initialize."""
-        assert type(root_linear).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
+        assert type(root_linear).__name__ == "Linear", "layer should be Linear module type"
         for target_linear in target_linears:
-            assert type(target_linear).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
+            assert type(target_linear).__name__ == "Linear", "layer should be Linear module type"
         self.root_linear = root_linear
         self.target_linears = target_linears
         self.device = self.root_linear.weight.device
