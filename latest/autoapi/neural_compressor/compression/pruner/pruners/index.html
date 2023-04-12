@@ -98,6 +98,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.PatternLockPruner" title="neural_compressor.compression.pruner.pruners.PatternLockPruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PatternLockPruner</span></code></a></p></td>
 <td><p>Pruning Pruner.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.BlockMaskPruner" title="neural_compressor.compression.pruner.pruners.BlockMaskPruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BlockMaskPruner</span></code></a></p></td>
+<td><p>Pruning Pruner.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.RetrainFreePruner" title="neural_compressor.compression.pruner.pruners.RetrainFreePruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RetrainFreePruner</span></code></a></p></td>
+<td><p>Pruning Pruner.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.pruners.ProgressivePruner" title="neural_compressor.compression.pruner.pruners.ProgressivePruner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProgressivePruner</span></code></a></p></td>
 <td><p>Pruning Pruner.</p></td>
 </tr>
@@ -361,6 +367,99 @@ This pruner is useful when a user trains a sparse model without changing its ori
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">Inherit</span> <span class="pre">from</span> <span class="pre">parent</span> <span class="pre">class</span> <span class="pre">Pruner.</span></span></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.BlockMaskPruner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.pruners.</span></span><span class="sig-name descname"><span class="pre">BlockMaskPruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.BlockMaskPruner" title="Permalink to this definition"></a></dt>
+<dd><p>Pruning Pruner.</p>
+<p>The class which executes pruning process.
+1. Defines pruning functions called at step begin/end, before/after optimize and epoch begin/end.
+2. Defines the pruning criterion.
+3. Obtain block masks and its grads.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>config</strong> – A config dict object that contains the pruner information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.BlockMaskPruner.pattern">
+<span class="sig-name descname"><span class="pre">pattern</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.BlockMaskPruner.pattern" title="Permalink to this definition"></a></dt>
+<dd><p>A Pattern object that defines pruning weights’ arrangements within space.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.BlockMaskPruner.criterion">
+<span class="sig-name descname"><span class="pre">criterion</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.BlockMaskPruner.criterion" title="Permalink to this definition"></a></dt>
+<dd><p>A Criterion Object that defines which weights are to be pruned</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.BlockMaskPruner.scheduler">
+<span class="sig-name descname"><span class="pre">scheduler</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.BlockMaskPruner.scheduler" title="Permalink to this definition"></a></dt>
+<dd><p>A Scheduler object that defines how the model’s sparsity changes as training/pruning proceeds.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.BlockMaskPruner.reg">
+<span class="sig-name descname"><span class="pre">reg</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.BlockMaskPruner.reg" title="Permalink to this definition"></a></dt>
+<dd><p>A Reg object that defines regulization terms.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.RetrainFreePruner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.pruners.</span></span><span class="sig-name descname"><span class="pre">RetrainFreePruner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.RetrainFreePruner" title="Permalink to this definition"></a></dt>
+<dd><p>Pruning Pruner.
+The retrain_free pruner_class is derived from BasePruner.
+This pruner references the mask search and mask rearrangement strategies in fast retraining free.
+RetrainFreePruner supports one-shot pruning (same effect as fast retraining free) and iterative pruning.
+Please refer to A Fast Post-Training Pruning Framework for Transformers</p>
+<blockquote>
+<div><p>(<a class="reference external" href="https://arxiv.org/abs/2204.09656">https://arxiv.org/abs/2204.09656</a>)</p>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>Defines pruning functions called at step begin/end, before/after optimize and epoch begin/end.</p></li>
+<li><p>Defines the pruning criterion and fixed weight parameters.</p></li>
+<li><p>Obtain block masks and its grads.</p></li>
+<li><p>Rearrange block masks.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>config</strong> – A config dict object that contains the pruner information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.RetrainFreePruner.pattern">
+<span class="sig-name descname"><span class="pre">pattern</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.RetrainFreePruner.pattern" title="Permalink to this definition"></a></dt>
+<dd><p>A Pattern object that defines pruning weights’ arrangements within space.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.RetrainFreePruner.criterion">
+<span class="sig-name descname"><span class="pre">criterion</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.RetrainFreePruner.criterion" title="Permalink to this definition"></a></dt>
+<dd><p>A Criterion Object that defines which weights are to be pruned</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.RetrainFreePruner.scheduler">
+<span class="sig-name descname"><span class="pre">scheduler</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.RetrainFreePruner.scheduler" title="Permalink to this definition"></a></dt>
+<dd><p>A Scheduler object that defines how the model’s sparsity changes as training/pruning proceeds.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.RetrainFreePruner.reg">
+<span class="sig-name descname"><span class="pre">reg</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.RetrainFreePruner.reg" title="Permalink to this definition"></a></dt>
+<dd><p>A Reg object that defines regulization terms.</p>
+</dd></dl>
 
 </dd></dl>
 

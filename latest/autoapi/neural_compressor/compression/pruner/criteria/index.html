@@ -104,6 +104,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion" title="neural_compressor.compression.pruner.criteria.SnipMomentumCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SnipMomentumCriterion</span></code></a></p></td>
 <td><p>Pruning criterion.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion" title="neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SnipMomentumBlockCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion" title="neural_compressor.compression.pruner.criteria.RetrainFreeCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RetrainFreeCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -238,6 +244,53 @@ A momentum mechanism is used to calculate snip score, which determines if a weig
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipMomentumCriterion.scores">
 <span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion.scores" title="Permalink to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">SnipMomentumBlockCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion" title="Permalink to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The snip_momentum_block criterion_class is derived from PruningCriterion.
+A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>alpha</strong> – A parameter that determines how much of the snip score is preserved from last pruning step.</p></li>
+<li><p><strong>beta</strong> – A parameter that determines how much of the snip score is updated at the current step.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion.scores" title="Permalink to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.RetrainFreeCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">RetrainFreeCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion" title="Permalink to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The retrain_free criterion_class is derived from PruningCriterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>alpha</strong> – A parameter that determines how much of the snip score is preserved from last pruning step.</p></li>
+<li><p><strong>beta</strong> – A parameter that determines how much of the snip score is updated at the current step.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.RetrainFreeCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion.scores" title="Permalink to this definition"></a></dt>
 <dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
 </dd></dl>
 
