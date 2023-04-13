@@ -152,6 +152,7 @@ if args.int8:
         op_type_dict["add"] = {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
 
     conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
+                                   backend='ipex',
                                    recipes=recipes,
                                    op_type_dict=op_type_dict)
 

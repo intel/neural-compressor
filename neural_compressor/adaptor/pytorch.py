@@ -2837,7 +2837,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 del tmp_model
                 import gc
                 gc.collect()
-
+        map_op_name_to_fqn = {}
+        
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:
@@ -2858,11 +2859,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     if len(name) == 1:
                         module_key = name[0][0]
                         op_cfg_id = name[0][2]
-                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex \
-                                               [self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']] \
-                                               if self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type'] \
-                                               in unify_op_type_mapping_ipex else \
-                                               self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']))
+                        _op_type = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                        if _op_type in unify_op_type_mapping_ipex:
+                            _op_type = unify_op_type_mapping_ipex[_op_type]
+                        quantizable_ops.append((tuple(name), _op_type))
+                        _fqn = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['fqn']
+                        map_op_name_to_fqn[(tuple(name), _op_type)] = _fqn
                     else:
                         op_type = ""
                         for op_name in name:
@@ -2872,6 +2874,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         quantizable_ops.append((tuple(name), op_type))
                 self.op_infos_from_cfgs = op_infos_from_cfgs
                 self.output_tensor_id_op_name = output_tensor_id_op_name
+        logger.info("map_op_name_to_fqn: ")
+        logger.info(map_op_name_to_fqn)
+        from .torch_utils.util import search_blocks_for_ipex
+        att_blocks_info, ffn_blocks = search_blocks_for_ipex(map_op_name_to_fqn)
+        logger.info("Atten Block info")
+        logger.info(att_blocks_info)
+    
+        logger.info("FFN Block info")
+        logger.info(ffn_blocks)
+        self.block_info = ffn_blocks
+        
+
         os.remove(self.ipex_config_path)
 
     def get_fuse_ops(self, default_cfgs):
