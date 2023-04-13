@@ -624,7 +624,7 @@ Classes
                         select from ["QDQ", "QLinear"]. Defaults to "QDQ".
    :type quant_format: str, optional
    :param example_inputs: Example inputs used for tracing model. Defaults to None.
-   :type example_inputs: optional
+   :type example_inputs: tensor|list|tuple|dict, optional
    :param input_names: A list of model input names. Defaults to None.
    :type input_names: list, optional
    :param output_names: A list of model output names. Defaults to None.
@@ -662,7 +662,7 @@ Classes
                         select from ["QDQ", "QLinear"]. Defaults to "QDQ".
    :type quant_format: str, optional
    :param example_inputs: Example inputs used for tracing model. Defaults to None.
-   :type example_inputs: required
+   :type example_inputs: tensor|list|tuple|dict, required
    :param input_names: A list of model input names. Defaults to None.
    :type input_names: list, optional
    :param output_names: A list of model output names. Defaults to None.

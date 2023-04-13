@@ -805,7 +805,7 @@ Defaults to “int8”.</p></li>
 <li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The ONNX opset version used for export. Defaults to 14.</p></li>
 <li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format of the exported int8 onnx model,
 select from [“QDQ”, “QLinear”]. Defaults to “QDQ”.</p></li>
-<li><p><strong>example_inputs</strong> (<em>optional</em>) – Example inputs used for tracing model. Defaults to None.</p></li>
+<li><p><strong>example_inputs</strong> (<em>tensor</em><em>|</em><em>list</em><em>|</em><em>tuple</em><em>|</em><em>dict</em><em>, </em><em>optional</em>) – Example inputs used for tracing model. Defaults to None.</p></li>
 <li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
 <li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model output names. Defaults to None.</p></li>
 <li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dynamic axes information. Defaults to None.</p></li>
@@ -841,7 +841,7 @@ Defaults to “int8”.</p></li>
 <li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The ONNX opset version used for export. Defaults to 14.</p></li>
 <li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format of the exported int8 onnx model,
 select from [“QDQ”, “QLinear”]. Defaults to “QDQ”.</p></li>
-<li><p><strong>example_inputs</strong> (<em>required</em>) – Example inputs used for tracing model. Defaults to None.</p></li>
+<li><p><strong>example_inputs</strong> (<em>tensor</em><em>|</em><em>list</em><em>|</em><em>tuple</em><em>|</em><em>dict</em><em>, </em><em>required</em>) – Example inputs used for tracing model. Defaults to None.</p></li>
 <li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
 <li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model output names. Defaults to None.</p></li>
 <li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dynamic axes information. Defaults to None.</p></li>
