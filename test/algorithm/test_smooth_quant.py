@@ -3,7 +3,13 @@ import torch
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-import torchvision
+
+
+try:
+    import intel_extension_for_pytorch as ipex
+    TEST_IPEX = True
+except:
+    TEST_IPEX = False
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -43,7 +49,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         output = model(data)
 
         sq = TorchSmoothQuant(model, dummy_dataloader)
-        sq.transform(alpha='auto', calib_iter=1)
+        sq.transform(alpha='auto', calib_iter=1, folding=True)
         output_sq = model(data)
         assert torch.sum(torch.abs(output - output_sq)) < 1e-5
         assert len(sq.absorb_to_layer) == 1
@@ -73,15 +79,10 @@ class TestSqDepthwiseConv(unittest.TestCase):
         output = model(data)
 
         sq = TorchSmoothQuant(model, dummy_dataloader)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         output_sq = model(data)
         assert torch.sum(torch.abs(output - output_sq)) < 1e-5
         assert len(sq.absorb_to_layer) == 1
-
-
-
-
-
 
 
 class TestSqConvOpFuseAuto(unittest.TestCase):
@@ -118,7 +119,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, dummy_dataloader)
-        sq.transform(alpha='auto', calib_iter=3)
+        sq.transform(alpha='auto', calib_iter=3, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
 
@@ -152,7 +153,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.5)
+        sq.transform(alpha=0.5, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -173,7 +174,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.5, calib_iter=2)
+        sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -194,7 +195,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.5, calib_iter=2)
+        sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 0
 
     @classmethod
@@ -217,7 +218,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.5, calib_iter=2)
+        sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     def test_sq_conv_gn(self):
@@ -239,7 +240,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.6, calib_iter=2)
+        sq.transform(alpha=0.6, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     def test_sq_add(self):
@@ -261,7 +262,7 @@ class TestSqConvOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
-        sq.transform(alpha=0.6, calib_iter=2)
+        sq.transform(alpha=0.6, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 0
 
 
@@ -351,7 +352,7 @@ class TestSqListInput(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.list_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -372,7 +373,7 @@ class TestSqListInput(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.tuple_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
 
@@ -406,7 +407,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha='auto', calib_iter=1)
+        sq.transform(alpha='auto', calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
 
@@ -440,7 +441,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -461,7 +462,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -482,7 +483,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -503,7 +504,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -526,7 +527,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 2
 
     @classmethod
@@ -549,8 +550,116 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 0
+
+    def test_sq_linear(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1) # By default, folding=False
+        from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
+        assert isinstance(sq.model.fc1, SQLinearWrapper)
+
+    def test_sq_quant(self):
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                return out
+
+        input_ids = torch.randn([1, 3])
+        fp32_model = Model()
+        conf = PostTrainingQuantConfig(
+            calibration_sampling_size=8,
+            recipes={"smooth_quant": True, 
+                     "smooth_quant_args": {'alpha': 'auto', 'folding': False}}
+        )#  By default, folding args: {IPEX: False, ONNX RT: False, Stock PT: True}
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
+
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=CalibDataloader(),
+            eval_func=lambda x: 0.1,
+        )
+        from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
+        assert isinstance(q_model.model.fc1, SQLinearWrapper)
+        assert isinstance(fp32_model.fc1, SQLinearWrapper) # for smoothquant, inplace=True.
+
+        fp32_model = Model()
+        origin_bias = float(fp32_model.fc1.bias[0])
+        conf = PostTrainingQuantConfig(
+            calibration_sampling_size=8,
+            recipes={"smooth_quant": True, 
+                     "smooth_quant_args": {'alpha': 'auto'}}
+        )#  By default, folding args: {IPEX: False, ONNX RT: False, Stock PT: True}
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=CalibDataloader(),
+            eval_func=lambda x: 0.1,
+        )
+        self.assertTrue(float(q_model.model.fc1.bias()[0]) != origin_bias)
+
+    @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
+    def test_sq_quant_ipex(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                return out
+
+        input_ids = torch.randn([1, 3])
+        fp32_model = Model()
+        output1 = fp32_model(input_ids)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            calibration_sampling_size=8,
+            excluded_precisions=['bf16'],
+            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}}
+        )
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
+
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=CalibDataloader(),
+            eval_func=lambda x: 0.1,
+        )
+        output2 = q_model.model(input_ids)
 
 
 if __name__ == '__main__':
