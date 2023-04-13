@@ -76,10 +76,10 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     if isinstance(input, dict) or isinstance(input, UserDict):
         if device == 'cpu':
             output = model(**input)
-        elif device == 'ipex':  # pragma: no cover
+        elif device == 'ipex':
             # have to split the case to avoid exposing ipex.DEVICE outside
             # which require intel extension installed
-            if version.release < Version("1.12.0").release:
+            if version.release < Version("1.12.0").release:  # pragma: no cover
                 if running_mode == "calibration":
                     with ipex.quantization.calibrate(conf, default_recipe=True):   # pylint: disable=E1101
                         output = model(**input)
@@ -95,8 +95,8 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     elif isinstance(input, list) or isinstance(input, tuple):
         if device == 'cpu':
             output = model(*input)
-        elif device == 'ipex':  # pragma: no cover
-            if version.release < Version("1.12.0").release:
+        elif device == 'ipex':
+            if version.release < Version("1.12.0").release:  # pragma: no cover
                 if running_mode == "calibration":
                     with ipex.quantization.calibrate(conf, default_recipe=True):   # pylint: disable=E1101
                         output = model(*input)
@@ -113,8 +113,8 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     else:
         if device == 'cpu' or not isinstance(input, torch.Tensor):
             output = model(input)
-        elif device == 'ipex':  # pragma: no cover
-            if version.release < Version("1.12.0").release:
+        elif device == 'ipex':
+            if version.release < Version("1.12.0").release:  # pragma: no cover
                 if running_mode == "calibration":
                     with ipex.quantization.calibrate(conf, default_recipe=True):    # pylint: disable=E1101
                         output = model(input)
@@ -128,7 +128,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     return output
 
 
-def get_example_inputs(model, dataloader):  # pragma: no cover
+def get_example_inputs(model, dataloader):
     version = get_torch_version()
     # Suggest set dataloader like calib_dataloader
     if dataloader is None:
@@ -2334,7 +2334,7 @@ unify_op_type_mapping_ipex = {
 
 
 @adaptor_registry
-class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
+class PyTorch_IPEXAdaptor(TemplateAdaptor):
     """Adaptor of PyTorch framework with Intel PyTorch Extension,
        all PyTorch IPEX API is in this class.
 
