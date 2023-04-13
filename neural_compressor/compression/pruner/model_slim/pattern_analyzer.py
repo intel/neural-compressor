@@ -20,7 +20,7 @@ import torch
 import re
 from ..utils import logger
 
-JIT_SUPPORT_OPS = ['linear', 'gelu', 'silu', 'relu', 'mul', 'add']
+JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
@@ -165,6 +165,12 @@ class JitBasicSearcher(object):
         logger.info(f"Generating jit tracing from original model.")
         # static graph generation relies on shape
         dummy_inputs = self.generate_dummy_inputs()
+        dummy_inputs = [] + [dummy_inputs]
+        if type(self.model).__name__ == "WhisperForConditionalGeneration":
+            dummy_inputs = [
+                torch.ones([1, 80, 3000]),
+                torch.ones([1, 448], dtype=torch.int64)
+            ]
         self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
          # re-org from original static codes. 
         self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
