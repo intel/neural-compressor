@@ -209,7 +209,7 @@ if __name__ == "__main__":
             sess_options = ort.SessionOptions()
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
             sess_options.optimized_model_filepath = args.output_model
-            q_model.save(os.path.join(args.workspace, 'eval.onnx'))
-            ort.InferenceSession(os.path.join(args.workspace, 'eval.onnx'), sess_options, providers=ort.get_available_providers())
+            q_model.save(args.output_model)
+            ort.InferenceSession(args.output_model, sess_options, providers=ort.get_available_providers())
         else:
             q_model.save(args.output_model)
