@@ -19,12 +19,27 @@
 # Note: Do not import this file unless you have already imported torch, 
 # since the model classes inherit torch.nn.Module.
 import torch
+from packaging.version import Version
+
+
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, 'Got an unknown version of torch: {}'.format(e)
+    version = Version(torch_version)
+    return version
+
+PT_VERSION = get_torch_version().release
 
 
 class QDQLinear(torch.nn.Module):
     def __init__(self, module, scale, zero_point, dtype):
         super().__init__()
-        import torch.ao.nn.quantized as nnq
+        if PT_VERSION < Version("1.13.0").release:
+            import torch.nn.quantized as nnq
+        else:
+            import torch.ao.nn.quantized as nnq
         self.add_module('quant', nnq.Quantize(scale, zero_point, dtype))
         self.add_module('dequant', nnq.DeQuantize())
         self.add_module('module', module)

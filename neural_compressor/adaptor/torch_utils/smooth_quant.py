@@ -191,7 +191,7 @@ class TorchSmoothQuant:
         self.input_values = {}
         self.output_values = {}
         self.input_maxes = {}
-        self.input_mines = {}
+        self.input_mins = {}
         self.input_abs_maxes = {}
         self.hook_layer_names = []
         self.hook_values_handles = []
@@ -223,7 +223,7 @@ class TorchSmoothQuant:
         def save_input_hook(module, inputs, outputs):
             if name not in self.input_maxes.keys():
                 self.input_maxes[name] = []
-                self.input_mines[name] = []
+                self.input_mins[name] = []
             input = inputs[0]
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not supported now, need better way
@@ -232,7 +232,7 @@ class TorchSmoothQuant:
             max_tensor = torch.max(input, dim=0)[0]
             min_tensor = torch.min(input, dim=0)[0]
             self.input_maxes[name].append(max_tensor)
-            self.input_mines[name].append(min_tensor)
+            self.input_mins[name].append(min_tensor)
             # self.input_values[name] = input
             # self.output_values[name] = outputs
 
@@ -329,11 +329,11 @@ class TorchSmoothQuant:
         for key in self.input_maxes.keys():
             max_val = self.input_maxes[key]
             max_val = torch.stack(max_val, dim=0)
-            min_val = self.input_mines[key]
+            min_val = self.input_mins[key]
             min_val = torch.stack(min_val, dim=0)
             self.input_maxes[key] = torch.max(max_val, dim=0)[0]
-            self.input_mines[key] = torch.min(min_val, dim=0)[0]
-            abs_max_val = torch.max(torch.abs(self.input_mines[key]), torch.abs(self.input_maxes[key]))
+            self.input_mins[key] = torch.min(min_val, dim=0)[0]
+            abs_max_val = torch.max(torch.abs(self.input_mins[key]), torch.abs(self.input_maxes[key]))
             self.input_abs_maxes[key] = abs_max_val
         for key in self.input_values.keys():
             self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
@@ -412,7 +412,7 @@ class TorchSmoothQuant:
             if isinstance(layer, SQLinearWrapper):
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
-                input_minmax = [self.input_mines[layer_name], self.input_maxes[layer_name]]
+                input_minmax = [self.input_mins[layer_name], self.input_maxes[layer_name]]
                 new_module = SQLinearWrapper(layer, scale, input_minmax)
                 set_module(self.model, layer_name, new_module)
 
