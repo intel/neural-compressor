@@ -2,7 +2,7 @@ import unittest
 import torch
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant, SQLinearWrapper
+from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 
 
 try:
@@ -569,6 +569,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha=0.5, calib_iter=1) # By default, folding=False
+        from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
         assert isinstance(sq.model.fc1, SQLinearWrapper)
 
     def test_sq_quant(self):
@@ -603,9 +604,11 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_dataloader=CalibDataloader(),
             eval_func=lambda x: 0.1,
         )
+        from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
-        assert isinstance(fp32_model.fc1, torch.nn.Linear)
+        assert isinstance(fp32_model.fc1, SQLinearWrapper) # for smoothquant, inplace=True.
 
+        fp32_model = Model()
         origin_bias = float(fp32_model.fc1.bias[0])
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
@@ -618,7 +621,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_dataloader=CalibDataloader(),
             eval_func=lambda x: 0.1,
         )
-        self.assertTrue(float(q_model.model.fc1.bias[0]) != origin_bias)
+        self.assertTrue(float(q_model.model.fc1.bias()[0]) != origin_bias)
 
     @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
     def test_sq_quant_ipex(self):

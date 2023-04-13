@@ -1293,7 +1293,8 @@ class TemplateAdaptor(Adaptor):
             model: qdq quantized model.
         """
         q_model = model._model
-        from .torch_utils.smooth_quant import QDQLinear, SQLinearWrapper, set_module
+        from .torch_utils.smooth_quant import set_module
+        from .torch_utils.model_wrapper import QDQLinear, SQLinearWrapper
         smoothquant_scale_info = {}
         fallback_op_name_list = []
         stats_result = {}
@@ -3036,7 +3037,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         q_model = self.tmp_model._model
 
         # fetch SmoothQuant scale info from pre-optimized model
-        from .torch_utils.smooth_quant import SQLinearWrapper, update_sq_scale
+        from .torch_utils.model_wrapper import SQLinearWrapper
+        from .torch_utils.smooth_quant import update_sq_scale
         smoothquant_scale_info = {}
         for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
