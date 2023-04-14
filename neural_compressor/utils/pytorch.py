@@ -387,12 +387,3 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
               "Loading state_dict failed: {}".format(mismatch_log)
     util.get_embedding_contiguous(model)
     return model
-
-
-def for_test_ut_coverage():
-    """Only for test."""
-    print("hello")
-    if (1 < 2):
-        print("hi")
-    else:
-        print("hiii")
