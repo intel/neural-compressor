@@ -429,3 +429,59 @@ class FallbackTuningSampler(TuningSampler):
                 continue
             logger.debug(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
+
+class BlockFallbackTuningSampler(TuningSampler):
+    """Not displayed in API Docs."""
+
+    def __init__(self,
+                 tuning_space: TuningSpace,
+                 tuning_order_lst: List[TuningOrder],
+                 initial_op_tuning_cfg: Dict[tuple, Any],
+                 op_block_lst: List[List[tuple]],
+                 accumulate: bool,
+                 target_dtype: str
+                 ):
+        """Sampler for generate the tuning config of fallback stage.
+
+        Args:
+            tuning_space (TuningSpace): Tuning space.
+            tuning_order_lst (List[TuningOrder]): The tuning orders.
+            initial_op_tuning_cfg (Dict[tuple, Any]): The initial tuning config.
+            op_block_lst (List[List[tuple]]): The block of op_list, 
+                [[(op name, op type), (op name, op type), ...], op_list2, ...].
+            accumulate (bool): Fallback accumulated or not.
+            target_dtype (str): Skip fallback the first op or not. Defaults to True.
+        """
+        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
+        self.op_block_lst = op_block_lst
+        self.accumulate = accumulate
+        self.target_dtype = target_dtype
+
+    def __iter__(self):
+        """Yield the next tuning config.
+
+        Yields:
+            The next tuning config.
+        """
+        new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+        for op_block in self.op_block_lst:
+            # Only support fallback to lower precision.
+            if not self.accumulate:
+                    new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+            logger.debug(f"[BlockFallbackTuningSampler] op_block: {op_block}")
+            for  op_name_type in op_block:
+                full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, self.target_dtype)
+                self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
+                config_args = {}
+                self._set_dtype(op_name_type, config_args)
+                internal_pattern = pattern_to_internal(self.target_dtype)
+                quant_mode = quant_mode_from_pattern(internal_pattern)
+                new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1],
+                                            quant_mode, self.tuning_space,
+                                            kwargs=config_args)
+
+                new_tune_cfg.update({op_name_type: new_op_config})
+                logger.debug(f"[BlockFallbackTuningSampler] updated_tuning_cfg {op_name_type}: {new_op_config}")
+                logger.debug(f"[BlockFallbackTuningSampler] fallback {op_name_type} to {self.target_dtype}")
+            yield new_tune_cfg
+

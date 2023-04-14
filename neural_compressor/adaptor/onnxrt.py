@@ -652,47 +652,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             is_nlp = True
 
         # 3. according to attention structure
-        for node in model.model.graph.node:
-            if node.op_type == 'Add':
-                start_node = node
-                qkv_nodes_list = [
-                    # match base attention structure
-                    model.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [0, None, 0, 0, 0],),
-                    model.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [1, None, 0, 0, 0]),
-
-                    # match gpt attention no past structure
-                    model.match_parent_path(
-                        start_node,
-                        ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
-                        [ None, 0, 0, 0, 0, 0],
-                        output_name_to_node=model.output_name_to_node,
-                        return_indice=[])
-                    ]
-                if not any(qkv_nodes_list):
-                    continue
-                qkv_nodes = [qkv for qkv in qkv_nodes_list if qkv is not None][-1]
-                other_inputs = []
-                for input in start_node.input:
-                    if input not in model.output_name_to_node:
-                        continue
-                    if input == qkv_nodes[0].output[0]:
-                        continue
-                    other_inputs.append(input)
-                if len(other_inputs) != 1:
-                    continue
-                root_input = other_inputs[0]
-                input_name_to_nodes = model.input_name_to_nodes
-                children = input_name_to_nodes[root_input]
-                children_types = [child.op_type for child in children]
-                if children_types.count("MatMul") == 3:
-                    is_nlp = True
-                    break
+        qkv = model.find_qkv_in_attention()
+        if len(qkv) != 0:
+            is_nlp = True
 
         # 4. according to LSTM/Attention optype
         op_types = [node.op_type for node in model.model.graph.node]
@@ -997,25 +959,58 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         first_quantizable_node = []
         last_quantizable_node = []
         all_conv_matmul = []
+        attention_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
-            if node.op_type in ['Conv', 'MatMul']:
+            if node.op_type in ['Conv', 'MatMul', 'Attention']:
                 # get first Conv or MatMul node
                 if len(first_quantizable_node) == 0:
                     first_quantizable_node.append(node)
-                
+
                 # get last Conv or MatMul node
                 if len(last_quantizable_node) != 0:
                     last_quantizable_node.pop()
                 last_quantizable_node.append(node)
 
                 all_conv_matmul.append(node)
-
+                if node.op_type != 'Conv':
+                    attention_matmul.append(node)
+        
         if len(first_quantizable_node) != 0:
             recipes_ops['first_conv_or_matmul_quantization'] = [(first_quantizable_node[0].name, 
                                                                 first_quantizable_node[0].op_type)]
         if len(last_quantizable_node) != 0:
             recipes_ops['last_conv_or_matmul_quantization'] = [(last_quantizable_node[0].name, 
                                                                 last_quantizable_node[0].op_type)]
+        
+        
+        ffn_matmul = []
+        attention_matmul_optype = [node.op_type for node in attention_matmul]
+        if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            first_attention_index = attention_matmul_optype.index('Attention')
+            attention_matmul_optype = attention_matmul_optype[first_attention_index:]
+            attention_matmul = attention_matmul[first_attention_index:]
+            attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
+            block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+            for idx in range(len(attention_index)):
+                # to find matmul in ffn
+                if idx != len(attention_index) - 1:
+                    index = attention_index[idx + 1]
+                    if index - 2 >= 0 and index - 1 >= 0:
+                        ffn_matmul.append([attention_matmul[index - 2], 
+                                           attention_matmul[index - 1]])
+                else:
+                    index = attention_index[idx]
+                    if index + block_len - 2 < len(attention_matmul) and \
+                        index + block_len - 1 < len(attention_matmul):
+                        ffn_matmul.append([attention_matmul[index + block_len - 2], 
+                                        attention_matmul[index + block_len - 1]])
+        block_info = []
+        for block in reversed(ffn_matmul):
+            node_info = []
+            for node in block:
+                node_info.append((node.name, node.op_type))
+            if len(node_info) != 0:
+                block_info.append(node_info)
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             # for TRT EP, only insert Q/DQ to inputs of Add nodes followed by ReduceMean
@@ -1060,7 +1055,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             for _, node in enumerate(self.pre_optimized_model.nodes()):
                 if node.name not in backbone_nodes and node.op_type in optype_wise:
                     recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
-
             if exclude_pre_post_process:
                 for _, node in enumerate(self.pre_optimized_model.nodes()):
                     if node.op_type in optype_wise:
@@ -1076,8 +1070,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         else: # pragma: no cover
                             op_wise.update(
                                 {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-        
-        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops}
+
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_info': block_info}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
         """Filter optypes that don't support per_channel in QDQ format.

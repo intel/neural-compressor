@@ -22,6 +22,7 @@ from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
+from .utils.tuning_sampler import BlockFallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import TUNING_ITEMS_LST
 
@@ -161,6 +162,50 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("yield op_tuning_cfg_lst_stage_4 with length {}".format(len(op_tuning_cfg_lst_stage_4)))
                     yield op_tuning_cfg_lst_stage_4
 
+    def fallback_by_block(self, fallback_items_lst, best_op_tuning_cfg_stage1, target_dtype, tuning_space,\
+        calib_sampling_size):
+        """Fallback ops by block.
+
+        Step 1. block by block
+        Step 2. accumulate block
+
+        Args:
+            fallback_items_lst (list): list of fallback items
+            best_op_tuning_cfg_stage1 (dict): best op tuning cfg of stage1
+            target_dtype (str): target dtype
+            tuning_space (TuningSpace): Tuning space
+
+        Yields:
+            dict: op_tuning_cfg fall-backed by block
+        """
+        from copy import deepcopy
+        op_block_lst = self.capability.get('block_info', [])
+        if op_block_lst:
+            # Fallback block by block
+            fallback_items_name_lst = [item.name for item in fallback_items_lst]
+            op_block_fallback_lst = []
+            for op_block_index, op_block in enumerate(op_block_lst):
+                if not fallback_items_name_lst:
+                    break
+                matches = [item for item in op_block if item in fallback_items_name_lst]
+                if matches:
+                    op_block_fallback_lst.append(op_block)
+
+            initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
+
+            # Fallback by accumulating blocks
+            if op_block_fallback_lst:
+                logger.info(f"Start to fallback op to {target_dtype} by blocks")
+            block_fallback_sampler = BlockFallbackTuningSampler(tuning_space=tuning_space,
+                                                                tuning_order_lst=[],
+                                                                initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                                op_block_lst=op_block_fallback_lst,
+                                                                accumulate=True,
+                                                                target_dtype=target_dtype)
+            for op_block_index, op_tuning_cfg in enumerate(block_fallback_sampler):
+                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                yield op_tuning_cfg
+
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
         
@@ -235,6 +280,14 @@ class BasicTuneStrategy(TuneStrategy):
             for target_dtype in ['bf16', 'fp32']:
                 target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
                 fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
+
+                # Fallback block by block
+                for op_tuning_cfg in self.fallback_by_block(fallback_items_lst, best_op_tuning_cfg_stage1,
+                                                             target_dtype,
+                                                             tuning_space,
+                                                            calib_sampling_size):
+                    yield op_tuning_cfg
+
                 if fallback_items_lst:
                     logger.info(f"Start to fallback op to {target_dtype} one by one.")
                     self._fallback_started()
