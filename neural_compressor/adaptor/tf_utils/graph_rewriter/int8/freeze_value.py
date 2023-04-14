@@ -243,9 +243,13 @@ class FreezeValueTransformer(GraphRewriterBase):
                 not in_node_name.endswith('_eightbit_quantized_in'):
                 in_node_name = None
 
-            if self.itex_mode and ('FusedBatchNormV3_eightbit_requant_range' in node_name or \
-                'FusedBatchNorm_eightbit_requant_range' in node_name):
+            if self.itex_mode and 'BatchNorm' in node_name:
                 bn_node_name = node_name[:-len("_eightbit_requant_range")]
+                if bn_node_name not in self.graph_info:
+                    bn_node_name = None
+                else:
+                    if 'FusedBatchNorm' not in self.graph_info[bn_node_name].node.op:
+                        bn_node_name = None
 
             if node_name not in self.graph_info \
                 and bn_node_name not in self.graph_info \

@@ -566,6 +566,13 @@ class TuneStrategy(object):
             smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
             sq_algo = ALGORITHMS()['smooth_quant']
             sq_algo.alpha = smooth_quant_args['alpha']
+            if 'folding' not in smooth_quant_args:
+                smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx'] \
+                  else False
+                logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
+                if self.framework == 'pytorch_ipex':
+                    smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
+            sq_algo.folding = smooth_quant_args['folding']
             #logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
             
@@ -1048,6 +1055,7 @@ class TuneStrategy(object):
                 framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
+            framework_specific_info.update({'recipes': self.cfg.quantization.get('recipes', {})})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update({"use_bf16": self.conf.quantization.use_bf16 \
                             if self.conf.quantization.use_bf16 is not None else True})

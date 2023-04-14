@@ -1737,7 +1737,7 @@ class ExportConfig:
         opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
         quant_format (str, optional): The quantization format of the exported int8 onnx model, 
                                       select from ["QDQ", "QLinear"]. Defaults to "QDQ".
-        example_inputs (optional): Example inputs used for tracing model. Defaults to None.
+        example_inputs (tensor|list|tuple|dict, optional): Example inputs used for tracing model. Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
         output_names (list, optional): A list of model output names. Defaults to None.
         dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
@@ -1848,7 +1848,7 @@ class Torch2ONNXConfig(ExportConfig):
         opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
         quant_format (str, optional): The quantization format of the exported int8 onnx model, 
                                       select from ["QDQ", "QLinear"]. Defaults to "QDQ".
-        example_inputs (required): Example inputs used for tracing model. Defaults to None.
+        example_inputs (tensor|list|tuple|dict, required): Example inputs used for tracing model. Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
         output_names (list, optional): A list of model output names. Defaults to None.
         dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
