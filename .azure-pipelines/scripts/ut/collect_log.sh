@@ -28,6 +28,7 @@ cd /neural-compressor
 git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
+echo y | pip uninstall neural-compressor
 cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh
 cat /usr/local/lib/python3.8/dist-packages/neural_compressor/utils/pytorch.py
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
