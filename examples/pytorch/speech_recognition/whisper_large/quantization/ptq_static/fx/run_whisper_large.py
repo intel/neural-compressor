@@ -43,9 +43,10 @@ def eval_func(model):
         transcription = processor.decode(predicted_ids)
         prediction = processor.tokenizer._normalize(transcription)
         predictions.append(prediction)
-    wer_result = 100 * wer.compute(references=references, predictions=predictions)
-    print(f"Result wer: {wer_result}")
-    return wer_result
+    wer_result = wer.compute(references=references, predictions=predictions)
+    print(f"Result wer: {100 * wer_result}")
+    accuracy = 1 - wer_result
+    return accuracy
 
 def calib_func(model):
     for i, batch in enumerate(librispeech_test_clean):
