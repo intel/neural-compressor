@@ -24,9 +24,6 @@ from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
-# model slim related
-from .model_slim.pattern_analyzer import Linear2LinearSearcher, RecipeSearcher
-from .model_slim.weight_slim import LinearCompressionIterator, MHACompression
 
 PRUNERS = {}
 

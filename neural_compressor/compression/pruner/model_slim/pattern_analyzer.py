@@ -41,6 +41,14 @@ def get_attributes(module: torch.nn.Module, attrs: str):
         sub_module = getattr(sub_module, attr)
     return sub_module
 
+def print_iterables(data_iters):
+    if isinstance(data_iters, list):
+        for data in data_iters:
+            logger.info(f"{data}")
+    elif isinstance(data_iters, dict):
+        for k, v in data_iters.items():
+            logger.info(f"{k}: {v}")
+
 class RecipeSearcher(object):
     """Searcher class which searches patterns with a pre-defined recipe.
 
@@ -465,8 +473,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
                 all_linear_structure_results.append(search_res)
         #import pdb;pdb.set_trace()
         # Summary
-        for item in all_linear_structure_results:
-            logger.info(item)
+        print_iterables(all_linear_structure_results)
         logger.info(f"Found {all_linear_structure_results.__len__()} linear2linear structures")
         return all_linear_structure_results
     
@@ -640,6 +647,7 @@ class SelfMHASearcher(JitBasicSearcher):
         qkv_clusters = self.extract_qkv_from_linears(linear_clusters)
         self_attn_list = self.search_ffn_from_qkv(qkv_clusters)
         # summary
+        print_iterables(self_attn_list)
         logger.info(f"Found {self_attn_list.__len__()} MHA modules")
         if not split_qkv_ffn:
             return self_attn_list, None

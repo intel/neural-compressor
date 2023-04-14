@@ -506,7 +506,7 @@ def main():
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "excluded_op_names": ["pooler", ".*embeddings*"],
+            "excluded_op_names": ["pooler"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }
