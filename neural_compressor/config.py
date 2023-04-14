@@ -1265,8 +1265,7 @@ class WeightPruningConfig:
             Supports ['Conv', 'Linear'].
             Default to ['Conv', 'Linear'].
 
-    Example::
-
+    Example:
         from neural_compressor.config import WeightPruningConfig
         local_configs = [
             {
@@ -1570,8 +1569,7 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                                                                  it won't work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
 
-    Example::
-
+    Example:
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
 
