@@ -390,29 +390,29 @@ Classes
                             Default to ['Conv', 'Linear'].
    :type pruning_op_types: list of str
 
-   Example::
+   .. rubric:: Example
 
-       from neural_compressor.config import WeightPruningConfig
-       local_configs = [
-           {
-               "pruning_scope": "local",
-               "target_sparsity": 0.6,
-               "op_names": ["query", "key", "value"],
-               "pattern": "channelx1",
-           },
-           {
-               "pruning_type": "snip_momentum_progressive",
-               "target_sparsity": 0.5,
-               "op_names": ["self.attention.dense"],
-           }
-       ]
-       config = WeightPruningConfig(
-           pruning_configs = local_configs,
-           target_sparsity=0.8
-       )
-       prune = Pruning(config)
-       prune.update_config(start_step=1, end_step=10)
-       prune.model = self.model
+   from neural_compressor.config import WeightPruningConfig
+   local_configs = [
+       {
+           "pruning_scope": "local",
+           "target_sparsity": 0.6,
+           "op_names": ["query", "key", "value"],
+           "pattern": "channelx1",
+       },
+       {
+           "pruning_type": "snip_momentum_progressive",
+           "target_sparsity": 0.5,
+           "op_names": ["self.attention.dense"],
+       }
+   ]
+   config = WeightPruningConfig(
+       pruning_configs = local_configs,
+       target_sparsity=0.8
+   )
+   prune = Pruning(config)
+   prune.update_config(start_step=1, end_step=10)
+   prune.model = self.model
 
 
 .. py:class:: KnowledgeDistillationLossConfig(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5])
@@ -602,13 +602,13 @@ Classes
    :param excluded_precisions: Precisions to be excluded during mix precision conversion, default is [].
    :type excluded_precisions: list, optional
 
-   Example::
+   .. rubric:: Example
 
-       from neural_compressor import mix_precision
-       from neural_compressor.config import MixedPrecisionConfig
+   from neural_compressor import mix_precision
+   from neural_compressor.config import MixedPrecisionConfig
 
-       conf = MixedPrecisionConfig()
-       converted_model = mix_precision.fit(model, config=conf)
+   conf = MixedPrecisionConfig()
+   converted_model = mix_precision.fit(model, config=conf)
 
 
 .. py:class:: ExportConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None)
