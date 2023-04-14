@@ -1055,7 +1055,7 @@ class TuneStrategy(object):
                 framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
-            framework_specific_info.update({'recipes': self.cfg.quantization.get('recipes', {})})
+            framework_specific_info.update({'recipes': self.conf.quantization.recipes})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update({"use_bf16": self.conf.quantization.use_bf16 \
                             if self.conf.quantization.use_bf16 is not None else True})
