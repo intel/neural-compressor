@@ -670,7 +670,8 @@ class ClassifierHeadSearcher(object):
 
     def __init__(self, model):
         """Initialize."""
-        super(ClassifierHeadSearcher, self).__init__(model)
+        super(ClassifierHeadSearcher, self).__init__()
+        self.model = model
         self.pruning_ops = ["Linear", "Conv2d"]
     
     def search(self, return_name=True):
