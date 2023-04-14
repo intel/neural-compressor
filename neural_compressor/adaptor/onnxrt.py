@@ -152,7 +152,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5,
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=False,
                                     percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True):
         """Get augmented model with smooth quant.
 
@@ -162,6 +162,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             iterations: iterations
             tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile:Percentile of calibration to remove outliers
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
@@ -179,6 +180,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             alpha = 0.5
         black_nodes = []
         white_nodes = []
+        quantize_config = None
         if tune_cfg is not None:
             quantize_config = self._cfg_to_quantize_config(tune_cfg)
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
@@ -190,7 +192,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                 iterations=list(range(0, iterations)),
                                 backend=self.backend, reduce_range=self.reduce_range)
 
-        max_vals_per_channel, shape_infos = augment.calib_smooth(percentile, op_types)
+        max_vals_per_channel, shape_infos = augment.calib_smooth(percentile, op_types, quantize_config)
 
         input_tensors_2_weights = {}
         input_tensors_2_weights_nodes = {}
@@ -519,7 +521,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])),
                   backend=self.backend, reduce_range=self.reduce_range)
-        self.min_max = augment.dump_minmax()
+        self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
 
@@ -544,7 +546,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   white_nodes=op_list,
                   backend=self.backend)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
-                                      weight=(inspect_type!='activation'))
+                                      weight=(inspect_type!='activation'),)
         if save_to_disk:
             if not save_path:
                 save_path = self.work_space
@@ -1223,7 +1225,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                 ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
                             else:
                                 ort_inputs.update({inputs_names[i]: inputs[i]})
-
                 if measurer is not None:
                     measurer.start()
                     predictions = session.run(None, ort_inputs)

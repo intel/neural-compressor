@@ -342,15 +342,15 @@ The pruning technique  is validated on typical models across various domains (in
 
   Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
-- Language Translation (Experimental)
+- Language Translation (Experimental, sparsity 0.8, pattern 4x1, BLEU 25.63(dense) vs 24.35(sparse))
 
   Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
 
-- Object Detection (Experimental)
+- Object Detection (Experimental, sparsity 0.8, pattern 4x1, mAP 0.404(dense) vs 0.381(sparse))
 
   Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
 
-- Image Recognition (Experimental)
+- Image Recognition (Experimental, sparsity 0.75, pattern 2x1, top1 acc 0.801(dense) vs 0.7895)
 
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
 

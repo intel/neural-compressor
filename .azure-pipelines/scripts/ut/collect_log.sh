@@ -4,7 +4,7 @@ pip install coverage
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 coverage_log="/neural-compressor/log_dir/coverage_log"
 coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
-coverage_compare="/neural-compressor/log_dir/coverate_compare.html"
+coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
