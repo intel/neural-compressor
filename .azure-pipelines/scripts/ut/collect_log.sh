@@ -24,6 +24,9 @@ coverage html -d log_dir/coverage_PR/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_PR/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_PR/htmlcov
 
+cd /neural-compressor
+git fetch
+git checkout master
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 coverage erase
 cd /neural-compressor/log_dir
