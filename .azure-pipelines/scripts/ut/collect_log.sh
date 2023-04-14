@@ -28,6 +28,7 @@ cd /neural-compressor
 git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
+python setup.py install
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 coverage erase
 cd /neural-compressor/log_dir
