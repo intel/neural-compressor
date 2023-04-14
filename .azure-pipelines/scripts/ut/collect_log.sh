@@ -25,6 +25,7 @@ coverage xml -o log_dir/coverage_PR/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_PR/htmlcov
 
 cd /neural-compressor
+git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
