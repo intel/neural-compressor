@@ -2597,5 +2597,6 @@ llamanorm
 nbias
 pc
 cdrdv
+NeuralCompressor
 zp
 TensorflowTopK
