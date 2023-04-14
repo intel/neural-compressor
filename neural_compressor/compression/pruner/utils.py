@@ -463,19 +463,19 @@ def generate_pruner_config(info):
                   update_frequency=info.pruning_frequency,
                   )
 
-def parse_auto_slim_config(model, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
+def parse_auto_slim_config(model, dataloader = None, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
     """Get model slim pruning configs."""
     auto_slim_configs = []
     if ffn2_sparsity > 0 and ffn2_sparsity < 1:
-        auto_slim_configs += generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
+        auto_slim_configs += generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs)
     if mha_sparsity > 0 and mha_sparsity < 1:
-        auto_slim_configs += generate_mha_pruning_config(model, mha_sparsity, **kwargs)
+        auto_slim_configs += generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs)
     return auto_slim_configs
 
-def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
+def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
     """Get consecutive linear layers pruning configs."""
     from .model_slim.pattern_analyzer import Linear2LinearSearcher
-    searcher = Linear2LinearSearcher(model)
+    searcher = Linear2LinearSearcher(model, dataloader)
     layers = searcher.search()
     # extract the second linear layer
     ffn_layers = [ffn2_module['root_linear'] for ffn2_module in layers]
@@ -491,10 +491,10 @@ def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
         item.update(kwargs)
     return ffn2_pruning_config
 
-def generate_mha_pruning_config(model, mha_sparsity, **kwargs):
+def generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs):
     """Get multi-head attention layers pruning configs."""
     from .model_slim.pattern_analyzer import SelfMHASearcher
-    searcher = SelfMHASearcher(model)
+    searcher = SelfMHASearcher(model, dataloader)
     qkv_pattern, ffn_pattern = searcher.get_head_pattern()
     qkv_layers, ffn_layers = searcher.search()
     mha_pruning_config = [

@@ -91,7 +91,6 @@ class RecipeSearcher(object):
         for n, m in module.named_children():
             self.dfs_search(m, n, target_name)
 
-
 class JitBasicSearcher(object):
     """Static graph searcher class which searches patterns with PyTorch static graph and its input/output information.
 
@@ -112,7 +111,7 @@ class JitBasicSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
@@ -124,8 +123,9 @@ class JitBasicSearcher(object):
         except:
             self.device = next(self.model.parameters()).device
         # use torch.jit to generate static graph
-        self.placeholder_shape = placeholder_shape # dummy input
-        self.placeholder_dtype = placeholder_dtype # dummy input
+        self.dataloader = dataloader # user can set a dataloader to help trace static graph
+        self.placeholder_shape = placeholder_shape # dummy input's shape
+        self.placeholder_dtype = placeholder_dtype # dummy input's data 
         self.static_graph = None
         self.flatten_static_graph = None
         self.analyze_dummy_input()
@@ -135,7 +135,12 @@ class JitBasicSearcher(object):
         self.search_results = []
     
     def analyze_dummy_input(self):
-        """Analyze the model's input type."""
+        """Analyze the model's input type.
+        
+        If no dataloader is specified, searcher will automatically generate a dummy input to
+        obtain static graph.
+
+        """
         # if the user already set the dummy inputs, no need to analyze the model
         if self.placeholder_dtype != None and self.placeholder_dtype != None:
             return
@@ -160,9 +165,8 @@ class JitBasicSearcher(object):
             self.placeholder_dtype = torch.int64
         return
 
-    def generate_static_graph(self):
-        """Operations called when generate the model's static graph."""
-        logger.info(f"Generating jit tracing from original model.")
+    def generate_static_graph_with_dummyinput(self):
+        """Generate static graph from a dummy input, if no dataloader is specified."""
         # static graph generation relies on shape
         dummy_inputs = self.generate_dummy_inputs()
         dummy_inputs = [] + [dummy_inputs]
@@ -171,9 +175,45 @@ class JitBasicSearcher(object):
                 torch.ones([1, 80, 3000]),
                 torch.ones([1, 448], dtype=torch.int64)
             ]
+        logger.info(f"Generating static graph from original model: start.")
         self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
          # re-org from original static codes. 
         self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
+        logger.info(f"Generating static graph from original model: success.")
+    
+    def generate_static_graph_with_dataloader(self):
+        """Generate static graph from a external dataloader."""
+        dummy_input = self.dataloader[0]
+        logger.info(f"Generating static graph from original model: start.")
+        if isinstance(dummy_input, dict):
+            try:
+                dummy_input = dummy_input["input_ids"]
+                self.static_graph = torch.jit.trace(self.model, dummy_input.to(self.device), strict=False)
+            except:
+                pass
+        else:
+            try:
+                for idx in range(len(dummy_input)):
+                    dummy_input[idx] = dummy_input[idx].to(self.device)
+                self.static_graph = torch.jit.trace(self.model, dummy_input, strict=False)
+            except:
+                try:
+                    dummy_input = dummy_input[0]
+                    self.static_graph = torch.jit.trace(self.model, dummy_input.to(self.device), strict=False)
+                except:
+                    pass
+        try:
+            self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
+            logger.info(f"Generating static graph from original model: success.")
+        except:
+            return
+
+    def generate_static_graph(self):
+        """Generate static graph with two methods: using dataloader or dummy input."""
+        try:
+            self.generate_static_graph_with_dataloader()
+        except:
+            self.generate_static_graph_with_dummyinput()
     
     def generate_dummy_inputs(self):
         """Generate dummy inputs for the model's static graph.
@@ -197,45 +237,9 @@ class JitBasicSearcher(object):
             if kw in info:
                 list_out.append(info)
         return list_out
-
-    def analyze_code(self, code):
-        """Analyzes and extracts static graph str style's critical information.
-
-        Args:
-            code: a str presenting static graph forwarding code
-        
-        Return:
-            A dict:
-                {
-                    output_name: "the output node name for this op",
-                    input_name: "the input node name for this op",
-                    op_type: "the aten::op name",
-                    op_trace: "the absolute dir to get this model, in torch.nn.Module's attribute style."
-                }
-        """
-        # find output's name
-        output_name = code.split(":")[0].strip()
-        # use pattern match to find aten::op and input's name
-        aten_pattern = re.compile('aten::.*,')
-        aten_regex = aten_pattern.search(code)[0]
-        input_pattern = re.compile("\(.*\)")
-        # only obtain the first input name, for linear, act_fn, the first input name refer to hidden state
-        input_name = input_pattern.search(aten_regex)[0][1:-1].split(",")[0]
-        # obtain the op name (linear, or a act type)
-        aten_op_pattern = re.compile('aten::.*\(')
-        op_type = aten_op_pattern.search(code)[0][6:-1]
-        # obtain the op_trace
-        op_trace_pattern = re.compile('scope\:.*\#')
-        op_trace = op_trace_pattern.search(code)[0]
-        res = {
-            "output_name": output_name, # should be a list
-            "input_name": input_name, # shoule be a list
-            "op_type": op_type,
-            "op_trace": op_trace,
-        }
-        return res
     
     def refine_strings(self, string_list):
+        """Remove space and tabs in strings."""
         return [s.strip() for s in string_list]
 
     def analyze_jit_code(self, code):
@@ -267,16 +271,23 @@ class JitBasicSearcher(object):
         input_names = input_pattern.search(aten_regex)[0][1:-1].split(",")
         input_names = filter(remove_weight_or_bias_getattr_op, input_names)
         input_names = self.refine_strings(input_names)
-        # step3: find the op name (linear, or a act type)
+        # step3: obtain the tensor shape of ops
+        shape_pattern = re.compile('Float\(.* strides')
+        try:
+            op_shape = shape_pattern.search(code)[0][6:-9]
+        except:
+            op_shape = None
+        # step4: find the op name (linear, or a act type)
         aten_op_pattern = re.compile('aten::.*\(')
         op_type = aten_op_pattern.search(code)[0][6:-1]
-        # step4: find the 
+        # step5: find the attribute calling code 
         op_trace_pattern = re.compile('scope\:.*\#')
         op_trace = self.get_layer_path_from_jit_code(op_trace_pattern.search(code)[0])
-        # step5: compile all information in a dict and return
+        # step6: compile all information in a dict and return
         res = {
             "output_names": output_names, # should be a list
             "input_names": input_names, # shoule be a list
+            "op_shape": op_shape,
             "op_type": op_type,
             "op_trace": op_trace,
         }
@@ -375,65 +386,24 @@ class Linear2LinearSearcher(JitBasicSearcher):
         current_pattern: a searching path to store searching status.
     """
 
-    def __init__(self, model):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
-        super(Linear2LinearSearcher, self).__init__(model)
+        super(Linear2LinearSearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
         self.target_op_lut = {}
         self.current_pattern = []
         # initialize target_op_lut
         for op in JIT_SUPPORT_OPS:
             self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
 
-    # def search(self, return_name = False):
-    #     """Operations called for entire searching process."""
-    #     self.search_results.clear()
-    #     self.target_op_lut.clear()
-    #     self.current_pattern.clear()
-    #     for op in JIT_SUPPORT_OPS:
-    #         self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
-
-    #     def dfs():
-    #         """Operations called for one single search step."""
-    #         # ends up with another linear layer, successfully obtain a linear2linear pattern
-    #         if len(self.current_pattern) > 1 and self.current_pattern[-1]['op_type'] == "linear":
-    #             self.search_results.append(self.current_pattern[:])
-    #             return
-    #         # continue searching
-    #         lastest_ops = self.current_pattern[-1]
-    #         lastest_ops_outputs = lastest_ops['output_name']
-    #         for next_op_type, next_op_codes in self.target_op_lut.items():
-    #             for next_op_code in next_op_codes:
-    #                 next_op_info = JitBasicSearcher.analyze_code(self, next_op_code)
-    #                 next_op_info_input = next_op_info['input_name']
-    #                 if next_op_info_input == lastest_ops_outputs:
-    #                     self.current_pattern.append(next_op_info)
-    #                     dfs()
-    #                     self.current_pattern.pop()
-    #                 else:
-    #                     continue
-
-    #     for init_op_code in self.target_op_lut['linear']:
-    #         init_op_info = JitBasicSearcher.analyze_code(self, init_op_code)
-    #         self.current_pattern.append(init_op_info)
-    #         dfs()
-    #         self.current_pattern.pop()
-
-    #     logger.info(f"Found {len(self.search_results)} target pattern 'linear2linear' in {type(self.model).__name__}")
-    #     if not return_name: 
-    #         # return the module object instead of module name
-    #         JitBasicSearcher.get_layer_for_all(self)
-    #         return self.search_results
-    #     else:
-    #         name_results = []
-    #         for item in self.search_results:
-    #             name_item = [
-    #                 JitBasicSearcher.get_layer_path_from_jit_code(self, layer_info['op_trace']) for layer_info in item
-    #             ]
-    #             name_results.append(name_item)
-    #         return name_results
-
     def search_frontier_ops_from_node(self, node_name):
-        # node_name is a member in output_names and input_names: %xxx for example
+        """Search the frontier nodes from a original op's input nodes.
+
+        Args:
+            node_name: a node string (%input xxx, %yyy, etc.)
+        
+        Return:
+            a list of ops, whose output is node_name.
+        """
         target_frontier_ops = []
         for op_type, op_codes in self.target_op_lut.items():
             for op_code in op_codes:
@@ -445,7 +415,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
         return target_frontier_ops
 
     def search_from_root_linear(self, linear_code):
-        # obtain linear tree from one root linear, search from latter to frontier
+        """Search frontier linears from a linear op."""
         self.current_pattern.clear()
         linear_info = JitBasicSearcher.analyze_jit_code(self, linear_code)
         root_linear_trace = linear_info['op_trace']
@@ -456,6 +426,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
         }
         # start dfs
         def dfs(root_op_code):
+            """a dfs step code."""
             op_info = JitBasicSearcher.analyze_jit_code(self, root_op_code)
             op_inputs = op_info['input_names']
             for op_input in op_inputs:
@@ -471,6 +442,22 @@ class Linear2LinearSearcher(JitBasicSearcher):
         return results
 
     def search(self):
+        """Operations called for entire searching process.
+
+        some example:
+        A    X    Y
+        |     \  /
+        B       Z
+        A, B, X, Y, Z are all linear layers, some ops including add, mul, dropout can be ignored.
+        When we prune B or Z, we can also prune A or X & Y of same channel indices.  
+        Return:
+            A list [
+                {
+                    "root_linear": str (B or Z),
+                    "target_frontier_linears": [str] ([A] or [X, Y])
+                }
+            ]
+        """
         all_linear_structure_results = []
         for linear_code in self.target_op_lut['linear']:
             search_res = self.search_from_root_linear(linear_code)
@@ -484,6 +471,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
         return all_linear_structure_results
     
     def from_layer_name_to_object(self, l2l_search_layers):
+        """Obtain the layer object themselves from their names."""
         layer_objs = []
         for item in l2l_search_layers:
             layer_obj = {
@@ -513,9 +501,9 @@ class SelfMHASearcher(JitBasicSearcher):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
-        super(SelfMHASearcher, self).__init__(model)
+        super(SelfMHASearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
 
     def get_head_pattern(self):
         """Obtain head block sizes."""
@@ -528,40 +516,86 @@ class SelfMHASearcher(JitBasicSearcher):
     def gather_mha_inputs(self):
         """Search the multi-head attention modules' query, key, as well as value layers."""
         linears = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::linear")
-        linear_infos = [JitBasicSearcher.analyze_code(self, li) for li in linears]
+        linear_infos = [JitBasicSearcher.analyze_jit_code(self, li) for li in linears]
         # generate all nodes' name and their related input node names
         input_counts = {}
         # get all linear modules
         for linfo in linear_infos:
-            if linfo['input_name'] in input_counts:
-                input_counts[linfo['input_name']] += 1
-            else:
-                input_counts[linfo['input_name']] = 1
+            for input_name in linfo['input_names']:
+                if linfo['op_type'] == 'linear' and input_name in input_counts:
+                    input_counts[input_name] += 1
+                elif linfo['op_type'] == 'linear' and input_name not in input_counts:
+                    input_counts[input_name] = 1
+                else:
+                    # op which is not linear, skip
+                    continue
+        # import pdb;pdb.set_trace()
         input_counts_filtered = {}
         # in our strategy, when three linear layers share the same input, they should be query, key, and value
         for k, v in input_counts.items():
-            if v == 3:
+            if v >= 3:
                 # attention's number
                 input_counts_filtered[k] = v
             else: 
                 continue
         return input_counts_filtered
     
-    def gather_qkv_from_input(self, input_names: dict):
+    def gather_linear_from_input(self, input_names: dict):
         """Gather query, key and value layers of the same self-attention module together."""
-        qkv_clusters = {}
+        linear_clusters = {}
         linears = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::linear")
         for li in linears:
-            linfo = JitBasicSearcher.analyze_code(self, li)
-            if linfo['input_name'] in input_names:
-                if linfo['input_name'] in qkv_clusters:
-                    qkv_clusters[linfo['input_name']].append(linfo['op_trace'])
+            linfo = JitBasicSearcher.analyze_jit_code(self, li)
+            for input_name in linfo['input_names']:
+                if input_name in input_names:
+                    if input_name in linear_clusters:
+                        linear_clusters[input_name].append(li)
+                    else:
+                        linear_clusters[input_name] = [li]
                 else:
-                    qkv_clusters[linfo['input_name']] = [linfo['op_trace']]
-            else:
-                continue
-        return qkv_clusters
-    
+                    continue
+        return linear_clusters
+
+    def extract_qkv_from_linears(self, linears):
+        """Extract linear cluster with same inputs, same op shape, and size is 3 (qkv)
+
+        Args:
+            linears: A dict, key is input name, value is a list of linear layers jit code
+        
+        Return:
+            A dict contains only qkv linear layers.
+        """
+        qkv_clusters = {}
+        for input_name, input_linked_linears in linears.items():
+            linfos = [JitBasicSearcher.analyze_jit_code(self, il) for il in input_linked_linears]
+            # step 1: statistics of linears clusters with same shape.
+            op_shape_lut = {}
+            for linfo in linfos:
+                op_shape = linfo['op_shape']
+                if op_shape_lut.get(op_shape, None) == None:
+                    op_shape_lut[op_shape] = 1
+                else:
+                    op_shape_lut[op_shape] += 1
+            qkv_related_op_shape = []
+            for op_shape_lut_key in op_shape_lut:
+                if op_shape_lut[op_shape_lut_key] == 3:
+                    qkv_related_op_shape.append(op_shape_lut_key)
+                else:
+                    continue
+            # step 2: extract qkv layers
+            qkv_linears = []
+            for linfo in linfos:
+                if linfo['op_shape'] in qkv_related_op_shape:
+                    qkv_linears.append(linfo['op_trace'])
+                else:
+                    continue
+            qkv_clusters[input_name] = qkv_linears
+        qkv_clusters_filtered = {}
+        for key in qkv_clusters.keys():
+            if qkv_clusters[key].__len__() == 3:
+                qkv_clusters_filtered[key] = qkv_clusters[key][:]
+        return qkv_clusters_filtered
+
     def search_ffn_from_qkv(self, qkv_clusters):
         """Search the related ffn linear module related to every self-attention."""
         linear_lut = []
@@ -600,14 +634,11 @@ class SelfMHASearcher(JitBasicSearcher):
             two lists containing self-attention modules' layer names.
 
         """
+        # import pdb;pdb.set_trace()
         input_names_for_linears = self.gather_mha_inputs()
-        qkv_clusters = self.gather_qkv_from_input(input_names_for_linears)
-        qkv_clusters_main = {}
-        for input_name in qkv_clusters:
-            qkv_clusters_main[input_name] = [
-            JitBasicSearcher.get_layer_path_from_jit_code(self, scope_code) for scope_code in qkv_clusters[input_name]
-        ]
-        self_attn_list = self.search_ffn_from_qkv(qkv_clusters_main)
+        linear_clusters = self.gather_linear_from_input(input_names_for_linears)
+        qkv_clusters = self.extract_qkv_from_linears(linear_clusters)
+        self_attn_list = self.search_ffn_from_qkv(qkv_clusters)
         # summary
         logger.info(f"Found {self_attn_list.__len__()} MHA modules")
         if not split_qkv_ffn:
@@ -621,7 +652,7 @@ class SelfMHASearcher(JitBasicSearcher):
                 ffn_list += item['ffn']
             return qkv_list, ffn_list
 
-class ClassifierHeadSearcher(JitBasicSearcher):
+class ClassifierHeadSearcher(object):
     """Static graph searcher for multi-head attention modules.
 
     Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.

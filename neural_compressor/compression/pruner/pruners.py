@@ -91,13 +91,13 @@ def get_pruner(config, modules):
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
     return PRUNERS[name](config, modules)
 
-def model_slim(model, round_multiplier=0):
+def model_slim(model, dataloader=None, round_multiplier=0):
     """Slim the sparse model automatically."""
-    model = model_slim_ffn2(model, round_multiplier)
-    model = model_slim_mha(model)
+    model = model_slim_ffn2(model, dataloader, round_multiplier)
+    model = model_slim_mha(model, dataloader)
     return model
 
-def model_slim_ffn2(model, round_multiplier=32):
+def model_slim_ffn2(model, dataloader = None, round_multiplier=32):
     """Remove some sparse part in the model permanently and obtain acceleration directly.
 
     Args:
@@ -105,14 +105,14 @@ def model_slim_ffn2(model, round_multiplier=32):
         round_multiplier(int): the channel number after slimming should be multiple of this number.
     """
     logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
-    pa_obj = Linear2LinearSearcher(model)
+    pa_obj = Linear2LinearSearcher(model, dataloader)
     layers = pa_obj.search()
     layers = pa_obj.from_layer_name_to_object(layers)
     linear_pruner = LinearCompressionIterator(layers)
     linear_pruner(masks=None, round_value=round_multiplier)
     return model
 
-def model_slim_mha(model):
+def model_slim_mha(model, dataloader = None):
     """Remove some sparse part in the model permanently and obtain acceleration directly.
 
     Args:
