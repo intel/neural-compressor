@@ -28,8 +28,9 @@ cd /neural-compressor
 git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
-pip uninstall neural-compressor
+echo y | pip uninstall neural-compressor
 python setup.py install
+cat /usr/local/lib/python3.8/dist-packages/neural_compressor/utils/pytorch.py
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 coverage erase
 cd /neural-compressor/log_dir
