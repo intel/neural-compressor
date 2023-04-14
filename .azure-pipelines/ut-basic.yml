@@ -220,11 +220,15 @@ stages:
               docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
               echo "--- docker ps ---"
               docker ps
-              echo "--- collect logs ---"
+              echo "--- prepare environment ---"
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
-              && bash install_nc.sh \
+              && bash install_nc.sh
+            displayName: "Prepare environment"
+
+          - script: |
+              docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
               && bash ut/collect_log.sh"
-            displayName: "collect logs"
+            displayName: "Calculate coverage"
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()
