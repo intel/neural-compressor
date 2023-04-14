@@ -205,7 +205,7 @@ class TuneStrategy(object):
         adaptor_name = get_adaptor_name(self.adaptor)
         adaptor_recipes = fwk_recipes['common']
         # TODO WA due to smooth quant only supported by ort/pt currently.
-        if not adaptor_name not in ['onnx', 'pytorch']:
+        if not adaptor_name not in ['onnx', 'pytorch', 'tensorflow']:
             adaptor_recipes.pop('smooth_quant', None)
         for adaptor_name_key, adaptor_recipes_val in fwk_recipes.items():
             if adaptor_name_key.startswith(adaptor_name):

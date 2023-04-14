@@ -31,6 +31,7 @@ from ..utils.utility import version1_lt_version2, version1_gte_version2, version
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
+from .tf_utils.smooth_quant import TFSmoothQuant
 
 tensorflow = LazyImport('tensorflow')
 spr_base_verions = ('2.11.0202242', '2.11.0202250')
@@ -1684,6 +1685,36 @@ class TensorFlowAdaptor(Adaptor):
                 predictions.append(item)
 
         return predictions
+
+    def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5,
+                     percentile=None, op_types=None, scales_per_op=None):
+        """Convert the model by smooth quant.
+
+        Args:
+            model: original model
+            dataloader: the calibration dataloader
+            calib_iter: how many steps of iterations on the dataloader to move forward
+            tune_cfg: ??????????Can we get the tune_cfg with no access to strategy here??????????? quantization config
+            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            percentile: ????????needed????????? Percentile of calibration to remove outliers
+            op_types: The op types whose input tensor will be dumped
+            scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                           False, ops with the same input will share a scale, mainly for performance
+
+        Returns:
+            model: A smoothed Tensorflow model
+        """
+        sq = TFSmoothQuant(model, dataloader)
+        # 1. according to the tune_cfg, get the white/black node list
+        # sq.filter_nodes(tune_cfg)
+        # 3. calibrate the graph, find the input (activation) max value per channel of each op (e.g. matmul)
+        # need to find the node before and get the output
+        # input_maxes_per_channel = sq.smooth_calibrate(model, calib_iter)
+        # 4. calculate the smooth scale, transform the weights with the smooth scale
+        # for weights: directly update in-place
+        # for activation: insert a mul node after each matmul to smooth activation
+        sq.smooth_transform(model, alpha, calib_iter)
+        return model
 
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
