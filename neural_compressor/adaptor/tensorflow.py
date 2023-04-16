@@ -31,7 +31,6 @@ from ..utils.utility import version1_lt_version2, version1_gte_version2, version
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
-from .tf_utils.smooth_quant import TFSmoothQuant
 
 tensorflow = LazyImport('tensorflow')
 spr_base_verions = ('2.11.0202242', '2.11.0202250')
@@ -108,6 +107,7 @@ class TensorFlowAdaptor(Adaptor):
         self.optype_statistics = None
 
         self._last_dequantize_ops = None
+        self.smooth_quant_model = None
 
     def _log_histogram(self, writer, tag, values, step=0, bins=1000):
         """Writes a histogram for later analysis."""
@@ -1687,7 +1687,7 @@ class TensorFlowAdaptor(Adaptor):
         return predictions
 
     def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5,
-                     percentile=None, op_types=None, scales_per_op=None):
+                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
         """Convert the model by smooth quant.
 
         Args:
@@ -1704,17 +1704,28 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             model: A smoothed Tensorflow model
         """
-        sq = TFSmoothQuant(model, dataloader)
+        if self.smooth_quant_model is not None:
+            return self.smooth_quant_model
         # 1. according to the tune_cfg, get the white/black node list
+        if tune_cfg is not None:
+            quantize_config = self._tuning_cfg_to_fw(tune_cfg)
         # sq.filter_nodes(tune_cfg)
         # 3. calibrate the graph, find the input (activation) max value per channel of each op (e.g. matmul)
         # need to find the node before and get the output
+        from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
+        calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile)
+        max_vals_per_channel, shape_infos = calibration()
+        print("===================", max_vals_per_channel)
+        print("===================", shape_infos)
         # input_maxes_per_channel = sq.smooth_calibrate(model, calib_iter)
         # 4. calculate the smooth scale, transform the weights with the smooth scale
         # for weights: directly update in-place
         # for activation: insert a mul node after each matmul to smooth activation
-        sq.smooth_transform(model, alpha, calib_iter)
-        return model
+        # sq = TFSmoothQuant(model, dataloader)
+        # sq.smooth_transform(model, alpha, calib_iter)
+
+        self.smooth_quant_model = model # TODO, replace model to the adjust weights model
+        return self.smooth_quant_model
 
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
