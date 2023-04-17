@@ -791,6 +791,8 @@ class TemplateAdaptor(Adaptor):
         self.example_inputs = framework_specific_info.get("example_inputs", None)
         if 'recipes' in framework_specific_info:
             self.recipes = framework_specific_info['recipes']
+        else:
+            self.recipes = None
 
         if 'approach' in framework_specific_info:  # pragma: no cover
             self.approach = framework_specific_info['approach']
