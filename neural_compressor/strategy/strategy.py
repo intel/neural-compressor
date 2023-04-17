@@ -596,9 +596,14 @@ class TuneStrategy(object):
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
         self._eval_baseline()
-        if self.cfg.tuning.use_distributed_tuning:
-            logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
-            return self.distributed_traverse()
+        try:
+            from mpi4py import MPI
+            if MPI.COMM_WORLD.Get_size() > 1:
+                logger.info("use distributed traverse on {} nodes".format(MPI.COMM_WORLD.Get_size()))
+                return self.distributed_traverse()
+        except (ImportError, AttributeError):
+            logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
+
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
             tuning_start_time = time()

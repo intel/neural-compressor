@@ -495,7 +495,6 @@ class _BaseQuantizationConfig:
         quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
                      strategy, auto (default) is the combination of 0 and 1.
         accuracy_criterion: Accuracy constraint settings.
-        use_distributed_tuning: Whether use distributed tuning or not.
     """
     def __init__(self,
                  inputs=[],
@@ -518,8 +517,7 @@ class _BaseQuantizationConfig:
                  example_inputs=None,
                  excluded_precisions=[],
                  quant_level="auto",
-                 accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False):
+                 accuracy_criterion=accuracy_criterion):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
@@ -542,7 +540,6 @@ class _BaseQuantizationConfig:
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
-        self.use_distributed_tuning=use_distributed_tuning
         self._example_inputs = example_inputs
 
     @property
@@ -695,15 +692,6 @@ class _BaseQuantizationConfig:
     @quant_level.setter
     def quant_level(self, quant_level):
         self._quant_level = quant_level
-
-    @property
-    def use_distributed_tuning(self):
-        return self._use_distributed_tuning
-
-    @use_distributed_tuning.setter
-    def use_distributed_tuning(self, use_distributed_tuning):
-        if _check_value('use_distributed_tuning', use_distributed_tuning, bool):
-            self._use_distributed_tuning = use_distributed_tuning
 
     @property
     def reduce_range(self):
@@ -1042,7 +1030,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         accuracy_criterion: Instance of AccuracyCriterion class. In this class you can set higher_is_better,
                                 criterion and tolerable_loss.
                             Please refer to docstring of AccuracyCriterion class.
-        use_distributed_tuning: Whether use distributed tuning or not.
 
     Example::
 
@@ -1073,7 +1060,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level="auto",
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False,
     ):
         """Init a PostTrainingQuantConfig object."""
         self.tuning_criterion = tuning_criterion
@@ -1095,8 +1081,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
-                         accuracy_criterion=accuracy_criterion,
-                         use_distributed_tuning=use_distributed_tuning)
+                         accuracy_criterion=accuracy_criterion,)
         self.approach = approach
 
     @property
