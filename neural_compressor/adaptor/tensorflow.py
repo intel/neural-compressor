@@ -1686,7 +1686,7 @@ class TensorFlowAdaptor(Adaptor):
 
         return predictions
 
-    def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5,
+    def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
                      percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
         """Convert the model by smooth quant.
 
@@ -1696,6 +1696,7 @@ class TensorFlowAdaptor(Adaptor):
             calib_iter: how many steps of iterations on the dataloader to move forward
             tune_cfg: ??????????Can we get the tune_cfg with no access to strategy here??????????? quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile: ????????needed????????? Percentile of calibration to remove outliers
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
@@ -1706,25 +1707,28 @@ class TensorFlowAdaptor(Adaptor):
         """
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
-        # 1. according to the tune_cfg, get the white/black node list
+
+        # Get the nodes list which can't be quantized from tune_cfg
+        black_nodes = []
         if tune_cfg is not None:
             quantize_config = self._tuning_cfg_to_fw(tune_cfg)
-        # sq.filter_nodes(tune_cfg)
-        # 3. calibrate the graph, find the input (activation) max value per channel of each op (e.g. matmul)
-        # need to find the node before and get the output
-        from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
-        calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile)
-        max_vals_per_channel, shape_infos = calibration()
-        print("===================", max_vals_per_channel)
-        print("===================", shape_infos)
-        # input_maxes_per_channel = sq.smooth_calibrate(model, calib_iter)
-        # 4. calculate the smooth scale, transform the weights with the smooth scale
-        # for weights: directly update in-place
-        # for activation: insert a mul node after each matmul to smooth activation
-        # sq = TFSmoothQuant(model, dataloader)
-        # sq.smooth_transform(model, alpha, calib_iter)
+            black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
 
-        self.smooth_quant_model = model # TODO, replace model to the adjust weights model
+        # Run calibration to get max values per channel
+        from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
+        calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile, black_nodes)
+        max_vals_per_channel, shape_infos = calibration()
+
+        # Get weight tensors and weight nodes based on the input tensor
+        from neural_compressor.adaptor.tf_utils.util import get_weight_from_input_tensor
+        sq_weight_tensors, sq_weights_nodes = get_weight_from_input_tensor(
+            model, max_vals_per_channel.keys(), op_types)
+
+        # Get smooth scales and ajust weights per op
+
+        # Get smooth scales and ajust weights per input
+
+        self.smooth_quant_model = model
         return self.smooth_quant_model
 
 @adaptor_registry

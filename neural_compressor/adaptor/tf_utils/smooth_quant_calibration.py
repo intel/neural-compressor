@@ -17,16 +17,12 @@
 """Tensorflow model calibration process for Smooth Quantization."""
 
 import os
-import ast
 import logging
-import tempfile
 import numpy as np
 from collections import OrderedDict, UserDict
 from tensorflow.core.framework import graph_pb2
+from tensorflow.python.framework import tensor_util
 from .quantize_graph_common import QuantizeGraphHelper
-from .transform_graph.transform_calibration_graph import InsertPrintNode
-from neural_compressor.model import Model
-from neural_compressor.utils.utility import CaptureOutputToFile
 from .util import iterator_sess_run
 
 logger = logging.getLogger("neural_compressor")
@@ -41,13 +37,10 @@ class SmoothQuantCalibration:
         dataloader (DataLoader): The data loader for the calibration dataset.
         iterations (int): The number of iterations to run the calibration process.
         op_types (List[str]): The types of operations to be quantized.
-
-    Attributes:
-        model (Model): The Tensorflow wrapper model to be calibrated.
-        dataloader (DataLoader): The data loader for the calibration dataset.
-        op_types (List[str]): The types of operations to be quantized.
+        percentile (float): The percentile of calibration to remove outliers.
+        black_nodes (List[str]): A list of node names to be ignored during calibration.
     """
-    def __init__(self, model, dataloader, iterations, op_types, percentile):
+    def __init__(self, model, dataloader, iterations, op_types, percentile, black_nodes):
         """Initializes a SmoothQuantCalibration object."""
         self.model = model
         self.dataloader = dataloader
@@ -55,8 +48,8 @@ class SmoothQuantCalibration:
         self.iterations = 3
         self.op_types = op_types
         self.percentile = percentile
+        self.black_nodes = black_nodes
         self._sq_input_node_names = []
-        self._sq_node_names = []
         self._sq_output_tensor_dict = {}
 
     def _inference_for_calibration(self, model):
@@ -85,7 +78,7 @@ class SmoothQuantCalibration:
             for output_idx, output in enumerate(sess.run(output_tensor, feed_dict) if iter_op==[] \
             else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)):
                 self._sq_output_tensor_dict.setdefault(
-                    self._sq_node_names[output_idx], []).append(output)
+                    self._sq_input_node_names[output_idx], []).append(output)
         for idx, (inputs, labels) in enumerate(self.dataloader):
             if len(input_tensor) == 1:
                 feed_dict = {}
@@ -146,7 +139,7 @@ class SmoothQuantCalibration:
             for output_idx, output in enumerate(sess.run(output_tensor, feed_dict) if iter_op==[] \
             else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)):
                 self._sq_output_tensor_dict.setdefault(
-                    self._sq_node_names[output_idx], []).append(output)
+                    self._sq_input_node_names[output_idx], []).append(output)
             if idx + 1 == self.iterations:
                 break
         os.environ["ITEX_REMAPPER"] = "1"
@@ -159,10 +152,9 @@ class SmoothQuantCalibration:
             self.model.output_node_names)
 
         for node in sorted_graph.node:
-            if node.op not in self.op_types:
+            if node.op not in self.op_types or node.name in self.black_nodes:
                 continue
             self._sq_input_node_names.append(node.input[0])
-            self._sq_node_names.append(node.name)
 
         self._inference_for_calibration(self.model)
 
@@ -170,7 +162,7 @@ class SmoothQuantCalibration:
         """Get the max values per input channel.
 
         Args:
-            datas: The input tensors
+            tensor_data: The input tensors
             percentile: The percentile of calibration to remove outliers
 
         Returns:
@@ -196,6 +188,13 @@ class SmoothQuantCalibration:
         return max_per_channels
 
     def __call__(self):
+        """
+        Generates calibration data and calculate the maximum values per channel.
+
+        Returns:
+            max_vals_per_channel (dict): A dictionary containing the maximum values per channel.
+            shape_infos (dict): A dictionary containing the shape information.
+        """
         self._generate_calibration_data()
         max_vals_per_channel = {}
         shape_infos = {}
