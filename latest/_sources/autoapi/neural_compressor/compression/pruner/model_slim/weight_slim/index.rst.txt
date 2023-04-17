@@ -32,7 +32,7 @@ Classes
    Operations library related to weight compression.
 
 
-.. py:class:: LinearCompression(layer_1, layer_2)
+.. py:class:: LinearCompression(root_linear, target_linears)
 
 
 

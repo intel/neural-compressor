@@ -27,11 +27,9 @@ Functions
    neural_compressor.compression.pruner.utils.check_key_validity
    neural_compressor.compression.pruner.utils.process_and_check_config
    neural_compressor.compression.pruner.utils.process_config
+   neural_compressor.compression.pruner.utils.parse_last_linear
    neural_compressor.compression.pruner.utils.parse_to_prune
    neural_compressor.compression.pruner.utils.generate_pruner_config
-   neural_compressor.compression.pruner.utils.parse_auto_slim_config
-   neural_compressor.compression.pruner.utils.generate_ffn2_pruning_config
-   neural_compressor.compression.pruner.utils.generate_mha_pruning_config
 
 
 
@@ -118,6 +116,15 @@ Functions
    :returns: A config dict object.
 
 
+.. py:function:: parse_last_linear(model)
+
+   Locate the last linear layers of the model.
+   While pruning, the final linear often acts like classifier head, which might cause
+   accuracy drop.
+
+   :param model: The model to be pruned.
+
+
 .. py:function:: parse_to_prune(config, model)
 
    Keep target pruned layers.
@@ -134,20 +141,5 @@ Functions
 
    :returns: A pruner config object.
    :rtype: pruner
-
-
-.. py:function:: parse_auto_slim_config(model, ffn2_sparsity=0.0, mha_sparsity=0.0, **kwargs)
-
-   Get model slim pruning configs.
-
-
-.. py:function:: generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
-
-   Get consecutive linear layers pruning configs.
-
-
-.. py:function:: generate_mha_pruning_config(model, mha_sparsity, **kwargs)
-
-   Get multi-head attention layers pruning configs.
 
 

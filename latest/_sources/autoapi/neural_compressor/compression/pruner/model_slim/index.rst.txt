@@ -15,6 +15,7 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
+   auto_slim/index.rst
    pattern_analyzer/index.rst
    weight_slim/index.rst
 
