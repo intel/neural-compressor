@@ -42,12 +42,12 @@ def get_attributes(module: torch.nn.Module, attrs: str):
     return sub_module
 
 def print_iterables(data_iters):
-    if isinstance(data_iters, list):
-        for data in data_iters:
-            logger.info(f"{data}")
-    elif isinstance(data_iters, dict):
-        for k, v in data_iters.items():
-            logger.info(f"{k}: {v}")
+    """Print the auto slim logs."""
+    for data in data_iters:
+        try:
+            logger.info(f"{data}: {data_iters[data]}") # dict
+        except:
+            logger.info(f"{data}") # list
 
 class RecipeSearcher(object):
     """Searcher class which searches patterns with a pre-defined recipe.
@@ -304,26 +304,6 @@ class JitBasicSearcher(object):
     def search(self):
         """Operations called for entire searching process."""
         raise NotImplementedError
-
-    def get_layer_for_all(self):
-        """Extract target layers from matched patterns.
-
-        After searching process, target patterns are stored in self.search_results.
-        This function obtains obtains the layer object (torch.nn.Module) from self.search_results.
-        By default, self.target_layer is ['Linear'], therefore this function only obtain linear layers,
-        and store them in self.search_results.
-        """
-        results = []
-        for pattern in self.search_results:
-            pattern_layer = []
-            for layer in pattern:
-                if layer['op_type'] in self.target_layers: 
-                    pattern_layer.append(self.get_layer_object_from_jit_codes(layer['op_trace']))
-                else:
-                    continue
-            results.append(pattern_layer)
-        self.search_results.clear()
-        self.search_results += results
 
     def get_layer_object_from_jit_codes(self, scope_code):
         """Obtain the specific layer from jit code.
