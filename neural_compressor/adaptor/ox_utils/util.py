@@ -743,11 +743,11 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
 def absorb_scale(model, scales, quantize_params):
-    """
-    Absorb the scale to the operator at output channel
-    :param model: The neural_compressor model object
-    :param scales: A dict, tensor: smooth quant scale
-    :return:
+    """Absorb the scale to the operator at output channel.
+
+    Args:
+        model: The neural_compressor model object
+        scales: A dict, tensor: smooth quant scale
     """
     from onnx import numpy_helper
     def norm(node, scale):
