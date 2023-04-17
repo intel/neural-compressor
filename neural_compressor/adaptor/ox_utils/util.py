@@ -800,7 +800,7 @@ def absorb_scale(model, scales, quantize_params):
             if parent is None:
                 continue
             if parent.op_type in could_absorb_optype:
-                if scales_per_op and model.get_children(parent) > 1 and
+                if scales_per_op and len(model.get_children(parent)) > 1 and \
                         all([i.op_type == "Mul" and i.name.endswith("_smooth_mul") \
                                 for i in model.get_children(parent)]):
                     continue
