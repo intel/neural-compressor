@@ -748,6 +748,7 @@ def absorb_scale(model, scales, quantize_params):
     Args:
         model: The neural_compressor model object
         scales: A dict, tensor: smooth quant scale
+        quantize_params: A dict, tensor: quantization parameters
     """
     from onnx import numpy_helper
     def norm(node, scale):
