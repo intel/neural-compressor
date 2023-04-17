@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--int8', dest='int8', action='store_true')
 parser.add_argument('--tune', dest='tune', action='store_true', 
                     help='tune best int8 model with Neural Compressor on calibration dataset')
-parser.add_argument('--accuracy_only', dest='benchmark', action='store_true',
+parser.add_argument('--accuracy_only', dest='accuracy_only', action='store_true',
                     help='run accuracy_only')
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
@@ -20,6 +20,9 @@ parser.add_argument('--iters', default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('--warmup_iter', default=5, type=int,
                     help='For benchmark measurement only.')
+parser.add_argument('--output_dir', default="saved_results", type=str,
+                    help='the folder path to save the results.')
+
 args = parser.parse_args()
 model_name = 'openai/whisper-large'
 processor = WhisperProcessor.from_pretrained(model_name)
@@ -44,7 +47,7 @@ def eval_func(model):
         prediction = processor.tokenizer._normalize(transcription)
         predictions.append(prediction)
     wer_result = wer.compute(references=references, predictions=predictions)
-    print(f"Result wer: {100 * wer_result}")
+    print(f"Result wer: {wer_result * 100}")
     accuracy = 1 - wer_result
     return accuracy
 
@@ -59,19 +62,22 @@ def calib_func(model):
 
 if args.tune:
     from neural_compressor import PostTrainingQuantConfig, quantization
-    conf = PostTrainingQuantConfig(approach="static")
+    op_type_dict = {
+            "Embedding": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
+            }
+    conf = PostTrainingQuantConfig(approach="static", op_type_dict=op_type_dict)
     q_model = quantization.fit(model,
                         conf=conf,
-                        eval_func=eval_func,
                         calib_func=calib_func
                         )
     q_model.save(args.output_dir)
     exit(0)
 
+#benchmark
 if args.int8:
     from neural_compressor.utils.pytorch import load
     model = load(
-            os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
+            os.path.abspath(os.path.expanduser(args.output_dir)), model)
 
 if args.accuracy_only:
     eval_func(model)
