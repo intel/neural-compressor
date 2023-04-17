@@ -206,7 +206,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if len(node.input) >= 2:
                     input = node.input[1]  ##TODO always dump the index 1 to get the weight
                     if self.pre_optimized_model.get_initializer(input):
-                        weight = numpy_helper.to_array(self.pre_optimized_model.get_initializer(input))
+                        weight = numpy_helper.to_array(self.pre_optimized_model.get_initializer(input),
+                                os.path.dirname(self.pre_optimized_model.model_path))
                         curr_tensor_to_weight.append(weight)
                         curr_tensor_to_weight_nodes.append(node)
             input_tensors_2_weights[name] = curr_tensor_to_weight
@@ -330,7 +331,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         if self.smooth_quant_model is not None:
             from neural_compressor.adaptor.ox_utils.util import absorb_scale
-            absorb_scale(tmp_model, self.scales)
+            absorb_scale(tmp_model, self.scales, self.quantize_params)
 
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options

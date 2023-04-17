@@ -641,7 +641,8 @@ def adjust_weights_per_op(model, nodes, scales):
         node = nodes[key]
         input = node.input[1]
         if input in name_to_indices.keys():
-            weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
+            weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]],
+                    os.path.dirname(model.model_path))
             if len(weight.shape) == 2:
                 scale = np.expand_dims(scales[key],
                                        axis=-1)  # TODO, to support conv
@@ -672,7 +673,8 @@ def adjust_weights_per_input(model, nodes, scales):
         for node in curr_nodes:
             input = node.input[1]  # TODO
             if input in name_to_indices.keys():
-                weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
+                weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]],
+                        os.path.dirname(model.model_path))
                 if len(weight.shape) == 2:
                     scale = np.expand_dims(scales[key],
                                            axis=-1)  # TODO, to support conv
@@ -740,7 +742,7 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
                     node.input[index] = mul_output_name
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
-def absorb_scale(model, scales):
+def absorb_scale(model, scales, quantize_params):
     """
     Absorb the scale to the operator at output channel
     :param model: The neural_compressor model object
@@ -751,27 +753,37 @@ def absorb_scale(model, scales):
     def norm(node, scale):
         for idx in [1, 2]:
             tensor = model.get_initializer(node.inp[idx])
-            model.set_initializer(node.inp[idx], numpy_helper.to_array(tensor) * scale)
+            model.set_initializer(node.inp[idx],
+                    numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+        return True
         
     def mul(node, scale):
+        if all([model.get_initializer(inp) is None for inp in node.input]):
+            return False
         for inp in node.input:
             if model.get_initializer(inp) is not None:
                 tensor = model.get_initializer(inp)
-                model.set_initializer(inp, numpy_helper.to_array(tensor) * scale)
+                model.set_initializer(inp,
+                        numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+        return True
  
     def conv(node, scale):
         if len(node.input) > 2:
             if model.get_initializer(node.input[2]) is not None:
                 tensor = model.get_initializer(node.input[2])
-                model.set_initializer(node.input[2], numpy_helper.to_array(tensor) * scale)
+                model.set_initializer(node.input[2],
+                        numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
             scale = scale.reshape(-1, 1, 1, 1)
 
             tensor = model.get_initializer(node.input[1])
-            model.set_initializer(node.input[1], numpy_helper.to_array(tensor) * scale)
- 
+            model.set_initializer(node.input[1],
+                    numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+        return True
+
     could_absorb_optype = {"LayerNormalization": norm,
                            "BatchNormalization": norm,
                            "InstanceNormalization": norm,
+                           "SimplifiedLayerNormalization": mul,
                            "MatMul": mul, 
                            "Gemm": mul,
                            "Conv": conv,
@@ -780,20 +792,29 @@ def absorb_scale(model, scales):
                            }
     remove_nodes = []
 
+    scales_per_op = model.get_initializer(list(scales.keys())[0]) is None
+
     for node in model.nodes():
-        if node.op_type == "Mul" and node.name.endswith("_smooth_mul"):
+        if node.op_type == "Mul"  and node.name.endswith("_smooth_mul"):
             parent = model.get_parent(node, 0)
             if parent is None:
                 continue
             if parent.op_type in could_absorb_optype:
+                if scales_per_op and model.get_children(parent) > 1 and
+                        all([i.op_type == "Mul" and i.name.endswith("_smooth_mul") \
+                                for i in model.get_children(parent)]):
+                    continue
                 if node.output[0].split("_smooth_output")[0] in scales:
-                    could_absorb_optype[parent.op_type](parent, 1.0 / scales[node.output[0].split("_smooth_output")[0]])
-                    remove_nodes.append(node)
-                    children = [i for i in model.nodes() if node.output[0] in i.input]
-                    for child in children:
-                        for idx, inp in enumerate(child.input):
-                            if inp == node.output[0]:
-                                child.input[idx] = node.input[0]
+                    if could_absorb_optype[parent.op_type](parent,
+                            1.0 / scales[node.output[0].split("_smooth_output")[0]]):
+                        remove_nodes.append(node)
+                        children = [i for i in model.nodes() if node.output[0] in i.input]
+                        for child in children:
+                            for idx, inp in enumerate(child.input):
+                                if inp == node.output[0]:
+                                    if quantize_params is not None and node.output[0] in quantize_params:
+                                        quantize_params[node.input[0]] = quantize_params[node.output[0]]
+                                    child.input[idx] = node.input[0]
     model.remove_nodes(remove_nodes)
 
 def trt_env_setup(model):
