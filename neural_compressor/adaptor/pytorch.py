@@ -19,6 +19,7 @@ import copy
 import gc
 import math
 import os
+import re
 from collections import OrderedDict, UserDict, namedtuple
 from packaging.version import Version
 import yaml
@@ -2425,7 +2426,10 @@ unify_op_type_mapping_ipex = {
     "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "adaptiveavgpool2d",
     "Linear_Relu": "linear",
     "<class 'torch.nn.modules.linear.Linear'>": "linear",
-    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "maxpool2d"
+    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "maxpool2d",
+    're': {
+        "<built-in method matmul of type object at": "matmul"
+    }
 }
 
 
@@ -2956,9 +2960,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.default_cfgs = copy.deepcopy(self.cfgs)
                 self.fuse_ops = self.get_fuse_ops(self.cfgs)
                 for op_cfg in self.cfgs:
-                    quantizable_ops.append(
-                        (op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]
-                         if op_cfg["name"] in unify_op_type_mapping_ipex else op_cfg["name"]))
+                    if op_cfg["name"] in unify_op_type_mapping_ipex:
+                        quantizable_ops.append(
+                            (op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]))
+                    else:
+                        re_flag = False
+                        for pattern, unify_op_type in unify_op_type_mapping_ipex.items():
+                            if re.match(pattern, op_cfg["name"]):
+                                re_flag = True
+                                quantizable_ops.append((op_cfg["id"], unify_op_type))
+                                break
+                        if not re_flag:
+                            quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
             else:
                 ops_name, op_infos_from_cfgs, input_tensor_id_op_name, \
                                 output_tensor_id_op_name = torch_utils.util.paser_cfgs(self.cfgs)
@@ -2970,11 +2983,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     if len(name) == 1:
                         module_key = name[0][0]
                         op_cfg_id = name[0][2]
-                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex \
-                                               [self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']] \
-                                               if self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type'] \
-                                               in unify_op_type_mapping_ipex else \
-                                               self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']))
+                        ipex_op_type = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                        if ipex_op_type in unify_op_type_mapping_ipex:
+                            quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                        else:
+                            re_flag = False
+                            for pattern, unify_op_type in unify_op_type_mapping_ipex.items():
+                                if re.match(pattern, ipex_op_type):
+                                    re_flag = True
+                                    quantizable_ops.append((op_cfg["id"], unify_op_type))
+                                    break
+                            if not re_flag:
+                                quantizable_ops.append((op_cfg["id"], ipex_op_type))
                     else:
                         op_type = ""
                         for op_name in name:
@@ -4080,7 +4100,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             fused_model (GraphModule): fused GraphModule model from torch.fx.
         """
         import inspect
-        import re
         try:
             lines = inspect.getsource(module.forward)
             # Proxy obj. will always be detectd as `not None`.
