@@ -4,7 +4,7 @@ pip install coverage
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 coverage_log="/neural-compressor/log_dir/coverage_log"
 coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
-coverage_compare="/neural-compressor/log_dir/coverate_compare.html"
+coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
@@ -23,6 +23,13 @@ coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log}
 coverage html -d log_dir/coverage_PR/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_PR/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_PR/htmlcov
+
+cd /neural-compressor
+git config --global --add safe.directory /neural-compressor
+git fetch
+git checkout master
+echo y | pip uninstall neural-compressor
+cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh
 
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 coverage erase
