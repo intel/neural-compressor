@@ -55,10 +55,9 @@ sh run_benchmark.sh --topology=topology_name --mode=performance
 ## 4. Saving and Loading Model
 ### Saving model:
 ```python
-from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
+from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor import quantization
-accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=0.5)
-conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
+conf = PostTrainingQuantConfig(approach="dynamic")
 q_model = quantization.fit(model,
                            conf,
                            calib_dataloader=dataloader(),

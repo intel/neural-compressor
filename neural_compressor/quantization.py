@@ -29,7 +29,7 @@ from .utils import logger
 from .utils.utility import time_limit
 
 
-class PostTrainingQuant:
+class _PostTrainingQuant:
     """Post Training Quantization class.
 
     It automatically searches for optimal quantization recipes for low precision model inference,
@@ -43,7 +43,7 @@ class PostTrainingQuant:
     Example::
 
         conf = PostTrainingQuantConfig()
-        quantizer = PostTrainingQuant(conf)
+        quantizer = _PostTrainingQuant(conf)
         quantizer.model = model
         quantizer.eval_func = eval_func
         quantizer.calib_dataloader = calib_dataloader
@@ -407,9 +407,7 @@ def fit(model,
                                               instance.
                                               For MXNet model, it's mxnet.symbol.Symbol
                                               or gluon.HybirdBlock instance.
-        conf (QuantizationAwareTrainingConfig or PostTrainingQuantConfig):
-                                              The class of QuantizationAwareTrainingConfig
-                                              and PostTrainingQuantConfig containing accuracy goal,
+        conf (PostTrainingQuantConfig):       The class of PostTrainingQuantConfig containing accuracy goal,
                                               tuning objective and preferred calibration &
                                               quantization tuning space etc.
         calib_dataloader (generator):         Data loader for calibration, mandatory for
@@ -437,7 +435,10 @@ def fit(model,
                                                    input, label = dataloader()
                                                    output = model(input)
                                                    accuracy = metric(output, label)
-                                                   return accuracy
+                                                   return accuracy.
+                                              The user only needs to set eval_func or
+                                              eval_dataloader and eval_metric which is an alternative option
+                                              to tune the model accuracy.
         eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
                                               and should yield a tuple of (input, label).
                                               The input could be a object, list, tuple or
@@ -447,7 +448,7 @@ def fit(model,
                                               supported metrics. If this parameter is
                                               not None, user needs to specify pre-defined
                                               evaluation metrics through configuration file
-                                              and should set "eval_func" paramter as None.
+                                              and should set "eval_func" parameter as None.
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.
@@ -457,22 +458,25 @@ def fit(model,
     Example::
 
         # Quantization code for PTQ
-        from neural_compressor import PostTrainingQuantConfig, set_workspace
+        from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
+        def eval_func(model):
+            for input, label in dataloader:
+                output = model(input)
+                metric.update(output, label)
+            accuracy = metric.result()
+            return accuracy
+
         conf = PostTrainingQuantConfig()
-
-        # saved intermediate files in ./saved folder
-        set_workspace("./saved")
-
         q_model = quantization.fit(model_origin,
                                    conf,
                                    calib_dataloader=dataloader,
-                                   calib_func=eval_func)
+                                   eval_func=eval_func)
 
         # Saved quantized model in ./saved folder
         q_model.save("./saved")
     """
-    quantizer = PostTrainingQuant(conf)
+    quantizer = _PostTrainingQuant(conf)
     quantizer.model = model
     if eval_func is not None:
         quantizer.eval_func = eval_func

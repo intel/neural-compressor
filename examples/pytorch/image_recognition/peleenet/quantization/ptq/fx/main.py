@@ -168,7 +168,6 @@ def main():
 
     if args.tune:
         model.eval()
-        model.module.fuse_model()
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
         conf = PostTrainingQuantConfig()
@@ -344,7 +343,6 @@ def validate(val_loader, model, criterion, args):
     print('Batch size = %d' % args.batch_size)
     print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
           .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
-
     return top1.avg
 
 

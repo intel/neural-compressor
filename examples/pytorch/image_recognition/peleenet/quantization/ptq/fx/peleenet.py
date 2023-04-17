@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.quantization import QuantStub, DeQuantStub
 from collections import OrderedDict
 
 import math
@@ -26,8 +25,6 @@ class _DenseLayer(nn.Module):
         self.branch2b = BasicConv2d(inter_channel, growth_rate, kernel_size=3, padding=1)
         self.branch2c = BasicConv2d(growth_rate, growth_rate, kernel_size=3, padding=1)
 
-        self.f_cat = torch.nn.quantized.FloatFunctional()
-
     def forward(self, x):
         branch1 = self.branch1a(x)
         branch1 = self.branch1b(branch1)
@@ -36,7 +33,11 @@ class _DenseLayer(nn.Module):
         branch2 = self.branch2b(branch2)
         branch2 = self.branch2c(branch2)
 
-        return self.f_cat.cat([x, branch1, branch2], 1)
+
+        # torch.fx doesn't dequant the input x, which will cause an error.
+        if x.dtype == torch.quint8:
+            x = x.dequantize()
+        return torch.cat([x, branch1, branch2], 1)
 
 
 class _DenseBlock(nn.Sequential):
@@ -60,8 +61,6 @@ class _StemBlock(nn.Module):
         self.stem3 = BasicConv2d(2*num_init_features, num_init_features, kernel_size=1, stride=1, padding=0)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.f_cat = torch.nn.quantized.FloatFunctional()
-
     def forward(self, x):
         out = self.stem1(x)
 
@@ -69,7 +68,7 @@ class _StemBlock(nn.Module):
         branch2 = self.stem2b(branch2)
         branch1 = self.pool(out)
 
-        out = self.f_cat.cat([branch1, branch2], 1)
+        out = torch.cat([branch1, branch2], 1)
         out = self.stem3(out)
 
         return out
@@ -81,23 +80,16 @@ class BasicConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, activation=True, **kwargs):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, bias=False, **kwargs)
-        self.norm = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.norm = nn.BatchNorm2d(out_channels) 
         self.activation = activation
 
     def forward(self, x):
         x = self.conv(x)
         x = self.norm(x)
         if self.activation:
-            return self.relu(x)
+            return F.relu(x, inplace=True)
         else:
             return x
-
-    def fuse_model(self):
-        if self.activation:
-            torch.quantization.fuse_modules(self, ['conv', 'norm', 'relu'], inplace=True)
-        else:
-            torch.quantization.fuse_modules(self, ['conv', 'norm'], inplace=True)
 
 class PeleeNet(nn.Module):
     r"""PeleeNet model class, based on
@@ -158,24 +150,15 @@ class PeleeNet(nn.Module):
 
         self._initialize_weights()
 
-        # Quantization
-        self.quant = QuantStub()
-        self.dequant = DeQuantStub()
-
     def forward(self, x):
-        x = self.quant(x)
         features = self.features(x)
         out = F.avg_pool2d(features, kernel_size=(features.size(2), features.size(3))).view(features.size(0), -1)
         if self.drop_rate > 0:
             out = F.dropout(out, p=self.drop_rate, training=self.training)
         out = self.classifier(out)
-        out = self.dequant(out)
         return out
 
-    def fuse_model(self):
-        for m in self.modules():
-            if type(m) == BasicConv2d:
-                m.fuse_model()
+
 
     def _initialize_weights(self):
         for m in self.modules():

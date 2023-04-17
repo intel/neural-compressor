@@ -17,6 +17,7 @@
 """Bf16 Convert for Torch Utils."""
 import torch
 import torch.nn as nn
+from ...utils import logger
 from torch.fx import symbolic_trace
 
 class BF16ModuleWrapper(nn.Module):
@@ -47,6 +48,8 @@ def Convert(model, tune_cfg):
         bf16_ops_list = tune_cfg['bf16_ops_list']
         fx_sub_module_list = tune_cfg['fx_sub_module_list'] \
                              if 'fx_sub_module_list' in tune_cfg.keys() else []
+        if len(bf16_ops_list) > 0:
+            logger.info("Convert operators to bfloat16")
         mixed_precision_model = _bf16_wrapper_model(model, bf16_ops_list)
         if fx_sub_module_list is not None and len(fx_sub_module_list) > 0:
             mixed_precision_model = bf16_symbolic_trace(mixed_precision_model, fx_sub_module_list)

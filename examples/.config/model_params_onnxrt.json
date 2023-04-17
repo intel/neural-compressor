@@ -23,14 +23,14 @@
     },
     "ssd_mobilenet_v1": {
       "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v1/ssd_mobilenet_v1_frozen.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "ssd_mobilenet_v2": {
       "model_src_dir": "object_detection/ssd_mobilenet_v2/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v2/ssd_mobilenet_v2_frozen.onnx",
       "main_script": "main.py",
       "batch_size": 1
@@ -184,7 +184,7 @@
     },
     "ssd-12": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssd/ssd-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
@@ -198,21 +198,21 @@
     },
     "ssd_mobilenet_v1-2": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssdmb/ssd_mobilenet_v1_12.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "faster_rcnn": {
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "mask_rcnn": {
       "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
@@ -233,7 +233,7 @@
     },
     "yolov3": {
       "model_src_dir": "object_detection/onnx_model_zoo/yolov3/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/yolov3/yolov3-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
@@ -261,14 +261,14 @@
     },
     "ssd_mobilenet_v1_qdq": {
       "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v1/ssd_mobilenet_v1_frozen-13.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "ssd_mobilenet_v2_qdq": {
       "model_src_dir": "object_detection/ssd_mobilenet_v2/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v2/ssd_mobilenet_v2_frozen-13.onnx",
       "main_script": "main.py",
       "batch_size": 1
@@ -401,49 +401,49 @@
     },
     "ssd-12_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssd/ssd-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "fcn_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/fcn/fcn-resnet50-13.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "ssd_mobilenet_v1-2_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/ssdmb/ssd_mobilenet_v1_13.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "faster_rcnn_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "mask_rcnn_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "yolov4": {
       "model_src_dir": "object_detection/onnx_model_zoo/yolov4/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/yolov4/yolov4-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "tiny_yolov3": {
       "model_src_dir": "object_detection/onnx_model_zoo/tiny_yolov3/quantization/ptq_static",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
       "input_model": "/tf_dataset2/models/onnx/tiny_yolov3/tiny-yolov3-12.onnx",
       "main_script": "main.py",
       "batch_size": 1
@@ -525,8 +525,22 @@
       "main_script": "main.py",
       "batch_size": 8
     },
+    "hf_xlm-roberta-base": {
+      "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq_static",
+      "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
+      "input_model": "/tf_dataset2/models/onnx/hf_xlm-roberta-base_dynamic/xlm-roberta-base-mrpc.onnx",
+      "main_script": "main.py",
+      "batch_size": 8
+    },
     "hf_camembert-base_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq_dynamic",
+      "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
+      "input_model": "/tf_dataset2/models/onnx/hf_camembert-base_dynamic/camembert-base-mrpc.onnx",
+      "main_script": "main.py",
+      "batch_size": 8
+    },
+    "hf_camembert-base": {
+      "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq_static",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_camembert-base_dynamic/camembert-base-mrpc.onnx",
       "main_script": "main.py",
@@ -562,6 +576,13 @@
     },
     "hf_albert-base-v2_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq_dynamic",
+      "dataset_location": "/tf_dataset/pytorch/glue_data/SST-2/",
+      "input_model": "/tf_dataset2/models/onnx/hf_albert-base-v2_dynamic/albert-base-v2-sst2.onnx",
+      "main_script": "main.py",
+      "batch_size": 8
+    },
+    "hf_albert-base-v2": {
+      "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq_static",
       "dataset_location": "/tf_dataset/pytorch/glue_data/SST-2/",
       "input_model": "/tf_dataset2/models/onnx/hf_albert-base-v2_dynamic/albert-base-v2-sst2.onnx",
       "main_script": "main.py",
@@ -672,8 +693,22 @@
       "main_script": "main.py",
       "batch_size": 8
     },
+    "hf_bart-large": {
+      "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq_static",
+      "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
+      "input_model": "/tf_dataset2/models/onnx/hf_bart-large_dynamic/bart-large-mrpc-hf.onnx",
+      "main_script": "main.py",
+      "batch_size": 8
+    },
     "hf_distilbert-base-uncased-distilled_dynamic": {
       "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq_dynamic",
+      "dataset_location": "/tf_dataset2/datasets/squad",
+      "input_model": "/tf_dataset2/models/onnx/hf_distilbert-squad_dynamic/distilbert-base-uncased-distilled-squad.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_distilbert-base-uncased-distilled": {
+      "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/hf_distilbert-squad_dynamic/distilbert-base-uncased-distilled-squad.onnx",
       "main_script": "main.py",
@@ -711,6 +746,41 @@
       "model_src_dir": "nlp/huggingface_model/text_generation/quantization/ptq_dynamic",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/gpt-j-6b/model.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_roberta-large": {
+      "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq_static",
+      "dataset_location": "/tf_dataset2/datasets/squad",
+      "input_model": "/tf_dataset2/models/onnx/hf_roberta-large_dynamic/roberta-large-squad2.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_gpt2_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_dynamic",
+      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
+      "input_model": "/tf_dataset2/models/onnx/gpt2/gpt2_lm_head_wikitext_model_zoo.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_gpt2": {
+      "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_static",
+      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
+      "input_model": "/tf_dataset2/models/onnx/gpt2/gpt2_lm_head_wikitext_model_zoo.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_distilgpt2_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_dynamic",
+      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
+      "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2/distilgpt2.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_distilgpt2": {
+      "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_static",
+      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
+      "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2/distilgpt2.onnx",
       "main_script": "main.py",
       "batch_size": 1
     }

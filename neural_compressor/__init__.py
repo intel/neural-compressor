@@ -16,7 +16,7 @@
 # limitations under the License.
 
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
-from .benchmark import Benchmark
+from .benchmark import _Benchmark
 from .version import __version__
 from .contrib import *
 # we need to set a global 'NA' backend, or Model can't be used

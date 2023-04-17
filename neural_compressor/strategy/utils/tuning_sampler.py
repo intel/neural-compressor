@@ -430,34 +430,58 @@ class FallbackTuningSampler(TuningSampler):
             logger.debug(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
-@TuningSamplerRegistry.register("smooth_quant")
-class SmoothQuantSampler(TuningSampler):
-    """Sampler for the hyperparameter tuning of smooth quantization."""
-    
+class BlockFallbackTuningSampler(TuningSampler):
+    """Not displayed in API Docs."""
+
     def __init__(self,
                  tuning_space: TuningSpace,
                  tuning_order_lst: List[TuningOrder],
-                 initial_op_tuning_cfg: Dict,
-                 kwargs: Dict ={}):
-        """Initialize the sampler."""
-        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg, kwargs)
-        # TODO use the alpha list specified by user
-        self._kwargs = kwargs
-        self._alpha_lst = [0.5]
-        if kwargs.get('smooth_quant_agrs', {}):
-            self._alpha_lst = kwargs['smooth_quant_agrs'].get('alpha_lst', [0.5])
-
-    def __iter__(self, tune_cfg=None) -> OpTuningConfig:
-        """Yield the next tuning config with update alpha.
+                 initial_op_tuning_cfg: Dict[tuple, Any],
+                 op_block_lst: List[List[tuple]],
+                 accumulate: bool,
+                 target_dtype: str
+                 ):
+        """Sampler for generate the tuning config of fallback stage.
 
         Args:
-            tune_cfg: tuning config. Defaults to None.
+            tuning_space (TuningSpace): Tuning space.
+            tuning_order_lst (List[TuningOrder]): The tuning orders.
+            initial_op_tuning_cfg (Dict[tuple, Any]): The initial tuning config.
+            op_block_lst (List[List[tuple]]): The block of op_list, 
+                [[(op name, op type), (op name, op type), ...], op_list2, ...].
+            accumulate (bool): Fallback accumulated or not.
+            target_dtype (str): Skip fallback the first op or not. Defaults to True.
         """
-        for alpha in self._alpha_lst:
-            new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg) if not tune_cfg else copy.deepcopy(tune_cfg)
-            sq_args = {'smooth_quant': True, 'smooth_quant_args': {'alpha': alpha}}
-            if 'recipe_cfgs' not in new_tune_cfg:
-                new_tune_cfg['recipe_cfgs'] = sq_args
-            else:
-                new_tune_cfg['recipe_cfgs'].update(sq_args)
+        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
+        self.op_block_lst = op_block_lst
+        self.accumulate = accumulate
+        self.target_dtype = target_dtype
+
+    def __iter__(self):
+        """Yield the next tuning config.
+
+        Yields:
+            The next tuning config.
+        """
+        new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+        for op_block in self.op_block_lst:
+            # Only support fallback to lower precision.
+            if not self.accumulate:
+                    new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+            logger.debug(f"[BlockFallbackTuningSampler] op_block: {op_block}")
+            for  op_name_type in op_block:
+                full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, self.target_dtype)
+                self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
+                config_args = {}
+                self._set_dtype(op_name_type, config_args)
+                internal_pattern = pattern_to_internal(self.target_dtype)
+                quant_mode = quant_mode_from_pattern(internal_pattern)
+                new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1],
+                                            quant_mode, self.tuning_space,
+                                            kwargs=config_args)
+
+                new_tune_cfg.update({op_name_type: new_op_config})
+                logger.debug(f"[BlockFallbackTuningSampler] updated_tuning_cfg {op_name_type}: {new_op_config}")
+                logger.debug(f"[BlockFallbackTuningSampler] fallback {op_name_type} to {self.target_dtype}")
             yield new_tune_cfg
+

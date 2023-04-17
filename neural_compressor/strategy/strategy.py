@@ -515,8 +515,6 @@ class TuneStrategy(object):
         For recipes only have two options, apply the last one.
         For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
         """
-        from .utils.tuning_sampler import TuningSamplerRegistry
-        all_registered_samplers = TuningSamplerRegistry.sampler_dict
         for recipe_name, recipe_vals in self._tuning_recipes.items():
             if recipe_name in FALLBACK_RECIPES_SET and 'recipes_ops' in self.capability and \
                 len(self.capability['recipes_ops'].get(recipe_name, [])) > 0:
@@ -524,13 +522,14 @@ class TuneStrategy(object):
                 new_tune_cfg = self._fallback_ops(copy.deepcopy(tune_cfg), \
                     self.capability['recipes_ops'][recipe_name], self.tuning_space)
                 yield new_tune_cfg
-            if recipe_name in all_registered_samplers:
-                recipe_sampler = all_registered_samplers[recipe_name](tuning_space=None,
-                                                                      tuning_order_lst=[],
-                                                                      initial_op_tuning_cfg=copy.deepcopy(tune_cfg),
-                                                                      kwargs={recipe_name: recipe_vals})
-                for new_tune_cfg in recipe_sampler:
-                    yield new_tune_cfg
+            if recipe_name == "smooth_quant":
+                sq_args = {'smooth_quant': True}
+                if 'recipe_cfgs' not in new_tune_cfg:
+                    new_tune_cfg['recipe_cfgs'] = sq_args
+                else:
+                    new_tune_cfg['recipe_cfgs'].update(sq_args)
+                new_tune_cfg['recipe_cfgs'] = sq_args
+                yield new_tune_cfg
 
     def set_param_for_pre_quantization_algos(self, algo_scheduler, tune_cfg, fp32_model) -> None:
         """Set the parameter for pre-quantization algos, such as smooth quantization.
@@ -549,9 +548,16 @@ class TuneStrategy(object):
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
             # skip assign alpha to sq first.
             # set the alpha to 0.5 by default
-            # smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
+            smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
             sq_algo = ALGORITHMS()['smooth_quant']
-            #sq_algo.alpha = smooth_quant_args['alpha']
+            sq_algo.alpha = smooth_quant_args['alpha']
+            if 'folding' not in smooth_quant_args:
+                smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx'] \
+                  else False
+                logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
+                if self.framework == 'pytorch_ipex':
+                    smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
+            sq_algo.folding = smooth_quant_args['folding']
             #logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
             
@@ -709,7 +715,7 @@ class TuneStrategy(object):
             if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
                 self._fp32_model = self.model
-                self.baseline = self._evaluate(self.model)       
+                self.baseline = self._evaluate(self.model)
                 self.objectives.baseline = self.baseline
                 # record the FP32 baseline
                 self._add_tuning_history()
@@ -1060,6 +1066,7 @@ class TuneStrategy(object):
                 framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
+            framework_specific_info.update({'recipes': self.cfg.quantization.get('recipes', {})})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update({"use_bf16": self.cfg.use_bf16 \
                             if self.cfg.use_bf16 is not None else True})

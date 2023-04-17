@@ -1072,7 +1072,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
 
     def test_smooth_quant(self):
-        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True})
+        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
+            'smooth_quant_args': {'alpha': 0.5}})
         q_model = quantization.fit(self.conv_model, config,
             calib_dataloader=self.cv_dataloader)
         self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
@@ -1165,6 +1166,60 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.rn50_model
         q_model = quantizer.fit()
         self.assertEqual(q_model, None)
+
+    def test_calibrator(self):
+        from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
+        regular_data = [np.arange(15).reshape(3,5).astype('float32'),
+                        np.arange(15).reshape(3,5).astype('float32')]
+        irregular_data = [np.arange(10).reshape(2,5).astype('float32'),
+                          np.arange(5).reshape(1,5).astype('float32')]
+        
+        calibrator = CALIBRATOR['minmax']()
+        calibrator.collect(irregular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(9.0).astype(np.float32))
+        calibrator.collect(regular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(14.0).astype(np.float32))
+        calibrator.clear()
+        res = calibrator.calib_range
+        self.assertIsNone(res[0])
+        self.assertIsNone(res[1])
+        del calibrator
+
+        calibrator = CALIBRATOR['kl']()
+        calibrator.collect(irregular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(9.0).astype(np.float32))
+        calibrator.collect(regular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(9.140625).astype(np.float32))
+        calibrator.clear()
+        res = calibrator.calib_range
+        self.assertIsNone(res[0])
+        self.assertIsNone(res[1])
+        del calibrator
+
+        calibrator = CALIBRATOR['percentile']()
+        calibrator.collect(irregular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(8.991211).astype(np.float32))
+        calibrator.collect(regular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(13.9921875).astype(np.float32))
+        calibrator.clear()
+        res = calibrator.calib_range
+        self.assertIsNone(res[0])
+        self.assertIsNone(res[1])
+        del calibrator
+
+
 
 
 if __name__ == "__main__":

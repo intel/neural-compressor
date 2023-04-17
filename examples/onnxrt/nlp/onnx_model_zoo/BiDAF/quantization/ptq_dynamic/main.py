@@ -22,10 +22,12 @@ import onnx
 import json
 import numpy as np
 import string
-from nltk import word_tokenize
 import re
 import onnxruntime as ort
 import tqdm
+from nltk import word_tokenize
+import nltk
+nltk.download('punkt')
 
 # answer normalization specific for squad evaluation
 def normalize_answer(s):

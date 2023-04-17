@@ -152,7 +152,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5,
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=False,
                                     percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True):
         """Get augmented model with smooth quant.
 
@@ -162,6 +162,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             iterations: iterations
             tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile:Percentile of calibration to remove outliers
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
@@ -174,8 +175,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return self.smooth_quant_model
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from onnx import numpy_helper
+        if isinstance(alpha, str):
+            logger.warning(f"onnx backend only support float alpha, reset alpha to 0.5 ")
+            alpha = 0.5
         black_nodes = []
         white_nodes = []
+        quantize_config = None
         if tune_cfg is not None:
             quantize_config = self._cfg_to_quantize_config(tune_cfg)
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
@@ -187,7 +192,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                 iterations=list(range(0, iterations)),
                                 backend=self.backend, reduce_range=self.reduce_range)
 
-        max_vals_per_channel, shape_infos = augment.calib_smooth(percentile, op_types)
+        max_vals_per_channel, shape_infos = augment.calib_smooth(percentile, op_types, quantize_config)
 
         input_tensors_2_weights = {}
         input_tensors_2_weights_nodes = {}
@@ -516,7 +521,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])),
                   backend=self.backend, reduce_range=self.reduce_range)
-        self.min_max = augment.dump_minmax()
+        self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
 
@@ -541,7 +546,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   white_nodes=op_list,
                   backend=self.backend)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
-                                      weight=(inspect_type!='activation'))
+                                      weight=(inspect_type!='activation'),)
         if save_to_disk:
             if not save_path:
                 save_path = self.work_space
@@ -647,47 +652,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             is_nlp = True
 
         # 3. according to attention structure
-        for node in model.model.graph.node:
-            if node.op_type == 'Add':
-                start_node = node
-                qkv_nodes_list = [
-                    # match base attention structure
-                    model.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [0, None, 0, 0, 0],),
-                    model.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [1, None, 0, 0, 0]),
-
-                    # match gpt attention no past structure
-                    model.match_parent_path(
-                        start_node,
-                        ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
-                        [ None, 0, 0, 0, 0, 0],
-                        output_name_to_node=model.output_name_to_node,
-                        return_indice=[])
-                    ]
-                if not any(qkv_nodes_list):
-                    continue
-                qkv_nodes = [qkv for qkv in qkv_nodes_list if qkv is not None][-1]
-                other_inputs = []
-                for input in start_node.input:
-                    if input not in model.output_name_to_node:
-                        continue
-                    if input == qkv_nodes[0].output[0]:
-                        continue
-                    other_inputs.append(input)
-                if len(other_inputs) != 1:
-                    continue
-                root_input = other_inputs[0]
-                input_name_to_nodes = model.input_name_to_nodes
-                children = input_name_to_nodes[root_input]
-                children_types = [child.op_type for child in children]
-                if children_types.count("MatMul") == 3:
-                    is_nlp = True
-                    break
+        qkv = model.find_qkv_in_attention()
+        if len(qkv) != 0:
+            is_nlp = True
 
         # 4. according to LSTM/Attention optype
         op_types = [node.op_type for node in model.model.graph.node]
@@ -992,34 +959,58 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         first_quantizable_node = []
         last_quantizable_node = []
         all_conv_matmul = []
+        attention_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
-            if node.op_type in ['Conv', 'MatMul']:
-                if len(first_quantizable_node) == 0:
-                    recipes_ops['first_conv_or_matmul_quantization'] = [(node.name, node.op_type)]
-
+            if node.op_type in ['Conv', 'MatMul', 'Attention']:
                 # get first Conv or MatMul node
-                if exclude_first_quantizable_op:
-                    if len(first_quantizable_node) == 0:
-                        first_quantizable_node.append(node.name)
-                    
+                if len(first_quantizable_node) == 0:
+                    first_quantizable_node.append(node)
+
                 # get last Conv or MatMul node
-                if exclude_last_quantizable_op:
-                    if len(last_quantizable_node) != 0:
-                        last_quantizable_node.pop()
-                    last_quantizable_node.append(node.name)
+                if len(last_quantizable_node) != 0:
+                    last_quantizable_node.pop()
+                last_quantizable_node.append(node)
 
-                if len(recipes_ops['last_conv_or_matmul_quantization']):
-                    recipes_ops['last_conv_or_matmul_quantization'].pop()
-                recipes_ops['last_conv_or_matmul_quantization'].append((node.name, node.op_type))
-
-                # get first and last Conv or MatMul node
-                if exclude_pre_post_process:
-                    if len(first_quantizable_node) == 0:
-                        first_quantizable_node.append(node.name)
-                    if len(last_quantizable_node) != 0:
-                        last_quantizable_node.pop()
-                    last_quantizable_node.append(node.name)
-                    all_conv_matmul.append(node)
+                all_conv_matmul.append(node)
+                if node.op_type != 'Conv':
+                    attention_matmul.append(node)
+        
+        if len(first_quantizable_node) != 0:
+            recipes_ops['first_conv_or_matmul_quantization'] = [(first_quantizable_node[0].name, 
+                                                                first_quantizable_node[0].op_type)]
+        if len(last_quantizable_node) != 0:
+            recipes_ops['last_conv_or_matmul_quantization'] = [(last_quantizable_node[0].name, 
+                                                                last_quantizable_node[0].op_type)]
+        
+        
+        ffn_matmul = []
+        attention_matmul_optype = [node.op_type for node in attention_matmul]
+        if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            first_attention_index = attention_matmul_optype.index('Attention')
+            attention_matmul_optype = attention_matmul_optype[first_attention_index:]
+            attention_matmul = attention_matmul[first_attention_index:]
+            attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
+            block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+            for idx in range(len(attention_index)):
+                # to find matmul in ffn
+                if idx != len(attention_index) - 1:
+                    index = attention_index[idx + 1]
+                    if index - 2 >= 0 and index - 1 >= 0:
+                        ffn_matmul.append([attention_matmul[index - 2], 
+                                           attention_matmul[index - 1]])
+                else:
+                    index = attention_index[idx]
+                    if index + block_len - 2 < len(attention_matmul) and \
+                        index + block_len - 1 < len(attention_matmul):
+                        ffn_matmul.append([attention_matmul[index + block_len - 2], 
+                                        attention_matmul[index + block_len - 1]])
+        block_info = []
+        for block in reversed(ffn_matmul):
+            node_info = []
+            for node in block:
+                node_info.append((node.name, node.op_type))
+            if len(node_info) != 0:
+                block_info.append(node_info)
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             # for TRT EP, only insert Q/DQ to inputs of Add nodes followed by ReduceMean
@@ -1031,8 +1022,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 continue
 
             if node.op_type in optype_wise:
-                if (exclude_first_quantizable_op and node.name in first_quantizable_node) \
-                     or (exclude_last_quantizable_op and node.name in last_quantizable_node):
+                if (exclude_first_quantizable_op and node in first_quantizable_node) \
+                     or (exclude_last_quantizable_op and node in last_quantizable_node):
                     tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
                     tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
                     op_wise.update({(node.name, node.op_type): tmp_cfg})
@@ -1040,43 +1031,47 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 op_wise.update(
                     {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
-        # get backbone nodes
-        from collections import deque
-        
-        # get nodes between first quantizable node and last quantizable node
-        backbone_queue = deque(last_quantizable_node)
-        backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
+        # only when first and last quantizable nodes are found and they are not the same,
+        # fallback pre/postprocess ops
+        if len(first_quantizable_node) != 0 and \
+           len(last_quantizable_node) != 0 and \
+           first_quantizable_node[0].name != last_quantizable_node[0].name:
+            # get backbone nodes
+            from collections import deque
+            
+            # get nodes between first quantizable node and last quantizable node
+            backbone_queue = deque(last_quantizable_node)
+            backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
 
-        # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
-        backbone_queue_extra = deque()
-        for conv_or_matmul in all_conv_matmul:
-            if conv_or_matmul.name not in backbone_nodes:
-                backbone_queue_extra.append(conv_or_matmul.name)
-                backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
-                                                first_quantizable_node, backbone_nodes)
-        backbone_nodes += [i for i in first_quantizable_node]
-        
-        for _, node in enumerate(self.pre_optimized_model.nodes()):
-            if node.name not in backbone_nodes:
-                recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
-        
-        if exclude_pre_post_process:
+            # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
+            backbone_queue_extra = deque()
+            for conv_or_matmul in all_conv_matmul:
+                if conv_or_matmul.name not in backbone_nodes:
+                    backbone_queue_extra.append(conv_or_matmul)
+                    backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
+                                                    first_quantizable_node, backbone_nodes)
+            backbone_nodes += [i.name for i in first_quantizable_node]
+            
             for _, node in enumerate(self.pre_optimized_model.nodes()):
-                if node.op_type in optype_wise:
-                    # nodes not in backbone are not quantized
-                    if node.name not in backbone_nodes:
-                        tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
-                        tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
-                        op_wise.update({(node.name, node.op_type): tmp_cfg})
-                        continue
-                    if (node.name, node.op_type) in op_wise:
-                        op_wise.update(
-                            {(node.name, node.op_type): copy.deepcopy(op_wise[(node.name, node.op_type)])})
-                    else: # pragma: no cover
-                        op_wise.update(
-                            {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-        
-        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops}
+                if node.name not in backbone_nodes and node.op_type in optype_wise:
+                    recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
+            if exclude_pre_post_process:
+                for _, node in enumerate(self.pre_optimized_model.nodes()):
+                    if node.op_type in optype_wise:
+                        # nodes not in backbone are not quantized
+                        if node.name not in backbone_nodes:
+                            tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
+                            tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
+                            op_wise.update({(node.name, node.op_type): tmp_cfg})
+                            continue
+                        if (node.name, node.op_type) in op_wise:
+                            op_wise.update(
+                                {(node.name, node.op_type): copy.deepcopy(op_wise[(node.name, node.op_type)])})
+                        else: # pragma: no cover
+                            op_wise.update(
+                                {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_info': block_info}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
         """Filter optypes that don't support per_channel in QDQ format.
@@ -1224,7 +1219,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                 ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
                             else:
                                 ort_inputs.update({inputs_names[i]: inputs[i]})
-
                 if measurer is not None:
                     measurer.start()
                     predictions = session.run(None, ort_inputs)

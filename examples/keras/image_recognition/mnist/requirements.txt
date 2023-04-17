@@ -1,3 +1,0 @@
-tensorflow
-neural-compressor
-intel-extension-for-tensorflow[cpu]

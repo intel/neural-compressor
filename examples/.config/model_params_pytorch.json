@@ -311,13 +311,6 @@
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
-    "3dunet": {
-      "model_src_dir": "image_recognition/3d-unet/quantization/ptq/fx",
-      "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build",
-      "input_model": "/tf_dataset/pytorch/mlperf_3dunet/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1",
-      "batch_size": 100,
-      "main_script": "run.py"
-    },
     "rnnt": {
       "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/eager",
       "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
@@ -407,10 +400,10 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "t5_WMT_en_ro": {
+    "t5-small": {
       "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/wmt16",
-      "input_model": "/tf_dataset2/models/huggingface/t5-small-finetuned-en-to-ro-dataset_20",
+      "input_model": "/tf_dataset2/models/huggingface/t5-small",
       "batch_size": 64,
       "main_script": "run_translation.py"
     },
@@ -542,21 +535,21 @@
       "batch_size": 1,
       "new_benchmark": false
     },
-    "ssd_resnet34_fx": {
+    "ssd-resnet34": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/resized_1200x1200/coconpy",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/resnet34-ssd1200.pytorch",
       "main_script": "python/main.py",
       "batch_size": 100
     },
-    "ssd_resnet34_ipex": {
+    "ssd-resnet34_ipex": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/ipex",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34_ipex/resnet34-ssd1200.pth",
       "main_script": "infer.py",
       "batch_size": 100
     },
-    "ssd_resnet34_qat_fx": {
+    "ssd-resnet34_qat": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/qat/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/ssd_resnet34_qat_fx.pt",
@@ -575,9 +568,9 @@
     "bert_base_MRPC_qat": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC/",
-      "input_model": "/tf_dataset2/models/pytorch/bert_model",
-      "batch_size": 8,
-      "main_script": "run_glue.py"
+      "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-mrpc",
+      "main_script": "run_glue.py",
+      "batch_size": 64
     },
     "bloom-560m_sq": {
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
@@ -597,6 +590,13 @@
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
       "dataset_location": "",
       "input_model": "facebook/opt-125m",
+      "batch_size": 1,
+      "main_script": "eval_lambada.py"
+    },
+    "opt-6.7b_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
+      "dataset_location": "",
+      "input_model": "facebook/opt-6.7b",
       "batch_size": 1,
       "main_script": "eval_lambada.py"
     },

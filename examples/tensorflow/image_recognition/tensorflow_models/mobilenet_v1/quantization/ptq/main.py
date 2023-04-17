@@ -36,7 +36,7 @@ arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ne
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
-arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
+arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='iterations')
 args = arg_parser.parse_args()
 
 def evaluate(model, eval_dataloader, metric, postprocess=None):

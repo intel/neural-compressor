@@ -36,10 +36,19 @@ function run_tuning {
         model_name_or_path="salti/bert-base-multilingual-cased-finetuned-squad"
         num_heads=12
         hidden_size=768
+    elif [[ "${input_model}" =~ "distilbert-base-uncased" ]]; then
+        model_name_or_path="distilbert-base-uncased-distilled-squad"
+        num_heads=12
+        hidden_size=768
     elif [[ "${input_model}" =~ "bert-large-uncased" ]]; then
         model_name_or_path="bert-large-uncased-whole-word-masking-finetuned-squad"
         num_heads=16
         hidden_size=1024
+    elif [[ "${input_model}" =~ "roberta-large" ]]; then
+        model_name_or_path="deepset/roberta-large-squad2"
+        num_heads=16
+        hidden_size=1024
+        extra_cmd='--version_2_with_negative=True'
     fi
 
     python main.py \
@@ -48,11 +57,11 @@ function run_tuning {
             --save_path ${output_model} \
             --output_dir './output' \
             --overwrite_output_dir \
-            --model_name_or_path ${model_name_or_path} \
-            --quant_format ${quant_format} \
+            --model_name_or_path=${model_name_or_path} \
             --num_heads ${num_heads} \
             --hidden_size ${hidden_size} \
-            --tune 
+            --tune \
+            ${extra_cmd}
 }
 
 main "$@"

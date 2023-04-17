@@ -316,7 +316,7 @@ class TRANSFORMS(object):
             framework (str): different framework type like tensorflow, pytorch and so on
             process (str): process type, the value can be preprocess, postprocess or general
         """
-        assert framework in ("tensorflow", "tensorflow_itex", "onnxruntime", \
+        assert framework in ("tensorflow", "tensorflow_itex", "keras", "onnxruntime", \
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq", \
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt"
@@ -2638,6 +2638,8 @@ class TFModelZooCollectTransform(CollectTransform):
     def __call__(self, sample):
         """Collect postprocess data."""
         all_results, label = sample
+        if len(all_results) == 1:
+            all_results = all_results.reshape((2, 1, 384))
         all_results = zip(all_results[0], all_results[1])
         for start_logits, end_logits in all_results:
             if len(self.unique_id) < self.length:

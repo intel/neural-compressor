@@ -30,16 +30,15 @@ Download [weights](https://github.com/Robert-JunWang/PeleeNet/tree/master/weight
 ## 1. Quantization
 ```shell
 cd examples/pytorch/image_recognition/peleenet/quantization/ptq/fx
-python main.py --tune --pretrained -j 1 /path/to/imagenet
-```
+python main.py --tune --pretrained -j 1 /path/to/imagenet --weights weights/peleenet_acc7208.pth.tar
 or
 ```shell
-sh run_tuning --dataset_location=/path/to/imagenet
+sh run_tuning.sh --dataset_location=/path/to/imagenet --input_model=weights/peleenet_acc7208.pth.tar
 ```
 ## 2. Benchmark
 ```bash
 # int8
 sh run_benchmark.sh --dataset_location=/path/to/imagenet --mode=performance --int8=true
 # fp32
-sh run_benchmark.sh --dataset_location=/path/to/imagenet --mode=performance
+sh run_benchmark.sh --dataset_location=/path/to/imagenet --mode=performance --input_model=weights/peleenet_acc7208.pth.tar
 ```
