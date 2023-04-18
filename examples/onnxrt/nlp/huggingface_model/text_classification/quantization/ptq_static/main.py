@@ -410,10 +410,10 @@ if __name__ == "__main__":
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
         fp32_op_names = None
-        if args.model_name_or_path == 'Intel/bart-large-mrpc':
-            fp32_op_names = ['/model/(en|de)coder/layers.*/fc(1|2)/MatMul']
-        elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
-            fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
+        #if args.model_name_or_path == 'Intel/bart-large-mrpc':
+        #    fp32_op_names = ['/model/(en|de)coder/layers.*/fc(1|2)/MatMul']
+        #elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
+        #    fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=args.quant_format,
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
