@@ -399,11 +399,12 @@ class TorchSmoothQuant:
         layer.weight *= scale
         return scale
 
-    def _absorb_scales(self, layer_name, scale):  ##output channel
+    def _absorb_scales(self, layer_name, scale, alpha=0.5):  ##output channel
         """
         Absorb the scale to the layer at output channel
         :param layer_name: The module name
         :param scale: The scale to be absorbed
+        :param alpha_key: The alpha passed to SQLinearWrapper
         :return:
         """
         from .model_wrapper import SQLinearWrapper
@@ -413,7 +414,7 @@ class TorchSmoothQuant:
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
                 input_minmax = [self.input_mins[layer_name], self.input_maxes[layer_name]]
-                new_module = SQLinearWrapper(layer, scale, input_minmax)
+                new_module = SQLinearWrapper(layer, scale, input_minmax, alpha)
                 set_module(self.model, layer_name, new_module)
 
         elif self.allow_absorb:
@@ -507,7 +508,7 @@ class TorchSmoothQuant:
             scale = torch.clip(input_power / weight_power, min=1e-5)
             scale[input_power == 0] = 1.0
 
-            self._absorb_scales(key, 1.0 / scale)
+            self._absorb_scales(key, 1.0 / scale, alpha_key)
             absorb_scales_info[key] = 1.0 / scale
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
@@ -902,24 +903,22 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
         for module_name, v in ipex_config.items():
             if 'q_op_infos' in v and v['q_op_infos']:
                 for op_num, v1 in v['q_op_infos'].items():
-                    if 'weight_tensor_infos' in v1 and v1['weight_tensor_infos']:
-                        op_name = v1['fqn']
-                        if op_name in smoothquant_scale_info:
-                            input_scale_for_mul = \
-                                    smoothquant_scale_info[op_name]['input_scale_for_mul'].tolist()
-                            input_scale_after_mul = \
-                                    smoothquant_scale_info[op_name]['input_scale_after_mul'].tolist()
-                            input_zero_point_after_mul = \
-                                    smoothquant_scale_info[op_name]['input_zero_point_after_mul'].tolist()
-                            weight_scale_for_mul = \
-                                    (1 / smoothquant_scale_info[op_name]['input_scale_for_mul']).tolist()
-                            weight_scale_after_mul = \
-                                    smoothquant_scale_info[op_name]['weight_scale_after_mul'].tolist()
-                            v1['input_tensor_infos'][0]['smooth_quant_scaling_factor'] = input_scale_for_mul
-                            v1['input_tensor_infos'][0]['scale'] = input_scale_after_mul
-                            v1['input_tensor_infos'][0]['zero_point'] = input_zero_point_after_mul
-                            v1['weight_tensor_infos'][0]['smooth_quant_scaling_factor'] = weight_scale_for_mul
-                            v1['weight_tensor_infos'][0]['scale'] = weight_scale_after_mul
+                    # update alpha data instead of updating weight scale
+                    op_name = v1['fqn'] # fqn always exists even it's empty.
+                    if op_name in smoothquant_scale_info:
+                        # observers were overridden by the fallback step, setting it back.
+                        v1['activation_observer'] = {'name': 'SmoothQuantActivationObserver', 
+                                        'smooth_quant_enabled': False, 'dtype': 'torch.quint8', 
+                                        'qscheme': 'torch.per_tensor_affine', 'reduce_range': False,
+                                        'quant_min': 0, 'quant_max': 255, 
+                                        'alpha': smoothquant_scale_info[op_name]['alpha']
+                                        }
+                        v1['weight_observer'] = {'name': 'SmoothQuantWeightObserver', 
+                                        'smooth_quant_enabled': False, 'dtype': 'torch.qint8', 
+                                        'qscheme': 'torch.per_channel_symmetric', 'reduce_range': False, 
+                                        'quant_min': -128, 'quant_max': 127, 
+                                        'alpha': smoothquant_scale_info[op_name]['alpha'] #only update alpha
+                                        }
         f.close()
     # overwrite ipex_config_path
     with open(ipex_config_path, 'w') as f1:
