@@ -2878,7 +2878,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         Returns:
             None
         """
-
+        
+        # group ops by postion for transform-based model
+        from .torch_utils.block import get_blocks
+        ffn_blocks, attention_block = get_blocks(model)
+        logger.info(f"Attention Blocks: {len(attention_block)}")
+        logger.info(f"FFN Blocks: {len(ffn_blocks)}")
         if not os.path.exists(self.ipex_config_path):
             assert isinstance(model, torch.nn.Module), \
                     "The model passed in is not the instance of torch.nn.Module"
@@ -2983,13 +2988,19 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                             module_key = op_name[0]
                             op_cfg_id = op_name[2]
                             op_type += self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                        # TODO(future PR): assume the pattern is linear/conv + activation function
                         quantizable_ops.append((tuple(name), op_type))
+                        _module_key = name[0][0]
+                        _op_cfg_id = name[0][2]
+                        _fqn = self.cfgs[_module_key]['q_op_infos'][_op_cfg_id]['fqn']
+                        map_op_name_to_fqn[(tuple(name), op_type)] = _fqn
                 self.op_infos_from_cfgs = op_infos_from_cfgs
                 self.output_tensor_id_op_name = output_tensor_id_op_name
         logger.info("map_op_name_to_fqn: ")
         logger.info(map_op_name_to_fqn)
         from .torch_utils.util import search_blocks_for_ipex
-        att_blocks_info, ffn_blocks = search_blocks_for_ipex(map_op_name_to_fqn)
+        att_blocks_info, ffn_blocks = attention_block, ffn_blocks
+
         logger.info("Atten Block info")
         logger.info(att_blocks_info)
     

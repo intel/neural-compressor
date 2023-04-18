@@ -1,12 +1,11 @@
 BLOCK_PATTERNS = [
-    # ['OP_TYPE', NUM_OPS]
-
+    # [['OP_TYPE1', NUM_OPS], ['OP_TYPE2', NUM_OPS], ...]
     [['Linear', 4], ['Linear', 4]], # 
     [['Linear', 4], ['Linear', 3]], # Llama
     [['Linear', 4], ['Linear', 2]], # T5-Encoder, OPT
     [['Linear', 2], ['Linear', 2]], # 
     [['Conv1D', 2], ['Conv1D', 2]], # GPT-2
-    [['Linear', 4], ['Linear', 1], ['Linear', 1]], # Bert 
+    [['Linear', 4], ['Linear', 1], ['Linear', 1]], # Bert
     [['Linear', 4], ['Linear', 4], ['Linear', 2]],  # T5-Decoder
 ]
 
