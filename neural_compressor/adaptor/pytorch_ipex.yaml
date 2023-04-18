@@ -84,7 +84,7 @@
           'conv1d': *cap_s8_1_10_Conv2d,
           'conv3d': *cap_s8_1_10_Conv2d,
           'linear': *cap_s8_1_10_Conv2d,
-          'default': &cap_s8_1_10_default{
+          'default': &cap_s8_1_10_default {
             'weight': {
                         'dtype': ['int8'],
                         'scheme': ['sym'],
@@ -98,6 +98,7 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'add': *cap_s8_1_10_default,
           'matmul': *cap_s8_1_10_default,
           },
     'dynamic': {},
