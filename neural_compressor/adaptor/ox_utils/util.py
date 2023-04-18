@@ -535,7 +535,7 @@ def get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
                 else:
                     weight = np.moveaxis(weight, 0, 1)
             weight = weight.reshape(weight.shape[0], -1)
-            weight_max_per_channel = np.amax(weight, axis=-1)
+            weight_max_per_channel = np.amax(np.abs(weight), axis=-1)
             input_power = np.power(max_vals_per_channel[key], alpha)
             weight_power = np.power(weight_max_per_channel, 1 - alpha)
             scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
@@ -755,10 +755,10 @@ def absorb_scale(model, scales, quantize_params):
     from onnx import numpy_helper
     def norm(node, scale):
         for idx in [1, 2]:
-            tensor = model.get_initializer(node.inp[idx])
+            tensor = model.get_initializer(node.input[idx])
             new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
                 model.model_path is not None else numpy_helper.to_array(tensor) * scale
-            model.set_initializer(node.inp[idx], new_tensor)
+            model.set_initializer(node.input[idx], new_tensor)
         return True
         
     def mul(node, scale):
