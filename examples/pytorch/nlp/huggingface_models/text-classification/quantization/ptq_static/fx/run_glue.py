@@ -507,18 +507,20 @@ def main():
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=600)
-        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion, use_distributed_tuning=False)
+        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
         # whether to use distributed tuning
-        if conf.use_distributed_tuning == True:
+        rank = -1
+        try:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
             size = comm.Get_size()
             assert size > 1
             rank = comm.Get_rank()
-        else:
-            rank = -1
-        if rank == 0 or conf.use_distributed_tuning == False:
+        except (ImportError, AttributeError):
+            logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
+
+        if rank in [0, -1]:
             from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
             save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
         return

@@ -602,7 +602,7 @@ class TuneStrategy(object):
                 logger.info("use distributed traverse on {} nodes".format(MPI.COMM_WORLD.Get_size()))
                 return self.distributed_traverse()
         except (ImportError, AttributeError):
-            logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
+            logger.debug("[Strategy] <mpi4py> needs to be installed correctly for distributed tuning.")
 
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():

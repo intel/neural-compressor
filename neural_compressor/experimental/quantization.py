@@ -177,7 +177,7 @@ class Quantization(Component):
         try:
             from mpi4py import MPI
             if MPI.COMM_WORLD.Get_size() > 1:
-                logger.info("use distributed traverse on {} nodes".format(MPI.COMM_WORLD.Get_size()))
+                logger.info("use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
                 return self.distributed_execute()
         except (ImportError, AttributeError):
             logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
