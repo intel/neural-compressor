@@ -164,18 +164,19 @@ class BasicTuneStrategy(TuneStrategy):
 
     def fallback_by_block(self, fallback_items_lst, best_op_tuning_cfg_stage1, target_dtype, tuning_space,\
         calib_sampling_size):
-        """ Fallback ops by block.
-            step 1. block by block
-            step 2. accumulate block
+        """Fallback ops by block.
+
+        Step 1. block by block
+        Step 2. accumulate block
 
         Args:
-            fallback_items_lst (_type_): _description_
-            best_op_tuning_cfg_stage1 (_type_): _description_
-            target_dtype (_type_): _description_
-            tuning_space (_type_): _description_
+            fallback_items_lst (list): list of fallback items
+            best_op_tuning_cfg_stage1 (dict): best op tuning cfg of stage1
+            target_dtype (str): target dtype
+            tuning_space (TuningSpace): Tuning space
 
         Yields:
-            _type_: op_tuning_cfg fall-backed by block
+            dict: op_tuning_cfg fall-backed by block
         """
         from copy import deepcopy
         op_block_lst = self.capability.get('block_info', [])

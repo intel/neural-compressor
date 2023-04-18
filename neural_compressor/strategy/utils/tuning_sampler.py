@@ -443,12 +443,13 @@ class BlockFallbackTuningSampler(TuningSampler):
         """Sampler for generate the tuning config of fallback stage.
 
         Args:
-            tuning_space: Tuning space.
-            tuning_order_lst: The tuning orders.
-            initial_op_tuning_cfg: The initial tuning config.
-            op_block: The block of op_list, [[(op name, op type), (op name, op type), ...], op_list2, ...].
-            accumulate: Fallback accumulated or not.
-            skip_first: Skip fallback the first op or not. Defaults to True.
+            tuning_space (TuningSpace): Tuning space.
+            tuning_order_lst (List[TuningOrder]): The tuning orders.
+            initial_op_tuning_cfg (Dict[tuple, Any]): The initial tuning config.
+            op_block_lst (List[List[tuple]]): The block of op_list, 
+                [[(op name, op type), (op name, op type), ...], op_list2, ...].
+            accumulate (bool): Fallback accumulated or not.
+            target_dtype (str): Skip fallback the first op or not. Defaults to True.
         """
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
         self.op_block_lst = op_block_lst

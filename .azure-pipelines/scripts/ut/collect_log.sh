@@ -24,6 +24,13 @@ coverage html -d log_dir/coverage_PR/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_PR/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_PR/htmlcov
 
+cd /neural-compressor
+git config --global --add safe.directory /neural-compressor
+git fetch
+git checkout master
+echo y | pip uninstall neural-compressor
+cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh
+
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 coverage erase
 cd /neural-compressor/log_dir
