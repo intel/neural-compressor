@@ -585,7 +585,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 out = self.fc2(out)
                 return out
 
-        input_ids = torch.randn([1, 3])
+        input_ids = torch.randn([2, 3])
         fp32_model = Model()
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
@@ -607,6 +607,11 @@ class TestSqLinearOpFuse(unittest.TestCase):
         from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
         assert isinstance(fp32_model.fc1, SQLinearWrapper) # for smoothquant, inplace=True.
+
+        q_model.save('saved_result')
+        from neural_compressor.utils.pytorch import load
+        model_origin = Model()
+        qdq_model = load("./saved_result", model_origin)
 
         fp32_model = Model()
         origin_bias = float(fp32_model.fc1.bias[0])

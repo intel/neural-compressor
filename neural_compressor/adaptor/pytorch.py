@@ -1305,9 +1305,11 @@ class TemplateAdaptor(Adaptor):
                 op_name = op_name.rstrip('.sq_linear') 
                 fallback_op_name_list.append(op_name)
 
+        smoothquant_op_info = {'sq_linear': {}, 'qdq_linear': []}
         stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
         for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
+                smoothquant_op_info['sq_linear'][name] = module.input_scale
                 if name not in fallback_op_name_list:
                     smoothquant_scale_info[name] = {
                         'input_scale_for_mul': module.input_scale,
@@ -1315,13 +1317,14 @@ class TemplateAdaptor(Adaptor):
                         'quant_zero_point': module.zero_point,
                         'quant_dtype': module.dtype,
                         }
+                    smoothquant_op_info['qdq_linear'].append(name+'.sq_linear')
                     new_module = QDQLinear(module.sq_linear, module.scale, module.zero_point, module.dtype)
                     set_module(q_model, name+'.sq_linear', new_module)
                     stats_result['SQLinearWrapper']['INT8(QDQ)'] += 1
                 else:
                     stats_result['SQLinearWrapper']['FP32'] += 1
 
-        tune_cfg['recipe_cfgs']['smoothquant_scale_info'] = smoothquant_scale_info
+        tune_cfg['recipe_cfgs']['smoothquant_op_info'] = smoothquant_op_info
         model._model = q_model
         model.q_config = copy.deepcopy(tune_cfg)
         field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
@@ -2480,7 +2483,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and self.version.release >= Version("2.1").release \
           and self.approach != 'post_training_dynamic_quant':
-            return self.qdq_quantize(model, tune_cfg, dataloader)
+            return self.qdq_quantize(model, tune_cfg, dataloader, q_func)
 
         assert self.approach != 'quant_aware_training', \
             "Intel PyTorch Extension didn't support quantization aware training mode"
@@ -2961,11 +2964,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.fuse_ops = self.get_fuse_ops(self.cfgs)
                 for op_cfg in self.cfgs:
                     if op_cfg["name"] in unify_op_type_mapping_ipex:
-                        quantizable_ops.append(
-                            (op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]))
+                        quantizable_ops.append((op_cfg["id"], 
+                                                unify_op_type_mapping_ipex[op_cfg["name"]]))
                     else:
                         re_flag = False
-                        for pattern, unify_op_type in unify_op_type_mapping_ipex.items():
+                        for pattern, unify_op_type in unify_op_type_mapping_ipex['re'].items():
                             if re.match(pattern, op_cfg["name"]):
                                 re_flag = True
                                 quantizable_ops.append((op_cfg["id"], unify_op_type))
@@ -2985,16 +2988,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         op_cfg_id = name[0][2]
                         ipex_op_type = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
                         if ipex_op_type in unify_op_type_mapping_ipex:
-                            quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                            quantizable_ops.append((tuple(name), 
+                                                    unify_op_type_mapping_ipex[ipex_op_type]))
                         else:
                             re_flag = False
-                            for pattern, unify_op_type in unify_op_type_mapping_ipex.items():
+                            for pattern, unify_op_type in unify_op_type_mapping_ipex['re'].items():
                                 if re.match(pattern, ipex_op_type):
                                     re_flag = True
-                                    quantizable_ops.append((op_cfg["id"], unify_op_type))
+                                    quantizable_ops.append((tuple(name), unify_op_type))
                                     break
                             if not re_flag:
-                                quantizable_ops.append((op_cfg["id"], ipex_op_type))
+                                quantizable_ops.append((tuple(name), ipex_op_type))
                     else:
                         op_type = ""
                         for op_name in name:
@@ -3041,7 +3045,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         op_patterns.append([(value[0], value[1]), (cur_id, cur_op)])
         return op_patterns
 
-    def qdq_quantize(self, model, tune_cfg, dataloader):
+    def qdq_quantize(self, model, tune_cfg, dataloader, q_func):
         assert not self.version.release < Version("2.1").release, \
             "IPEX version >= 2.1 is required for SmoothQuant."
 
@@ -3062,14 +3066,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         smoothquant_scale_info = {}
         for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
-                weight_scale = module._get_weight_scale()
                 smoothquant_scale_info[name + '.sq_linear'] = {
-                    'input_scale_for_mul': module.input_scale,
-                    'input_scale_after_mul': module.scale,
-                    'input_zero_point_after_mul': module.zero_point,
-                    'input_dtype': module.dtype,
-                    'weight_scale_after_mul': weight_scale,
-                    }
+                    'alpha': module.alpha,
+                }
                 module.ipex = True
                 # Note: save weight scale before recover
                 module._recover_sq_linear()
@@ -3078,14 +3077,21 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
-        self.calib_func(q_model, dataloader, tmp_iterations=1) # fake calibration
+        self.calib_func(q_model, dataloader, tmp_iterations=1) # fake calibration for save qconf
         q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
 
-        # update ipex_config.json with smoothquant_scale_info
-        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         # enable fallback
         self._cfg_to_qconfig(tune_cfg)
+        # update ipex_config.json with smoothquant_scale_info
+        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
+        # real calibration for other operators
+        if q_func is not None:
+            q_func(q_model)
+        else:
+            iterations = tune_cfg.get('calib_iteration', 1)
+            self.model_calibration(q_model, dataloader, iterations, None,
+                                    tune_cfg.get('calib_sampling_size', 1))
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
