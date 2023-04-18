@@ -207,7 +207,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     input = node.input[1]  ##TODO always dump the index 1 to get the weight
                     if self.pre_optimized_model.get_initializer(input):
                         weight = numpy_helper.to_array(self.pre_optimized_model.get_initializer(input),
-                                os.path.dirname(self.pre_optimized_model.model_path))
+                                os.path.dirname(self.pre_optimized_model.model_path)) if \
+                                self.pre_optimized_model.model_path is not None else \
+                                numpy_helper.to_array(self.pre_optimized_model.get_initializer(input))
                         curr_tensor_to_weight.append(weight)
                         curr_tensor_to_weight_nodes.append(node)
             input_tensors_2_weights[name] = curr_tensor_to_weight
