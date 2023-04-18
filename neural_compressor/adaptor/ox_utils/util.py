@@ -642,7 +642,8 @@ def adjust_weights_per_op(model, nodes, scales):
         input = node.input[1]
         if input in name_to_indices.keys():
             weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]],
-                    os.path.dirname(model.model_path))
+                    os.path.dirname(model.model_path)) if model.model_path is not None else \
+                    numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
             if len(weight.shape) == 2:
                 scale = np.expand_dims(scales[key],
                                        axis=-1)  # TODO, to support conv
@@ -674,7 +675,8 @@ def adjust_weights_per_input(model, nodes, scales):
             input = node.input[1]  # TODO
             if input in name_to_indices.keys():
                 weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]],
-                        os.path.dirname(model.model_path))
+                        os.path.dirname(model.model_path)) if model.model_path is not None else \
+                        numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
                 if len(weight.shape) == 2:
                     scale = np.expand_dims(scales[key],
                                            axis=-1)  # TODO, to support conv
@@ -754,8 +756,9 @@ def absorb_scale(model, scales, quantize_params):
     def norm(node, scale):
         for idx in [1, 2]:
             tensor = model.get_initializer(node.inp[idx])
-            model.set_initializer(node.inp[idx],
-                    numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+            new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
+                model.model_path is not None else numpy_helper.to_array(tensor) * scale
+            model.set_initializer(node.inp[idx], new_tensor)
         return True
         
     def mul(node, scale):
@@ -764,21 +767,23 @@ def absorb_scale(model, scales, quantize_params):
         for inp in node.input:
             if model.get_initializer(inp) is not None:
                 tensor = model.get_initializer(inp)
-                model.set_initializer(inp,
-                        numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+                new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
+                    model.model_path is not None else numpy_helper.to_array(tensor) * scale
+                model.set_initializer(inp, new_tensor)
         return True
  
     def conv(node, scale):
         if len(node.input) > 2:
             if model.get_initializer(node.input[2]) is not None:
                 tensor = model.get_initializer(node.input[2])
-                model.set_initializer(node.input[2],
-                        numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+                new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
+                    model.model_path is not None else numpy_helper.to_array(tensor) * scale
+                model.set_initializer(node.input[2], new_tensor)
             scale = scale.reshape(-1, 1, 1, 1)
-
             tensor = model.get_initializer(node.input[1])
-            model.set_initializer(node.input[1],
-                    numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale)
+            new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
+                model.model_path is not None else numpy_helper.to_array(tensor) * scale
+            model.set_initializer(node.input[1], new_tensor)
         return True
 
     could_absorb_optype = {"LayerNormalization": norm,
