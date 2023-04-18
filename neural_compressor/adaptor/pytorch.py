@@ -1266,7 +1266,7 @@ class TemplateAdaptor(Adaptor):
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
 
         if not hasattr(self, 'sq') or force_re_smooth:
-            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types

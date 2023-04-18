@@ -597,6 +597,9 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 self.batch_size = 1
             def __iter__(self):
                 yield input_ids
+        def calib_func(model):
+            for i in range(10):
+                model(ipnut_ids)
 
         q_model = quantization.fit(
             fp32_model,
@@ -626,6 +629,19 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_dataloader=CalibDataloader(),
             eval_func=lambda x: 0.1,
         )
+        self.assertTrue(float(q_model.model.fc1.bias()[0]) != origin_bias)
+
+        # with calib_func
+        conf = PostTrainingQuantConfig(
+                        recipes={"smooth_quant": True,
+                                "smooth_quant_args": {'alpha': 'auto', 'folding':False}}
+                        )
+        q_model = quantization.fit(
+                        fp32_model,
+                        conf,
+                        calib_func=calib_func,
+                        eval_func=lambda x: 0.1,
+                        )
         self.assertTrue(float(q_model.model.fc1.bias()[0]) != origin_bias)
 
     @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
