@@ -73,7 +73,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - NxM Pruning
 
-  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  *Users could set "NxM", e.g. "4x1", in pruning pattern to enable it.*
+  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criteria. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  *Users could set "NxM", e.g. "4x1", in pruning pattern to enable it.*
 
 - N:M Pruning
 
@@ -89,7 +89,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - Unstructured Pruning
 
-  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. *Users could set "1x1" in  pruning pattern to enable it.*
+  Unstructured pruning means pruning parameters individually without any constraints.  *Users could set "1x1" in  pruning pattern to enable it.*
 
 
 <div align=center>
@@ -119,7 +119,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - Gradient
 
-  The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
+   Gradient based criterion. The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
 
 - SNIP
 
@@ -129,7 +129,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - SNIP Momentum
 
-  Gradient based criterion. The algorithm improves original SNIP algorithm and  update the score in a momentum way.\
+  Gradient based criterion. The algorithm improves original SNIP algorithm and updates the score in a momentum way.\
   In the following formula, $n$ is the training step and $W$ and $G$ are model's weights and gradients respectively.
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
