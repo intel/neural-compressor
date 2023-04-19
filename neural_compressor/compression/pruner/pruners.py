@@ -24,9 +24,6 @@ from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
-# model slim related
-from .model_slim.pattern_analyzer import Linear2LinearSearcher, RecipeSearcher
-from .model_slim.weight_slim import LinearCompressionIterator, MHACompression
 
 PRUNERS = {}
 
@@ -95,48 +92,6 @@ def get_pruner(config, modules):
     if name not in PRUNERS.keys():
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
     return PRUNERS[name](config, modules)
-
-def model_slim(model, round_multiplier=0):
-    """Slim the sparse model automatically."""
-    model = model_slim_ffn2(model, round_multiplier)
-    model = model_slim_mha(model)
-    return model
-
-def model_slim_ffn2(model, round_multiplier=0):
-    """Remove some sparse part in the model permanently and obtain acceleration directly.
-
-    Args:
-        model: a sprase model.
-        round_multiplier(int): the channel number after slimming should be multiple of this number.
-    """
-    logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
-    pa_obj = Linear2LinearSearcher(model)
-    layers = pa_obj.search()
-    linear_pruner = LinearCompressionIterator(layers)
-    linear_pruner(masks=None, round_value=round_multiplier)
-    return model
-
-def model_slim_mha(model):
-    """Remove some sparse part in the model permanently and obtain acceleration directly.
-
-    Args:
-        model: a sprase model.
-    """
-    logger.warning(f"You are using model slim methods, some attention heads will be removed permanently.")
-    recipe = {'BertLayer': ["attention"]}
-    searcher = RecipeSearcher(model, recipe)
-    layers = searcher.search('BertLayer')
-    if "PyTorchFXModel" in type(model).__name__:
-        config = model.model.config
-    else:
-        config = model.config
-    # linear_pruner = LinearCompressionIterator(layers)
-    for item in layers:
-        mha_compression = MHACompression(
-            item[0], config.num_attention_heads, config.hidden_size // config.num_attention_heads
-        )
-        mha_compression()
-    return model
 
 class BasePruner:
     """Pruning Pruner.
