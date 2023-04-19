@@ -73,23 +73,23 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - NxM Pruning
 
-  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  **Users could set "NxM", e.g. "4x1", in pruning pattern to enable it.**
+  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  *Users could set "NxM", e.g. "4x1", in pruning pattern to enable it.*
 
 - N:M Pruning
 
-  N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used. **Users could set  "N:M" , e.g. "2:4", to enable it.**
+  N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used. *Users could set  "N:M" , e.g. "2:4", to enable it.*
 
 - Channel-wise Pruning
 
-  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. **Users could set a "channelx1"( some input channels will be totally pruned) (or "1xchannel")  to enable it.**
+  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. *Users could set "channelx1"( some input channels will be totally pruned) (or "1xchannel")  to enable it.*
 
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
 
-  We name this process as <span id="click">**Model Auto Slim(experimental feature)**</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
+  We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
 
 - Unstructured Pruning
 
-  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. **Users could set "1x1" in  pruning pattern to enable it.**
+  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. *Users could set "1x1" in  pruning pattern to enable it.*
 
 
 <div align=center>
@@ -101,7 +101,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - Multi-head Attention Pruning (Work in progress)
 
-  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in model Auto Slim**. Please refer to [multi-head attention autoslim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
+  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
 
 
 
@@ -123,14 +123,14 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - SNIP
 
-  Gradient based criterion. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.$ $ and $G$ are model's weights and gradients respectively.
+  Gradient based criterion. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.$ $ and $G$ are model's weights and gradients respectively. 
 
   $$Score = |W \times G|$$
 
 - SNIP Momentum
 
-  Gradient based criterion. The algorithm improves original SNIP algorithm and introduces weights' scored maps which update in a momentum way.\
-  In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
+  Gradient based criterion. The algorithm improves original SNIP algorithm and  update the score in a momentum way.\
+  In the following formula, $n$ is the training step and $W$ and $G$ are model's weights and gradients respectively.
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 <div align=center>
@@ -143,7 +143,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 
 
-Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported.
+Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both  **iterative**  and **one shot** pruning schedules are supported.
 
 - Iterative Pruning
 
@@ -151,7 +151,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 - One-shot Pruning
 
-  One-shot pruning means the model is pruned to its target sparsity with one single step. This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning. **Users could set start_step=end_step in pruning configuration to enable this. Also please note if  gradient based criterion is used, start step should be greater than 0.**
+  One-shot pruning means the model is pruned to its target sparsity with one single step. This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning. *Users could set start_step=end_step in pruning configuration to enable this. Also please note if gradient based criterion is used, start step should be greater than 0.*
 
 
 <div align=center>
@@ -165,7 +165,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected . **Please note that progressive pruning only supports NXM and channel-wise pattern currently.**
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected . *Please note that progressive pruning only supports NXM and channel-wise pattern currently.*
 
 - Progressive Pruning
 
