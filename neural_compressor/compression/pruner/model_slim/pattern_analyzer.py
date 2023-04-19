@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+from ..utils import torch
 import re
 from ..utils import logger
 
@@ -24,7 +24,7 @@ JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
-def get_attributes(module: torch.nn.Module, attrs: str):
+def get_attributes(module, attrs: str):
     """Get a multi-level descent module of module.
 
     Args:
@@ -72,7 +72,7 @@ class RecipeSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model: torch.nn.Module, recipe: dict):
+    def __init__(self, model, recipe: dict):
         """Initialize the attributes."""
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
