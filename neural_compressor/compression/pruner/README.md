@@ -73,15 +73,15 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - NxM Pruning
 
-  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  **Users could set "NxM", e.g. "4x1",  pruning pattern to enable it.**
+  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  **Users could set "NxM", e.g. "4x1", in pruning pattern to enable it.**
 
 - N:M Pruning
 
-  N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used. **Users could set a "N:M" pruning pattern , e.g. "2:4", to enable it.**
+  N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used. **Users could set  "N:M" , e.g. "2:4", to enable it.**
 
 - Channel-wise Pruning
 
-  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. **Users could set a "channelx1"( some input channels will be totally pruned) (or "1xchannel") pruning pattern to enable this pattern.**
+  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. **Users could set a "channelx1"( some input channels will be totally pruned) (or "1xchannel")  to enable it.**
 
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
 
@@ -89,7 +89,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - Unstructured Pruning
 
-  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. **Users could set a "1x1" pruning pattern to enable this pattern.**
+  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. **Users could set "1x1" in  pruning pattern to enable it.**
 
 
 <div align=center>
