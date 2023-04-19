@@ -585,7 +585,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 out = self.fc2(out)
                 return out
 
-        input_ids = torch.randn([1, 3])
+        input_ids = torch.randn([2, 3])
         fp32_model = Model()
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
@@ -597,6 +597,9 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 self.batch_size = 1
             def __iter__(self):
                 yield input_ids
+        def calib_func(model):
+            for i in range(10):
+                model(input_ids)
 
         q_model = quantization.fit(
             fp32_model,
@@ -607,6 +610,11 @@ class TestSqLinearOpFuse(unittest.TestCase):
         from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
         assert isinstance(fp32_model.fc1, SQLinearWrapper) # for smoothquant, inplace=True.
+
+        q_model.save('saved_result')
+        from neural_compressor.utils.pytorch import load
+        model_origin = Model()
+        qdq_model = load("./saved_result", model_origin)
 
         fp32_model = Model()
         origin_bias = float(fp32_model.fc1.bias[0])
@@ -622,6 +630,20 @@ class TestSqLinearOpFuse(unittest.TestCase):
             eval_func=lambda x: 0.1,
         )
         self.assertTrue(float(q_model.model.fc1.bias()[0]) != origin_bias)
+
+        # with calib_func
+        conf = PostTrainingQuantConfig(
+                        recipes={"smooth_quant": True,
+                                "smooth_quant_args": {'alpha': 'auto', 'folding': False}}
+                        )
+        fp32_model = Model()
+        q_model = quantization.fit(
+                        fp32_model,
+                        conf,
+                        calib_func=calib_func,
+                        eval_func=lambda x: 0.1,
+                        )
+        self.assertTrue(isinstance(q_model.model.fc1, SQLinearWrapper))
 
     @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
     def test_sq_quant_ipex(self):

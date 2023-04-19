@@ -34,7 +34,7 @@ PT_VERSION = get_torch_version().release
 
 
 class QDQLinear(torch.nn.Module):
-    def __init__(self, module, scale, zero_point, dtype):
+    def __init__(self, module, scale=1, zero_point=0, dtype=torch.quint8):
         super().__init__()
         if PT_VERSION < Version("1.13.0").release:
             import torch.nn.quantized as nnq
@@ -59,9 +59,10 @@ class QDQLinear(torch.nn.Module):
 
 
 class SQLinearWrapper(torch.nn.Module):
-    def __init__(self, module, input_scale, input_minmax, dtype=torch.quint8):
+    def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
         super().__init__()
-        self.input_scale = input_scale
+        self.register_buffer('input_scale', input_scale)
+        self.alpha = alpha
         self.dtype = dtype
         # calculate and only save scale, zero_point to avoid memory usage
         self.scale, self.zero_point = self._calculate_qparams(input_scale, input_minmax, dtype)
@@ -104,3 +105,36 @@ class SQLinearWrapper(torch.nn.Module):
         scale = self.input_scale.view(1, self.input_scale.shape[0])
         with torch.no_grad():
             self.sq_linear.weight *= scale
+
+
+def _wrapper_sq_linear(tmp_model, input_scale_dict):
+    """Help function to generate a fake SmoothQuant model for loading weights"""
+    class SQLinearWrapper(torch.nn.Module):
+        def __init__(self, module, input_scale):
+            super().__init__()
+            self.register_buffer('input_scale', input_scale)
+            self.add_module('sq_linear', module)
+
+        def forward(self, X):
+            X = torch.mul(X, self.input_scale)
+            X = self.sq_linear(X)
+            return X
+
+    module_name_list = input_scale_dict.keys()
+    from .smooth_quant import get_module, set_module
+    for name in module_name_list:
+        module = get_module(tmp_model, name)
+        input_scale = input_scale_dict[name]
+        new_module = SQLinearWrapper(module, input_scale)
+        set_module(tmp_model, name, new_module)
+    return tmp_model
+
+
+def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
+    """Help function to generate a fake QDQ model for loading weights"""
+    from .smooth_quant import get_module, set_module
+    for name in module_name_list:
+        module = get_module(tmp_model, name)
+        new_module = QDQLinear(module)
+        set_module(tmp_model, name, new_module)
+    return tmp_model
