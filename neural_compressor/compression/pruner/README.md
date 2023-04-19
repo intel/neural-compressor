@@ -101,7 +101,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - Multi-head Attention Pruning (Work in progress)
 
-  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
+  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in Model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
 
 
 
@@ -119,11 +119,11 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - Gradient
 
-   Gradient based criterion. The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
+  Gradient based criterion. The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
 
 - SNIP
 
-  Gradient based criterion. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.$ $ and $G$ are model's weights and gradients respectively. 
+  Gradient based criterion. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details. $W$ and $G$ are model's weights and gradients respectively. 
 
   $$Score = |W \times G|$$
 
@@ -136,27 +136,6 @@ Pruning Criteria determines how should the weights of a neural network are score
 <div align=center>
 <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_criteria.png">
     <img src="../../../docs/source/imgs/pruning/pruning_criteria.png" width=340 height=170 alt="Pruning criteria">
-</a>
-</div>
-
-### Pruning Schedules
-
-
-
-Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both  **iterative**  and **one shot** pruning schedules are supported.
-
-- Iterative Pruning
-
-  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
-
-- One-shot Pruning
-
-  One-shot pruning means the model is pruned to its target sparsity with one single step. This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning. *Users could set start_step=end_step in pruning configuration to enable this. Also please note if gradient based criterion is used, start step should be greater than 0.*
-
-
-<div align=center>
-<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
-    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -178,13 +157,38 @@ Pruning type defines how the masks are generated and applied to a neural network
       </a>
   </div>
   &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
-  &emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+  &emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pruning criterion.
 
   (b) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.
 
 - Pattern_lock Pruning
 
   Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
+
+
+
+### Pruning Schedules
+
+
+
+Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both  **iterative**  and **one shot** pruning schedules are supported.
+
+- Iterative Pruning
+
+  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
+  
+  
+
+- One-shot Pruning
+
+  One-shot pruning means the model is pruned to its target sparsity with one single step. This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning. *Users could set start_step=end_step in pruning configuration to enable this. Also please note if gradient based criterion is used, start step should be greater than 0.*
+
+
+<div align=center>
+<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
+    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
+</a>
+</div>
 
 
 
