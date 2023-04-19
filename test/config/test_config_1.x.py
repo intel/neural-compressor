@@ -1,4 +1,4 @@
-"""Tests for config file"""
+"""Tests for 1.x config file"""
 import unittest
 import os
 from neural_compressor.conf import config as conf
