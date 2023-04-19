@@ -123,11 +123,13 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - SNIP
 
-  The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.
+  Gradient based criterion. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.$ $ and $G$ are model's weights and gradients respectively.
+
+  $$Score = |W \times G|$$
 
 - SNIP Momentum
 
-  The algorithm improves original SNIP algorithm and introduces weights' scored maps which update in a momentum way.\
+  Gradient based criterion. The algorithm improves original SNIP algorithm and introduces weights' scored maps which update in a momentum way.\
   In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
@@ -149,7 +151,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 - One-shot Pruning
 
-  One-shot pruning means the model is pruned to its target sparsity with one single step(which means pruning start_step = end_step). This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning.
+  One-shot pruning means the model is pruned to its target sparsity with one single step. This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning. **Users could set start_step=end_step in pruning configuration to enable this. Also please note if  gradient based criterion is used, start step should be greater than 0.**
 
 
 <div align=center>
