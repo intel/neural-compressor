@@ -1340,7 +1340,7 @@ class TensorFlowAdaptor(Adaptor):
             for conv_node in quantize_node_outputs:
                 assert 'Conv2D' in conv_node.op, 'only support QuantizeV2 to Conv2D'
 
-                GraphRewriterHelper.set_attr_int_list(conv_node,
+                GraphRewriter_int_list(conv_node,
                                                       "padding_list", paddings_tensor)
             graph_def.node.remove(quantize_node_input)
 
@@ -1687,7 +1687,7 @@ class TensorFlowAdaptor(Adaptor):
         return predictions
 
     def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
-                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
+                     percentile=99.999, op_types=['MatMul'], scales_per_op=True):
         """Convert the model by smooth quant.
 
         Args:
@@ -1717,16 +1717,18 @@ class TensorFlowAdaptor(Adaptor):
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
         calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile, black_nodes)
-        max_vals_per_channel, shape_infos = calibration()
+        max_vals_per_channel, shape_infos, sq_node_names = calibration()
 
         # Get weight tensors and weight nodes based on the input tensor
         from neural_compressor.adaptor.tf_utils.util import get_weight_from_input_tensor
         sq_weight_tensors, sq_weights_nodes = get_weight_from_input_tensor(
             model, max_vals_per_channel.keys(), op_types)
 
-        # Get smooth scales and ajust weights per op
-
-        # Get smooth scales and ajust weights per input
+        from .tf_utils.smooth_quant_scaler import SmoothQuantScaler
+        scaler = SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
+        # Get smooth scales and adjust weights per op
+        # Get smooth scales and adjust weights per input
+        model = scaler.transform(max_vals_per_channel, shape_infos, sq_weight_tensors, sq_weights_nodes, sq_node_names)
 
         self.smooth_quant_model = model
         return self.smooth_quant_model
@@ -1736,7 +1738,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     """Tensorflow ITEX Adaptor Class."""
 
     def __init__(self, framework_specific_info):
-        """Initilization.
+        """Initialization.
 
         Args:
             framework_specific_info: framework specific information.
@@ -1840,7 +1842,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
 class TensorflowQuery(QueryBackendCapability):
     """Tensorflow Query Capability Class."""
     def __init__(self, local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static'):
-        """Initilization.
+        """Initialization.
 
         Args:
             local_config_file: local configuration file name.

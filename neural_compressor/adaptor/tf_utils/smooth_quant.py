@@ -22,6 +22,7 @@ class TFSmoothQuant:
         pass
     
     def smooth_transform(self, alpha=0.5, calib_iter=100):
+        breakpoint()
         """calib to get max per channel => calculate the smooth scale => transform the w/a with the smooth scale"""
         input_maxes_per_channel = self._smooth_calibrate(calib_iter=calib_iter)
         self._adjust_parameters(input_maxes_per_channel)

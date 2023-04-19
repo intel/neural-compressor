@@ -44,13 +44,14 @@ class SmoothQuantCalibration:
         """Initializes a SmoothQuantCalibration object."""
         self.model = model
         self.dataloader = dataloader
-        # self.iterations = iterations
-        self.iterations = 3
+        self.iterations = iterations
+        # self.iterations = 3
         self.op_types = op_types
         self.percentile = percentile
         self.black_nodes = black_nodes
         self._sq_input_node_names = []
         self._sq_output_tensor_dict = {}
+        self._sq_node_names = {}    # mapping from input node name to concrete output node name
 
     def _inference_for_calibration(self, model):
         """Run the calibration on the input graph.
@@ -155,6 +156,10 @@ class SmoothQuantCalibration:
             if node.op not in self.op_types or node.name in self.black_nodes:
                 continue
             self._sq_input_node_names.append(node.input[0])
+            if node.input[0] not in self._sq_node_names:
+                self._sq_node_names[node.input[0]] = [node.name]
+            else:
+                self._sq_node_names[node.input[0]].append(node.name)
 
         self._inference_for_calibration(self.model)
 
@@ -169,12 +174,13 @@ class SmoothQuantCalibration:
             The max values per input channel
         """
         permute_datas = []
-        for data in tensor_data:
+        for data in tensor_data:    # iteration_num * (N, H, W, C)
             if len(data.shape) == 3:  # TODO  mammul batchsize*seq*inchannel, 
                 tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
                 permute_datas.append(tensor)
             elif len(data.shape) == 4: # conv2d: NHWC--->NCHW
-                tensor = np.transpose(data, [0, 3, 1, 2])
+                # tensor = np.transpose(data, [0, 3, 1, 2])
+                tensor = data
                 tensor = np.abs(np.reshape(tensor, (-1, tensor.shape[-1])))
                 permute_datas.append(tensor)
             elif len(data.shape) == 2:
@@ -183,7 +189,14 @@ class SmoothQuantCalibration:
                 assert False, "not supported"
         permute_datas = np.stack(permute_datas, axis=0)
         permute_datas = permute_datas.reshape(-1, permute_datas.shape[-1])
-        max_per_channels = np.percentile(permute_datas, percentile, axis=0)
+        ########dump the first activation value
+        # try:
+        #     np.percentile(permute_datas, percentile, axis=0)
+        # except FloatingPointError:
+        #     indexes = [i for i,e in enumerate(np.percentile(permute_datas, percentile, axis=0)) if np.isnan(e)][0]
+        #     np.seterr(all='warning')
+        # max_per_channels = np.percentile(permute_datas, percentile, axis=0)
+        max_per_channels = np.max(permute_datas, axis=0)
         max_per_channels = max_per_channels.astype(np.single)
         return max_per_channels
 
@@ -203,5 +216,5 @@ class SmoothQuantCalibration:
                 self._sq_output_tensor_dict[key], percentile=self.percentile)
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = self._sq_output_tensor_dict[key][0].shape
-        return max_vals_per_channel, shape_infos
+        return max_vals_per_channel, shape_infos, self._sq_node_names
 
