@@ -43,6 +43,13 @@ def calib_func(model):
         output = model(input)
 
 
+class Dataloader:
+    def __init__(self) -> None:
+        self.batch_size=1
+    def __iter__(self):
+        yield torch.randn(1, 3, 224, 224)
+
+
 @unittest.skipIf(PT_VERSION >= Version("1.12.0").release or PT_VERSION < Version("1.10.0").release,
                  "Please use Intel extension for Pytorch version 1.10 or 1.11")
 class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
@@ -163,6 +170,39 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         dataloader = torch.utils.data.DataLoader(dataset)
         quantizer.calib_dataloader = dataloader
         nc_model = quantizer.fit()
+
+    def test_new_API(self):
+        model = M()
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        op_type_dict = {
+            "add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}},
+            "linear": {
+                "weight": {
+                    "dtype": ["int8"],
+                    "scheme": ["sym"],
+                    "granularity": ["per_channel"],
+                    "algorithm": ["minmax"],
+                },
+                "activation": {
+                    "dtype": ["int8"],
+                    "scheme": ["sym"],
+                    "granularity": ["per_tensor"],
+                    "algorithm": ["kl"],
+                },
+            },
+        }
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            op_type_dict=op_type_dict,
+        )
+        calib_dataloader = Dataloader()
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_dataloader=calib_dataloader,
+        )
+        q_model.save('./saved')
 
 if __name__ == "__main__":
     unittest.main()

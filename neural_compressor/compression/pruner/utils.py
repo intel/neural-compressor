@@ -404,6 +404,18 @@ def process_config(config):
     else:
         assert False, f"not supported type {config}"
 
+def parse_last_linear(model):
+    """Locate the last linear layers of the model.
+    While pruning, the final linear often acts like classifier head, which might cause
+    accuracy drop.
+
+    Args:
+        model: The model to be pruned.
+    """
+    from .model_slim.pattern_analyzer import ClassifierHeadSearcher
+    searcher = ClassifierHeadSearcher(model)
+    layer = searcher.search(return_name = True)
+    return layer
 
 def parse_to_prune(config, model):
     """Keep target pruned layers.
@@ -413,6 +425,11 @@ def parse_to_prune(config, model):
         model: The model to be pruned.
     """
     modules = {}
+    # additional function: exclude last layer (often a classifier head and not suitable to be pruned)
+    classifier_head_name = parse_last_linear(model)
+    if classifier_head_name != None:
+        config["excluded_op_names"].append(classifier_head_name)
+    # locate target layers
     if config["op_names"] == None or config["op_names"] == []:
         config["op_names"] = [".*"]
     for raw in config["op_names"]:
@@ -454,56 +471,3 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
-
-
-def parse_auto_slim_config(model, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
-    """Get model slim pruning configs."""
-    auto_slim_configs = []
-    if ffn2_sparsity > 0 and ffn2_sparsity < 1:
-        auto_slim_configs += generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
-    if mha_sparsity > 0 and mha_sparsity < 1:
-        auto_slim_configs += generate_mha_pruning_config(model, mha_sparsity, **kwargs)
-    return auto_slim_configs
-
-def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
-    """Get consecutive linear layers pruning configs."""
-    from .model_slim.pattern_analyzer import Linear2LinearSearcher
-    searcher = Linear2LinearSearcher(model)
-    layers = searcher.search(return_name = True)
-    # extract the second linear layer
-    ffn_layers = [ffn2_module[-1] for ffn2_module in layers]
-    ffn2_pruning_config = [
-        {
-            "op_names": ffn_layers,
-            "pattern": "channelx1",
-            "target_sparsity": ffn2_sparsity
-        }
-    ]
-    # append kwargs to generated config
-    for item in ffn2_pruning_config:
-        item.update(kwargs)
-    return ffn2_pruning_config
-
-def generate_mha_pruning_config(model, mha_sparsity, **kwargs):
-    """Get multi-head attention layers pruning configs."""
-    from .model_slim.pattern_analyzer import SelfMHASearcher
-    searcher = SelfMHASearcher(model)
-    qkv_pattern, ffn_pattern = searcher.get_head_pattern()
-    qkv_layers, ffn_layers = searcher.search()
-    mha_pruning_config = [
-        {
-            "op_names": qkv_layers,
-            "pattern": qkv_pattern,
-            "target_sparsity": mha_sparsity,
-        },
-        {
-            "op_names": ffn_layers,
-            "pattern": ffn_pattern,
-            "target_sparsity": mha_sparsity,
-        }
-    ]
-    # append kwargs to generated config
-    for item in mha_pruning_config:
-        item.update(kwargs)
-    return mha_pruning_config
-
