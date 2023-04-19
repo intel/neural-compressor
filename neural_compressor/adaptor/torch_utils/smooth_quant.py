@@ -175,7 +175,7 @@ class TorchSmoothQuant:
     to recover the weights if needed
     """
 
-    def __init__(self, model, dataloader, traced_model=None):
+    def __init__(self, model, dataloader, q_func=None, traced_model=None):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
@@ -188,6 +188,7 @@ class TorchSmoothQuant:
         self.device = device
         self.dtype = dtype
         self.dataloader = dataloader
+        self.q_func = q_func
         self.input_values = {}
         self.output_values = {}
         self.input_maxes = {}
@@ -324,7 +325,11 @@ class TorchSmoothQuant:
         :param calib_iter: Sample size for calibration
         :return:
         """
-        model_forward(self.model, self.dataloader, calib_iter, self.device)
+        if self.q_func:
+            self.q_func(self.model)
+        else:
+            assert self.dataloader, "Please set dataloader for calibration."
+            model_forward(self.model, self.dataloader, calib_iter, self.device)
         ##stack
         for key in self.input_maxes.keys():
             max_val = self.input_maxes[key]
