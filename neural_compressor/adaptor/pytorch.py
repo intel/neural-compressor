@@ -2880,8 +2880,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         """
         
         # group ops by postion for transform-based model
-        from .torch_utils.block import get_blocks
-        ffn_blocks, attention_block = get_blocks(model)
+        from .torch_utils.block_detector import TransformerModelBlockDetector
+        detector = TransformerModelBlockDetector(model)
+        detect_result = detector.detect_block()
+        attention_block = detect_result.get("attention_blocks", None)
+        ffn_blocks = detect_result.get("ffn_blocks", None) 
         logger.info(f"Attention Blocks: {len(attention_block)}")
         logger.info(f"FFN Blocks: {len(ffn_blocks)}")
         if not os.path.exists(self.ipex_config_path):
@@ -3774,8 +3777,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        from .torch_utils.block import get_blocks
-        ffn_blocks, attention_block = get_blocks(model)
+        from .torch_utils.block_detector import TransformerModelBlockDetector
+        detector = TransformerModelBlockDetector(model)
+        detect_result = detector.detect_block()
+        attention_block = detect_result.get("attention_blocks", None)
+        ffn_blocks = detect_result.get("ffn_blocks", None) 
         logger.info(f"Attention Blocks: {len(attention_block)}")
         logger.info(f"FFN Blocks: {len(ffn_blocks)}")
         module_dict = dict(model.named_modules())
@@ -3796,14 +3802,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
         #TODO move it to utility
-        block_info = [[(name, self._get_op_type(module_dict[op_name])) for name in block] for block in ffn_blocks]
+        block_info = [[(name, self._get_op_type(name, quantizable_ops)) for name in block] for block in ffn_blocks]
         self.block_info = block_info
         
-    def _get_op_type(self, child):
-        if str(child.__class__.__name__) in unify_op_type_mapping:
-            return unify_op_type_mapping[str(child.__class__.__name__)]
-        else:
-            return str(child.__class__.__name__)
+    def _get_op_type(self, op_name, quantizable_ops):
+        for pair in quantizable_ops:
+            if pair[0] == op_name:
+                return pair[1]
+        return None
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.

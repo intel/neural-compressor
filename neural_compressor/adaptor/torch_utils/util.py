@@ -954,6 +954,7 @@ def calculate_quant_min_max(unsigned, num_bits):
     
     
 def search_blocks_for_ipex(map_op_name_to_fqn):
+    # TODO remove it before merge
     revert_map = {v:k for k, v in map_op_name_to_fqn.items()}
     print(map_op_name_to_fqn)
     #map_op_name_to_fqn
@@ -998,3 +999,27 @@ def search_blocks_for_ipex(map_op_name_to_fqn):
     print("-"*10)
     print(ffn_blocks_info)
     return att_blocks_info, ffn_blocks_info
+
+
+def get_depth(d) -> int:
+    """Query the depth of the dict."""
+    if isinstance(d, dict):
+        return 1 + max(get_depth(v) for v in d.values())
+    return 0
+
+def get_dict_at_depth(d, target_depth, result, depth=0):
+    """Get all sub-dicts that are at a specified depth in a nested dict."""
+    if depth == target_depth:
+        result.append(d)
+        return
+    elif depth < target_depth and isinstance(d, dict):
+        for k, v in d.items():
+            get_dict_at_depth(v, target_depth, result, depth=depth+1)
+
+def get_element_under_depth(d, ops_lst):
+    """Get all values in a nested dict."""
+    if isinstance(d, dict):
+        for k, v in d.items():
+            get_element_under_depth(v, ops_lst)
+    else:
+        ops_lst.append(d)
