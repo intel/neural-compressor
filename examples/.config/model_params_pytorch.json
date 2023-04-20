@@ -339,7 +339,7 @@
        "new_benchmark": false
     },
     "whisper_large":{
-       "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_static/fx",
+       "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_dynamic/fx",
        "dataset_location": "",
        "input_model": "",
        "main_script": "run_whisper_large.py",

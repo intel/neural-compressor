@@ -65,10 +65,10 @@ if args.tune:
     op_type_dict = {
             "Embedding": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
             }
-    conf = PostTrainingQuantConfig(approach="static", op_type_dict=op_type_dict)
+    conf = PostTrainingQuantConfig(approach="dynamic", op_type_dict=op_type_dict)
     q_model = quantization.fit(model,
                         conf=conf,
-                        calib_func=calib_func
+                        calib_func=calib_func,
                         )
     q_model.save(args.output_dir)
     exit(0)
