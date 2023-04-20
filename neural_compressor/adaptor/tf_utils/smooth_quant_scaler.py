@@ -15,9 +15,12 @@ class SmoothQuantScaler:
         
     def _adjust_activation(self, scale, input_node_name, output_node_name, w_i):
         """Insert the Mul node after the activation before the weight node
-        
+
         Args:
-            w_i: distinguish between different output weight node on different branches
+            scale: smooth scale with the shape (ic,)
+            input_node_name: the parent input node
+            output_node_name: the concrete output weight node
+            w_i: distinguish between different output weight nodes on different branches when naming
         """
         from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
         node_suffix = str(w_i)
@@ -36,26 +39,29 @@ class SmoothQuantScaler:
         # print(self.model.graph_def == g.dump_graph())
 
     def _adjust_weight(self, scale, weight_node, original_weight):
-        original_shape = original_weight.shape
-        if len(original_shape) == 4:
-            fh, fw, ic, oc = original_shape
-            # TODO Check ? weight is the third dimension!!!
-            # should not use transpose here !!!!!!
-            # should use reshape here
-            # W = np.transpose(original_weight, [0, 1, 3, 2]) # put channel to last dimension
-            W = original_weight.reshape(fh,fw,oc,ic)
-            # breakpoint()
-            # W = np.transpose(original_weight, [0, 3, 1, 2])
-            # W = np.reshape(W, (-1, W.shape[-1]))
-            W *= scale
-            W = np.reshape(W, original_shape)
+        """In-place adjust weight by scale.
 
-            weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
-        elif len(original_shape) == 2:
-            W = original_weight
-            W = np.reshape(W, (original_shape[1], original_shape[0]))
+        Args:
+            scale: smooth scale with the shape (ic,)
+            weight_node: reference to the original const weight node
+            original_weight: numpy value of the original const weight node
+        """
+        # scale: (ic,)
+        original_shape = original_weight.shape
+        if len(original_shape) == 4:    # (fh, hw, ic, oc)
+            # fh, fw, ic, oc = original_shape
+            # TODO Check ? weight is the third dimension!!!
+            W = np.transpose(original_weight, [0, 1, 3, 2]) # put input channel to last dimension
+            # W = original_weight.reshape(fh,fw,oc,ic)
             W *= scale
-            W = np.reshape(W, original_shape)
+            # W = np.reshape(W, original_shape)
+            W = np.transpose(W, [0, 1, 3, 2])   # put input channel back
+            weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
+        elif len(original_shape) == 2:  # (ic, oc) if transpose_a == transpose_b == false
+            # W = np.reshape(W, (original_shape[1], original_shape[0]))
+            W = np.transpose(original_weight, [1, 0])
+            W *= scale
+            W = np.transpose(W, [1, 0])
             weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
 
     def transform(self, max_vals_per_channel, shape_infos, sq_weight_tensors, sq_weights_nodes, sq_node_names):
@@ -65,6 +71,9 @@ class SmoothQuantScaler:
             # adjust activation
             # adjust weight
             for idx, input_node_name in enumerate(max_vals_per_channel):
+                # if idx!=0 and input_node_name!='resnet_model/Squeeze':
+                #     continue
+                # breakpoint()
                 A_max_per_in_channel = max_vals_per_channel[input_node_name]
                 W_lst = sq_weight_tensors[input_node_name]
                 W_const_node_lst = sq_weights_nodes[input_node_name]  # Use the const nodes before to get weight values
@@ -74,13 +83,13 @@ class SmoothQuantScaler:
                         # https://www.tensorflow.org/api_docs/python/tf/nn/conv2d
                         # weight: [filter_height, filter_width, in_channels, out_channels]
                         # activation: NHWC, also batch_shape + [in_height, in_width, in_channels]
-                        tensor = np.transpose(W, [0, 1, 3, 2])
+                        tensor = np.abs(np.transpose(W, [0, 1, 3, 2]))
                         # reduce weight max to (in_channel, ), aligned with activation max
                         # tensor = W
                         W_max_per_in_channel = np.max(np.reshape(tensor, (-1, tensor.shape[-1])), axis=0)
                     elif len(W.shape) == 2: # matmul
                         # reduce weight max to (in_channel, ), aligned with activation max
-                        tensor = W
+                        tensor = np.abs(W)
                         # W_max_per_in_channel = np.max(np.reshape(tensor, (-1, tensor.shape[-1])), axis=0)
                         W_max_per_in_channel = np.max(W, axis=1)
                     else:
@@ -88,7 +97,7 @@ class SmoothQuantScaler:
                     # breakpoint()
                     scale = np.power(A_max_per_in_channel, self.alpha) / np.power(W_max_per_in_channel, (1-self.alpha))
                     # clip the scales that are too small
-                    scale = tf.clip_by_value(scale, clip_value_min=1e-5, clip_value_max=float("inf"))
+                    scale = tf.clip_by_value(scale, clip_value_min=1e-2, clip_value_max=1e8)
 
                     self._adjust_weight(scale, W_const_node_lst[w_i], W)
                     self._adjust_activation(1 / scale, input_node_name, W_node_lst[w_i], w_i)
@@ -99,12 +108,12 @@ class SmoothQuantScaler:
                     # print("scale: p scale")
                     # breakpoint()
                     # # return self.model
-                # if idx == 0:
+                # if idx == 3:
                 #     tf.io.gfile.GFile('i_middle_1_with_branch_check.pb', 'wb').write(self.model.graph_def.SerializeToString())
-                    # tf.io.gfile.GFile('i_middle_0_with_branch_check.pb', 'wb').write(self.model.graph_def.SerializeToString())
+                    # tf.io.gfile.GFile('j_middle_0_mm.pb', 'wb').write(self.model.graph_def.SerializeToString())
                     # return self.model
         else:
             pass
         # breakpoint()
-        tf.io.gfile.GFile('j_new_only_matmul.pb', 'wb').write(self.model.graph_def.SerializeToString())
+        tf.io.gfile.GFile('j_new.pb', 'wb').write(self.model.graph_def.SerializeToString())
         return self.model

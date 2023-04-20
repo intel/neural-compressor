@@ -175,15 +175,15 @@ class SmoothQuantCalibration:
         """
         permute_datas = []
         for data in tensor_data:    # iteration_num * (N, H, W, C)
-            if len(data.shape) == 3:  # TODO  mammul batchsize*seq*inchannel, 
+            if len(data.shape) == 3:  # TODO  matmul batchsize*seq*inchannel,
                 tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
                 permute_datas.append(tensor)
-            elif len(data.shape) == 4: # conv2d: NHWC--->NCHW
+            elif len(data.shape) == 4: # already NHWC
                 # tensor = np.transpose(data, [0, 3, 1, 2])
                 tensor = data
                 tensor = np.abs(np.reshape(tensor, (-1, tensor.shape[-1])))
                 permute_datas.append(tensor)
-            elif len(data.shape) == 2:
+            elif len(data.shape) == 2:  # (?, ic)
                 permute_datas.append(np.abs(data))
             else:
                 assert False, "not supported"
@@ -195,8 +195,8 @@ class SmoothQuantCalibration:
         # except FloatingPointError:
         #     indexes = [i for i,e in enumerate(np.percentile(permute_datas, percentile, axis=0)) if np.isnan(e)][0]
         #     np.seterr(all='warning')
-        # max_per_channels = np.percentile(permute_datas, percentile, axis=0)
-        max_per_channels = np.max(permute_datas, axis=0)
+        max_per_channels = np.percentile(permute_datas, percentile, axis=0)
+        # max_per_channels = np.max(permute_datas, axis=0)
         max_per_channels = max_per_channels.astype(np.single)
         return max_per_channels
 

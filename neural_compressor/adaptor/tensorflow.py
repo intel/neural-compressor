@@ -1687,7 +1687,7 @@ class TensorFlowAdaptor(Adaptor):
         return predictions
 
     def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
-                     percentile=99.999, op_types=['MatMul'], scales_per_op=True):
+                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
         """Convert the model by smooth quant.
 
         Args:
