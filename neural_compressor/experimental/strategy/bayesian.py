@@ -17,20 +17,17 @@
 
 """The Bayesian tuning strategy."""
 
-import copy
 import warnings
 import numpy as np
 from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 
-from collections import OrderedDict
 from copy import deepcopy
 
 from ...utils import logger
 from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_sampler import OpWiseTuningSampler
-from .utils.tuning_structs import OpTuningConfig
 
 
 @strategy_registry

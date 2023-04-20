@@ -289,7 +289,7 @@ class TestQuantization(unittest.TestCase):
         self.assertNotEqual(output_graph, None)
 
     def test_bayesian_opt_class(self):
-        from neural_compressor.strategy.bayesian import BayesianOptimization
+        from neural_compressor.experimental.strategy.bayesian import BayesianOptimization
         pbounds = {}
         pbounds['x1'] = (0, 1)
         pbounds['x2'] = (0, 1)

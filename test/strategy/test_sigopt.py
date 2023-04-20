@@ -44,7 +44,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-@unittest.skipIf(CONDITION , "missing the env variables 'SIGOPT_API_TOKEN' or 'SIGOPT_PROJECT_ID'")
+
 class TestSigoptTuningStrategy(unittest.TestCase):
 
     @classmethod
@@ -56,8 +56,33 @@ class TestSigoptTuningStrategy(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree('saved', ignore_errors=True)
-
+        
+    @unittest.skipIf(CONDITION , "missing the env variables 'SIGOPT_API_TOKEN' or 'SIGOPT_PROJECT_ID'")
     def test_run_sigopt_one_trial_new_api(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        
+        # tuning and accuracy criterion
+        accuracy_criterion = AccuracyCriterion(criterion='relative')
+        strategy_kwargs = {'sigopt_api_token': 'sigopt_api_token_test', 
+                           'sigopt_project_id': 'sigopt_project_id_test',
+                           'sigopt_experiment_name': 'nc-tune'}
+        tuning_criterion = TuningCriterion(strategy='sigopt', strategy_kwargs=strategy_kwargs, max_trials=3)
+        conf = PostTrainingQuantConfig(quant_level=1,
+                                       approach="static",
+                                       tuning_criterion=tuning_criterion,
+                                       accuracy_criterion=accuracy_criterion)
+        self.assertEqual(conf.tuning_criterion.strategy_kwargs, strategy_kwargs)
+        def fake_eval(model):
+            return 1
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
+        
+    def test_run_sigopt_one_trial_fake_token(self):
         from neural_compressor.quantization import fit
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
         from neural_compressor.data import Datasets, DATALOADERS

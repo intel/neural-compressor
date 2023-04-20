@@ -15,12 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The exhaustive tuning strategy."""
-from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
-
-from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .utils.tuning_structs import OpTuningConfig
-from ...utils import logger
+from .utils.tuning_sampler import OpWiseTuningSampler
 
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):

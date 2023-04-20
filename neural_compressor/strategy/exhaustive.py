@@ -15,12 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The exhaustive tuning strategy."""
-from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 
-from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .utils.tuning_structs import OpTuningConfig
-from ..utils import logger
+from .utils.tuning_sampler import OpWiseTuningSampler
 
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):
@@ -46,4 +43,3 @@ class ExhaustiveTuneStrategy(TuneStrategy):
             for op_tuning_cfg in op_wise_tuning_sampler:
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
-        return
