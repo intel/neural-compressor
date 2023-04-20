@@ -188,13 +188,6 @@ class TuningSpace:
                 else:
                     self.quant_mode_wise_items[q_option.name].append(op_item)
 
-    def _create_tuning_item(self, tuning_items: Dict, attr_name: str, quant_mode_item: TuningItem):
-        for tuning_item_name, options in tuning_items.items():
-            if tuning_item_name not in ['dtype', 'quant_mode']:
-                name = (attr_name, tuning_item_name)
-                tuning_item = TuningItem(name=name, options=options, item_type=name)
-                quant_mode_item.append(tuning_item)
-
     def _merge_op_cfg(self, cur_op_cap, op_user_cfg, fw_op_cap):
         """Merge the op cfg with user cfg.
         
@@ -641,27 +634,7 @@ class TuningSpace:
         att_lst = ['activation', 'weight'] if has_weight else ['activation']
         for att in att_lst:
             result[att] = self.get_default_full_path(op_name_type, full_path[att])
-        return result        
-        
-def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
-    """Get the op mode according to the query order."""
-    quant_mode_wise_items = OrderedDict() # mode, op_item_lst
-    pre_items = set()
-    # Collect op items supported the specified mode.
-    for quant_mode in query_order:
-        items = tuning_space.query_items_by_quant_mode(quant_mode)
-        filtered_items = list(filter(lambda item: item not in pre_items, items))
-        pre_items = pre_items.union(set(items))
-        quant_mode_wise_items[quant_mode] = filtered_items
-
-    def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
-        for item in items_lst:
-            op_item_dtype_dict[item.name] = target_quant_mode
-    op_item_dtype_dict = OrderedDict()
-    for quant_mode, quant_mode_items in quant_mode_wise_items.items():
-        initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-    
-    return op_item_dtype_dict
+        return result
 
 def pattern_to_internal(pattern, default_dtype='int8'):
     """Convert pattern to internal format.

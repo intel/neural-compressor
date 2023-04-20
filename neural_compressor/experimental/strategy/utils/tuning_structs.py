@@ -60,7 +60,7 @@ class OpTuningConfig:
         #             f"with quant_mode {self.op_quant_mode}")
         
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """Display the tuning config as string.
 
         Returns:

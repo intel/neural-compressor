@@ -7,7 +7,6 @@ from neural_compressor.strategy.utils.tuning_sampler import (
     )
 from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
 from neural_compressor.strategy.utils.tuning_space import TuningSpace
-from neural_compressor.utils import logger
 from collections import OrderedDict
 from copy import deepcopy
 import unittest
@@ -176,7 +175,7 @@ class TestTuningSampler(unittest.TestCase):
             if item.item_type == 'op':
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
-                logger.debug(initial_op_tuning_cfg[item.name])
+                print(initial_op_tuning_cfg[item.name])
         quant_mode_wise_items = OrderedDict()
         from neural_compressor.strategy.utils.constant import auto_query_order as query_order
         pre_items = set()
@@ -265,7 +264,7 @@ class TestTuningSampler(unittest.TestCase):
             if item.item_type == 'op':
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
-                logger.debug(initial_op_tuning_cfg[item.name])
+                print(initial_op_tuning_cfg[item.name])
         quant_mode_wise_items = OrderedDict()
         from neural_compressor.strategy.utils.constant import auto_query_order as query_order
         pre_items = set()

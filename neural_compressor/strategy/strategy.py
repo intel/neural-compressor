@@ -496,14 +496,6 @@ class TuneStrategy(object):
                 .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
-
-    def _open_all_recipes(self):
-        """Open all tunable recipes."""
-        opened_recipes = {}
-        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
-            opened_recipes[recipe_name] = recipe_val_lst[-1]
-        logger.info("Opened all recipes.")
-        logger.info(opened_recipes)
     
     def _fallback_ops(self, tune_cfg, recipe_op_lst, tuning_space):
         """Fallback ops in recipe op list."""
@@ -1176,33 +1168,6 @@ class TuneStrategy(object):
         with open(self.deploy_path, 'w+') as f:
             yaml.dump(self.deploy_cfg, f)
             logger.info("Save deploy yaml to {}".format(self.deploy_path))
-
-    def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
-        """Get the common parts from the model_wise_cfg.
-        
-            This function is focused on composing the configuration that consists of
-            model-wise field and op-wise unique field data.
-
-        Args:
-            model_wise_cfg ([DotDict]): The model-wise configuration.
-            op_wise_cfgs ([List]): The list of each op's config in DotDict type.
-
-        Returns:
-            [DotDict]: The combined configration with the op-wise unique field.
-        """
-        model_wise_keys = model_wise_cfg.keys()
-
-        result = op_wise_cfgs[0]
-        for each_op_wise_cfg in op_wise_cfgs:
-            tmp_cfg = {}
-            for k in model_wise_keys:
-                tmp_cfg[k] = each_op_wise_cfg[k]
-
-            if model_wise_cfg == tmp_cfg:
-                result = each_op_wise_cfg
-                break
-
-        return result
 
     @property
     def evaluation_result(self):

@@ -2,6 +2,7 @@
 import numpy as np
 import unittest
 import shutil
+import os
 
 def build_fake_model():
     import tensorflow as tf
@@ -45,10 +46,12 @@ class TestBasicTuningStrategy(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
+        self.workspace = os.path.join(os.getcwd(), 'nc_workspace')
 
     @classmethod
     def tearDownClass(self):
         shutil.rmtree('saved', ignore_errors=True)
+        shutil.rmtree(self.workspace)
         
     def test_run_basic_one_trial_new_api(self):
         from neural_compressor.quantization import fit
@@ -66,7 +69,29 @@ class TestBasicTuningStrategy(unittest.TestCase):
         conf = PostTrainingQuantConfig()
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_func=fake_eval)
         self.assertIsNotNone(q_model)
+
+
+    def test_diagnosis(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
         
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        from neural_compressor.metric import METRICS
+        metrics = METRICS('tensorflow')
+        top1 = metrics['topk']()
+        
+        # tuning and accuracy criterion
+        conf = PostTrainingQuantConfig(diagnosis=True)
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader,\
+            eval_dataloader=dataloader, eval_metric=top1)
+        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/fp32/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/quan/inspect_result.pkl')), True)
+
+        
+
     def test_run_create_eval_from_metric_and_dataloader(self):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
