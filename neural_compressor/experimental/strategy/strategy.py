@@ -340,9 +340,6 @@ class TuneStrategy(object):
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
         self._eval_baseline()
-        logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
-        if self.cfg.tuning.use_distributed_tuning:
-            return self.distributed_traverse()
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
