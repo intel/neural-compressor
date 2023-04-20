@@ -30,6 +30,36 @@ def build_fake_yaml():
         yaml.dump(y,f)
     f.close()
 
+def build_fake_yaml_recipe():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op2_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        quantization:
+            approach:
+                post_training_auto_quant
+        tuning:
+          strategy:
+            name: basic
+          exit_policy:
+            max_trials: 10
+          accuracy_criterion:
+            relative: -0.01
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_recipe.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
 def build_fake_yaml2():
     fake_yaml = '''
         model:
@@ -164,6 +194,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         build_fake_yaml2()
         build_fake_yaml3()
         build_fake_yaml4()
+        build_fake_yaml_recipe()
 
     @classmethod
     def tearDownClass(self):
@@ -171,6 +202,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         os.remove('fake_yaml2.yaml')
         os.remove('fake_yaml3.yaml')
         os.remove('fake_yaml4.yaml')
+        os.remove('fake_yaml_recipe.yaml')
         shutil.rmtree('saved', ignore_errors=True)
 
     def test_run_basic_one_trial(self):
@@ -191,6 +223,16 @@ class TestBasicTuningStrategy(unittest.TestCase):
         from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml2.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.fit()
+        
+    def test_run_basic_recipe(self):
+        from neural_compressor.experimental import Quantization, common
+
+        quantizer = Quantization('fake_yaml_recipe.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)

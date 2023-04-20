@@ -57,11 +57,11 @@ class BasicTuneStrategy(TuneStrategy):
             quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
             quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
             stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
+            op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             # stage 1: yield op_tune_cfg_lst
             op_tuning_cfg_lst_stage_1 = []
-            for op_tuning_cfg in op_wise_tuning_sampler:
+            for op_tuning_cfg in op_type_wise_tuning_sampler:
                 stage1_cnt += 1
                 if early_stop_tuning and stage1_cnt > stage1_max:
                     logger.info("Early stopping the stage 1.")
@@ -233,9 +233,9 @@ class BasicTuneStrategy(TuneStrategy):
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
             stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
-                                                             op_item_dtype_dict, initial_op_tuning_cfg)
-            for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
+            op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],\
+                op_item_dtype_dict, initial_op_tuning_cfg)
+            for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:

@@ -60,9 +60,10 @@ class BasicTuneStrategy(TuneStrategy):
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
             stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
-                                                             op_item_dtype_dict, initial_op_tuning_cfg)
-            for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
+            op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(
+                tuning_space, [], [], op_item_dtype_dict, initial_op_tuning_cfg)
+            for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
+                logger.debug(f"[OP TYPE WISE STAGE], Trial {index + 1}")
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:

@@ -802,9 +802,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_auto_quant(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_auto_quant'
+        conf.quantization.optype_wise ={"Add|MatMul|Conv": {'weight': {'algorithm': ['minmax']}, \
+            'activation': {'algorithm': ['minmax']}}}
         conf.quantization.calibration.sampling_size = 1
         conf.tuning.exit_policy.timeout = 1000000
-        conf.tuning.exit_policy.max_trials = 5
+        conf.tuning.exit_policy.max_trials = 8
         conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
         quantizer = Quantization(conf)
         quantizer.calib_dataloader = self.cv_dataloader
@@ -820,6 +822,21 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.rn50_model
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
+
+    def test_auto_quant_v2(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        tuning_criterion = TuningCriterion(max_trials=8, timeout=10000)
+        accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01)
+        conf = PostTrainingQuantConfig(quant_level=1, approach="auto",
+                                       op_type_dict={"Add|MatMul|Conv": {'weight': {'algorithm': ['minmax']},\
+                                           'activation': {'algorithm': ['minmax']}}},
+                                       tuning_criterion=tuning_criterion, 
+                                       accuracy_criterion=accuracy_criterion)
+        conf.framework = "onnxrt_qlinearops"
+        q_model = fit(model=self.rn50_model, conf=conf, calib_dataloader=self.cv_dataloader, eval_func=lambda model: 1)
+        self.assertIsNotNone(q_model)
+
 
     def test_quantize_data_per_channel(self):
         from neural_compressor.adaptor.ox_utils.util import quantize_data_per_channel

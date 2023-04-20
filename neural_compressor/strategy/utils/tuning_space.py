@@ -227,7 +227,7 @@ class TuningSpace:
         new_op_cap = deepcopy(cur_op_cap)
         for att in ['activation', 'weight']:
             if op_user_cfg.get(att, None) is not None:
-                user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att]['dtype'] is not None else []
+                user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att].get('dtype', None) is not None else []
                 # Merge the precision part.
                 fwk_att_precision_cap = fw_op_cap['precision'].get(att, {})
                 fwk_precision_set = set(fwk_att_precision_cap.keys())
