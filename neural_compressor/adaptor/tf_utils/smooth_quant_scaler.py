@@ -19,7 +19,7 @@ class SmoothQuantScaler:
         Args:
             scale: smooth scale with the shape (ic,)
             input_node_name: the parent input node
-            output_node_name: the concrete output weight node
+            output_node_name: the concrete output weight node name
             w_i: distinguish between different output weight nodes on different branches when naming
         """
         from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
@@ -95,7 +95,12 @@ class SmoothQuantScaler:
                     else:
                         assert False, "not supported"
                     # breakpoint()
-                    scale = np.power(A_max_per_in_channel, self.alpha) / np.power(W_max_per_in_channel, (1-self.alpha))
+                    try:
+                        scale = np.power(A_max_per_in_channel, self.alpha) / np.power(W_max_per_in_channel, (1-self.alpha))
+                    except ValueError as e:
+                        print(e)
+                        print("Skip smoothing the node: {}".format(W_node_lst[w_i]))
+                        continue
                     # clip the scales that are too small
                     scale = tf.clip_by_value(scale, clip_value_min=1e-2, clip_value_max=1e8)
 
