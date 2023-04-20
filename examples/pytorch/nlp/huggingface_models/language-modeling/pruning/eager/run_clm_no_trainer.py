@@ -271,7 +271,7 @@ def parse_args():
     parser.add_argument(
         "--model_type",
         type=str,
-        default=None,
+        default=42,
         help="Model type to use if training from scratch.",
         choices=MODEL_TYPES,
     )
@@ -459,13 +459,12 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    is_pile = bool(args.calibration_dataset_name and "pile" in args.calibration_dataset_name)
     if args.calibration_dataset_name is not None:
         # Downloading and loading a dataset from the hub.i
         raw_datasets = load_dataset(args.calibration_dataset_name, args.dataset_config_name)
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset( #use the_pile's validation set for retraining pruning
-                args.evaluation_dataset_name,
+                args.calibration_dataset_name,
                 args.dataset_config_name,
                 split=f"train[:{args.validation_split_percentage}%]"
             )
@@ -559,10 +558,7 @@ def main():
 
     # Preprocessing the datasets.
     # First we tokenize all the texts.
-    if is_pile:
-        column_names = raw_datasets["validation"].column_names
-    else:
-        column_names = raw_datasets["train"].column_names
+    column_names = raw_datasets["train"].column_names
     text_column_name = "text" if "text" in column_names else column_names[0]
 
     def tokenize_function(examples):
@@ -629,10 +625,7 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc=f"Grouping texts in chunks of {block_size}",
         )
-    if is_pile:
-        train_dataset = lm_datasets["validation"]
-    else:
-        train_dataset = lm_datasets["train"]
+    train_dataset = lm_datasets["train"]
     eval_dataset = lm_datasets["validation"]
 
     # Log a few random samples from the training set:
@@ -765,10 +758,7 @@ def main():
             {
                 "pruning_type": "retrain_free",
                 "pruning_scope": "global",
-                # "op_names": ["fc_out"], #for gptj
-                "op_names": ["down_proj"], #for llama
-                # "op_names": ["wo"], #for t5
-                # "op_names": ["fc2"], #for opt
+                "op_names": ["wo"], #for t5
                 "excluded_op_names": [".attn"],
                 "sparsity_decay_type": "exp",
                 "pattern": "channelx1",
@@ -841,21 +831,22 @@ def main():
                     accelerator.save_state(output_dir)
             if completed_steps >= args.max_pruning_steps:
                 break
-
-        model.eval()
-        if args.evaluation_dataset_name is None:
-            dataset_eval = raw_datasets["validation"]
-        else:
-            dataset_eval = load_dataset( #use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
-                args.evaluation_dataset_name,
-                args.dataset_config_name,
-                split=f"validation",
-            )
-        dataset_eval = dataset_eval.shuffle(seed=42)
-        evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
-        def eval_func(model):
-            acc, avg_latency = evaluator.evaluate(model)
-            return acc, avg_latency
+    compression_manager.callbacks.on_train_end()
+    
+    model.eval()
+    if args.evaluation_dataset_name != None:
+        dataset_eval = load_dataset( # for example:use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
+            args.evaluation_dataset_name,
+            args.dataset_config_name,
+            split=f"validation",
+        )
+    else:      
+        dataset_eval = raw_datasets["validation"]
+    dataset_eval = dataset_eval.shuffle(seed=42)
+    evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
+    def eval_func(model):
+        acc, avg_latency = evaluator.evaluate(model)
+        return acc, avg_latency
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
@@ -863,11 +854,10 @@ def main():
         unwrapped_model.save_pretrained(
             args.output_dir+"/noslim", is_main_process=accelerator.is_main_process, save_function=accelerator.save
         )
-        # accelerator.save_state(args.output_dir+"/noslim")
         if accelerator.is_main_process:
             tokenizer.save_pretrained(args.output_dir+"/noslim")
             if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+                repo.push_to_hub(commit_message="End of pruning", auto_lfs_prune=True)
     
     if not args.auto_slim:
         # only eval
@@ -893,7 +883,6 @@ def main():
         # unwrapped_model.save_pretrained(
         #     args.output_dir+"/slimed", is_main_process=accelerator.is_main_process, save_function=accelerator.save
         # )
-        # accelerator.save_state(args.output_dir+"/slimed")
         model.to('cpu')
         torch.save(model, args.output_dir+"/slimed_model.pt")
         if accelerator.is_main_process:
