@@ -340,7 +340,7 @@
     },
     "whisper_large":{
        "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_dynamic/fx",
-       "dataset_location": "",
+       "dataset_location": "/tf_dataset2/datasets/datasets_cache",
        "input_model": "",
        "main_script": "run_whisper_large.py",
        "batch_size": 1

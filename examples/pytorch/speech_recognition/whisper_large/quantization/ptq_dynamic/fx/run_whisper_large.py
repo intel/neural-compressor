@@ -22,13 +22,15 @@ parser.add_argument('--warmup_iter', default=5, type=int,
                     help='For benchmark measurement only.')
 parser.add_argument('--output_dir', default="saved_results", type=str,
                     help='the folder path to save the results.')
+parser.add_argument('--cache_dir', default=None, type=str,
+                    help='the folder path to save the results.')
 
 args = parser.parse_args()
 model_name = 'openai/whisper-large'
 processor = WhisperProcessor.from_pretrained(model_name)
 model = WhisperForConditionalGeneration.from_pretrained(model_name)
 # dataset
-librispeech_test_clean = load_dataset("librispeech_asr", "clean", split="test")
+librispeech_test_clean = load_dataset("librispeech_asr", "clean", split="test", cache_dir=args.cache_dir)
 
 # metric
 wer = load("wer")

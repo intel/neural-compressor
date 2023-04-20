@@ -19,6 +19,8 @@ pip install -r requirements.txt
 ```
 # Run
 
+`--dataset_location` is used to get local saved huggingface/datasets cache.
+
 ```bash
 bash run_tuning.sh --topology=whisper_large --output_dir=./saved_results
 ```

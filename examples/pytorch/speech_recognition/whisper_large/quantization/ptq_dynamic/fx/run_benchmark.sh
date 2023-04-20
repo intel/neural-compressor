@@ -68,6 +68,7 @@ function run_benchmark {
     python run_whisper_large.py \
             --output_dir ${output_model} \
             --batch_size $batch_size \
+	    --cache_dir ${dataset_location} \
             ${mode_cmd} \
             ${extra_cmd}
 
