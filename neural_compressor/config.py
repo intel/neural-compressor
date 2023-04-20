@@ -1991,8 +1991,9 @@ class MXNet:
         """Set precision."""
         if not isinstance(precisions, list):
             precisions = [precisions]
-        if _check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
-            self._precisions = precisions
+        for pr in precisions:
+            _check_value('precision', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
+        self._precisions = precisions
 
 
 class ONNX(MXNet):

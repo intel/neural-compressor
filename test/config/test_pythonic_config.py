@@ -143,10 +143,14 @@ class TestPythonicConf(unittest.TestCase):
         config.quantization.outputs = ['out']
         config.quantization.approach = 'post_training_dynamic_quant'
         config.quantization.device = 'gpu'
-        config.quantization.op_type_dict = {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}}
+        config.quantization.op_type_dict = {'Conv': {'weight': {'dtype': ['fp32']}
+                                                     , 'activation': {'dtype': ['fp32']}}}
+        config.quantization.op_name_dict = {"layer1.0.conv1": {"activation": {"dtype": ["fp32"]}
+                                                               ,"weight": {"dtype": ["fp32"]}}}
         config.quantization.strategy = 'mse'
         config.quantization.objective = 'accuracy'
         config.quantization.timeout = 100
+        config.quantization.max_trials = 100
         config.quantization.accuracy_criterion.relative = 0.5
         config.quantization.reduce_range = False
         config.quantization.use_bf16 = False
@@ -158,9 +162,12 @@ class TestPythonicConf(unittest.TestCase):
         self.assertEqual(config.quantization.device, 'gpu')
         self.assertEqual(config.quantization.op_type_dict,
             {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
+        self.assertEqual(config.quantization.op_name_dict, 
+                         {"layer1.0.conv1": {"activation": {"dtype": ["fp32"]},"weight": {"dtype": ["fp32"]}}})
         self.assertEqual(config.quantization.strategy, 'mse')
         self.assertEqual(config.quantization.objective, 'accuracy')
         self.assertEqual(config.quantization.timeout, 100)
+        self.assertEqual(config.quantization.max_trials, 100)
         self.assertEqual(config.quantization.accuracy_criterion.relative, 0.5)
         self.assertEqual(config.benchmark.cores_per_instance, 10)
 

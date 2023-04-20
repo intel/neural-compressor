@@ -4,7 +4,7 @@ import os
 from neural_compressor.config import Config as conf
 from neural_compressor.utils.constant import *
 from neural_compressor.config import PostTrainingQuantConfig, BenchmarkConfig, Options
-from neural_compressor.config import MixedPrecisionConfig, DotDict
+from neural_compressor.config import MixedPrecisionConfig, MXNet
 
 
 def helper(content):
@@ -62,6 +62,11 @@ class TestGeneralConf(unittest.TestCase):
         cfg = MixedPrecisionConfig()
         a = conf(mixed_precision=cfg)
         self.assertEqual(a.mixed_precision.precision, ["bf16"])
+
+        cfg = MXNet()
+        cfg.precisions = "bf16"
+        a = conf(mxnet=cfg)
+        self.assertEqual(a.mxnet.precisions, ["bf16"])
 
 
 if __name__ == "__main__":
