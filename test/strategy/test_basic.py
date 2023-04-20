@@ -79,14 +79,11 @@ class TestBasicTuningStrategy(unittest.TestCase):
         # dataset and dataloader
         dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
-        from neural_compressor.metric import METRICS
-        metrics = METRICS('tensorflow')
-        top1 = metrics['topk']()
         
         # tuning and accuracy criterion
         conf = PostTrainingQuantConfig(diagnosis=True)
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader,\
-            eval_dataloader=dataloader, eval_metric=top1)
+                eval_func=lambda model: 1)
         self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/fp32/inspect_result.pkl')), True)
         self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/quan/inspect_result.pkl')), True)
 
