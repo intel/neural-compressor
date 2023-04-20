@@ -256,9 +256,6 @@ def validate(val_loader, model, criterion, args):
         for i, (input, target) in enumerate(val_loader):
             if i >= args.warmup_iter:
                 start = time.time()
-            if args.gpu is not None:
-                input = input.cuda(args.gpu, non_blocking=True)
-                target = target.cuda(args.gpu, non_blocking=True)
 
             # compute output
             output = model(input)
