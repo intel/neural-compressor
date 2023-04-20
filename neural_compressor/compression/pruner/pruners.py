@@ -398,7 +398,7 @@ class PatternLockPruner(BasePruner):
         self.global_step += 1
 
 
-@register_pruner('snip_momentum_block')
+@register_pruner('block_mask')
 class BlockMaskPruner(BasePruner):
     """Pruning Pruner.
 

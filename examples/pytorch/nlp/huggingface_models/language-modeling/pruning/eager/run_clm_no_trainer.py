@@ -465,7 +465,7 @@ def main():
         raw_datasets = load_dataset(args.calibration_dataset_name, args.dataset_config_name)
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset( #use the_pile's validation set for retraining pruning
-                args.Evaluation_dataset_name,
+                args.evaluation_dataset_name,
                 args.dataset_config_name,
                 split=f"train[:{args.validation_split_percentage}%]"
             )
@@ -843,11 +843,11 @@ def main():
                 break
 
         model.eval()
-        if args.Evaluation_dataset_name is None:
+        if args.evaluation_dataset_name is None:
             dataset_eval = raw_datasets["validation"]
         else:
             dataset_eval = load_dataset( #use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
-                args.Evaluation_dataset_name,
+                args.evaluation_dataset_name,
                 args.dataset_config_name,
                 split=f"validation",
             )
