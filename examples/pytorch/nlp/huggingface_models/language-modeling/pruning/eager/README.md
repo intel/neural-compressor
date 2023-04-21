@@ -29,13 +29,22 @@ There are pruning scripts for LLM sparse models (GPT-j, BLOOM, OPT, LLaMA etc). 
 
 
 ### Results
-The retrain_free pruning method is used by default.
-|  Model  | Calibration Dataset | Evaluation Dataset | Sparsity pattern | Element-wise/matmul, Gemm, conv ratio | Dense F1 (mean/max)| Sparse F1 (mean/max)| Relative drop|
-|  :----:  | :----:  | :----: | :----: | :----: |:----: |:----:| :----: |
-| GPT-J | lambada | lambada | channelx1  | 0.1999 | 0.7917 | 0.7907-0.8038 | +1.50% |
-| GPT-j | pile_10k | lambada | channelx1  | 0.0999 | 0.7917 | 0.7872-0.7925 | +0.10% |
-| GPT-j | the_pile | lambada |  channelx1  | 0.0999 | 0.7917 | 0.7839-0.7894 | -0.29% |
 
+The pruning performance of GPT-J was verified on different calibration datasets, the last word accuracy data is selected as the maximum of about 5 rounds.
+| Model | Calibration dataset | Evaluation dataset | Sparsity pattern | Over mlp block sparsity |Element-wise/matmul, Gemm, conv ratio | Dense last word accuracy | Sparse last word accuracy | Relative drop |
+|  :----: | :----: | :----: | :----: | :----: | :----: |:----: |:----:| :----: |
+| GPT-J | lambada | lambada | channelx1  | 0.1999 | 0.1242 | 0.7917 | 0.8038 | +1.50% |
+| GPT-J | pile_10k | lambada | channelx1  | 0.0999 | 0.0643 | 0.7917 | 0.7925 | +0.10% |
+| GPT-J | the_pile | lambada |  channelx1  | 0.0999 | 0.0643 | 0.7917 | 0.7931 | +0.17% |
+
+<br />
+
+The inference performance of the sparse model is verified under different precision on Casual language modeling(CLM) task.
+| Model | Task | Calibration dataset | Evaluation dataset | Precision | Dense accuracy | Sparse accuracy | Relative drop |
+|  :----: | :----: | :----: | :----: | :----: | :----: |:----: |:----:|
+| GPT-J | CLM | pile_10k | lambada_openai | FP32 | 0.6831 | 0.6877 | +0.67% |
+| GPT-J | CLM | pile_10k | lambada_openai | IPEX-BF16 | 0.6792 | 0.6833 | +0.60% |
+| GPT-J | CLM | pile_10k | lambada_openai | Int8 | 0.6718 | 0.6738 | +0.30% |
 
 ## References
 * [A Fast Post-Training Pruning Framework for Transformers](https://arxiv.org/abs/2204.09656)
