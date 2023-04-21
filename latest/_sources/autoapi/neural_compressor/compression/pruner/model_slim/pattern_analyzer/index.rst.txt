@@ -35,7 +35,7 @@ Functions
 
 
 
-.. py:function:: get_attributes(module: torch.nn.Module, attrs: str)
+.. py:function:: get_attributes(module, attrs: str)
 
    Get a multi-level descent module of module.
 
@@ -53,7 +53,7 @@ Functions
    Print the auto slim logs.
 
 
-.. py:class:: RecipeSearcher(model: torch.nn.Module, recipe: dict)
+.. py:class:: RecipeSearcher(model, recipe: dict)
 
 
 
