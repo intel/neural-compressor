@@ -18,7 +18,7 @@ parser.add_argument('--batch_size', default=1, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('--iters', default=0, type=int,
                     help='For accuracy measurement only.')
-parser.add_argument('--warmup_iter', default=5, type=int,
+parser.add_argument('--warmup_iters', default=5, type=int,
                     help='For benchmark measurement only.')
 parser.add_argument('--output_dir', default="saved_results", type=str,
                     help='the folder path to save the results.')
@@ -51,6 +51,7 @@ def eval_func(model):
     wer_result = wer.compute(references=references, predictions=predictions)
     print(f"Result wer: {wer_result * 100}")
     accuracy = 1 - wer_result
+    print("Accuracy: %.5f" % accuracy)
     return accuracy
 
 def calib_func(model):
@@ -99,9 +100,9 @@ if args.benchmark:
             with torch.no_grad():
                 predicted_ids = model.generate(input_features)[0]
             toc = time.time()
-            if i >= args.warmup:
+            if i >= args.warmup_iters:
                 total_time += (toc - tic)
-        latency = total_time / (args.iters - args.warmup)
+        latency = total_time / (args.iters - args.warmup_iters)
         print('Latency: %.3f ms' % (latency * 1000))
         print('Throughput: %.3f images/sec' % (args.batch_size / latency))
         print('Batch size = %d' % args.batch_size)
