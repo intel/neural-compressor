@@ -199,7 +199,7 @@ class BaseCallbacks(object):
             user_model: user are supported to set model from original framework model format
                         (eg, tensorflow frozen_pb or path to a saved model),
                         but not recommended. Best practice is to set from a initialized
-                        neural_compressor.model.Model.
+                        neural_compressor.Model.
                         If tensorflow model is used, model's inputs/outputs will be
                         auto inferenced, but sometimes auto inferenced
                         inputs/outputs will not meet your requests,
@@ -734,8 +734,7 @@ class DistillationCallbacks(BaseCallbacks):
            user_model: user are supported to set model from original framework model format
                        (eg, tensorflow frozen_pb or path to a saved model),
                        but not recommended. Best practice is to set from a initialized
-                       neural_compressor.experimental.common.Model.
-                       If tensorflow model is used, model's inputs/outputs will be
+                       neural_compressor.Model. If tensorflow model is used, model's inputs/outputs will be
                        auto inferenced, but sometimes auto inferenced
                        inputs/outputs will not meet your requests,
                        set them manually in config yaml file.

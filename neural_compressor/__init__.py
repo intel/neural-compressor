@@ -24,3 +24,4 @@ from .config import DistillationConfig, PostTrainingQuantConfig, \
                     WeightPruningConfig, QuantizationAwareTrainingConfig, \
                     MixedPrecisionConfig
 from .contrib import *
+from .model import *
