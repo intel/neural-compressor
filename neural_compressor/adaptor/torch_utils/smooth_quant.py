@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from neural_compressor.utils.utility import LazyImport
-import json
 
+import json
 try:
+    from neural_compressor.utils.utility import LazyImport
     torch = LazyImport('torch')
     from ...utils import logger
 except:
@@ -323,11 +323,11 @@ class TorchSmoothQuant:
         for name in self.hook_layer_names:
             hook_modules_input_output[name] = get_module(self.model, name)
         self._add_observer(hook_modules, hook_modules_input_output, percentile=percentile)
-        self._dump_min_max(percentile, calib_iter=calib_iter)
+        self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
         return self.input_abs_maxes
 
-    def _dump_min_max(self, percentile=100, calib_iter=100):
+    def _dump_min_max(self, calib_iter=100):
         """
         Dump min max per channel information, the min max value will be saved in input_maxes attribute
         :param calibration_method: only support min_max currently
