@@ -475,14 +475,18 @@ def build_conv_model():
         np.random.randint(-1, 2, [5, 3, 3, 3]).astype(np.float32), name='conv2_weight')
     conv2_node = helper.make_node('Conv', ['conv1_output', 'conv2_weight'], ['conv2_output'], name='conv2')
 
+    conv3_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [5, 5, 1, 1]).astype(np.float32), name='conv3_weight')
+    conv3_node = helper.make_node('Conv', ['conv2_output', 'conv3_weight'], ['conv3_output'], name='conv3')
+
     avg_args = {'kernel_shape': [3, 3]}
     avgpool_node = helper.make_node('AveragePool', ['conv1_output'], ['avg_output'], name='AveragePool', **avg_args)
 
-    concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'], 
+    concat_node = helper.make_node('Concat', ['avg_output', 'conv3_output'], 
         ['concat_output'], name='Concat', axis=1)
     output = helper.make_tensor_value_info('concat_output', TensorProto.FLOAT, [1, 8, 220, 220])
-    initializers = [conv1_weight_initializer, conv2_weight_initializer]
-    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node],
+    initializers = [conv1_weight_initializer, conv2_weight_initializer, conv3_weight_initializer]
+    graph = helper.make_graph([conv1_node, conv2_node, conv3_node, concat_node, avgpool_node],
         'test', [input], [output], initializer=initializers)
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
@@ -1076,14 +1080,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
             'smooth_quant_args': {'alpha': 0.5}})
         q_model = quantization.fit(self.conv_model, config,
             calib_dataloader=self.cv_dataloader)
-        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 1)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
 
     def test_smooth_quant_args(self):
         config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
             'smooth_quant_args': {'alpha': 0.6}})
         q_model = quantization.fit(self.conv_model, config,
             calib_dataloader=self.cv_dataloader)
-        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 1)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
 
     def test_multi_metrics(self):
         conf.model.framework = 'onnxrt_qlinearops'
