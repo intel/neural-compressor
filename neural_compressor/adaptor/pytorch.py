@@ -2482,6 +2482,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and self.version.release >= Version("2.1").release \
+          and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
             return self.qdq_quantize(model, tune_cfg, dataloader, q_func)
 
@@ -2669,8 +2670,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                             qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                             weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                         qscheme=torch.per_channel_symmetric))
-
-                        q_model = ipex.quantization.prepare(model._model, static_qconfig, \
+                        q_model = self.tmp_model._model
+                        q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=False)
                         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
                         if q_func is not None:
@@ -2926,19 +2927,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                qscheme=torch.per_channel_symmetric))
                     # For smoothquant optimized model
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:
-                        static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-                        if not hasattr(tmp_model, '_smoothquant_optimized') \
-                          or not tmp_model._smoothquant_optimized:
-                            # to make sure ipex_config.json is based on pre-optimized model
-                            tmp_model = self._wrapper_sq_linear(tmp_model)
-                    else:
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                    qscheme=torch.per_channel_symmetric))
+                        smooth_quant_args = self.recipes.get('smooth_quant_args', {})
+                        if 'folding' in smooth_quant_args and not smooth_quant_args['folding']:
+                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+                            if not hasattr(tmp_model, '_smoothquant_optimized') \
+                              or not tmp_model._smoothquant_optimized:
+                                # to make sure ipex_config.json is based on pre-optimized model
+                                tmp_model = self._wrapper_sq_linear(tmp_model)
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
