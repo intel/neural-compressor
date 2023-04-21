@@ -655,7 +655,7 @@ class TorchSmoothQuant:
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
         to the paper for more details
         :param folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
-        :param percentile: remove the activation outlier when calculating the scale
+        :param percentile: remove the activation outlier when calculating the scale, current it's only for sq
         :param op_types: The op typed to be smooth quantized
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
@@ -692,7 +692,7 @@ class TorchSmoothQuant:
                         logger.warning("sorry, could not trace the model, smooth quant is ignored")
                         logger.warning("if you are using huggingface model,"
                                        "you could set torchscript to True "
-                                       "when loading the model or set the return_dict to False")
+                                       "when loading the model")
                         return self.model
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
