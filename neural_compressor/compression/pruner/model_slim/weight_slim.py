@@ -123,26 +123,31 @@ class PostCompressionUtils(object):
         Return:
             The same layer object whose weight (probability also bias) has been compressed. 
         """
-        # import pdb;pdb.set_trace()
         index = index.to(device)
         _w = layer.weight.index_select(dim, index).clone().detach()
-        if prune_bias:
-            _b = layer.bias[index].clone().detach()
+        if layer.bias != None:
+            if prune_bias:
+                _b = layer.bias[index].clone().detach()
+            else:
+                _b = layer.bias.clone().detach()
         else:
-            _b = layer.bias.clone().detach()
+            _b = None
         new_size = list(layer.weight.size())
         new_size[dim] = len(index)
         setattr(layer, "in_features", new_size[1])
         setattr(layer, "out_features", new_size[0])
         setattr(layer, "weight", torch.nn.Parameter(_w.clone()))
-        setattr(layer, "bias", torch.nn.Parameter(_b.clone()))
+        if _b != None:
+            setattr(layer, "bias", torch.nn.Parameter(_b.clone()))
+        else:
+            setattr(layer, "bias", None)
 
         # new_layer = nn.Linear(new_size[1], new_size[0], bias=layer.bias is not None)
         layer.weight.requires_grad = False
         layer.weight.copy_(_w.contiguous())
         layer.weight.requires_grad = True
 
-        if prune_bias:
+        if prune_bias and layer.bias != None:
             layer.bias.requires_grad = False
             layer.bias.copy_(_b.contiguous())
             layer.bias.requires_grad = True
