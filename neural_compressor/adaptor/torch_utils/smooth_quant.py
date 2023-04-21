@@ -219,7 +219,7 @@ class TorchSmoothQuant:
         for _, p in self.model.named_parameters():
             return p.data.device, p.data.dtype
 
-    def _save_input_pc_hook(self, name):
+    def _save_input_pc_hook(self, name, percentile=100):
         """
         A forward hook to save input max of a module
         :param name: the module name
@@ -230,6 +230,7 @@ class TorchSmoothQuant:
             if name not in self.input_maxes.keys():
                 self.input_maxes[name] = []
                 self.input_mins[name] = []
+                self.input_abs_maxes[name] = []
             input = inputs[0]
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not supported now, need better way
@@ -237,6 +238,9 @@ class TorchSmoothQuant:
             input = input.reshape(-1, input.shape[-1])
             max_tensor = torch.max(input, dim=0)[0]
             min_tensor = torch.min(input, dim=0)[0]
+            k_index = int(input.shape[0] * percentile / 100)
+            res, _ = torch.kthvalue(torch.abs(input), k_index, dim=0)
+            self.input_abs_maxes[name].append(res)
             self.input_maxes[name].append(max_tensor)
             self.input_mins[name].append(min_tensor)
             # self.input_values[name] = input
@@ -262,14 +266,14 @@ class TorchSmoothQuant:
 
         return save_input_output_hook
 
-    def _add_observer(self, modules, input_output_modules=None):
+    def _add_observer(self, modules, input_output_modules=None, percentile=100):
         """
         :param modules: the modules which the observer will insert to
         :return:
         """
         self.hook_handles = []
         for key in modules.keys():
-            hook_func = self._save_input_pc_hook(key)
+            hook_func = self._save_input_pc_hook(key, percentile)
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
         if input_output_modules:
@@ -289,7 +293,7 @@ class TorchSmoothQuant:
             for hook_handle in self.hook_values_handles:
                 hook_handle.remove()
 
-    def _calibrate(self, absorb_to_layer, calib_iter, save_input_output=False):
+    def _calibrate(self, absorb_to_layer, calib_iter, percentile, save_input_output=False):
         """
         :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
         :param calib_iter: Data size for calibration
@@ -318,12 +322,12 @@ class TorchSmoothQuant:
         hook_modules_input_output = {}
         for name in self.hook_layer_names:
             hook_modules_input_output[name] = get_module(self.model, name)
-        self._add_observer(hook_modules, hook_modules_input_output)
-        self._dump_min_max(calib_iter=calib_iter)
+        self._add_observer(hook_modules, hook_modules_input_output, percentile=percentile)
+        self._dump_min_max(percentile, calib_iter=calib_iter)
         self._remove_observer()
         return self.input_abs_maxes
 
-    def _dump_min_max(self, calibration_method="min_max", calib_iter=100):
+    def _dump_min_max(self, percentile=100, calib_iter=100):
         """
         Dump min max per channel information, the min max value will be saved in input_maxes attribute
         :param calibration_method: only support min_max currently
@@ -343,8 +347,9 @@ class TorchSmoothQuant:
             min_val = torch.stack(min_val, dim=0)
             self.input_maxes[key] = torch.max(max_val, dim=0)[0]
             self.input_mins[key] = torch.min(min_val, dim=0)[0]
-            abs_max_val = torch.max(torch.abs(self.input_mins[key]), torch.abs(self.input_maxes[key]))
-            self.input_abs_maxes[key] = abs_max_val
+            self.input_abs_maxes[key] = torch.max(torch.stack(self.input_abs_maxes[key], dim=0), dim=0)[0]
+            # abs_max_val = torch.max(torch.abs(self.input_mins[key]), torch.abs(self.input_maxes[key]))
+            # self.input_abs_maxes[key] = abs_max_val
         for key in self.input_values.keys():
             self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
             self.output_values[key] = torch.cat(self.output_values[key], dim=0)
@@ -642,7 +647,7 @@ class TorchSmoothQuant:
         logger.info("auto tuning alpha done")
         return ans_layer2absorb
 
-    def transform(self, alpha=0.5, folding=False, percentile=99.999, op_types=['Linear', 'Conv2d'],
+    def transform(self, alpha=0.5, folding=False, percentile=99, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100,
                   auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
         """
@@ -650,7 +655,7 @@ class TorchSmoothQuant:
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
         to the paper for more details
         :param folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
-        :param percentile: Not supported now
+        :param percentile: remove the activation outlier when calculating the scale
         :param op_types: The op typed to be smooth quantized
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
@@ -708,7 +713,7 @@ class TorchSmoothQuant:
                 if alpha == "auto":
                     save_input_output = True
 
-                input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
+                input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, percentile, save_input_output)
                 if alpha == 'auto':
                     self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
 
