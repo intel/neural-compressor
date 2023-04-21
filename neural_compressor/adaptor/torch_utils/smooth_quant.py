@@ -18,8 +18,13 @@
 from neural_compressor.utils.utility import LazyImport
 import json
 
-torch = LazyImport('torch')
-from ...utils import logger
+try:
+    torch = LazyImport('torch')
+    from ...utils import logger
+except:
+    import torch
+    import logging
+    logger = logging.getLogger()
 from collections import UserDict
 
 
