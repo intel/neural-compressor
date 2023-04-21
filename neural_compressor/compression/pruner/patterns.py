@@ -704,7 +704,7 @@ class PatternNxM(BasePattern):
             pattern_lock_masks[key] = mask
         return pattern_lock_masks
     
-    def get_block_masks(self, modules):
+    def register_block_masks(self, modules):
         """Register the block mask parameters and get the mask gradients.
         
         Args:
@@ -728,15 +728,21 @@ class PatternNxM(BasePattern):
             masks[key] = modules[key].block_mask.data
         return masks
     
-    def mask_block_weights(self):
-        """Achieve weight pruning by multiplying the reshaped weights and block masks."""
+    def remove_block_masks(self):
+        """Remove the block mask parameters."""
         for key in self.modules.keys():
+            if hasattr(self.modules[key], 'block_mask'):
+                delattr(self.modules[key], 'block_mask')
+    
+    def mask_block_weights(self, masks):
+        """Achieve weight pruning by multiplying the reshaped weights and block masks."""
+        for key in masks.keys():
             if key in self.invalid_layers:
                 continue
             module = self.modules[key]
             block_size = self.block_size[key]
             org_shape = module.weight.shape
-            mask = module.block_mask.data.repeat_interleave(\
+            mask = masks[key].data.repeat_interleave(\
                     block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
             reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
             module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
@@ -1287,5 +1293,6 @@ class PatternNInM(BasePattern):
             mask = self._reshape_2dims_to_orig(mask, orig_shape)
             pattern_lock_masks[key] = mask
         return pattern_lock_masks
+
 
 
