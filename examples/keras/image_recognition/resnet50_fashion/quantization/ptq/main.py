@@ -126,7 +126,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model import Model
-            model = Model(FLAGS.input_model).model
+            model = Model(FLAGS.input_model, backend='keras').model
             accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.batch_size)
             print("Accuracy: %.5f" % accuracy)
