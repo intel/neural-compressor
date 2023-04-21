@@ -1,7 +1,7 @@
 """Tests for 2.x config file"""
 import unittest
 import os
-from neural_compressor.config import Config as conf
+from neural_compressor.config import _Config as conf
 from neural_compressor.utils.constant import *
 from neural_compressor.config import PostTrainingQuantConfig, BenchmarkConfig, Options
 from neural_compressor.config import MixedPrecisionConfig, MXNet

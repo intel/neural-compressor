@@ -22,7 +22,7 @@ import numpy as np
 import random
 from .utils.utility import time_limit, CpuInfo
 from .strategy import STRATEGIES
-from .config import Config
+from .config import _Config, options
 from .utils import logger
 from .model.model import BaseModel, get_model_fwk_name, Model, MODELS
 
@@ -52,8 +52,8 @@ class _MixedPrecision:
         Args:
             conf (obj): The MixedPrecisionConfig class containing accuracy goal, tuning objective etc.
         """
-        self.conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
-        seed = self.conf.options.random_seed
+        self.conf = _Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        seed = options.random_seed
         random.seed(seed)
         np.random.seed(seed)
 
@@ -69,8 +69,8 @@ class _MixedPrecision:
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.options.resume_from)) \
-                           if cfg.options.workspace and cfg.options.resume_from else None
+        self.resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
+                           if options.workspace and options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -243,7 +243,7 @@ class _MixedPrecision:
             self._model.name = cfg.quantization.model_name
             self._model.output_tensor_names = cfg.quantization.outputs
             self._model.input_tensor_names = cfg.quantization.inputs
-            self._model.workspace_path = cfg.options.workspace
+            self._model.workspace_path = options.workspace
 
     @property
     def metric(self):

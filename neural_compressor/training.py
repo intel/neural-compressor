@@ -271,8 +271,6 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         confs (Union[Callable, List]): The instance of QuantizationAwareTrainingConfig,
                                        PruningConfig and distillationConfig, or a list of
                                        config for orchestration optimization.
-        options (Options, optional):   The configure for random_seed, workspace,
-                                       resume path and tensorboard flag.
 
     Returns:
         An object of CompressionManager.

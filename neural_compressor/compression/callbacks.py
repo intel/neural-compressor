@@ -21,25 +21,23 @@ The Component class will be inherited by the class 'QuantizationAwareTrainingCal
 'PruningCallbacks' and 'DistillationCallbacks'.
 """
 
-import copy
 import numpy as np
 import os
 import pickle
 import random
 from .distillation.criterions import Criterions
 from ..adaptor import FRAMEWORKS
-from ..config import Config, QuantizationAwareTrainingConfig, DistillationConfig, WeightPruningConfig
+from ..config import _Config, options
 from ..utils import logger
 from ..utils.utility import time_limit, LazyImport
 from ..model import BaseModel, Model
 from ..model.model import get_model_fwk_name
 from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
-from .pruner.utils import process_config, parse_to_prune, \
-    generate_pruner_config, get_sparsity_ratio
+from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
 # model auto slim related
-from .pruner.model_slim.auto_slim import model_slim, parse_auto_slim_config
+
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
@@ -218,22 +216,22 @@ class BaseCallbacks(object):
             user_model.model if isinstance(user_model, BaseModel) else user_model)
         if self.framework == "tensorflow":
             try:
-                if self.cfg.quantization.approach == "quant_aware_training":
+                if self.conf.quantization.approach == "quant_aware_training":
                     self.framework = 'tensorflow_itex'
                 else:
                     from ..model.tensorflow_model import get_model_type
-                    if get_model_type(user_model) == 'keras' and self.cfg.quantization.backend == 'itex':
+                    if get_model_type(user_model) == 'keras' and self.conf.quantization.backend == 'itex':
                         self.framework = 'keras'
             except Exception as e:
                 pass
 
         if self.framework == "pytorch":
             try:
-                if self.cfg.quantization.backend == "default":
+                if self.conf.quantization.backend == "default":
                     self.framework = "pytorch_fx"
-                elif self.cfg.quantization.backend == "ipex":
+                elif self.conf.quantization.backend == "ipex":
                     self.framework = "pytorch_ipex"
-                self.cfg.quantization.framework = self.framework
+                self.conf.quantization.framework = self.framework
             except Exception as e:
                 pass
 
@@ -246,7 +244,7 @@ class BaseCallbacks(object):
                     self._model = TensorflowQATModel(user_model._model)
             elif "tensorflow" in self.framework or self.framework == "keras":
                 try:
-                    self._model = Model(user_model, backend=self.framework, device=self.cfg.quantization.device)
+                    self._model = Model(user_model, backend=self.framework, device=self.conf.quantization.device)
                 except Exception as e:
                     self._model = Model(user_model, backend=self.framework, device=None)
             else:
@@ -256,10 +254,10 @@ class BaseCallbacks(object):
 
         if 'tensorflow' in self.framework:
             try:
-                self._model.name = self.cfg.quantization.model_name
-                self._model.output_tensor_names = self.cfg.quantization.outputs
-                self._model.input_tensor_names = self.cfg.quantization.inputs
-                self._model.workspace_path = self.cfg.options.workspace
+                self._model.name = self.conf.quantization.model_name
+                self._model.output_tensor_names = self.conf.quantization.outputs
+                self._model.input_tensor_names = self.conf.quantization.inputs
+                self._model.workspace_path = options.workspace
             except Exception as e:
                 self._model.name = None
                 self._model.output_tensor_names = None
@@ -273,31 +271,31 @@ class BaseCallbacks(object):
             self.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
             self.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
 
-        strategy = self.cfg.quantization.tuning_criterion.strategy.lower()
-        if self.cfg.quantization.quant_level == 0:
+        strategy = self.conf.quantization.tuning_criterion.strategy.lower()
+        if self.conf.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
 
         if strategy == "mse_v2":
-            if not (self.cfg.quantization.framework.startswith("tensorflow") \
-                    or self.cfg.quantization.framework == 'pytorch_fx'): # pragma: no cover
+            if not (self.conf.quantization.framework.startswith("tensorflow") \
+                    or self.conf.quantization.framework == 'pytorch_fx'): # pragma: no cover
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support \
-                               {self.cfg.quantization.framework} now, use basic instead.")
+                               {self.conf.quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(self.cfg.options.resume_from)) \
-                           if self.cfg.options.workspace and self.cfg.options.resume_from else None
+        self.resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
+                           if options.workspace and options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
-        
+
         self.strategy = STRATEGIES[strategy](
             model = self.model,
             conf = self.conf,
@@ -495,30 +493,28 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
             model: Model to be quantized in this object.
         """
         super(QuantizationAwareTrainingCallbacks, self).__init__(conf=None)
-        self.conf = Config(quantization=conf, benchmark=None, \
-                           pruning=None, distillation=None, nas=None)
-        self.cfg = self.conf
+        self.conf = _Config(quantization=conf, benchmark=None,pruning=None, distillation=None, nas=None)
         self.model = model
 
-        seed = self.conf.options.random_seed
+        seed = options.random_seed
         random.seed(seed)
         np.random.seed(seed)
 
-        framework_specific_info = {'device': self.cfg.quantization.device,
-                                   'random_seed': self.cfg.options.random_seed,
-                                   'workspace_path': self.cfg.options.workspace,
+        framework_specific_info = {'device': self.conf.quantization.device,
+                                   'random_seed': options.random_seed,
+                                   'workspace_path': options.workspace,
                                    'q_dataloader': None,
-                                   'backend': self.cfg.quantization.backend if \
-                                    self.cfg.quantization.backend is not None else 'default',
-                                   'format': self.cfg.quantization.quant_format if \
-                                    self.cfg.quantization.quant_format is not None else 'default'}
-        if self.cfg.quantization.approach is not None:
-            framework_specific_info['approach'] = self.cfg.quantization.approach
+                                   'backend': self.conf.quantization.backend if \
+                                    self.conf.quantization.backend is not None else 'default',
+                                   'format': self.conf.quantization.quant_format if \
+                                    self.conf.quantization.quant_format is not None else 'default'}
+        if self.conf.quantization.approach is not None:
+            framework_specific_info['approach'] = self.conf.quantization.approach
 
         if 'tensorflow' in self.framework:
             framework_specific_info.update(
-                {"inputs": self.cfg.quantization.inputs, \
-                 "outputs": self.cfg.quantization.outputs})
+                {"inputs": self.conf.quantization.inputs, \
+                 "outputs": self.conf.quantization.outputs})
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
         self.adaptor.model = self.model
         self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
@@ -543,7 +539,7 @@ class PruningCallbacks(BaseCallbacks):
             model: Model to be Pruning in this object.
         """
         super(PruningCallbacks, self).__init__(conf=None)
-        self.conf = Config(pruning=conf, quantization=None, benchmark=None
+        self.conf = _Config(pruning=conf, quantization=None, benchmark=None
                            , distillation=None, nas=None)
         self.cfg = self.conf.pruning
         self.model = model
@@ -607,8 +603,7 @@ class DistillationCallbacks(BaseCallbacks):
     def __init__(self, conf=None, model=None):
         """Initialize the attributes."""
         super(DistillationCallbacks, self).__init__()
-        self.conf = Config(quantization=None, benchmark=None, pruning=None
-                           , distillation=conf, nas=None)
+        self.conf = _Config(quantization=None, benchmark=None, pruning=None, distillation=conf, nas=None)
         self.cfg = self.conf.distillation
         self.model = model
 

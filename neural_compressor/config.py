@@ -2051,12 +2051,11 @@ pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
 
-class Config:
+class _Config:
     """Main config class."""
     def __init__(self,
                  quantization=quantization,
                  benchmark=benchmark,
-                 options=options,
                  mixed_precision=mixed_precision,
                  pruning=pruning,
                  distillation=distillation,
@@ -2072,7 +2071,6 @@ class Config:
         """Init a config object."""
         self._quantization = quantization
         self._benchmark = benchmark
-        self._options = options
         self._mixed_precision = mixed_precision
         self._onnxruntime = onnxruntime
         self._pruning = pruning
@@ -2131,11 +2129,6 @@ class Config:
         return self._benchmark
 
     @property
-    def options(self):
-        """Get the options object."""
-        return self._options
-    
-    @property
     def mixed_precision(self):
         """Get the mixed_precision object."""
         return self._mixed_precision
@@ -2155,4 +2148,4 @@ class Config:
         """Get the tuning object."""
         return self._tuning
 
-config = Config()
+config = _Config()

@@ -29,7 +29,7 @@ import yaml
 import numpy as np
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from ..config import MixedPrecisionConfig
+from ..config import MixedPrecisionConfig, options
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
 from ..utils.utility import Statistics
@@ -132,8 +132,8 @@ class TuneStrategy(object):
         """
         self.model = model
         self.conf = conf
-        self.history_path = self._create_path(self.conf.options.workspace, './history.snapshot')
-        self.deploy_path = self._create_path(self.conf.options.workspace, 'deploy.yaml')
+        self.history_path = self._create_path(options.workspace, './history.snapshot')
+        self.deploy_path = self._create_path(options.workspace, 'deploy.yaml')
         self.calib_dataloader = q_dataloader
         self.eval_func = eval_func
         self.eval_dataloader = eval_dataloader
@@ -680,7 +680,7 @@ class TuneStrategy(object):
                     if best_result != self.best_tune_result:
                         from neural_compressor.utils.utility import recover
                         self.best_qmodel = recover(self.model.model,
-                            os.path.join(self.conf.options.workspace, 'history.snapshot'),
+                            os.path.join(options.workspace, 'history.snapshot'),
                             best_trail)
                         logger.debug(f"*** Update the best qmodel by recovering from history.")
                         self.best_tune_result = best_result
@@ -1002,7 +1002,7 @@ class TuneStrategy(object):
     def _set_framework_info(self, q_dataloader, q_func=None):
         framework_specific_info = {'device': self.conf.quantization.device,
                                    'approach': self.conf.quantization.approach,
-                                   'random_seed': self.conf.options.random_seed,
+                                   'random_seed': options.random_seed,
                                    'performance_only': self._not_tuning}
         framework = self.conf.quantization.framework.lower()
         framework_specific_info.update({'backend': self.conf.quantization.backend})
@@ -1015,7 +1015,7 @@ class TuneStrategy(object):
             framework_specific_info.update(
                 {"inputs": self.conf.quantization.inputs,
                  "outputs": self.conf.quantization.outputs,
-                 'workspace_path': self.conf.options.workspace,
+                 'workspace_path': options.workspace,
                  'recipes': self.conf.quantization.recipes,
                  'use_bf16': self.conf.quantization.use_bf16 if self.conf.quantization.use_bf16 is not None else False})
             for item in ['scale_propagation_max_pooling', 'scale_propagation_concat']:
@@ -1025,14 +1025,14 @@ class TuneStrategy(object):
                 framework = 'tensorflow_itex'
         if 'keras' in framework:
             framework_specific_info.update({
-                 'workspace_path': self.conf.options.workspace, })
+                 'workspace_path': options.workspace, })
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnx' in framework.lower():
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
-            framework_specific_info.update({'workspace_path': self.conf.options.workspace})
+            framework_specific_info.update({'workspace_path': options.workspace})
             framework_specific_info.update({'recipes': self.conf.quantization.recipes})
             framework_specific_info.update({'reduce_range': self.conf.quantization.reduce_range})
             framework_specific_info.update({'recipes': self.conf.quantization.recipes})
@@ -1188,14 +1188,14 @@ class TuneStrategy(object):
             Objective: The objective value evaluated.
         """
         if self.eval_func:
-            if self.conf.options.tensorboard:
+            if options.tensorboard:
                 # Pytorch can insert observer to model in this hook.
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
             val = self.objectives.evaluate(
                 self.eval_func, model if self.framework == "pytorch_ipex" else model.model
             )
-            if self.conf.options.tensorboard:
+            if options.tensorboard:
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
         else:
@@ -1210,7 +1210,7 @@ class TuneStrategy(object):
                 metric_cfg,
                 postprocess_cfg,
                 iteration,
-                tensorboard = self.conf.options.tensorboard,
+                tensorboard = options.tensorboard,
                 fp32_baseline = self.baseline == None)
 
             if getattr(self.eval_dataloader, 'distributed', False):

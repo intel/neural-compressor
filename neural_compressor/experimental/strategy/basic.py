@@ -164,5 +164,3 @@ class BasicTuneStrategy(TuneStrategy):
                         tuning_item = quant_mode_item.get_option_by_name(att_and_method_name)
                         dynamic_state[att_and_method_name] = tuning_item.options[0] if tuning_item else None
         return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)
-        
-        

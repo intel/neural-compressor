@@ -20,7 +20,7 @@ import os
 import pickle
 import random
 import numpy as np
-from .config import Config
+from .config import _Config, options
 from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, MODELS
 from .strategy import STRATEGIES
 from .utils import logger
@@ -54,9 +54,8 @@ class _PostTrainingQuant:
             conf (PostTrainingQuantConfig): A instance of PostTrainingQuantConfig to
                                             specify the quantization behavior.
         """
-        self.conf = Config(quantization=conf, benchmark=None
-                           , pruning=None, distillation=None, nas=None)
-        seed = self.conf.options.random_seed
+        self.conf = _Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        seed = options.random_seed
         random.seed(seed)
         np.random.seed(seed)
         self._train_func = None
@@ -93,8 +92,8 @@ class _PostTrainingQuant:
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.options.resume_from)) \
-                           if cfg.options.workspace and cfg.options.resume_from else None
+        self.resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
+                           if options.workspace and options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -185,7 +184,6 @@ class _PostTrainingQuant:
                     assert cfg.quantization.framework == "pytorch_ipex",\
                           "Please wrap the model with correct Model class!"
                 if cfg.quantization.backend == "itex":
-                    from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
                         assert cfg.quantization.framework == "keras",\
                               "Please wrap the model with KerasModel class!"
@@ -195,7 +193,6 @@ class _PostTrainingQuant:
             else:
                 framework = get_model_fwk_name(user_model)
                 if framework == "tensorflow":
-                    from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
                         framework = 'keras'
                 if framework == "pytorch":
@@ -227,7 +224,7 @@ class _PostTrainingQuant:
             self._model.name = cfg.quantization.model_name
             self._model.output_tensor_names = cfg.quantization.outputs
             self._model.input_tensor_names = cfg.quantization.inputs
-            self._model.workspace_path = cfg.options.workspace
+            self._model.workspace_path = options.workspace
 
     @property
     def eval_func(self):
