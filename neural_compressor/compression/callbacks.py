@@ -280,7 +280,7 @@ class BaseCallbacks(object):
 
         if strategy == "mse_v2":
             if not (self.cfg.quantization.framework.startswith("tensorflow") \
-                    or self.cfg.quantization.framework == 'pytorch_fx'):
+                    or self.cfg.quantization.framework == 'pytorch_fx'): # pragma: no cover
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support \
                                {self.cfg.quantization.framework} now, use basic instead.")

@@ -83,7 +83,7 @@ class _PostTrainingQuant:
 
         if strategy == "mse_v2":
             if not (cfg.quantization.framework.startswith("tensorflow")\
-                     or cfg.quantization.framework == 'pytorch_fx'):
+                     or cfg.quantization.framework == 'pytorch_fx'): # pragma: no cover
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support {cfg.quantization.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
@@ -179,7 +179,7 @@ class _PostTrainingQuant:
         """
         cfg = self.conf
         if cfg.quantization.framework is None:
-            if isinstance(user_model, BaseModel):
+            if isinstance(user_model, BaseModel): # pragma: no cover
                 cfg.quantization.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
                 if cfg.quantization.backend == "ipex":
                     assert cfg.quantization.framework == "pytorch_ipex",\
@@ -211,7 +211,7 @@ class _PostTrainingQuant:
                 self._model = Model(user_model, backend=cfg.quantization.framework, device=cfg.quantization.device)
             else:
                 self._model = Model(user_model, backend=cfg.quantization.framework)
-        else:
+        else: # pragma: no cover
             if cfg.quantization.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 assert type(user_model) == IPEXModel, \

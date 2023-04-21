@@ -166,6 +166,7 @@ class _MixedPrecision:
                                     framework infomation can be known. Future we will support
                                     creating iterable dataloader from neural_compressor.common.DataLoader
         """
+        # pragma: no cover
         assert hasattr(dataloader, '__iter__') and \
             hasattr(dataloader, 'batch_size'), \
             'dataloader must implement __iter__ method and batch_size attribute'
@@ -198,7 +199,7 @@ class _MixedPrecision:
                 if cfg.quantization.backend == "ipex":
                     assert cfg.quantization.framework == "pytorch_ipex",\
                           "Please wrap the model with correct Model class!"
-                if cfg.quantization.backend == "itex":
+                if cfg.quantization.backend == "itex": # pragma: no cover
                     from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
                         assert cfg.quantization.framework == "keras",\
@@ -226,7 +227,7 @@ class _MixedPrecision:
                                     , device=cfg.quantization.device)
             else:
                 self._model = Model(user_model, backend=cfg.quantization.framework)
-        else:
+        else: # pragma: no cover
             if cfg.quantization.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 assert type(user_model) == IPEXModel, \
@@ -379,7 +380,7 @@ def fit(model,
     converter.model = model
 
     if ('bf16' in precisions or 'fp16' in precisions) and \
-        converter.conf.quantization.framework == "onnxruntime":
+        converter.conf.quantization.framework == "onnxruntime": # pragma: no cover
         if config.device == "cpu":
             logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
             sys.exit(0)
@@ -387,7 +388,7 @@ def fit(model,
             logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
             sys.exit(0)
     elif 'bf16' in precisions and not CpuInfo().bf16 and \
-        converter.conf.quantization.framework != "onnxruntime":
+        converter.conf.quantization.framework != "onnxruntime": # pragma: no cover
         if os.getenv('FORCE_BF16') == '1':
             logger.warning("Mix precision will generate bf16 graph although " \
                            "the hardware doesn't support bf16 instruction.")
