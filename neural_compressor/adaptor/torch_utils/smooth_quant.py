@@ -37,8 +37,8 @@ def forward_wrapper(model, input, device='cpu'):
             output = model(*input)
         else:  # pragma: no cover
             input = [inp.to(device) \
-                    if isinstance(inp, torch.Tensor) else inp
-                    for inp in input] # pylint: disable=E1133
+                         if isinstance(inp, torch.Tensor) else inp
+                     for inp in input]  # pylint: disable=E1133
             output = model(*input)
     else:
         if device == 'cpu' or not isinstance(input, torch.Tensor):
@@ -397,8 +397,7 @@ class TorchSmoothQuant:
         :return:
         """
         layer = get_module(self.model, layer_name)
-        from .model_wrapper import SQLinearWrapper
-        if isinstance(layer, SQLinearWrapper):
+        if layer.__class__.__name__ == "SQLinearWrapper":
             layer = layer.sq_linear
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight *= scale
@@ -412,12 +411,12 @@ class TorchSmoothQuant:
         :param alpha_key: The alpha passed to SQLinearWrapper
         :return:
         """
-        from .model_wrapper import SQLinearWrapper
         layer = get_module(self.model, layer_name)
         if self.insert_mul:
-            if isinstance(layer, SQLinearWrapper):
+            if layer.__class__.__name__ == "SQLinearWrapper":
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
+                from .model_wrapper import SQLinearWrapper
                 input_minmax = [self.input_mins[layer_name], self.input_maxes[layer_name]]
                 new_module = SQLinearWrapper(layer, scale, input_minmax, alpha)
                 set_module(self.model, layer_name, new_module)
@@ -463,12 +462,12 @@ class TorchSmoothQuant:
                 layer.weight *= scale
 
             elif layer.__class__.__name__ == "LlamaRMSNorm" \
-              or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+                    or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
                 layer.weight *= scale
 
             else:
                 logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to "
-                  f"weight and bias directly, this may introduce accuracy issue, please have a check ")
+                               f"weight and bias directly, this may introduce accuracy issue, please have a check ")
                 if hasattr(layer, "weight") and layer.weight != None:
                     layer.weight *= scale
                 if hasattr(layer, "bias") and layer.bias != None:
@@ -574,7 +573,6 @@ class TorchSmoothQuant:
         """
         logger.info("auto tuning alpha")
         import copy
-        from .model_wrapper import SQLinearWrapper
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
@@ -604,7 +602,7 @@ class TorchSmoothQuant:
                                                                 self.absorb_scales_info[absorb_key])
                     input_of_op_q = quant_dequant_x(input_of_op * input_scale)
                     layer = get_module(self.model, layer_key)
-                    if isinstance(layer, SQLinearWrapper):
+                    if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
@@ -676,15 +674,15 @@ class TorchSmoothQuant:
             input_maxes = self.input_maxes
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
-                    self.self_absorb_layers = self._get_all_layer_names()   # TODO: only support linear now.
+                    self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
                         logger.warning("sorry, could not trace the model, smooth quant is ignored")
                         logger.warning("if you are using huggingface model,"
-                                    "you could set torchscript to True "
-                                    "when loading the model or set the return_dict to False")
+                                       "you could set torchscript to True "
+                                       "when loading the model or set the return_dict to False")
                         return self.model
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
@@ -729,7 +727,7 @@ class TorchSmoothQuant:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
- 
+
     def _get_all_layer_names(self, op_types=['Linear']):
         """
         Try the model to find the layers which can be smooth quantized.
@@ -896,6 +894,7 @@ class GraphTrace:
                 res[key] = absorb_to_layer[key]
         return res
 
+
 def update_sq_scale(ipex_config_path, smoothquant_scale_info):
     """update ipex_config.json with smoothquant scale info generated by our algorithm.
 
@@ -909,23 +908,23 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
             if 'q_op_infos' in v and v['q_op_infos']:
                 for op_num, v1 in v['q_op_infos'].items():
                     # update alpha data instead of updating weight scale
-                    op_name = v1['fqn'] # fqn always exists even it's empty.
+                    op_name = v1['fqn']  # fqn always exists even it's empty.
                     if op_name in smoothquant_scale_info:
                         # observers were overridden by the fallback step, setting it back.
-                        v1['activation_observer'] = {'name': 'SmoothQuantActivationObserver', 
-                                        'smooth_quant_enabled': False, 'dtype': 'torch.quint8', 
-                                        'qscheme': 'torch.per_tensor_affine', 'reduce_range': False,
-                                        'quant_min': 0, 'quant_max': 255, 
-                                        'alpha': smoothquant_scale_info[op_name]['alpha']
-                                        }
-                        v1['weight_observer'] = {'name': 'SmoothQuantWeightObserver', 
-                                        'smooth_quant_enabled': False, 'dtype': 'torch.qint8', 
-                                        'qscheme': 'torch.per_channel_symmetric', 'reduce_range': False, 
-                                        'quant_min': -128, 'quant_max': 127, 
-                                        'alpha': smoothquant_scale_info[op_name]['alpha'] #only update alpha
-                                        }
+                        v1['activation_observer'] = {'name': 'SmoothQuantActivationObserver',
+                                                     'smooth_quant_enabled': False, 'dtype': 'torch.quint8',
+                                                     'qscheme': 'torch.per_tensor_affine', 'reduce_range': False,
+                                                     'quant_min': 0, 'quant_max': 255,
+                                                     'alpha': smoothquant_scale_info[op_name]['alpha']
+                                                     }
+                        v1['weight_observer'] = {'name': 'SmoothQuantWeightObserver',
+                                                 'smooth_quant_enabled': False, 'dtype': 'torch.qint8',
+                                                 'qscheme': 'torch.per_channel_symmetric', 'reduce_range': False,
+                                                 'quant_min': -128, 'quant_max': 127,
+                                                 'alpha': smoothquant_scale_info[op_name]['alpha']  # only update alpha
+                                                 }
         f.close()
     # overwrite ipex_config_path
     with open(ipex_config_path, 'w') as f1:
-        json.dump(ipex_config, f1, indent = 4)
+        json.dump(ipex_config, f1, indent=4)
         f1.close()
