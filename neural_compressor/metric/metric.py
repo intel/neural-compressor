@@ -39,8 +39,8 @@ class Metric(object):
     recommended to design metric_cls to take (predictions, labels) as inputs.
 
     Args:
-        metric_cls (cls): Should be a instance of sub_class of neural_compressor.metric.BaseMetric or a customer's metric,
-            which takes (predictions, labels) as inputs
+        metric_cls (cls): Should be a instance of sub_class of neural_compressor.metric.BaseMetric
+                          or a customer's metric, which takes (predictions, labels) as inputs.
         name (str, optional): Name for metric. Defaults to 'user_metric'.
     """
 
