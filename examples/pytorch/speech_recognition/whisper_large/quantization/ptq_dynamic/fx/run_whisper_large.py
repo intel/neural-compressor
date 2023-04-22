@@ -54,15 +54,6 @@ def eval_func(model):
     print("Accuracy: %.5f" % accuracy)
     return accuracy
 
-def calib_func(model):
-    for i, batch in enumerate(librispeech_test_clean):
-        if i == 100:
-            break
-        audio = batch["audio"]
-        input_features = processor(audio["array"], sampling_rate=audio["sampling_rate"], return_tensors="pt").input_features
-        with torch.no_grad():
-            predicted_ids = model.generate(input_features)[0]
-
 if args.tune:
     from neural_compressor import PostTrainingQuantConfig, quantization
     op_type_dict = {
@@ -71,7 +62,7 @@ if args.tune:
     conf = PostTrainingQuantConfig(approach="dynamic", op_type_dict=op_type_dict)
     q_model = quantization.fit(model,
                         conf=conf,
-                        calib_func=calib_func,
+                        eval_func=eval_func,
                         )
     q_model.save(args.output_dir)
     exit(0)
