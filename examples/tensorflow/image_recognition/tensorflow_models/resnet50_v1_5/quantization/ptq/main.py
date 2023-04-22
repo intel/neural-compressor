@@ -117,8 +117,8 @@ class eval_classifier_optimized_graph:
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             conf = PostTrainingQuantConfig(outputs=['softmax_tensor'], calibration_sampling_size=[50, 100])
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader, eval_metric=top1)
@@ -134,8 +134,8 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             def eval(model):
                 return evaluate(model, dataloader, top1)
 

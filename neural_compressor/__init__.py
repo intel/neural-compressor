@@ -25,3 +25,4 @@ from .config import DistillationConfig, PostTrainingQuantConfig, \
                     MixedPrecisionConfig
 from .contrib import *
 from .model import *
+from .metric import *

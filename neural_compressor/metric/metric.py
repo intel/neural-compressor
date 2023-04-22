@@ -37,19 +37,19 @@ class Metric(object):
     The metric class should take the outputs of the model as the metric's inputs,
     neural_compressor built-in metric always take (predictions, labels) as inputs, it's
     recommended to design metric_cls to take (predictions, labels) as inputs.
+
+    Args:
+        metric_cls (cls): Should be a instance of sub_class of neural_compressor.metric.BaseMetric or a customer's metric,
+            which takes (predictions, labels) as inputs
+        name (str, optional): Name for metric. Defaults to 'user_metric'.
     """
-    
-    def __init__(self, metric_cls, name='user_metric', **kwargs):
-        """Initialize a Metric with needed information.
-        
-        Args:
-            metric_cls (cls): Should be a sub_class of neural_compressor.metric.BaseMetric, 
-                which takes (predictions, labels) as inputs
-            name (str, optional): Name for metric. Defaults to 'user_metric'.
-        """
+
+    def __init__(self, name='user_metric', metric_cls=None, **kwargs):
+        """Initialize a Metric with needed information."""
         self.metric_cls = metric_cls
         self.name = name
         self.kwargs = kwargs
+
 
 @singleton
 class TensorflowMetrics(object):
@@ -58,7 +58,7 @@ class TensorflowMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for Tensorflow model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
@@ -72,7 +72,7 @@ class PyTorchMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for PyTorch model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
@@ -86,7 +86,7 @@ class MXNetMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for MXNet model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         from neural_compressor.adaptor.mxnet_utils.util import check_mx_version
@@ -110,7 +110,7 @@ class ONNXRTQLMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for ONNXRT QLinear model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
@@ -124,7 +124,7 @@ class ONNXRTITMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for ONNXRT Integer model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
@@ -180,7 +180,7 @@ class METRICS(object):
             framework: The framwork name.
         """
         assert framework in ("tensorflow", "tensorflow_itex", "keras",
-                            "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
                              "onnxruntime"), \
                              "framework support tensorflow pytorch mxnet onnxrt"
@@ -212,18 +212,18 @@ class METRICS(object):
 
 def metric_registry(metric_type: str, framework: str):
     """Decorate for registering all Metric subclasses.
-    
+
     The cross-framework metric is supported by specifying the framework param
     as one of tensorflow, pytorch, mxnet, onnxrt.
-       
+
     Args:
         metric_type: The metric type.
         framework: The framework name.
-    
+
     Returns:
         decorator_metric: The function to register metric class.
     """
-    
+
     def decorator_metric(cls):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
@@ -249,8 +249,8 @@ def metric_registry(metric_type: str, framework: str):
 
 class BaseMetric(object):
     """The base class of Metric."""
-    
-    def __init__(self, metric, single_output = False, hvd = None):
+
+    def __init__(self, metric, single_output=False, hvd=None):
         """Initialize the basic metric.
 
         Args:
@@ -333,10 +333,10 @@ class BaseMetric(object):
 
 class WrapPyTorchMetric(BaseMetric):
     """The wrapper of Metric class for PyTorch."""
-    
+
     def update(self, preds, labels=None, sample_weight=None):
         """Convert the prediction to torch.
-        
+
         Args:
             preds: The prediction result.
             labels: The reference. Defaults to None.
@@ -359,10 +359,10 @@ class WrapPyTorchMetric(BaseMetric):
 
 class WrapMXNetMetric(BaseMetric):
     """The wrapper of Metric class for MXNet."""
-    
+
     def update(self, preds, labels=None, sample_weight=None):
         """Convert the prediction to MXNet array.
-           
+
         Args:
             preds: The prediction result.
             labels: The reference. Defaults to None.
@@ -378,7 +378,7 @@ class WrapMXNetMetric(BaseMetric):
 
     def result(self):
         """Evaluate the difference between predictions and labels.
-        
+
         Returns:
             acc: The evaluated result.
         """
@@ -387,10 +387,10 @@ class WrapMXNetMetric(BaseMetric):
 
 class WrapONNXRTMetric(BaseMetric):
     """The wrapper of Metric class for ONNXRT."""
-    
+
     def update(self, preds, labels=None, sample_weight=None):
         """Convert the prediction to NumPy array.
-           
+
         Args:
             preds: The prediction result.
             labels: The reference. Defaults to None.
@@ -406,7 +406,7 @@ class WrapONNXRTMetric(BaseMetric):
 
     def result(self):
         """Evaluate the difference between predictions and labels.
-        
+
         Returns:
             acc: The evaluated result.
         """
@@ -486,16 +486,16 @@ def _shape_validate(preds, labels):
 @metric_registry('F1', 'tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class F1(BaseMetric):
     """F1 score of a binary classification problem.
-    
+
     The F1 score is the harmonic mean of the precision and recall. 
     It can be computed with the equation: 
     F1 = 2 * (precision * recall) / (precision + recall)
     """
-    
+
     def __init__(self):
         """Initialize the F1 score list."""
         self._score_list = []
-    
+
     def update(self, preds, labels):
         """Add the predictions and labels.
 
@@ -575,7 +575,7 @@ def _accuracy_type_check(preds, labels):
 @metric_registry('Accuracy', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Accuracy(BaseMetric):
     """The Accuracy for the classification tasks.
-    
+
     The accuracy score is the proportion of the total number of predictions
     that were correct classified.
 
@@ -584,7 +584,7 @@ class Accuracy(BaseMetric):
         label_list: List of labels to score.
         sample: The total number of samples.
     """
-    
+
     def __init__(self):
         """Initialize predictions, labels and sample."""
         self.pred_list = []
@@ -642,10 +642,10 @@ class Accuracy(BaseMetric):
 
 class PyTorchLoss():
     """A dummy PyTorch Metric.
-    
+
     A dummy metric that computes the average of predictions and prints it directly.
     """
-    
+
     def __init__(self):
         """Initialize the number of examples, sum of prediction. and device."""
         self._num_examples = 0
@@ -686,14 +686,14 @@ class PyTorchLoss():
 @metric_registry('Loss', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Loss(BaseMetric):
     """A dummy Metric.
-    
+
     A dummy metric that computes the average of predictions and prints it directly.
-    
+
     Attributes:
         sample: The number of samples.
         sum: The sum of prediction.
     """
-    
+
     def __init__(self):
         """Initialize the number of samples, sum of prediction."""
         self.sample = 0
@@ -718,7 +718,7 @@ class Loss(BaseMetric):
 
     def result(self):
         """Compute the  average of predictions.
-        
+
         Returns:
             The dummy loss.
         """
@@ -790,12 +790,12 @@ class MAE(BaseMetric):
 @metric_registry('RMSE', 'tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
-    
+
     Attributes:
         mse: The instance of MSE Metric.
 
     """
-    
+
     def __init__(self, compare_label=True):
         """Initialize the mse.
 
@@ -834,18 +834,18 @@ class RMSE(BaseMetric):
 @metric_registry('MSE', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
-    
+
     Mean Squared Error(MSE) represents the average of the squares of errors.
     For example, the average squared difference between the estimated values
     and the actual values.
-    
+
     Attributes:
         pred_list: List of prediction to score.
         label_list: List of references corresponding to the prediction result.
         compare_label (bool): Whether to compare label. False if there are no labels
                               and will use FP32 preds as labels.
     """
-    
+
     def __init__(self, compare_label=True):
         """Initialize the list of prediction and labels.
 
@@ -893,16 +893,16 @@ class MSE(BaseMetric):
 @metric_registry('topk', 'tensorflow, tensorflow_itex')
 class TensorflowTopK(BaseMetric):
     """Compute Top-k Accuracy classification score for Tensorflow model.
-    
+
     This metric computes the number of times where the correct label is among
     the top k labels predicted.
-    
+
     Attributes:
         k (int): The number of most likely outcomes considered to find the correct label.
         num_correct: The number of predictions that were correct classified.
         num_sample: The total number of predictions.
     """
-    
+
     def __init__(self, k=1):
         """Initialize the k, number of samples and correct predictions.
 
@@ -960,16 +960,16 @@ class TensorflowTopK(BaseMetric):
 @metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class GeneralTopK(BaseMetric):
     """Compute Top-k Accuracy classification score.
-    
+
     This metric computes the number of times where the correct label is among
     the top k labels predicted.
-    
+
     Attributes:
         k (int): The number of most likely outcomes considered to find the correct label.
         num_correct: The number of predictions that were correct classified.
         num_sample: The total number of predictions.
     """
-    
+
     def __init__(self, k=1):
         """Initialize the k, number of samples and correct predictions.
 
@@ -1023,7 +1023,7 @@ class GeneralTopK(BaseMetric):
             allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
             return allgather_num_correct / allgather_num_sample
         return self.num_correct / self.num_sample
-    
+
 
 @metric_registry('COCOmAPv2', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
 class COCOmAPv2(BaseMetric):

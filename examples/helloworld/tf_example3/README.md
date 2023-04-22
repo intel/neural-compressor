@@ -29,7 +29,7 @@ We can get a BF16 model using the Mixed Precision API.
 ```python
     from neural_compressor.config import MixedPrecisionConfig
     from neural_compressor import mix_precision
-    from neural_compressor.metric import TensorflowTopK
+    from neural_compressor import Metric
     top1 = TensorflowTopK(k=1)
     config = MixedPrecisionConfig()
     mix_precision_model = mix_precision.fit(

@@ -24,8 +24,8 @@ def main():
 
     if args.tune:
         from neural_compressor.quantization import fit
-        from neural_compressor.metric import TensorflowTopK
-        top1 = TensorflowTopK(k=1)
+        from neural_compressor import Metric
+        top1 = Metric(name="topk", k=1)
         config = PostTrainingQuantConfig(calibration_sampling_size=[20])
         q_model = fit(
             model="./mobilenet_v1_1.0_224_frozen.pb",

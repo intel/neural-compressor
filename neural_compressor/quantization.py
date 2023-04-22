@@ -73,10 +73,10 @@ class _PostTrainingQuant:
         cfg = self.conf
 
         strategy = cfg.quantization.tuning_criterion.strategy
-        
+
         if cfg.quantization.quant_level == "auto":
             strategy = "auto"
-            
+
         elif cfg.quantization.quant_level == 0:
             strategy = "conservative"
 
@@ -279,7 +279,7 @@ class _PostTrainingQuant:
 
         1. neural_compressor have many built-in metrics,
            user can pass a metric configure dict to tell neural compressor what metric will be use.
-           You can set multi-metrics to evaluate the performance of a specific model.
+           You also can set multi-metrics to evaluate the performance of a specific model.
                 Single metric:
                     {topk: 1}
                 Multi-metrics:
@@ -291,7 +291,9 @@ class _PostTrainingQuant:
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
 
-        2. User also can set specific metric through this api. The metric class should take the outputs of the model or
+        2. User also can get the built-in metrics by neural_compressor.Metric:
+            Metric(name="topk", k=1)
+        3. User also can set specific metric through this api. The metric class should take the outputs of the model or
            postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels)
            as inputs for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
 
@@ -306,9 +308,16 @@ class _PostTrainingQuant:
             metric_cfg = user_metric
         else:
             if isinstance(user_metric, NCMetric):
-                name = user_metric.name
-                metric_cls = user_metric.metric_cls
-                metric_cfg = {name: {**user_metric.kwargs}}
+                if user_metric.metric_cls is None:
+                    name = user_metric.name
+                    metric_cls = METRICS(self.conf.quantization.framework).metrics[name]
+                    metric_cfg = {name: {**user_metric.kwargs}}
+                    self._metric = metric_cfg
+                    return
+                else:
+                    name = user_metric.name
+                    metric_cls = user_metric.metric_cls
+                    metric_cfg = {name: {**user_metric.kwargs}}
             else:
                 for i in ['reset', 'update', 'result']:
                     assert hasattr(user_metric, i), 'Please realise {} function' \

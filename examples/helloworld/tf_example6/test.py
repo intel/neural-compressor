@@ -1,6 +1,6 @@
 import tensorflow as tf
 from argparse import ArgumentParser
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 from neural_compressor.data import LabelShift
 from neural_compressor.data import TensorflowImageRecord
 from neural_compressor.data import BilinearImagenetTransform
@@ -41,7 +41,7 @@ def evaluate(model):
     if args.benchmark:
         iteration = 100
     postprocess = LabelShift(label_shift=1)
-    metric = TensorflowTopK(k=1)
+    metric = Metric(name="topk", k=1)
 
     def eval_func(dataloader):
         latency_list = []
@@ -76,8 +76,8 @@ def main():
     if args.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.metric import TensorflowTopK
-        top1 = TensorflowTopK(k=1)
+        from neural_compressor import Metric
+        top1 = Metric(name="topk", k=1)
         config = PostTrainingQuantConfig(calibration_sampling_size=[20])
         quantized_model = fit(
             model="./mobilenet_v1_1.0_224_frozen.pb",

@@ -6,7 +6,7 @@ from neural_compressor.data import ComposeTransform
 from neural_compressor.data import DefaultDataLoader
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 
 flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
@@ -22,7 +22,7 @@ eval_dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=Comp
 eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 
 def main():
-    top1 = TensorflowTopK(k=1)
+    top1 = Metric(name="topk", k=1)
     config = PostTrainingQuantConfig(calibration_sampling_size=[20])
     q_model = fit(
         model="./mobilenet_v1_1.0_224_frozen.pb",

@@ -115,8 +115,8 @@ class eval_classifier_optimized_graph:
                 eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
                 conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
                                             outputs=['softmax_tensor'])
-                from neural_compressor.metric import TensorflowTopK
-                top1 = TensorflowTopK(k=1)
+                from neural_compressor import Metric
+                top1 = Metric(name="topk", k=1)
                 q_model = quantization.fit(self.args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
                             eval_dataloader=eval_dataloader, eval_metric=top1)
                 q_model.save("./tf-quant.pb")
@@ -146,8 +146,8 @@ class eval_classifier_optimized_graph:
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
 
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
 
             def eval(model):
                 if isinstance(model, str):
