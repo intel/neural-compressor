@@ -1,10 +1,9 @@
 """Tests for 2.x config file"""
 import unittest
-import os
+from neural_compressor import set_workspace, set_random_seed, set_resume_from, set_tensorboard
 from neural_compressor.config import _Config as conf
+from neural_compressor.config import PostTrainingQuantConfig, BenchmarkConfig, MixedPrecisionConfig, MXNet, options
 from neural_compressor.utils.constant import *
-from neural_compressor.config import PostTrainingQuantConfig, BenchmarkConfig, Options
-from neural_compressor.config import MixedPrecisionConfig, MXNet
 
 
 def helper(content):
@@ -42,22 +41,17 @@ class TestGeneralConf(unittest.TestCase):
                             }
         a = conf(quantization=cfg)
         self.assertEqual(a.quantization.op_type_dict['Conv']['weight']['dtype'], ['fp32'])
- 
+
         cfg.tuning_criterion.strategy = 'mse'
         a = conf(quantization=cfg)
         self.assertEqual(a.tuning.strategy, 'mse')
-        
+
         cfg = BenchmarkConfig()
         cfg.cores_per_instance = 4
         cfg.iteration = 100
         cfg.num_of_instance = 7
         a = conf(benchmark=cfg)
         self.assertEqual(a.benchmark.iteration, 100)
-
-        cfg = Options()
-        cfg.workspace = "workspace_path"
-        a = conf(options=cfg)
-        self.assertEqual(a.options.workspace, "workspace_path")
 
         cfg = MixedPrecisionConfig()
         a = conf(mixed_precision=cfg)
@@ -67,6 +61,23 @@ class TestGeneralConf(unittest.TestCase):
         cfg.precisions = "bf16"
         a = conf(mxnet=cfg)
         self.assertEqual(a.mxnet.precisions, ["bf16"])
+
+        set_workspace("workspace_path")
+        self.assertEqual(options.workspace, "workspace_path")
+
+        set_random_seed(1)
+        self.assertEqual(options.random_seed, 1)
+
+        tmp_resume_from = options.resume_from
+        set_resume_from("resume_from_path")
+        self.assertEqual(options.resume_from, "resume_from_path")
+        set_resume_from(tmp_resume_from)
+
+        tmp_tensorboard = options.tensorboard
+        set_tensorboard(True)
+        self.assertEqual(options.tensorboard, True)
+        set_tensorboard(tmp_tensorboard)
+
 
 
 if __name__ == "__main__":
