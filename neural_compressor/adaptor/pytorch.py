@@ -2670,7 +2670,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                             qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                             weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                         qscheme=torch.per_channel_symmetric))
-                        q_model = self.tmp_model._model
+                        q_model = model._model
                         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=False)
                         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
@@ -2931,9 +2931,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                         weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                 qscheme=torch.per_channel_symmetric))
-                    # For smoothquant optimized model
+                    # For smoothquant optimized model, need ipex version >= 2.1
                     if self.recipes and self.recipes.get('smooth_quant', False) \
-                      and self.version.release >= Version("2.1").release:
+                      and self.version.release >= Version("2.1").release:  # pragma: no cover
                         smooth_quant_args = self.recipes.get('smooth_quant_args', {})
                         if 'folding' in smooth_quant_args and not smooth_quant_args['folding']:
                             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
