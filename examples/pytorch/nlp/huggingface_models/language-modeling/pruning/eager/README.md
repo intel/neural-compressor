@@ -44,7 +44,6 @@ The inference performance of the sparse model is verified under different precis
 |  :----: | :----: | :----: | :----: | :----: | :----: |:----: |:----:|
 | GPT-J | CLM | pile_10k | lambada_openai | FP32 | 0.6831 | 0.6877 | +0.67% |
 | GPT-J | CLM | pile_10k | lambada_openai | IPEX-BF16 | 0.6792 | 0.6833 | +0.60% |
-| GPT-J | CLM | pile_10k | lambada_openai | Int8 | 0.6718 | 0.6738 | +0.30% |
 
 ## References
 * [A Fast Post-Training Pruning Framework for Transformers](https://arxiv.org/abs/2204.09656)
