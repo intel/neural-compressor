@@ -286,7 +286,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     another_conv_node.input[offset_value + 1]]
                 min_input = min_freezed_output_node.attr['value'].tensor.float_val[0]
                 max_input = max_freezed_output_node.attr['value'].tensor.float_val[0]
-                # To avoid generate int32 bias exception for corner case
+                # To avoid generating int32 bias exception for corner case
                 if min_input == 0 and max_input == 0:
                     continue
 
