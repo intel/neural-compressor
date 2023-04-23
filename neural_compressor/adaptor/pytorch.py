@@ -2670,8 +2670,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                             qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                             weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                         qscheme=torch.per_channel_symmetric))
-                        q_model = model._model
-                        q_model = ipex.quantization.prepare(q_model, static_qconfig, \
+                        q_model = ipex.quantization.prepare(model._model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=False)
                         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
                         if q_func is not None:
