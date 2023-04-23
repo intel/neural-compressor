@@ -3071,7 +3071,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         # fetch SmoothQuant scale info from pre-optimized model
         from .torch_utils.model_wrapper import SQLinearWrapper
-        from .torch_utils.smooth_quant import update_sq_scale
+        from .torch_utils.util import update_sq_scale
         smoothquant_scale_info = {}
         for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
