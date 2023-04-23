@@ -2708,7 +2708,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                         # At the 2nd run, the llga pass will be triggered and the model is turned into
                         # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                        self.calib_func(q_model, dataloader, tmp_iterations=2)
+                        self._simple_inference(q_model, dataloader, iterations=2)
 
             self.tmp_model._model = q_model
             with open(self.ipex_config_path, 'r') as f:
@@ -3084,9 +3084,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+        if self.performance_only:
+            logger.error("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
-        self.calib_func(q_model, dataloader, tmp_iterations=1) # fake calibration for save qconf
+        self._simple_inference(q_model, dataloader, iterations=1)   # fake calibration for save qconf
         q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # enable fallback
@@ -3118,7 +3120,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         else:
             q_model = ipex.quantization.convert(q_model, inplace=True)
             # inference once after convert for SmoothQuant
-            self.calib_func(q_model, dataloader, tmp_iterations=1)
+            self._simple_inference(q_model, dataloader, iterations=1)
             with torch.no_grad():
                 try:
                     q_model = torch.jit.trace(q_model, self.example_inputs)
@@ -3129,7 +3131,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
         # At the 2nd run, the llga pass will be triggered and the model is turned into
         # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-        self.calib_func(q_model, dataloader, tmp_iterations=2)
+        self._simple_inference(q_model, dataloader, iterations=2)
         self.tmp_model._model = q_model
 
         with open(self.ipex_config_path, 'r') as f:
@@ -3159,6 +3161,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                        inspect_type='activation',
                        save_to_disk=False):
         assert False, "Inspect_tensor didn't support IPEX backend now!"
+
+    def _simple_inference(self, q_model, dataloader, iterations=1):
+        """The function is used for ipex warm-up inference."""
+        if self.example_inputs:
+            try:
+                for i in range(iterations):
+                    q_model(*self.example_inputs)
+            except:
+                logger.error("example_inputs should be a tuple for ipex")
+        else:
+            self.calib_func(q_model, dataloader, iterations)
 
 
 @adaptor_registry
