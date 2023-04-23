@@ -310,11 +310,6 @@ class TorchSmoothQuant:
             module = get_module(self.model, name)
             if isinstance(module, torch.nn.Linear) or isinstance(module,
                                                                  torch.nn.Conv2d):
-                if isinstance(module, torch.nn.Conv2d):
-                    if self._check_dw_conv(module):
-                        pass
-                    elif module.groups > 1:
-                        continue
 
                 hook_modules[name] = module
         if len(hook_modules) == 0:
@@ -565,13 +560,6 @@ class TorchSmoothQuant:
         self.calib_iter = calib_iter
         return need_calib
 
-    def _check_dw_conv(self, module):
-        if not isinstance(module, torch.nn.Conv2d):
-            return False
-
-        return module.groups > 1 and module.in_channels == module.out_channels and \
-               module.groups == module.in_channels
-
     def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
         """
         Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
@@ -596,7 +584,6 @@ class TorchSmoothQuant:
             absorb_to_layer_sample[absorb_key] = self.absorb_to_layer[absorb_key]
             loss_all_layers = {}
             for layer_key in self.absorb_to_layer[absorb_key]:
-                # if self._check_dw_conv(get_module(self.model,layer_key)):
 
                 if layer_key not in self.layer_to_absorb.values():
                     if layer_key in input_maxes:
@@ -860,6 +847,22 @@ class GraphTrace:
         res = list(set(res))
         return res
 
+    def _check_valid_conv(self, module):
+        """
+        remove group conv except depthwise conv
+        :param module:
+        :return:
+        """
+        if not isinstance(module, torch.nn.Conv2d):
+            return True
+        if module.groups > 1:
+            if module.in_channels == module.out_channels and \
+                    module.groups == module.in_channels:
+                return True
+            else:
+                return False
+        return True
+
     def get_absorb_to_layer(self, model, example_input, op_types):
         traced_model = self.trace(model, example_input)
         if traced_model == None:
@@ -897,7 +900,7 @@ class GraphTrace:
             for layer_name in absorb_to_layer[key]:
                 layer = get_module(model, layer_name)
                 layer_type = layer.__class__.__name__
-                if layer_type not in self.supported_torch_module_to_aten.keys():
+                if (layer_type not in self.supported_torch_module_to_aten.keys()) or not self._check_valid_conv(layer):
                     supported = False
                     break
             if supported:
