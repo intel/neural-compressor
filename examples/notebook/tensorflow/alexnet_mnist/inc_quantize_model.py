@@ -68,7 +68,6 @@ def auto_tune(input_graph_path, batch_size):
     return q_model
 
 
-#yaml_file = "alexnet.yaml"
 batch_size = 200
 fp32_frozen_pb_file = "fp32_frozen.pb"
 int8_pb_file = "alexnet_int8_model.pb"
