@@ -31,7 +31,6 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..data.dataloaders.base_dataloader import BaseDataLoader
-from .torch_utils.smooth_quant import TorchSmoothQuant
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -1266,6 +1265,7 @@ class TemplateAdaptor(Adaptor):
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
 
         if not hasattr(self, 'sq') or force_re_smooth:
+            from .torch_utils.smooth_quant import TorchSmoothQuant
             self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
@@ -2546,10 +2546,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                                             inplace=True)  # pylint: disable=E1121
                     else:
                         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                        qscheme=torch.per_channel_symmetric))
+                        if self.version.release >= Version("2.1").release:
+                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        else:
+                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                            qscheme=torch.per_channel_symmetric))
 
                         q_model = ipex.quantization.prepare(model._model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=True)
@@ -2665,10 +2668,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                     repr(e)))
                                 self.tmp_model = model
                         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                        qscheme=torch.per_channel_symmetric))
+                        if self.version.release >= Version("2.1").release:
+                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        else:
+                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                            qscheme=torch.per_channel_symmetric))
 
                         q_model = ipex.quantization.prepare(model._model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=False)
@@ -2935,10 +2941,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                             # to make sure ipex_config.json is based on pre-optimized model
                             tmp_model = self._wrapper_sq_linear(tmp_model)
                     else:
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                    qscheme=torch.per_channel_symmetric))
+                        if self.version.release >= Version("2.1").release:
+                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        else:
+                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                        qscheme=torch.per_channel_symmetric))
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
