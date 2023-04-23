@@ -22,11 +22,11 @@ from ..utils import logger
 @strategy_registry
 class AutoTuneStrategy(TuneStrategy):
     """The auto tuning strategy.
-    
+
     There are three stages executed by auto strategy sequentially,
     and the tuning process ends once the condition meets the exit policy.
     """
-    
+
     def __init__(self,
                  model,
                  conf,
@@ -44,8 +44,8 @@ class AutoTuneStrategy(TuneStrategy):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
-                evaluation dataset and metrics should be encapsulated in this function implementation and 
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
                 outputs a higher-is-better accuracy scalar value.
             eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_metric: Metric for evaluation. Defaults to None.
@@ -64,7 +64,7 @@ class AutoTuneStrategy(TuneStrategy):
                          q_hooks=q_hooks)
         logger.info(f"*** Initialize auto tuning")
         self.strategies_sequence = ['conservative', 'basic']
-        
+
     def sequential_traverse(self):
         """Try different strategies sequentially."""
         pre_strategy = self
@@ -80,7 +80,7 @@ class AutoTuneStrategy(TuneStrategy):
                 eval_metric=self.eval_metric,
                 resume=self._resume,
                 q_hooks=self.q_hooks)
-            
+
             if pre_strategy:
                 #TODO add tuning history from the previous stage to current stage.
                 strategy.baseline = deepcopy(pre_strategy.baseline)
@@ -90,7 +90,7 @@ class AutoTuneStrategy(TuneStrategy):
             strategy.traverse()
             self.best_qmodel = strategy.best_qmodel
             if self.best_qmodel:
-                return 
+                return
 
     def next_tune_cfg(self):
         """Generate and yield the default tuning config.
@@ -104,7 +104,7 @@ class AutoTuneStrategy(TuneStrategy):
         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size_lst[0]
         logger.info(f"Quantize the model with default config.")
         yield op_tuning_cfg
-     
+
     def traverse(self):
         """Traverse the tuning space."""
         # Quantize model with default config

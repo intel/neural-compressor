@@ -30,15 +30,15 @@ from .utils.tuning_structs import OpTuningConfig
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     """Tuning strategy for auto mixed precision."""
-    
+
     def next_tune_cfg(self):
         """Generate the next tuning config.
-        
+
         Tuning configurations are generated according to the following rules:
         1. First, it tries to convert all ops into target date type as many as possible.
-        2. If the accuracy does  not meets the requirements, it starts the stage of fallback 
+        2. If the accuracy does  not meets the requirements, it starts the stage of fallback
             which converts ops into higher precision.
-        
+
         Yields:
             tune_config (dict): A dict containing the tuning configuration.
         """

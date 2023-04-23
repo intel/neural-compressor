@@ -23,7 +23,7 @@ from ...utils import logger
 
 class OpTuningConfig:
     """Op tuning config."""
-    
+
     def __init__(self, op_name, op_type, op_quant_mode, tuning_space, kwargs={}):
         """Create the tuning config.
 
@@ -43,7 +43,7 @@ class OpTuningConfig:
         self.weight_dtype = None
         self.has_weight = self.op_name_type in tuning_space.ops_attr['weight']
         self._set_dtype()
-        
+
     def _set_dtype(self):
         """Set the date type."""
         if self.op_quant_mode in PRECISION_LIST:
@@ -58,7 +58,7 @@ class OpTuningConfig:
         #     assert self.weight_dtype, \
         #         (f"Didn't assign the weight data type for {self.op_name, self.op_type}", \
         #             f"with quant_mode {self.op_quant_mode}")
-        
+
 
     def __repr__(self) -> str:
         """Display the tuning config as string.
@@ -76,7 +76,7 @@ class OpTuningConfig:
 
     def get_state(self):
         """Return the op tuning configuration.
-        
+
         Returns:
             Dict: The op tuning state.
         """

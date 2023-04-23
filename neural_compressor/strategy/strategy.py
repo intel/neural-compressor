@@ -121,8 +121,8 @@ class TuneStrategy(object):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
-                evaluation dataset and metrics should be encapsulated in this function implementation and 
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
                 outputs a higher-is-better accuracy scalar value.
             eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_metric: Metric for evaluation. Defaults to None.
@@ -156,12 +156,12 @@ class TuneStrategy(object):
         self.tune_result_record = []
         self.tuning_history = []
         self.tuning_result_data = []
-        
+
         self.baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
         self.last_tune_cfg = None
-        self.best_qmodel = None 
+        self.best_qmodel = None
         self.best_tune_result = None
         self.best_tuning_cfg = None # track the best tuning config correspondence to the best quantized model
         self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
@@ -171,7 +171,7 @@ class TuneStrategy(object):
         self.capability = self.adaptor.query_fw_capability(model)
         logger.debug(self.capability)
         self.set_tuning_space(self.config)
-        
+
         #For algo scheduler
         self.algo_scheduler = AlgorithmScheduler(self.config.recipes)
         self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
@@ -184,7 +184,7 @@ class TuneStrategy(object):
         self.tuning_times = 0
         self.fallback_start_point = 0
         self.metric_met_point = 0
-        
+
         # for recipes
         # {recipe name: the list of supported value}
         self._tuning_recipes = OrderedDict()
@@ -194,7 +194,7 @@ class TuneStrategy(object):
         self._not_tuning_recipes_values = {}
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
-        
+
         self._resume = resume
         if self._resume is not None: self.setup_resume(resume)
 
@@ -212,7 +212,7 @@ class TuneStrategy(object):
             tune_config (dict): It's a dict containing the tuning configuration to traverse.
         """
         raise NotImplementedError
-    
+
     def _initialize_recipe(self):
         """Divide the recipe into two categories tuning/not tuning."""
         from .utils.utility import get_adaptor_name
@@ -248,7 +248,6 @@ class TuneStrategy(object):
         logger.debug(self._not_tuning_recipes_values)
         logger.info(f"{len(self._tuning_recipes)} recipes require future tuning.")
         logger.debug(self._tuning_recipes)
-        
 
     def distributed_next_tune_cfg_lst(self, comm):
         """Interface for generate the distributed next tuning config list.
@@ -327,7 +326,7 @@ class TuneStrategy(object):
             # record eval_results for context coordination of stage 3
             self.last_tune_result = eval_res
             self.eval_results[tag] = eval_res
-            
+
             self.overall_trials += 1
             self.best_tune_cfg_id = None
             self.already_ack_id_lst.add(tag)
@@ -337,7 +336,7 @@ class TuneStrategy(object):
                 logger.info("[Rank {}]master has one tuning cfg meet acc: {}".format(comm.Get_rank(), tag))
                 self.met_flag = True
                 self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
-                
+
                 # must ensure every id lower than current min_id has been acknowledged
                 # because a tune cfg (not acked yet) with lower id can have better acc
                 for i in range(self.requirements_met_min_cfg_id):
@@ -347,7 +346,7 @@ class TuneStrategy(object):
                         # not completely collected yet!
                         self.met_flag = False
                         break
-                
+
                 if self.met_flag:
                     # found the best tune cfg!
                     logger.info("[Rank {}]master has one tuning cfg meet acc: {} and also collect all acks before"\
@@ -365,7 +364,7 @@ class TuneStrategy(object):
                 logger.info(self.best_tune_cfg_id)
                 logger.info(self.tune_cfg_lst[self.best_tune_cfg_id])
                 break
-            
+
             # send the next cfg if not exceed max trials
             if self.overall_trials > self.config.tuning_criterion.max_trials:
                 self.max_trial_flag = True
@@ -376,7 +375,7 @@ class TuneStrategy(object):
                     cur_cfg_id, sender_rank))
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
-            else:                    
+            else:
                 logger.info("[Rank {}]All tune configs are sent, no more sending, just collecting..."\
                     .format(comm.Get_rank()))
 
@@ -498,14 +497,14 @@ class TuneStrategy(object):
                 .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
-    
+
     def _fallback_ops(self, tune_cfg, recipe_op_lst, tuning_space):
         """Fallback ops in recipe op list."""
         for op_name_type in recipe_op_lst:
             tune_cfg.update({op_name_type: OpTuningConfig(op_name_type[0], \
                 op_name_type[1],'fp32', tuning_space)})
         return tune_cfg
-    
+
     def apply_all_tuning_recipes(self, tune_cfg):
         """Apply all tunable recipes with their value."""
         tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
@@ -517,10 +516,10 @@ class TuneStrategy(object):
                 tune_cfg = self._fallback_ops(tune_cfg, self.capability['recipes_ops'][recipe_name],\
                     self.tuning_space)
         return tune_cfg
-        
+
     def apply_recipe_one_by_one(self, tune_cfg):
         """Apply the tunable recipes one by one.
-        
+
         For recipes only have two options, apply the last one.
         For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
         """
@@ -569,8 +568,8 @@ class TuneStrategy(object):
             sq_algo.folding = smooth_quant_args['folding']
             #logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
-            
-            
+
+
     def set_param_for_post_quantization_algos(self, algo_scheduler, tune_cfg, pre_optimized_model, q_model) -> None:
         """Set the parameter for post-quantization algos, such as bias correction, weight correction.
 
@@ -583,7 +582,7 @@ class TuneStrategy(object):
         algo_scheduler.origin_model = pre_optimized_model
         # if no pre-process algos, return the fp32 model directly.
         algo_scheduler.q_model = q_model
-        
+
         algo_scheduler.reset_exec_algorithms()
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         # for fast_bias_correction
@@ -689,20 +688,20 @@ class TuneStrategy(object):
                     self._dump_tuning_process_statistics()
                 break
         self._recover_best_qmodel_from_tuning_cfg()
-            
+
     def _remove_redundant_qmodel(self):
         """Remove the redundant quantized model to reduce memory use.
-        
+
         During the tuning process, the strategy only keeps the best tuning config
         instead of the best quantized model to reduce memory use.
         """
         self.last_qmodel = None
         self.best_qmodel = None
-        
+
     def _eval_baseline(self):
         """Evaluate the fp32 model if needed."""
         if self._not_tuning:
-            
+
             logger.info("Do not evaluate the baseline and quantize the model with default configuration.")
             return
         else:
@@ -819,7 +818,7 @@ class TuneStrategy(object):
 
     def initial_tuning_cfg(self):
         """Init the tuning config.
-        
+
         Initialize the tuning config according to the quantization approach.
 
         Returns:
@@ -945,7 +944,7 @@ class TuneStrategy(object):
 
     def set_tuning_space(self, config):
         """Create the tuning space.
-        
+
         Create the tuning space based on the framework capability and user configuration.
 
         Args:
@@ -1079,7 +1078,7 @@ class TuneStrategy(object):
             self.use_multi_objective = True
         else:
             objectives = [obj.lower()]
-            
+
         # set metric
         self.metric_name = ['Accuracy']
         self.metric_criterion = [self.higher_is_better]
@@ -1100,7 +1099,7 @@ class TuneStrategy(object):
                     self.metric_criterion = [True] * len(self.metric_name)
             # metric weight
             self.metric_weight = self.eval_metric.get('weight', None)
-        
+
         accuracy_criterion = {'relative': 0.01, 'higher_is_better': True}
         accuracy_criterion_conf = self.config.accuracy_criterion
         accuracy_criterion[accuracy_criterion_conf.criterion] = accuracy_criterion_conf.tolerable_loss
@@ -1111,7 +1110,7 @@ class TuneStrategy(object):
                                          metric_weight=self.metric_weight,
                                          obj_criterion=obj_higher_is_better,
                                          obj_weight=obj_weight)
-    
+
     def _same_conf(self, src_conf, dst_conf):
         """Check if the two configs are the same."""
         from ..utils.utility import compare_objects
@@ -1160,7 +1159,7 @@ class TuneStrategy(object):
         model_cfg['backend'] = self.config.backend
         self.deploy_cfg['model'] = model_cfg
         self.deploy_cfg['device'] = self.config.device
-        
+
         def setup_yaml():
             represent_dict_order = lambda self, \
                 data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
@@ -1268,7 +1267,7 @@ class TuneStrategy(object):
 
     def stop(self, timeout, trials_count):
         """Check if need to stop traverse.
-        
+
         Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
 
         Returns:

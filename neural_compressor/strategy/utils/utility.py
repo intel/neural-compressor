@@ -22,7 +22,7 @@ from collections import OrderedDict
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
-    
+
     def __missing__(self, key):
         """Initialize value for the missing key."""
         self[key] = value = OrderedDefaultDict()

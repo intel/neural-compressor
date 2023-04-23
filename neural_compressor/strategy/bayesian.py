@@ -51,8 +51,8 @@ class BayesianTuneStrategy(TuneStrategy):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
-                evaluation dataset and metrics should be encapsulated in this function implementation and 
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
                 outputs a higher-is-better accuracy scalar value.
             eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_metric: Metric for evaluation. Defaults to None.
@@ -102,19 +102,19 @@ class BayesianTuneStrategy(TuneStrategy):
         """Generate the next tuning config according to bayesian search algorithm.
 
         This strategy comes from the Bayesian optimization package and changed it to a discrete version.
-        It uses Gaussian processes to define the prior/posterior distribution over the black-box 
-        function with the tuning history and then finds the tuning configuration that maximizes 
+        It uses Gaussian processes to define the prior/posterior distribution over the black-box
+        function with the tuning history and then finds the tuning configuration that maximizes
         the expected improvement.
 
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         params = None
-        pbounds = {} 
+        pbounds = {}
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
                                            op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
 
@@ -271,11 +271,11 @@ class TargetSpace(object):
         """Generate an array from params.
 
         Args:
-            params (Dict): The dict contains keys in `self.keys`, and 
+            params (Dict): The dict contains keys in `self.keys`, and
               corresponding param.
 
         Returns:
-            np.array: An array contains all params. 
+            np.array: An array contains all params.
         """
         try:
             assert set(params) == set(self.keys)
@@ -324,7 +324,7 @@ class TargetSpace(object):
         """Append a point and its target value to the known data.
 
         Runs in amortized constant time.
-        
+
         Args:
             params (ndarray): a single point, with len(params) == self.dim
             target (float): target function value
@@ -347,7 +347,7 @@ class TargetSpace(object):
 
         Args:
             params (ndarray): a single point, with len(params) == self.dim
-        
+
         Returns:
             target (float): target function value.
         """
@@ -394,7 +394,7 @@ class TargetSpace(object):
 class BayesianOptimization():
     """The class for bayesian optimization.
 
-    This class takes the parameters bounds in order to find which values for 
+    This class takes the parameters bounds in order to find which values for
     the parameters yield the maximum value using bayesian optimization.
     """
 
@@ -404,7 +404,7 @@ class BayesianOptimization():
         Args:
             pbounds (dict): Dictionary with parameters names as keys and a tuple with
               minimum and maximum values.
-            random_seed (int, optional): The seed for random searching. Default to 9527. 
+            random_seed (int, optional): The seed for random searching. Default to 9527.
             verbose (int, optional): The level of verbosity. Default to 2.
         """
         self._random_seed = random_seed
