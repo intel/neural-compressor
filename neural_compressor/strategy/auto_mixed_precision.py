@@ -22,7 +22,6 @@ import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
-
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
@@ -30,6 +29,27 @@ from .utils.tuning_structs import OpTuningConfig
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     """Tuning strategy for auto mixed precision."""
+
+    def _initialize_config(self, conf):
+        """Init the tuning config based on user conf.
+
+        Args:
+            conf: User config
+
+        Returns:
+            Tuning config
+        """
+        config = conf.mixed_precision
+        config.approach = getattr(config, 'approach', None)
+        config.recipes = getattr(config, 'recipes', {})
+        config.calibration_sampling_size = getattr(config, 'calibration_sampling_size', [0])
+        config.op_type_dict = getattr(config, 'op_type_dict', None)
+        config.op_name_dict = getattr(config, 'op_name_dict', None)
+        config.quant_format = getattr(config, 'quant_format', "")
+        config.domain = getattr(config, 'domain', None)
+        config.reduce_range = getattr(config, 'reduce_range', None)
+        config.example_inputs = getattr(config, 'example_inputs', None)
+        return config
 
     def next_tune_cfg(self):
         """Generate the next tuning config.

@@ -89,8 +89,8 @@ class SigOptTuneStrategy(TuneStrategy):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
-                evaluation dataset and metrics should be encapsulated in this function implementation and 
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
                 outputs a higher-is-better accuracy scalar value.
             eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_metric: Metric for evaluation. Defaults to None.
@@ -108,7 +108,7 @@ class SigOptTuneStrategy(TuneStrategy):
                          resume=resume,
                          q_hooks=q_hooks)
         logger.info(f"*** Initialize SigOpt tuning")
-        self.config = conf.quantization
+        self.config = self._initialize_config(conf)
         strategy_name = self.config.tuning_criterion.strategy
         if strategy_name.lower() == "sigopt":
             try:
@@ -119,7 +119,7 @@ class SigOptTuneStrategy(TuneStrategy):
                     import sys
                     subprocess.check_call([sys.executable, "-m", "pip", "install", "sigopt"])
                     import sigopt # pylint: disable=import-error
-                finally:
+                except:
                     assert False, "Unable to import sigopt from the local environment."
         else:
             pass
@@ -266,7 +266,7 @@ class SigOptTuneStrategy(TuneStrategy):
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
 
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
                                            op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
         for op, configs in self.op_configs.items():

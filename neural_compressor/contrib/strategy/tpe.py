@@ -93,7 +93,7 @@ class TpeTuneStrategy(TuneStrategy):
                  resume=None,
                  q_hooks=None):
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        self.config = conf.quantization
+        self.config = self._initialize_config(conf)
         assert self.config.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
         """Initialize the tpe tuning strategy if the user specified to use it."""
@@ -118,7 +118,7 @@ class TpeTuneStrategy(TuneStrategy):
         self.max_trials = 200
         if self.config.tuning_criterion.max_trials:
             self.max_trials = self.config.tuning_criterion.max_trials
-        
+
         self.loss_function_config = {
             'acc_th': 0.01,
             'acc_weight': 1.0,
@@ -226,7 +226,7 @@ class TpeTuneStrategy(TuneStrategy):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
                                            op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
         self.opwise_tune_cfgs = {}

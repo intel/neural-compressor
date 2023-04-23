@@ -132,8 +132,7 @@ class TuneStrategy(object):
         """
         self.model = model
         self.conf = conf
-        # TODO replace self.config with mixed_precision when self is an instance of AutoMixedPrecisionTuneStrategy
-        self.config = conf.quantization
+        self.config = self._initialize_config(conf)
         self.history_path = self._create_path(options.workspace, './history.snapshot')
         self.deploy_path = self._create_path(options.workspace, 'deploy.yaml')
         self.calib_dataloader = q_dataloader
@@ -198,6 +197,17 @@ class TuneStrategy(object):
         self._resume = resume
         if self._resume is not None: self.setup_resume(resume)
 
+    def _initialize_config(self, conf):
+        """Init the tuning config based on user conf.
+
+        Args:
+            conf: User config
+
+        Returns:
+            Tuning config
+        """
+        config = conf.quantization
+        return config
 
     @abstractmethod
     def next_tune_cfg(self):
@@ -1001,14 +1011,14 @@ class TuneStrategy(object):
         return new_path
 
     def _set_framework_info(self, q_dataloader, q_func=None):
-        framework_specific_info = {'device': self.config.device,
-                                   'approach': self.config.approach,
+        framework_specific_info = {'device': getattr(self.config, 'device', None),
+                                   'approach': getattr(self.config, 'approach', None),
                                    'random_seed': options.random_seed,
                                    'performance_only': self._not_tuning}
         framework = self.config.framework.lower()
         framework_specific_info.update({'backend': self.config.backend})
-        framework_specific_info.update({'format': self.config.quant_format})
-        framework_specific_info.update({'domain': self.config.quant_format})
+        framework_specific_info.update({'format': getattr(self.config, 'quant_format', None)})
+        framework_specific_info.update({'domain': getattr(self.config, 'quant_format', None)})
 
         self.mixed_precision_mode = isinstance(self.config, MixedPrecisionConfig)
 
@@ -1020,7 +1030,7 @@ class TuneStrategy(object):
                  'recipes': self.config.recipes,
                  'use_bf16': self.config.use_bf16 if self.config.use_bf16 is not None else False})
             for item in ['scale_propagation_max_pooling', 'scale_propagation_concat']:
-                if item not in framework_specific_info['recipes']:
+                if framework_specific_info['recipes'] and item not in framework_specific_info['recipes']:
                     framework_specific_info['recipes'].update({item: True})
             if self.config.backend == 'itex':
                 framework = 'tensorflow_itex'
