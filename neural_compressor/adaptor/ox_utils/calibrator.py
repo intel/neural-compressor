@@ -73,7 +73,8 @@ class MinMaxCalibrator(CalibratorBase):
     
     def collect_calib_data(self, datas):
         """Collect calibration range."""
-        if len(set([data.shape for data in datas])) != 1:
+        if isinstance(datas, list) and \
+            len(set([data.shape for data in datas])) != 1:
             for data in datas:
                 if data.size == 0: # pragma: no cover
                     continue
@@ -96,6 +97,11 @@ class MinMaxCalibrator(CalibratorBase):
         else:
             self._calib_min = np.minimum(self._calib_min, local_min)
             self._calib_max = np.maximum(self._calib_max, local_max)
+    
+    @property
+    def method_name(self):
+        """Get calibration method name."""
+        return "minmax"
 
 @calib_registry(calib_method='percentile')
 class PercentileCalibrator(CalibratorBase):
@@ -146,6 +152,11 @@ class PercentileCalibrator(CalibratorBase):
         self._calib_min = None
         self._calib_max = None
         self.collector = None
+    
+    @property
+    def method_name(self):
+        """Get calibration method name."""
+        return "percentile"
 
 @calib_registry(calib_method='kl')
 class KLCalibrator(CalibratorBase):
@@ -270,6 +281,11 @@ class KLCalibrator(CalibratorBase):
         self._calib_min = None
         self._calib_max = None
         self.collector = None
+    
+    @property
+    def method_name(self):
+        """Get calibration method name."""
+        return "kl"
         
 class HistogramCollector():
     """Histogram collctor class."""
@@ -281,7 +297,8 @@ class HistogramCollector():
     
     def collect_data(self, datas):
         """Collect histogram data."""
-        if len(set([data.shape for data in datas])) != 1:
+        if isinstance(datas, list) and \
+            len(set([data.shape for data in datas])) != 1:
             for data in datas:
                 if data.size == 0: # pragma: no cover
                     continue

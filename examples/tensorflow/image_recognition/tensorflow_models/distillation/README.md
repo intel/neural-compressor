@@ -45,6 +45,19 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download. 
   This example uses the raw ImageNet data. Therefore, users do not need to convert the data to TF Record format.
 
+  The data folder is expected to contain subfolders representing the classes to which
+    its images belong.
+
+    Please arrange data in this way:
+        dataset/class_1/xxx.png
+        dataset/class_1/xxy.png
+        dataset/class_1/xxz.png
+        ...
+        dataset/class_n/123.png
+        dataset/class_n/nsdf3.png
+        dataset/class_n/asd932_.png
+    Please put images of different categories into different folders.
+
 # Run
 
 ## Run pretraining

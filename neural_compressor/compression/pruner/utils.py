@@ -28,13 +28,17 @@ try:
     from neural_compressor.conf.config import Pruner
     LazyImport('torch.nn')
     torch = LazyImport('torch')
+    F = LazyImport('torch.nn.functional')
+    
 except:
     import torch
+    import torch.nn.functional as F
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)
     from .schema_check import PrunerV2
     
+
     class WeightPruningConfig:
         """Similiar to torch optimizer's interface."""
 
@@ -96,7 +100,11 @@ def get_sparsity_ratio(pruners, model):
             cnt += modules[key].weight.numel()
         pattern_sparsity_cnt += int(cnt * sparsity_ratio)
         for key in pruner.masks.keys():
-            element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item()
+            block_num = 1 
+            if pruner.pattern.block:
+                block_size = pruner.pattern.block_size[key]
+                block_num = block_size[0] * block_size[1]
+            element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item() * block_num
 
     linear_conv_cnt = 0
     param_cnt = 0
@@ -176,7 +184,7 @@ def check_config(prune_config):
         max_ratio = float(N) / M
         if prune_config['pruning_type']!="pattern_lock":
             assert prune_config['target_sparsity'] <= max_ratio, \
-                "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
+                   "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
         prune_config['max_sparsity_ratio_per_op'] = min(max_ratio, prune_config['max_sparsity_ratio_per_op'])
     if prune_config['reg_coeff'] != None:
         prune_config['reg_coeff'] = float(prune_config['reg_coeff'])
@@ -311,7 +319,7 @@ def check_key_validity(template_config, user_config):
         for user_key, user_value in usr_cfg_dict.pruner_config.items():
             if user_key not in template_config.keys():
                 logger.warning(f"{user_key} is not supported for config")
-    
+
     # multi pruners
     if isinstance(user_config, list):
         for obj in user_config:
@@ -319,7 +327,7 @@ def check_key_validity(template_config, user_config):
                 check_key_validity_dict(template_config, obj)
             elif isinstance(obj, PrunerV2):
                 check_key_validity_prunerv2(template_config, obj)
-                
+
     # single pruner, weightconfig or yaml
     elif isinstance(user_config, dict):
         check_key_validity_dict(template_config, user_config)
@@ -329,15 +337,15 @@ def check_key_validity(template_config, user_config):
 
 def process_and_check_config(val):
     """Process and check configurations.
-    
-    Args:  
+
+    Args:
         val: A dict that contains the layer-specific pruning configurations.
     """
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
                              'excluded_op_names': [],
                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
                              'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
-                             'sparsity_decay_type': 'exp',
+                             'sparsity_decay_type': 'exp', "criterion_type": "snip_momentum",
                              'pruning_op_types': ['Conv', 'Linear'],
                              }
     default_local_config = {'resume_from_pruned_checkpoint': False, 'reg_type': None,
@@ -395,15 +403,32 @@ def process_config(config):
     else:
         assert False, f"not supported type {config}"
 
+def parse_last_linear(model):
+    """Locate the last linear layers of the model.
+    While pruning, the final linear often acts like classifier head, which might cause
+    accuracy drop.
+
+    Args:
+        model: The model to be pruned.
+    """
+    from .model_slim.pattern_analyzer import ClassifierHeadSearcher
+    searcher = ClassifierHeadSearcher(model)
+    layer = searcher.search(return_name = True)
+    return layer
 
 def parse_to_prune(config, model):
     """Keep target pruned layers.
-    
+
     Args:
         config: A string representing the path to the configuration file.
         model: The model to be pruned.
     """
     modules = {}
+    # additional function: exclude last layer (often a classifier head and not suitable to be pruned)
+    classifier_head_name = parse_last_linear(model)
+    if classifier_head_name != None:
+        config["excluded_op_names"].append(classifier_head_name)
+    # locate target layers
     if config["op_names"] == None or config["op_names"] == []:
         config["op_names"] = [".*"]
     for raw in config["op_names"]:
@@ -431,7 +456,7 @@ def parse_to_prune(config, model):
 
 def generate_pruner_config(info):
     """Generate pruner config object from prune information.
-    
+
     Args:
         info: A dotdict that saves prune information.
 
@@ -445,54 +470,3 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
-
-def parse_auto_slim_config(model, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
-    """Get model slim pruning configs."""
-    auto_slim_configs = []
-    if ffn2_sparsity > 0 and ffn2_sparsity < 1:
-        auto_slim_configs += generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs)
-    if mha_sparsity > 0 and mha_sparsity < 1:
-        auto_slim_configs += generate_mha_pruning_config(model, mha_sparsity, **kwargs)
-    return auto_slim_configs
-
-def generate_ffn2_pruning_config(model, ffn2_sparsity, **kwargs):
-    """Get consecutive linear layers pruning configs."""
-    from .model_slim.pattern_analyzer import Linear2LinearSearcher
-    searcher = Linear2LinearSearcher(model)
-    layers = searcher.search(return_name = True)
-    # extract the second linear layer
-    ffn_layers = [ffn2_module[-1] for ffn2_module in layers]
-    ffn2_pruning_config = [
-        {
-            "op_names": ffn_layers,
-            "pattern": "channelx1",
-            "target_sparsity": ffn2_sparsity
-        }
-    ]
-    # append kwargs to generated config
-    for item in ffn2_pruning_config:
-        item.update(kwargs)
-    return ffn2_pruning_config
-
-def generate_mha_pruning_config(model, mha_sparsity, **kwargs):
-    """Get multi-head attention layers pruning configs."""
-    from .model_slim.pattern_analyzer import SelfMHASearcher
-    searcher = SelfMHASearcher(model)
-    qkv_pattern, ffn_pattern = searcher.get_head_pattern()
-    qkv_layers, ffn_layers = searcher.search()
-    mha_pruning_config = [
-        {
-            "op_names": qkv_layers,
-            "pattern": qkv_pattern,
-            "target_sparsity": mha_sparsity,
-        },
-        {
-            "op_names": ffn_layers,
-            "pattern": ffn_pattern,
-            "target_sparsity": mha_sparsity,
-        }
-    ]
-    # append kwargs to generated config
-    for item in mha_pruning_config:
-        item.update(kwargs)
-    return mha_pruning_config
