@@ -93,10 +93,11 @@ class TpeTuneStrategy(TuneStrategy):
                  resume=None,
                  q_hooks=None):
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        assert conf.quantization.approach == 'post_training_static_quant', \
+        self.config = conf.quantization
+        assert self.config.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        strategy_name = conf.quantization.tuning_criterion.strategy
+        strategy_name = self.config.tuning_criterion.strategy
         if strategy_name.lower() == "tpe":
             try:
                 import hyperopt
@@ -115,15 +116,15 @@ class TpeTuneStrategy(TuneStrategy):
         self.cfg_evaluated = False
         self.hpopt_trials = hyperopt.Trials()
         self.max_trials = 200
-        if conf.quantization.tuning_criterion.max_trials:
-            self.max_trials = conf.quantization.tuning_criterion.max_trials
+        if self.config.tuning_criterion.max_trials:
+            self.max_trials = self.config.tuning_criterion.max_trials
         
         self.loss_function_config = {
             'acc_th': 0.01,
             'acc_weight': 1.0,
             'lat_weight': 1.0
         }
-        accuracy_criterion = conf.quantization.accuracy_criterion
+        accuracy_criterion = self.config.accuracy_criterion
         if accuracy_criterion.criterion == 'relative':
             self.loss_function_config['acc_th'] = accuracy_criterion.tolerable_loss
 
@@ -306,7 +307,7 @@ class TpeTuneStrategy(TuneStrategy):
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
                 self._save()
-                if self.stop(self.conf.quantization.tuning_criterion.timeout, trials_count):
+                if self.stop(self.config.tuning_criterion.timeout, trials_count):
                     exit = True
         else:
             logger.warn("Can't create search space for input model.")
@@ -518,7 +519,7 @@ class TpeTuneStrategy(TuneStrategy):
 
         if timeout == 0 and self.best_tune_result:
             need_stop = True
-        elif trials_count >= self.conf.quantization.tuning_criterion.max_trials:
+        elif trials_count >= self.config.tuning_criterion.max_trials:
             need_stop = True
         else:
             need_stop = False

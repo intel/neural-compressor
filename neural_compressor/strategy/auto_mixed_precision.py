@@ -46,7 +46,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
         # filter quantization dtype
         # TODO align with the old mixed-precison
-        target_dtypes = self.conf.quantization.precisions
+        target_dtypes = self.config.precisions
         target_dtypes = list(set(target_dtypes) - set(['fp32']))
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
@@ -116,7 +116,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             self.trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and self.trials_count < self.conf.quantization.tuning_criterion.max_trials:
+            if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -137,7 +137,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-                need_stop = self.stop(self.conf.quantization.tuning_criterion.timeout, self.trials_count)
+                need_stop = self.stop(self.config.tuning_criterion.timeout, self.trials_count)
                 # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)

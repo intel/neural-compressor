@@ -107,7 +107,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
             requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg))
             self.output_op_names = self.adaptor.get_output_op_names(self.last_qmodel)
             confidence_batches = 2
-            strategy_kwargs = self.conf.quantization.tuning_criterion.strategy_kwargs
+            strategy_kwargs = self.config.tuning_criterion.strategy_kwargs
             if strategy_kwargs and strategy_kwargs.get('confidence_batches', None):
                 confidence_batches = strategy_kwargs.get('confidence_batches', None)
 

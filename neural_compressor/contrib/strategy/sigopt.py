@@ -108,7 +108,8 @@ class SigOptTuneStrategy(TuneStrategy):
                          resume=resume,
                          q_hooks=q_hooks)
         logger.info(f"*** Initialize SigOpt tuning")
-        strategy_name = conf.quantization.tuning_criterion.strategy
+        self.config = conf.quantization
+        strategy_name = self.config.tuning_criterion.strategy
         if strategy_name.lower() == "sigopt":
             try:
                 import sigopt
@@ -118,12 +119,12 @@ class SigOptTuneStrategy(TuneStrategy):
                     import sys
                     subprocess.check_call([sys.executable, "-m", "pip", "install", "sigopt"])
                     import sigopt # pylint: disable=import-error
-                except:
+                finally:
                     assert False, "Unable to import sigopt from the local environment."
         else:
             pass
         # SigOpt init
-        strategy_kwargs = conf.quantization.tuning_criterion.strategy_kwargs
+        strategy_kwargs = self.config.tuning_criterion.strategy_kwargs
         client_token = strategy_kwargs.get('sigopt_api_token', None)
         self.project_id = strategy_kwargs.get('sigopt_project_id', None)
         self.experiment_name = strategy_kwargs.get('sigopt_experiment_name', None)
@@ -182,7 +183,7 @@ class SigOptTuneStrategy(TuneStrategy):
 
     def get_acc_target(self, base_acc):
         """Get the tuning target of the accuracy ceiterion."""
-        accuracy_criterion_conf = self.conf.quantization.accuracy_criterion
+        accuracy_criterion_conf = self.config.accuracy_criterion
         if accuracy_criterion_conf.criterion == 'relative':
             return base_acc * (1. - accuracy_criterion_conf.tolerable_loss)
         else:
@@ -206,7 +207,7 @@ class SigOptTuneStrategy(TuneStrategy):
             # add tune_cfg here as quantize use tune_cfg
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and trials_count < self.conf.quantization.tuning_criterion.max_trials:
+            if tuning_history and trials_count < self.config.tuning_criterion.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -225,7 +226,7 @@ class SigOptTuneStrategy(TuneStrategy):
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
-            need_stop = self.stop(self.conf.quantization.tuning_criterion.timeout, trials_count)
+            need_stop = self.stop(self.config.tuning_criterion.timeout, trials_count)
 
             # record the tuning history
             saved_tune_cfg = copy.deepcopy(tune_cfg)

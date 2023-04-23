@@ -18,7 +18,6 @@
 """Tuning space."""
 
 from collections import defaultdict, OrderedDict
-import os
 import re
 from typing import Dict, Tuple
 from copy import deepcopy
@@ -134,17 +133,16 @@ class TuningSpace:
         self.ops_attr = {'activation': set(), 'weight': set()}
         # {(op_name, op_type): {path1, path2, ...}
         self.ops_path_set = defaultdict(set)
-        
         self._create_tuning_space(capability, self._usr_cfg)
-        
+
     def _init_usr_cfg(self):
         """Init user config."""
         usr_cfg = {'quantization': {}}
         usr_cfg['quantization']['model_wise'] =  None
-        usr_cfg['quantization']['optype_wise'] = self.conf.quantization.op_type_dict if self.conf else None
-        usr_cfg['quantization']['op_wise'] = self.conf.quantization.op_name_dict if self.conf else None
+        usr_cfg['quantization']['optype_wise'] = self.conf.op_type_dict if self.conf else None
+        usr_cfg['quantization']['op_wise'] = self.conf.op_name_dict if self.conf else None
         return usr_cfg
-        
+
     def _parse_capability(self, capability: Dict) -> None:
         """Parse the capability and construct the tuning space(a tree).
 
@@ -276,7 +274,7 @@ class TuningSpace:
                     cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                                  op_user_cfg,
                                                                  fw_cap['op'][op_name_type])
-             
+
     def _merge_with_user_cfg(self, capability: Dict, user_cfg: Dict):
         """Merge the capability with user config.
         
@@ -392,7 +390,7 @@ class TuningSpace:
             
     def _parse_cap_helper(self, cap):
         """Convert the cpa to internal format.
-        
+
         Parsed result:
         (op_name, op_type):
             {

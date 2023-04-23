@@ -15,16 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The auto tuning strategy."""
-import copy
 from copy import deepcopy
-import numpy as np
-from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy, STRATEGIES
 from ..utils import logger
-
-from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .utils.tuning_structs import OpTuningConfig
-from .utils.constant import TUNING_ITEMS_LST
 
 @strategy_registry
 class AutoTuneStrategy(TuneStrategy):
