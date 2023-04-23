@@ -2934,7 +2934,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:  # pragma: no cover
                         smooth_quant_args = self.recipes.get('smooth_quant_args', {})
-                        if 'folding' in smooth_quant_args and not smooth_quant_args['folding']:
+                        folding = smooth_quant_args.get('folding', False)
+                        if not folding:
                             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                             if not hasattr(tmp_model, '_smoothquant_optimized') \
                               or not tmp_model._smoothquant_optimized:
