@@ -117,7 +117,6 @@ class AlgorithmScheduler(object):
         if len(self._exec_algorithms.get(location, [])) == 0:
             return self._q_model
         assert self._origin_model, 'set origin model for algorithm'
-        assert self._dataloader, 'set dataloader for algorithm'
         assert self._adaptor, 'set adaptor for algorithm'
         assert self._calib_iter, 'set calibration iteration for algorithm'
         for algo in self._exec_algorithms.get(location, []):
