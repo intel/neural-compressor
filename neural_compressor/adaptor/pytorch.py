@@ -2932,10 +2932,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                qscheme=torch.per_channel_symmetric))
                     # For smoothquant optimized model, need ipex version >= 2.1
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:  # pragma: no cover
