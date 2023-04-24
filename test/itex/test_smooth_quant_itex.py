@@ -9,7 +9,7 @@ from neural_compressor.utils.utility import set_random_seed
 from tensorflow.python.framework import graph_util
 
 
-class TestSmoothQuantTF(unittest.TestCase):
+class TestItexSmoothQuantTF(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         pass
@@ -19,7 +19,7 @@ class TestSmoothQuantTF(unittest.TestCase):
         pass
 
     @disable_random()
-    def test_conv_sq(self):
+    def test_itex_conv_sq(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -47,6 +47,7 @@ class TestSmoothQuantTF(unittest.TestCase):
 
         set_random_seed(9527)
         config = PostTrainingQuantConfig(
+            backend='itex',
             quant_level=1,
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}},
             calibration_sampling_size=[500])
@@ -68,7 +69,7 @@ class TestSmoothQuantTF(unittest.TestCase):
         self.assertEqual(mul_count, 2)
 
     @disable_random()
-    def test_sq_matmul(self):
+    def test_itex_sq_matmul(self):
         x_data = np.random.rand(1024, 1024).astype(np.float32)
         y_data = np.random.rand(1024, 1024).astype(np.float32)
         import tensorflow.compat.v1 as tf
@@ -85,6 +86,7 @@ class TestSmoothQuantTF(unittest.TestCase):
 
         set_random_seed(9527)
         config = PostTrainingQuantConfig(
+            backend='itex',
             quant_level=1,
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}},
             calibration_sampling_size=[1024])
@@ -106,7 +108,7 @@ class TestSmoothQuantTF(unittest.TestCase):
         self.assertEqual(mul_count, 1)
 
     @disable_random()
-    def test_sq_conv_matmul(self):
+    def test_itex_sq_conv_matmul(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -134,6 +136,7 @@ class TestSmoothQuantTF(unittest.TestCase):
 
         set_random_seed(9527)
         config = PostTrainingQuantConfig(
+            backend='itex',
             quant_level=1,
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.6}},
             calibration_sampling_size=[500])
