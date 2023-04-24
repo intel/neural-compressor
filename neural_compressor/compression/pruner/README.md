@@ -257,7 +257,7 @@ The following section exemplifies how to use hooks in user pass-in training func
                 "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step = end_step.
                 "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                "pruning_frequence": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
+                "pruning_frequency": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
                 "pattern": "4x1",   # Default pruning pattern.
               }, # The missing parameter items would be complemented by default settings (i.e. start_step = 1)
 
