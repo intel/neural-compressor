@@ -217,14 +217,17 @@ class BaseCallbacks(object):
             if self.framework == "tensorflow":
                 from ..model.tensorflow_model import get_model_type
                 if not isinstance(user_model, BaseModel) and get_model_type(user_model) == 'keras'\
-                     and self.conf.quantization.backend == 'itex':
+                     and self.conf.backend == 'itex':
                     self.framework = 'keras'
             if self.framework == "pytorch":
-                if self.conf.quantization.backend == "default":
-                    self.framework = "pytorch_fx"
-                elif self.conf.quantization.backend == "ipex":
-                    self.framework = "pytorch_ipex"
-            self.conf.quantization.framework = self.framework
+                try:
+                    if self.conf.quantization.backend == "default":
+                        self.framework = "pytorch_fx"
+                    elif self.conf.quantization.backend == "ipex":
+                        self.framework = "pytorch_ipex"
+                    self.conf.quantization.framework = self.framework
+                except Exception as e:
+                    pass
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
