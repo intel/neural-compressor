@@ -212,6 +212,9 @@ class SmoothQuantCalibration:
         max_vals_per_channel = {}
         shape_infos = {}
         for key in self._sq_output_tensor_dict.keys():
+            # breakpoint()
+            # if key == 'StatefulPartitionedCall/tf_distil_bert_for_sequence_classification/distilbert/transformer/layer_._1/ffn/lin2/Tensordot/Reshape':
+            #     breakpoint()
             max_val_per_channel = self._get_maxval_per_channel(
                 self._sq_output_tensor_dict[key], percentile=self.percentile)
             max_vals_per_channel[key] = max_val_per_channel

@@ -2,9 +2,12 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
+import logging
 
 # TODO remove this to bypass np fp error
 # np.seterr(all='raise')
+
+logger = logging.getLogger("neural_compressor")
 
 class SmoothQuantScaler:
     def __init__(self, model, dataloader, alpha, scales_per_op):
@@ -71,8 +74,6 @@ class SmoothQuantScaler:
             # adjust activation
             # adjust weight
             for idx, input_node_name in enumerate(max_vals_per_channel):
-                # if idx!=0 and input_node_name!='resnet_model/Squeeze':
-                #     continue
                 # breakpoint()
                 A_max_per_in_channel = max_vals_per_channel[input_node_name]
                 W_lst = sq_weight_tensors[input_node_name]
@@ -98,11 +99,15 @@ class SmoothQuantScaler:
                     try:
                         scale = np.power(A_max_per_in_channel, self.alpha) / np.power(W_max_per_in_channel, (1-self.alpha))
                     except ValueError as e:
-                        print(e)
-                        print("Skip smoothing the node: {}".format(W_node_lst[w_i]))
+                        logger.info(e)
+                        logger.info("Skip smoothing the node: {}".format(W_node_lst[w_i]))
                         continue
                     # clip the scales that are too small
                     scale = tf.clip_by_value(scale, clip_value_min=1e-2, clip_value_max=1e8)
+                    # skip smoothing the op where scale has elements that less than 1
+                    if np.any(scale < 1):
+                        logger.info("skip smooth quant: {}".format(input_node_name))
+                        continue
 
                     self._adjust_weight(scale, W_const_node_lst[w_i], W)
                     self._adjust_activation(1 / scale, input_node_name, W_node_lst[w_i], w_i)
@@ -113,13 +118,13 @@ class SmoothQuantScaler:
                     # print("scale: p scale")
                     # breakpoint()
                     # # return self.model
-                if idx == 25:
-                    breakpoint()
-                    # tf.io.gfile.GFile('i_middle_1_with_branch_check.pb', 'wb').write(self.model.graph_def.SerializeToString())
-                    tf.io.gfile.GFile('k_middle_{}.pb'.format(idx+1), 'wb').write(self.model.graph_def.SerializeToString())
-                    return self.model
+                # if idx == 11:
+                #     # breakpoint()
+                #     # tf.io.gfile.GFile('i_middle_1_with_branch_check.pb', 'wb').write(self.model.graph_def.SerializeToString())
+                #     tf.io.gfile.GFile('k_middle_{}.pb'.format(idx+1), 'wb').write(self.model.graph_def.SerializeToString())
+                #     return self.model
         else:
             pass
         # breakpoint()
-        tf.io.gfile.GFile('j_new.pb', 'wb').write(self.model.graph_def.SerializeToString())
+        tf.io.gfile.GFile('b_new.pb', 'wb').write(self.model.graph_def.SerializeToString())
         return self.model
