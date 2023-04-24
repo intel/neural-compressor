@@ -1338,7 +1338,7 @@ class TemplateAdaptor(Adaptor):
 
         return model
 
-    def _wrapper_sq_linear(self, tmp_model):
+    def _wrapper_sq_linear(self, tmp_model, recover=False):
         """Help function for _get_quantizable_ops_recursively to align smoothquant processed model"""
         class SQLinearWrapper(torch.nn.Module):
             def __init__(self, module):
@@ -1348,16 +1348,22 @@ class TemplateAdaptor(Adaptor):
             def forward(self, X):
                 return self.sq_linear(X)
 
-        module_name_list = []
         from .torch_utils.smooth_quant import get_module, set_module
-        for name, module in tmp_model.named_modules():
-            if 'Linear' == str(module.__class__.__name__):
-                module_name_list.append(name)
-        for name in module_name_list:
-            module = get_module(tmp_model, name)
-            new_module = SQLinearWrapper(module)
-            set_module(tmp_model, name, new_module)
-        return tmp_model
+        if recover:
+            for name in self.sq_module_name_list:
+                new_module = get_module(tmp_model, name+'.sq_linear')
+                set_module(tmp_model, name, new_module)
+            return tmp_model
+        else:
+            self.sq_module_name_list = []
+            for name, module in tmp_model.named_modules():
+                if 'Linear' == str(module.__class__.__name__):
+                    self.sq_module_name_list.append(name)
+            for name in self.sq_module_name_list:
+                module = get_module(tmp_model, name)
+                new_module = SQLinearWrapper(module)
+                set_module(tmp_model, name, new_module)
+            return tmp_model
 
 
 unify_op_type_mapping = {
@@ -2959,6 +2965,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 else:
                     self.q_func(tmp_model)
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+                if hasattr(self, 'sq_module_name_list'):
+                    # recover model before SmoothQuant
+                    model = self._wrapper_sq_linear(model, recover=True)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
@@ -3166,12 +3175,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
     def _simple_inference(self, q_model, dataloader, iterations=1):
         """The function is used for ipex warm-up inference."""
-        if self.example_inputs:
-            try:
-                for i in range(iterations):
-                    q_model(*self.example_inputs)
-            except:
-                logger.error("example_inputs should be a tuple for ipex")
+        if self.example_inputs is not None and isinstance(self.example_inputs, (list, tuple)):
+            for _ in range(iterations):
+                q_model(*self.example_inputs)
         else:
             self.calib_func(q_model, dataloader, iterations)
 
