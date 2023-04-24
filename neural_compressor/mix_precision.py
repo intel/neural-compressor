@@ -52,7 +52,8 @@ class _MixedPrecision:
         Args:
             conf (obj): The MixedPrecisionConfig class containing accuracy goal, tuning objective etc.
         """
-        self.conf = _Config(mixed_precision=conf, quantization=None, benchmark=None, pruning=None, distillation=None, nas=None)
+        self.conf = _Config(mixed_precision=conf, quantization=None, benchmark=None
+                            , pruning=None, distillation=None, nas=None)
         seed = options.random_seed
         random.seed(seed)
         np.random.seed(seed)

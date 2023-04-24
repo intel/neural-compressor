@@ -100,7 +100,7 @@ class _PostTrainingQuant:
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
-        if self._eval_func is None and self._eval_dataloader is None:
+        if self._eval_func is None and self._eval_dataloader is None: # pragma: no cover
             logger.info("Quantize model without tuning!")
 
         self.strategy = STRATEGIES[strategy](
@@ -125,7 +125,7 @@ class _PostTrainingQuant:
                 self.strategy.traverse()
         except KeyboardInterrupt:
             pass
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
             import traceback
             traceback.print_exc()

@@ -1728,10 +1728,12 @@ class MixedPrecisionConfig(object):
 
     @property
     def accuracy_criterion(self):
+        """Get the accuracy criterion."""
         return self._accuracy_criterion
 
     @accuracy_criterion.setter
     def accuracy_criterion(self, accuracy_criterion):
+        """Set the accuracy criterion."""
         if _check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
             self._accuracy_criterion = accuracy_criterion
 
@@ -1748,55 +1750,67 @@ class MixedPrecisionConfig(object):
 
     @property
     def device(self):
+        """Get device."""
         return self._device
 
     @device.setter
     def device(self, device):
+        """Set device."""
         if _check_value('device', device, str, ['cpu', 'gpu']):
             self._device = device
 
     @property
     def backend(self):
+        """Get backend."""
         return self._backend
 
     @backend.setter
     def backend(self, backend):
+        """Set backend."""
         if _check_value('backend', backend, str, [
                 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
     def outputs(self):
+        """Get outputs."""
         return self._outputs
 
     @outputs.setter
     def outputs(self, outputs):
+        """Set outputs."""
         if _check_value('outputs', outputs, str):
             self._outputs = outputs
 
     @property
     def inputs(self):
+        """Get inputs."""
         return self._inputs
 
     @inputs.setter
     def inputs(self, inputs):
+        """Set inputs."""
         if _check_value('inputs', inputs, str):
             self._inputs = inputs
 
     @property
     def framework(self):
+        """Get framework."""
         return self._framework
 
     @framework.setter
     def framework(self, framework):
+        """Set framework."""
         self._framework = framework
 
     @property
     def excluded_precisions(self):
+        """Get excluded precisions."""
         return self._excluded_precisions
 
     @excluded_precisions.setter
     def excluded_precisions(self, excluded_precisions):
+        """Set excluded precisions."""
         if _check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions

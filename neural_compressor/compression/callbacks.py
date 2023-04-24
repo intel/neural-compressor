@@ -211,28 +211,28 @@ class BaseCallbacks(object):
         if user_model is None:
             return
 
-        if self.framework == 'NA':
+        if self.framework == None:
             self.framework = get_model_fwk_name(
                 user_model.model if isinstance(user_model, BaseModel) else user_model)
             if self.framework == "tensorflow":
                 from ..model.tensorflow_model import get_model_type
                 if not isinstance(user_model, BaseModel) and get_model_type(user_model) == 'keras'\
-                     and self.cfg.quantization.backend == 'itex':
+                     and self.conf.quantization.backend == 'itex':
                     self.framework = 'keras'
             if self.framework == "pytorch":
-                if self.cfg.quantization.backend == "default":
+                if self.conf.quantization.backend == "default":
                     self.framework = "pytorch_fx"
                 elif self.conf.quantization.backend == "ipex":
                     self.framework = "pytorch_ipex"
-            self.cfg.quantization.framework = self.framework
+            self.conf.quantization.framework = self.framework
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in self.framework or self.framework == "keras":
-                if self.cfg.quantization and self.cfg.quantization.approach == "quant_aware_training":
-                    self._model = Model(user_model, backend='tensorflow_qat', device=self.cfg.device)
+                if self.conf.quantization and self.conf.quantization.approach == "quant_aware_training":
+                    self._model = Model(user_model, backend='tensorflow_qat', device=self.conf.device)
                 else:
-                    self._model = Model(user_model, backend=self.framework, device=self.cfg.device)
+                    self._model = Model(user_model, backend=self.framework, device=self.conf.device)
             else:
                 self._model = Model(user_model, backend=self.framework)
         else:
