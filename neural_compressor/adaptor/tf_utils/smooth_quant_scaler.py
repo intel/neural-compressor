@@ -15,7 +15,8 @@ class SmoothQuantScaler:
         self.dataloader = dataloader
         self.alpha = alpha
         self.scales_per_op = scales_per_op
-        
+        self.mul_list = []
+
     def _adjust_activation(self, scale, input_node_name, output_node_name, w_i):
         """Insert the Mul node after the activation before the weight node
 
@@ -30,6 +31,7 @@ class SmoothQuantScaler:
         mul_const_node = Helper.create_constant_node(input_node_name + "/scale_mul" + node_suffix, scale, tf.float32)
         mul_node = Helper.create_node('Mul', input_node_name + "_mul" + node_suffix, [input_node_name + "/scale_mul" + node_suffix, input_node_name])
         Helper.set_attr_dtype(mul_node, "T", dtypes.float32)
+        self.mul_list.append(mul_node.name)
         from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
         g = GraphAnalyzer()
         g.graph = self.model
@@ -127,4 +129,4 @@ class SmoothQuantScaler:
             pass
         # breakpoint()
         tf.io.gfile.GFile('b_new.pb', 'wb').write(self.model.graph_def.SerializeToString())
-        return self.model
+        return self.model, self.mul_list

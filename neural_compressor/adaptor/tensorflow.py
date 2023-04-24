@@ -84,6 +84,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.bf16_ops = []
         self.fp32_ops = []
+        self.smooth_quant_mul_ops = []
         self.dump_times = 0   # for tensorboard
 
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
@@ -547,6 +548,7 @@ class TensorFlowAdaptor(Adaptor):
         assert q_func is None, \
             "post-training quantization mode is not support calibration function for Tensorflow!"
         self._tuning_cfg_to_fw(tune_cfg)
+        self.bf16_ops.extend(self.smooth_quant_mul_ops)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
@@ -1728,8 +1730,8 @@ class TensorFlowAdaptor(Adaptor):
         scaler = SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
         # Get smooth scales and adjust weights per op
         # Get smooth scales and adjust weights per input
-        model = scaler.transform(max_vals_per_channel, shape_infos, sq_weight_tensors, sq_weights_nodes, sq_node_names)
-
+        model, mul_list = scaler.transform(max_vals_per_channel, shape_infos, sq_weight_tensors, sq_weights_nodes, sq_node_names)
+        self.smooth_quant_mul_ops.extend(mul_list)
         self.smooth_quant_model = model
         return self.smooth_quant_model
 
