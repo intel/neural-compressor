@@ -105,7 +105,7 @@ class SmoothQuantScaler:
                         logger.info("Skip smoothing the node: {}".format(W_node_lst[w_i]))
                         continue
                     # clip the scales that are too small
-                    scale = tf.clip_by_value(scale, clip_value_min=1e-2, clip_value_max=1e8)
+                    scale = np.clip(scale, a_min=1e-2, a_max=1e8)
                     # skip smoothing the op where scale has elements that less than 1
                     if np.any(scale < 1):
                         logger.info("skip smooth quant: {}".format(input_node_name))
