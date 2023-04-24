@@ -2965,8 +2965,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 else:
                     self.q_func(tmp_model)
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                if hasattr(self, 'sq_module_name_list'):
-                    # recover model before SmoothQuant
+                if hasattr(self, 'sq_module_name_list') and self.performance_only:
+                    # recover model before SmoothQuant, tmp_model is copied when prepare.
                     model = self._wrapper_sq_linear(model, recover=True)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
