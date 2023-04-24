@@ -26,7 +26,7 @@ import psutil
 from threading import Thread
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
-from .config import Config, BenchmarkConfig
+from .config import BenchmarkConfig, options
 from .utils import logger
 from .utils import OPTIONS
 from .utils.utility import GLOBAL_STATE, MODE
@@ -54,17 +54,17 @@ def set_all_env_var(conf, overwrite_existing=False):
     Neural Compressor only uses physical cores
     """
     cpu_counts = psutil.cpu_count(logical=False)
-    assert isinstance(conf, Config), \
+    assert isinstance(conf, BenchmarkConfig), \
         'input has to be a Config object'
 
-    if conf.benchmark.cores_per_instance is not None:
-        assert conf.benchmark.cores_per_instance * conf.benchmark.num_of_instance <= cpu_counts, \
+    if conf.cores_per_instance is not None:
+        assert conf.cores_per_instance * conf.num_of_instance <= cpu_counts, \
             'num_of_instance * cores_per_instance should <= cpu physical cores'
     else:
-        assert conf.benchmark.num_of_instance <= cpu_counts, \
+        assert conf.num_of_instance <= cpu_counts, \
             'num_of_instance should <= cpu counts'
-        conf.benchmark.cores_per_instance = int(cpu_counts / conf.benchmark.num_of_instance)
-    for var, value in dict(conf.benchmark).items():
+        conf.cores_per_instance = int(cpu_counts / conf.num_of_instance)
+    for var, value in dict(conf).items():
         set_env_var(var.upper(), value, overwrite_existing)
 
 
@@ -153,9 +153,9 @@ class _Benchmark(object):
         self._results = {}
         assert isinstance(conf, BenchmarkConfig), \
             "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
-        self.conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
-        if self.conf.benchmark.framework is not None:
-            self.framework = self.conf.benchmark.framework.lower()
+        self.conf = conf
+        if self.conf.framework is not None:
+            self.framework = self.conf.framework.lower()
 
     def __call__(self, raw_cmd=None):
         """Directly call a Benchmark object.
@@ -167,7 +167,7 @@ class _Benchmark(object):
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         # disable multi-instance for running bechmark on GPU device
         set_all_env_var(cfg)
-        if cfg.benchmark.device == 'gpu':
+        if cfg.device == 'gpu':
             set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
         logger.info("Start to run Benchmark.")
@@ -322,28 +322,28 @@ class _Benchmark(object):
         if self._b_func is None:
             cfg = self.conf
             GLOBAL_STATE.STATE = MODE.BENCHMARK
-            framework_specific_info = {'device': cfg.benchmark.device, \
+            framework_specific_info = {'device': cfg.device, \
                                        'approach': None, \
-                                       'random_seed': cfg.options.random_seed,
-                                       'backend': cfg.benchmark.backend \
-                                        if cfg.benchmark.backend is not None else 'default',
+                                       'random_seed': options.random_seed,
+                                       'backend': cfg.backend \
+                                        if cfg.backend is not None else 'default',
                                        'format': None}
-            framework = cfg.benchmark.framework.lower()
+            framework = cfg.framework.lower()
             if 'tensorflow' in framework:
-                framework_specific_info.update({"inputs": cfg.benchmark.inputs, \
-                                                "outputs": cfg.benchmark.outputs, \
+                framework_specific_info.update({"inputs": cfg.inputs, \
+                                                "outputs": cfg.outputs, \
                                                 "recipes": None, \
-                                                'workspace_path': cfg.options.workspace})
+                                                'workspace_path': options.workspace})
             if framework == 'keras':
-                framework_specific_info.update({'workspace_path': cfg.options.workspace})
+                framework_specific_info.update({'workspace_path': options.workspace})
             if framework == 'mxnet':
                 framework_specific_info.update({"b_dataloader": self._b_dataloader})
             if 'onnx' in framework:
                 framework_specific_info.update(
-                                     {'workspace_path': cfg.options.workspace, \
+                                     {'workspace_path': options.workspace, \
                                      'graph_optimization': OPTIONS[framework].graph_optimization})
             if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
-                framework_specific_info.update({"workspace_path": cfg.options.workspace,
+                framework_specific_info.update({"workspace_path": options.workspace,
                                                 "q_dataloader": None})
 
             assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for quantization....'
@@ -367,7 +367,7 @@ class _Benchmark(object):
             # also measurer have result list among steps
             acc, _ = val
             batch_size = self._b_dataloader.batch_size
-            warmup = cfg.benchmark.warmup
+            warmup = cfg.warmup
             if len(self.objectives.objectives[0].result_list()) < warmup:
                 if len(self.objectives.objectives[0].result_list()) > 1 and warmup != 0:
                     warmup = 1
@@ -472,42 +472,42 @@ class _Benchmark(object):
                        make sure the name is in the supported slim model list.
         """
         cfg = self.conf
-        if cfg.benchmark.framework is None:
+        if cfg.framework is None:
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "tensorflow":
                 from .model.tensorflow_model import get_model_type
-                if get_model_type(user_model) == 'keras' and cfg.benchmark.backend == 'itex':
+                if get_model_type(user_model) == 'keras' and cfg.backend == 'itex':
                     self.framework = 'keras'
             if self.framework == "pytorch":
-                if cfg.benchmark.backend == "default":
+                if cfg.backend == "default":
                     self.framework = "pytorch_fx"
-                elif cfg.benchmark.backend == "ipex":
+                elif cfg.backend == "ipex":
                     self.framework = "pytorch_ipex"
                     import intel_extension_for_pytorch
-            cfg.benchmark.framework = self.framework
+            cfg.framework = self.framework
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in self.framework or self.framework == "keras":
-                self._model = NCModel(user_model, backend=self.framework, device=cfg.benchmark.device)
+                self._model = NCModel(user_model, backend=self.framework, device=cfg.device)
             else:
                 self._model = NCModel(user_model, backend=self.framework)
         else:
             # It is config of neural_compressor version < 2.0, no need in 2.0
-            if cfg.benchmark.framework == "pytorch_ipex":
+            if cfg.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 if not isinstance(user_model, IPEXModel):
-                    self._model = NCModel(user_model.model, framework=cfg.benchmark.framework)
+                    self._model = NCModel(user_model.model, framework=cfg.framework)
                     return
             self._model = user_model
 
         if 'tensorflow' in self.framework:
-            self._model.name = cfg.benchmark.model_name
-            self._model.output_tensor_names = cfg.benchmark.outputs
-            self._model.input_tensor_names = cfg.benchmark.inputs
-            self._model.workspace_path = cfg.options.workspace
+            self._model.name = cfg.model_name
+            self._model.output_tensor_names = cfg.outputs
+            self._model.input_tensor_names = cfg.inputs
+            self._model.workspace_path = options.workspace
 
     def __repr__(self):
         """Get the object representation in string format."""

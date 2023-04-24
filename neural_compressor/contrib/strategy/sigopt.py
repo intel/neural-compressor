@@ -89,8 +89,8 @@ class SigOptTuneStrategy(TuneStrategy):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
-                evaluation dataset and metrics should be encapsulated in this function implementation and 
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
                 outputs a higher-is-better accuracy scalar value.
             eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_metric: Metric for evaluation. Defaults to None.
@@ -108,7 +108,8 @@ class SigOptTuneStrategy(TuneStrategy):
                          resume=resume,
                          q_hooks=q_hooks)
         logger.info(f"*** Initialize SigOpt tuning")
-        strategy_name = conf.quantization.tuning_criterion.strategy
+        self.config = self._initialize_config(conf)
+        strategy_name = self.config.tuning_criterion.strategy
         if strategy_name.lower() == "sigopt":
             try:
                 import sigopt
@@ -123,7 +124,7 @@ class SigOptTuneStrategy(TuneStrategy):
         else:
             pass
         # SigOpt init
-        strategy_kwargs = conf.quantization.tuning_criterion.strategy_kwargs
+        strategy_kwargs = self.config.tuning_criterion.strategy_kwargs
         client_token = strategy_kwargs.get('sigopt_api_token', None)
         self.project_id = strategy_kwargs.get('sigopt_project_id', None)
         self.experiment_name = strategy_kwargs.get('sigopt_experiment_name', None)
@@ -182,7 +183,7 @@ class SigOptTuneStrategy(TuneStrategy):
 
     def get_acc_target(self, base_acc):
         """Get the tuning target of the accuracy ceiterion."""
-        accuracy_criterion_conf = self.conf.quantization.accuracy_criterion
+        accuracy_criterion_conf = self.config.accuracy_criterion
         if accuracy_criterion_conf.criterion == 'relative':
             return base_acc * (1. - accuracy_criterion_conf.tolerable_loss)
         else:
@@ -206,7 +207,7 @@ class SigOptTuneStrategy(TuneStrategy):
             # add tune_cfg here as quantize use tune_cfg
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and trials_count < self.conf.quantization.tuning_criterion.max_trials:
+            if tuning_history and trials_count < self.config.tuning_criterion.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -225,7 +226,7 @@ class SigOptTuneStrategy(TuneStrategy):
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
-            need_stop = self.stop(self.conf.quantization.tuning_criterion.timeout, trials_count)
+            need_stop = self.stop(self.config.tuning_criterion.timeout, trials_count)
 
             # record the tuning history
             saved_tune_cfg = copy.deepcopy(tune_cfg)
@@ -265,7 +266,7 @@ class SigOptTuneStrategy(TuneStrategy):
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
 
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
                                            op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
         for op, configs in self.op_configs.items():

@@ -20,7 +20,7 @@ import os
 import pickle
 import random
 import numpy as np
-from .config import Config
+from .config import _Config, options
 from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, MODELS
 from .strategy import STRATEGIES
 from .utils import logger
@@ -54,9 +54,8 @@ class _PostTrainingQuant:
             conf (PostTrainingQuantConfig): A instance of PostTrainingQuantConfig to
                                             specify the quantization behavior.
         """
-        self.conf = Config(quantization=conf, benchmark=None
-                           , pruning=None, distillation=None, nas=None)
-        seed = self.conf.options.random_seed
+        self.conf = _Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        seed = options.random_seed
         random.seed(seed)
         np.random.seed(seed)
         self._train_func = None
@@ -74,10 +73,10 @@ class _PostTrainingQuant:
         cfg = self.conf
 
         strategy = cfg.quantization.tuning_criterion.strategy
-        
+
         if cfg.quantization.quant_level == "auto":
             strategy = "auto"
-            
+
         elif cfg.quantization.quant_level == 0:
             strategy = "conservative"
 
@@ -93,8 +92,8 @@ class _PostTrainingQuant:
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.options.resume_from)) \
-                           if cfg.options.workspace and cfg.options.resume_from else None
+        self.resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
+                           if options.workspace and options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -185,7 +184,6 @@ class _PostTrainingQuant:
                     assert cfg.quantization.framework == "pytorch_ipex",\
                           "Please wrap the model with correct Model class!"
                 if cfg.quantization.backend == "itex":
-                    from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
                         assert cfg.quantization.framework == "keras",\
                               "Please wrap the model with KerasModel class!"
@@ -195,7 +193,6 @@ class _PostTrainingQuant:
             else:
                 framework = get_model_fwk_name(user_model)
                 if framework == "tensorflow":
-                    from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model) == 'keras' and cfg.quantization.backend == 'itex':
                         framework = 'keras'
                 if framework == "pytorch":
@@ -227,7 +224,7 @@ class _PostTrainingQuant:
             self._model.name = cfg.quantization.model_name
             self._model.output_tensor_names = cfg.quantization.outputs
             self._model.input_tensor_names = cfg.quantization.inputs
-            self._model.workspace_path = cfg.options.workspace
+            self._model.workspace_path = options.workspace
 
     @property
     def eval_func(self):
@@ -282,7 +279,7 @@ class _PostTrainingQuant:
 
         1. neural_compressor have many built-in metrics,
            user can pass a metric configure dict to tell neural compressor what metric will be use.
-           You can set multi-metrics to evaluate the performance of a specific model.
+           You also can set multi-metrics to evaluate the performance of a specific model.
                 Single metric:
                     {topk: 1}
                 Multi-metrics:
@@ -294,7 +291,9 @@ class _PostTrainingQuant:
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
 
-        2. User also can set specific metric through this api. The metric class should take the outputs of the model or
+        2. User also can get the built-in metrics by neural_compressor.Metric:
+            Metric(name="topk", k=1)
+        3. User also can set specific metric through this api. The metric class should take the outputs of the model or
            postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels)
            as inputs for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
 
@@ -309,9 +308,16 @@ class _PostTrainingQuant:
             metric_cfg = user_metric
         else:
             if isinstance(user_metric, NCMetric):
-                name = user_metric.name
-                metric_cls = user_metric.metric_cls
-                metric_cfg = {name: {**user_metric.kwargs}}
+                if user_metric.metric_cls is None:
+                    name = user_metric.name
+                    metric_cls = METRICS(self.conf.quantization.framework).metrics[name]
+                    metric_cfg = {name: {**user_metric.kwargs}}
+                    self._metric = metric_cfg
+                    return
+                else:
+                    name = user_metric.name
+                    metric_cls = user_metric.metric_cls
+                    metric_cfg = {name: {**user_metric.kwargs}}
             else:
                 for i in ['reset', 'update', 'result']:
                     assert hasattr(user_metric, i), 'Please realise {} function' \

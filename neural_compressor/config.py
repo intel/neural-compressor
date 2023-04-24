@@ -167,7 +167,7 @@ class Options:
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
         set_tensorboard(True)
-        
+
     """
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
@@ -275,7 +275,7 @@ class BenchmarkConfig:
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
-        self._framework=None
+        self._framework = None
 
     def keys(self):
         """Returns keys of the dict."""
@@ -286,7 +286,7 @@ class BenchmarkConfig:
     def __getitem__(self, item):
         """Get the dict."""
         return getattr(self, item)
-    
+
     @property
     def backend(self):
         """Get backend."""
@@ -362,7 +362,7 @@ class BenchmarkConfig:
     def cores_per_instance(self, cores_per_instance):
         """Set cores_per_instance."""
         if cores_per_instance is None or _check_value('cores_per_instance', cores_per_instance,
-                                                     int):
+                                                      int):
             self._cores_per_instance = cores_per_instance
 
     @property
@@ -397,14 +397,14 @@ class BenchmarkConfig:
     def intra_num_of_threads(self, intra_num_of_threads):
         """Get intra_num_of_threads."""
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
-                                                       intra_num_of_threads, int):
+                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
 
     @property
     def model(self):
         """Get model."""
         return self._model
-    
+
     @model.setter
     def model(self, model):
         """Set model."""
@@ -420,12 +420,12 @@ class BenchmarkConfig:
         """Set model name."""
         if _check_value("model_name", model_name, str):
             self._model_name = model_name
-    
+
     @property
     def framework(self):
         """Set framework."""
         return self._framework
-    
+
     @framework.setter
     def framework(self, framework):
         """Get framework."""
@@ -536,7 +536,7 @@ accuracy_criterion = AccuracyCriterion()
 
 class TuningCriterion:
     """Class for Tuning Criterion.
-    
+
     Args:
         strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
         strategy_kwargs: Parameters for strategy. Please refer to docs/source/tuning_strategies.md.
@@ -545,10 +545,10 @@ class TuningCriterion:
                    Please refer to docs/source/objective.md.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
-    
+
     Example::
         from neural_compressor.config import TuningCriterion
-        
+
         tuning_criterion=TuningCriterion(
             timeout=0,
             max_trials=100,
@@ -598,7 +598,7 @@ class TuningCriterion:
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
             return
-        
+
         if _check_value('objective', objective, dict):
             if 'weight' in objective.keys() and isinstance(objective['weight'], list):
                 assert len(objective['objective']) == len(objective['weight'])
@@ -735,8 +735,8 @@ class _BaseQuantizationConfig:
         self.tuning_criterion = tuning_criterion
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
-        self.use_distributed_tuning=use_distributed_tuning
-        self._framework=None
+        self.use_distributed_tuning = use_distributed_tuning
+        self._framework = None
         self._example_inputs = example_inputs
 
     @property
@@ -1019,15 +1019,15 @@ class _BaseQuantizationConfig:
     def inputs(self, inputs):
         if _check_value('inputs', inputs, str):
             self._inputs = inputs
-    
+
     @property
     def framework(self):
         return self._framework
-    
+
     @framework.setter
     def framework(self, framework):
         self._framework = framework
-    
+
     @property
     def example_inputs(self):
         """Get strategy_kwargs."""
@@ -1638,9 +1638,9 @@ class DistillationConfig:
         self._teacher_model = teacher_model
 
 
-class MixedPrecisionConfig(_BaseQuantizationConfig):
+class MixedPrecisionConfig(object):
     """Config Class for MixedPrecision.
-    
+
     Args:
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
@@ -1669,25 +1669,26 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
                  backend="default",
                  precision="bf16",
                  model=None,
+                 model_name="",
                  inputs=[],
                  outputs=[],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[]):
         """Init a MixedPrecisionConfig object."""
-        super().__init__(inputs=inputs,
-                         outputs=outputs,
-                         device=device,
-                         backend=backend,
-                         tuning_criterion=tuning_criterion,
-                         accuracy_criterion=accuracy_criterion,
-                         excluded_precisions=excluded_precisions,
-        )
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.device = device
+        self.excluded_precisions = excluded_precisions
+        self.accuracy_criterion = accuracy_criterion
+        self.tuning_criterion = tuning_criterion
         self.precision = precision
+        self.use_bf16 = "bf16" in self.precision
         self.model = model
-        # For align with quant config
-        self._approach = None
-    
+        self.model_name = model_name
+        self._framework = None
+
     @property
     def precision(self):
         """Get precision."""
@@ -1703,21 +1704,102 @@ class MixedPrecisionConfig(_BaseQuantizationConfig):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
             self._precision = precision
-    
+
     @property
     def model(self):
         """Get model."""
         return self._model
-    
+
     @model.setter
     def model(self, model):
         """Set model."""
         self._model = model
 
     @property
-    def approach(self):
-        """Get approach."""
-        return self._approach
+    def model_name(self):
+        """Get model name."""
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, model_name):
+        """Set model name."""
+        if _check_value("model_name", model_name, str):
+            self._model_name = model_name
+
+    @property
+    def accuracy_criterion(self):
+        return self._accuracy_criterion
+
+    @accuracy_criterion.setter
+    def accuracy_criterion(self, accuracy_criterion):
+        if _check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
+            self._accuracy_criterion = accuracy_criterion
+
+    @property
+    def tuning_criterion(self):
+        """Get tuning_criterion."""
+        return self._tuning_criterion
+
+    @tuning_criterion.setter
+    def tuning_criterion(self, tuning_criterion):
+        """Set tuning_criterion."""
+        if _check_value("tuning_criterion", tuning_criterion, TuningCriterion):
+            self._tuning_criterion = tuning_criterion
+
+    @property
+    def device(self):
+        return self._device
+
+    @device.setter
+    def device(self, device):
+        if _check_value('device', device, str, ['cpu', 'gpu']):
+            self._device = device
+
+    @property
+    def backend(self):
+        return self._backend
+
+    @backend.setter
+    def backend(self, backend):
+        if _check_value('backend', backend, str, [
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            self._backend = backend
+
+    @property
+    def outputs(self):
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, outputs):
+        if _check_value('outputs', outputs, str):
+            self._outputs = outputs
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, inputs):
+        if _check_value('inputs', inputs, str):
+            self._inputs = inputs
+
+    @property
+    def framework(self):
+        return self._framework
+
+    @framework.setter
+    def framework(self, framework):
+        self._framework = framework
+
+    @property
+    def excluded_precisions(self):
+        return self._excluded_precisions
+
+    @excluded_precisions.setter
+    def excluded_precisions(self, excluded_precisions):
+        if _check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
+            self._excluded_precisions = excluded_precisions
+            self._use_bf16 = "bf16" not in excluded_precisions
 
 
 class ExportConfig:
@@ -2051,12 +2133,11 @@ pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
 
-class Config:
+class _Config:
     """Main config class."""
     def __init__(self,
                  quantization=quantization,
                  benchmark=benchmark,
-                 options=options,
                  mixed_precision=mixed_precision,
                  pruning=pruning,
                  distillation=distillation,
@@ -2072,7 +2153,6 @@ class Config:
         """Init a config object."""
         self._quantization = quantization
         self._benchmark = benchmark
-        self._options = options
         self._mixed_precision = mixed_precision
         self._onnxruntime = onnxruntime
         self._pruning = pruning
@@ -2131,11 +2211,6 @@ class Config:
         return self._benchmark
 
     @property
-    def options(self):
-        """Get the options object."""
-        return self._options
-    
-    @property
     def mixed_precision(self):
         """Get the mixed_precision object."""
         return self._mixed_precision
@@ -2155,4 +2230,4 @@ class Config:
         """Get the tuning object."""
         return self._tuning
 
-config = Config()
+config = _Config()

@@ -36,7 +36,8 @@ python test.py --benchmark --dataset_location=/path/to/imagenet/
 ### 2. Introduction
 * We only need to add the following lines for quantization to create an int8 model.
 ```python
-    top1 = TensorflowTopK(k=1)
+    from neural_compressor import Metric
+    top1 = Metric(name="topk", k=1)
     quantized_model = fit(
         model="./mobilenet_v1_1.0_224_frozen.pb",
         conf=config,

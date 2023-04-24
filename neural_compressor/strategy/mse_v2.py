@@ -22,7 +22,7 @@ from collections import OrderedDict
 from typing import Dict, Any, List
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
-from time import time 
+from time import time
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
@@ -30,12 +30,12 @@ from .utils.constant import PRECISION_LIST
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):
     """The `mse_v2` tuning strategy.
-    
-    MSE_v2 is a strategy with a two stages fallback and revert fallback. 
+
+    MSE_v2 is a strategy with a two stages fallback and revert fallback.
     Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
     tuning strategy.
     """
-    
+
     def _tuning_record_msg(self, records):
         records_str_lst = [[str(e) for e in record] for record in records]
         record_msg = '\n'.join(','.join(record) for record in records_str_lst)
@@ -43,7 +43,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
-           
+
            1. In the fallback stage, it uses multi-batch data to score the op impact
             and then fallback the op with the highest score util found the quantized model
             that meets accuracy criteria.
@@ -51,7 +51,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
             the impact of fallback OPs in the previous stage and selects the op
             with the lowest score to revert the fallback until the quantized model
             that does not meets accuracy criteria.
-    
+
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
@@ -63,11 +63,11 @@ class MSE_V2TuneStrategy(TuneStrategy):
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
-            # Optype-wise tuning 
+            # Optype-wise tuning
             early_stop_tuning = True
             stage1_cnt = 0
             stage1_max = 2  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
+            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for op_tuning_cfg in op_wise_tuning_sampler:
                 stage1_cnt += 1
@@ -107,7 +107,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
             requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg))
             self.output_op_names = self.adaptor.get_output_op_names(self.last_qmodel)
             confidence_batches = 2
-            strategy_kwargs = self.conf.quantization.tuning_criterion.strategy_kwargs
+            strategy_kwargs = self.config.tuning_criterion.strategy_kwargs
             if strategy_kwargs and strategy_kwargs.get('confidence_batches', None):
                 confidence_batches = strategy_kwargs.get('confidence_batches', None)
 
@@ -129,9 +129,9 @@ class MSE_V2TuneStrategy(TuneStrategy):
                 while not self.objectives.compare(self.last_tune_result, self.baseline):
                     # Record the time of calculating the sensitivity
                     start = time()
-                    ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
-                                                                    self.calib_dataloader, 
-                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)), 
+                    ops_lst = self.adaptor.calculate_op_sensitivity(self.model,
+                                                                    self.calib_dataloader,
+                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)),
                                                                     self.output_op_names,
                                                                     confidence_batches,
                                                                     fallback=True)
@@ -145,10 +145,10 @@ class MSE_V2TuneStrategy(TuneStrategy):
                         fallback it to {target_dtype}.")
                     tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0],
                                                                 select_op_info[1],
-                                                                target_dtype, 
+                                                                target_dtype,
                                                                 self.tuning_space)
                     # Record the fallback history
-                    if not fallback_records: 
+                    if not fallback_records:
                         fallback_records = [[select_op_info]]
                     else:
                         fallback_records.append(fallback_records[-1] + [select_op_info])
@@ -162,17 +162,17 @@ class MSE_V2TuneStrategy(TuneStrategy):
                     break
                 logger.info(f"*** Start to re-quant the fallback op in the previous stage.")
                 # Track the current fallback ops
-                tmp_fallback_ops = fallback_records[-1] if fallback_records else [] 
+                tmp_fallback_ops = fallback_records[-1] if fallback_records else []
                 start = time()
-                ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
-                                                                self.calib_dataloader, 
+                ops_lst = self.adaptor.calculate_op_sensitivity(self.model,
+                                                                self.calib_dataloader,
                                                                 deepcopy(self._tune_cfg_converter(tune_cfg)),
-                                                                self.output_op_names, 
+                                                                self.output_op_names,
                                                                 confidence_batches,
                                                                 fallback=False,
                                                                 requantize_cfgs=requantize_cfg['op'])
                 logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
-                if not ops_lst: 
+                if not ops_lst:
                     logger.warning("No op to be requantized")
                     break
                 for select_op_info in ops_lst:
@@ -180,7 +180,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                     if select_op_info not in tmp_fallback_ops:
                         logger.debug(f"{select_op_info} not in fallback list.")
                         continue
-                    
+
                     new_fallback_ops = deepcopy(tmp_fallback_ops)
                     new_fallback_ops.remove(select_op_info)
                     if new_fallback_ops not in fallback_records:

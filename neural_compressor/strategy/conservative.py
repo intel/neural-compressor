@@ -33,12 +33,12 @@ from ..algorithm import AlgorithmScheduler
 @strategy_registry
 class ConservativeTuneStrategy(TuneStrategy):
     """Tuning strategy with accuracy first, performance second.
-    
+
     The quantization level O0 is designed for user who want to keep the accuracy
     of the model after quantization. It starts with the original(fp32) model,
     and then quantize the OPs to lower precision OP type wisely and OP wisely.
     """
-        
+
     def __init__(self,
                  model,
                  conf,
@@ -56,8 +56,8 @@ class ConservativeTuneStrategy(TuneStrategy):
             conf: The Conf class instance includes all user configurations.
             q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
             q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
-            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
-                evaluation dataset and metrics should be encapsulated in this function implementation and 
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
                 outputs a higher-is-better accuracy scalar value.
             eval_dataloader: Data loader for evaluation. Defaults to None.
             eval_metric: Metric for evaluation. Defaults to None.
@@ -129,11 +129,11 @@ class ConservativeTuneStrategy(TuneStrategy):
         op_type_priority = list(optypewise_cap.keys())
         return op_type_priority
 
-    def _sorted_item_by_op_type(self, 
-                                items_lst, 
+    def _sorted_item_by_op_type(self,
+                                items_lst,
                                 op_type_priority: List[str]) -> OrderedDict[str, List]:
         """Scoring the tuning items according to its op type.
-        
+
         Args:
             items_lst: The tuning item list. # [(op_item, quant_mode), ... ]
             op_type_priority: The op type list with the order. # [optype_1, optype_2]
@@ -142,7 +142,7 @@ class ConservativeTuneStrategy(TuneStrategy):
             The tuning items list that sorted according to its op type.
             OrderDict:
                 # op_type: [(TuningItem, quant_mode), ...]
-                conv: [(TuningItem, static), (TuningItem, static)] 
+                conv: [(TuningItem, static), (TuningItem, static)]
                 linear: [(TuningItem, static), (TuningItem, static)]
                 matmul: [(TuningItem, static), (TuningItem, static)]
         """
@@ -165,11 +165,11 @@ class ConservativeTuneStrategy(TuneStrategy):
             op_item_dtype_dict (OrderedDict): key is (op_name, op_type); value is quantization mode.
             quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
             initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
-        
+
         """
         from .utils.constant import auto_query_order_o0 as query_order
         from .utils.tuning_space import initial_tuning_cfg_with_quant_mode
-        
+
         quant_mode_wise_items = OrderedDict() # mode, op_item_lst
         pre_items = set()
         # Collect op items supported the specified mode.
@@ -197,17 +197,17 @@ class ConservativeTuneStrategy(TuneStrategy):
     def _quant_items_pool(self, op_type_priority: List[str]) -> OrderedDict[
         str, OrderedDict[str, List[Tuple[TuningItem, str]]]]:
         """Create the op queue to be quantized.
-        
+
         Args:
             op_type_priority: The optype list with priority.
-            
+
         Returns:
             The op item pool to convert into lower precision.
             quant_items_pool(OrderDict):
                 int8:
                     OrderDict:
                         # (TuningItem, quant_mode)
-                        conv2d: [(TuningItem, static), (TuningItem, static)] 
+                        conv2d: [(TuningItem, static), (TuningItem, static)]
                         linear: [(TuningItem, static), (TuningItem, static)]
         """
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items

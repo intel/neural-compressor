@@ -1,4 +1,4 @@
-from neural_compressor.experimental.strategy.utils.tuning_space import TuningItem, TuningSpace
+from neural_compressor.experimental.strategy.utils.tuning_space import TuningSpace
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.utils import logger
 from copy import deepcopy

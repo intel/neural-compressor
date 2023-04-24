@@ -210,18 +210,16 @@ class TestTuningSampler(unittest.TestCase):
                 }
             }
         }
-        
+
         self.capability2 = {
             'calib': {'calib_sampling_size': [1, 10]},
             'op': deepcopy(op_cap2)
         }
-    
+
     def test_tuning_space_merge_op_wise_not_exist(self):
         # op-wise
         conf = {
-                'quantization': {
-                    'op_type_dict': deepcopy(self.op_wise_user_config2),
-                }
+                'op_type_dict': deepcopy(self.op_wise_user_config2),
         }
         conf = DotDict(conf)
         tuning_space2 = TuningSpace(deepcopy(self.capability2), deepcopy(conf))
@@ -230,20 +228,20 @@ class TestTuningSampler(unittest.TestCase):
 
     def test_tuning_space_creation(self):
         conf = None
-        # Test the creation of tuning space 
+        # Test the creation of tuning space
         tuning_space = TuningSpace(self.capability, conf)
         logger.debug(tuning_space.root_item.get_details())
-        # ops supported static 
+        # ops supported static
         static_items = tuning_space.query_items_by_quant_mode('static')
         static_items_name = [item.name for item in static_items]
         self.assertEqual(set(static_items_name), set(op_cap.keys()))
-        # ops supported dynamic 
+        # ops supported dynamic
         dynamic_items = tuning_space.query_items_by_quant_mode('dynamic')
         dynamic_items_name = [item.name for item in dynamic_items]
         all_items_name = list(op_cap.keys())
         all_items_name.remove(('op_name3', 'op_type2'))
         self.assertEqual(set(dynamic_items_name), set(all_items_name))
-        # ops supported fp32 
+        # ops supported fp32
         fp32_items = tuning_space.query_items_by_quant_mode('fp32')
         fp32_items_name = [item.name for item in fp32_items]
         self.assertEqual(set(fp32_items_name), set(op_cap.keys()))
@@ -253,9 +251,7 @@ class TestTuningSampler(unittest.TestCase):
     def test_tuning_space_merge_optype_wise(self):
         # optype-wise
         conf = {
-                'quantization': {
-                    'op_type_dict': self.optype_wise_user_config,
-                }
+                'op_type_dict': self.optype_wise_user_config,
         }
         conf = DotDict(conf)
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -278,9 +274,7 @@ class TestTuningSampler(unittest.TestCase):
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {
-                'quantization': {
-                    'op_name_dict': self.op_wise_user_config,
-                }
+            'op_name_dict': self.op_wise_user_config,
 
         }
         conf = DotDict(conf)
