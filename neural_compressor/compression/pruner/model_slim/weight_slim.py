@@ -16,8 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn as nn
+from ..utils import torch
 import random
 from ..utils import logger
 
@@ -124,26 +123,31 @@ class PostCompressionUtils(object):
         Return:
             The same layer object whose weight (probability also bias) has been compressed. 
         """
-        # import pdb;pdb.set_trace()
         index = index.to(device)
         _w = layer.weight.index_select(dim, index).clone().detach()
-        if prune_bias:
-            _b = layer.bias[index].clone().detach()
+        if layer.bias != None:
+            if prune_bias:
+                _b = layer.bias[index].clone().detach()
+            else:
+                _b = layer.bias.clone().detach()
         else:
-            _b = layer.bias.clone().detach()
+            _b = None
         new_size = list(layer.weight.size())
         new_size[dim] = len(index)
         setattr(layer, "in_features", new_size[1])
         setattr(layer, "out_features", new_size[0])
         setattr(layer, "weight", torch.nn.Parameter(_w.clone()))
-        setattr(layer, "bias", torch.nn.Parameter(_b.clone()))
+        if _b != None:
+            setattr(layer, "bias", torch.nn.Parameter(_b.clone()))
+        else:
+            setattr(layer, "bias", None)
 
         # new_layer = nn.Linear(new_size[1], new_size[0], bias=layer.bias is not None)
         layer.weight.requires_grad = False
         layer.weight.copy_(_w.contiguous())
         layer.weight.requires_grad = True
 
-        if prune_bias:
+        if prune_bias and layer.bias != None:
             layer.bias.requires_grad = False
             layer.bias.copy_(_b.contiguous())
             layer.bias.requires_grad = True
@@ -169,19 +173,22 @@ class LinearCompression(object):
         device: the device of layers' weights.
     """
 
-    def __init__(self, layer_1, layer_2):
+    def __init__(self, root_linear, target_linears):
         """Initialize."""
-        assert type(layer_1).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
-        assert type(layer_2).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
-        self.layer_1 = layer_1
-        self.layer_2 = layer_2
-        self.device = self.layer_1.weight.device
+        assert type(root_linear).__name__ == "Linear", "layer should be Linear module type"
+        for target_linear in target_linears:
+            assert type(target_linear).__name__ == "Linear", "layer should be Linear module type"
+        self.root_linear = root_linear
+        self.target_linears = target_linears
+        self.device = self.root_linear.weight.device
         self.log = {
-            '1_before': [self.layer_1.out_features, self.layer_1.in_features],
-            '2_before': [self.layer_2.out_features, self.layer_2.in_features],
+            'root_before': [self.root_linear.out_features, self.root_linear.in_features],
+            'target_before': [
+                [linear_layer.out_features, linear_layer.in_features] for linear_layer in self.target_linears
+            ],
         }
     
-    def __call__(self, mask=None, round_value=0):
+    def __call__(self, mask=None, round_value=32):
         """Operation to execute weight compression process.
 
         Args:
@@ -191,29 +198,34 @@ class LinearCompression(object):
 
         """
         if mask is not None:
-            layer_2_mask = mask.clone().to(self.device)
+            root_linear_mask = mask.clone().to(self.device)
         else:
-            layer_2_mask = PostCompressionUtils.obtain_input_masks(self.layer_2.weight)
-        layer_2_indice_to_prune = PostCompressionUtils.get_mask_indices(layer_2_mask)
-        _, layer_2_indice_to_keep = PostCompressionUtils.find_pruneable_indices(
-            layer_2_indice_to_prune, 
-            self.layer_2.in_features, 1, round_value
+            root_linear_mask = PostCompressionUtils.obtain_input_masks(self.root_linear.weight)
+        root_linear_indice_to_prune = PostCompressionUtils.get_mask_indices(root_linear_mask)
+        _, root_linear_indice_to_keep = PostCompressionUtils.find_pruneable_indices(
+            root_linear_indice_to_prune, 
+            self.root_linear.in_features, 1, round_value
         ) # 1 refer to channel-wise pruning
+        # slim the root linear layer
         PostCompressionUtils.prune_linear(
-            self.layer_2, 
-            layer_2_indice_to_keep, 
+            self.root_linear, 
+            root_linear_indice_to_keep, 
             device=self.device, dim=1, prune_bias=False
         )
-        PostCompressionUtils.prune_linear(
-            self.layer_1, 
-            layer_2_indice_to_keep, 
-            device=self.device, dim=0, prune_bias=True
-        )
+        for target_linear in self.target_linears:
+            PostCompressionUtils.prune_linear(
+                target_linear, 
+                root_linear_indice_to_keep, 
+                device=self.device, dim=0, prune_bias=True
+            )
         # Summary:
-        self.log['1_after'] = [self.layer_1.out_features, self.layer_1.in_features]
-        self.log['2_after'] = [self.layer_2.out_features, self.layer_2.in_features]
-        logger.info(f"layer_1 compression: {self.log['1_before']} -> {self.log['1_after']}")
-        logger.info(f"layer_2 compression: {self.log['2_before']} -> {self.log['2_after']}")
+        self.log['root_after'] = [self.root_linear.out_features, self.root_linear.in_features]
+        self.log['target_after'] = [
+            [linear_layer.out_features, linear_layer.in_features] for linear_layer in self.target_linears
+        ]
+        logger.info(f"linear compression: {self.log['root_before']} -> {self.log['root_after']}")
+        for idx in range(len(self.log['target_before'])):
+            logger.info(f"linear compression: {self.log['target_before'][idx]} -> {self.log['target_after'][idx]}")
 
 class LinearCompressionIterator(object):
     """Pruner of a sequence of consecutive linear patterns.
@@ -226,7 +238,7 @@ class LinearCompressionIterator(object):
         """Initialize."""
         self.linear_patterns = linear_patterns
 
-    def __call__(self, masks=None, round_value=0):
+    def __call__(self, masks=None, round_value=32):
         """Operation to execute weight compression process.
 
         Args:
@@ -243,12 +255,13 @@ class LinearCompressionIterator(object):
             mask_len = masks.shape[0]
         layer_idx = 0
         for pattern in self.linear_patterns:
-            if isinstance(self.linear_patterns, dict):
-                linear_pruner = LinearCompression(self.linear_patterns[pattern][0], self.linear_patterns[pattern][1])
-            elif isinstance(self.linear_patterns, list):
-                linear_pruner = LinearCompression(pattern[0], pattern[1])
-            else:
-                raise NotImplementedError
+            linear_pruner = LinearCompression(pattern['root_linear'], pattern['target_frontier_linears'])
+            # if isinstance(self.linear_patterns, dict):
+            #     linear_pruner = LinearCompression(self.linear_patterns[pattern][0], self.linear_patterns[pattern][1])
+            # elif isinstance(self.linear_patterns, list):
+            #     linear_pruner = LinearCompression(pattern[0], pattern[1:])
+            # else:
+            #     raise NotImplementedError
             # compression
             if masks != None and layer_idx < len(masks):
                 linear_pruner(mask=masks[layer_idx], round_value=round_value)

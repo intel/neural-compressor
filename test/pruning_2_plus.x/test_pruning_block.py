@@ -18,7 +18,7 @@ class TestPruning(unittest.TestCase):
         local_configs = [
             {
                 "op_names": ['encoder_layer_1.mlp*'],
-                "target_sparsity": 0.6,
+                "target_sparsity": 0.95,
                 "pattern": 'channelx2',
                 "pruning_type": "block_mask",
                 "pruning_scope": "global",
@@ -36,12 +36,30 @@ class TestPruning(unittest.TestCase):
             },
             {
                 "op_names": ['encoder_layer_3.mlp*'],
-                'target_sparsity': 0.4,
+                'target_sparsity': 0.9,
                 'pattern': 'channelx1',
                 "pruning_op_types": "Linear",
                 "pruning_type": "retrain_free",
                 "pruning_scope": "local",
                 "pruning_frequency": 2,
+            },
+            {
+                "op_names": ['encoder_layer_0.mlp*'],
+                'target_sparsity': 0.4,
+                'pattern': 'channelx2',
+                "pruning_op_types": "Linear",
+                "pruning_type": "retrain_free",
+                "pruning_scope": "global",
+                "pruning_frequency": 3,
+            },
+            {
+                "op_names": ['encoder_layer_0.mlp*', "conv_proj"],
+                'target_sparsity': 0.4,
+                'pattern': 'channelx2',
+                "pruning_op_types": ["Linear","Conv2d"],
+                "pruning_type": "retrain_free",
+                "pruning_scope": "global",
+                "pruning_frequency": 3,
             }
         ]
         config = WeightPruningConfig(
@@ -72,4 +90,6 @@ class TestPruning(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
 
