@@ -38,6 +38,8 @@ from ..model.model import get_model_fwk_name
 from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, generate_pruner_config, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
+LazyImport('torch.nn')
+torch = LazyImport('torch')
 
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
