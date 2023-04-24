@@ -173,8 +173,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
-        from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
+
         from onnx import numpy_helper
+        from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
+        from neural_compressor.adaptor.ox_utils.util import absorb_scale
         if isinstance(alpha, str):
             logger.warning(f"onnx backend only support float alpha, reset alpha to 0.5 ")
             alpha = 0.5
@@ -218,24 +220,27 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if scales_per_op:
             from neural_compressor.adaptor.ox_utils.util import get_smooth_scales_per_op, \
                 insert_smooth_mul_op_per_op, adjust_weights_per_op
-            self.scales = get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
+            scales = get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
                                                     input_tensors_2_weights_nodes, alpha)
-            new_added_mul_nodes, new_init_tensors, op_nodes = insert_smooth_mul_op_per_op(self.scales, shape_infos,
+            new_added_mul_nodes, new_init_tensors, op_nodes = insert_smooth_mul_op_per_op(scales, shape_infos,
                                                                                 input_tensors_2_weights_nodes)
-            adjust_weights_per_op(self.pre_optimized_model, op_nodes, self.scales)
+            adjust_weights_per_op(self.pre_optimized_model, op_nodes, scales)
         else:
             from neural_compressor.adaptor.ox_utils.util import get_smooth_scales_per_input, \
                 insert_smooth_mul_op_per_input, adjust_weights_per_input
-            self.scales = get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
-            new_added_mul_nodes, new_init_tensors = insert_smooth_mul_op_per_input(self.scales, shape_infos,
+            scales = get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
+            new_added_mul_nodes, new_init_tensors = insert_smooth_mul_op_per_input(scales, shape_infos,
                                                                             input_tensors_2_weights_nodes)
-            adjust_weights_per_input(self.pre_optimized_model, input_tensors_2_weights_nodes, self.scales)
+            adjust_weights_per_input(self.pre_optimized_model, input_tensors_2_weights_nodes, scales)
 
         self.pre_optimized_model.add_nodes(new_added_mul_nodes)
         self.pre_optimized_model.add_initializers(new_init_tensors)
         self.pre_optimized_model.update()
         self.pre_optimized_model.topological_sort()
         self.pre_optimized_model.remove_unused_constant()
+
+        absorb_scale(self.pre_optimized_model, scales)
+
         self.smooth_quant_model = self.pre_optimized_model
         return self.smooth_quant_model
 
@@ -330,10 +335,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         else:
             quantize_params = None
         self.quantize_params = quantize_params
-
-        if self.smooth_quant_model is not None:
-            from neural_compressor.adaptor.ox_utils.util import absorb_scale
-            absorb_scale(tmp_model, self.scales, self.quantize_params)
 
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options

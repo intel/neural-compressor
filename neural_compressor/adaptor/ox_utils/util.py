@@ -744,24 +744,23 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
                     node.input[index] = mul_output_name
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
-def absorb_scale(model, scales, quantize_params):
+def absorb_scale(model, scales):
     """Absorb the scale to the operator at output channel.
 
     Args:
         model: The neural_compressor model object
         scales: A dict, tensor: smooth quant scale
-        quantize_params: A dict, tensor: quantization parameters
     """
     from onnx import numpy_helper
-    def norm(node, scale):
+    def norm(node, scale): # pragma: no cover
         for idx in [1, 2]:
             tensor = model.get_initializer(node.input[idx])
             new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
                 model.model_path is not None else numpy_helper.to_array(tensor) * scale
             model.set_initializer(node.input[idx], new_tensor)
         return True
-        
-    def mul(node, scale):
+
+    def mul(node, scale): # pragma: no cover
         if all([model.get_initializer(inp) is None for inp in node.input]):
             return False
         for inp in node.input:
@@ -771,8 +770,8 @@ def absorb_scale(model, scales, quantize_params):
                     model.model_path is not None else numpy_helper.to_array(tensor) * scale
                 model.set_initializer(inp, new_tensor)
         return True
- 
-    def conv(node, scale):
+
+    def conv(node, scale): # pragma: no cover
         if len(node.input) > 2:
             if model.get_initializer(node.input[2]) is not None:
                 tensor = model.get_initializer(node.input[2])
@@ -814,8 +813,6 @@ def absorb_scale(model, scales, quantize_params):
                         for child in children:
                             for idx, inp in enumerate(child.input):
                                 if inp == node.output[0]:
-                                    if quantize_params is not None and node.output[0] in quantize_params:
-                                        quantize_params[node.input[0]] = quantize_params[node.output[0]]
                                     child.input[idx] = node.input[0]
     model.remove_nodes(remove_nodes)
 

@@ -476,13 +476,13 @@ def build_conv_model():
     conv2_node = helper.make_node('Conv', ['conv1_output', 'conv2_weight'], ['conv2_output'], name='conv2')
 
     conv3_weight_initializer = numpy_helper.from_array(
-        np.random.randint(-1, 2, [5, 5, 1, 1]).astype(np.float32), name='conv3_weight')
-    conv3_node = helper.make_node('Conv', ['conv2_output', 'conv3_weight'], ['conv3_output'], name='conv3')
+        np.random.randint(-1, 2, [3, 3, 3, 3]).astype(np.float32), name='conv3_weight')
+    conv3_node = helper.make_node('Conv', ['input', 'conv3_weight'], ['conv3_output'], name='conv3')
 
     avg_args = {'kernel_shape': [3, 3]}
-    avgpool_node = helper.make_node('AveragePool', ['conv1_output'], ['avg_output'], name='AveragePool', **avg_args)
+    avgpool_node = helper.make_node('AveragePool', ['conv3_output'], ['avg_output'], name='AveragePool', **avg_args)
 
-    concat_node = helper.make_node('Concat', ['avg_output', 'conv3_output'], 
+    concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'], 
         ['concat_output'], name='Concat', axis=1)
     output = helper.make_tensor_value_info('concat_output', TensorProto.FLOAT, [1, 8, 220, 220])
     initializers = [conv1_weight_initializer, conv2_weight_initializer, conv3_weight_initializer]
@@ -1083,12 +1083,24 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
 
     def test_smooth_quant_args(self):
-        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
-            'smooth_quant_args': {'alpha': 0.6}})
-        q_model = quantization.fit(self.conv_model, config,
-            calib_dataloader=self.cv_dataloader)
-        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
-
+        from neural_compressor.model.onnx_model import ONNXModel
+        framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "backend": "default",
+                               "format": "default",
+                               "domain": "auto",
+                               "recipes": {},
+                               "workspace_path": './nc_workspace/{}/{}/'.format(
+                                                       'onnxrt',
+                                                       'imagenet')}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        adaptor.pre_optimized_model = ONNXModel(self.conv_model)
+        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        self.assertEqual(len([i for i in adaptor.pre_optimized_model.nodes() if i.op_type == 'Mul']), 1)
+ 
     def test_multi_metrics(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'
