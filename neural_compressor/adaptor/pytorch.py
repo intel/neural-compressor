@@ -77,10 +77,10 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     if isinstance(input, dict) or isinstance(input, UserDict):
         if device == 'cpu':
             output = model(**input)
-        elif device == 'ipex':  # pragma: no cover
+        elif device == 'ipex':
             # have to split the case to avoid exposing ipex.DEVICE outside
             # which require intel extension installed
-            if version.release < Version("1.12.0").release:
+            if version.release < Version("1.12.0").release:  # pragma: no cover
                 if running_mode == "calibration":
                     with ipex.quantization.calibrate(conf, default_recipe=True):   # pylint: disable=E1101
                         output = model(**input)
@@ -96,8 +96,8 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     elif isinstance(input, list) or isinstance(input, tuple):
         if device == 'cpu':
             output = model(*input)
-        elif device == 'ipex':  # pragma: no cover
-            if version.release < Version("1.12.0").release:
+        elif device == 'ipex':
+            if version.release < Version("1.12.0").release:  # pragma: no cover
                 if running_mode == "calibration":
                     with ipex.quantization.calibrate(conf, default_recipe=True):   # pylint: disable=E1101
                         output = model(*input)
@@ -114,8 +114,8 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     else:
         if device == 'cpu' or not isinstance(input, torch.Tensor):
             output = model(input)
-        elif device == 'ipex':  # pragma: no cover
-            if version.release < Version("1.12.0").release:
+        elif device == 'ipex':
+            if version.release < Version("1.12.0").release:  # pragma: no cover
                 if running_mode == "calibration":
                     with ipex.quantization.calibrate(conf, default_recipe=True):    # pylint: disable=E1101
                         output = model(input)
@@ -129,7 +129,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
     return output
 
 
-def get_example_inputs(model, dataloader):  # pragma: no cover
+def get_example_inputs(model, dataloader):
     version = get_torch_version()
     # Suggest set dataloader like calib_dataloader
     if dataloader is None:
@@ -2437,7 +2437,7 @@ unify_op_type_mapping_ipex = {
 
 
 @adaptor_registry
-class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
+class PyTorch_IPEXAdaptor(TemplateAdaptor):
     """Adaptor of PyTorch framework with Intel PyTorch Extension,
        all PyTorch IPEX API is in this class.
 
@@ -2589,6 +2589,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             with open(self.ipex_config_path, 'r') as f:
                 model.tune_cfg = json.load(f)
             model.ipex_config_path = self.ipex_config_path
+            if self.version.release >= Version("1.12.0").release:
+                self._dump_model_op_stats(tune_cfg)
             return model
         else:
             if self.tmp_model is None:
@@ -2708,7 +2710,52 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             with open(self.ipex_config_path, 'r') as f:
                 self.tmp_model.tune_cfg = json.load(f)
             self.tmp_model.ipex_config_path = self.ipex_config_path
+            if self.version.release >= Version("1.12.0").release:
+                self._dump_model_op_stats(tune_cfg)
             return self.tmp_model
+
+    def _dump_model_op_stats(self, tune_cfg):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            tune_cfg (dict): quantization config
+        Returns:
+            None
+        """
+        res = dict()
+        for k, v in tune_cfg["op"].items():
+            op_type_list = k[-1].split("><")
+            op_type = ""
+            for op in op_type_list:
+                if "class" in op:
+                    op_type = op[op.rfind(".") + 1: op.rfind("'")] \
+                        if op_type == "" else op_type + "&" + op[op.rfind(".") + 1: op.rfind("'")]
+                elif "method" in op:
+                    start = op.find("'") + 1
+                    if start > 1:
+                        op_type = op[start: op.find("'", start)] \
+                            if op_type == "" else op_type + "&" + op[start: op.find("'", start)]
+                    else:
+                        start = op.find("method") + 7
+                        op_type = op[start: op.find(" ", start)] \
+                            if op_type == "" else op_type + "&" + op[start: op.find(" ", start)]
+                else:
+                    op_type = op if op_type == "" else op_type + "&" + op
+            if op_type not in res.keys():
+                res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
+            if v["weight"]["dtype"] == "int8":
+                res[op_type]["INT8"] += 1
+            elif v["weight"]["dtype"] == "fp32":
+                res[op_type]["FP32"] += 1
+
+        output_data = [[
+            op_type,
+            sum(res[op_type].values()), res[op_type]['INT8'], res[op_type]['BF16'],
+            res[op_type]['FP32']
+        ] for op_type in res.keys()]
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def _cfg_to_qconfig(self, tune_cfg):
         """Convert tune configure to quantization config for each op.
