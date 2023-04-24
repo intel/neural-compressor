@@ -140,7 +140,7 @@ class ONNXModel(BaseModel):
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
             convert_model_to_external_data(self._model,
                                            all_tensors_to_one_file=True,
-                                           location="weights.pb",
+                                           location="int8_weights.pb",
                                            convert_attribute=False)
         onnx.save(self._model, root)
 
@@ -510,6 +510,78 @@ class ONNXModel(BaseModel):
                 start_node.append(parent.name)
 
         return result_chain
+    
+    def find_qkv_in_attention(self, find_all=False):
+        """Find qkv MatMul in Attention.
+
+        Args:
+            find_all (bool, optional): find all qkv MatMul. Defaults to False
+
+        Returns:
+            qkv (list): qkv MatMul list
+        """
+        qkv = []
+        for node in self._model.graph.node:
+            start_node, qkv_nodes_list = None, None
+            if node.op_type == 'SkipLayerNormalization':
+                start_node = node
+                qkv_nodes_list = [
+                    self.match_parent_path(
+                        start_node,
+                        ["MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [None, 0, 0, 0, 0],)
+                ]
+            if node.op_type == 'Add':
+                start_node = node
+                qkv_nodes_list = [
+                    # match base attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [0, None, 0, 0, 0],),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [1, None, 0, 0, 0]),
+
+                    # match gpt attention no past structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
+                        [ None, 0, 0, 0, 0, 0],
+                        output_name_to_node=self.output_name_to_node,
+                        return_indice=[]),
+
+                    # match bart attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [1, None, 0, 0, 0, 0]),
+                    ]
+
+            if not start_node:
+                continue
+            if not any(qkv_nodes_list):
+                continue
+            qkv_nodes = [qkv for qkv in qkv_nodes_list if qkv is not None][-1]
+            other_inputs = []
+            for input in start_node.input:
+                if input not in self.output_name_to_node:
+                    continue
+                if input == qkv_nodes[0].output[0]:
+                    continue
+                other_inputs.append(input)
+            if len(other_inputs) != 1:
+                continue
+            root_input = other_inputs[0]
+            input_name_to_nodes = self.input_name_to_nodes
+            children = input_name_to_nodes[root_input]
+            children_types = [child.op_type for child in children]
+            if children_types.count("MatMul") == 3:
+                qkv.append([child.name for child in children if child.op_type == "MatMul"])
+                if not find_all:
+                    break
+        return qkv
 
     def export(self, save_path, conf):
         """Export Qlinear to QDQ model."""
