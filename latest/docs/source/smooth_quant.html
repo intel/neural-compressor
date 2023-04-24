@@ -103,8 +103,8 @@ $$</p>
 <p>where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.</p>
 <section id="per-tensor-per-channel">
 <h3>Per-tensor &amp; Per-channel<a class="headerlink" href="#per-tensor-per-channel" title="Permalink to this heading"></a></h3>
-<p>There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual parameter.</p>
-<p>However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. <strong>In the following part, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization</strong></p>
+<p>There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual set of quantization parameters.</p>
+<p>However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. <strong>In the following part, We will show that per-channel could bring lower quantization loss but has some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization</strong></p>
 <section id="per-tensor-example">
 <h4>Per-tensor example<a class="headerlink" href="#per-tensor-example" title="Permalink to this heading"></a></h4>
 <p>Suppose the weight tensor is：</p>
@@ -115,7 +115,7 @@ $$</p>
     <span class="p">)</span>
 </pre></div>
 </div>
-<p>According to the formula (1), we need to scale $S$ and zero point $Z$ to calculate the integer matrix.</p>
+<p>According to the formula (1), we need scale $S$ and zero point $Z$ to calculate the integer matrix.</p>
 <p>$$
 S = \frac{X_{max} - X{min}}{2^b -1} \tag{2}
 $$</p>
@@ -267,7 +267,7 @@ tensor<span class="o">([[</span><span class="m">0</span>.6836,<span class="w"> <
 <section id="per-channel-limitation">
 <h4>Per-channel limitation<a class="headerlink" href="#per-channel-limitation" title="Permalink to this heading"></a></h4>
 <p>Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.</p>
-<p>The left side of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.</p>
+<p>The image on the left presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation (right image), we could not dequantize the  $y_1$ and  $y_2$ to float results.</p>
 <div align="center">
     <img src="./imgs/sq_pc.png"/>
 </div></section>
@@ -282,11 +282,11 @@ tensor<span class="o">([[</span><span class="m">0</span>.6836,<span class="w"> <
 <p>So <strong>the first question is how to migrate the difficulty from activation to weights?</strong> The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, similar to a fake per-channel activation quantization.</p>
 <div align="center">
     <img src="./imgs/sq_convert.png"/>
-</div><p>Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights showed above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.</p>
-<p>So <strong>the second question is how much difficulty to be migrated</strong>, that is how to choose the <strong>convention per-channel scale</strong> $s_{x1}$ and $s_{x2}$ on the above image. Different works adopt different ways.</p>
-<p><em>SPIQ</em> just adopts the quantization scale of activations as the convention per-channel scale.</p>
-<p><em>Outlier suppression</em> adopts the scale of the preceding layernorm as the convention per-channel scale.</p>
-<p><em>Smoothquant</em> introduces a hyperparameter $\alpha$ as a smooth factor to calculate the convention per-channel scale and balance the quantization difficulty of activation and weight.</p>
+</div><p>Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights shown above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.</p>
+<p>So <strong>the second question is how much difficulty to be migrated</strong>, that is how to choose the <strong>conversion per-channel scale</strong> $s_{x1}$ and $s_{x2}$ from the above image. Different works adopt different ways.</p>
+<p><em>SPIQ</em> just adopts the quantization scale of activations as the conversion per-channel scale.</p>
+<p><em>Outlier suppression</em> adopts the scale of the preceding layernorm as the conversion per-channel scale.</p>
+<p><em>Smoothquant</em> introduces a hyperparameter $\alpha$ as a smooth factor to calculate the conversion per-channel scale and balance the quantization difficulty of activation and weight.</p>
 <p>$$
 s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha} \tag{4}
 $$</p>
@@ -320,7 +320,7 @@ $$</p>
 </pre></div>
 </div>
 <p>please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False”</p>
-<p><em>support lots of fusing patterns</em>: when applying the convention per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1-&gt;relu-&gt;linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.</p>
+<p><em>support lots of fusing patterns</em>: when applying the conversion per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1-&gt;relu-&gt;linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conv2d/linear-&gt;relu/leakyrelu/hardtanh-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
 
 conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
