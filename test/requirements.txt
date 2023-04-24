@@ -16,6 +16,6 @@ tensorflow_model_optimization
 horovod
 tensorflow-addons
 onnxruntime-extensions; python_version < '3.10'
-dynast==1.2.0rc1
+dynast==1.2.0rc2
 intel-extension-for-pytorch
 tf2onnx
