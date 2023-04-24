@@ -91,7 +91,7 @@ class SmoothQuantScaler:
                         # reduce weight max to (in_channel, ), aligned with activation max
                         tensor = np.abs(W)
                         # W_max_per_in_channel = np.max(np.reshape(tensor, (-1, tensor.shape[-1])), axis=0)
-                        W_max_per_in_channel = np.max(W, axis=1)
+                        W_max_per_in_channel = np.max(tensor, axis=1)
                     else:
                         assert False, "not supported"
                     # breakpoint()
@@ -113,10 +113,11 @@ class SmoothQuantScaler:
                     # print("scale: p scale")
                     # breakpoint()
                     # # return self.model
-                # if idx == 3:
-                #     tf.io.gfile.GFile('i_middle_1_with_branch_check.pb', 'wb').write(self.model.graph_def.SerializeToString())
-                    # tf.io.gfile.GFile('j_middle_0_mm.pb', 'wb').write(self.model.graph_def.SerializeToString())
-                    # return self.model
+                if idx == 25:
+                    breakpoint()
+                    # tf.io.gfile.GFile('i_middle_1_with_branch_check.pb', 'wb').write(self.model.graph_def.SerializeToString())
+                    tf.io.gfile.GFile('k_middle_{}.pb'.format(idx+1), 'wb').write(self.model.graph_def.SerializeToString())
+                    return self.model
         else:
             pass
         # breakpoint()

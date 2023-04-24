@@ -273,7 +273,7 @@ class Distilbert_base(object):
             from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
             accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
             config = PostTrainingQuantConfig(calibration_sampling_size=[500],
-                                             accuracy_criterion=accuracy_criterion)
+                                             accuracy_criterion=accuracy_criterion, quant_level=1, recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}})
             q_model = quantization.fit(model=graph, conf=config, calib_dataloader=self.dataloader,
                             eval_func=self.eval_func)
             try:
