@@ -2932,6 +2932,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                    if self.version.release >= Version("2.1").release:
+                        static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                    else:
+                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                    qscheme=torch.per_channel_symmetric))
                     # For smoothquant optimized model, need ipex version >= 2.1
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:  # pragma: no cover
@@ -2943,14 +2950,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                               or not tmp_model._smoothquant_optimized:
                                 # to make sure ipex_config.json is based on pre-optimized model
                                 tmp_model = self._wrapper_sq_linear(tmp_model)
-                    else:
-                        if self.version.release >= Version("2.1").release:
-                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
-                        else:
-                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                        qscheme=torch.per_channel_symmetric))
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
