@@ -3121,7 +3121,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 with torch.cpu.amp.autocast():
                     q_model = ipex.quantization.convert(q_model, inplace=True)
                     # inference once after convert for SmoothQuant
-                    self.calib_func(q_model, dataloader, tmp_iterations=1)
+                    self._simple_inference(q_model, dataloader, iterations=1)
                     try:
                         q_model = torch.jit.trace(q_model, self.example_inputs)
                         q_model = torch.jit.freeze(q_model.eval())
