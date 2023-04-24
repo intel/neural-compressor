@@ -58,10 +58,10 @@ def _register_on_step_begin(model):
     return hook_handle
 
 
-def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
+def _rewrite_optimizer_step(opt):
     """Mount on_before/after_optimizer_step to optimizer.
 
-    :param opt: user optimizer
+    :param opt: user optimizer: should be a torch.optim.Optimizer object
     :return: the modified optimizer
     """
 
@@ -145,12 +145,12 @@ def save(
         torch.orig_save(obj, f)
 
 
-def prepare_pruning(config, model: torch.nn.Module, opt: torch.optim):
+def prepare_pruning(config, model, opt):
     """Wrapper the model and optimizer to support all the pruning functionality.
 
     :param config: WeightPruningConfig
-    :param model: The user's model
-    :param opt: The user's optimizer
+    :param model: The user's model, a torch.nn.Module object
+    :param opt: The user's optimizer, a torch.optim object
     :return: The modified model and optimizer
     """
     import torch

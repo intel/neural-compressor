@@ -33,7 +33,6 @@ from ..utils import logger
 from ..utils.utility import time_limit, LazyImport
 from ..model import BaseModel, Model
 from ..model.model import get_model_fwk_name
-from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, \
     generate_pruner_config, get_sparsity_ratio
@@ -214,41 +213,28 @@ class BaseCallbacks(object):
         if user_model is None:
             return
 
-        self.framework = get_model_fwk_name(
-            user_model.model if isinstance(user_model, BaseModel) else user_model)
-        if self.framework == "tensorflow":
-            try:
-                if self.cfg.quantization.approach == "quant_aware_training":
-                    self.framework = 'tensorflow_itex'
-                else:
-                    from ..model.tensorflow_model import get_model_type
-                    if get_model_type(user_model) == 'keras' and self.cfg.quantization.backend == 'itex':
-                        self.framework = 'keras'
-            except Exception as e:
-                pass
-
-        if self.framework == "pytorch":
-            try:
+        if self.framework == 'NA':
+            self.framework = get_model_fwk_name(
+                user_model.model if isinstance(user_model, BaseModel) else user_model)
+            if self.framework == "tensorflow":
+                from ..model.tensorflow_model import get_model_type
+                if not isinstance(user_model, BaseModel) and get_model_type(user_model) == 'keras'\
+                     and self.cfg.quantization.backend == 'itex':
+                    self.framework = 'keras'
+            if self.framework == "pytorch":
                 if self.cfg.quantization.backend == "default":
                     self.framework = "pytorch_fx"
                 elif self.cfg.quantization.backend == "ipex":
                     self.framework = "pytorch_ipex"
                 self.cfg.quantization.framework = self.framework
-            except Exception as e:
-                pass
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            if self.framework == 'tensorflow':
-                if type(user_model) == str:
-                    self._model = TensorflowQATModel(user_model)
+            if "tensorflow" in self.framework or self.framework == "keras":
+                if self.cfg.quantization and self.cfg.quantization.approach == "quant_aware_training":
+                    self._model = Model(user_model, backend='tensorflow_qat', device=self.cfg.device)
                 else:
-                    self._model = TensorflowQATModel(user_model._model)
-            elif "tensorflow" in self.framework or self.framework == "keras":
-                try:
-                    self._model = Model(user_model, backend=self.framework, device=self.cfg.quantization.device)
-                except Exception as e:
-                    self._model = Model(user_model, backend=self.framework, device=None)
+                    self._model = Model(user_model, backend=self.framework, device=self.cfg.device)
             else:
                 self._model = Model(user_model, backend=self.framework)
         else:

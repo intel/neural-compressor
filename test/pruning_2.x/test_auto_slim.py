@@ -11,16 +11,63 @@ from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
 import random
 
-class TestPruning(unittest.TestCase):
-    def test_pruning_basic(self):
-        # task1: check config generation functions
-        print("test")
-        from transformers import BertForSequenceClassification
-        model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+class NaiveMLP(nn.Module):
+    def __init__(self, hidden_size=16):
+        super(NaiveMLP, self).__init__()
+        self.linear1 = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.ac1 = nn.ReLU()
+        self.linear2 = nn.Linear(hidden_size, hidden_size, bias=True)
+        self.ac2 = nn.ReLU()
+        self.linear3 = nn.Linear(hidden_size, 2, bias=True)
+        self.ac3 = nn.Sigmoid()
+        
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.ac1(x)
+        x = self.linear2(x)
+        x = self.ac2(x)
+        x = self.linear3(x)
+        x = self.ac3(x)
+        return x
 
+class TestPruning(unittest.TestCase):
+
+    def test_pruning_basic(self):
         prune_ffn2_sparsity = 0.5
         prune_mha_sparsity = 0.5
+        hidden_size = 16
         from neural_compressor.compression import parse_auto_slim_config
+        # print("Run a naive MLP model")
+        model = NaiveMLP(hidden_size)
+        datasets = Datasets('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(10, hidden_size), low=0., high=1., dtype='float32', label=True)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+        from neural_compressor.compression import parse_auto_slim_config
+        auto_slim_configs_0 = parse_auto_slim_config(
+            model, 
+            dummy_dataloader,
+            ffn2_sparsity = prune_ffn2_sparsity, 
+            pruning_scope="local",
+        )
+        assert auto_slim_configs_0[0]['op_names'].__len__() == 2 # ffn2
+        for n, m in model.named_modules():
+            if n in auto_slim_configs_0[0]['op_names']:
+                ffn2_chn_sparsity = random.sample(list(range(hidden_size)), int(hidden_size * prune_ffn2_sparsity))
+                _w = m.weight.clone()
+                _w[:, ffn2_chn_sparsity] = 0
+                setattr(m, 'weight', torch.nn.Parameter(_w.clone()))
+        from neural_compressor.compression import model_slim
+        dummy_inputs = torch.randn([1, 16])
+        outputs_before_slim = model(dummy_inputs)
+        model = model_slim(model, dummy_dataloader)
+        outputs_after_slim = model(dummy_inputs)
+        assert torch.sum(outputs_before_slim - outputs_after_slim).abs().item() < 1e-5
+
+
+        # task1: check config generation functions
+        print("Run a Bert model")
+        from transformers import BertForSequenceClassification
+        model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
         # case 1: without external dataloader
         auto_slim_configs = parse_auto_slim_config(
             model, 
@@ -33,7 +80,7 @@ class TestPruning(unittest.TestCase):
         assert auto_slim_configs[2]['op_names'].__len__() == 12 # mha outputs
         # case 2: with external dataloader
         datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 1, 16), low=0., high=1., label=True)
+        dummy_dataset = datasets['dummy'](shape=(10, 16), low=0., high=1., dtype='int64', label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         auto_slim_configs_2 = parse_auto_slim_config(
             model, 
