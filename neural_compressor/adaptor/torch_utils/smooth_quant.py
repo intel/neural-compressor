@@ -400,7 +400,7 @@ class TorchSmoothQuant:
         if isinstance(layer, SQLinearWrapper):
             layer = layer.sq_linear
         scale = self._reshape_scale_for_weight(layer, scale)
-        layer.weight *= scale
+        layer.weight = torch.nn.Parameter(layer.weight * scale)
         return scale
 
     def _absorb_scales(self, layer_name, scale, alpha=0.5):  ##output channel

@@ -669,9 +669,9 @@ def simple_inference(model, input):
         output (object).
     """
     with torch.no_grad():
-        if type(input) is dict:
+        if isinstance(input, (dict, UserDict)):
             output = model(**input)
-        elif type(input) is tuple or type(input) is list:
+        elif isinstance(input, (list, tuple)):
             try:
                 output = model(*input)
             except:
