@@ -332,7 +332,7 @@ class _Benchmark(object):
             if 'tensorflow' in framework:
                 framework_specific_info.update({"inputs": cfg.inputs, \
                                                 "outputs": cfg.outputs, \
-                                                "recipes": None, \
+                                                "recipes": {}, \
                                                 'workspace_path': options.workspace})
             if framework == 'keras':
                 framework_specific_info.update({'workspace_path': options.workspace})
