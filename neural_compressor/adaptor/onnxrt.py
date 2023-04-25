@@ -152,7 +152,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=False,
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5,
             percentile=99.999, op_types=['FusedConv', 'MatMul', 'Linear', 'Conv'], scales_per_op=True):
         """Get augmented model with smooth quant.
 
@@ -162,7 +162,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             iterations: iterations
             tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
-            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile:Percentile of calibration to remove outliers
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
