@@ -416,8 +416,6 @@ if __name__ == "__main__":
             fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=args.quant_format,
-                                         recipes={'smooth_quant': True,
-                                                  'smooth_quant_args': {'alpha': 0.5}},
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
                                             if fp32_op_names else None,)
         q_model = quantization.fit(model, 
