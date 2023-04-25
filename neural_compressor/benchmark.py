@@ -327,7 +327,7 @@ class _Benchmark(object):
                                        'random_seed': options.random_seed,
                                        'backend': cfg.backend \
                                         if cfg.backend is not None else 'default',
-                                       'format': None}
+                                       'format': 'default'}
             framework = cfg.framework.lower()
             if 'tensorflow' in framework:
                 framework_specific_info.update({"inputs": cfg.inputs, \
