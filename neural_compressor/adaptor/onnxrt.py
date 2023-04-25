@@ -152,8 +152,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5,
-            percentile=99.999, op_types=['FusedConv', 'MatMul', 'Linear', 'Conv'], scales_per_op=True):
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, percentile=99.999,
+            op_types=['FusedConv', 'MatMul', 'Linear', 'Conv'], scales_per_op=True, **kwargs):
         """Get augmented model with smooth quant.
 
         Args:
