@@ -1696,10 +1696,10 @@ class TensorFlowAdaptor(Adaptor):
             model: original model
             dataloader: the calibration dataloader
             calib_iter: how many steps of iterations on the dataloader to move forward
-            tune_cfg: ??????????Can we get the tune_cfg with no access to strategy here??????????? quantization config
+            tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
             folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
-            percentile: ????????needed????????? Percentile of calibration to remove outliers
+            percentile: percentile of calibration to remove outliers
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
@@ -1719,18 +1719,17 @@ class TensorFlowAdaptor(Adaptor):
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
         calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile, black_nodes)
-        max_vals_per_channel, shape_infos, sq_node_names = calibration()
+        max_vals_per_channel, sq_node_names = calibration()
 
         # Get weight tensors and weight nodes based on the input tensor
         from neural_compressor.adaptor.tf_utils.util import get_weight_from_input_tensor
         sq_weight_tensors, sq_weights_nodes = get_weight_from_input_tensor(
             model, max_vals_per_channel.keys(), op_types)
 
+        # Calculate the smooth quant scaler and insert Mul op into the graph
         from .tf_utils.smooth_quant_scaler import SmoothQuantScaler
         scaler = SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
-        # Get smooth scales and adjust weights per op
-        # Get smooth scales and adjust weights per input
-        model, mul_list = scaler.transform(max_vals_per_channel, shape_infos, sq_weight_tensors, sq_weights_nodes, sq_node_names)
+        model, mul_list = scaler.transform(max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_node_names)
         self.smooth_quant_mul_ops.extend(mul_list)
         self.smooth_quant_model = model
         return self.smooth_quant_model

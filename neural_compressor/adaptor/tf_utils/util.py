@@ -583,8 +583,7 @@ def generate_feed_dict(input_tensor, inputs):
     return feed_dict
 
 def get_weight_from_input_tensor(model, input_tensor_names, op_types):
-    """
-    Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
+    """Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
 
     Args:
         model: A TensorFlow model containing a `graph_def` attribute.

@@ -29,8 +29,7 @@ logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
 
 class SmoothQuantCalibration:
-    """
-    A class for performing smooth quantization calibration on a Tensorflow model.
+    """A class for performing smooth quantization calibration on a Tensorflow model.
 
     Args:
         model (Model): The Tensorflow wrapper model to be calibrated.
@@ -201,8 +200,7 @@ class SmoothQuantCalibration:
         return max_per_channels
 
     def __call__(self):
-        """
-        Generates calibration data and calculate the maximum values per channel.
+        """Generates calibration data and calculate the maximum values per channel.
 
         Returns:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel.
@@ -210,7 +208,6 @@ class SmoothQuantCalibration:
         """
         self._generate_calibration_data()
         max_vals_per_channel = {}
-        shape_infos = {}
         for key in self._sq_output_tensor_dict.keys():
             # breakpoint()
             # if key == 'StatefulPartitionedCall/tf_distil_bert_for_sequence_classification/distilbert/transformer/layer_._1/ffn/lin2/Tensordot/Reshape':
@@ -218,6 +215,5 @@ class SmoothQuantCalibration:
             max_val_per_channel = self._get_maxval_per_channel(
                 self._sq_output_tensor_dict[key], percentile=self.percentile)
             max_vals_per_channel[key] = max_val_per_channel
-            shape_infos[key] = self._sq_output_tensor_dict[key][0].shape
-        return max_vals_per_channel, shape_infos, self._sq_node_names
+        return max_vals_per_channel, self._sq_node_names
 
