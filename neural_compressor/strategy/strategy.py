@@ -17,39 +17,31 @@
 
 """The base class for tuning strategy."""
 
-from abc import abstractmethod
 import os
 import math
 import copy
-from copy import deepcopy
 import pickle
+import yaml
+import sys
+
+from abc import abstractmethod
+from copy import deepcopy
 from collections import OrderedDict, defaultdict
 from pathlib import Path
-import yaml
+from time import time
 import numpy as np
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
 from ..config import MixedPrecisionConfig, options
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
-from ..utils.utility import Statistics
-from ..utils.utility import fault_tolerant_file, GLOBAL_STATE, MODE
+from ..utils.utility import Statistics, fault_tolerant_file, GLOBAL_STATE, MODE, LazyImport, DotDict
 from ..utils.create_obj_from_config import create_eval_func
-from ..utils.utility import LazyImport
 from ..utils import logger
 from ..version import __version__
-from ..utils.utility import DotDict
 from ..algorithm import AlgorithmScheduler, ALGORITHMS
 
-import copy
-import numpy as np
-from collections import OrderedDict
-from time import time
-from ..utils import logger
-import sys
-
-
-from .utils.tuning_space import TuningItem, TuningSpace
+from .utils.tuning_space import  TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
 
@@ -77,32 +69,6 @@ def strategy_registry(cls):
 @strategy_registry
 class TuneStrategy(object):
     """Basic class for tuning strategy."""
-
-    def _check_tuning_status(self):
-        if self.eval_func:
-            self._not_tuning = False
-            logger.info("Execute the tuning process due to detect the evaluation function.")
-            if self.eval_dataloader:
-                logger.warning("Ignore the evaluation dataloader due to evaluation function exist.")
-            if self.eval_metric:
-                logger.warning("Ignore the evaluation metric due to evaluation function exist.")
-            return
-        if self.eval_dataloader and self.eval_metric:
-            self._not_tuning = False
-            logger.info("Create evaluation function according to evaluation dataloader and metric\
-                and Execute the tuning process.")
-            return
-        else:
-            if self.eval_dataloader:
-                assert self.eval_metric, "Detected evaluation dataloader but no evaluation metric, " \
-                 "Please provide both to perform tuning process or neither for the default quantization."
-            if self.eval_metric:
-                assert self.eval_dataloader, "Detected evaluation metric but no evaluation dataloader, "\
-                    "Please provide both to perform tuning process or neither for the default quantization."
-        if self._not_tuning:
-            logger.info("Quantize the model with default configuration without evaluating the model.\
-                To perform the tuning process, please either provide an eval_func or provide an\
-                    eval_dataloader an eval_metric.")
 
     def __init__(self,
                  model,
@@ -139,7 +105,7 @@ class TuneStrategy(object):
         self.eval_func = eval_func
         self.eval_dataloader = eval_dataloader
         self.eval_metric = eval_metric
-        # not tuning equals to performance only
+        # not tuning equals to performance only in 1.x
         self._not_tuning = True
         self._check_tuning_status()
         self.q_func = q_func
@@ -162,18 +128,24 @@ class TuneStrategy(object):
         self.last_tune_cfg = None
         self.best_qmodel = None
         self.best_tune_result = None
-        self.best_tuning_cfg = None # track the best tuning config correspondence to the best quantized model
-        self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
-        self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
+        # track the best tuning config correspondence to the best quantized model
+        self.best_tuning_cfg = None
+        # track the current best accuracy
+        self.cur_best_acc = self.initial_best_acc()
+        # track tuning cfg with the current best accuracy
+        self.cur_best_tuning_cfg = {}
         self.re_quant = False
         self.trials_count = 0
+
+        # query capability and build tuning space
         self.capability = self.adaptor.query_fw_capability(model)
         logger.debug(self.capability)
         self.set_tuning_space(self.config)
 
-        #For algo scheduler
+        # set algo scheduler
         self.algo_scheduler = AlgorithmScheduler(self.config.recipes)
-        self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
+        # reuse the calibration iteration
+        self.algo_scheduler.dataloader = self.calib_dataloader
         self.algo_scheduler.origin_model = self.model
         self.algo_scheduler.adaptor = self.adaptor
 
@@ -184,18 +156,49 @@ class TuneStrategy(object):
         self.fallback_start_point = 0
         self.metric_met_point = 0
 
-        # for recipes
-        # {recipe name: the list of supported value}
+        # set recipes
+        # recipe name -> the list of supported value
         self._tuning_recipes = OrderedDict()
-        # {recipe name: the default value when not tuning}
+        # recipe name-> the default value when not tuning
         self._tuning_recipes_default_values = {}
-        # {recipe name: the value specified by user}
+        # recipe name -> the value specified by user
         self._not_tuning_recipes_values = {}
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
 
         self._resume = resume
         if self._resume is not None: self.setup_resume(resume)
+
+    def _check_tuning_status(self):
+        # got eval func
+        if self.eval_func:
+            self._not_tuning = False
+            logger.info("Execute the tuning process due to detect the evaluation function.")
+            if self.eval_dataloader:
+                logger.warning("Ignore the evaluation dataloader due to evaluation function exist.")
+            if self.eval_metric:
+                logger.warning("Ignore the evaluation metric due to evaluation function exist.")
+            return
+        # got eval dataloader + eval metric => eval func
+        if self.eval_dataloader and self.eval_metric:
+            self._not_tuning = False
+            logger.info("Create evaluation function according to evaluation dataloader and metric\
+                and Execute the tuning process.")
+            return
+        else:
+            # got eval dataloader but not eval metric
+            if self.eval_dataloader:
+                assert self.eval_metric, "Detected evaluation dataloader but no evaluation metric, " \
+                 "Please provide both to perform tuning process or neither for the default quantization."
+            # got eval metric but not eval dataloader
+            if self.eval_metric:
+                assert self.eval_dataloader, "Detected evaluation metric but no evaluation dataloader, "\
+                    "Please provide both to perform tuning process or neither for the default quantization."
+        # not tuning
+        if self._not_tuning:
+            logger.info("Quantize the model with default configuration without evaluating the model.\
+                To perform the tuning process, please either provide an eval_func or provide an\
+                    eval_dataloader an eval_metric.")
 
     def _initialize_config(self, conf):
         """Init the tuning config based on user conf.
@@ -222,6 +225,97 @@ class TuneStrategy(object):
             tune_config (dict): It's a dict containing the tuning configuration to traverse.
         """
         raise NotImplementedError
+
+    def traverse(self):
+        """Traverse the tuning space.
+
+        The main traverse logic which could be override by some concrete strategy which needs more hooks.
+        """
+        self._eval_baseline()
+        if self.config.use_distributed_tuning:
+            logger.info("use distributed traverse: {}".format(self.config.use_distributed_tuning))
+            return self.distributed_traverse()
+        traverse_start_time = time()
+        for op_tuning_cfg in self.next_tune_cfg():
+            tuning_start_time = time()
+            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
+            self.trials_count += 1
+            tuning_history = self._find_tuning_history(tune_cfg)
+            if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials:
+                self.last_tune_result = tuning_history['last_tune_result']
+                self.best_tune_result = tuning_history['best_tune_result']
+                logger.warn("Find evaluated tuning config, skip.")
+                continue
+            self._remove_redundant_qmodel()
+            logger.debug("Dump current tuning configuration:")
+            logger.debug(tune_cfg)
+            self.tuning_times += 1
+            # set the parameter for pre quantization algos and run
+            self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
+            self.model = self.algo_scheduler('pre_quantization')
+            # quantize
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            assert self.adaptor.pre_optimized_model
+            # set the parameter for post quantization algos and run
+            self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg,\
+                self.adaptor.pre_optimized_model, q_model)
+            self.last_qmodel = self.algo_scheduler('post_quantization')
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
+            # remove the reference to model
+            self.algo_scheduler.reset_exec_algorithms()
+            assert self.last_qmodel
+            # return the last quantized model as a result. if not tune.
+            if self._not_tuning:
+                self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
+                return
+            self.last_tune_result = self._evaluate(self.last_qmodel)
+            self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
+            need_stop = self.stop(self.config.tuning_criterion.timeout, self.trials_count)
+
+            # record the tuning history
+            saved_tune_cfg = copy.deepcopy(tune_cfg)
+            saved_last_tune_result = copy.deepcopy(self.last_tune_result)
+            self._add_tuning_history(saved_tune_cfg,
+                                    saved_last_tune_result,
+                                    q_config=q_model.q_config)
+            self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
+            self.tune_cfg = tune_cfg
+            now_time = time()
+            acc_res_msg = ""
+            performance_res_msg = ""
+            if self.tuning_result_data:
+                acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
+                performance_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
+            logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
+            logger.debug(f"*** The performance of last tuning is: {performance_res_msg}")
+            logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
+            logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
+
+            self._dump_tuning_process_statistics()
+            if need_stop:
+                if self.re_quant:
+                    logger.info("*** Do not stop the tuning process, re-quantize the ops.")
+                    continue
+                # recover the best quantized model from tuning config
+                self._recover_best_qmodel_from_tuning_cfg()
+                if self.config.diagnosis:
+                    logger.debug(f'*** Start to do diagnosis (inspect tensor).')
+                    self._diagnosis()
+                if self.use_multi_objective and len(self.tune_result_record) > 1 and \
+                    self.best_tune_result is not None:
+                    best_trail, best_result = self.objectives.best_result(self.tune_result_record,
+                                                                          copy.deepcopy(self.baseline))
+                    if best_result != self.best_tune_result:
+                        from neural_compressor.utils.utility import recover
+                        self.best_qmodel = recover(self.model.model,
+                            os.path.join(options.workspace, 'history.snapshot'),
+                            best_trail)
+                        logger.debug(f"*** Update the best qmodel by recovering from history.")
+                        self.best_tune_result = best_result
+                    self._dump_tuning_process_statistics()
+                break
+        self._recover_best_qmodel_from_tuning_cfg()
 
     def _initialize_recipe(self):
         """Divide the recipe into two categories tuning/not tuning."""
@@ -607,97 +701,6 @@ class TuneStrategy(object):
             w_algo.quantization_cfg = deepcopy(tune_cfg)
             algo_scheduler.append_algorithm('post_quantization', w_algo)
             logger.debug(f"Add weight correction as the post quantization algo.")
-
-    def traverse(self):
-        """Traverse the tuning space.
-
-        The main traverse logic which could be override by some concrete strategy which needs more hooks.
-        """
-        self._eval_baseline()
-        if self.config.use_distributed_tuning:
-            logger.info("use distributed traverse: {}".format(self.config.use_distributed_tuning))
-            return self.distributed_traverse()
-        traverse_start_time = time()
-        for op_tuning_cfg in self.next_tune_cfg():
-            tuning_start_time = time()
-            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
-            self.trials_count += 1
-            tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials:
-                self.last_tune_result = tuning_history['last_tune_result']
-                self.best_tune_result = tuning_history['best_tune_result']
-                logger.warn("Find evaluated tuning config, skip.")
-                continue
-            self._remove_redundant_qmodel()
-            logger.debug("Dump current tuning configuration:")
-            logger.debug(tune_cfg)
-            self.tuning_times += 1
-            # set the parameter for pre quantization algos and run
-            self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
-            self.model = self.algo_scheduler('pre_quantization')
-            # quantize
-            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            assert self.adaptor.pre_optimized_model
-            # set the parameter for post quantization algos and run
-            self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg, self.adaptor.pre_optimized_model,
-                                                       q_model)
-            self.last_qmodel = self.algo_scheduler('post_quantization')
-            self.last_tune_cfg = copy.deepcopy(tune_cfg)
-            # Remove the reference to model
-            self.algo_scheduler.reset_exec_algorithms()
-            assert self.last_qmodel
-            # Return the last quantized model as a result. if performance only.
-            if self._not_tuning:
-                self.best_qmodel = self.last_qmodel
-                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
-                return
-            self.last_tune_result = self._evaluate(self.last_qmodel)
-            self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-            need_stop = self.stop(self.config.tuning_criterion.timeout, self.trials_count)
-
-            # record the tuning history
-            saved_tune_cfg = copy.deepcopy(tune_cfg)
-            saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-            self._add_tuning_history(saved_tune_cfg,
-                                    saved_last_tune_result,
-                                    q_config=q_model.q_config)
-            self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
-            self.tune_cfg = tune_cfg
-            now_time = time()
-            acc_res_msg = ""
-            performance_res_msg = ""
-            if self.tuning_result_data:
-                acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
-                performance_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
-            logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
-            logger.debug(f"*** The performance of last tuning is: {performance_res_msg}")
-            logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
-            logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
-
-            self._dump_tuning_process_statistics()
-            if need_stop:
-                if self.re_quant:
-                    logger.info("*** Do not stop the tuning process, re-quantize the ops.")
-                    continue
-                # recover the best quantized model from tuning config
-                self._recover_best_qmodel_from_tuning_cfg()
-                if self.config.diagnosis:
-                    logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-                    self._diagnosis()
-                if self.use_multi_objective and len(self.tune_result_record) > 1 and \
-                    self.best_tune_result is not None:
-                    best_trail, best_result = self.objectives.best_result(self.tune_result_record,
-                                                                          copy.deepcopy(self.baseline))
-                    if best_result != self.best_tune_result:
-                        from neural_compressor.utils.utility import recover
-                        self.best_qmodel = recover(self.model.model,
-                            os.path.join(options.workspace, 'history.snapshot'),
-                            best_trail)
-                        logger.debug(f"*** Update the best qmodel by recovering from history.")
-                        self.best_tune_result = best_result
-                    self._dump_tuning_process_statistics()
-                break
-        self._recover_best_qmodel_from_tuning_cfg()
 
     def _remove_redundant_qmodel(self):
         """Remove the redundant quantized model to reduce memory use.

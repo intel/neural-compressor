@@ -179,7 +179,7 @@ op_cap2 = {
 }
 
 
-class TestTuningSampler(unittest.TestCase):
+class TestTuningSpace(unittest.TestCase):
     def setUp(self) -> None:
         self.capability = {
             'calib': {'calib_sampling_size': [1, 10, 50]},

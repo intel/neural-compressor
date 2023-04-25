@@ -18,8 +18,7 @@
 """Tuning structure."""
 
 from typing import Dict
-from .constant import QUANT_MODE_SET, TUNING_ITEMS_LST, PRECISION_LIST
-from ...utils import logger
+from .constant import TUNING_ITEMS_LST, PRECISION_LIST
 
 class OpTuningConfig:
     """Op tuning config."""

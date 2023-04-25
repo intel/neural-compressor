@@ -38,7 +38,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-class TestQuantization(unittest.TestCase):
+class TestTpeStrategy(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -48,15 +48,15 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("saved", ignore_errors=True)
 
-    def test_run_tpe_one_trial(self):        
+    def test_run_tpe_one_trial(self):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
         from neural_compressor.data import Datasets, DATALOADERS
-        
+
         # dataset and dataloader
         dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
         dataloader = DATALOADERS["tensorflow"](dataset)
-        
+
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='tpe', max_trials=200)
         acc_cri = AccuracyCriterion(tolerable_loss=0.01)
@@ -72,15 +72,15 @@ class TestQuantization(unittest.TestCase):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
         from neural_compressor.data import Datasets, DATALOADERS
-        
+
         # dataset and dataloader
         dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
         dataloader = DATALOADERS["tensorflow"](dataset)
-        
+
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='tpe', max_trials=5)
         acc_cri = AccuracyCriterion(tolerable_loss=0.01)
-        
+
         from neural_compressor.metric import METRICS
         metrics = METRICS('tensorflow')
         top1 = metrics['topk']()

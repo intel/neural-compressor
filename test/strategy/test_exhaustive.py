@@ -35,7 +35,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-class TestQuantization(unittest.TestCase):
+class TestExhaustiveStrategy(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -49,19 +49,19 @@ class TestQuantization(unittest.TestCase):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
         from neural_compressor.data import Datasets, DATALOADERS
-        
+
         # dataset and dataloader
         dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
         dataloader = DATALOADERS["tensorflow"](dataset)
-        
+
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='exhaustive', max_trials=1)
         acc_cri = AccuracyCriterion(tolerable_loss=0.01)
-        
+
         conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
         def fake_eval(model):
             return 1
-        
+
         q_model = fit(model=self.constant_graph,
                       conf=conf,
                       calib_dataloader=dataloader,
@@ -72,15 +72,15 @@ class TestQuantization(unittest.TestCase):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
         from neural_compressor.data import Datasets, DATALOADERS
-        
+
         # dataset and dataloader
         dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
         dataloader = DATALOADERS["tensorflow"](dataset)
-        
+
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='exhaustive', max_trials=3)
         acc_cri = AccuracyCriterion(tolerable_loss=0.01)
-        
+
         acc = [0, 1, 0.9, 0.9, 1]
         def fake_eval(model):
             acc.pop(0)

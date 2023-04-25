@@ -184,7 +184,7 @@ def create_test_graph():
 def objective_func(params):
     return params['x1']**2 + params['x2']
 
-class TestQuantization(unittest.TestCase):
+class TestBayesianStrategy(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -230,13 +230,13 @@ class TestQuantization(unittest.TestCase):
         # tuning and accuracy criterion
         tune_cri = TuningCriterion(strategy='bayesian', max_trials=3)
         acc_cri = AccuracyCriterion(tolerable_loss=0.01)
-        
+
         op_name_dict = {
             "conv1": {
                 "activation":  {"dtype": ["fp32"]},
                 },
             }
-        
+
         acc = [0, 1, 0.9, 0.9, 1]
         def fake_eval(model):
             acc.pop(0)
@@ -249,7 +249,7 @@ class TestQuantization(unittest.TestCase):
                       calib_dataloader=dataloader,
                       eval_func=fake_eval)
         self.assertNotEqual(q_model, None)
-        
+
 
     def test_bayesian_opt_class(self):
         from neural_compressor.strategy.bayesian import BayesianOptimization
