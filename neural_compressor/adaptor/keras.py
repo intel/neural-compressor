@@ -39,6 +39,7 @@ def _add_supported_quantized_objects(custom_objects):
   from neural_compressor.adaptor.keras_utils.depthwise_conv2d import QDepthwiseConv2D
   from neural_compressor.adaptor.keras_utils.separable_conv2d import QSeparableConv2D
   from neural_compressor.adaptor.keras_utils.dense import QDense
+  from neural_compressor.adaptor.keras_utils.pool2d import QMaxPool2D, QAvgPool2D
   custom_objects["Quantize"] = Quantize
   custom_objects["DeQuantize"] = DeQuantize
   custom_objects["FakeQuant"] = FakeQuant
@@ -46,6 +47,10 @@ def _add_supported_quantized_objects(custom_objects):
   custom_objects["QDepthwiseConv2D"] = QDepthwiseConv2D
   custom_objects["QSeparableConv2D"] = QSeparableConv2D
   custom_objects["QDense"] = QDense
+  custom_objects["QMaxPool2D"] = QMaxPool2D
+  custom_objects["QAvgPool2D"] = QAvgPool2D
+  custom_objects["QMaxPooling2D"] = QMaxPool2D
+  custom_objects["QAvgPooling2D"] = QAvgPool2D
   return custom_objects
 
 @adaptor_registry
@@ -62,7 +67,8 @@ class KerasAdaptor(Adaptor):
         #self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         #os.makedirs(self.work_dir, exist_ok=True)
-        self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D']
+        self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D', 'AveragePooling2D', 
+        'MaxPooling2D', 'AvgPool2D', 'MaxPool2D']
 
         self.pre_optimized_object = None
         self.pre_optimized_model = None
@@ -394,16 +400,23 @@ class KerasAdaptor(Adaptor):
                 q_layer_name = 'Q' + layer['class_name']
                 # this is for inbounds search
                 q_name  = layer['config']['name']
-                kernel = self.layer_weights[layer['config']['name']][0]
-                dim = list(range(0, kernel.ndim)) 
-                t_dim = [dim.pop(-1)]
-                t_dim.extend(dim)
-                channel_size = kernel.shape[-1]
-                kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
-                layer_config['min_value'] = json.dumps(\
-                        np.min(kernel_channel, axis=1).tolist())
-                layer_config['max_value'] = json.dumps(\
-                        np.max(kernel_channel, axis=1).tolist())
+                # for layers that have weights
+                if layer['config']['name'] in self.layer_weights:
+                    kernel = self.layer_weights[layer['config']['name']][0]
+                    dim = list(range(0, kernel.ndim)) 
+                    t_dim = [dim.pop(-1)]
+                    t_dim.extend(dim)
+                    channel_size = kernel.shape[-1]
+                    kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
+                    layer_config['min_value'] = json.dumps(\
+                            np.min(kernel_channel, axis=1).tolist())
+                    layer_config['max_value'] = json.dumps(\
+                            np.max(kernel_channel, axis=1).tolist())
+                else:
+                    # default value, but never expected to be used
+                    # cause no kernel weights for this layer
+                    layer_config['min_value'] = json.dumps([-10000])
+                    layer_config['max_value'] = json.dumps([10000])
                 layer_config['name'] = q_name
                 q_layer = {'class_name': q_layer_name,
                            'name': q_name,
@@ -516,6 +529,8 @@ class KerasAdaptor(Adaptor):
         conv_config = copy.deepcopy(op_capability['int8']['SeparableConv2D'])
         conv_config = copy.deepcopy(op_capability['int8']['DepthwiseConv2D'])
         dense_config = copy.deepcopy(op_capability['int8']['Dense'])
+        maxpool_config = copy.deepcopy(op_capability['int8']['MaxPooling2D'])
+        avgpool_config = copy.deepcopy(op_capability['int8']['AveragePooling2D'])
         other_config = copy.deepcopy(op_capability['int8']['default'])
 
         # # get fp32 layer weights
@@ -548,6 +563,10 @@ class KerasAdaptor(Adaptor):
                 quantizable_op_details[(node_name, node_op)] = [conv_config, fp32_config]
             elif node_op == 'Dense':
                 quantizable_op_details[(node_name, node_op)] = [dense_config, fp32_config]
+            elif node_op in {'AveragePooling2D', 'AvgPool2D'}:
+                quantizable_op_details[(node_name, node_op)] = [avgpool_config, fp32_config]
+            elif node_op in {'MaxPooling2D', 'MaxPool2D'}:
+                quantizable_op_details[(node_name, node_op)] = [maxpool_config, fp32_config]
             else:
                 quantizable_op_details[(node_name, node_op)] = [fp32_config]
 

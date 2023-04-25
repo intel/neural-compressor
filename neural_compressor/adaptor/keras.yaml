@@ -22,7 +22,8 @@
     valid_mixed_precisions: []
   
   ops: &common_ops
-    int8: ['Conv2D', 'SeparableConv2D', 'DepthwiseConv2D', 'Dense']
+    int8: ['Conv2D', 'SeparableConv2D', 'DepthwiseConv2D', 'Dense', 'AveragePooling2D', 'MaxPooling2D',
+    'AvgPool2D', 'MaxPool2D']
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
@@ -87,7 +88,7 @@
                         'granularity': ['per_tensor'],
                         }
                     },
-         'default': {
+         'default': &ref_default_static {
              'activation': {
                         'dtype': ['int8'],
                         'quant_mode': 'static',
@@ -96,4 +97,8 @@
                         'granularity': ['per_tensor']
                         }
                     },
+          'AveragePooling2D': *ref_default_static,
+          'AvgPool2D': *ref_default_static,
+          'MaxPooling2D': *ref_default_static,
+          'MaxPool2D': *ref_default_static,
           }
