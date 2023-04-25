@@ -475,7 +475,6 @@ class _Benchmark(object):
         if cfg.framework is None:
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
-            import pdb; pdb.set_trace()
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "tensorflow":
                 from .model.tensorflow_model import get_model_type
