@@ -93,6 +93,10 @@ class ModelArguments:
         default=1,
         metadata={"help": ("batch size for benchmark")},
     )
+    quant_format: str = field(
+        default="QOperator",
+        metadata={"help": ("quant format")},
+    )
 
 
 @dataclass
@@ -503,13 +507,24 @@ def main():
         onnx_model = onnx.load(model_args.input_model)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
         from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+        from neural_compressor.config import TuningCriterion
 
         calib_dataset = IncDataset(eval_dataset, onnx_model)
-        config = PostTrainingQuantConfig(approach='dynamic')
+        tuning_criterion = TuningCriterion(max_trials=400)
+        fp32_op_names = None
+        config = PostTrainingQuantConfig(approach='static',
+                                         quant_level=1,
+                                         quant_format=model_args.quant_format,
+                                         tuning_criterion=tuning_criterion,
+                                         op_type_dict={'^((?!(MatMul|Gather)).)*$': FP32},
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
+                                                if fp32_op_names else None,)
         q_model = quantization.fit(onnx_model, 
-                                   config,
-                                   eval_func=eval_func)
+                                    config,
+                                    eval_func=eval_func,
+                                    calib_dataloader=DefaultDataLoader(calib_dataset, 1))
         q_model.save(model_args.save_path)
     
     if model_args.benchmark:
