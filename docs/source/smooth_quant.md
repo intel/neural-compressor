@@ -328,6 +328,25 @@ Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region i
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md) on how to use smooth quant.
 
+```python
+recipes = {
+    "smooth_quant": True,
+    "smooth_quant_args": {
+        "alpha": 0.5,
+        "folding": True,
+    },
+}
+conf = PostTrainingQuantConfig(recipes=recipes)
+```
+smooth_quant_args description:
+
+"alpha": "auto" or a float value. Default is 0.5. "auto" means automatic tuning.
+
+"folding":
+- False: Allow inserting mul to update the input distribution and not absorbing. IPEX can fuse inserted mul automatically and folding=False is recommanded. And for PyTorch FBGEMM backend, folding=False setting will only convert model to QDQ model.
+- True: Only allow inserting mul with the input scale that can be absorbed into the last layer. 
+- If folding not set in config, the default value is IPEX: False (True if version<2.1), Stock PyTorch: True.
+
 
 ## Reference
 
