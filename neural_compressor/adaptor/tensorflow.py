@@ -1342,7 +1342,7 @@ class TensorFlowAdaptor(Adaptor):
             for conv_node in quantize_node_outputs:
                 assert 'Conv2D' in conv_node.op, 'only support QuantizeV2 to Conv2D'
 
-                GraphRewriter_int_list(conv_node,
+                GraphRewriterHelper.set_attr_int_list(conv_node,
                                                       "padding_list", paddings_tensor)
             graph_def.node.remove(quantize_node_input)
 
