@@ -3086,8 +3086,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         smoothquant_scale_info = {}
         for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
+                weight_scale = module._get_weight_scale()
                 smoothquant_scale_info[name + '.sq_linear'] = {
                     'alpha': module.alpha,
+                    'input_scale_for_mul': module.input_scale,
+                    'input_scale_after_mul': module.scale,
+                    'input_zero_point_after_mul': module.zero_point,
+                    'input_dtype': module.dtype,
+                    'weight_scale_after_mul': weight_scale,
                 }
                 module.ipex = True
                 # Note: save weight scale before recover
@@ -3099,21 +3105,27 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             logger.error("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
-        self._simple_inference(q_model, dataloader, iterations=1)   # fake calibration for save qconf
-        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # enable fallback
+        self._simple_inference(q_model, dataloader, iterations=1)   # fake calibration for save qconf
+        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._cfg_to_qconfig(tune_cfg)
-        # update ipex_config.json with smoothquant_scale_info
+        # TODO: update_sq_scale is used to update observer, should fuse in _cfg_to_qconfig
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-        # real calibration for other operators
+
+        # real calibration for other operators, like quantize_per_tensor.
         if q_func is not None:
             q_func(q_model)
         else:
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model, dataloader, iterations, None,
                                     tune_cfg.get('calib_sampling_size', 1))
+
+        # update ipex_config.json with smoothquant_scale_info
+        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+        q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):

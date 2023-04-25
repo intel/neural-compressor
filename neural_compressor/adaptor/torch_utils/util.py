@@ -510,7 +510,22 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
                     # update alpha data instead of updating weight scale
                     op_name = v1['fqn'] # fqn always exists even it's empty.
                     if op_name in smoothquant_scale_info:
-                        # observers were overridden by the fallback step, setting it back.
+                        input_scale_for_mul = \
+                                smoothquant_scale_info[op_name]['input_scale_for_mul'].tolist()
+                        input_scale_after_mul = \
+                                smoothquant_scale_info[op_name]['input_scale_after_mul'].tolist()
+                        input_zero_point_after_mul = \
+                                smoothquant_scale_info[op_name]['input_zero_point_after_mul'].tolist()
+                        weight_scale_for_mul = \
+                                (1 / smoothquant_scale_info[op_name]['input_scale_for_mul']).tolist()
+                        weight_scale_after_mul = \
+                                smoothquant_scale_info[op_name]['weight_scale_after_mul'].tolist()
+                        v1['input_tensor_infos'][0]['smooth_quant_scaling_factor'] = input_scale_for_mul
+                        v1['input_tensor_infos'][0]['scale'] = input_scale_after_mul
+                        v1['input_tensor_infos'][0]['zero_point'] = input_zero_point_after_mul
+                        v1['weight_tensor_infos'][0]['smooth_quant_scaling_factor'] = weight_scale_for_mul
+                        v1['weight_tensor_infos'][0]['scale'] = weight_scale_after_mul
+                        # # observers were overridden by the fallback step, setting it back.
                         v1['activation_observer'] = {'name': 'SmoothQuantActivationObserver', 
                                         'smooth_quant_enabled': False, 'dtype': 'torch.quint8', 
                                         'qscheme': 'torch.per_tensor_affine', 'reduce_range': False,
