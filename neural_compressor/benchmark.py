@@ -327,12 +327,12 @@ class _Benchmark(object):
                                        'random_seed': options.random_seed,
                                        'backend': cfg.backend \
                                         if cfg.backend is not None else 'default',
-                                       'format': None}
+                                       'format': 'default'}
             framework = cfg.framework.lower()
             if 'tensorflow' in framework:
                 framework_specific_info.update({"inputs": cfg.inputs, \
                                                 "outputs": cfg.outputs, \
-                                                "recipes": None, \
+                                                "recipes": {}, \
                                                 'workspace_path': options.workspace})
             if framework == 'keras':
                 framework_specific_info.update({'workspace_path': options.workspace})
@@ -475,6 +475,7 @@ class _Benchmark(object):
         if cfg.framework is None:
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
+            import pdb; pdb.set_trace()
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "tensorflow":
                 from .model.tensorflow_model import get_model_type
