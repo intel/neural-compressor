@@ -36,11 +36,14 @@ python test.py --benchmark --dataset_location=/path/to/imagenet/
 ### 2. Introduction
 * We only need to add the following lines for quantization to create an int8 model.
 ```python
+    from neural_compressor import Metric
+    top1 = Metric(name="topk", k=1)
     quantized_model = fit(
         model="./mobilenet_v1_1.0_224_frozen.pb",
         conf=config,
         calib_dataloader=calib_dataloader,
-        eval_dataloader=eval_dataloader)
+        eval_dataloader=eval_dataloader,
+        eval_metric=top1)
     tf.io.write_graph(graph_or_graph_def=quantized_model.model,
                         logdir='./',
                         name='int8.pb',

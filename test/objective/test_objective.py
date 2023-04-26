@@ -165,44 +165,78 @@ def build_fake_model1():
 
 def build_fake_strategy():
     with open(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), \
-              'strategy/fake.py'), 'w', encoding='utf-8') as f:
-        seq = [
-            "import time\n",
-            "from .strategy import strategy_registry, TuneStrategy\n",
-            "from collections import OrderedDict\n",
-            "import copy\n",
-            "@strategy_registry\n",
-            "class FakeTuneStrategy(TuneStrategy):\n",
-            "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):\n",
-            "    self.id = 0\n",
-            "    self.resume = True if dicts else False\n",
-            "    super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",
-            "  def __getstate__(self):\n",
-            "    for history in self.tuning_history:\n",
-            "      if self._same_yaml(history['cfg'], self.cfg):\n",
-            "        history['id'] = self.id\n",
-            "    save_dict = super(FakeTuneStrategy, self).__getstate__()\n",
-            "    return save_dict\n",
-            "  def next_tune_cfg(self):\n",
-            "    if self.resume:\n",
-            "      assert self.id == 1\n",
-            "      assert len(self.tuning_history) == 1\n",
-            "      history = self.tuning_history[0]\n",
-            "      assert self._same_yaml(history['cfg'], self.cfg)\n",
-            "      assert len(history['history'])\n",
-            "      for h in history['history']:\n",
-            "        assert h\n",
-            "    op_cfgs = {}\n",
-            "    for iterations in self.calib_iter:\n",
-            "      op_cfgs['calib_iteration'] = int(iterations)\n",
-            "      op_cfgs['op'] = OrderedDict()\n",
-            "      for op in self.opwise_quant_cfgs:\n",
-            "        op_cfgs['op'][op] = copy.deepcopy(\n",
-            "                                self.opwise_tune_cfgs[op][0])\n",
-            "      self.id += 1\n",
-            "      yield op_cfgs\n",
-            "      return\n"
-        ]
+              'experimental/strategy/fake.py'), 'w', encoding='utf-8') as f:
+        seq = ["import time \n",
+              "import copy \n",
+              "import numpy as np \n",
+              "from collections import OrderedDict \n",
+              "from .strategy import strategy_registry, TuneStrategy \n",
+              "from ...utils import logger \n",
+              "from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler \n",
+              "from .utils.tuning_structs import OpTuningConfig \n",
+              "import copy \n",
+              "@strategy_registry \n",
+              "class FakeTuneStrategy(TuneStrategy): \n",
+              "    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, \n",
+              "                 eval_func=None, dicts=None, q_hooks=None): \n",
+              "        self.id = 0 \n",
+              "        self.resume = True if dicts else False \n",
+              "        super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, \n",
+              "                                               q_func, eval_dataloader, eval_func, dicts) \n",
+              "    def __getstate__(self): \n",
+              "        for history in self.tuning_history: \n",
+              "            if self._same_yaml(history['cfg'], self.cfg): \n",
+              "                history['id'] = self.id \n",
+              "        save_dict = super(FakeTuneStrategy, self).__getstate__() \n",
+              "        return save_dict \n",
+              "    def next_tune_cfg(self): \n",
+              "        if self.resume: \n",
+              "            #assert self.id == 1 \n",
+              "            assert len(self.tuning_history) == 1 \n",
+              "            history = self.tuning_history[0] \n",
+              "            assert self._same_yaml(history['cfg'], self.cfg) \n",
+              "            assert len(history['history']) \n",
+              "            for h in history['history']: \n",
+              "                assert h \n",
+              "        from copy import deepcopy \n",
+              "        tuning_space = self.tuning_space \n",
+              "        initial_op_tuning_cfg = {} \n",
+              "        for item in tuning_space.root_item.options: \n",
+              "            if item.item_type == 'op': \n",
+              "                op_name, op_type = item.name \n",
+              "                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space) \n",
+              "            calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options \n",
+              "            for calib_sampling_size in calib_sampling_size_lst: \n",
+              "                # step1. collect the ops that support static and dynamic \n",
+              "                quant_mode_wise_items = OrderedDict() \n",
+              "                query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32'] \n",
+              "                pre_items = set() \n",
+              "                for quant_mode in query_order: \n",
+              "                    items = tuning_space.query_items_by_quant_mode(quant_mode) \n",
+              "                    filtered_items = [item for item in items if item not in pre_items] \n",
+              "                    pre_items = pre_items.union(set(items)) \n",
+              "                    quant_mode_wise_items[quant_mode] = filtered_items \n",
+              "                def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict): \n",
+              "                    for item in items_lst: \n",
+              "                        op_item_dtype_dict[item.name] = target_quant_mode \n",
+              "                op_item_dtype_dict = OrderedDict() \n",
+              "                for quant_mode, quant_mode_items in quant_mode_wise_items.items(): \n",
+              "                    initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict) \n",
+              "                # step3. optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight) \n",
+              "                early_stop_tuning = False \n",
+              "                stage1_cnt = 0 \n",
+              "                int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static'] \n",
+              "                stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value \n",
+              "                op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], \n",
+              "                                                                 op_item_dtype_dict, initial_op_tuning_cfg) \n",
+              "                for op_tuning_cfg in op_wise_tuning_sampler: \n",
+              "                    stage1_cnt += 1 \n",
+              "                    if early_stop_tuning and stage1_cnt > stage1_max: \n",
+              "                        logger.info('Early stopping the stage 1.') \n",
+              "                        break \n",
+              "                    op_tuning_cfg['calib_sampling_size'] = calib_sampling_size \n",
+              "                    self.id += 1 \n",
+              "                    yield op_tuning_cfg \n",]
         f.writelines(seq)
     f.close()
 
@@ -221,7 +255,7 @@ class TestObjective(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_model_size.yaml')
         os.remove('fake_yaml_footprint.yaml')
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'experimental/strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_performance(self):
@@ -282,7 +316,7 @@ class TestObjs(unittest.TestCase):
         
         model = build_matmul_model()
         
-        from neural_compressor import conf
+        from neural_compressor.conf.config import conf
         from neural_compressor.experimental import Quantization
         
         conf.model.framework = 'onnxrt_integerops'

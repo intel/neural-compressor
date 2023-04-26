@@ -22,10 +22,8 @@ import numpy as np
 import random
 from .utils.utility import time_limit, CpuInfo
 from .strategy import STRATEGIES
-from .conf.pythonic_config import Config
-from .conf.config import MixedPrecision_Conf
+from .config import _Config, options
 from .utils import logger
-from .conf.dotdict import deep_get, deep_set, DotDict
 from .model.model import BaseModel, get_model_fwk_name, Model, MODELS
 
 class _MixedPrecision:
@@ -39,8 +37,8 @@ class _MixedPrecision:
         from neural_compressor.config import MixedPrecisionConfig
         def eval_func(model):
             ...
-        return accuracy
-        
+            return accuracy
+
         conf = MixedPrecisionConfig()
         output_model = mix_precision.fit(
             model,
@@ -54,27 +52,25 @@ class _MixedPrecision:
         Args:
             conf (obj): The MixedPrecisionConfig class containing accuracy goal, tuning objective etc.
         """
-        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
-        self.conf = MixedPrecision_Conf()
-        self.conf.map_pyconfig_to_cfg(conf)
-        seed = self.conf.usr_cfg.tuning.random_seed
+        self.conf = _Config(mixed_precision=conf, quantization=None, benchmark=None
+                            , pruning=None, distillation=None, nas=None)
+        seed = options.random_seed
         random.seed(seed)
         np.random.seed(seed)
 
         self._eval_func = None
         self._eval_dataloader = None
-        self._eval_metric = None
         self._model = None
+        self._metric = None
 
     def pre_process(self):
         """Create strategy object for tuning."""
-        cfg = self.conf.usr_cfg
         strategy = 'automixedprecision'
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
-                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
+        self.resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
+                           if options.workspace and options.resume_from else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -82,18 +78,18 @@ class _MixedPrecision:
                 _resume = pickle.load(f).__dict__
 
         self.strategy = STRATEGIES[strategy](
-            self._model,
-            self.conf,
-            None,
-            None,
-            self._eval_dataloader,
-            self._eval_func,
-            _resume)
+            model=self.model,
+            conf=self.conf,
+            eval_func=self._eval_func,
+            eval_dataloader=self._eval_dataloader,
+            eval_metric=self.metric,
+            resume=_resume,
+            q_hooks=None)
 
     def execute(self):
         """Execute routinue based on strategy design."""
         try:
-            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+            with time_limit(self.conf.mixed_precision.tuning_criterion.timeout):
                 self.strategy.traverse()
         except KeyboardInterrupt:
             pass
@@ -137,7 +133,7 @@ class _MixedPrecision:
             self._precisions = sorted([i.strip() for i in customized_precisions])
         elif isinstance(customized_precisions, str):
             self._precisions = sorted([i.strip() for i in customized_precisions.split(',')])
-        self.conf.usr_cfg.mixed_precision.precisions = self._precisions
+        self.conf.mixed_precision.precision = self._precisions
 
     @property
     def eval_dataloader(self):
@@ -164,10 +160,11 @@ class _MixedPrecision:
                                     batched data and only in this setter method
                                     a 'real' eval_dataloader will be created,
                                     the reason is we have to know the framework info
-                                    and only after the Quantization object created then
+                                    and only after the mixed_precision object created then
                                     framework infomation can be known. Future we will support
                                     creating iterable dataloader from neural_compressor.common.DataLoader
         """
+        # pragma: no cover
         assert hasattr(dataloader, '__iter__') and \
             hasattr(dataloader, 'batch_size'), \
             'dataloader must implement __iter__ method and batch_size attribute'
@@ -193,60 +190,63 @@ class _MixedPrecision:
                        of tensorflow, be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
         """
-        cfg = self.conf.usr_cfg
-        if cfg.model.framework == 'NA':
+        cfg = self.conf
+        if cfg.mixed_precision.framework is None:
             if isinstance(user_model, BaseModel):
-                cfg.model.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
-                if cfg.model.backend == "ipex":
-                    assert cfg.model.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
-                if cfg.model.backend == "itex":
+                cfg.mixed_precision.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
+                if cfg.mixed_precision.backend == "ipex":
+                    assert cfg.mixed_precision.framework == "pytorch_ipex",\
+                          "Please wrap the model with correct Model class!"
+                if cfg.mixed_precision.backend == "itex": # pragma: no cover
                     from .model.tensorflow_model import get_model_type
                     if get_model_type(user_model.model) == 'keras':
-                        assert cfg.model.framework == "keras", "Please wrap the model with KerasModel class!"
+                        assert cfg.mixed_precision.framework == "keras",\
+                              "Please wrap the model with KerasModel class!"
                     else:
-                        assert cfg.model.framework == "pytorch_itex", \
+                        assert cfg.mixed_precision.framework == "pytorch_itex", \
                             "Please wrap the model with TensorflowModel class!"
             else:
                 framework = get_model_fwk_name(user_model)
                 if framework == "tensorflow":
                     from .model.tensorflow_model import get_model_type
-                    if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
+                    if get_model_type(user_model) == 'keras' and cfg.mixed_precision.backend == 'itex':
                         framework = 'keras'
                 if framework == "pytorch":
-                    if cfg.model.backend == "default":
+                    if cfg.mixed_precision.backend == "default":
                         framework = "pytorch_fx"
-                    elif cfg.model.backend == "ipex":
+                    elif cfg.mixed_precision.backend == "ipex":
                         framework = "pytorch_ipex"
-                cfg.model.framework = framework
+                cfg.mixed_precision.framework = framework
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            if "tensorflow" in cfg.model.framework or cfg.model.framework == "keras":
-                self._model = Model(user_model, backend=cfg.model.framework, device=cfg.device)
+            if "tensorflow" in cfg.mixed_precision.framework or cfg.mixed_precision.framework == "keras":
+                self._model = Model(user_model, backend=cfg.mixed_precision.framework
+                                    , device=cfg.mixed_precision.device)
             else:
-                self._model = Model(user_model, backend=cfg.model.framework)
-        else:
-            if cfg.model.framework == "pytorch_ipex":
+                self._model = Model(user_model, backend=cfg.mixed_precision.framework)
+        else: # pragma: no cover
+            if cfg.mixed_precision.framework == "pytorch_ipex":
                 from neural_compressor.model.torch_model import IPEXModel
                 assert type(user_model) == IPEXModel, \
                             "The backend is ipex, please wrap the model with IPEXModel class!"
-            elif cfg.model.framework == "pytorch_fx":
+            elif cfg.mixed_precision.framework == "pytorch_fx":
                 from neural_compressor.model.torch_model import PyTorchFXModel
                 assert type(user_model) == PyTorchFXModel, \
                             "The backend is default, please wrap the model with PyTorchFXModel class!"
 
             self._model = user_model
 
-        if 'tensorflow' in cfg.model.framework:
-            self._model.name = cfg.model.name
-            self._model.output_tensor_names = cfg.model.outputs
-            self._model.input_tensor_names = cfg.model.inputs
-            self._model.workspace_path = cfg.tuning.workspace.path
+        if 'tensorflow' in cfg.mixed_precision.framework:
+            self._model.name = cfg.mixed_precision.model_name
+            self._model.output_tensor_names = cfg.mixed_precision.outputs
+            self._model.input_tensor_names = cfg.mixed_precision.inputs
+            self._model.workspace_path = options.workspace
 
     @property
     def metric(self):
-        """Get metric."""
-        assert False, 'Should not try to get the value of `metric` attribute.'
+        """Get `metric` attribute."""
+        return self._metric
 
     @metric.setter
     def metric(self, user_metric):
@@ -261,6 +261,8 @@ class _MixedPrecision:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
+                     weight: [0.5, 0.5],
+                     higher_is_better: [True, False]
                     }
             Refer to this [file](../docs/source/metric.md#supported-built-in-metric-matrix) for built-in metric list
         2. User also can set specific metric through this api. The metric class should take the outputs of the model or
@@ -271,10 +273,6 @@ class _MixedPrecision:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
                 The object of Metric or a dict of built-in metric configurations.
         """
-        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning("Override the value of `metric` field defined in yaml file" \
-                           " as user defines the value of `metric` attribute by code.")
-
         from .metric import Metric as NCMetric, METRICS
         if isinstance(user_metric, dict):
             metric_cfg = user_metric
@@ -290,11 +288,10 @@ class _MixedPrecision:
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.usr_cfg.model.framework)
+            metrics = METRICS(self.conf.mixed_precision.framework)
             metrics.register(name, metric_cls)
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-        self._metric = user_metric
+        self._metric = metric_cfg
+
 
     @property
     def eval_func(self):
@@ -331,10 +328,8 @@ def fit(model,
                                               to .onnx file or onnx.onnx_ml_pb2.ModelProto.
                                               For MXNet model, it's mxnet.symbol.Symbol
                                               or gluon.HybirdBlock instance.
-        config (MixedPrecisionConfig):        The path to the YAML configuration file or
-                                              QuantConf class containing accuracy goal,
-                                              tuning objective and preferred calibration &
-                                              quantization tuning space etc.
+        config (MixedPrecisionConfig):        The MixedPrecisionConfig class containing accuracy goal,
+                                              tuning objective and mixed_precision tuning space etc.
         eval_func (function, optional):       The evaluation function provided by user.
                                               This function takes model as parameter,
                                               and evaluation dataset and metrics should be
@@ -355,7 +350,7 @@ def fit(model,
                                               and pre-defined metrics to run evaluation
                                               process.
         eval_metric (obj, optional):          An Accuracy object that measures metric for
-                                              quantization.
+                                              mixed_precision.
 
     Returns:
         A _MixedPrecision object that generates low precision model across various DL frameworks.
@@ -377,17 +372,19 @@ def fit(model,
             "please modify precision or excluded_precisions to make it understandable.")
         sys.exit(0)
     precisions = list(set(config.precision) - set(config.excluded_precisions))
-    converter.precisions = precisions
+    converter.conf.mixed_precision.precisions = precisions
     converter.model = model
 
-    if ('bf16' in precisions or 'fp16' in precisions) and converter.model.framework() == "onnxruntime":
+    if ('bf16' in precisions or 'fp16' in precisions) and \
+        converter.conf.mixed_precision.framework == "onnxruntime": # pragma: no cover
         if config.device == "cpu":
             logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
             sys.exit(0)
         elif config.backend != "onnxrt_cuda_ep":
             logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
             sys.exit(0)
-    elif 'bf16' in precisions and not CpuInfo().bf16 and converter.model.framework() != "onnxruntime":
+    elif 'bf16' in precisions and not CpuInfo().bf16 and \
+        converter.conf.mixed_precision.framework != "onnxruntime": # pragma: no cover
         if os.getenv('FORCE_BF16') == '1':
             logger.warning("Mix precision will generate bf16 graph although " \
                            "the hardware doesn't support bf16 instruction.")
@@ -395,7 +392,7 @@ def fit(model,
             logger.warning("Mix precision exits due to the hardware " \
                            "doesn't support bf16 instruction.")
             sys.exit(0)
-    elif 'fp16' in precisions and converter.model.framework() != "onnxruntime":
+    elif 'fp16' in precisions and converter.conf.mixed_precision.framework != "onnxruntime":
         logger.warning("Currently mix precision only supports fp16 for onnx models.")
         sys.exit(0)
     if eval_func is not None:

@@ -117,7 +117,6 @@ class TestMetrics(unittest.TestCase):
         f1_squad = evaluate_squad(dataset,predictions)
         self.assertEqual(f1_squad['f1'], 100.)
         self.assertEqual(f1_squad['exact_match'], 100.)
-        
 
     def test_pytorch_F1(self):
         metrics = METRICS('pytorch')
@@ -373,11 +372,11 @@ class TestMetrics(unittest.TestCase):
         ]
 
         mAP = metrics['mAP']()
-        
+
         self.assertEqual(mAP.result(), 0)
 
         mAP.update(detection, ground_truth)
-        
+
         mAP.update(detection, ground_truth)
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.18182')
@@ -436,7 +435,6 @@ class TestMetrics(unittest.TestCase):
         self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)
         os.remove('anno.yaml')
 
-   
     def test_tensorflow_VOCmAP(self):
         import os
         metrics = METRICS('tensorflow')
@@ -537,11 +535,11 @@ class TestMetrics(unittest.TestCase):
             np.array([[64, 62, 62, 67, 82, 52, 79, 81, 55, 55, 55, 55, 62, 55]]),
             np.array([b'000000037777.jpg'])
         ]
-        
+
         self.assertEqual(mAP.result(), 0)
 
         mAP.update(detection, ground_truth)
-        
+
         mAP.update(detection, ground_truth)
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.18182')

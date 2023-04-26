@@ -33,17 +33,48 @@ from ..algorithm import AlgorithmScheduler
 @strategy_registry
 class ConservativeTuneStrategy(TuneStrategy):
     """Tuning strategy with accuracy first, performance second.
-    
+
     The quantization level O0 is designed for user who want to keep the accuracy
     of the model after quantization. It starts with the original(fp32) model,
     and then quantize the OPs to lower precision OP type wisely and OP wisely.
     """
 
-    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
-                 eval_func=None, dicts=None, q_hooks=None):
-        """Init conservative tuning strategy."""
-        super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
-                         eval_func, dicts, q_hooks)
+    def __init__(self,
+                 model,
+                 conf,
+                 q_dataloader=None,
+                 q_func=None,
+                 eval_func=None,
+                 eval_dataloader=None,
+                 eval_metric=None,
+                 resume=None,
+                 q_hooks=None):
+        """Init conservative tuning strategy.
+
+        Args:
+            model: The FP32 model specified for low precision tuning.
+            conf: The Conf class instance includes all user configurations.
+            q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
+            q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
+                outputs a higher-is-better accuracy scalar value.
+            eval_dataloader: Data loader for evaluation. Defaults to None.
+            eval_metric: Metric for evaluation. Defaults to None.
+            resume: The dict containing resume information. Defaults to None.
+            q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
+                on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
+        """
+        super().__init__(model=model,
+                         conf=conf,
+                         q_dataloader=q_dataloader,
+                         q_func=q_func,
+                         eval_func=eval_func,
+                         eval_dataloader=eval_dataloader,
+                         eval_metric=eval_metric,
+                         resume=resume,
+                         q_hooks=q_hooks)
+        logger.info(f"*** Initialize conservative tuning")
         self.acc_meet_flag = False
         self.quant_op_type_lst = ['conv', 'matmul', 'linear']
         res_lst = [None] * len(self.quant_op_type_lst)
@@ -98,11 +129,11 @@ class ConservativeTuneStrategy(TuneStrategy):
         op_type_priority = list(optypewise_cap.keys())
         return op_type_priority
 
-    def _sorted_item_by_op_type(self, 
-                                items_lst, 
+    def _sorted_item_by_op_type(self,
+                                items_lst,
                                 op_type_priority: List[str]) -> OrderedDict[str, List]:
         """Scoring the tuning items according to its op type.
-        
+
         Args:
             items_lst: The tuning item list. # [(op_item, quant_mode), ... ]
             op_type_priority: The op type list with the order. # [optype_1, optype_2]
@@ -111,7 +142,7 @@ class ConservativeTuneStrategy(TuneStrategy):
             The tuning items list that sorted according to its op type.
             OrderDict:
                 # op_type: [(TuningItem, quant_mode), ...]
-                conv: [(TuningItem, static), (TuningItem, static)] 
+                conv: [(TuningItem, static), (TuningItem, static)]
                 linear: [(TuningItem, static), (TuningItem, static)]
                 matmul: [(TuningItem, static), (TuningItem, static)]
         """
@@ -134,11 +165,11 @@ class ConservativeTuneStrategy(TuneStrategy):
             op_item_dtype_dict (OrderedDict): key is (op_name, op_type); value is quantization mode.
             quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
             initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
-        
+
         """
         from .utils.constant import auto_query_order_o0 as query_order
         from .utils.tuning_space import initial_tuning_cfg_with_quant_mode
-        
+
         quant_mode_wise_items = OrderedDict() # mode, op_item_lst
         pre_items = set()
         # Collect op items supported the specified mode.
@@ -166,17 +197,17 @@ class ConservativeTuneStrategy(TuneStrategy):
     def _quant_items_pool(self, op_type_priority: List[str]) -> OrderedDict[
         str, OrderedDict[str, List[Tuple[TuningItem, str]]]]:
         """Create the op queue to be quantized.
-        
+
         Args:
             op_type_priority: The optype list with priority.
-            
+
         Returns:
             The op item pool to convert into lower precision.
             quant_items_pool(OrderDict):
                 int8:
                     OrderDict:
                         # (TuningItem, quant_mode)
-                        conv2d: [(TuningItem, static), (TuningItem, static)] 
+                        conv2d: [(TuningItem, static), (TuningItem, static)]
                         linear: [(TuningItem, static), (TuningItem, static)]
         """
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items

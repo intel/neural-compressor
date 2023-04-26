@@ -24,7 +24,7 @@ import sys
 from collections import OrderedDict, UserDict
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils import logger
-from neural_compressor.conf import config as cfg
+from neural_compressor import config as cfg
 from neural_compressor.model.base_model import BaseModel
 
 torch = LazyImport('torch')
