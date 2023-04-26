@@ -309,7 +309,16 @@ conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/g
 ```
 
 ## Validated Models
-Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
+neural_compressor: 2.1
+
+IPEX: 2.0
+
+Dataset: lambada
+
+task: text-generation
+
+alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
+
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
 | bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over 0.6, 4.1% in [0.4, 0.6])                           |
