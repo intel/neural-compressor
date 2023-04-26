@@ -111,18 +111,19 @@ class TuneStrategy(object):
         self.q_func = q_func
         self.q_hooks = q_hooks
         GLOBAL_STATE.STATE = MODE.QUANTIZATION
-        framework, framework_specific_info = self._set_framework_info(q_dataloader, q_func)
-        self.adaptor = FRAMEWORKS[framework](framework_specific_info)
-        self.framework = framework
 
-        self.set_q_func()
-        self._set_objectives()
+        # following attributes may set by pre strategy:
+        # adaptor, framework, baseline, trials_count, capability, tuning_space, algo_scheduler
+        self._adaptor = None
+        self._framework = None
+        self.check_q_func()
+        self.objectives = self._set_objectives()
         self.tune_data = {}
         self.tune_result_record = []
         self.tuning_history = []
         self.tuning_result_data = []
 
-        self.baseline = None
+        self._baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
         self.last_tune_cfg = None
@@ -131,23 +132,15 @@ class TuneStrategy(object):
         # track the best tuning config correspondence to the best quantized model
         self.best_tuning_cfg = None
         # track the current best accuracy
-        self.cur_best_acc = self.initial_best_acc()
+        self.cur_best_acc = None
         # track tuning cfg with the current best accuracy
         self.cur_best_tuning_cfg = {}
         self.re_quant = False
-        self.trials_count = 0
 
-        # query capability and build tuning space
-        self.capability = self.adaptor.query_fw_capability(model)
-        logger.debug(self.capability)
-        self.set_tuning_space(self.config)
-
-        # set algo scheduler
-        self.algo_scheduler = AlgorithmScheduler(self.config.recipes)
-        # reuse the calibration iteration
-        self.algo_scheduler.dataloader = self.calib_dataloader
-        self.algo_scheduler.origin_model = self.model
-        self.algo_scheduler.adaptor = self.adaptor
+        self._trials_count = 0
+        self._capability = None
+        self._tuning_space = None
+        self._algo_scheduler = None
 
         self._optype_statistics = None
         self.fallback_stats_baseline = None
@@ -168,6 +161,146 @@ class TuneStrategy(object):
 
         self._resume = resume
         if self._resume is not None: self.setup_resume(resume)
+
+    @property
+    def adaptor(self):
+        """
+        Gets the adaptor.
+        """
+        return self._adaptor
+
+    @adaptor.setter
+    def adaptor(self, value):
+        """
+        Sets the adaptor.
+
+        Args:
+            value: The new value for the adaptor.
+        """
+        self._adaptor = value
+
+    @property
+    def framework(self):
+        """
+        Gets the framework.
+        """
+        return self._framework
+
+    @framework.setter
+    def framework(self, value):
+        """
+        Sets the framework.
+
+        Args:
+            value: The new value for the framework.
+        """
+        self._framework = value
+
+    @property
+    def baseline(self):
+        """
+        Gets the baseline.
+        """
+        return self._baseline
+
+    @baseline.setter
+    def baseline(self, value):
+        """
+        Sets the baseline.
+
+        Args:
+            value (float): The new value for the baseline.
+        """
+        self._baseline = value
+
+    @property
+    def trials_count(self):
+        """
+        Gets the trials_count.
+        """
+        return self._trials_count
+
+    @trials_count.setter
+    def trials_count(self, value):
+        """
+        Sets the trials_count.
+
+        Args:
+            value (int): The new value for the trials_count.
+        """
+        self._trials_count = value
+
+    @property
+    def capability(self):
+        """
+        Gets the capability.
+        """
+        return self._capability
+
+    @capability.setter
+    def capability(self, value):
+        """
+        Sets the capability.
+
+        Args:
+            value: The new value for the capability.
+        """
+        self._capability = value
+
+    @property
+    def tuning_space(self):
+        """
+        Gets the tuning_space.
+        """
+        return self._tuning_space
+
+    @tuning_space.setter
+    def tuning_space(self, value):
+        """
+        Sets the tuning_space.
+
+        Args:
+            value (list): The new value for the tuning_space.
+        """
+        self._tuning_space = value
+
+    @property
+    def algo_scheduler(self):
+        """
+        Gets the algo_scheduler.
+        """
+        return self._algo_scheduler
+
+    @algo_scheduler.setter
+    def algo_scheduler(self, value):
+        """
+        Sets the algo_scheduler.
+
+        Args:
+            value: The new value for the algo_scheduler.
+        """
+        self._algo_scheduler = value
+
+    def _initialize_algo_scheduler(self):
+        algo_scheduler = AlgorithmScheduler(self.config.recipes)
+        # reuse the calibration iteration
+        algo_scheduler.dataloader = self.calib_dataloader
+        algo_scheduler.origin_model = self.model
+        algo_scheduler.adaptor = self.adaptor
+        return algo_scheduler
+
+    def _prepare_tuning(self):
+        """Prepare to tune and avoid repeated initialization of the adaptor and tuning space."""
+        framework, framework_specific_info = self._set_framework_info(self.calib_dataloader, self.q_func)
+        self.adaptor = self.adaptor or FRAMEWORKS[framework](framework_specific_info)
+        self.framework = self.framework or framework
+        self.cur_best_acc = self.cur_best_acc or self.initial_best_acc()
+        # query capability and build tuning space
+        self.capability = self.capability or self.adaptor.query_fw_capability(self.model)
+        logger.debug(self.capability)
+        self.tuning_space = self.tuning_space or self.build_tuning_space(self.config)
+        self.algo_scheduler = self.algo_scheduler or self._initialize_algo_scheduler()
+        self._eval_baseline()
 
     def _check_tuning_status(self):
         # got eval func
@@ -231,7 +364,7 @@ class TuneStrategy(object):
 
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
-        self._eval_baseline()
+        self._prepare_tuning()
         if self.config.use_distributed_tuning:
             logger.info("use distributed traverse: {}".format(self.config.use_distributed_tuning))
             return self.distributed_traverse()
@@ -571,6 +704,7 @@ class TuneStrategy(object):
 
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
+        self._prepare_tuning()
         MPI = LazyImport("mpi4py.MPI")
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
@@ -955,7 +1089,7 @@ class TuneStrategy(object):
                 tune_cfg['recipe_cfgs'][recipe_name] = recipe_val
         return tune_cfg
 
-    def set_tuning_space(self, config):
+    def build_tuning_space(self, config):
         """Create the tuning space.
 
         Create the tuning space based on the framework capability and user configuration.
@@ -975,7 +1109,8 @@ class TuneStrategy(object):
             'calib': {'calib_sampling_size': calib_sampling_size_lst},
             'op': self.capability['opwise']
         }
-        self.tuning_space = TuningSpace(adaptor_cap, conf=config, framework=self.framework)
+        tuning_space = TuningSpace(adaptor_cap, conf=config, framework=self.framework)
+        return tuning_space
 
     def setup_resume(self, resume):
         """Resume the best quantized model from tuning history.
@@ -1002,8 +1137,8 @@ class TuneStrategy(object):
 
                 break
 
-    def set_q_func(self):
-        """Set the training function for quantization aware training."""
+    def check_q_func(self):
+        """Check the training function for quantization aware training."""
         if self.config.approach == 'quant_aware_training':
             assert self.q_func != None, "Please set train func for quantization aware training"
 
@@ -1117,12 +1252,13 @@ class TuneStrategy(object):
         accuracy_criterion_conf = self.config.accuracy_criterion
         accuracy_criterion[accuracy_criterion_conf.criterion] = accuracy_criterion_conf.tolerable_loss
         accuracy_criterion['higher_is_better'] = accuracy_criterion_conf.higher_is_better
-        self.objectives = MultiObjective(objectives=objectives,
-                                         accuracy_criterion=accuracy_criterion,
-                                         metric_criterion=self.metric_criterion,
-                                         metric_weight=self.metric_weight,
-                                         obj_criterion=obj_higher_is_better,
-                                         obj_weight=obj_weight)
+        objectives = MultiObjective(objectives=objectives,
+                                    accuracy_criterion=accuracy_criterion,
+                                    metric_criterion=self.metric_criterion,
+                                    metric_weight=self.metric_weight,
+                                    obj_criterion=obj_higher_is_better,
+                                    obj_weight=obj_weight)
+        return objectives
 
     def _same_conf(self, src_conf, dst_conf):
         """Check if the two configs are the same."""

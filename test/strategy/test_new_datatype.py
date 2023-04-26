@@ -40,14 +40,14 @@ def add_cap(filename):
                         },
         }
     }
-    
+
     with open(filename) as f:
         con = yaml.safe_load(f)
     con[0]['int4'] = int4_cap
     with open(filename, 'w') as out:
         yaml.dump(con, out)
 
-class TestBasicTuningStrategy(unittest.TestCase):
+class TestAddNewDataType(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -56,7 +56,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree('saved', ignore_errors=True)
-        
+
     def test_add_int4(self):
         import shutil
         import importlib
@@ -68,12 +68,12 @@ class TestBasicTuningStrategy(unittest.TestCase):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         from neural_compressor.data import Datasets, DATALOADERS
-        
+
         # dataset and dataloader
         dataset = Datasets("pytorch")["dummy"](((100, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
         model = build_model()
-        
+
         def fake_eval(model):
             return 1
 
