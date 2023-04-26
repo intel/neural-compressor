@@ -124,12 +124,18 @@ def quant_dequant_w(m, num_bits=8, scheme='sym'):  ##TODO take sym as default
         logger.warning("unsupported layer type, please have a check")
 
 
-def quant_dequant_x(x, num_bits=8):
+def quant_dequant_x(x,  min_x=None, max_x=None, num_bits=8):
     eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2. ** num_bits - 1.
-    scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
+    if max_x == None or min_x == None:
+        max_x = torch.max(x)
+        min_x = torch.min(x)
+    else:
+        max_x = torch.max(max_x)
+        min_x = torch.min(min_x)
+    scale = (max_x - min_x) / (2 ** num_bits - 1)
     scale = torch.clip(scale, min=eps)
-    bias = torch.round(0 - (torch.min(x)) / scale)
+    bias = torch.round(0 - min_x) / scale
     q_x = x / scale + bias
     q_x.clamp_(q_min, q_max).round_()
     return scale * (q_x - bias)
@@ -264,8 +270,13 @@ class TorchSmoothQuant:
             #     self.input_values[name].append(input)
             #     self.output_values[name].append(outputs)
             # else:
-            self.input_values[name] = [input]  ##TODO save more,like 8
-            self.output_values[name] = [outputs]  ##TODO do not save output
+            cnt = 32
+            if name in self.input_values.keys() and len(self.input_values[name]) < cnt:
+                self.input_values[name].append(input)
+                self.output_values[name].append(outputs)
+            if name not in self.input_values.keys():
+                self.input_values[name] = [input]  ##TODO save more,like 8
+                self.output_values[name] = [outputs]  ##TODO do not save output
 
         return save_input_output_hook
 
@@ -344,15 +355,15 @@ class TorchSmoothQuant:
             min_val = torch.stack(min_val, dim=0)
             self.input_maxes[key] = torch.max(max_val, dim=0)[0]
             self.input_mins[key] = torch.min(min_val, dim=0)[0]
-            abs_max_val = torch.abs(self.input_maxes[key])
+            ##abs_max_val = torch.abs(self.input_maxes[key])
             ##self.input_abs_maxes[key] = abs_max_val
             # self.input_abs_maxes[key] = torch.max(torch.stack(self.input_abs_maxes[key], dim=0), dim=0)[0]
             abs_max_val = torch.max(torch.abs(self.input_mins[key]), torch.abs(self.input_maxes[key]))
-            ##abs_max_val=self.input_maxes[key]-self.input_mins[key]
+            ##abs_max_val = self.input_maxes[key] - self.input_mins[key]
             self.input_abs_maxes[key] = abs_max_val
-        for key in self.input_values.keys():
-            self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
-            self.output_values[key] = torch.cat(self.output_values[key], dim=0)
+        # for key in self.input_values.keys():
+        #     self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
+        #     self.output_values[key] = torch.cat(self.output_values[key], dim=0)
 
     def _reshape_in_channel_to_last(self, layer_name):
         """
@@ -484,7 +495,9 @@ class TorchSmoothQuant:
                     layer.bias *= scale
 
     def _cal_scale(self, input_max, weights, alpha, scale_type="orig"):
+
         if scale_type == "orig":  # same as the paper
+            weights = torch.cat(weights, dim=0)
             weight_max = torch.max(torch.abs(weights), dim=0)[0]
             input_power = torch.pow(input_max, alpha)
             logger.debug(f"{max(input_max)}, {min(input_max)}")
@@ -493,6 +506,7 @@ class TorchSmoothQuant:
             scale[input_power == 0] = 1.0
             return scale
         if scale_type == "code_2":
+            weights = torch.cat(weights, dim=0)
             weight_oc_max = torch.max(torch.abs(weights), dim=1)[0]
             weight_oc_max[weight_oc_max == 0] = 1e-5
             weight_ratio = torch.abs(weights) / (weight_oc_max.unsqueeze(-1))
@@ -503,37 +517,32 @@ class TorchSmoothQuant:
             scale[input_power == 0] = 1.0
             return scale
         if scale_type == "code_3":
-            weight_oc_max = torch.max(torch.abs(weights), dim=1)[0]
-            weight_oc_max[weight_oc_max == 0] = 1e-5
-            weight_ratio = torch.abs(weights) / (weight_oc_max.unsqueeze(-1))
-            mask = weight_ratio==1
-            mask_weight = torch.abs(weights)*mask
-            mask_1_cnt = torch.sum(mask, dim=0)
-            mask_1_cnt = mask_1_cnt.to(torch.float32)
-            mask_1_cnt[mask_1_cnt==0]=1e-5
-            mask_weight = torch.sum(mask_weight,dim=0)
-            mask_weight = mask_weight/mask_1_cnt
-            zero_index = mask_weight==0
-            weight_ratio[:, zero_index]
-            max_value, index = torch.max(weight_ratio[:,zero_index],dim=0)
-            other_weight_value = (torch.abs(weights))[:,zero_index][index,torch.arange(len(index))]
-            mask_weight[zero_index] = other_weight_value
+            ##weights = torch.cat(weights, dim=0)
+            mask_weights = []
+            for weight in weights:
+                weight_oc_max = torch.max(torch.abs(weight), dim=1)[0]
+                weight_oc_max[weight_oc_max == 0] = 1e-5
+                weight_ratio = torch.abs(weight) / (weight_oc_max.unsqueeze(-1))
+                mask = weight_ratio == 1
+                mask_weight = torch.abs(weight) * mask
+                mask_1_cnt = torch.sum(mask, dim=0)
+                mask_1_cnt = mask_1_cnt.to(torch.float32)
+                mask_1_cnt[mask_1_cnt == 0] = 1e-5
+                mask_weight = torch.sum(mask_weight, dim=0)
+                mask_weight = mask_weight / mask_1_cnt
+                zero_index = mask_weight == 0
+                max_value, index = torch.max(weight_ratio[:, zero_index], dim=0)
+                other_weight_value = (torch.abs(weight))[:, zero_index][index, torch.arange(len(index))]
+                mask_weight[zero_index] = other_weight_value
+                mask_weight = mask_weight.unsqueeze(dim=0)
+                mask_weights.append(mask_weight)
+            mask_weights = torch.cat(mask_weights, dim=0)
+            mask_weights = torch.mean(mask_weights, dim=0)
             input_power = torch.pow(input_max, alpha)
-            weight_power = torch.pow(mask_weight, 1 - alpha)
+            weight_power = torch.pow(mask_weights, 1 - alpha)
             scale = torch.clip(input_power / weight_power, min=1e-5)
             scale[input_power == 0] = 1.0
             return scale
-            tmp=1
-            #
-            # weight_sum = torch.sum(weight, dim=0)
-            # mask_1_cnt = torch.sum(mask, dim=0)
-            # max_weight_ratio, max_weight_ratio_index = torch.max(weight_ratio, dim=0)
-            # weight_ratio[:,max_weight_ratio==1]
-            # input_power = torch.pow(input_max, alpha)
-            # weight_power = torch.pow(max_weight_ratio, 1 - alpha)
-            # scale = torch.clip(input_power / weight_power, min=1e-5)
-            # scale[input_power == 0] = 1.0
-            # return scale
 
     def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5):
         """
@@ -561,8 +570,6 @@ class TorchSmoothQuant:
             for layer in layers:
                 weight = self._reshape_in_channel_to_last(layer)
                 weights.append(weight)
-
-            weights = torch.cat(weights, dim=0)
 
             # weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
             # input_power = torch.pow(input_max, alpha_key)
@@ -618,7 +625,7 @@ class TorchSmoothQuant:
         self.calib_iter = calib_iter
         return need_calib
 
-    def _get_auto_loss(self, output, output_q, loss_type="mean_scale_error", loss_alpha=0.5):
+    def _get_auto_loss(self, output, output_q, loss_type="mean", loss_alpha=1.0):
         if loss_type == "mse":
             return torch.mean((output - output_q) ** 2)
         elif loss_type == "mean_scale_error":
@@ -653,19 +660,22 @@ class TorchSmoothQuant:
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
                         {absorb_key: self.absorb_to_layer[absorb_key]},
                         {self.absorb_to_layer[absorb_key][0]: input_maxes[self.absorb_to_layer[absorb_key][0]]}, alpha)
-                    input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
+                    input_of_ops, output_of_ops = self.input_values[layer_key], self.output_values[layer_key]
+                    loss = 0
                     input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
                                                                 self.absorb_scales_info[absorb_key])
-                    input_of_op_q = quant_dequant_x(input_of_op * input_scale)
                     layer = get_module(self.model, layer_key)
                     if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
                     layer_cp.weight.data = weight_qdq
-                    output_of_op_q = layer_cp(input_of_op_q)
+                    for input_of_op, output_of_op in zip(input_of_ops, output_of_ops):
+                        input_of_op_q = quant_dequant_x(input_of_op * input_scale,  self.input_mins[self.absorb_to_layer[absorb_key][0]] * input_scale, self.input_maxes[self.absorb_to_layer[absorb_key][0]] * input_scale,
+                                                       )
+                        output_of_op_q = layer_cp(input_of_op_q)
+                        loss += self._get_auto_loss(output_of_op, output_of_op_q)
                     self.recover()
-                    loss = self._get_auto_loss(output_of_op, output_of_op_q)
                     loss_alpha[alpha] = loss
                     if layer_key not in ans:  # Update alpha results
                         ans[layer_key] = alpha
