@@ -208,8 +208,6 @@ class TorchSmoothQuant:
         self.input_maxes = {}
         self.input_mins = {}
         self.input_maxes_abs = {}
-        self.hook_layer_names = []
-        self.hook_values_handles = []
         self.traced_model = traced_model
         if self.traced_model == None:
             self.traced_model = self.model
@@ -280,7 +278,13 @@ class TorchSmoothQuant:
 
         return save_input_output_hook
 
-    def _add_observer(self, modules, input_output_modules=None, percentile=100):
+    def _add_input_output_observer(self, input_output_modules):
+        for key in input_output_modules.keys():
+            hook_func = self._save_input_output_hook(key)
+            hook_handle = input_output_modules[key].register_forward_hook(hook_func)
+            self.hook_handles.append(hook_handle)
+
+    def _add_min_max_observer(self, modules, percentile=100):
         """
         :param modules: the modules which the observer will insert to
         :return:
@@ -290,11 +294,9 @@ class TorchSmoothQuant:
             hook_func = self._save_input_pc_hook(key, percentile)
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
-        if input_output_modules:
-            for key in input_output_modules.keys():
-                hook_func = self._save_input_output_hook(key)
-                hook_handle = input_output_modules[key].register_forward_hook(hook_func)
-                self.hook_values_handles.append(hook_handle)
+        # if input_output_modules:
+        #     self._add_input_output_observer(input_output_modules)
+
 
     def _remove_observer(self):
         """
@@ -303,9 +305,8 @@ class TorchSmoothQuant:
         """
         for hook_handle in self.hook_handles:
             hook_handle.remove()
-        if self.hook_values_handles:
-            for hook_handle in self.hook_values_handles:
-                hook_handle.remove()
+
+
 
     def _calibrate(self, absorb_to_layer, calib_iter, percentile, save_input_output=False):
         """
@@ -317,20 +318,25 @@ class TorchSmoothQuant:
         for key in absorb_to_layer:
             for layer_name in absorb_to_layer[key]:
                 layer_to_absorb[layer_name] = key
-        hook_module_names_tmp = [absorb_to_layer[key][0] for key in absorb_to_layer.keys()]
+        hook_module_names = [absorb_to_layer[key][0] for key in absorb_to_layer.keys()]
         hook_modules = {}
 
-        for index, name in enumerate(hook_module_names_tmp):
+        for index, name in enumerate(hook_module_names):
             module = get_module(self.model, name)
             if isinstance(module, torch.nn.Linear) or isinstance(module,
                                                                  torch.nn.Conv2d):
                 hook_modules[name] = module
         if len(hook_modules) == 0:
             return {}
-        hook_modules_input_output = {}
-        for name in self.hook_layer_names:
-            hook_modules_input_output[name] = get_module(self.model, name)
-        self._add_observer(hook_modules, hook_modules_input_output, percentile=percentile)
+        self._add_min_max_observer(hook_modules,)
+        if save_input_output:
+            hook_modules_input_output = {}
+            hook_layer_names=[]
+            for key in self.absorb_to_layer:
+                hook_layer_names += self.absorb_to_layer[key]
+            for name in hook_layer_names:
+                hook_modules_input_output[name] = get_module(self.model, name)
+            self._add_input_output_observer(hook_modules_input_output, percentile=percentile)
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
         return self.input_maxes_abs
@@ -633,6 +639,9 @@ class TorchSmoothQuant:
             loss = torch.mean(torch.pow(torch.abs(output - output_q) / torch.abs(output), loss_alpha))
             return loss
 
+    def _auto_tune_alpha_save_memory(self, input_maxes, alpha_space, attn_method):
+
+
     def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
         """
         Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
@@ -763,8 +772,7 @@ class TorchSmoothQuant:
                         if i in self.self_absorb_layers:
                             self.self_absorb_layers.pop(i)
                 self.absorb_to_layer.update(self.self_absorb_layers)
-                for key in self.absorb_to_layer:
-                    self.hook_layer_names += self.absorb_to_layer[key]
+
 
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
