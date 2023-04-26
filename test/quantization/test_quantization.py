@@ -190,13 +190,13 @@ def build_fake_model():
     return graph
 
 def build_fake_strategy():
-    with open(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'experimental/strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = ["import time \n",
               "import copy \n",
               "import numpy as np \n",
               "from collections import OrderedDict \n",
               "from .strategy import strategy_registry, TuneStrategy \n",
-              "from ..utils import logger \n",
+              "from ...utils import logger \n",
               "from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler \n",
               "from .utils.tuning_structs import OpTuningConfig \n",
               "import copy \n",
@@ -296,7 +296,7 @@ class TestQuantization(unittest.TestCase):
         os.remove('fake_yaml4.yaml')
         os.remove('fake_yaml5.yaml')
         os.remove('fake_yaml6.yaml')
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'experimental/strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_resume(self):

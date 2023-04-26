@@ -110,7 +110,7 @@ arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
 
-from neural_compressor import conf
+from neural_compressor.conf.config import conf
 from neural_compressor.experimental import Benchmark, common
 conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': [100,32,32,1], 'label':True}}
 benchmarker = Benchmark(conf)
@@ -134,7 +134,7 @@ class Metric:
     def result(self):
         return 1.
 
-from neural_compressor import conf
+from neural_compressor.conf.config import conf
 from neural_compressor.experimental import Benchmark, common
 conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [100,32,32,1], 'label':True}}
 benchmarker = Benchmark(conf)

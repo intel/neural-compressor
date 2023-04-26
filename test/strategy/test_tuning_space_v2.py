@@ -174,7 +174,7 @@ class TestTuningSpaceV2(unittest.TestCase):
             'calib': {'calib_sampling_size': [1, 10, 50]},
             'op': deepcopy(op_cap)
         }
-        
+
         self.op_wise_user_cfg_for_fallback = {
             'op_name1': {
                 'activation': {
@@ -185,11 +185,11 @@ class TestTuningSpaceV2(unittest.TestCase):
                 }
             },
         }
-        
-        
+
+
     def test_tuning_sampler_int4(self):
         # op-wise
-        conf = {'usr_cfg': { } }
+        conf = {}
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -208,14 +208,14 @@ class TestTuningSpaceV2(unittest.TestCase):
             if dtype_item.name == 'int4':
                 found_int4_weight = True
         self.assertTrue(found_int4_weight)
-        
+
     def test_sampler_int4(self):
         # test sampler
         from collections import OrderedDict
         from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
         from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler
         # op-wise
-        conf = {'usr_cfg': { } }
+        conf = {}
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -241,7 +241,7 @@ class TestTuningSpaceV2(unittest.TestCase):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-        
+
         op_wise_tuning_sampler = OpWiseTuningSampler(deepcopy(tuning_space), [], [],
                                                      op_item_dtype_dict, initial_op_tuning_cfg)
         op3 = ('op_name3', 'op_type3')
@@ -250,16 +250,12 @@ class TestTuningSpaceV2(unittest.TestCase):
             act_dtype = op_cfg['activation']['dtype']
             weight_dtype = op_cfg['weight']['dtype']
             self.assertTrue(act_dtype == weight_dtype == 'int4')
-        
+
 
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {
-            'usr_cfg': {
-                'quantization': {
-                    'op_wise': self.op_wise_user_cfg_for_fallback,
-                }
-            }
+                    'op_name_dict': self.op_wise_user_cfg_for_fallback,
 
         }
         conf = DotDict(conf)

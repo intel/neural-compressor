@@ -55,6 +55,7 @@ from transformers import (
     SchedulerType,
     default_data_collator,
     get_scheduler,
+    T5ForConditionalGeneration
 )
 from transformers.utils import check_min_version, get_full_repo_name, send_example_telemetry
 from transformers.utils.versions import require_version
@@ -102,7 +103,6 @@ class Evaluator:
                 # timing
                 if step > warmup_steps: my_timer.__enter__()
                 outputs = model(input_ids)
-                # outputs = model(input_ids, labels=label)
                 if step > warmup_steps: my_timer.__exit__()
                 last_token_logits = outputs[0][torch.arange(len(label_indices)), label_indices, :]
                 pred = last_token_logits.argmax(dim=-1)
@@ -173,10 +173,16 @@ class INCDataloader():
 def parse_args():
     parser = argparse.ArgumentParser(description="Finetune a transformers model on a causal language modeling task")
     parser.add_argument(
-        "--dataset_name",
+        "--calibration_dataset_name",
         type=str,
         default=None,
-        help="The name of the dataset to use (via the datasets library).",
+        help="The name of the pruning dataset to use (via the datasets library).",
+    )
+    parser.add_argument(
+        "--evaluation_dataset_name",
+        type=str,
+        default=None,
+        help="The name of the evaluation dataset to use (via the datasets library).",
     )
     parser.add_argument(
         "--dataset_config_name",
@@ -265,7 +271,7 @@ def parse_args():
     parser.add_argument(
         "--model_type",
         type=str,
-        default=None,
+        default=42,
         help="Model type to use if training from scratch.",
         choices=MODEL_TYPES,
     )
@@ -342,6 +348,12 @@ def parse_args():
         help="Whether or not to prune the model"
     )
     parser.add_argument(
+        "--max_pruning_steps",
+        type=int,
+        default=None,
+        help="Total number of pruning steps to perform. If provided",
+    )
+    parser.add_argument(
         "--pruning_pattern",
         type=str, default="4x1",
         help="pruning pattern type, we support NxM and N:M."
@@ -360,11 +372,15 @@ def parse_args():
         "--auto_slim", action="store_true",
         help="Whether or not to auto slim the model after pruning."
     )
-    
+    parser.add_argument(
+        "--max_length",
+        type=int, default=2048,
+        help="Maximum data length the model can receive."
+    )
     args = parser.parse_args()
 
     # Sanity checks
-    if args.dataset_name is None and args.train_file is None and args.validation_file is None:
+    if args.calibration_dataset_name is None and args.train_file is None and args.validation_file is None:
         raise ValueError("Need either a dataset name or a training/validation file.")
     else:
         if args.train_file is not None:
@@ -443,18 +459,17 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    if args.dataset_name is not None:
-        # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset(args.dataset_name, args.dataset_config_name)
-        # raw_datasets = load_dataset(args.dataset_name, keep_in_memory=True)
+    if args.calibration_dataset_name is not None:
+        # Downloading and loading a dataset from the hub.i
+        raw_datasets = load_dataset(args.calibration_dataset_name, args.dataset_config_name)
         if "validation" not in raw_datasets.keys():
-            raw_datasets["validation"] = load_dataset(
-                args.dataset_name,
+            raw_datasets["validation"] = load_dataset( #use the_pile's validation set for retraining pruning
+                args.calibration_dataset_name,
                 args.dataset_config_name,
-                split=f"train[:{args.validation_split_percentage}%]",
+                split=f"train[:{args.validation_split_percentage}%]"
             )
             raw_datasets["train"] = load_dataset(
-                args.dataset_name,
+                args.calibration_dataset_name,
                 args.dataset_config_name,
                 split=f"train[{args.validation_split_percentage}%:]",
             )
@@ -497,11 +512,13 @@ def main():
     elif args.model_name_or_path:
         # torchscript will force `return_dict=False` to avoid jit errors
         config = AutoConfig.from_pretrained(args.model_name_or_path, torchscript=True)
+        # config = None
     else:
         config = CONFIG_MAPPING[args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
         
     is_llama = bool("llama" in args.model_name_or_path)
+    is_t5 = bool("t5" in args.model_name_or_path)
     if args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, use_fast=not args.use_slow_tokenizer)
     elif args.model_name_or_path:
@@ -516,12 +533,19 @@ def main():
         )
 
     if args.model_name_or_path:
-        model = AutoModelForCausalLM.from_pretrained(
+        if is_t5:
+            model = T5ForConditionalGeneration.from_pretrained(
+                args.model_name_or_path,
+                config=config,
+                )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
             low_cpu_mem_usage=args.low_cpu_mem_usage,
-        )
+            )
+        
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForCausalLM.from_config(config)
@@ -538,8 +562,8 @@ def main():
     text_column_name = "text" if "text" in column_names else column_names[0]
 
     def tokenize_function(examples):
-        # return tokenizer(examples[text_column_name], max_length=512, truncation=True) #padding
-      return tokenizer(examples[text_column_name])
+        return tokenizer(examples[text_column_name], max_length=args.max_length, truncation=True) #padding
+    #   return tokenizer(examples[text_column_name])
     
 
     with accelerator.main_process_first():
@@ -601,7 +625,6 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc=f"Grouping texts in chunks of {block_size}",
         )
-
     train_dataset = lm_datasets["train"]
     eval_dataset = lm_datasets["validation"]
 
@@ -610,12 +633,12 @@ def main():
     #     logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     # DataLoaders creation:
+    train_dataset = train_dataset.shuffle(seed=42)
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
     )
-    eval_dataset = eval_dataset.shuffle(seed=42)
     eval_dataloader = DataLoader(
-        eval_dataset, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
+        eval_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
     )
 
     # Optimizer
@@ -634,6 +657,7 @@ def main():
     optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
 
     # Scheduler and math around the number of training steps.
+    args.max_train_steps = args.max_pruning_steps
     overrode_max_train_steps = False
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
     if args.max_train_steps is None:
@@ -646,7 +670,6 @@ def main():
         num_warmup_steps=args.num_warmup_steps * args.gradient_accumulation_steps,
         num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
     )
-    # eval_dataloader = eval_dataloader.shuffle(seed=42)
     # Prepare everything with our `accelerator`.
     model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
         model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
@@ -721,23 +744,21 @@ def main():
     # Pruning preparation 
     num_iterations = num_update_steps_per_epoch
     num_warm = args.num_warmup_steps
-    total_iterations = args.max_train_steps
+    total_iterations = args.max_pruning_steps
     frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
                                                            else args.pruning_frequency
     pruning_start = max(num_warm, 1)
-    pruning_end = total_iterations
+    pruning_end = max(total_iterations - 1, pruning_start)
     if not args.do_prune:
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
         
-    if is_llama or not args.auto_slim:
+    if not args.auto_slim:
         pruning_configs=[
             {
                 "pruning_type": "retrain_free",
                 "pruning_scope": "global",
-                # "op_names": ["fc_out"], #for gptj
-                # "op_names": ["down_proj"], #for llama
-                "op_names": ["fc2"], #for opt
+                "op_names": ["wo"], #for t5
                 "excluded_op_names": [".attn"],
                 "sparsity_decay_type": "exp",
                 "pattern": "channelx1",
@@ -808,86 +829,37 @@ def main():
                     if args.output_dir is not None:
                         output_dir = os.path.join(args.output_dir, output_dir)
                     accelerator.save_state(output_dir)
-            if completed_steps >= args.max_train_steps:
+            if completed_steps >= args.max_pruning_steps:
                 break
-
-        model.eval()
-        dataset_eval = raw_datasets["validation"]
-        evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
-        def eval_func(model):
-            acc, avg_latency = evaluator.evaluate(model)
-            return acc, avg_latency
-        
-        # losses = []
-        # total, hit = 0, 0
-        # for step, batch in enumerate(eval_dataloader):
-        #     with torch.no_grad():
-        #         # labels = batch['labels']
-        #         input_ids = batch['input_ids']
-        #         labels = input_ids[:, -1].to(input_ids.device)
-        #         outputs = model(return_dict=True, **batch)
-        #         # outputs = model(**batch)
-        #         last_token_logits = outputs['logits'][:,-2,:]
-        #         # last_token_logits = outputs['logits']
-        #         pred = last_token_logits.argmax(dim=-1)
-        #         total += labels.size(0)
-        #         hit += (pred == labels).sum().item()
-
-        #     loss = outputs.loss
-        #     losses.append(accelerator.gather_for_metrics(loss.repeat(args.per_device_eval_batch_size)))
-            
-        # acc = hit / total
-        # losses = torch.cat(losses)
-        # try:
-        #     eval_loss = torch.mean(losses)
-        #     perplexity = math.exp(eval_loss)
-        # except OverflowError:
-        #     perplexity = float("inf")
-
-        # logger.info(f"epoch {epoch}: perplexity: {perplexity} eval_loss: {eval_loss} accuracy:{acc}")
-        # if args.with_tracking:
-        #     accelerator.log(
-        #         {
-        #             "perplexity": perplexity,
-        #             "eval_loss": eval_loss,
-        #             "train_loss": total_loss.item() / len(train_dataloader),
-        #             "epoch": epoch,
-        #             "step": completed_steps,
-        #         },
-        #         step=completed_steps,
-        #     )
-
-        if args.push_to_hub and epoch < args.num_train_epochs - 1:
-            accelerator.wait_for_everyone()
-            unwrapped_model = accelerator.unwrap_model(model)
-            unwrapped_model.save_pretrained(
-                args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-            )
-            if accelerator.is_main_process:
-                tokenizer.save_pretrained(args.output_dir)
-                repo.push_to_hub(
-                    commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
-                )
-
-        if args.checkpointing_steps == "epoch":
-            output_dir = f"epoch_{epoch}"
-            if args.output_dir is not None:
-                output_dir = os.path.join(args.output_dir, output_dir)
-            accelerator.save_state(output_dir)
-
     compression_manager.callbacks.on_train_end()
+    
+    model.eval()
+    if args.evaluation_dataset_name != None:
+        dataset_eval = load_dataset( # for example:use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
+            args.evaluation_dataset_name,
+            args.dataset_config_name,
+            split=f"validation",
+        )
+    else:      
+        dataset_eval = raw_datasets["validation"]
+    dataset_eval = dataset_eval.shuffle(seed=42)
+    evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
+    def eval_func(model):
+        acc, avg_latency = evaluator.evaluate(model)
+        return acc, avg_latency
+
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
         unwrapped_model.save_pretrained(
-            args.output_dir+"_noslim", is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            args.output_dir+"/noslim", is_main_process=accelerator.is_main_process, save_function=accelerator.save
         )
         if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir+"_noslim")
+            tokenizer.save_pretrained(args.output_dir+"/noslim")
             if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+                repo.push_to_hub(commit_message="End of pruning", auto_lfs_prune=True)
     
-    if is_llama or not args.auto_slim:
+    if not args.auto_slim:
         # only eval
         logger.info(f"***** Running Evaluation *****")
         acc, _ = eval_func(model)
@@ -905,16 +877,18 @@ def main():
     if args.with_tracking:
         accelerator.end_training()
 
-    if args.output_dir is not None:
+    if args.output_dir is not None and args.auto_slim:
         accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(
-            args.output_dir+"_slimed", is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        )
+        # unwrapped_model = accelerator.unwrap_model(model)
+        # unwrapped_model.save_pretrained(
+        #     args.output_dir+"/slimed", is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        # )
+        model.to('cpu')
+        torch.save(model, args.output_dir+"/slimed_model.pt")
         if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir+"_slimed")
+            tokenizer.save_pretrained(args.output_dir)
             if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+                repo.push_to_hub(commit_message="End of auto slim", auto_lfs_prune=True)
 
             # with open(os.path.join(args.output_dir, "all_results.json"), "w") as f:
             #     json.dump({"perplexity": perplexity}, f)

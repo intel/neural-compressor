@@ -51,7 +51,7 @@ flags.DEFINE_integer(
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 from neural_compressor.data import TensorflowImageRecord
 from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.data import ComposeTransform
@@ -79,7 +79,7 @@ def evaluate(model):
         accuracy (float): evaluation result, the larger is better.
     """
     postprocess = LabelShift(label_shift=1)
-    metric = TensorflowTopK(k=1)
+    metric = Metric(name="topk", k=1)
 
     def eval_func(dataloader, metric):
         warmup = 5
@@ -128,7 +128,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model import Model
-            model = Model(FLAGS.input_model).model
+            model = Model(FLAGS.input_model, backend='keras').model
             accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.batch_size)
             print("Accuracy: %.5f" % accuracy)

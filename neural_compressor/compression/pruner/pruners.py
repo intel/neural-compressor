@@ -424,7 +424,7 @@ class BlockMaskPruner(BasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
-        self.masks = self.pattern.get_block_masks(self.modules)
+        self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(self.config, self.modules)
@@ -470,13 +470,11 @@ class BlockMaskPruner(BasePruner):
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
         
-        if (self.end_step-self.global_step) / self.pruning_frequency < 1:
-            self.recover_forward()
-        
     def on_before_optimizer_step(self):
         """Implement before optimizer.step()."""
-        self.reg.on_before_optimizer_step()
-        self.criterion.on_before_optimizer_step()
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_before_optimizer_step()
+            self.criterion.on_before_optimizer_step()
     
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
@@ -485,6 +483,10 @@ class BlockMaskPruner(BasePruner):
             self.reg.on_after_optimizer_step()
         self.zero_mask_grad()
         self.mask_weights()
+        if not self.end_step or self.end_step == self.global_step:
+            # recover forward method and remove block mask parameters at last prune step
+            self.recover_forward()
+            self.pattern.remove_block_masks()
         self.global_step += 1
                 
     def mask_weights(self):
@@ -493,7 +495,7 @@ class BlockMaskPruner(BasePruner):
         Weights are multipled with masks. This is the formal pruning process.
         """
         with torch.no_grad():
-            self.pattern.mask_block_weights()
+            self.pattern.mask_block_weights(self.masks)
         
     def update_block_masks(self, masks):
         """Update the block mask parameters."""
@@ -547,7 +549,7 @@ class RetrainFreePruner(BasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
-        self.masks = self.pattern.get_block_masks(self.modules)
+        self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(self.config, self.modules)
@@ -587,30 +589,33 @@ class RetrainFreePruner(BasePruner):
         self.completed_pruned_cnt += 1
         if self.criterion.scores == {}:
             return
+        ##the order of the following three lines can't not be exchanged
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.rearrange_masks(self.masks)
         self.update_block_masks(self.masks)
-        # support iterative rearrangement
-        if (self.end_step-self.global_step) / self.pruning_frequency < 1:
-            self.mask_weights()
-            logger.info(f"mask weights at end_step: {self.global_step}")
-            self.recover_forward()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
         
     def on_before_optimizer_step(self):
         """Implement before optimizer.step()."""
-        self.reg.on_before_optimizer_step()
-        self.criterion.on_before_optimizer_step()
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_before_optimizer_step()
+            self.criterion.on_before_optimizer_step()
     
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
         ##the order of the following four lines can't not be exchanged
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_after_optimizer_step()
-        self.zero_mask_grad()
-        # self.mask_weights() #done on update_masks
+        # self.mask_weights() 
+        # Iterative rearrangement with mask weight at the last step only
+        if self.end_step == self.global_step:
+            self.mask_weights()
+            logger.info(f"mask weights at last_prune_step: {self.global_step}")
+            # recover forward method and remove block mask parameters at last prune step
+            self.recover_forward()
+            self.pattern.remove_block_masks()
         self.global_step += 1
                 
     def mask_weights(self):
@@ -619,7 +624,7 @@ class RetrainFreePruner(BasePruner):
         Weights are multipled with masks. This is the formal pruning process.
         """
         with torch.no_grad():
-            self.pattern.mask_block_weights()
+            self.pattern.mask_block_weights(self.masks)
         
     def update_block_masks(self, masks):
         """Update the block mask parameters."""
@@ -635,10 +640,10 @@ class RetrainFreePruner(BasePruner):
             for key in masks.keys():
                 block_mask = masks[key]
                 num_pruned = torch.sum(block_mask == 0.0).data.item()
-                grads = torch.stack(self.criterion.collected_grads[key], dim=0).squeeze()
-                if not num_pruned:
+                if not num_pruned or not self.criterion.collected_grads[key]:
                     new_masks[key] = block_mask
                     continue
+                grads = torch.stack(self.criterion.collected_grads[key], dim=0).squeeze()
                 grads = grads.permute(1, 0).contiguous()
                 grads_sq = grads.pow(2).sum(dim=1)
                 _, indicies = grads_sq.sort(descending=False)
@@ -670,7 +675,7 @@ class RetrainFreePruner(BasePruner):
                     else:
                         mask.grad.requires_grad_(False)
                     mask.grad.zero_()
-    
+
 
 @register_pruner('progressive')
 class ProgressivePruner(BasicPruner):
@@ -882,5 +887,6 @@ class ProgressivePruner(BasicPruner):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
+
 
 

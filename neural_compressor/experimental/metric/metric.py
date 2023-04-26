@@ -871,16 +871,16 @@ class MSE(BaseMetric):
 @metric_registry('topk', 'tensorflow, tensorflow_itex')
 class TensorflowTopK(BaseMetric):
     """Compute Top-k Accuracy classification score for Tensorflow model.
-    
+
     This metric computes the number of times where the correct label is among
     the top k labels predicted.
-    
+
     Attributes:
         k (int): The number of most likely outcomes considered to find the correct label.
         num_correct: The number of predictions that were correct classified.
         num_sample: The total number of predictions.
     """
-    
+
     def __init__(self, k=1):
         """Initialize the k, number of samples and correct predictions.
 
