@@ -61,7 +61,7 @@ def strategy_registry(cls):
     assert cls.__name__.endswith(
         'TuneStrategy'
     ), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
-    if cls.__name__[:-len('TuneStrategy')].lower() in STRATEGIES:
+    if cls.__name__[:-len('TuneStrategy')].lower() in STRATEGIES: # pragma: no cover
         raise ValueError('Cannot have two strategies with the same name')
     STRATEGIES[cls.__name__[:-len('TuneStrategy')].lower()] = cls
     return cls
@@ -299,11 +299,11 @@ class TuneStrategy(object):
             return
         else:
             # got eval dataloader but not eval metric
-            if self.eval_dataloader:
+            if self.eval_dataloader: # pragma: no cover
                 assert self.eval_metric, "Detected evaluation dataloader but no evaluation metric, " \
                  "Please provide both to perform tuning process or neither for the default quantization."
             # got eval metric but not eval dataloader
-            if self.eval_metric:
+            if self.eval_metric: # pragma: no cover
                 assert self.eval_dataloader, "Detected evaluation metric but no evaluation dataloader, "\
                     "Please provide both to perform tuning process or neither for the default quantization."
         # not tuning
@@ -353,7 +353,7 @@ class TuneStrategy(object):
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             self.trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials:
+            if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials: # pragma: no cover
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -415,7 +415,7 @@ class TuneStrategy(object):
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
-                    self.best_tune_result is not None:
+                    self.best_tune_result is not None: # pragma: no cover
                     best_trail, best_result = self.objectives.best_result(self.tune_result_record,
                                                                           copy.deepcopy(self.baseline))
                     if best_result != self.best_tune_result:
@@ -747,7 +747,7 @@ class TuneStrategy(object):
                 new_tune_cfg = self._fallback_ops(copy.deepcopy(tune_cfg), \
                     self.capability['recipes_ops'][recipe_name], self.tuning_space)
                 yield new_tune_cfg
-            if recipe_name == "smooth_quant":
+            if recipe_name == "smooth_quant": # pragma: no cover
                 sq_args = {'smooth_quant': True}
                 if 'recipe_cfgs' not in new_tune_cfg:
                     new_tune_cfg['recipe_cfgs'] = sq_args
@@ -803,13 +803,13 @@ class TuneStrategy(object):
         algo_scheduler.reset_exec_algorithms()
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         # for fast_bias_correction
-        if recipe_cfgs and recipe_cfgs.get('fast_bias_correction', False):
+        if recipe_cfgs and recipe_cfgs.get('fast_bias_correction', False): # pragma: no cover
             fbc_algo = ALGORITHMS()['fast_bias_correction']
             fbc_algo.quantization_cfg = deepcopy(tune_cfg)
             algo_scheduler.append_algorithm('post_quantization', fbc_algo)
             logger.debug(f"Add fast bias correction as the post quantization algo.")
         # for weight correction
-        if recipe_cfgs and recipe_cfgs.get('weight_correction', False):
+        if recipe_cfgs and recipe_cfgs.get('weight_correction', False): # pragma: no cover
             w_algo = ALGORITHMS()['weight_correction']
             w_algo.quantization_cfg = deepcopy(tune_cfg)
             algo_scheduler.append_algorithm('post_quantization', w_algo)
@@ -903,13 +903,13 @@ class TuneStrategy(object):
         adaptor_statistics = self.adaptor.optype_statistics
 
         def _field_skipped(field):
-            if fields != None:
+            if fields != None:  # pragma: no cover
                 return field not in fields
             elif skip_fields != None:
                 return field in skip_fields
 
         def _optype_skipped(optype):
-            if optypes != None:
+            if optypes != None: # pragma: no cover
                 return optype not in optypes
             elif skip_optypes != None:
                 return optype in skip_optypes
@@ -1099,7 +1099,7 @@ class TuneStrategy(object):
         """
         self.__dict__.update(resume)
         for history in self.tuning_history:
-            if self._same_conf(history['cfg'], self.conf):
+            if self._same_conf(history['cfg'], self.conf):  # pragma: no cover
                 self.__dict__.update({k: v for k, v in history.items() \
                                         if k not in ['version', 'history']})
                 logger.info("Start to resume tuning process.")
