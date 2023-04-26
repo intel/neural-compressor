@@ -102,19 +102,16 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.get_op_mode_by_query_order" title="neural_compressor.strategy.utils.tuning_space.get_op_mode_by_query_order"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_op_mode_by_query_order</span></code></a>(tuning_space, query_order)</p></td>
-<td><p>Get the op mode according to the query order.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.pattern_to_internal" title="neural_compressor.strategy.utils.tuning_space.pattern_to_internal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pattern_to_internal</span></code></a>(pattern[, default_dtype])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.pattern_to_internal" title="neural_compressor.strategy.utils.tuning_space.pattern_to_internal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pattern_to_internal</span></code></a>(pattern[, default_dtype])</p></td>
 <td><p>Convert pattern to internal format.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.pattern_to_path" title="neural_compressor.strategy.utils.tuning_space.pattern_to_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pattern_to_path</span></code></a>(pattern)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.pattern_to_path" title="neural_compressor.strategy.utils.tuning_space.pattern_to_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pattern_to_path</span></code></a>(pattern)</p></td>
 <td><p>Convert pattern to path.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.quant_mode_from_pattern" title="neural_compressor.strategy.utils.tuning_space.quant_mode_from_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_mode_from_pattern</span></code></a>(internal_pattern)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.quant_mode_from_pattern" title="neural_compressor.strategy.utils.tuning_space.quant_mode_from_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_mode_from_pattern</span></code></a>(internal_pattern)</p></td>
 <td><p>Get quant mode from internal pattern.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.initial_tuning_cfg_with_quant_mode" title="neural_compressor.strategy.utils.tuning_space.initial_tuning_cfg_with_quant_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">initial_tuning_cfg_with_quant_mode</span></code></a>(...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.initial_tuning_cfg_with_quant_mode" title="neural_compressor.strategy.utils.tuning_space.initial_tuning_cfg_with_quant_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">initial_tuning_cfg_with_quant_mode</span></code></a>(...)</p></td>
 <td><p>Initialize the tuning cfg.</p></td>
 </tr>
 </tbody>
@@ -132,12 +129,6 @@
 <ol class="arabic simple">
 <li><p>capability -&gt; internal format -&gt; merge -&gt; tuning space (tree)</p></li>
 </ol>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.strategy.utils.tuning_space.get_op_mode_by_query_order">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.tuning_space.</span></span><span class="sig-name descname"><span class="pre">get_op_mode_by_query_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.strategy.utils.tuning_space.TuningSpace" title="neural_compressor.strategy.utils.tuning_space.TuningSpace"><span class="pre">TuningSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_order</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/utils/tuning_space.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.utils.tuning_space.get_op_mode_by_query_order" title="Permalink to this definition"></a></dt>
-<dd><p>Get the op mode according to the query order.</p>
 </dd></dl>
 
 <dl class="py function">

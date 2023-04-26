@@ -35,10 +35,8 @@ Functions
                  For MXNet model, it's mxnet.symbol.Symbol
                  or gluon.HybirdBlock instance.
    :type model: object
-   :param config: The path to the YAML configuration file or
-                  QuantConf class containing accuracy goal,
-                  tuning objective and preferred calibration &
-                  quantization tuning space etc.
+   :param config: The MixedPrecisionConfig class containing accuracy goal,
+                  tuning objective and mixed_precision tuning space etc.
    :type config: MixedPrecisionConfig
    :param eval_func: The evaluation function provided by user.
                      This function takes model as parameter,
@@ -62,7 +60,7 @@ Functions
                            process.
    :type eval_dataloader: generator, optional
    :param eval_metric: An Accuracy object that measures metric for
-                       quantization.
+                       mixed_precision.
    :type eval_metric: obj, optional
 
    :returns: A _MixedPrecision object that generates low precision model across various DL frameworks.

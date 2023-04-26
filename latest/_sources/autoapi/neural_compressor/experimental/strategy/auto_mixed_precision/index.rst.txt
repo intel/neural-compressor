@@ -1,0 +1,31 @@
+:py:mod:`neural_compressor.experimental.strategy.auto_mixed_precision`
+======================================================================
+
+.. py:module:: neural_compressor.experimental.strategy.auto_mixed_precision
+
+.. autoapi-nested-parse::
+
+   The auto-mixed precision strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy
+
+
+
+
+.. py:class:: AutoMixedPrecisionTuneStrategy
+
+
+
+   Tuning strategy for auto mixed precision.
+
+

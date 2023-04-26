@@ -1,0 +1,34 @@
+:py:mod:`neural_compressor.experimental.strategy.basic`
+=======================================================
+
+.. py:module:: neural_compressor.experimental.strategy.basic
+
+.. autoapi-nested-parse::
+
+   The basic tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.strategy.basic.BasicTuneStrategy
+
+
+
+
+.. py:class:: BasicTuneStrategy
+
+
+
+   The basic tuning strategy.
+
+   There are three stages executed by Basic strategy sequentially,
+   and the tuning process ends once the condition meets the exit policy.
+
+

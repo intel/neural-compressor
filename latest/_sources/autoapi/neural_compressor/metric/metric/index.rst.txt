@@ -57,7 +57,7 @@ Functions
 
 
 
-.. py:class:: Metric(metric_cls, name='user_metric', **kwargs)
+.. py:class:: Metric(name='user_metric', metric_cls=None, **kwargs)
 
 
 
@@ -66,6 +66,12 @@ Functions
    The metric class should take the outputs of the model as the metric's inputs,
    neural_compressor built-in metric always take (predictions, labels) as inputs, it's
    recommended to design metric_cls to take (predictions, labels) as inputs.
+
+   :param metric_cls: Should be a instance of sub_class of neural_compressor.metric.BaseMetric
+                      or a customer's metric, which takes (predictions, labels) as inputs.
+   :type metric_cls: cls
+   :param name: Name for metric. Defaults to 'user_metric'.
+   :type name: str, optional
 
 
 .. py:class:: TensorflowMetrics

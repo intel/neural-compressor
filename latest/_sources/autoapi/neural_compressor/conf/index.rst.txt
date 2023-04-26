@@ -6,3 +6,12 @@
 .. py:module:: neural_compressor.conf
 
 
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   pythonic_config/index.rst
+
+

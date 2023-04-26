@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   Configs for Neural Compressor.
+   Configs for Neural Compressor 2.x.
 
 
 
@@ -17,6 +17,7 @@ Classes
 
 .. autoapisummary::
 
+   neural_compressor.config.DotDict
    neural_compressor.config.Options
    neural_compressor.config.BenchmarkConfig
    neural_compressor.config.AccuracyCriterion
@@ -33,8 +34,24 @@ Classes
    neural_compressor.config.ONNXQlinear2QDQConfig
    neural_compressor.config.Torch2ONNXConfig
    neural_compressor.config.TF2ONNXConfig
+   neural_compressor.config.NASConfig
+   neural_compressor.config.MXNet
+   neural_compressor.config.ONNX
+   neural_compressor.config.TensorFlow
+   neural_compressor.config.Keras
+   neural_compressor.config.PyTorch
 
 
+
+
+.. py:class:: DotDict(value=None)
+
+
+
+   access yaml using attributes instead of using the dictionary notation.
+
+   :param value: The dict object to access.
+   :type value: dict
 
 
 .. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
@@ -75,7 +92,8 @@ Classes
        set_tensorboard(True)
 
 
-.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', warmup=5, iteration=-1, cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None)
+
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model=None, model_name='', cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None)
 
    Config Class for Benchmark.
 
@@ -106,8 +124,8 @@ Classes
    Example::
 
        # Run benchmark according to config
-
        from neural_compressor.benchmark import fit
+
        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
 
@@ -140,39 +158,26 @@ Classes
 
    Class for Tuning Criterion.
 
-   :param strategy: Name of the tuning strategy. Please refer to docs/source/tuning_strategies.md.
-                    Default is 'basic'.
-   :type strategy: str, optional
-   :param strategy_kwargs: The strategy setting dictionary.
-                           Please refer to docs/source/tuning_strategies.md.
-                           Default value is None.
-   :type strategy_kwargs: dict, optional
-   :param timeout: Tuning timeout(seconds). When set to 0, early stopping is enabled.
-                   Default value is 0.
-   :type timeout: int, optional
-   :param max_trials: Max tuning times. Combined with the `timeout` field to decide when to exit tuning.
-                      Default is 100.
-   :type max_trials: int, optional
-   :param objective:
-                     Objective with accuracy constraint guaranteed,
-                         support 'performance', 'modelsize', 'footprint'.
-                     Please refer to docs/source/objective.md.
-                     Default value is 'performance'.
-   :type objective: str, optinal
+   :param strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
+   :param strategy_kwargs: Parameters for strategy. Please refer to docs/source/tuning_strategies.md.
+   :param objective: String or dict. Objective with accuracy constraint guaranteed. String value supports
+                     'performance', 'modelsize', 'footprint'. Default value is 'performance'.
+                      Please refer to docs/source/objective.md.
+   :param timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+   :param max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
 
    Example::
-
        from neural_compressor.config import TuningCriterion
 
        tuning_criterion=TuningCriterion(
-           strategy="basic",
-           strategy_kwargs=None,
            timeout=0,
            max_trials=100,
+           strategy="basic",
+           strategy_kwargs=None,
        )
 
 
-.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, excluded_precisions=[], quant_level='auto', tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, use_distributed_tuning=False)
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, use_distributed_tuning=False, diagnosis=False)
 
 
 
@@ -253,6 +258,9 @@ Classes
                                   criterion and tolerable_loss.
                               Please refer to docstring of AccuracyCriterion class.
    :param use_distributed_tuning: Whether use distributed tuning or not.
+   :param diagnosis: This flag indicates whether to do diagnosis.
+                     Default value is False.
+   :type diagnosis: bool
 
    Example::
 
@@ -267,7 +275,7 @@ Classes
        )
 
 
-.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_dict=None, op_name_dict=None, reduce_range=None, excluded_precisions=[], quant_level='auto', tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_dict=None, op_name_dict=None, reduce_range=None, model_name='', quant_format='default', excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion)
 
 
 
@@ -563,9 +571,9 @@ Classes
    Example::
 
        from neural_compressor.training import prepare_compression
-       from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+       from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 
-       distil_loss = SelfKnowledgeDistillationLossConfig()
+       distil_loss = KnowledgeDistillationLossConfig()
        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
        criterion = nn.CrossEntropyLoss()
        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -573,7 +581,7 @@ Classes
        model = compression_manager.model
 
 
-.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precision='bf16', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precision='bf16', model=None, model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
 
 
 
@@ -636,15 +644,6 @@ Classes
 .. py:class:: ONNXQlinear2QDQConfig
 
    Config Class for ONNXQlinear2QDQ.
-
-   Example::
-
-       from neural_compressor.config import ONNXQlinear2QDQConfig
-       from neural_compressor.model import Model
-
-       conf = ONNXQlinear2QDQConfig()
-       model = Model(model)
-       model.export('new_model.onnx', conf)
 
 
 .. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, recipe='QDQ_OP_FP32_BIAS', **kwargs)
@@ -722,5 +721,43 @@ Classes
        from neural_compressor.config import TF2ONNXConfig
        config = TF2ONNXConfig()
        q_model.export(output_graph, config)
+
+
+.. py:class:: NASConfig(approach=None, search_space=None, search_algorithm=None, metrics=[], higher_is_better=[], max_trials=3, seed=42, dynas=None)
+
+   Config class for NAS approaches.
+
+
+.. py:class:: MXNet(precisions=None)
+
+   Base config class for MXNet.
+
+
+.. py:class:: ONNX(graph_optimization_level=None, precisions=None)
+
+
+
+   Config class for ONNX.
+
+
+.. py:class:: TensorFlow(precisions=None)
+
+
+
+   Config class for TensorFlow.
+
+
+.. py:class:: Keras(precisions=None)
+
+
+
+   Config class for Keras.
+
+
+.. py:class:: PyTorch(precisions=None)
+
+
+
+   Config class for PyTorch.
 
 

@@ -109,10 +109,8 @@ instance. For onnx model, it chould be a path
 to .onnx file or onnx.onnx_ml_pb2.ModelProto.
 For MXNet model, it’s mxnet.symbol.Symbol
 or gluon.HybirdBlock instance.</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.MixedPrecisionConfig" title="neural_compressor.config.MixedPrecisionConfig"><em>MixedPrecisionConfig</em></a>) – The path to the YAML configuration file or
-QuantConf class containing accuracy goal,
-tuning objective and preferred calibration &amp;
-quantization tuning space etc.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.MixedPrecisionConfig" title="neural_compressor.config.MixedPrecisionConfig"><em>MixedPrecisionConfig</em></a>) – The MixedPrecisionConfig class containing accuracy goal,
+tuning objective and mixed_precision tuning space etc.</p></li>
 <li><p><strong>eval_func</strong> (<em>function</em><em>, </em><em>optional</em>) – The evaluation function provided by user.
 This function takes model as parameter,
 and evaluation dataset and metrics should be
@@ -133,7 +131,7 @@ Tuner will combine model, eval_dataloader
 and pre-defined metrics to run evaluation
 process.</p></li>
 <li><p><strong>eval_metric</strong> (<em>obj</em><em>, </em><em>optional</em>) – An Accuracy object that measures metric for
-quantization.</p></li>
+mixed_precision.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

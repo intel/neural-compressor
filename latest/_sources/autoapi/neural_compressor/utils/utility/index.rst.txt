@@ -28,6 +28,7 @@ Classes
    neural_compressor.utils.utility.Statistics
    neural_compressor.utils.utility.MODE
    neural_compressor.utils.utility.GLOBAL_STATE
+   neural_compressor.utils.utility.DotDict
 
 
 
@@ -63,6 +64,8 @@ Functions
    neural_compressor.utils.utility.set_resume_from
    neural_compressor.utils.utility.set_tensorboard
    neural_compressor.utils.utility.show_memory_info
+   neural_compressor.utils.utility.dump_class_attrs
+   neural_compressor.utils.utility.compare_objects
 
 
 
@@ -263,5 +266,34 @@ Functions
 .. py:function:: show_memory_info(hint)
 
    Show process full memory.
+
+
+.. py:function:: dump_class_attrs(obj, result={})
+
+   Dump the attributes and values of a config class.
+
+   :param obj: An instance of a config class.
+   :param result: An dict for recording attributes and values.
+
+
+.. py:class:: DotDict(value=None)
+
+
+
+   access yaml using attributes instead of using the dictionary notation.
+
+   :param value: The dict object to access.
+   :type value: dict
+
+
+.. py:function:: compare_objects(obj1, obj2, ignore_attrs)
+
+   Compare two objects and ignore the specified attributes.
+
+   :param obj1: The first object to compare.
+   :param obj2: The second object to compare.
+   :param ignore_attrs: A list of attribute names to ignore during the comparison.
+
+   :returns: True if the objects are equal ignoring the specified attributes, False otherwise.
 
 

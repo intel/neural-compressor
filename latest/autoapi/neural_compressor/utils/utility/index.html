@@ -111,6 +111,9 @@ options.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.GLOBAL_STATE" title="neural_compressor.utils.utility.GLOBAL_STATE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GLOBAL_STATE</span></code></a></p></td>
 <td><p>Access the global model.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.DotDict" title="neural_compressor.utils.utility.DotDict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DotDict</span></code></a></p></td>
+<td><p>access yaml using attributes instead of using the dictionary notation.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -198,6 +201,12 @@ options.</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.show_memory_info" title="neural_compressor.utils.utility.show_memory_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">show_memory_info</span></code></a>(hint)</p></td>
 <td><p>Show process full memory.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.dump_class_attrs" title="neural_compressor.utils.utility.dump_class_attrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_class_attrs</span></code></a>(obj[, result])</p></td>
+<td><p>Dump the attributes and values of a config class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.compare_objects" title="neural_compressor.utils.utility.compare_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_objects</span></code></a>(obj1, obj2, ignore_attrs)</p></td>
+<td><p>Compare two objects and ignore the specified attributes.</p></td>
 </tr>
 </tbody>
 </table>
@@ -446,6 +455,49 @@ options.</p>
 <dt class="sig sig-object py" id="neural_compressor.utils.utility.show_memory_info">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">show_memory_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hint</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.show_memory_info" title="Permalink to this definition"></a></dt>
 <dd><p>Show process full memory.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.dump_class_attrs">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_class_attrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.dump_class_attrs" title="Permalink to this definition"></a></dt>
+<dd><p>Dump the attributes and values of a config class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – An instance of a config class.</p></li>
+<li><p><strong>result</strong> – An dict for recording attributes and values.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.DotDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">DotDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.DotDict" title="Permalink to this definition"></a></dt>
+<dd><p>access yaml using attributes instead of using the dictionary notation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>dict</em>) – The dict object to access.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.compare_objects">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">compare_objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_attrs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.compare_objects" title="Permalink to this definition"></a></dt>
+<dd><p>Compare two objects and ignore the specified attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj1</strong> – The first object to compare.</p></li>
+<li><p><strong>obj2</strong> – The second object to compare.</p></li>
+<li><p><strong>ignore_attrs</strong> – A list of attribute names to ignore during the comparison.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the objects are equal ignoring the specified attributes, False otherwise.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

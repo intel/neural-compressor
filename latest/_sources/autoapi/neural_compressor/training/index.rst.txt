@@ -117,9 +117,6 @@ Functions
                  PruningConfig and distillationConfig, or a list of
                  config for orchestration optimization.
    :type confs: Union[Callable, List]
-   :param options: The configure for random_seed, workspace,
-                   resume path and tensorboard flag.
-   :type options: Options, optional
 
    :returns: An object of CompressionManager.
 

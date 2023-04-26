@@ -27,7 +27,6 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.strategy.utils.tuning_space.get_op_mode_by_query_order
    neural_compressor.strategy.utils.tuning_space.pattern_to_internal
    neural_compressor.strategy.utils.tuning_space.pattern_to_path
    neural_compressor.strategy.utils.tuning_space.quant_mode_from_pattern
@@ -46,11 +45,6 @@ Functions
 
    1) capability -> internal format -> merge -> tuning space (tree)
 
-
-
-.. py:function:: get_op_mode_by_query_order(tuning_space: TuningSpace, query_order)
-
-   Get the op mode according to the query order.
 
 
 .. py:function:: pattern_to_internal(pattern, default_dtype='int8')
