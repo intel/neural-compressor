@@ -124,7 +124,7 @@ def quant_dequant_w(m, num_bits=8, scheme='sym'):  ##TODO take sym as default
         logger.warning("unsupported layer type, please have a check")
 
 
-def quant_dequant_x(x,  min_x=None, max_x=None, num_bits=8):
+def quant_dequant_x(x, min_x=None, max_x=None, num_bits=8):
     eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2. ** num_bits - 1.
     if max_x == None or min_x == None:
@@ -207,7 +207,7 @@ class TorchSmoothQuant:
         self.output_values = {}
         self.input_maxes = {}
         self.input_mins = {}
-        self.input_abs_maxes = {}
+        self.input_maxes_abs = {}
         self.hook_layer_names = []
         self.hook_values_handles = []
         self.traced_model = traced_model
@@ -239,7 +239,7 @@ class TorchSmoothQuant:
             if name not in self.input_maxes.keys():
                 self.input_maxes[name] = []
                 self.input_mins[name] = []
-                self.input_abs_maxes[name] = []
+                self.input_maxes_abs[name] = []
             input = inputs[0]
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not supported now, need better way
@@ -249,7 +249,7 @@ class TorchSmoothQuant:
             min_tensor = torch.min(input, dim=0)[0]
             k_index = int(input.shape[0] * percentile / 100)
             res, _ = torch.kthvalue(torch.abs(input), k_index, dim=0)
-            self.input_abs_maxes[name].append(res)
+            self.input_maxes_abs[name].append(res)
             self.input_maxes[name].append(max_tensor)
             self.input_mins[name].append(min_tensor)
             # self.input_values[name] = input
@@ -333,7 +333,7 @@ class TorchSmoothQuant:
         self._add_observer(hook_modules, hook_modules_input_output, percentile=percentile)
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
-        return self.input_abs_maxes
+        return self.input_maxes_abs
 
     def _dump_min_max(self, calib_iter=100):
         """
@@ -356,11 +356,11 @@ class TorchSmoothQuant:
             self.input_maxes[key] = torch.max(max_val, dim=0)[0]
             self.input_mins[key] = torch.min(min_val, dim=0)[0]
             ##abs_max_val = torch.abs(self.input_maxes[key])
-            ##self.input_abs_maxes[key] = abs_max_val
-            # self.input_abs_maxes[key] = torch.max(torch.stack(self.input_abs_maxes[key], dim=0), dim=0)[0]
+            ##self.input_maxes_abs[key] = abs_max_val
+            # self.input_maxes_abs[key] = torch.max(torch.stack(self.input_maxes_abs[key], dim=0), dim=0)[0]
             abs_max_val = torch.max(torch.abs(self.input_mins[key]), torch.abs(self.input_maxes[key]))
             ##abs_max_val = self.input_maxes[key] - self.input_mins[key]
-            self.input_abs_maxes[key] = abs_max_val
+            self.input_maxes_abs[key] = abs_max_val
         # for key in self.input_values.keys():
         #     self.input_values[key] = torch.cat(self.input_values[key], dim=0)  ##this may introduce memory issue
         #     self.output_values[key] = torch.cat(self.output_values[key], dim=0)
@@ -671,8 +671,10 @@ class TorchSmoothQuant:
                     layer_cp = copy.deepcopy(layer)
                     layer_cp.weight.data = weight_qdq
                     for input_of_op, output_of_op in zip(input_of_ops, output_of_ops):
-                        input_of_op_q = quant_dequant_x(input_of_op * input_scale,  self.input_mins[self.absorb_to_layer[absorb_key][0]] * input_scale, self.input_maxes[self.absorb_to_layer[absorb_key][0]] * input_scale,
-                                                       )
+                        input_of_op_q = quant_dequant_x(input_of_op * input_scale, self.input_mins[
+                            self.absorb_to_layer[absorb_key][0]] * input_scale, self.input_maxes[
+                                                            self.absorb_to_layer[absorb_key][0]] * input_scale,
+                                                        )
                         output_of_op_q = layer_cp(input_of_op_q)
                         loss += self._get_auto_loss(output_of_op, output_of_op_q)
                     self.recover()
@@ -741,7 +743,7 @@ class TorchSmoothQuant:
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
-            input_maxes = self.input_maxes
+            input_maxes_abs = self.input_maxes_abs
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
                     self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
@@ -773,15 +775,15 @@ class TorchSmoothQuant:
                 if alpha == "auto":
                     save_input_output = True
 
-                input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, percentile, save_input_output)
+                input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile, save_input_output)
                 if alpha == 'auto':
-                    self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
+                    self.alpha_per_layer = self._auto_tune_alpha(input_maxes_abs, **auto_alpha_args)  ##save the alpha
 
             if alpha == 'auto':
                 alpha = self.alpha_per_layer
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
-                                                                                      input_maxes, alpha)
+                                                                                      input_maxes_abs, alpha)
             self.input_values, self.output_values = {}, {}
             return self.model
 
