@@ -65,6 +65,7 @@ arg_parser.add_argument("--tune", type=bool,
                         dest="tune",
                         default=False
                         )
+arg_parser.add_argument('--smooth-quant', dest='sq', action='store_true', help='smooth quantization')
 arg_parser.add_argument("--benchmark", type=bool,
                         help="whether to do benchmark",
                         dest="benchmark",
@@ -268,12 +269,17 @@ class Distilbert_base(object):
 
     def run(self):
         graph = self.load_graph()
-        if ARGS.tune:
+        if ARGS.tune or ARGS.sq:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
-            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
-            config = PostTrainingQuantConfig(calibration_sampling_size=[500],
-                                             accuracy_criterion=accuracy_criterion, quant_level=1, recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.6}})
+            if ARGS.sq:
+                config = PostTrainingQuantConfig(calibration_sampling_size=[500],
+                                                quant_level=1,
+                                                recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.6}})
+            else:
+                accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
+                config = PostTrainingQuantConfig(calibration_sampling_size=[500],
+                                                 accuracy_criterion=accuracy_criterion)
             q_model = quantization.fit(model=graph, conf=config, calib_dataloader=self.dataloader,
                             eval_func=self.eval_func)
             try:
