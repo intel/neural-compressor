@@ -192,8 +192,7 @@ class TuneStrategy(object):
 
     @property
     def baseline(self):
-        """Gets the baseline.
-        """
+        """Gets the baseline."""
         return self._baseline
 
     @baseline.setter
