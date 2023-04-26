@@ -63,7 +63,9 @@ class SmoothQuantScaler:
         g.graph = self.model
         g.add_node(mul_node, input_node_name, [output_node_name]) # v0/conv0/conv2d/Conv2D
         g.add_node(mul_const_node, None, [input_node_name + "_mul" + node_suffix])
-        self.model.graph_def = g.dump_graph()
+        sq_graph_def = g.dump_graph()
+        sq_graph_def.library.CopyFrom(self.model.graph_def.library)
+        self.model.graph_def = sq_graph_def
 
     def _adjust_weight(self, scale, weight_node, original_weight):
         """In-place adjust weight by scale.
