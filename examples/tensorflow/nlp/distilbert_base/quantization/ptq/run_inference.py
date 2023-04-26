@@ -192,7 +192,7 @@ class Distilbert_base(object):
             logger.warning("Warmup steps greater than max possible value of 22." + \
                            " Setting to max value of ", MAX_WARMUP_STEPS)
             ARGS.warmup_steps = MAX_WARMUP_STEPS
-        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+        if ARGS.tune or ARGS.sq or (ARGS.benchmark and ARGS.mode == "accuracy"):
             ARGS.steps = MAX_STEPS
         elif ARGS.benchmark:
             if ARGS.steps > (MAX_STEPS - MAX_WARMUP_STEPS):
@@ -255,11 +255,11 @@ class Distilbert_base(object):
                 start_time = time.time()
                 pred = sess.run(output, feed_dict=feed_dict)
                 run_time = time.time() - start_time
-                if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+                if ARGS.tune or ARGS.sq or (ARGS.benchmark and ARGS.mode == "accuracy"):
                     total_correct_predictions += self.get_correct_predictions(pred, labels)
                 total_time += run_time
         time_per_batch = total_time / float(ARGS.steps / ARGS.batch_size)
-        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+        if ARGS.tune or ARGS.sq or (ARGS.benchmark and ARGS.mode == "accuracy"):
             accuracy = total_correct_predictions / ARGS.steps
             logger.info("Accuracy: {:.4f}".format(accuracy))
         if self.dataloader.batch_size == 1:
