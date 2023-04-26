@@ -3120,18 +3120,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # real calibration for other operators
-        if q_func is not None:
-            try:
-                # IPEX may raise an error on the second iteration.
-                # OverflowError: cannot convert float infinity to integer
+        try:
+            # IPEX may raise an error on the second iteration.
+            # OverflowError: cannot convert float infinity to integer
+            if q_func is not None:
                 q_func(q_model)
-            except:
-                logger.error("The q_func failed when calibrating with ipex, "+\
-                             "using dataloader with 1 iteration insteadly.")
-        else:
-            iterations = tune_cfg.get('calib_iteration', 1)
-            self.model_calibration(q_model, dataloader, iterations, None,
+            else:
+                iterations = tune_cfg.get('calib_iteration', 1)
+                self.model_calibration(q_model, dataloader, iterations, None,
                                     tune_cfg.get('calib_sampling_size', 1))
+        except:
+            logger.error("The calibration failed when calibrating with ipex, "+\
+                         "using dataloader with 1 iteration insteadly.")
 
         # update ipex_config.json with smoothquant_scale_info
         q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
