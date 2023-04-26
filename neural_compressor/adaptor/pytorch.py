@@ -2963,7 +2963,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 if self.q_func is None:
                     self.model_calibration(tmp_model, self.q_dataloader)
                 else:
-                    self.q_func(tmp_model)
+                    try:
+                        self.q_func(tmp_model)
+                    except:
+                        logger.error("The q_func failed when calibrating with ipex, "+\
+                                     "using dataloader with 1 iteration insteadly.")
+                        self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
                 if hasattr(self, 'sq_module_name_list') and self.performance_only:
                     # recover model before SmoothQuant, tmp_model is copied when prepare.
@@ -3114,9 +3119,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
-        # real calibration for other operators, like quantize_per_tensor.
+        # real calibration for other operators
         if q_func is not None:
-            q_func(q_model)
+            try:
+                # IPEX may raise an error on the second iteration.
+                # OverflowError: cannot convert float infinity to integer
+                q_func(q_model)
+            except:
+                logger.error("The q_func failed when calibrating with ipex, "+\
+                             "using dataloader with 1 iteration insteadly.")
         else:
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model, dataloader, iterations, None,
