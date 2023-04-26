@@ -612,7 +612,7 @@ class TorchSmoothQuant:
             return need_calib
 
         if self.percentile == percentile and self.op_types == op_types \
-                and self.scales_per_op == scales_per_op and self.calib_iter != calib_iter:
+                and self.scales_per_op == scales_per_op and self.calib_iter == calib_iter:
             if isinstance(alpha, float):
                 need_calib = False
             elif self.alpha == "auto":
@@ -852,6 +852,8 @@ class GraphTrace:
             "LlamaRMSNorm": "aten::mul",
             "T5LayerNorm": "aten::mul",
         }
+
+        ##TODO potential bug, need to check only have one bug
         ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to",
                                         "aten::relu",
