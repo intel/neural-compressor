@@ -164,15 +164,12 @@ class TuneStrategy(object):
 
     @property
     def adaptor(self):
-        """
-        Gets the adaptor.
-        """
+        """Gets the adaptor."""
         return self._adaptor
 
     @adaptor.setter
     def adaptor(self, value):
-        """
-        Sets the adaptor.
+        """Sets the adaptor.
 
         Args:
             value: The new value for the adaptor.
@@ -181,15 +178,12 @@ class TuneStrategy(object):
 
     @property
     def framework(self):
-        """
-        Gets the framework.
-        """
+        """Gets the framework."""
         return self._framework
 
     @framework.setter
     def framework(self, value):
-        """
-        Sets the framework.
+        """Sets the framework.
 
         Args:
             value: The new value for the framework.
@@ -198,15 +192,13 @@ class TuneStrategy(object):
 
     @property
     def baseline(self):
-        """
-        Gets the baseline.
+        """Gets the baseline.
         """
         return self._baseline
 
     @baseline.setter
     def baseline(self, value):
-        """
-        Sets the baseline.
+        """Sets the baseline.
 
         Args:
             value (float): The new value for the baseline.
@@ -215,15 +207,12 @@ class TuneStrategy(object):
 
     @property
     def trials_count(self):
-        """
-        Gets the trials_count.
-        """
+        """Gets the trials_count."""
         return self._trials_count
 
     @trials_count.setter
     def trials_count(self, value):
-        """
-        Sets the trials_count.
+        """Sets the trials_count.
 
         Args:
             value (int): The new value for the trials_count.
@@ -232,15 +221,12 @@ class TuneStrategy(object):
 
     @property
     def capability(self):
-        """
-        Gets the capability.
-        """
+        """Gets the capability."""
         return self._capability
 
     @capability.setter
     def capability(self, value):
-        """
-        Sets the capability.
+        """Sets the capability.
 
         Args:
             value: The new value for the capability.
@@ -249,15 +235,12 @@ class TuneStrategy(object):
 
     @property
     def tuning_space(self):
-        """
-        Gets the tuning_space.
-        """
+        """Gets the tuning_space."""
         return self._tuning_space
 
     @tuning_space.setter
     def tuning_space(self, value):
-        """
-        Sets the tuning_space.
+        """Sets the tuning_space.
 
         Args:
             value (list): The new value for the tuning_space.
@@ -266,15 +249,12 @@ class TuneStrategy(object):
 
     @property
     def algo_scheduler(self):
-        """
-        Gets the algo_scheduler.
-        """
+        """Gets the algo_scheduler."""
         return self._algo_scheduler
 
     @algo_scheduler.setter
     def algo_scheduler(self, value):
-        """
-        Sets the algo_scheduler.
+        """Sets the algo_scheduler.
 
         Args:
             value: The new value for the algo_scheduler.
