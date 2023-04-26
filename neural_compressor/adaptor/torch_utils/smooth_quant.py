@@ -278,6 +278,7 @@ class TorchSmoothQuant:
 
         return save_input_output_hook
 
+
     def _add_input_output_observer(self, input_output_modules):
         for key in input_output_modules.keys():
             hook_func = self._save_input_output_hook(key)
@@ -305,8 +306,6 @@ class TorchSmoothQuant:
         """
         for hook_handle in self.hook_handles:
             hook_handle.remove()
-
-
 
     def _calibrate(self, absorb_to_layer, calib_iter, percentile, save_input_output=False):
         """
@@ -336,6 +335,7 @@ class TorchSmoothQuant:
             for name in hook_layer_names:
                 hook_modules_input_output[name] = get_module(self.model, name)
             self._add_input_output_observer(hook_modules_input_output)
+
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
         return self.input_maxes_abs
@@ -638,9 +638,9 @@ class TorchSmoothQuant:
             loss = torch.mean(torch.pow(torch.abs(output - output_q) / torch.abs(output), loss_alpha))
             return loss
 
+
     # def _auto_tune_alpha_save_memory(self, input_maxes, alpha_space, attn_method):
     #     pass
-
 
     def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
         """
