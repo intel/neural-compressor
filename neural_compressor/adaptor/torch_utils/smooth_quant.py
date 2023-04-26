@@ -754,7 +754,7 @@ class TorchSmoothQuant:
                         logger.warning("sorry, could not trace the model, smooth quant is ignored")
                         logger.warning("if you are using huggingface model,"
                                        "you could set torchscript to True "
-                                       "when loading the model or set the return_dict to False")
+                                       "when loading the model")
                         return self.model
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
