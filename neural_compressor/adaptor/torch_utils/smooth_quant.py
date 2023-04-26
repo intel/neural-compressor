@@ -323,12 +323,11 @@ class TorchSmoothQuant:
 
         for index, name in enumerate(hook_module_names):
             module = get_module(self.model, name)
-            if isinstance(module, torch.nn.Linear) or isinstance(module,
-                                                                 torch.nn.Conv2d):
+            if module.__class__.__name__.split(".")[-1] in self.op_types:
                 hook_modules[name] = module
         if len(hook_modules) == 0:
             return {}
-        self._add_min_max_observer(hook_modules,)
+        self._add_min_max_observer(hook_modules, percentile)
         if save_input_output:
             hook_modules_input_output = {}
             hook_layer_names=[]
@@ -336,7 +335,7 @@ class TorchSmoothQuant:
                 hook_layer_names += self.absorb_to_layer[key]
             for name in hook_layer_names:
                 hook_modules_input_output[name] = get_module(self.model, name)
-            self._add_input_output_observer(hook_modules_input_output, percentile=percentile)
+            self._add_input_output_observer(hook_modules_input_output)
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
         return self.input_maxes_abs
@@ -639,7 +638,8 @@ class TorchSmoothQuant:
             loss = torch.mean(torch.pow(torch.abs(output - output_q) / torch.abs(output), loss_alpha))
             return loss
 
-    def _auto_tune_alpha_save_memory(self, input_maxes, alpha_space, attn_method):
+    # def _auto_tune_alpha_save_memory(self, input_maxes, alpha_space, attn_method):
+    #     pass
 
 
     def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
