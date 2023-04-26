@@ -625,7 +625,7 @@ class TorchSmoothQuant:
         self.calib_iter = calib_iter
         return need_calib
 
-    def _get_auto_loss(self, output, output_q, loss_type="mean", loss_alpha=1.0):
+    def _get_auto_loss(self, output, output_q, loss_type="mse", loss_alpha=1.0):
         if loss_type == "mse":
             return torch.mean((output - output_q) ** 2)
         elif loss_type == "mean_scale_error":
