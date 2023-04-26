@@ -52,7 +52,6 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    sed -i 's/sklearn/scikit-learn/g' ./nnUNet/setup.py
     if [[ ${int8} == "true" ]]; then
         extra_cmd="--int8"
     else

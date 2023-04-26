@@ -37,7 +37,6 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    sed -i 's/sklearn/scikit-learn/g' ./nnUNet/setup.py
     python run.py \
             --model_dir=${input_model} \
             --backend=pytorch --accuracy \
