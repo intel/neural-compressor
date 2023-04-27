@@ -510,7 +510,7 @@ conf = PostTrainingQuantConfig(backend="ipex")
 conf = PostTrainingQuantConfig(backend="onnxrt_cuda_ep", device="gpu")
 ```
 ```python
-# run with TF ITEX on GPU
+# run with ITEX on GPU
 conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ```
 
