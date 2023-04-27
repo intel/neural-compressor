@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: FrozenPbModel(path: str)
+.. py:class:: FrozenPbModel
 
 
 

@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: SavedModelModel(path: str)
+.. py:class:: SavedModelModel
 
 
 

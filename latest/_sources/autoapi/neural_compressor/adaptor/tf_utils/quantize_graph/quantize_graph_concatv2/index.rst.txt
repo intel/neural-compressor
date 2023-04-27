@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: FuseNodeStartWithConcatV2
+.. py:class:: FuseNodeStartWithConcatV2(**kwargs)
 
 
 

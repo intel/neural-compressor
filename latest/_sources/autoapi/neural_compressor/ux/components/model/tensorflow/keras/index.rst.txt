@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: KerasModel
+.. py:class:: KerasModel(path: str)
 
 
 

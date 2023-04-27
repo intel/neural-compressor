@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: MetaGraphModel(path: str)
+.. py:class:: MetaGraphModel
 
 
 

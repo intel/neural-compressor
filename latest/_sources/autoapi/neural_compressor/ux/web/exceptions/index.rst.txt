@@ -12,7 +12,17 @@
 Module Contents
 ---------------
 
-.. py:exception:: ServiceNotFoundException
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.exceptions.ServiceNotFoundException
+
+
+
+
+.. py:class:: ServiceNotFoundException
 
 
 
