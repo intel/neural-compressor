@@ -33,7 +33,6 @@ arg_parser.add_argument("--output-graph",
 arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
 arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
-arg_parser.add_argument('--smooth-quant', dest='sq', action='store_true', help='smooth quantization')
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
@@ -97,7 +96,7 @@ class eval_classifier_optimized_graph:
         from neural_compressor.utils import set_random_seed
         set_random_seed(9527)
 
-        if args.tune or args.sq:
+        if args.tune:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor.utils.create_obj_from_config import create_dataloader
@@ -117,17 +116,11 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-            if args.sq:
-                # TODO quant level remove
-                conf = PostTrainingQuantConfig(outputs=['softmax_tensor'],
-                                            calibration_sampling_size=[50, 100],
-                                            quant_level=1,
-                                            recipes={"smooth_quant": True,
-                                                        "smooth_quant_args": {'alpha': 0.5}})
-            else:
-                conf = PostTrainingQuantConfig(outputs=['softmax_tensor'], calibration_sampling_size=[50, 100])
+            conf = PostTrainingQuantConfig(outputs=['softmax_tensor'], calibration_sampling_size=[50, 100])
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                        eval_dataloader=eval_dataloader)
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
             q_model.save(args.output_graph)
 
         if args.benchmark:

@@ -23,7 +23,7 @@ import random
 import numpy as np
 from .component import Component
 from ..conf.dotdict import deep_get, deep_set, DotDict
-from ..strategy import STRATEGIES
+from .strategy import EXP_STRATEGIES
 from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
@@ -144,7 +144,7 @@ class Quantization(Component):
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support {self.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
-        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
+        assert strategy in EXP_STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
@@ -157,7 +157,7 @@ class Quantization(Component):
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
-        self.strategy = STRATEGIES[strategy](
+        self.strategy = EXP_STRATEGIES[strategy](
             self._model,
             self.conf,
             self._calib_dataloader,

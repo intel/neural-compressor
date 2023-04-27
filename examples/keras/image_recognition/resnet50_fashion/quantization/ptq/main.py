@@ -51,7 +51,7 @@ flags.DEFINE_integer(
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 
 def evaluate(model):
     """Custom evaluate function to inference the model for specified metric on validation dataset.
@@ -62,7 +62,7 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    metric = TensorflowTopK(k=1)
+    metric = Metric(name="topk", k=1)
 
     def eval_func(data_loader, metric):
         warmup = 5

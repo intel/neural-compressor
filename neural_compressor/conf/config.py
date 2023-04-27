@@ -18,7 +18,6 @@
 import yaml
 from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
-from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
 from ..utils import logger
 from ..version import __version__
@@ -28,6 +27,10 @@ import itertools
 from collections import OrderedDict
 from .dotdict import DotDict, deep_set
 import os, datetime
+# TODO WA for avoid circular import
+# from ..experimental.strategy import EXP_STRATEGIES
+EXP_STRATEGIES = ['basic', 'auto_mixed_precision', 'bayesian', 'conservative',\
+    'exhaustive', 'hawq_v2', 'mse', 'mse_v2', 'random', 'sigopt', 'tpe', 'fake']
 
 def constructor_register(cls):
     yaml_key = "!{}".format(cls.__name__)
@@ -914,7 +917,7 @@ schema = Schema({
         'diagnosis': False,
         }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES),
+            'name': And(str, lambda s: s in EXP_STRATEGIES),
             Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,

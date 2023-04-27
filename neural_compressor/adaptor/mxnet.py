@@ -25,7 +25,7 @@ from neural_compressor.utils.utility import (LazyImport, GLOBAL_STATE, MODE, Cpu
                                              dump_elapsed_time, singleton)
 from neural_compressor.adaptor.mxnet_utils.util import *
 from collections import OrderedDict
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
 from copy import deepcopy
 import math
 

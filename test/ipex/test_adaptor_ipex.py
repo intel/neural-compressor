@@ -6,7 +6,7 @@ import unittest
 from neural_compressor.experimental import common
 from packaging.version import Version
 from neural_compressor.utils.utility import LazyImport
-from neural_compressor import config
+from neural_compressor.conf.pythonic_config import config
 from neural_compressor.utils.pytorch import load
 torch_utils = LazyImport("neural_compressor.adaptor.torch_utils")
 

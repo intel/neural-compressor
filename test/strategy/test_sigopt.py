@@ -3,69 +3,10 @@ import numpy as np
 import unittest
 import shutil
 import os
-import yaml
 if os.getenv('SIGOPT_API_TOKEN') is None or os.getenv('SIGOPT_PROJECT_ID') is None:
     CONDITION = True
 else:
     CONDITION = False
-
-def build_fake_yaml(sigopt_api_token,sigopt_project_id):
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op2_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: sigopt
-              sigopt_api_token: {}
-              sigopt_project_id: {}
-              sigopt_experiment_name: nc-tune
-            accuracy_criterion:
-              relative: 0.01
-            workspace:
-              path: saved
-        '''.format(sigopt_api_token, sigopt_project_id)
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
-    f.close()
-
-def build_fake_yaml2(sigopt_api_token,sigopt_project_id):
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op2_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-          strategy:
-            name: sigopt
-            sigopt_api_token: {}
-            sigopt_project_id: {}
-            sigopt_experiment_name: nc-tune
-          exit_policy:
-            max_trials: 3
-          accuracy_criterion:
-            relative: -0.01
-          workspace:
-            path: saved
-        '''.format(sigopt_api_token, sigopt_project_id)
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
-    f.close()
 
 def build_fake_model():
     import tensorflow as tf
@@ -103,7 +44,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-@unittest.skipIf(CONDITION , "missing the env variables 'SIGOPT_API_TOKEN' or 'SIGOPT_PROJECT_ID'")
+
 class TestSigoptTuningStrategy(unittest.TestCase):
 
     @classmethod
@@ -111,36 +52,12 @@ class TestSigoptTuningStrategy(unittest.TestCase):
         sigopt_api_token = os.getenv('SIGOPT_API_TOKEN')
         sigopt_project_id = os.getenv('SIGOPT_PROJECT_ID')
         self.constant_graph = build_fake_model()
-        build_fake_yaml(sigopt_api_token,sigopt_project_id)
-        build_fake_yaml2(sigopt_api_token,sigopt_project_id)
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
-        os.remove('fake_yaml2.yaml')
         shutil.rmtree('saved', ignore_errors=True)
-
-    def test_run_basic_one_trial(self):
-        from neural_compressor.experimental import Quantization, common
-
-        quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        quantizer.fit()
-
-
-    def test_run_basic_max_trials(self):
-        from neural_compressor.experimental import Quantization, common
-
-        quantizer = Quantization('fake_yaml2.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        quantizer.fit()
         
+    @unittest.skipIf(CONDITION , "missing the env variables 'SIGOPT_API_TOKEN' or 'SIGOPT_PROJECT_ID'")
     def test_run_sigopt_one_trial_new_api(self):
         from neural_compressor.quantization import fit
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
@@ -156,11 +73,38 @@ class TestSigoptTuningStrategy(unittest.TestCase):
                            'sigopt_project_id': 'sigopt_project_id_test',
                            'sigopt_experiment_name': 'nc-tune'}
         tuning_criterion = TuningCriterion(strategy='sigopt', strategy_kwargs=strategy_kwargs, max_trials=3)
-        conf = PostTrainingQuantConfig(approach="static", 
+        conf = PostTrainingQuantConfig(quant_level=1,
+                                       approach="static",
                                        tuning_criterion=tuning_criterion,
                                        accuracy_criterion=accuracy_criterion)
-        self.assertEqual(conf.strategy_kwargs, strategy_kwargs)
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
+        self.assertEqual(conf.tuning_criterion.strategy_kwargs, strategy_kwargs)
+        def fake_eval(model):
+            return 1
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
+        
+    def test_run_sigopt_one_trial_fake_token(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataloader = DATALOADERS["tensorflow"](dataset)
+        
+        # tuning and accuracy criterion
+        accuracy_criterion = AccuracyCriterion(criterion='relative')
+        strategy_kwargs = {'sigopt_api_token': 'sigopt_api_token_test', 
+                           'sigopt_project_id': 'sigopt_project_id_test',
+                           'sigopt_experiment_name': 'nc-tune'}
+        tuning_criterion = TuningCriterion(strategy='sigopt', strategy_kwargs=strategy_kwargs, max_trials=3)
+        conf = PostTrainingQuantConfig(quant_level=1,
+                                       approach="static",
+                                       tuning_criterion=tuning_criterion,
+                                       accuracy_criterion=accuracy_criterion)
+        self.assertEqual(conf.tuning_criterion.strategy_kwargs, strategy_kwargs)
+        def fake_eval(model):
+            return 1
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
 
 
 if __name__ == "__main__":

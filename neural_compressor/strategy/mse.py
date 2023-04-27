@@ -21,7 +21,7 @@ from collections import OrderedDict
 from typing import Dict, Any, List
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
-from time import time 
+from time import time
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
@@ -34,12 +34,43 @@ class MSETuneStrategy(TuneStrategy):
     the best model-wise tuning configuration. It then calculates the MSE (Mean Squared Error) for each OP, sorts
     those OPs according to the MSE value, and performs the op-wise fallback in this order.
     """
-    
-    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
-                 eval_func=None, dicts=None, q_hooks=None):
-        """Init an mse tuning strategy."""
-        super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
-                         eval_func, dicts, q_hooks)
+
+    def __init__(self,
+                 model,
+                 conf,
+                 q_dataloader=None,
+                 q_func=None,
+                 eval_func=None,
+                 eval_dataloader=None,
+                 eval_metric=None,
+                 resume=None,
+                 q_hooks=None):
+        """Init MSE tuning strategy.
+
+        Args:
+            model: The FP32 model specified for low precision tuning.
+            conf: The Conf class instance includes all user configurations.
+            q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
+            q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
+                outputs a higher-is-better accuracy scalar value.
+            eval_dataloader: Data loader for evaluation. Defaults to None.
+            eval_metric: Metric for evaluation. Defaults to None.
+            resume: The dict containing resume information. Defaults to None.
+            q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
+                on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
+        """
+        super().__init__(model=model,
+                         conf=conf,
+                         q_dataloader=q_dataloader,
+                         q_func=q_func,
+                         eval_func=eval_func,
+                         eval_dataloader=eval_dataloader,
+                         eval_metric=eval_metric,
+                         resume=resume,
+                         q_hooks=q_hooks)
+        logger.info(f"*** Initialize MSE tuning")
         self.ordered_ops = None
 
 
@@ -50,7 +81,7 @@ class MSETuneStrategy(TuneStrategy):
             save_dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
+            if self._same_conf(history['cfg'], self.conf):
                 history['ordered_ops'] = self.ordered_ops
         save_dict = super().__getstate__()
         return save_dict
@@ -80,25 +111,25 @@ class MSETuneStrategy(TuneStrategy):
             op_list (List[Tuple(str, str)]): List of ops in format of [(op_name, op_type), ...].
             fp32_model (Model): The original FP32 model before quantization.
             current_best_model (Model):  The currently best quantized model.
-            
+
         Returns:
             ordered_op_name_types (List[Tuple(str, str)]): The sorted list of ops by its MSE
-              impaction, in the same format of 'op_list'. 
+              impaction, in the same format of 'op_list'.
         """
         op_name_lst = [element[0] for element in op_list ]
         op_mapping = {}
         for (op_name, op_type) in list(op_list):
             op_mapping[op_name] = (op_name, op_type)
         current_best_tune_cfg = self._tune_cfg_converter(self.cur_best_tuning_cfg)
-        fp32_dump_content = self.adaptor.inspect_tensor(fp32_model, 
-            self.calib_dataloader, op_name_lst, [1], inspect_type='activation', 
-            save_to_disk=True, save_path="./nc_workspace/", 
+        fp32_dump_content = self.adaptor.inspect_tensor(fp32_model,
+            self.calib_dataloader, op_name_lst, [1], inspect_type='activation',
+            save_to_disk=True, save_path="./nc_workspace/",
             quantization_cfg=current_best_tune_cfg)
         fp32_tensor_dict = fp32_dump_content['activation'][0]
         best_qmodel = self.adaptor.quantize(current_best_tune_cfg, self.model, self.calib_dataloader, self.q_func)
-        quant_dump_content = self.adaptor.inspect_tensor(best_qmodel, 
+        quant_dump_content = self.adaptor.inspect_tensor(best_qmodel,
             self.calib_dataloader, op_name_lst, [1], inspect_type='activation',
-            save_to_disk=True, save_path="./nc_workspace/", 
+            save_to_disk=True, save_path="./nc_workspace/",
             quantization_cfg=current_best_tune_cfg)
         dequantize_tensor_dict = quant_dump_content['activation'][0]
         ops_mse = {
@@ -106,14 +137,14 @@ class MSETuneStrategy(TuneStrategy):
                 list(fp32_tensor_dict[op].values())[0],
                 list(dequantize_tensor_dict[op].values())[0]) for op in fp32_tensor_dict}
         ordered_op_names = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=self.higher_is_better)
-        
+
         ordered_op_name_types = [op_mapping[name] for name in ordered_op_names]
         return ordered_op_name_types
 
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config.
-        
+
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
@@ -121,13 +152,13 @@ class MSETuneStrategy(TuneStrategy):
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for calib_sampling_size in calib_sampling_size_lst:
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-            # Optype-wise tuning 
+            # Optype-wise tuning
             early_stop_tuning = True
-            stage1_cnt = 0  
+            stage1_cnt = 0
             int8_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
             int8_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
             stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
+            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for op_tuning_cfg in op_wise_tuning_sampler:
                 stage1_cnt += 1
@@ -183,7 +214,7 @@ class MSETuneStrategy(TuneStrategy):
 
                 # Do accumulated fallback according to the order in the previous stage
                 if len(op_fallback_acc_impact) > 0:
-                    ordered_ops = sorted(op_fallback_acc_impact.keys(), 
+                    ordered_ops = sorted(op_fallback_acc_impact.keys(),
                                         key=lambda key: op_fallback_acc_impact[key],
                                         reverse=self.higher_is_better)
                     op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))

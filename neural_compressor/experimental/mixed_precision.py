@@ -24,7 +24,7 @@ import numpy as np
 from ..conf.config import MixedPrecision_Conf
 from ..conf.pythonic_config import Config
 from ..conf.dotdict import deep_get
-from ..strategy import STRATEGIES
+from .strategy import EXP_STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
 from ..utils.utility import CpuInfo, time_limit
@@ -149,7 +149,7 @@ class MixedPrecision(GraphOptimization):
 
         strategy = cfg.tuning.strategy.name.lower()
 
-        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
+        assert strategy in EXP_STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
@@ -162,7 +162,7 @@ class MixedPrecision(GraphOptimization):
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
-        self.strategy = STRATEGIES[strategy](
+        self.strategy = EXP_STRATEGIES[strategy](
             self._model,
             self.conf,
             None,
