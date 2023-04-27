@@ -127,8 +127,8 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             def eval(model):
                 return evaluate(model, dataloader, top1)
 
