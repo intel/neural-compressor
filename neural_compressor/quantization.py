@@ -111,9 +111,10 @@ def fit(model,
 
             2. User also can get the built-in metrics by neural_compressor.Metric:
                 Metric(name="topk", k=1)
-            3. User also can set specific metric through this api. The metric class should take the outputs of the model or
-               postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels)
-               as inputs for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+            3. User also can set specific metric through this api. The metric class should take the outputs of
+               the model or postprocess(if have) as inputs, neural_compressor built-in metric always
+               take (predictions, labels) as inputs for update, and user_metric.metric_cls should be
+               sub_class of neural_compressor.metric.BaseMetric.
 
     Example::
 

@@ -193,7 +193,7 @@ def wrap_model_from(user_model, conf):
     """Wrap the user model and dispatch to framework specific internal model object.
 
     Args:
-       user_model: user are supported to set model from original framework model format
+        user_model: user are supported to set model from original framework model format
                    (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
                    Best practice is to set from a initialized neural_compressor.common.Model.
                    If tensorflow model is used, model's inputs/outputs will be auto inferred,

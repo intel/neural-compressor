@@ -137,79 +137,84 @@ def get_bounded_threads(core_ids, threads, sockets):
 
 
 def run_instance(model, conf, b_dataloader=None, b_func=None):
-        """Run the instance with the configuration.
+    """Run the instance with the configuration.
 
-        Args:
-            runs benchmarking with numactl on specific cores and instances set
-                by user config and returns model performance
-        """
-        results = {}
-        if b_func is None:
-            GLOBAL_STATE.STATE = MODE.BENCHMARK
-            framework_specific_info = {'device': conf.device,
-                                       'approach': None,
-                                       'random_seed': options.random_seed,
-                                       'backend': conf.backend if conf.backend is not None else 'default',
-                                       'format': 'default'}
-            framework = conf.framework.lower()
-            if 'tensorflow' in framework:
-                framework_specific_info.update({"inputs": conf.inputs, \
-                                                "outputs": conf.outputs, \
-                                                "recipes": {}, \
-                                                'workspace_path': options.workspace})
-            if framework == 'keras':
-                framework_specific_info.update({'workspace_path': options.workspace})
-            if framework == 'mxnet':
-                framework_specific_info.update({"b_dataloader": b_dataloader})
-            if 'onnx' in framework:
-                framework_specific_info.update(
-                                     {'workspace_path': options.workspace, \
-                                     'graph_optimization': OPTIONS[framework].graph_optimization})
-            if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
-                framework_specific_info.update({"workspace_path": options.workspace,
-                                                "q_dataloader": None})
+    Args:
+        model (object):           The model to be benchmarked.
+        conf (BenchmarkConfig): The configuration for benchmark containing accuracy goal,
+                                  tuning objective and preferred calibration & quantization
+                                  tuning space etc.
+        b_dataloader:             The dataloader for frameworks.
+        b_func:                   Customized benchmark function. If user passes the dataloader,
+                                  then b_func is not needed.
+    """
+    results = {}
+    if b_func is None:
+        GLOBAL_STATE.STATE = MODE.BENCHMARK
+        framework_specific_info = {'device': conf.device,
+                                   'approach': None,
+                                   'random_seed': options.random_seed,
+                                   'backend': conf.backend if conf.backend is not None else 'default',
+                                   'format': 'default'}
+        framework = conf.framework.lower()
+        if 'tensorflow' in framework:
+            framework_specific_info.update({"inputs": conf.inputs, \
+                                            "outputs": conf.outputs, \
+                                            "recipes": {}, \
+                                            'workspace_path': options.workspace})
+        if framework == 'keras':
+            framework_specific_info.update({'workspace_path': options.workspace})
+        if framework == 'mxnet':
+            framework_specific_info.update({"b_dataloader": b_dataloader})
+        if 'onnx' in framework:
+            framework_specific_info.update(
+                                 {'workspace_path': options.workspace, \
+                                 'graph_optimization': OPTIONS[framework].graph_optimization})
+        if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
+            framework_specific_info.update({"workspace_path": options.workspace,
+                                            "q_dataloader": None})
 
-            assert isinstance(model, BaseModel), 'need set neural_compressor Model for quantization....'
+        assert isinstance(model, BaseModel), 'need set neural_compressor Model for quantization....'
 
-            adaptor = FRAMEWORKS[framework](framework_specific_info)
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
 
-            assert b_dataloader is not None, "dataloader should not be None"
+        assert b_dataloader is not None, "dataloader should not be None"
 
-            from neural_compressor.utils.create_obj_from_config import create_eval_func
-            b_func = create_eval_func(conf.framework,
-                                      b_dataloader,
-                                      adaptor,
-                                      None)
+        from neural_compressor.utils.create_obj_from_config import create_eval_func
+        b_func = create_eval_func(conf.framework,
+                                  b_dataloader,
+                                  adaptor,
+                                  None)
 
-            objectives = MultiObjective(["performance"],
-                                        {'relative': 0.1},
-                                        is_measure=True)
+        objectives = MultiObjective(["performance"],
+                                    {'relative': 0.1},
+                                    is_measure=True)
 
-            val = objectives.evaluate(b_func, model)
-            # measurer contain info not only performance(eg, memory, model_size)
-            # also measurer have result list among steps
-            acc, _ = val
-            batch_size = b_dataloader.batch_size
-            warmup = conf.warmup
-            if len(objectives.objectives[0].result_list()) < warmup:
-                if len(objectives.objectives[0].result_list()) > 1 and warmup != 0:
-                    warmup = 1
-                else:
-                    warmup = 0
+        val = objectives.evaluate(b_func, model)
+        # measurer contain info not only performance(eg, memory, model_size)
+        # also measurer have result list among steps
+        acc, _ = val
+        batch_size = b_dataloader.batch_size
+        warmup = conf.warmup
+        if len(objectives.objectives[0].result_list()) < warmup:
+            if len(objectives.objectives[0].result_list()) > 1 and warmup != 0:
+                warmup = 1
+            else:
+                warmup = 0
 
-            result_list = objectives.objectives[0].result_list()[warmup:]
-            latency = np.array(result_list).mean() / batch_size
-            results["performance"] = acc, batch_size, result_list
+        result_list = objectives.objectives[0].result_list()[warmup:]
+        latency = np.array(result_list).mean() / batch_size
+        results["performance"] = acc, batch_size, result_list
 
-            logger.info("\nbenchmark result:")
-            for i, res in enumerate(result_list):
-                logger.debug("Iteration {} result {}:".format(i, res))
-            logger.info("Batch size = {}".format(batch_size))
-            logger.info("Latency: {:.3f} ms".format(latency * 1000))
-            logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
-            return results
-        else:
-            b_func(model.model)
+        logger.info("\nbenchmark result:")
+        for i, res in enumerate(result_list):
+            logger.debug("Iteration {} result {}:".format(i, res))
+        logger.info("Batch size = {}".format(batch_size))
+        logger.info("Latency: {:.3f} ms".format(latency * 1000))
+        logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
+        return results
+    else:
+        b_func(model.model)
 
 
 def generate_prefix(core_list):
