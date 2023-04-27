@@ -87,11 +87,20 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 
 
 # Run
-Usage
-```shell
-cd examples/tensorflow/object_detection/yolo_v3/quantization/ptq
+
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
 ```
-## 1. Tune
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
+## 1. Quantization
 ```python
 bash run_tuning.sh --input_model=/path/to/yolov3_fp32.pb --output_model=/path/to/save/yolov3_int8.pb --dataset_location=/path/to/dataset
 ```
