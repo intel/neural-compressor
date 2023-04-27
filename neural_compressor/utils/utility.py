@@ -54,21 +54,26 @@ required_libs = {
     'mxnet': ['mxnet'],
 }
 
+
 def version1_lt_version2(version1, version2):
     """Check whether version1 is less than version2."""
     return parse_version(version1) < parse_version(version2)
-    
+
+
 def version1_gt_version2(version1, version2):
     """Check whether version1 is greater than version2."""
     return parse_version(version1) > parse_version(version2)
+
 
 def version1_eq_version2(version1, version2):
     """Check whether version1 is equal to version2."""
     return parse_version(version1) == parse_version(version2)
 
+
 def version1_gte_version2(version1, version2):
     """Check whether version1 is greater than version2 or is equal to it."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
+
 
 def version1_lte_version2(version1, version2):
     """Check whether version1 is less than version2 or is equal to it."""
@@ -109,7 +114,7 @@ class LazyImport(object):
 
 def singleton(cls):
     """Not displayed in API Docs.
-    
+
     Singleton decorater.
     """
     instances = {}
@@ -173,7 +178,7 @@ def get_size(obj, seen=None):
 
 def compute_sparsity(tensor):
     """Compute the sparsity.
-    
+
     Args:
         tensor: Tensorflow or Pytorch tensor
 
@@ -411,7 +416,6 @@ def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
         weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
 
 
-
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
     import numpy as np
@@ -425,7 +429,7 @@ def Dequantize(data, scale_info):
 
 class CaptureOutputToFile(object):
     """Not displayed in API Docs.
-    
+
     Capture the output to file.
     """
     def __init__(self, tmp_file_path, stream=sys.stderr):
@@ -450,7 +454,7 @@ class Statistics():
     """The statistics printer."""
     def __init__(self, data, header, field_names, output_handle=logger.info):
         """Init a Statistics object.
-        
+
         Args:
             data: The statistics data
             header: The table header
@@ -498,6 +502,7 @@ class GLOBAL_STATE():
     """Access the global model."""
     STATE = MODE.QUANTIZATION
 
+
 def load_data_from_pkl(path, filename):
     """Load data from local pkl file.
 
@@ -512,6 +517,7 @@ def load_data_from_pkl(path, filename):
             return data
     except FileExistsError:
         logging.getLogger("neural_compressor").info('Can not open %s.' % path)
+
 
 def dump_data_to_local(data, path, filename):
     """Dump data to local as pkl file.
@@ -531,7 +537,6 @@ def dump_data_to_local(data, path, filename):
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
-
 
 
 def set_random_seed(seed: int):
@@ -557,6 +562,7 @@ def set_tensorboard(tensorboard: bool):
     from neural_compressor.config import options
     options.tensorboard = tensorboard
 
+
 def show_memory_info(hint):
     """Show process full memory."""
     pid = os.getpid()
@@ -567,7 +573,7 @@ def show_memory_info(hint):
     print('{} memory used: {} MB'.format(hint, memory))
 
 
-def dump_class_attrs(obj, result = {}):
+def dump_class_attrs(obj, result={}):
     """Dump the attributes and values of a config class.
 
     Args:
@@ -586,9 +592,7 @@ def dump_class_attrs(obj, result = {}):
             else:
                 attr = attr[1:] if attr.startswith('_') else attr
                 result[obj_name][attr] = value
-                
-                
-                
+
 
 class DotDict(dict):
     """access yaml using attributes instead of using the dictionary notation.
@@ -647,7 +651,6 @@ class DotDict(dict):
         self.__dict__.update(d)
 
     __setattr__, __getattr__ = __setitem__, __getitem__
-
 
 
 def compare_objects(obj1, obj2, ignore_attrs):

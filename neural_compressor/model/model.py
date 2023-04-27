@@ -21,6 +21,7 @@ import copy
 import os
 import importlib
 import sys
+from neural_compressor.config import options
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.utils import logger
 from neural_compressor.model.base_model import BaseModel
@@ -186,3 +187,69 @@ class Model(object):
         else:
             model = MODELS[backend](root, **kwargs)
         return model
+
+
+def wrap_model_from(user_model, conf):
+    """Wrap the user model and dispatch to framework specific internal model object.
+
+    Args:
+       user_model: user are supported to set model from original framework model format
+                   (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
+                   Best practice is to set from a initialized neural_compressor.common.Model.
+                   If tensorflow model is used, model's inputs/outputs will be auto inferred,
+                   but sometimes auto inferred inputs/outputs will not meet your requests,
+                   set them manually in config yaml file. Another corner case is slim model
+                   of tensorflow, be careful of the name of model configured in yaml file,
+                   make sure the name is in supported slim model list.
+        conf: the instance of PostTrainingQuantConfig or QuantizationAwareTrainingConfig or MixedPrecisionConfig.
+    """
+    if conf.framework is None:
+        if isinstance(user_model, BaseModel):  # pragma: no cover
+            conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
+            if conf.backend == "ipex":
+                assert conf.framework == "pytorch_ipex",\
+                      "Please wrap the model with correct Model class!"
+            if conf.backend == "itex":
+                if get_model_type(user_model.model) == 'keras':
+                    assert conf.framework == "keras",\
+                          "Please wrap the model with KerasModel class!"
+                else:
+                    assert conf.framework == "pytorch_itex", \
+                        "Please wrap the model with TensorflowModel class!"
+        else:
+            framework = get_model_fwk_name(user_model)
+            if framework == "tensorflow":
+                if get_model_type(user_model) == 'keras' and conf.backend == 'itex':
+                    framework = 'keras'
+            if framework == "pytorch":
+                if conf.backend == "default":
+                    framework = "pytorch_fx"
+                elif conf.backend == "ipex":
+                    framework = "pytorch_ipex"
+            conf.framework = framework
+
+    if not isinstance(user_model, BaseModel):
+        logger.warning("Force convert framework model to neural_compressor model.")
+        if "tensorflow" in conf.framework or conf.framework == "keras":
+            model = Model(user_model, backend=conf.framework, device=conf.device)
+        else:
+            model = Model(user_model, backend=conf.framework)
+    else:  # pragma: no cover
+        if conf.framework == "pytorch_ipex":
+            from neural_compressor.model.torch_model import IPEXModel
+            assert type(user_model) == IPEXModel, \
+                        "The backend is ipex, please wrap the model with IPEXModel class!"
+        elif conf.framework == "pytorch_fx":
+            from neural_compressor.model.torch_model import PyTorchFXModel
+            assert type(user_model) == PyTorchFXModel, \
+                        "The backend is default, please wrap the model with PyTorchFXModel class!"
+
+        model = user_model
+
+    if 'tensorflow' in conf.framework:
+        model.name = conf.model_name
+        model.output_tensor_names = conf.outputs
+        model.input_tensor_names = conf.inputs
+        model.workspace_path = options.workspace
+
+    return model

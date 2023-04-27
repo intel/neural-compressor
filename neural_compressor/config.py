@@ -1295,12 +1295,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def approach(self):
         """Get approach."""
         return self._approach
-    
+
     @property
     def framework(self):
         """Get framework."""
         return self._framework
-    
+
     @framework.setter
     def framework(self, framework):
         """Set framework."""
@@ -1309,7 +1309,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
 class WeightPruningConfig:
     """Config Class for Pruning. Define a single or a sequence of pruning configs.
-    
+
     Args:
         pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
             Parameters defined out of pruning_configs are valid for all layers.
@@ -2238,7 +2238,7 @@ class _Config:
     def accuracy(self):
         """Get the accuracy object."""
         return self._accuracy
-    
+
     @property
     def tuning(self):
         """Get the tuning object."""
