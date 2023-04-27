@@ -331,3 +331,79 @@ class MHACompression(object):
         # Update hyper params and store pruned heads
         self.mha.self.num_attention_heads = self.mha.self.num_attention_heads - len(prune_indice)
         self.mha.self.all_head_size = self.mha.self.attention_head_size * self.mha.self.num_attention_heads
+
+class MHACompression_v2(object):
+    def __init__(self, mha_object):
+        """
+        mha_object: a mha object searched by pattern_analyzer.SelfMHASearcher, refer to it.
+        its data structure:
+        {
+            'qkv': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+            'ffn': [torch.nn.Linear]
+            'mha_name': ['mha_name'] (keep not change)
+            'mha_module': [torch.nn.Module] (keep not change)
+        }
+        """
+        self.qkv = mha_object['qkv'] # list
+        self.ffn = mha_object['ffn'] # list
+        self.mha = mha_object['mha_module'] # list
+
+        # hook related features
+        self.hidden_size = self.qkv[0].in_features
+        try:
+            self.num_attention_heads = self.mha[0].num_attention_heads # TODO to be improved
+            self.head_size = self.hidden_size // self.num_attention_heads
+        except:
+            pass
+        self.device = self.qkv[0].weight.device
+
+    def find_common_indice(self, d):
+        common_indice = d[0]
+        for v in d:
+            common_indice = set(common_indice) & set(v)
+        return list(common_indice)
+    
+    def __call__(self, head_mask = None):
+        """
+        for qkv, prune output channel, for output, prune input channel
+        four linear shares identical masks (attention mask)
+        """
+        qkv_indice = [
+            PostCompressionUtils.get_mha_output_indice(
+                layer.weight, 
+                self.hidden_size, 
+                self.num_attention_heads
+            ) for layer in self.qkv
+        ]
+        ffn_indice = [
+            PostCompressionUtils.get_mha_input_indice(
+                layer.weight, 
+                self.hidden_size, 
+                self.num_attention_heads
+            ) for layer in self.ffn
+        ]
+        all_indice_to_prune = {
+            "qkv": qkv_indice,
+            "ffn": ffn_indice,
+        }
+        all_indice_to_prune_list = []
+        for k, v in all_indice_to_prune.items():
+            all_indice_to_prune_list += v
+        
+        # alignment, take the least heads to prune
+        # logger.info(all_indice_to_prune)
+        prune_indice = self.find_common_indice(all_indice_to_prune_list)
+        logger.info(f"head indice to be slim: {prune_indice}")
+        # 1 refer to channel-wise pruning
+        _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, self.num_attention_heads, self.head_size)
+        # prune qkv, outputs
+        # Prune linear layers
+        for qkv_layer in self.qkv:
+            PostCompressionUtils.prune_linear(qkv_layer, indice_to_keep, self.device, dim=0, prune_bias=True)
+        for ffn_layer in self.ffn:
+            PostCompressionUtils.prune_linear(ffn_layer, indice_to_keep, self.device, dim=1, prune_bias=False)
+
+        # TODO Update hyper params and store pruned heads
+        for mha in self.mha:
+            mha.num_attention_heads = mha.num_attention_heads - len(prune_indice)
+            mha.all_head_size = mha.attention_head_size * mha.num_attention_heads

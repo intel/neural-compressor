@@ -17,7 +17,7 @@
 # limitations under the License.
 # model slim related
 from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASearcher
-from .weight_slim import LinearCompressionIterator, MHACompression
+from .weight_slim import LinearCompressionIterator, MHACompression, MHACompression_v2
 from ..utils import logger
 
 def model_slim(model, dataloader=None, round_multiplier=0):
@@ -54,18 +54,12 @@ def model_slim_mha(model, dataloader = None):
         model: a sprase model.
     """
     logger.warning(f"You are using model slim methods, some attention heads will be removed permanently.")
-    recipe = {'BertLayer': ["attention"]}
-    searcher = RecipeSearcher(model, recipe)
-    layers = searcher.search('BertLayer')
-    if "PyTorchFXModel" in type(model).__name__:
-        config = model.model.config
-    else:
-        config = model.config
-    # linear_pruner = LinearCompressionIterator(layers)
-    for item in layers:
-        mha_compression = MHACompression(
-            item[0], config.num_attention_heads, config.hidden_size // config.num_attention_heads
-        )
+    pa_obj = SelfMHASearcher(model, dataloader)
+    layers, _ = pa_obj.search(split_qkv_ffn = False)
+    layers = pa_obj.obtain_mha_module(layers)
+    layers = pa_obj.from_layer_name_to_object(layers)
+    for layer in layers:
+        mha_compression = MHACompression_v2(layer)
         mha_compression()
     return model
 

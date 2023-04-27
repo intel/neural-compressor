@@ -41,6 +41,19 @@ def get_attributes(module, attrs: str):
         sub_module = getattr(sub_module, attr)
     return sub_module
 
+def get_common_module(layer1: str, layer2: str):
+    """Get the module which contains layer1 and layer2 (nearest father nodes)
+    """
+    attribute_seq1 = layer1.split('.')
+    attribute_seq2 = layer2.split('.')
+    target_module = []
+    for idx in range(min(len(attribute_seq1), len(attribute_seq2))):
+        if attribute_seq1[idx] != attribute_seq2[idx]:
+            break
+        else:
+            target_module.append(attribute_seq1[idx])
+    return '.'.join(target_module)
+
 def print_iterables(data_iters):
     """Print the auto slim logs."""
     for data in data_iters:
@@ -472,7 +485,17 @@ class Linear2LinearSearcher(JitBasicSearcher):
         return all_linear_structure_results
     
     def from_layer_name_to_object(self, l2l_search_layers):
-        """Obtain the layer object themselves from their names."""
+        """Obtain the layer objects themselves from their names.
+        {
+            'root_linear': str(attribute),
+            'target_frontier_linears': list(str)
+        }
+        ->
+        {
+            'root_linear': torch.nn.Linear,
+            'target_frontier_linears': [torch.nn.Linear, torch.nn.Linear, ...]
+        }
+        """
         layer_objs = []
         for item in l2l_search_layers:
             layer_obj = {
@@ -635,7 +658,6 @@ class SelfMHASearcher(JitBasicSearcher):
             two lists containing self-attention modules' layer names.
 
         """
-        # import pdb;pdb.set_trace()
         input_names_for_linears = self.gather_mha_inputs()
         linear_clusters = self.gather_linear_from_input(input_names_for_linears)
         qkv_clusters = self.extract_qkv_from_linears(linear_clusters)
@@ -656,6 +678,78 @@ class SelfMHASearcher(JitBasicSearcher):
                 ffn_list += item['ffn']
             return qkv_list, ffn_list
 
+    def from_layer_name_to_object(self, mha_search_layers):
+        """Obtain the layer object themselves from their names.
+        {
+            'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+            'ffn': ['attention_ffn_name']
+            'mha_name': ['mha_name'] # bert.encoder.layer.0, etc.
+            'mha_module': torch.nn.Module, which corresponds to mha_name above.
+        }
+        ->
+        {
+            'qkv': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+            'ffn': [torch.nn.Linear]
+            'mha_name': ['mha_name'] (keep not change)
+            'mha_module': torch.nn.Module (keep not change)
+        }
+        """
+        layer_objs = []
+        for mha_search_layer in mha_search_layers:
+            layer_obj = {
+                "qkv": [],
+                "ffn": [],
+                "mha_name": None,
+                "mha_module": None,
+            }
+            layer_obj['qkv'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['qkv']]
+            layer_obj['ffn'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['ffn']]
+            layer_obj['mha_name'] = mha_search_layer['mha_name'][:]
+            layer_obj['mha_module'] = mha_search_layer['mha_module']
+            layer_objs.append(layer_obj)
+        return layer_objs
+    
+    def obtain_mha_module(self, self_attention_list):
+        """Return the attention module object (qkv & ffn's common module).
+
+        self_attention_list
+        [
+            {
+                'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn': ['attention_ffn_name']
+            }
+            ...
+        ]
+        ->
+        [
+            {
+                'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn': ['attention_ffn_name'],
+                'mha_name': ['mha_name'],
+                'mha_module': [torch.nn.Module]
+            }
+            ...
+        ]
+        """
+        for idx in range(len(self_attention_list)):
+            # get query layer name
+            # get attn_output layer name
+            qkv_layer_name = self_attention_list[idx]['qkv']
+            ffn_layer_name = self_attention_list[idx]['ffn']
+            # problematic implementations
+            # mha_module_name = get_common_module(qkv_layer_name, ffn_layer_name)
+            mha_module_name = get_common_module(qkv_layer_name[0], qkv_layer_name[-1])
+            self_attention_list[idx]['mha_name'] = [mha_module_name]
+            self_attention_list[idx]['mha_module'] = [
+                get_attributes(self.model, mha_module_name) for mha_module_name in self_attention_list[idx]['mha_name']
+            ]
+        return self_attention_list
+        
+    def hook_mha_attributes(self, mha_module):
+        if hasattr(mha_module, "num_attention_heads"):
+            logger.info("Good.")
+        # to add more implementations
+            
 class ClassifierHeadSearcher(object):
     """Static graph searcher for multi-head attention modules.
 
