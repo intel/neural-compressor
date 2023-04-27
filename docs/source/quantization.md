@@ -5,12 +5,12 @@ Quantization
 2. [Quantization Fundamentals](#quantization-fundamentals)
 3. [Accuracy Aware Tuning](#accuracy-aware-tuning)
 4. [Supported Feature Matrix](#supported-feature-matrix)
-5. [Get Started](#get-started)
-   5.1 [Post Training Quantization](#post-training-quantization)
-   5.2 [Quantization Aware Training](#quantization-aware-training-1)
-   5.3 [Specify Quantization Rules](#specify-quantization-rules)
-   5.4 [Specify Quantization Recipes](#specify-quantization-recipes)
-   5.5 [Specify Quantization Backend and Device](#specify-quantization-backend-and-device)
+5. [Get Started](#get-started)  
+   5.1 [Post Training Quantization](#post-training-quantization)   
+   5.2 [Quantization Aware Training](#quantization-aware-training-1)  
+   5.3 [Specify Quantization Rules](#specify-quantization-rules)  
+   5.4 [Specify Quantization Recipes](#specify-quantization-recipes)  
+   5.5 [Specify Quantization Backend and Device](#specify-quantization-backend-and-device)  
 6. [Examples](#examples)
 
 ## Quantization Introduction
@@ -498,19 +498,19 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
 
 Examples of configure:
 ```python
-# run with FX CPU
+# run with PT FX on CPU
 conf = PostTrainingQuantConfig()
 ```
 ```python
-# run with IPEX CPU
+# run with IPEX on CPU
 conf = PostTrainingQuantConfig(backend="ipex")
 ```
 ```python
-# run with ONNX CUDAExecutionProvider GPU
+# run with ONNXRT CUDAExecutionProvider on GPU
 conf = PostTrainingQuantConfig(backend="onnxrt_cuda_ep", device="gpu")
 ```
 ```python
-# run with TF ITEX GPU
+# run with TF ITEX on GPU
 conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ```
 
