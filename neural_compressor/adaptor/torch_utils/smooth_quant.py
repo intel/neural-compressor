@@ -719,7 +719,7 @@ class TorchSmoothQuant:
 
     def transform(self, alpha=0.5, folding=False, percentile=100, op_types=['Linear', 'Conv2d'],
                   scales_per_op=False, calib_iter=100,
-                  auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 1.0, 'alpha_step': 0.05, 'attn_method': 'min'}):
+                  auto_alpha_args={'alpha_min': 0.0, 'alpha_max': 1.0, 'alpha_step': 0.05, 'attn_method': 'min'}):
         """
         The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
