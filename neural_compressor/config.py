@@ -1647,7 +1647,7 @@ class MixedPrecisionConfig(object):
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
                                  default is 'default'.
-        precision (str, optional): Target precision for mix precision conversion.
+        precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
@@ -1667,7 +1667,7 @@ class MixedPrecisionConfig(object):
     def __init__(self,
                  device="cpu",
                  backend="default",
-                 precision="bf16",
+                 precisions="bf16",
                  model=None,
                  model_name="",
                  inputs=[],
@@ -1683,27 +1683,27 @@ class MixedPrecisionConfig(object):
         self.excluded_precisions = excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.tuning_criterion = tuning_criterion
-        self.precision = precision
-        self.use_bf16 = "bf16" in self.precision
+        self.precisions = precisions
+        self.use_bf16 = "bf16" in self.precisions
         self.model = model
         self.model_name = model_name
         self._framework = None
 
     @property
-    def precision(self):
+    def precisions(self):
         """Get precision."""
-        return self._precision
+        return self._precisions
 
-    @precision.setter
-    def precision(self, precision):
+    @precisions.setter
+    def precisions(self, precision):
         """Set precision."""
         if isinstance(precision, str):
             assert precision in ["fp16", "bf16"], "Only support 'fp16' and 'bf16' for mix precision."
-            self._precision = [precision]
+            self._precisions = [precision]
         elif isinstance(precision, list):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
-            self._precision = precision
+            self._precisions = precision
 
     @property
     def model(self):
@@ -2088,7 +2088,7 @@ class MXNet:
         if not isinstance(precisions, list):
             precisions = [precisions]
         for pr in precisions:
-            _check_value('precision', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
+            _check_value('precisions', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
         self._precisions = precisions
 
 

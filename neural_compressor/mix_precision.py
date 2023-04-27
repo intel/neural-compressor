@@ -88,7 +88,7 @@ def fit(model,
     if eval_dataloader is not None:
         check_dataloader(eval_dataloader)
 
-    if config.precision in config.excluded_precisions:
+    if config.precisions in config.excluded_precisions:
         logger.warning("Target precision is in excluded_precisions, "
                        "please modify precision or excluded_precisions to make it understandable.")
         sys.exit(0)

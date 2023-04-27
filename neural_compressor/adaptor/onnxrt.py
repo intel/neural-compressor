@@ -117,7 +117,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 static=self.static, 
                 format=self.format,
                 local_config_file=os.path.join(os.path.dirname(__file__), config_file))
- 
+
         self.work_space = framework_specific_info["workspace_path"]
         self.reduce_range = framework_specific_info["reduce_range"] if \
             "reduce_range" in framework_specific_info else not CpuInfo().vnni
@@ -133,7 +133,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     continue
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
- 
+
         if self.backend == 'TensorrtExecutionProvider':
             self.recipes['add_qdq_pair_to_weight'] = True
             self.recipes['dedicated_qdq_pair'] = True

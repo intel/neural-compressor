@@ -4253,7 +4253,7 @@ class PyTorchQuery(QueryBackendCapability):
 
     def get_quant_datatypes(self):
         """Got low-precision data types for quantization.
-        
+
         Collects all data types for quantization, such as int8, int4.
         """
         # TODO to handle other data types such FP8, FP8E4M3
