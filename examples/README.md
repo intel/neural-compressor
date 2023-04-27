@@ -1307,6 +1307,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">qlinearops</a></td>
   </tr>
+  <tr>
+    <td>GPT-J-6B</td>
+    <td>Text Generation</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_generation/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>GPT-J-6B</td>
+    <td>Text Generation</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_generation/quantization/ptq_dynamic">integerops</a></td>
+  </tr>
 </tbody>
 </table>
 
