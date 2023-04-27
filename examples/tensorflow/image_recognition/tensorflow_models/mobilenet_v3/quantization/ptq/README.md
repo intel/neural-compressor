@@ -72,6 +72,18 @@ The pre-trained PB is v3-large_224_1.0_float/v3-large_224_1.0_float.pb
 
 # Run
 
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
 ## 1 Quantization
 
   ```shell
