@@ -98,8 +98,8 @@ class eval_classifier_optimized_graph:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor.utils.create_obj_from_config import create_dataloader
-            data_path = os.path.join(args.dataset_location, 'raw_images')
-            label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
+            data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
+            label_path = os.path.join(args.dataset_location, 'val.txt')
             calib_dataloader_args = {
                 'batch_size': None,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
@@ -132,8 +132,10 @@ class eval_classifier_optimized_graph:
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
                                            inputs=['truediv'], outputs=['Squeeze'],
                                            op_name_dict=op_name_dict)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                        eval_dataloader=eval_dataloader)
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
             q_model.save(args.output_graph)
 
         if args.benchmark:
@@ -150,8 +152,8 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             def eval(model):
                 return evaluate(model, dataloader, top1)
 

@@ -22,7 +22,6 @@ import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
-
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
@@ -30,15 +29,36 @@ from .utils.tuning_structs import OpTuningConfig
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     """Tuning strategy for auto mixed precision."""
-    
+
+    def _initialize_config(self, conf):
+        """Init the tuning config based on user conf.
+
+        Args:
+            conf: User config
+
+        Returns:
+            Tuning config
+        """
+        config = conf.mixed_precision
+        config.approach = getattr(config, 'approach', None)
+        config.recipes = getattr(config, 'recipes', {})
+        config.calibration_sampling_size = getattr(config, 'calibration_sampling_size', [0])
+        config.op_type_dict = getattr(config, 'op_type_dict', None)
+        config.op_name_dict = getattr(config, 'op_name_dict', None)
+        config.quant_format = getattr(config, 'quant_format', "")
+        config.domain = getattr(config, 'domain', None)
+        config.reduce_range = getattr(config, 'reduce_range', None)
+        config.example_inputs = getattr(config, 'example_inputs', None)
+        return config
+
     def next_tune_cfg(self):
         """Generate the next tuning config.
-        
+
         Tuning configurations are generated according to the following rules:
         1. First, it tries to convert all ops into target date type as many as possible.
-        2. If the accuracy does  not meets the requirements, it starts the stage of fallback 
+        2. If the accuracy does  not meets the requirements, it starts the stage of fallback
             which converts ops into higher precision.
-        
+
         Yields:
             tune_config (dict): A dict containing the tuning configuration.
         """
@@ -46,8 +66,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
         # filter quantization dtype
         # TODO align with the old mixed-precison
-        target_dtypes = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
-            else self.cfg.mixed_precision.precisions
+        target_dtypes = self.config.precisions
         target_dtypes = list(set(target_dtypes) - set(['fp32']))
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
@@ -117,7 +136,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             self.trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and self.trials_count < self.cfg.tuning.exit_policy.max_trials:
+            if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -129,7 +148,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
-            if self.cfg.tuning.exit_policy.performance_only:
+            if self._not_tuning:
                 self.best_qmodel = self.last_qmodel
                 self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
                 return
@@ -138,7 +157,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-                need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, self.trials_count)
+                need_stop = self.stop(self.config.tuning_criterion.timeout, self.trials_count)
                 # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)

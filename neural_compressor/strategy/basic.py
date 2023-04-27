@@ -22,20 +22,21 @@ from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
+from .utils.tuning_sampler import BlockFallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
     """The basic tuning strategy.
-    
+
     There are three stages executed by Basic strategy sequentially,
     and the tuning process ends once the condition meets the exit policy.
     """
 
     def distributed_next_tune_cfg_lst(self, comm):
         """Generate and yield the next tuning config list with below order.
-        
+
             1. OP Type Wise Tuning
             2. Fallback OP One by One
             3. Fallback Multiple OPs Accumulated
@@ -48,7 +49,7 @@ class BasicTuneStrategy(TuneStrategy):
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         rank = comm.Get_rank()
         for calib_sampling_size in calib_sampling_size_lst:
-            # Initialize the tuning config for each op according to the quantization approach 
+            # Initialize the tuning config for each op according to the quantization approach
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
             early_stop_tuning = False
@@ -56,11 +57,11 @@ class BasicTuneStrategy(TuneStrategy):
             quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
             quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
             stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
+            op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             # stage 1: yield op_tune_cfg_lst
             op_tuning_cfg_lst_stage_1 = []
-            for op_tuning_cfg in op_wise_tuning_sampler:
+            for op_tuning_cfg in op_type_wise_tuning_sampler:
                 stage1_cnt += 1
                 if early_stop_tuning and stage1_cnt > stage1_max:
                     logger.info("Early stopping the stage 1.")
@@ -80,7 +81,7 @@ class BasicTuneStrategy(TuneStrategy):
             # stage 2: yield new_op_tuning_cfg_lst (length of stage 1)
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
-            if self.cfg.quantization.approach == 'post_training_auto_quant':
+            if self.config.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                         item in tuning_space.query_items_by_quant_mode('dynamic')]
                 if static_dynamic_items:
@@ -161,9 +162,53 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("yield op_tuning_cfg_lst_stage_4 with length {}".format(len(op_tuning_cfg_lst_stage_4)))
                     yield op_tuning_cfg_lst_stage_4
 
+    def fallback_by_block(self, fallback_items_lst, best_op_tuning_cfg_stage1, target_dtype, tuning_space,\
+        calib_sampling_size):
+        """Fallback ops by block.
+
+        Step 1. block by block
+        Step 2. accumulate block
+
+        Args:
+            fallback_items_lst (list): list of fallback items
+            best_op_tuning_cfg_stage1 (dict): best op tuning cfg of stage1
+            target_dtype (str): target dtype
+            tuning_space (TuningSpace): Tuning space
+
+        Yields:
+            dict: op_tuning_cfg fall-backed by block
+        """
+        from copy import deepcopy
+        op_block_lst = self.capability.get('block_info', [])
+        if op_block_lst:
+            # Fallback block by block
+            fallback_items_name_lst = [item.name for item in fallback_items_lst]
+            op_block_fallback_lst = []
+            for op_block_index, op_block in enumerate(op_block_lst):
+                if not fallback_items_name_lst:
+                    break
+                matches = [item for item in op_block if item in fallback_items_name_lst]
+                if matches:
+                    op_block_fallback_lst.append(op_block)
+
+            initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
+
+            # Fallback by accumulating blocks
+            if op_block_fallback_lst:
+                logger.info(f"Start to fallback op to {target_dtype} by blocks")
+            block_fallback_sampler = BlockFallbackTuningSampler(tuning_space=tuning_space,
+                                                                tuning_order_lst=[],
+                                                                initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                                op_block_lst=op_block_fallback_lst,
+                                                                accumulate=True,
+                                                                target_dtype=target_dtype)
+            for op_block_index, op_tuning_cfg in enumerate(block_fallback_sampler):
+                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                yield op_tuning_cfg
+
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
-        
+
             1. OP Type Wise Tuning: tries to quantize the OPs as many as possible
                 and traverse all OP type wise tuning configs
             2. Fallback OP One by One: it performs high-precision OP (FP32, BF16 ...)
@@ -188,9 +233,9 @@ class BasicTuneStrategy(TuneStrategy):
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
             stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
-                                                             op_item_dtype_dict, initial_op_tuning_cfg)
-            for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
+            op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],\
+                op_item_dtype_dict, initial_op_tuning_cfg)
+            for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:
@@ -202,16 +247,16 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("Early stopping the stage 1.")
                     break
                 yield op_tuning_cfg
-            
+
             # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
             if stage1_cnt == 1 and not self.applied_all_recipes_flag:
                 logger.info("Apply all recipes.")
                 self.applied_all_recipes_flag = True
                 yield self.apply_all_tuning_recipes(deepcopy(self.cur_best_tuning_cfg))
-            
+
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
-            if self.cfg.quantization.approach == 'post_training_auto_quant':
+            if self.config.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                         item in tuning_space.query_items_by_quant_mode('dynamic')]
                 if static_dynamic_items:
@@ -235,6 +280,14 @@ class BasicTuneStrategy(TuneStrategy):
             for target_dtype in ['bf16', 'fp32']:
                 target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
                 fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
+
+                # Fallback block by block
+                for op_tuning_cfg in self.fallback_by_block(fallback_items_lst, best_op_tuning_cfg_stage1,
+                                                             target_dtype,
+                                                             tuning_space,
+                                                            calib_sampling_size):
+                    yield op_tuning_cfg
+
                 if fallback_items_lst:
                     logger.info(f"Start to fallback op to {target_dtype} one by one.")
                     self._fallback_started()
@@ -266,7 +319,7 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
-                        
+
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name
@@ -291,5 +344,4 @@ class BasicTuneStrategy(TuneStrategy):
                         tuning_item = quant_mode_item.get_option_by_name(att_and_method_name)
                         dynamic_state[att_and_method_name] = tuning_item.options[0] if tuning_item else None
         return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)
-        
-        
+

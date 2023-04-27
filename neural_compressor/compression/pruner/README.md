@@ -39,6 +39,10 @@ Pruning
 
 
 
+    - [Pruning Support Matrix](#pruning-support-matrix)
+
+
+
 
 2. [Get Started With Pruning API](#get-started-with-pruning-api)
 
@@ -60,8 +64,8 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
-<a target="_blank" href="../../../docs/source/imgs/pruning/pruning.png">
-    <img src="../../../docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
+<a target="_blank" href="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png">
+    <img src="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
 </a>
 </div>
 
@@ -69,28 +73,28 @@ Neural network pruning is a promising model compression technique that removes t
 ### Pruning Patterns
 
 
-Pruning patterns defines the rules of pruned weights' arrangements in space. Intel Neural Compressor currently supports N:M and NxM patterns. N:M pattern is applied to input channels; for NxM pattern, N stands for output channels and M stands for input ones.
+Pruning patterns defines the rules of pruned weights' arrangements in space. Intel Neural Compressor currently supports **N:M** and **NxM** patterns. N:M pattern is applied to input channels; for NxM pattern, N stands for output channels and M stands for input ones.
 
 - NxM Pruning
 
-  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
+  NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criteria. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.  *Users could set "NxM", e.g. "4x1", in pruning pattern to enable it.*
 
 - N:M Pruning
 
-  N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used.
+  N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used. *Users could set  "N:M" , e.g. "2:4", to enable it.*
 
 - Channel-wise Pruning
 
-  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
-  
-  An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
-  
-  We name this process as <span id="click">**Model Auto Slim**</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
+  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. *Users could set "channelx1"( some input channels will be totally pruned) (or "1xchannel")  to enable it.*
 
+  An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
+
+
+  We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
 
 - Unstructured Pruning
-  
-  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. Users could apply unstructured pruning pattern by setting pattern to 1x1.
+
+  Unstructured pruning means pruning parameters individually without any constraints.  *Users could set "1x1" in  pruning pattern to enable it.*
 
 
 <div align=center>
@@ -98,6 +102,14 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
     <img src="../../../docs/source/imgs/pruning/pruning_patterns.jpg" width=680 height=145 alt="Sparsity Pattern">
 </a>
 </div>
+
+
+- Multi-head Attention Pruning (Work in progress)
+
+  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in Model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
+
+
+
 
 
 ### Pruning Criteria
@@ -112,16 +124,18 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - Gradient
 
-  The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
+  Gradient based criterion. The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
 
 - SNIP
 
-  The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.
+  Gradient based criterion. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details. $W$ and $G$ are model's weights and gradients respectively. 
+
+  $$Score = |W \times G|$$
 
 - SNIP Momentum
 
-  The algorithm improves original SNIP algorithm and introduces weights' scored maps which update in a momentum way.\
-  In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
+  Gradient based criterion. The algorithm improves original SNIP algorithm and updates the score in a momentum way.\
+  In the following formula, $n$ is the training step and $W$ and $G$ are model's weights and gradients respectively.
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 <div align=center>
@@ -130,33 +144,13 @@ Pruning Criteria determines how should the weights of a neural network are score
 </a>
 </div>
 
-### Pruning Schedules
-
-
-
-Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported.
-
-- Iterative Pruning
-
-  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
-v
-- One-shot Pruning
-
-  One-shot pruning means the model is pruned to its target sparsity with one single step(which means pruning start_step = end_step). This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning.
-
-
-<div align=center>
-<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
-    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
-</a>
-</div>
-
 
 ### Pruning Types
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected.
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected. Please note that progressive pruning only supports NxM patterns and is preferred when large patterns such as 1xchannel and channelx1 are selected.
+
 
 - Progressive Pruning
 
@@ -169,13 +163,38 @@ Pruning type defines how the masks are generated and applied to a neural network
       </a>
   </div>
   &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
-  &emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+  &emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pruning criterion.
 
   (b) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.
 
 - Pattern_lock Pruning
 
   Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
+
+
+
+### Pruning Schedules
+
+
+
+Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both  **iterative**  and **one shot** pruning schedules are supported.
+
+- Iterative Pruning
+
+  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
+  
+  
+
+- One-shot Pruning
+
+  One-shot pruning means the model is pruned to its target sparsity with one single step. This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning. *Users could set start_step=end_step in pruning configuration to enable this. Also please note if gradient based criterion is used, start step should be greater than 0.*
+
+
+<div align=center>
+<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
+    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
+</a>
+</div>
 
 
 
@@ -224,6 +243,14 @@ Regularization is a technique that discourages learning a more complex model and
 </div>
 
 
+### Pruning Support Matrix
+
+|Framework |  Status  | 
+|  :----:  | :----:  | 
+| PyTorch   |  Supported  |
+| TensorFlow |  Unsupported  |
+
+
 ## Get Started with Pruning API
 
 
@@ -245,7 +272,7 @@ The following section exemplifies how to use hooks in user pass-in training func
                 "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step = end_step.
                 "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                "pruning_frequence": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
+                "pruning_frequency": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
                 "pattern": "4x1",   # Default pruning pattern.
               }, # The missing parameter items would be complemented by default settings (i.e. start_step = 1)
 
@@ -286,11 +313,11 @@ The following section exemplifies how to use hooks in user pass-in training func
               optimizer.step()
               lr_scheduler.step()
               model.zero_grad()
-    ```
+  ```
 
 
     [**Stable Option** ]Insert Hook functions in your codes. 
-
+    
     ```python
         """ All you need is to insert following API functions to your codes:
         on_train_begin() # Setup pruners
@@ -348,7 +375,7 @@ The pruning technique  is validated on typical models across various domains (in
 
   Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
 
-- Image Recognition (Experimental, sparsity 0.75, pattern 2x1, top1 acc 0.801(dense) vs 0.7895)
+- Image Recognition (Experimental, sparsity 0.75, pattern 2x1, top1 acc 0.801(dense) vs 0.7895(sparse))
 
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
 

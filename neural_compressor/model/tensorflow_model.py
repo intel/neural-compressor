@@ -27,7 +27,7 @@ import sys
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
-from neural_compressor.conf import config as cfg
+from neural_compressor import config as cfg
 from neural_compressor.model.base_model import BaseModel
 
 tf = LazyImport('tensorflow')
