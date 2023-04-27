@@ -48,12 +48,12 @@ We need the `mpi4py` to be installed to execute the distributed tuning across mu
 > NOTE: For the working MPI implementation, we suggest users either build it with using [Conda](https://anaconda.org/conda-forge/openmpi) or following the instruction provided in the OpenMPI [Installing  documentation](https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html#building-from-source).
 
 
-In `run_glue.py`, set `config.use_distributed_tuning` to True by the following statement.
+In `run_glue.py`, set `config.quant_leve1` to 1 and `config.tuning_criterion.strategy` to "basic" by the following statement.
 
 ```python
-conf = PostTrainingQuantConfig(approach="static", 
-                               tuning_criterion=tuning_criterion, 
-                               use_distributed_tuning=True)
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+tuning_criterion = TuningCriterion(max_trials=600, strategy="basic")
+conf = PostTrainingQuantConfig(quant_level=1, approach="static", tuning_criterion=tuning_criterion)
 ```
 
 And then, run the following command:

@@ -172,10 +172,16 @@ class Quantization(Component):
 
     def execute(self):
         """Quantization execute routinue based on strategy design."""
-        # check here the distributed flag
-        logger.info("..............use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
-        if self.conf.usr_cfg.tuning.use_distributed_tuning:
-            return self.distributed_execute()
+        # auto check here the distributed flag
+        self._eval_baseline()
+        try:
+            from mpi4py import MPI
+            if MPI.COMM_WORLD.Get_size() > 1:
+                logger.info("use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
+                return self.distributed_execute()
+        except (ImportError, AttributeError):
+            logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
+
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 logger.debug("Dump user yaml configuration:")

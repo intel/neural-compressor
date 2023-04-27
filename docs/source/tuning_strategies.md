@@ -452,12 +452,10 @@ Intel® Neural Compressor provides distributed tuning to speed up the tuning pro
 
 ### Usage
 
-To use Distributed Tuning, the `use_distributed_tuning` field in the `PostTrainingQuantConfig` should be specified with `True`.
+To use Distributed Tuning, the number of processes should be specified to be greater than 1.
 
-```python
-from neural_compressor.config import PostTrainingQuantConfig
-
-conf = PostTrainingQuantConfig(use_distributed_tuning=True)
+```shell
+mpirun -np <number_of_processes> <RUN_CMD>
 ```
 An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).
 
