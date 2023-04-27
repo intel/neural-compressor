@@ -175,7 +175,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         from onnx import numpy_helper
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
-        from neural_compressor.adaptor.ox_utils.util import absorb_scale
+        from neural_compressor.adaptor.ox_utils.util import fold_scale
         if isinstance(alpha, str):
             logger.warning(f"onnx backend only support float alpha, reset alpha to 0.5 ")
             alpha = 0.5
@@ -238,7 +238,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.pre_optimized_model.topological_sort()
         self.pre_optimized_model.remove_unused_constant()
 
-        absorb_scale(self.pre_optimized_model, scales)
+        fold_scale(self.pre_optimized_model, scales)
 
         self.smooth_quant_model = self.pre_optimized_model
         return self.smooth_quant_model
