@@ -87,7 +87,7 @@
 <li><p><a class="reference external" href="#quantization-fundamentals">Quantization Fundamentals</a></p></li>
 <li><p><a class="reference external" href="#accuracy-aware-tuning">Accuracy Aware Tuning</a></p></li>
 <li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
-<li><p><a class="reference external" href="#get-started">Get Started</a></p></li>
+<li><p><a class="reference external" href="#get-started">Get Started</a><br />5.1 <a class="reference external" href="#post-training-quantization">Post Training Quantization</a><br />5.2 <a class="reference external" href="#quantization-aware-training-1">Quantization Aware Training</a><br />5.3 <a class="reference external" href="#specify-quantization-rules">Specify Quantization Rules</a><br />5.4 <a class="reference external" href="#specify-quantization-recipes">Specify Quantization Recipes</a><br />5.5 <a class="reference external" href="#specify-quantization-backend-and-device">Specify Quantization Backend and Device</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="quantization-introduction">
@@ -612,16 +612,17 @@ This method requires the user to provide training function and evaluation functi
 </pre></div>
 </div>
 </section>
-<section id="specify-quantization-backend">
-<h3>Specify Quantization Backend<a class="headerlink" href="#specify-quantization-backend" title="Permalink to this heading"></a></h3>
-<p>Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Runtime and MXNet. The neural compressor will automatically determine which framework to use based on the model type, but for backend, users need to set it themselves in configure object.</p>
+<section id="specify-quantization-backend-and-device">
+<h3>Specify Quantization Backend and Device<a class="headerlink" href="#specify-quantization-backend-and-device" title="Permalink to this heading"></a></h3>
+<p>Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Runtime and MXNet. The neural compressor will automatically determine which framework to use based on the model type, but for backend and device, users need to set it themselves in configure object.</p>
 <table class="center">
     <thead>
         <tr>
             <th>Framework</th>
             <th>Backend</th>
             <th>Backend Library</th>
-            <th>Value in Configure</th>
+            <th>Backend Value</th>
+            <th>Support Device(cpu as default)</th> 
         </tr>
     </thead>
     <tbody>
@@ -630,50 +631,71 @@ This method requires the user to provide training function and evaluation functi
             <td align="left">FX</td>
             <td align="left">FBGEMM</td>
             <td align="left">"default"</td>
+            <td align="left">cpu</td>
         </tr>
         <tr>
             <td align="left">IPEX</td>
             <td align="left">OneDNN</td>
             <td align="left">"ipex"</td>
+            <td align="left">cpu</td>
         </tr>
         <tr>
             <td rowspan="3" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
+            <td align="left">cpu</td>
         </tr>
         <tr>
             <td align="left">TensorrtExecutionProvider</td>
             <td align="left">TensorRT</td>
             <td align="left">"onnxrt_trt_ep"</td>
+            <td align="left">gpu</td>
         </tr>
         <tr>
             <td align="left">CUDAExecutionProvider</td>
             <td align="left">CUDA</td>
             <td align="left">"onnxrt_cuda_ep"</td>
+            <td align="left">gpu</td>
         </tr>
         <tr>
             <td rowspan="2" align="left">Tensorflow</td>
             <td align="left">Tensorflow</td>
             <td align="left">OneDNN</td>
             <td align="left">"default"</td>
+            <td align="left">cpu</td>
         </tr>
         <tr>
             <td align="left">ITEX</td>
             <td align="left">OneDNN</td>
             <td align="left">"itex"</td>
+            <td align="left">cpu | gpu</td>
         </tr>  
         <tr>
             <td align="left">MXNet</td>
             <td align="left">OneDNN</td>
             <td align="left">OneDNN</td>
-            <td align="left">“default</td>
+            <td align="left">"default"</td>
+            <td align="left">cpu</td>
         </tr>
     </tbody>
 </table>
 <br>
-<br><p>Example of configure for backend:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;IPEX&quot;</span><span class="p">)</span>
+<br><p>Examples of configure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with PT FX on CPU</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with IPEX on CPU</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;ipex&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ONNXRT CUDAExecutionProvider on GPU</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_cuda_ep&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ITEX on GPU</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;itex&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
