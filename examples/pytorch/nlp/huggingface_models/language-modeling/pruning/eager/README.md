@@ -3,7 +3,7 @@ Step-by-Step
 
 This document presents step-by-step instructions for pruning Huggingface Large Language Models(LLMs) using the Intel® Neural Compressor.
 
-The retrain free pruning feature is still in development, please stay tuned.
+The retraining free pruning feature is still in development, please stay tuned.
 
 # Prerequisite
 
@@ -47,6 +47,8 @@ The last word acc of the sparse model is verified under different precision on C
 | EleutherAI/gpt-j-6b | CLM | pile_10k | lambada_openai | IPEX-BF16 | 0.6792 | 0.6833 | +0.60% |
 | facebook/opt-2.7b | CLM | pile_10k | lambada_openai | FP32 | 0.6365 |0.6367  | +0.03% |
 | facebook/opt-2.7b | CLM | pile_10k | lambada_openai | IPEX-BF16 | 0.6336| 0.6344 | +0.12% |
+| facebook/opt-1.3b | CLM | pile_10k | lambada_openai | FP32 | 0.5789 |0.5686  | -1.73% |
+| facebook/opt-1.3b | CLM | pile_10k | lambada_openai | IPEX-BF16 | 0.5629| 0.5501 | -1.78% |
 
 ## References
 * [A Fast Post-Training Pruning Framework for Transformers](https://arxiv.org/abs/2204.09656)
