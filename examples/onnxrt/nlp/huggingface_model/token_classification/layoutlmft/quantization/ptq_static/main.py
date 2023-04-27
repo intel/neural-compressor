@@ -432,7 +432,7 @@ def main():
                 hidden_size=768,
                 optimization_options=opt_options)
             onnx_model = model_optimizer.model
-        
+            
             from neural_compressor import quantization, PostTrainingQuantConfig
             from neural_compressor.utils.constant import FP32
             from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader

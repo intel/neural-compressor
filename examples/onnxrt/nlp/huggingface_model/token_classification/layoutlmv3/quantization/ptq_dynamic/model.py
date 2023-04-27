@@ -21,14 +21,10 @@ from datasets import Dataset
 from transformers import EvalPrediction
 from transformers.trainer_pt_utils import nested_concat
 from transformers.trainer_utils import EvalLoopOutput
-
 import onnxruntime
-
 
 logger = logging.getLogger(__name__)
 
-
-# TODO : Temporary class, added to perform ONNX models evaluation, will be replaced with ONNXModel class
 class ORTModel:
     def __init__(
         self,

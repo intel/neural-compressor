@@ -1,8 +1,8 @@
-datasets
-transformers==4.12.5
+datasets==1.6.2
+transformers==4.6
+huggingface-hub==0.0.8
 seqeval==1.2.2
 tensorboard==2.7.0
-seqeval==1.2.2
 sentencepiece
 timm==0.4.12
 Pillow
@@ -16,3 +16,5 @@ setuptools==56.1.0
 onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.10'
+-f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.10/index.html
+detectron2

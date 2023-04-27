@@ -21,19 +21,14 @@ from datasets import Dataset
 from transformers import EvalPrediction
 from transformers.trainer_pt_utils import nested_concat
 from transformers.trainer_utils import EvalLoopOutput
-
 import onnxruntime
-
 
 logger = logging.getLogger(__name__)
 
-
-# TODO : Temporary class, added to perform ONNX models evaluation, will be replaced with ONNXModel class
 class ORTModel:
     def __init__(
         self,
         model: Union[str, os.PathLike],
-        execution_provider: Optional[str] = "CPUExecutionProvider",
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
         label_names: Optional[List[str]] = None,
     ):
@@ -41,8 +36,6 @@ class ORTModel:
         Args:
             model_path (`Union[str, os.PathLike]`):
                 The path to the model ONNX Intermediate Representation (IR).
-            execution_provider (:obj:`str`, `optional`):
-                ONNX Runtime execution provider to use.
             compute_metrics (`Callable[[EvalPrediction], Dict]`, `optional`):
                 The function that will be used to compute metrics at evaluation. Must take an `EvalPrediction` and
                 return a dictionary string to metric values.

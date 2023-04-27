@@ -479,17 +479,6 @@ def main():
                 "accuracy": results["overall_accuracy"],
             }
 
-    # Initialize our Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset if training_args.do_train else None,
-        eval_dataset=eval_dataset if training_args.do_eval else None,
-        tokenizer=tokenizer,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
-    )
-
     # Evaluation
     from model import ORTModel
 
@@ -505,22 +494,20 @@ def main():
 
     if model_args.tune:
         onnx_model = onnx.load(model_args.input_model)
-
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
         from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
         from neural_compressor.config import TuningCriterion
 
         calib_dataset = IncDataset(eval_dataset, onnx_model)
-        tuning_criterion = TuningCriterion(max_trials=400)
-        fp32_op_names = None
+        tuning_criterion = TuningCriterion(max_trials=1)
+        fp32_op_names = ['/layoutlmv3/encoder/layer.\d+/output/dense/MatMul',
+                         '/layoutlmv3/encoder/layer.\d+/intermediate/dense/MatMul',]
         config = PostTrainingQuantConfig(approach='static',
                                          quant_level=1,
                                          quant_format=model_args.quant_format,
                                          tuning_criterion=tuning_criterion,
-                                         op_type_dict={'^((?!(MatMul|Gather)).)*$': FP32},
-                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
-                                                if fp32_op_names else None,)
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names})
         q_model = quantization.fit(onnx_model, 
                                     config,
                                     eval_func=eval_func,
@@ -535,7 +522,7 @@ def main():
             b_dataset = IncDataset(eval_dataset, onnx_model)
             conf = BenchmarkConfig(iteration=100,
                                     cores_per_instance=28,
-                                    num_of_instance=1)
+                                    num_of_instance=1,)
             b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
             fit(onnx_model, conf, b_dataloader=b_dataloader)
         elif model_args.mode == 'accuracy':
