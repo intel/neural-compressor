@@ -116,6 +116,7 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
+            
             from neural_compressor import Metric
             top1 = Metric(name="topk", k=1)
             conf = PostTrainingQuantConfig(outputs=['softmax_tensor'], calibration_sampling_size=[50, 100])
