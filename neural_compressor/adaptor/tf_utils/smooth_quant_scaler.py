@@ -78,11 +78,9 @@ class SmoothQuantScaler:
         # scale: (ic,)
         original_shape = original_weight.shape
         if len(original_shape) == 4:    # (fh, hw, ic, oc)
-            # fh, fw, ic, oc = original_shape
-            # TODO Check ? weight is the third dimension!!!
-            W = np.transpose(original_weight, [0, 1, 3, 2]) # put input channel to last dimension
+            W = np.transpose(original_weight, [0, 1, 3, 2]) # move input channel to last dimension
             W *= scale
-            W = np.transpose(W, [0, 1, 3, 2])   # put input channel back
+            W = np.transpose(W, [0, 1, 3, 2])   # move input channel back
             weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
         elif len(original_shape) == 2:  # (ic, oc) if transpose_a == transpose_b == false
             W = np.transpose(original_weight, [1, 0])
@@ -91,7 +89,7 @@ class SmoothQuantScaler:
             weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
 
     def transform(self, max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_node_names):
-        """Applies scaling to weights and activations based on the maximum values per channel.
+        """Apply scaling to weights and activations based on the maximum values per channel.
 
         Args:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel for each input node.
@@ -103,10 +101,9 @@ class SmoothQuantScaler:
             tuple: A tuple containing the modified model and a list of the inserted multiplication nodes.
         """
         if self.scales_per_op:
-            # obtain the smooth scale per op
-            # S_j: a list
-            # adjust activation
-            # adjust weight
+            # 1. obtain the smooth scale per op
+            # 2. adjust weight
+            # 3. adjust activation
             for idx, input_node_name in enumerate(max_vals_per_channel):
                 A_max_per_in_channel = max_vals_per_channel[input_node_name]
                 W_lst = sq_weight_tensors[input_node_name]
@@ -119,7 +116,6 @@ class SmoothQuantScaler:
                         # activation: NHWC, also batch_shape + [in_height, in_width, in_channels]
                         tensor = np.abs(np.transpose(W, [0, 1, 3, 2]))
                         # reduce weight max to (in_channel, ), aligned with activation max
-                        # tensor = W
                         W_max_per_in_channel = np.max(np.reshape(tensor, (-1, tensor.shape[-1])), axis=0)
                     elif len(W.shape) == 2: # matmul
                         # reduce weight max to (in_channel, ), aligned with activation max

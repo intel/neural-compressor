@@ -188,7 +188,6 @@ class SmoothQuantCalibration:
                 assert False, "not supported"
         permute_datas = np.stack(permute_datas, axis=0)
         permute_datas = permute_datas.reshape(-1, permute_datas.shape[-1])
-        ########dump the first activation value
         # try:
         #     np.percentile(permute_datas, percentile, axis=0)
         # except FloatingPointError:
@@ -209,9 +208,6 @@ class SmoothQuantCalibration:
         self._generate_calibration_data()
         max_vals_per_channel = {}
         for key in self._sq_output_tensor_dict.keys():
-            # breakpoint()
-            # if key == 'StatefulPartitionedCall/tf_distil_bert_for_sequence_classification/distilbert/transformer/layer_._1/ffn/lin2/Tensordot/Reshape':
-            #     breakpoint()
             max_val_per_channel = self._get_maxval_per_channel(
                 self._sq_output_tensor_dict[key], percentile=self.percentile)
             max_vals_per_channel[key] = max_val_per_channel
