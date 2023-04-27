@@ -176,11 +176,14 @@ class Quantization(Component):
         self._eval_baseline()
         try:
             from mpi4py import MPI
-            if MPI.COMM_WORLD.Get_size() > 1:
-                logger.info("use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
+            if MPI.COMM_WORLD.Get_size() > 2:
+                logger.info("Use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
                 return self.distributed_execute()
+            elif MPI.COMM_WORLD.Get_size() == 2:
+                logger.info("Use distributed tuning on {} nodes, will be fallback to normal tuning."\
+                    .format(MPI.COMM_WORLD.Get_size()))
         except (ImportError, AttributeError):
-            logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
+            logger.warning("If use distributed tuning, <mpi4py> needs to be installed correctly.")
 
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):

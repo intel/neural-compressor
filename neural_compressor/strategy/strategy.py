@@ -234,9 +234,12 @@ class TuneStrategy(object):
         self._eval_baseline()
         try:
             from mpi4py import MPI
-            if MPI.COMM_WORLD.Get_size() > 1:
-                logger.info("use distributed traverse on {} nodes".format(MPI.COMM_WORLD.Get_size()))
-                return self.distributed_traverse()
+            if MPI.COMM_WORLD.Get_size() > 2:
+                logger.info("Use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
+                return self.distributed_execute()
+            elif MPI.COMM_WORLD.Get_size() == 2:
+                logger.info("Use distributed tuning on {} nodes, will be fallback to normal tuning."\
+                    .format(MPI.COMM_WORLD.Get_size()))
         except (ImportError, AttributeError):
             logger.warning("[Strategy] <mpi4py> needs to be installed correctly for distributed tuning.")
         traverse_start_time = time()
