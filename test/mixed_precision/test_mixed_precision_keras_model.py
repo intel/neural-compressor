@@ -75,6 +75,10 @@ class MyMetric(BaseMetric):
             np.array(self.pred_list) == np.array(self.label_list))
         return correct_num / self.samples
 
+class MyMetric_keras(MyMetric):
+    def __init__(self, *args):
+        super(MyMetric_keras, self).__init__(*args)
+
 class TestMixedPrecisionWithKerasModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -131,7 +135,7 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
             model='./models/saved_model',
             config=config,
             eval_dataloader=dataloader, 
-            eval_metric=MyMetric())
+            eval_metric=MyMetric_keras())
 
         bf16_policy = keras.mixed_precision.Policy('mixed_bfloat16')
         # bf16_model.model is an obj of tf.keras.Model
