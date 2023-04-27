@@ -744,8 +744,8 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
                     node.input[index] = mul_output_name
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
-def absorb_scale(model, scales):
-    """Absorb the scale to the operator at output channel.
+def fold_scale(model, scales):
+    """Fold the scale to the operator at output channel.
 
     Args:
         model: The neural_compressor model object
