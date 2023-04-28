@@ -285,7 +285,7 @@ class _MixedPrecision:
             if isinstance(user_metric, NCMetric):
                 if user_metric.metric_cls is None:
                     name = user_metric.name
-                    metric_cls = METRICS(self.conf.quantization.framework).metrics[name]
+                    metric_cls = METRICS(self.conf.mixed_precision.framework).metrics[name]
                     metric_cfg = {name: {**user_metric.kwargs}}
                     self._metric = metric_cfg
                     return
@@ -300,7 +300,7 @@ class _MixedPrecision:
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.quantization.framework)
+            metrics = METRICS(self.conf.mixed_precision.framework)
             metrics.register(name, metric_cls)
         self._metric = metric_cfg
 
