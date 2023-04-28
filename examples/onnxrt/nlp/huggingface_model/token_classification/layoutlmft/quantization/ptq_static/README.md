@@ -19,7 +19,7 @@ Finetune on FUNSD
 ```bash
 python main.py \
        --model_name_or_path microsoft/layoutlm-base-uncased \
-       --output_dir ./layoutlm-base-uncased-fintuned-funsd \
+       --output_dir ./layoutlm-base-uncased-finetuned-funsd \
        --do_train \
        --max_steps 1000 \
        --warmup_ratio 0.1 
@@ -28,7 +28,7 @@ python main.py \
 Export a model to ONNX with `optimum.exporters.onnx`.
 
 ```bash
-optimum-cli export onnx --model ./layoutlm-base-uncased-fintuned-funsd ./layoutlm-base-uncased-fintuned-funsd-onnx/ --task=token-classification
+optimum-cli export onnx --model ./layoutlm-base-uncased-finetuned-funsd ./layoutlm-base-uncased-finetuned-funsd-onnx/ --task=token-classification
 ```
 
 # Run
@@ -38,7 +38,7 @@ optimum-cli export onnx --model ./layoutlm-base-uncased-fintuned-funsd ./layoutl
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=./layoutlm-base-uncased-fintuned-funsd-onnx/model.onnx \ # model path as *.onnx
+bash run_tuning.sh --input_model=./layoutlm-base-uncased-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --quant_format="QOperator"
 ```
