@@ -39,6 +39,10 @@ Pruning
 
 
 
+    - [Pruning Support Matrix](#pruning-support-matrix)
+
+
+
 
 2. [Get Started With Pruning API](#get-started-with-pruning-api)
 
@@ -60,8 +64,8 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
-<a target="_blank" href="../../../docs/source/imgs/pruning/pruning.png">
-    <img src="../../../docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
+<a target="_blank" href="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png">
+    <img src="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
 </a>
 </div>
 
@@ -69,7 +73,7 @@ Neural network pruning is a promising model compression technique that removes t
 ### Pruning Patterns
 
 
-Pruning patterns defines the rules of pruned weights' arrangements in space. Intel Neural Compressor currently supports N:M and NxM patterns. N:M pattern is applied to input channels; for NxM pattern, N stands for output channels and M stands for input ones.
+Pruning patterns defines the rules of pruned weights' arrangements in space. Intel Neural Compressor currently supports **N:M** and **NxM** patterns. N:M pattern is applied to input channels; for NxM pattern, N stands for output channels and M stands for input ones.
 
 - NxM Pruning
 
@@ -84,6 +88,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. *Users could set "channelx1"( some input channels will be totally pruned) (or "1xchannel")  to enable it.*
 
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
+
 
   We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
 
@@ -144,7 +149,8 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected . *Please note that progressive pruning only supports NXM and channel-wise pattern currently.*
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected. Please note that progressive pruning only supports NxM patterns and is preferred when large patterns such as 1xchannel and channelx1 are selected.
+
 
 - Progressive Pruning
 
@@ -237,6 +243,14 @@ Regularization is a technique that discourages learning a more complex model and
 </div>
 
 
+### Pruning Support Matrix
+
+|Framework |  Status  | 
+|  :----:  | :----:  | 
+| PyTorch   |  Supported  |
+| TensorFlow |  Unsupported  |
+
+
 ## Get Started with Pruning API
 
 
@@ -258,7 +272,7 @@ The following section exemplifies how to use hooks in user pass-in training func
                 "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step = end_step.
                 "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                "pruning_frequence": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
+                "pruning_frequency": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
                 "pattern": "4x1",   # Default pruning pattern.
               }, # The missing parameter items would be complemented by default settings (i.e. start_step = 1)
 

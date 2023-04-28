@@ -23,7 +23,7 @@ import tensorflow as tf
 import onnxruntime as ort
 from argparse import ArgumentParser
 from neural_compressor.data import LabelShift
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 from neural_compressor.utils.create_obj_from_config import create_dataloader
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -113,7 +113,7 @@ class eval_classifier_optimized_graph:
             raise ValueError("Only support tensorflow export to ONNX for QDQ format, "
                 "please make sure input the correct quant_format.")
 
-        top1 = TensorflowTopK(k=1)
+        top1 = Metric(name="topk", k=1)
         postprocess = LabelShift(label_shift=1)
 
         if args.export:

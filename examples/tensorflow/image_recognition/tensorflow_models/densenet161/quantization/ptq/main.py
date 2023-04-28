@@ -117,8 +117,8 @@ class eval_classifier_optimized_graph:
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):
@@ -137,8 +137,8 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):

@@ -51,7 +51,7 @@ flags.DEFINE_integer('batch_size', 32, 'batch_size')
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor import Metric
 from neural_compressor.data.transforms.transform import ComposeTransform
 from neural_compressor.data.datasets.dataset import TensorflowImageRecord
 from neural_compressor.data.transforms.imagenet_transform import LabelShift
@@ -88,7 +88,7 @@ def evaluate(model):
     # disable eager mode
     model.compile(run_eagerly=False)
     postprocess = LabelShift(label_shift=1)
-    metric = TensorflowTopK(k=1)
+    metric = Metric(name="topk", k=1)
     latency_list = []
     def eval_func(dataloader, metric):
         warmup = 5

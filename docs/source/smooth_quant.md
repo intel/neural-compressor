@@ -26,9 +26,10 @@ where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integ
 
 ### Per-tensor & Per-channel
 
-There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual parameter.
+There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual set of quantization parameters.
 
-However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show per-channel could bring lower quantization loss but with some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
+
+However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show that per-channel could bring lower quantization loss but has some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
 #### Per-tensor example
 
@@ -42,7 +43,7 @@ W = torch.Tensor(
     )
 ```
 
-According to the formula (1), we need to scale $S$ and zero point $Z$ to calculate the integer matrix.
+According to the formula (1), we need scale $S$ and zero point $Z$ to calculate the integer matrix.
 
 $$
 S = \frac{X_{max} - X{min}}{2^b -1} \tag{2}
@@ -215,7 +216,7 @@ tensor([[0.6836, 0.2970, 0.1583, 0.6481],
 
 Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.
 
-The left side of the image presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle sub-image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation on the right sub-image, we could not dequantize the  $y_1$ and  $y_2$ to float results.
+The image on the left presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation (right image), we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
 <div align="center">
     <img src="./imgs/sq_pc.png"/>
@@ -240,15 +241,15 @@ So **the first question is how to migrate the difficulty from activation to weig
 </div>
 
 
-Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights showed above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
+Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights shown above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.
 
-So **the second question is how much difficulty to be migrated**, that is how to choose the **convention per-channel scale** $s_{x1}$ and $s_{x2}$ on the above image. Different works adopt different ways.
+So **the second question is how much difficulty to be migrated**, that is how to choose the **conversion per-channel scale** $s_{x1}$ and $s_{x2}$ from the above image. Different works adopt different ways.
 
-*SPIQ* just adopts the quantization scale of activations as the convention per-channel scale.
+*SPIQ* just adopts the quantization scale of activations as the conversion per-channel scale.
 
-*Outlier suppression* adopts the scale of the preceding layernorm as the convention per-channel scale.
+*Outlier suppression* adopts the scale of the preceding layernorm as the conversion per-channel scale.
 
-*Smoothquant* introduces a hyperparameter $\alpha$ as a smooth factor to calculate the convention per-channel scale and balance the quantization difficulty of activation and weight.
+*Smoothquant* introduces a hyperparameter $\alpha$ as a smooth factor to calculate the conversion per-channel scale and balance the quantization difficulty of activation and weight.
 
 $$
 s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha} \tag{4}
@@ -299,7 +300,7 @@ sq.transform(alpha) ##alpha could be a float or a string 'auto'
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
 
-*support lots of fusing patterns*: when applying the convention per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.
+*support lots of fusing patterns*: when applying the conversion per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.
 
 ```bash
 conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
@@ -308,7 +309,16 @@ conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/g
 ```
 
 ## Validated Models
-Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
+neural_compressor: 2.1
+
+IPEX: 2.0
+
+Dataset: lambada
+
+task: text-generation
+
+alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
+
 | Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
 |---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
 | bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over 0.6, 4.1% in [0.4, 0.6])                           |
@@ -326,6 +336,25 @@ Dataset: lambada, task: text-generation, alpha [0.4, 0.6] is sweet spot region i
 ## Example
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md) on how to use smooth quant.
+
+```python
+recipes = {
+    "smooth_quant": True,
+    "smooth_quant_args": {
+        "alpha": 0.5,
+        "folding": True,
+    },
+}
+conf = PostTrainingQuantConfig(recipes=recipes)
+```
+smooth_quant_args description:
+
+"alpha": "auto" or a float value. Default is 0.5. "auto" means automatic tuning.
+
+"folding":
+- False: Allow inserting mul to update the input distribution and not absorbing. IPEX can fuse inserted mul automatically and folding=False is recommended. And for PyTorch FBGEMM backend, folding=False setting will only convert model to QDQ model.
+- True: Only allow inserting mul with the input scale that can be absorbed into the last layer. 
+- If folding not set in config, the default value is IPEX: False (True if version<2.1), Stock PyTorch: True.
 
 
 ## Reference

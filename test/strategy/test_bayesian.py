@@ -1,73 +1,7 @@
 """Tests for quantization"""
 import numpy as np
 import unittest
-import os
 import shutil
-import yaml
-
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op_to_store
-        device: cpu
-        quantization:
-          calibration:
-            sampling_size: 10
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: bayesian
-            exit_policy:
-              max_trials: 1
-            accuracy_criterion:
-              relative: 0.01
-            workspace:
-              path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
-    f.close()
-
-def build_fake_yaml2():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: input
-          outputs: final
-        device: cpu
-        quantization:
-          calibration:
-            sampling_size: 10, 20
-          op_wise: {
-                     \"conv1\": {
-                       \"activation\":  {\"dtype\": [\"fp32\"]},
-                     },
-                   }
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-          strategy:
-            name: bayesian
-          exit_policy:
-            max_trials: 3
-          accuracy_criterion:
-            relative: 0.01
-          workspace:
-            path: saved
-        '''
-    with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
-        f.write(fake_yaml)
-    f.close()
 
 def build_fake_model():
     import tensorflow as tf
@@ -250,43 +184,72 @@ def create_test_graph():
 def objective_func(params):
     return params['x1']**2 + params['x2']
 
-class TestQuantization(unittest.TestCase):
+class TestBayesianStrategy(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
         self.test_graph = create_test_graph()
-        build_fake_yaml()
-        build_fake_yaml2()
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
-        os.remove('fake_yaml2.yaml')
-
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_run_bayesian_one_trial(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        output_graph = quantizer.fit()
-        self.assertNotEqual(output_graph, None)
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
+        dataloader = DATALOADERS["tensorflow"](dataset)
+
+        # tuning and accuracy criterion
+        tune_cri = TuningCriterion(strategy='bayesian', max_trials=1)
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
+
+        conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
+        def fake_eval(model):
+            return 1
+
+        q_model = fit(model=self.constant_graph,
+                      conf=conf,
+                      calib_dataloader=dataloader,
+                      eval_func=fake_eval)
+        self.assertNotEqual(q_model, None)
 
     def test_run_bayesian_max_trials(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('fake_yaml2.yaml')
-        dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.test_graph
-        output_graph = quantizer.fit()
-        self.assertNotEqual(output_graph, None)
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"]((100, 3, 3, 1), label=True)
+        dataloader = DATALOADERS["tensorflow"](dataset)
+
+        # tuning and accuracy criterion
+        tune_cri = TuningCriterion(strategy='bayesian', max_trials=3)
+        acc_cri = AccuracyCriterion(tolerable_loss=0.01)
+
+        op_name_dict = {
+            "conv1": {
+                "activation":  {"dtype": ["fp32"]},
+                },
+            }
+
+        acc = [0, 1, 0.9, 0.9, 1]
+        def fake_eval(model):
+            acc.pop(0)
+            return acc[0]
+
+        conf = PostTrainingQuantConfig(quant_level=1, op_name_dict = op_name_dict,\
+            tuning_criterion=tune_cri, accuracy_criterion=acc_cri)
+        q_model = fit(model=self.constant_graph,
+                      conf=conf,
+                      calib_dataloader=dataloader,
+                      eval_func=fake_eval)
+        self.assertNotEqual(q_model, None)
+
 
     def test_bayesian_opt_class(self):
         from neural_compressor.strategy.bayesian import BayesianOptimization
