@@ -146,13 +146,16 @@ class eval_classifier_optimized_graph:
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
 
-            from neural_compressor import Metric
-            top1 = Metric(name="topk", k=1)
-
             def eval(model):
                 if isinstance(model, str):
+                    from neural_compressor import METRICS
+                    metrics = METRICS('tensorflow')
+                    top1 = metrics['topk']()
                     return eval_func_tf(model, dataloader, top1)
                 else:
+                    from neural_compressor import METRICS
+                    metrics = METRICS('onnxrt_qlinearops')
+                    top1 = metrics['topk']()
                     return eval_func_onnx(model, dataloader, top1)
 
             if self.args.mode == 'performance':
