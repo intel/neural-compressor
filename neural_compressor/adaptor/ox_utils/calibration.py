@@ -612,7 +612,7 @@ class ONNXRTAugment:
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types=['MatMul', 'Linear', 'Conv']):
+    def _get_input_tensor_of_ops(self, op_types=['MatMul', 'Gemm', 'Conv', 'FusedConv']):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
@@ -622,20 +622,20 @@ class ONNXRTAugment:
             op_types: The op types whose input tensor will be dumped
 
         Returns:
-            A set of tensor names 
+            A dict of dumped tensor: node info
         """
-        tensors_to_dump = set()
+        tensors_to_node = {}
         model = self.model
         initializers = {i.name: i for i in model.graph.initializer}
 
         for node in model.graph.node:
             if len(op_types) == 0 or node.op_type in op_types:
-                if node.op_type == "Conv" and self._check_is_group_conv(node, model):
+                if node.op_type in ["Conv", "FusedConv"] and self._check_is_group_conv(node, model):
                     continue
                 # also need to check whether the layer has weight
                 if len(node.input) >= 2 and node.input[1] in initializers.keys():
-                    tensors_to_dump.add(node.input[0])
-        return tensors_to_dump
+                    tensors_to_node.setdefault(node.input[0], []).append([node.name, node.input, node.output])
+        return tensors_to_node
 
     def _get_max_per_channel(self, datas: list, percentile):
         """Get the max values per input channel.
@@ -680,8 +680,8 @@ class ONNXRTAugment:
             shape_infos: The shape information of input tensors
         """
         # add the input tensors of {op_types} to outputs of the model
-        tensors_to_dump = self._get_input_tensor_of_ops(op_types)
-        self.model_wrapper.add_tensors_to_outputs(tensors_to_dump)
+        tensors_to_node = self._get_input_tensor_of_ops(op_types)
+        self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())
         self.augmented_model = self.model_wrapper.model
         if self.model_wrapper.is_large_model:  # pragma: no cover
             onnx.save_model(self.augmented_model,
@@ -693,11 +693,11 @@ class ONNXRTAugment:
         _, output_dicts = self.get_intermediate_outputs()
 
         # remove the input tensors of {op_types} to outputs of the model
-        self.model_wrapper.remove_tensors_from_outputs(tensors_to_dump)
+        self.model_wrapper.remove_tensors_from_outputs(tensors_to_node.keys())
         max_vals_per_channel = {}
         shape_infos = {}
-        for key in tensors_to_dump:
+        for key in tensors_to_node.keys():
             max_val_per_channel = self._get_max_per_channel(output_dicts[key], percentile=percentile)
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
-        return max_vals_per_channel, shape_infos
+        return max_vals_per_channel, shape_infos, tensors_to_node
