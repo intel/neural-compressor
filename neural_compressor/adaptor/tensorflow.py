@@ -722,6 +722,7 @@ class TensorFlowAdaptor(Adaptor):
         fp32_common_config = {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}
         uint8_type = self.query_handler.get_op_types_by_precision(precision='uint8')
         int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
+        bf16_type = self.query_handler.get_op_types_by_precision(precision='bf16')
         tf_quantizable_op_type = list(set(uint8_type).union(set(int8_type)))
 
         valid_precision = self.query_handler.get_mixed_precision_combination()
@@ -792,7 +793,8 @@ class TensorFlowAdaptor(Adaptor):
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
                     )] = [copy.deepcopy(other_config), fp32_common_config]
-                if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
+                if node_op in bf16_type and (('bf16' in valid_precision and CpuInfo().bf16) \
+                         or os.getenv('FORCE_BF16') == '1'):
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
                     )].insert(1, bf16_common_config)
@@ -2228,7 +2230,7 @@ class TensorflowQuery(QueryBackendCapability):
                 return self.cur_config[precision]
             if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
                version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
-                return ['Conv2D']
+                return self.cur_config[precision]
             return []
 
     def get_mixed_precision_combination(self):
