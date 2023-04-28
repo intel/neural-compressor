@@ -41,7 +41,9 @@ def evaluate(model):
     if args.benchmark:
         iteration = 100
     postprocess = LabelShift(label_shift=1)
-    metric = Metric(name="topk", k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(dataloader):
         latency_list = []

@@ -137,8 +137,9 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor import Metric
-            top1 = Metric(name="topk", k=1)
+            from neural_compressor import METRICS
+            metrics = METRICS('tensorflow')
+            top1 = metrics['topk']()
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):
