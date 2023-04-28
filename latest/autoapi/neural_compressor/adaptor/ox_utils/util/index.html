@@ -192,7 +192,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op" title="neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_smooth_mul_op_per_op</span></code></a>(scales, shape_infos, ...)</p></td>
 <td><p>Insert the mul layer before op.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.trt_env_setup" title="neural_compressor.adaptor.ox_utils.util.trt_env_setup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trt_env_setup</span></code></a>(model)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.fold_scale" title="neural_compressor.adaptor.ox_utils.util.fold_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fold_scale</span></code></a>(model, scales)</p></td>
+<td><p>Fold the scale to the operator at output channel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.trt_env_setup" title="neural_compressor.adaptor.ox_utils.util.trt_env_setup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trt_env_setup</span></code></a>(model)</p></td>
 <td><p>Set environment variable for Tensorrt Execution Provider.</p></td>
 </tr>
 </tbody>
@@ -528,6 +531,20 @@ name_2_nodes: a dict, key is the node name, value is the node</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>new_added_mul_nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.fold_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">fold_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.fold_scale" title="Permalink to this definition"></a></dt>
+<dd><p>Fold the scale to the operator at output channel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The neural_compressor model object</p></li>
+<li><p><strong>scales</strong> – A dict, tensor: smooth quant scale</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

@@ -57,6 +57,7 @@ Functions
    neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op
    neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input
    neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op
+   neural_compressor.adaptor.ox_utils.util.fold_scale
    neural_compressor.adaptor.ox_utils.util.trt_env_setup
 
 
@@ -320,6 +321,14 @@ Functions
              new_init_tensors: added scales tensor
              name_2_nodes: a dict, key is the node name, value is the node
    :rtype: new_added_mul_nodes
+
+
+.. py:function:: fold_scale(model, scales)
+
+   Fold the scale to the operator at output channel.
+
+   :param model: The neural_compressor model object
+   :param scales: A dict, tensor: smooth quant scale
 
 
 .. py:function:: trt_env_setup(model)
