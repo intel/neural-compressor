@@ -2939,7 +2939,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     if self.version.release >= Version("2.1").release:
-                        static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        # HistogramObserver will cause a performance issue.
+                        # static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        qconfig = QConfig(activation=MinMaxObserver.with_args(
+                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                    qscheme=torch.per_channel_symmetric))
+                        from torch.ao.quantization import QConfigMapping
+                        static_qconfig = QConfigMapping().set_global(qconfig)
                     else:
                         static_qconfig = QConfig(activation=MinMaxObserver.with_args(
                             qscheme=torch.per_tensor_affine, dtype=torch.quint8),
