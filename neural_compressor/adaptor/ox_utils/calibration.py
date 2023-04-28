@@ -232,8 +232,11 @@ class ONNXRTAugment:
                                  else self.dequantized_output[output.name] \
                              for output in session.get_outputs()]
         
-        input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-        output_name_to_node = self.model_wrapper.output_name_to_node
+        augment_model_wrapper = ONNXModel(self.augmented_model) \
+            if not self.model_wrapper.is_large_model else \
+            ONNXModel(self.model_wrapper.model_path  + '_augment.onnx')
+        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
+        output_name_to_node = augment_model_wrapper.output_name_to_node
         name_to_node = {}
         for data_name in node_output_names:
             node = None

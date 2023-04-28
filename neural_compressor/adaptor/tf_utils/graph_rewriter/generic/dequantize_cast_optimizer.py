@@ -21,8 +21,10 @@ from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
+import tensorflow as tf
+from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
+
 class DequantizeCastOptimizer(GraphRewriterBase):
     """Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16."""
 
@@ -36,6 +38,11 @@ class DequantizeCastOptimizer(GraphRewriterBase):
         Returns:
             [graphdef]: optimized graph
         """
+        # stock TF _MklDequantize doesn't support BF16 currently.
+        # TODO remove this when spr-base upstream to stock TF.
+        if not tf.version.VERSION in TF_SPR_BASE_VERSIONS:
+            return self.model
+
         DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
