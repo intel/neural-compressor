@@ -94,7 +94,7 @@ python main.py -t -a resnext101_32x16d_wsl --hub --ipex --pretrained /path/to/im
 or
 ```shell
 bash run_tuning.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
+bash run_benchmark.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
 ```
 
 # Saving and Loading Model
