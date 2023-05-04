@@ -27,7 +27,7 @@ from .utils.utility import time_limit
 from .strategy import STRATEGIES
 from .config import _Config, options
 from .utils import logger
-from .model.model import wrap_model_from
+from .model import Model
 
 
 def fit(model,
@@ -93,7 +93,7 @@ def fit(model,
                        "please modify precision or excluded_precisions to make it understandable.")
         sys.exit(0)
 
-    wrapped_model = wrap_model_from(model, config)
+    wrapped_model = Model(model, conf=config)
 
     if eval_metric is not None:
         metric = register_customer_metric(eval_metric, config.framework)

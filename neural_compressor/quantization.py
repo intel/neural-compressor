@@ -23,7 +23,7 @@ import numpy as np
 from .config import _Config, options
 from .data.dataloaders.dataloader import check_dataloader
 from .metric.metric import register_customer_metric
-from .model.model import wrap_model_from
+from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import time_limit, dump_class_attrs
@@ -145,7 +145,7 @@ def fit(model,
     seed = options.random_seed
     random.seed(seed)
     np.random.seed(seed)
-    wrapped_model = wrap_model_from(model, conf)
+    wrapped_model = Model(model, conf=conf)
 
     if eval_metric is not None:
         metric = register_customer_metric(eval_metric, conf.framework)

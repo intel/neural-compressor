@@ -32,8 +32,7 @@ from .config import BenchmarkConfig, options
 from .utils import logger
 from .utils import OPTIONS
 from .utils.utility import GLOBAL_STATE, MODE
-from .model import BaseModel
-from .model.model import wrap_model_from
+from .model import BaseModel, Model
 from .utils import logger
 from .utils.utility import Statistics
 
@@ -184,7 +183,8 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
         b_func = create_eval_func(conf.framework,
                                   b_dataloader,
                                   adaptor,
-                                  None)
+                                  None,
+                                  iteration=conf.iteration)
 
         objectives = MultiObjective(["performance"],
                                     {'relative': 0.1},
@@ -403,7 +403,7 @@ def fit(model, config, b_dataloader=None, b_func=None):
     if config.backend == "ipex":
         import intel_extension_for_pytorch
 
-    wrapped_model = wrap_model_from(model, config)
+    wrapped_model = Model(model, conf=config)
 
     if b_dataloader is not None:
         check_dataloader(b_dataloader)

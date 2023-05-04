@@ -163,93 +163,54 @@ class Model(object):
         Returns:
             BaseModel: neural_compressor built-in model
         """
-        backend = kwargs.get("backend", "NA")
-        if backend == "NA" or backend == "default":
-            backend_tmp = get_model_fwk_name(root)
-            if backend_tmp == "pytorch":
-                backend = "pytorch_fx"
-            else:
-                backend = backend_tmp
-        elif backend == "ipex":
-            backend = "pytorch_ipex"
-
-        if 'tensorflow' in backend or backend == 'keras':
-            if kwargs.get("approach", None) == "quant_aware_training" or backend == 'tensorflow_qat':
-                return MODELS['tensorflow_qat'](root, **kwargs)
-
-            if 'modelType' in kwargs:
-                model_type = kwargs['modelType']
-            else:
-                model_type = get_model_type(root)
-            if backend == 'keras' and model_type == 'keras':
-                return MODELS['keras'](root, **kwargs)
-            model = MODELS['tensorflow'](model_type, root, **kwargs)
+        conf = kwargs.pop("conf", "NA")
+        if isinstance(root, BaseModel):
+            if conf != "NA" and conf.framework is None:
+                conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(root))]
+                if conf.backend == "ipex":
+                    assert conf.framework == "pytorch_ipex",\
+                          "Please wrap the model with correct Model class!"
+                if conf.backend == "itex":
+                    if get_model_type(root.model) == 'keras':
+                        assert conf.framework == "keras",\
+                              "Please wrap the model with KerasModel class!"
+                    else:
+                        assert conf.framework == "tensorflow_itex", \
+                            "Please wrap the model with TensorflowModel class!"
+                if getattr(conf, "approach", None) == "quant_aware_training":
+                    assert conf.framework == "tensorflow_qat", \
+                            "Please wrap the model with TensorflowQATModel class!"
+            return root
         else:
-            model = MODELS[backend](root, **kwargs)
-        return model
-
-
-def wrap_model_from(user_model, conf):
-    """Wrap the user model and dispatch to framework specific internal model object.
-
-    Args:
-        user_model: user are supported to set model from original framework model format
-                   (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
-                   Best practice is to set from a initialized neural_compressor.common.Model.
-                   If tensorflow model is used, model's inputs/outputs will be auto inferred,
-                   but sometimes auto inferred inputs/outputs will not meet your requests,
-                   set them manually in config yaml file. Another corner case is slim model
-                   of tensorflow, be careful of the name of model configured in yaml file,
-                   make sure the name is in supported slim model list.
-        conf: the instance of PostTrainingQuantConfig or QuantizationAwareTrainingConfig or MixedPrecisionConfig.
-    """
-    if conf.framework is None:
-        if isinstance(user_model, BaseModel):  # pragma: no cover
-            conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(user_model))]
-            if conf.backend == "ipex":
-                assert conf.framework == "pytorch_ipex",\
-                      "Please wrap the model with correct Model class!"
-            if conf.backend == "itex":
-                if get_model_type(user_model.model) == 'keras':
-                    assert conf.framework == "keras",\
-                          "Please wrap the model with KerasModel class!"
-                else:
-                    assert conf.framework == "pytorch_itex", \
-                        "Please wrap the model with TensorflowModel class!"
-        else:
-            framework = get_model_fwk_name(user_model)
-            if framework == "tensorflow":
-                if get_model_type(user_model) == 'keras' and conf.backend == 'itex':
-                    framework = 'keras'
-            if framework == "pytorch":
-                if conf.backend == "default":
+            framework = get_model_fwk_name(root)
+            if conf == "NA":
+                if framework == "pytorch":
                     framework = "pytorch_fx"
+                return MODELS[framework](root, **kwargs)
+            else:
+                conf.framework = framework
+                if conf.backend == "default":
+                    if framework == "pytorch":
+                        conf.framework = "pytorch_fx"
                 elif conf.backend == "ipex":
-                    framework = "pytorch_ipex"
-            conf.framework = framework
+                    conf.framework = "pytorch_ipex"
 
-    if not isinstance(user_model, BaseModel):
-        logger.warning("Force convert framework model to neural_compressor model.")
-        if "tensorflow" in conf.framework or conf.framework == "keras":
-            model = Model(user_model, backend=conf.framework, device=conf.device)
-        else:
-            model = Model(user_model, backend=conf.framework)
-    else:  # pragma: no cover
-        if conf.framework == "pytorch_ipex":
-            from neural_compressor.model.torch_model import IPEXModel
-            assert type(user_model) == IPEXModel, \
-                        "The backend is ipex, please wrap the model with IPEXModel class!"
-        elif conf.framework == "pytorch_fx":
-            from neural_compressor.model.torch_model import PyTorchFXModel
-            assert type(user_model) == PyTorchFXModel, \
-                        "The backend is default, please wrap the model with PyTorchFXModel class!"
+                if 'tensorflow' in conf.framework:
+                    if getattr(conf, "approach", None) == "quant_aware_training":
+                        return MODELS['tensorflow_qat'](root, **kwargs)
 
-        model = user_model
-
-    if 'tensorflow' in conf.framework:
-        model.name = conf.model_name
-        model.output_tensor_names = conf.outputs
-        model.input_tensor_names = conf.inputs
-        model.workspace_path = options.workspace
-
-    return model
+                    if 'modelType' in kwargs:
+                        model_type = kwargs['modelType']
+                    else:
+                        model_type = get_model_type(root)
+                    if conf.backend == "itex" and model_type == 'keras':
+                        return MODELS['keras'](root, **kwargs)
+                    model = MODELS['tensorflow'](model_type, root, **kwargs)
+                else:
+                    model = MODELS[conf.framework](root, **kwargs)
+                if 'tensorflow' in conf.framework:
+                    model.name = conf.model_name
+                    model.output_tensor_names = conf.outputs
+                    model.input_tensor_names = conf.inputs
+                    model.workspace_path = options.workspace
+        return model
