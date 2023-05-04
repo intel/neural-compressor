@@ -351,10 +351,10 @@ smooth_quant_args description:
 
 "alpha": "auto" or a float value. Default is 0.5. "auto" means automatic tuning.
 
-"folding": whether to fold torch.mul into the last layer.
-- False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically and folding=False is recommended. For Stock PyTorch, setting folding=False will only convert the model to a QDQ model.
-- True: Only allow inserting mul with the input scale that can be folded in the last layer.
-- If folding not set in config, the default value is IPEX: False (True if version<2.1), Stock PyTorch: True.
+"folding": whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.
+- False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will only convert the model to a QDQ model.
+- True: Only allow inserting mul that can be folded into the previous layer.
+- If folding is not set in config, the default value is: IPEX: False (True if version<2.1), Stock PyTorch: True.
 
 
 ## Reference
