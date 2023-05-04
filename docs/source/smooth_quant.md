@@ -309,13 +309,13 @@ conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/g
 ```
 
 ## Validated Models
-neural_compressor: 2.1
+Neural Compressor: 2.1
 
 IPEX: 2.0
 
 Dataset: lambada
 
-task: text-generation
+Task: text-generation
 
 alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
 
@@ -351,9 +351,9 @@ smooth_quant_args description:
 
 "alpha": "auto" or a float value. Default is 0.5. "auto" means automatic tuning.
 
-"folding":
-- False: Allow inserting mul to update the input distribution and not absorbing. IPEX can fuse inserted mul automatically and folding=False is recommended. And for PyTorch FBGEMM backend, folding=False setting will only convert model to QDQ model.
-- True: Only allow inserting mul with the input scale that can be absorbed into the last layer. 
+"folding": whether to fold torch.mul into the last layer.
+- False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically and folding=False is recommended. For Stock PyTorch, setting folding=False will only convert the model to a QDQ model.
+- True: Only allow inserting mul with the input scale that can be folded in the last layer.
 - If folding not set in config, the default value is IPEX: False (True if version<2.1), Stock PyTorch: True.
 
 
@@ -365,4 +365,4 @@ smooth_quant_args description:
 
 [^3]: Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
 
-[^4]: Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022)..
+[^4]: Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
