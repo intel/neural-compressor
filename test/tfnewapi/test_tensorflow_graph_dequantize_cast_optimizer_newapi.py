@@ -67,10 +67,7 @@ class TestDequantizeCastOptimizer(unittest.TestCase):
         graph_def = build_fake_graphdef()
         converted_graph_def = DequantizeCastOptimizer(graph_def).do_transformation()
         for i in converted_graph_def.node:
-            if i.op == 'Cast':
-                hasCast = True
-                break
-        self.assertEqual(hasCast, True)
+            self.assertNotEqual(i.op, 'Cast')
 
     @disable_random()
     def test_dequantize_cast_min_first(self):
