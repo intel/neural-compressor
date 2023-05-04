@@ -353,10 +353,11 @@ class _Benchmark(object):
             assert self._b_dataloader is not None, "dataloader should not be None"
 
             from neural_compressor.utils.create_obj_from_config import create_eval_func
-            self._b_func = create_eval_func(self.framework, \
-                                    self._b_dataloader, \
-                                    adaptor, \
-                                    None)
+            self._b_func = create_eval_func(framework=self.framework, \
+                                    dataloader=self._b_dataloader, \
+                                    adaptor=adaptor, \
+                                    metric=None, \
+                                    iteration=cfg.iteration)
 
             self.objectives = MultiObjective(["performance"],
                                              {'relative': 0.1},

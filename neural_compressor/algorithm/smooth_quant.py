@@ -78,13 +78,13 @@ class SmoothQuant(Algorithm):
             kwargs['percentile'] = self.percentile
         if self.scales_per_op != None:
             kwargs['scales_per_op'] = self.scales_per_op
+        kwargs['folding'] = self.folding
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,
             calib_iter,
             self.tune_cfg,
             alpha=self.alpha,
-            folding=self.folding,
             **kwargs,
         )
         return q_model

@@ -80,7 +80,9 @@ def evaluate(model):
         accuracy (float): evaluation result, the larger is better.
     """
     postprocess = LabelShift(label_shift=1)
-    metric = Metric(name="topk", k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
     latency_list = []
 
     def eval_func(dataloader, metric):
