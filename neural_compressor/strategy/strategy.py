@@ -364,14 +364,14 @@ class TuneStrategy(object):
             self.tuning_times += 1
             # set the parameter for pre quantization algos and run
             self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
-            self.model = self.algo_scheduler('pre_quantization')
+            self.model = self.algo_scheduler('pre_quantization') # pylint: disable=E1102
             # quantize
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             assert self.adaptor.pre_optimized_model
             # set the parameter for post quantization algos and run
             self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg,\
                 self.adaptor.pre_optimized_model, q_model)
-            self.last_qmodel = self.algo_scheduler('post_quantization')
+            self.last_qmodel = self.algo_scheduler('post_quantization') # pylint: disable=E1102
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the reference to model
             self.algo_scheduler.reset_exec_algorithms()
@@ -655,14 +655,14 @@ class TuneStrategy(object):
 
             # set the parameter for pre quantization algos and run
             self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
-            self.model = self.algo_scheduler('pre_quantization')
+            self.model = self.algo_scheduler('pre_quantization') # pylint: disable=E1102
             # quantize
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             assert self.adaptor.pre_optimized_model
             # set the parameter for post quantization algos and run
             self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg, self.adaptor.pre_optimized_model,
                                                        q_model)
-            self.last_qmodel = self.algo_scheduler('post_quantization')
+            self.last_qmodel = self.algo_scheduler('post_quantization') # pylint: disable=E1102
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # Remove the reference to model
             self.algo_scheduler.reset_exec_algorithms()
