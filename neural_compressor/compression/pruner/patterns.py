@@ -188,7 +188,7 @@ class ProgressivePatternUtils(object):
             pre_masks_for_this = {key: pre_masks[key]}
             cur_masks_for_this = {key: cur_masks[key]}
             scores_for_this = {key: scores[key]}
-            progressive_masks_for_this = ProgressivePatternUtils.update_progressive_masks_global(
+            progressive_masks_for_this = ProgressivePatternUtils.update_progressive_masks_global_scores(
                 pre_masks_for_this,
                 cur_masks_for_this,
                 scores_for_this,
