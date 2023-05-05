@@ -339,7 +339,7 @@ def summary_benchmark():
                 "Multiple instance benchmark failed with some instance!"
 
             output_data = [
-                ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
+                ["Latency average [second/sample]", "{:.6f}".format((sum(latency_l)/len(latency_l))/1000)],
                 ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
             ]
             logger.info("********************************************")
