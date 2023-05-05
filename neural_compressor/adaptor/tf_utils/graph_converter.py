@@ -126,7 +126,10 @@ class GraphConverter:
         self._check_tf_version()
         self._check_args()
 
-        self._fp32_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
+        if "backend" in self.model.kwargs:
+            self._fp32_model = Model(self.model._model, **self.model.kwargs)
+        else:
+            self._fp32_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
         self._fp32_model.graph_def = self.model.graph_def
         self._fp32_model.output_tensor_names = self.output_tensor_names
         self._fp32_model.input_tensor_names = self.input_tensor_names
@@ -145,7 +148,10 @@ class GraphConverter:
         self.scale_info.update({'bf16_ops': self.bf16_ops})
         self.scale_info.update({'fp32_ops': self.fp32_ops})
 
-        self._sampling_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
+        if "backend" in self.model.kwargs:
+            self._sampling_model = Model(self.model._model, **self.model.kwargs)
+        else:
+            self._sampling_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
         self._sampling_model.output_tensor_names = self.output_tensor_names
         self._sampling_model.input_tensor_names = self.input_tensor_names
 
@@ -326,8 +332,11 @@ class GraphConverter:
             self._tmp_model = self._fp32_model
         else:
             # to keep temp model
-            self._tmp_model = Model(self.model._model, **self.model.kwargs,
-                                    backend="itex" if self.itex_mode else "default")
+            if "backend" in self.model.kwargs:
+                self._tmp_model = Model(self.model._model, **self.model.kwargs)
+            else:
+                self._tmp_model = Model(self.model._model, **self.model.kwargs,
+                                        backend="itex" if self.itex_mode else "default")
             self._tmp_model.graph_def = self.model.graph_def
             self._tmp_model.output_tensor_names = self.output_tensor_names
             self._tmp_model.input_tensor_names = self.input_tensor_names
@@ -484,7 +493,7 @@ class GraphConverter:
             self._quantize_graph()
             self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
 
-            if self.fake_quant: # pragma: no cover
+            if self.fake_quant:  # pragma: no cover
                 self._fuse_requantize_with_fused_quantized_node()
             else:
                 if self._enable_kl_op_names:
@@ -603,7 +612,10 @@ class GraphConverter:
 
         logger.debug("Generate calibration data and save to {}.".format(tmp_dump_file))
 
-        model = Model(tmp_path, **self._tmp_model.kwargs, backend="itex" if self.itex_mode else "default")
+        if "backend" in self._tmp_model.kwargs:
+            model = Model(tmp_path, **self._tmp_model.kwargs)
+        else:
+            model = Model(tmp_path, **self._tmp_model.kwargs, backend="itex" if self.itex_mode else "default")
         model.output_tensor_names = self.output_tensor_names
         model.input_tensor_names = self.input_tensor_names
 
