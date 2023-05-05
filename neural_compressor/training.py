@@ -166,7 +166,7 @@ class CompressionManager:
         Args:
             root (str): path to save the model
         """
-        self.model.save(root)
+        self.model.save(root)  # pylint: disable=no-member
 
     def export(
         self,
@@ -179,7 +179,7 @@ class CompressionManager:
             save_path (str): The path to save the model
             conf (Union[Callable, List]) : The configure for onnx exportation.
         """
-        self.model.export(save_path, conf)
+        self.model.export(save_path, conf)  # pylint: disable=no-member
 
 
 def fit(compression_manager,
@@ -287,7 +287,8 @@ def fit(compression_manager,
         if not (compression_manager.conf.quantization.framework.startswith("tensorflow")
                 or compression_manager.conf.quantization.framework == 'pytorch_fx'):  # pragma: no cover
             strategy_name = "basic"
-            logger.warning(f"MSE_v2 does not support {compression_manager.conf.quantization.framework} now, use basic instead.")
+            logger.warning(f"MSE_v2 does not support {compression_manager.conf.quantization.framework} now,"
+                           "use basic instead.")
             logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
     assert strategy_name in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy_name)
 

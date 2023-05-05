@@ -175,17 +175,39 @@ class Model(object):
                         assert conf.framework == "keras",\
                               "Please wrap the model with KerasModel class!"
                     else:
-                        assert conf.framework == "tensorflow_itex", \
+                        assert conf.framework == "tensorflow", \
                             "Please wrap the model with TensorflowModel class!"
+                        conf.framework = "tensorflow_itex"
                 if getattr(conf, "approach", None) == "quant_aware_training":
                     assert conf.framework == "tensorflow_qat", \
                             "Please wrap the model with TensorflowQATModel class!"
+            else:
+                if 'tensorflow' in conf.framework:
+                    if getattr(root, "name", None) is None:
+                        root.name = conf.model_name
+                    if getattr(root, "output_tensor_names", None) is None:
+                        root.output_tensor_names = conf.outputs
+                    if getattr(root, "input_tensor_names", None) is None:
+                        root.input_tensor_names = conf.inputs
+                    if getattr(root, "workspace_path", None) is None:
+                        root.workspace_path = options.workspace
             return root
         else:
             framework = get_model_fwk_name(root)
             if conf == "NA":
                 if framework == "pytorch":
                     framework = "pytorch_fx"
+                if 'tensorflow' in framework:
+                    if kwargs.get("approach", None) == "quant_aware_training":
+                        return MODELS['tensorflow_qat'](root, **kwargs)
+                    if 'modelType' in kwargs:
+                        model_type = kwargs['modelType']
+                    else:
+                        model_type = get_model_type(root)
+                    if model_type == "keras" and kwargs.get("framework", None) != "tensorflow":
+                        return MODELS['keras'](root, **kwargs)
+                    else:
+                        return MODELS[framework](model_type, root, **kwargs)
                 return MODELS[framework](root, **kwargs)
             else:
                 conf.framework = framework
@@ -197,15 +219,21 @@ class Model(object):
 
                 if 'tensorflow' in conf.framework:
                     if getattr(conf, "approach", None) == "quant_aware_training":
-                        return MODELS['tensorflow_qat'](root, **kwargs)
-
-                    if 'modelType' in kwargs:
-                        model_type = kwargs['modelType']
+                        model = MODELS['tensorflow_qat'](root, **kwargs)
                     else:
-                        model_type = get_model_type(root)
-                    if conf.backend == "itex" and model_type == 'keras':
-                        return MODELS['keras'](root, **kwargs)
-                    model = MODELS['tensorflow'](model_type, root, **kwargs)
+                        if 'modelType' in kwargs:
+                            model_type = kwargs['modelType']
+                        else:
+                            model_type = get_model_type(root)
+                        if conf.backend == "itex":
+                            if model_type == 'keras':
+                                conf.framework = "keras"
+                                model = MODELS[conf.framework](root, **kwargs)
+                            else:
+                                conf.framework = "tensorflow_itex"
+                                model = MODELS[conf.framework](model_type, root, **kwargs)
+                        else:
+                            model = MODELS['tensorflow'](model_type, root, **kwargs)
                 else:
                     model = MODELS[conf.framework](root, **kwargs)
                 if 'tensorflow' in conf.framework:
