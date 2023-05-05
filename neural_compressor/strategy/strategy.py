@@ -1050,6 +1050,10 @@ class TuneStrategy(object):
             framework_specific_info.update({'recipes': self.config.recipes})
             framework_specific_info.update({'reduce_range': self.config.reduce_range})
             framework_specific_info.update({'recipes': self.config.recipes})
+            if framework_specific_info['backend'] in ['onnxrt_trt_ep', 'onnxrt_cuda_ep'] and \
+                'gpu' not in framework_specific_info['device']:
+                logger.warning('Please set device to gpu during using backend {}.'.format(self.config.backend))
+                sys.exit(0)
             if framework.lower() == 'onnxrt_qdq' or \
                 framework_specific_info['backend'] == 'onnxrt_trt_ep':
                 framework_specific_info.update({'format': 'QDQ'})
