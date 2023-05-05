@@ -514,11 +514,9 @@ def main():
         try:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
-            size = comm.Get_size()
-            assert size > 1
             rank = comm.Get_rank()
         except (ImportError, AttributeError):
-            logger.debug("<mpi4py> needs to be installed correctly for distributed tuning.")
+            logger.warning("<mpi4py> needs to be installed correctly for distributed tuning.")
 
         if rank in [0, -1]:
             from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
