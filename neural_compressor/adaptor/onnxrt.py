@@ -524,12 +524,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = ONNXModel(model)
         black_nodes = [node for node in quantize_config if quantize_config[node]=='fp32']
         white_nodes = [node for node in quantize_config if quantize_config[node]!='fp32']
-        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])),
-                  backend=backend, reduce_range=self.reduce_range)
+                  backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
