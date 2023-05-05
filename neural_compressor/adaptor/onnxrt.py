@@ -354,7 +354,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 self.recipes.get('optypes_to_exclude_output_quant', []),
             options.onnxrt.qdq_setting.DedicatedQDQPair if \
                 'dedicated_qdq_pair' not in self.recipes else \
-                self.recipes.get('dedicated_qdq_pair', False))
+                self.recipes.get('dedicated_qdq_pair', False),
+            self.backend)
         quantizer.quantize_model()
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
@@ -1028,7 +1029,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if 'ReduceMean' not in [i.op_type for i in children]:
                     op_wise.update({(node.name, node.op_type): 
                         [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
-                continue
+                    continue
 
             if node.op_type in optype_wise:
                 if (exclude_first_quantizable_op and node in first_quantizable_node) \
