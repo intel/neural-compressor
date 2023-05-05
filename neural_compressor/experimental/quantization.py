@@ -171,9 +171,8 @@ class Quantization(Component):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
-        """Quantization execute routinue based on strategy design."""
+        """Quantization execute routine based on strategy design."""
         # auto check here the distributed flag
-        self._eval_baseline()
         try:
             from mpi4py import MPI
             if MPI.COMM_WORLD.Get_size() > 2:
