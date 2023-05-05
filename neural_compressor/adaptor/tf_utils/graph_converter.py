@@ -129,7 +129,9 @@ class GraphConverter:
         if "backend" in self.model.kwargs:
             self._fp32_model = Model(self.model._model, **self.model.kwargs)
         else:
-            self._fp32_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
+            self._fp32_model = Model(self.model._model,
+                                     **self.model.kwargs,
+                                     backend="itex" if itex_mode else "default")
         self._fp32_model.graph_def = self.model.graph_def
         self._fp32_model.output_tensor_names = self.output_tensor_names
         self._fp32_model.input_tensor_names = self.input_tensor_names
@@ -151,7 +153,9 @@ class GraphConverter:
         if "backend" in self.model.kwargs:
             self._sampling_model = Model(self.model._model, **self.model.kwargs)
         else:
-            self._sampling_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
+            self._sampling_model = Model(self.model._model,
+                                         **self.model.kwargs,
+                                         backend="itex" if itex_mode else "default")
         self._sampling_model.output_tensor_names = self.output_tensor_names
         self._sampling_model.input_tensor_names = self.input_tensor_names
 
@@ -335,7 +339,8 @@ class GraphConverter:
             if "backend" in self.model.kwargs:
                 self._tmp_model = Model(self.model._model, **self.model.kwargs)
             else:
-                self._tmp_model = Model(self.model._model, **self.model.kwargs,
+                self._tmp_model = Model(self.model._model,
+                                        **self.model.kwargs,
                                         backend="itex" if self.itex_mode else "default")
             self._tmp_model.graph_def = self.model.graph_def
             self._tmp_model.output_tensor_names = self.output_tensor_names
