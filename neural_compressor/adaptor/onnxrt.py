@@ -347,13 +347,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.query_handler.get_fallback_list(),
             self.reduce_range,
             options.onnxrt.qdq_setting.AddQDQPairToWeight if \
-                not options.onnxrt.qdq_setting.AddQDQPairToWeight else \
+                'add_qdq_pair_to_weight' not in self.recipes else \
                 self.recipes.get('add_qdq_pair_to_weight', False),
             options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin if \
-                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None else \
+                'optypes_to_exclude_output_quant' not in self.recipes else \
                 self.recipes.get('optypes_to_exclude_output_quant', []),
             options.onnxrt.qdq_setting.DedicatedQDQPair if \
-                not options.onnxrt.qdq_setting.DedicatedQDQPair else \
+                'dedicated_qdq_pair' not in self.recipes else \
                 self.recipes.get('dedicated_qdq_pair', False))
         quantizer.quantize_model()
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
