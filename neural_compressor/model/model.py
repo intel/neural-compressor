@@ -204,7 +204,7 @@ class Model(object):
                         model_type = kwargs['modelType']
                     else:
                         model_type = get_model_type(root)
-                    if model_type == "keras" and kwargs.get("framework", None) != "tensorflow":
+                    if model_type == "keras" and kwargs.get("backend", None) == "itex":
                         return MODELS['keras'](root, **kwargs)
                     else:
                         return MODELS[framework](model_type, root, **kwargs)

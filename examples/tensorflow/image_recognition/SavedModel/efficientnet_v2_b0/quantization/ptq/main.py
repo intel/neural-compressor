@@ -127,7 +127,7 @@ class eval_object_detection_optimized_graph(object):
             from neural_compressor.config import BenchmarkConfig
             if args.mode == 'performance':
                 conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
-                fit(model=args.input_graph, config=conf, b_func=evaluate)
+                fit(model=args.input_graph, conf=conf, b_func=evaluate)
             else:
                 from neural_compressor.model import Model
                 model = Model(args.input_graph).model

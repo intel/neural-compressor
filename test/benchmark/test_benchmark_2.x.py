@@ -197,7 +197,7 @@ class TestObjective(unittest.TestCase):
     def test_benchmark_raw_cmd(self):
         conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
         raw_cmd = "python fake_raw_cmd.py --input_model={}".format(self.graph_path)
-        benchmark_with_raw_cmd(raw_cmd, config=conf)
+        benchmark_with_raw_cmd(raw_cmd, conf=conf)
         for i in range(2):
             with open(f'2_4_{i}.log', "r") as f:
                 for line in f:

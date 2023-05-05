@@ -352,7 +352,7 @@ def summary_benchmark():
         pass
 
 
-def benchmark_with_raw_cmd(raw_cmd, config=None):
+def benchmark_with_raw_cmd(raw_cmd, conf=None):
     """Benchmark the model performance with the raw commend.
 
     Args:
@@ -369,23 +369,23 @@ def benchmark_with_raw_cmd(raw_cmd, config=None):
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
         fit_with_raw_cmd("test.py", conf)
     """
-    if config is not None:
-        if config.backend == "ipex":
+    if conf is not None:
+        if conf.backend == "ipex":
             import intel_extension_for_pytorch
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         # disable multi-instance for running bechmark on GPU device
-        set_all_env_var(config)
+        set_all_env_var(conf)
 
     config_instance(raw_cmd)
     summary_benchmark()
 
 
-def fit(model, config, b_dataloader=None, b_func=None):
+def fit(model, conf, b_dataloader=None, b_func=None):
     """Benchmark the model performance with the configure.
 
     Args:
         model (object):           The model to be benchmarked.
-        config (BenchmarkConfig): The configuration for benchmark containing accuracy goal,
+        conf (BenchmarkConfig): The configuration for benchmark containing accuracy goal,
                                   tuning objective and preferred calibration & quantization
                                   tuning space etc.
         b_dataloader:             The dataloader for frameworks.
@@ -398,24 +398,24 @@ def fit(model, config, b_dataloader=None, b_func=None):
         from neural_compressor.benchmark import fit
 
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+        fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
-    if config.backend == "ipex":
+    if conf.backend == "ipex":
         import intel_extension_for_pytorch
 
-    wrapped_model = Model(model, conf=config)
+    wrapped_model = Model(model, conf=conf)
 
     if b_dataloader is not None:
         check_dataloader(b_dataloader)
 
     assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
     # disable multi-instance for running bechmark on GPU device
-    set_all_env_var(config)
-    if config.device == 'gpu':
+    set_all_env_var(conf)
+    if conf.device == 'gpu':
         set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
     logger.info("Start to run Benchmark.")
     if os.environ.get('NC_ENV_CONF') == 'True':
-        return run_instance(model=wrapped_model, conf=config, b_dataloader=b_dataloader, b_func=b_func)
+        return run_instance(model=wrapped_model, conf=conf, b_dataloader=b_dataloader, b_func=b_func)
     raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
     benchmark_with_raw_cmd(raw_cmd)

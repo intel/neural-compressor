@@ -23,7 +23,7 @@ import random
 
 from neural_compressor.data.dataloaders.dataloader import check_dataloader
 from neural_compressor.metric.metric import register_customer_metric
-from .utils.utility import time_limit
+from .utils.utility import time_limit, CpuInfo
 from .strategy import STRATEGIES
 from .config import _Config, options
 from .utils import logger
@@ -31,7 +31,7 @@ from .model import Model
 
 
 def fit(model,
-        config=None,
+        conf=None,
         eval_func=None,
         eval_dataloader=None,
         eval_metric=None,
@@ -47,7 +47,7 @@ def fit(model,
                                               to .onnx file or onnx.onnx_ml_pb2.ModelProto.
                                               For MXNet model, it's mxnet.symbol.Symbol
                                               or gluon.HybirdBlock instance.
-        config (MixedPrecisionConfig):        The MixedPrecisionConfig class containing accuracy goal,
+        conf (MixedPrecisionConfig):        The MixedPrecisionConfig class containing accuracy goal,
                                               tuning objective and mixed_precision tuning space etc.
         eval_func (function, optional):       The evaluation function provided by user.
                                               This function takes model as parameter,
@@ -83,24 +83,44 @@ def fit(model,
         from neural_compressor.config import MixedPrecisionConfig
 
         conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+        converted_model = mix_precision.fit(model, conf=conf)
     """
     if eval_dataloader is not None:
         check_dataloader(eval_dataloader)
 
-    if config.precisions in config.excluded_precisions:
+    if conf.precisions in conf.excluded_precisions:
         logger.warning("Target precision is in excluded_precisions, "
                        "please modify precision or excluded_precisions to make it understandable.")
         sys.exit(0)
 
-    wrapped_model = Model(model, conf=config)
+    wrapped_model = Model(model, conf=conf)
+
+    precisions = list(set(conf.precisions) - set(conf.excluded_precisions))
+    if ('bf16' in precisions or 'fp16' in precisions) and conf.framework == "onnxruntime":  # pragma: no cover
+        if conf.device == "cpu":
+            logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
+            sys.exit(0)
+        elif conf.backend != "onnxrt_cuda_ep":
+            logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
+            sys.exit(0)
+    elif 'bf16' in precisions and not CpuInfo().bf16 and conf.framework != "onnxruntime":  # pragma: no cover
+        if os.getenv('FORCE_BF16') == '1':
+            logger.warning("Mix precision will generate bf16 graph although "
+                           "the hardware doesn't support bf16 instruction.")
+        else:
+            logger.warning("Mix precision exits due to the hardware "
+                           "doesn't support bf16 instruction.")
+            sys.exit(0)
+    elif 'fp16' in precisions and conf.framework != "onnxruntime":
+        logger.warning("Currently mix precision only supports fp16 for onnx models.")
+        sys.exit(0)
 
     if eval_metric is not None:
-        metric = register_customer_metric(eval_metric, config.framework)
+        metric = register_customer_metric(eval_metric, conf.framework)
     else:
         metric = None
 
-    conf = _Config(mixed_precision=config,
+    config = _Config(mixed_precision=conf,
                    quantization=None,
                    benchmark=None,
                    pruning=None,
@@ -123,7 +143,7 @@ def fit(model,
 
     strategy = STRATEGIES['automixedprecision'](
         model=wrapped_model,
-        conf=conf,
+        conf=config,
         eval_func=eval_func,
         eval_dataloader=eval_dataloader,
         eval_metric=metric,
@@ -131,7 +151,7 @@ def fit(model,
         q_hooks=None)
 
     try:
-        with time_limit(config.tuning_criterion.timeout):
+        with time_limit(conf.tuning_criterion.timeout):
             strategy.traverse()
     except KeyboardInterrupt:
         pass

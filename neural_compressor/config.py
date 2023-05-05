@@ -247,7 +247,7 @@ class BenchmarkConfig:
         from neural_compressor.benchmark import fit
 
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+        fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
     def __init__(self,
                  inputs=[],
@@ -1662,7 +1662,7 @@ class MixedPrecisionConfig(object):
         from neural_compressor.config import MixedPrecisionConfig
 
         conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+        converted_model = mix_precision.fit(model, conf=conf)
     """
     def __init__(self,
                  device="cpu",

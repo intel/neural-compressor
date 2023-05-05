@@ -32,6 +32,7 @@ from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConf
                                WeightPruningConfig)
 from typing import Callable, List, Union
 
+
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
 
