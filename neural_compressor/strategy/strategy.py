@@ -541,6 +541,9 @@ class TuneStrategy(object):
 
             # record eval_results for context coordination of stage 3
             self.last_tune_result = eval_res
+            self.objectives.val = eval_res
+            self.trials_count = self.overall_trials + 1
+            self.stop(self.config.tuning_criterion.timeout, None)
             self.eval_results[tag] = eval_res
 
             self.overall_trials += 1
