@@ -628,16 +628,16 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>T5 Large</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/optimization/pytorch/huggingface/summarization/quantization">fx</a></td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/summarization/quantization">fx</a></td>
   </tr>
 </tbody>
 <tbody>
   <tr>
     <td>Flan T5 Large</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/optimization/pytorch/huggingface/summarization/quantization">fx</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td><a href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/summarization/quantization">fx</a></td>
   </tr>
 </tbody>
 </table>
