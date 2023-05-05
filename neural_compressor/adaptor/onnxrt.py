@@ -524,11 +524,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = ONNXModel(model)
         black_nodes = [node for node in quantize_config if quantize_config[node]=='fp32']
         white_nodes = [node for node in quantize_config if quantize_config[node]!='fp32']
+        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])),
-                  backend=self.backend, reduce_range=self.reduce_range)
+                  backend=backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
@@ -704,14 +705,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
+        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         if not model.is_large_model:
             ort.InferenceSession(model.model.SerializeToString(),
                                  sess_options,
-                                 providers=[self.backend])
+                                 providers=[backend])
         elif model.model_path is not None: # pragma: no cover
             ort.InferenceSession(model.model_path,
                                  sess_options,
-                                 providers=[self.backend])
+                                 providers=[backend])
         else: # pragma: no cover 
             logger.warning('Please use model path instead of onnx model object to quantize')
 
