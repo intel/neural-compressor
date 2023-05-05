@@ -33,7 +33,6 @@ class PostHostConstConverter(GraphRewriterBase):
         for node in self.model.node:
             new_node = node_def_pb2.NodeDef()
             new_node.CopyFrom(node)
-            new_node.device = ''
             if node.op == "Const" and node.attr['dtype'].type in [1, 3] \
                 and (node.name.endswith('_min') or node.name.endswith('_max') \
                     or node.name.endswith('_max_only') or node.name.endswith('_min_only')):

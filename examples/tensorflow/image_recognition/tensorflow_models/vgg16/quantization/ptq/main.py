@@ -33,6 +33,7 @@ arg_parser.add_argument("--output-graph",
 arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
 arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
+arg_parser.add_argument('--diagnose', dest='diagnose', action='store_true', help='use Neural Insights to diagnose tuning and benchmark.')
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
@@ -105,10 +106,12 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
-            from neural_compressor import METRICS
-            metrics = METRICS('tensorflow')
-            top1 = metrics['topk']()
+            conf = PostTrainingQuantConfig(
+                calibration_sampling_size=[50, 100],
+                diagnosis=args.diagnose,
+            )
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):
@@ -127,18 +130,26 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor import METRICS
-            metrics = METRICS('tensorflow')
-            top1 = metrics['topk']()
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):
                 return evaluate(model, dataloader, top1, postprocess)
 
+            if args.diagnosis and args.mode != "performance":
+                print("[ WARNING ] Profiling works only with performance benchmark.")
+
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
+                conf = BenchmarkConfig(
+                    warmup=10,
+                    iteration=100,
+                    cores_per_instance=4,
+                    num_of_instance=1,
+                    diagnosis=args.diagnose,
+                )
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)

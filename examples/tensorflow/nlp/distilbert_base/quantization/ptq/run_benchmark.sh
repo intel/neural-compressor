@@ -22,7 +22,6 @@ function init_params {
   num_inter=2
   num_intra=28
   benchmark=True
-  profile=False
 
   for var in "$@"
   do
@@ -57,9 +56,6 @@ function init_params {
       --benchmark=*)
          benchmark=$(echo ${var} |cut -f2 -d=)
       ;;
-      --profile=*)
-         profile=$(echo ${var} |cut -f2 -d=)
-      ;;
     esac
   done
 
@@ -72,7 +68,6 @@ function run_benchmark {
             --in-graph=${input_model} \
             --data-location=${dataset_location} \
             --benchmark=${benchmark} \
-            --profile=${profile} \
             --mode=${mode} \
             --steps=${iters} \
             --warmup-steps=${warmup_steps} \

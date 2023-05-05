@@ -73,24 +73,11 @@ There are two folders named style_images and content_images in current folder. P
   python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --input_model=./model/model.ckpt
   ```
 
-
-## Quantization Config
-
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
-
-## Quantization
+### Tune model with neural_compressor
   ```shell
   bash run_tuning.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
   ```
-## Benchmark
+### Check benchmark of tuned model
   ```shell
   bash run_benchmark.sh --dataset_location=style_images/,content_images/ --input_model=saved_model.pb --batch_size=1
   ```

@@ -17,34 +17,40 @@
 
 """The base class for tuning strategy."""
 
-import os
-import math
 import copy
+import math
+import os
 import pickle
-import yaml
 import sys
-
 from abc import abstractmethod
+from collections import OrderedDict
+from collections import defaultdict
 from copy import deepcopy
-from collections import OrderedDict, defaultdict
 from pathlib import Path
 from time import time
+from typing import List
+
 import numpy as np
+import yaml
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from ..config import MixedPrecisionConfig, options
-from ..objective import MultiObjective
+from neural_compressor.utils.utility import get_weights_details, print_table, dump_table
+from .utils.constant import FALLBACK_RECIPES_SET
+from .utils.tuning_space import TuningSpace
+from .utils.tuning_structs import OpTuningConfig
+from .utils.utility import print_op_list
 from ..adaptor import FRAMEWORKS
+from ..algorithm import AlgorithmScheduler, ALGORITHMS
+from ..conf.dotdict import DotDict, deep_get, deep_set
 from ..utils.utility import Statistics, fault_tolerant_file, GLOBAL_STATE, MODE, LazyImport, DotDict
 from ..utils.create_obj_from_config import create_eval_func
+from ..objective import MultiObjective
 from ..utils import logger
+from ..utils.utility import Statistics
+from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
+from ..utils.weights_details import WeightsDetails
 from ..version import __version__
-from ..algorithm import AlgorithmScheduler, ALGORITHMS
-
 from .utils.tuning_space import  TuningSpace
-from .utils.tuning_structs import OpTuningConfig
-from .utils.constant import FALLBACK_RECIPES_SET
-
 
 STRATEGIES = {}
 
@@ -121,7 +127,6 @@ class TuneStrategy(object):
         self.tune_result_record = []
         self.tuning_history = []
         self.tuning_result_data = []
-
         self.baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
@@ -165,6 +170,8 @@ class TuneStrategy(object):
         self._not_tuning_recipes_values = {}
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
+        # for diagnosis
+        self._diagnosis_done = False
 
         self._resume = resume
         if self._resume is not None: self.setup_resume(resume)
@@ -702,6 +709,10 @@ class TuneStrategy(object):
             algo_scheduler.append_algorithm('post_quantization', w_algo)
             logger.debug(f"Add weight correction as the post quantization algo.")
 
+            # evaluate the baseline for diagnosis
+            if self.cfg.tuning.diagnosis:
+                logger.debug(f'*** Start to do diagnosis.')
+                self._diagnosis(tune_cfg)
     def _remove_redundant_qmodel(self):
         """Remove the redundant quantized model to reduce memory use.
 
@@ -713,15 +724,22 @@ class TuneStrategy(object):
 
     def _eval_baseline(self):
         """Evaluate the fp32 model if needed."""
-        if self._not_tuning:
+        if self.cfg.tuning.diagnosis and not self._diagnosis_done:
+            logger.info(" *** Evaluate fp32 model after dumping the diagnosis information.")
+            return
+        if not self._can_create_eval_func_from_cfg() and not self.eval_func:
+            logger.info("Neither evaluation function nor metric is defined." \
+                        " Generate a quantized model with default quantization configuration.")
+            self.cfg.tuning.exit_policy.performance_only = True
+            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
 
+        if self._not_tuning:
             logger.info("Do not evaluate the baseline and quantize the model with default configuration.")
             return
         else:
             # get fp32 model baseline
             if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
-                self._fp32_model = self.model
                 self.baseline = self._evaluate(self.model)
                 self.objectives.baseline = self.baseline
                 # record the FP32 baseline
@@ -1525,13 +1543,15 @@ class TuneStrategy(object):
                 ops_lst.append(op_info)
         return ops_lst
 
-    def _diagnosis(self):
+    def _diagnosis(self, tune_cfg):
+        """Dump diagnosis information."""
+        from csv import DictWriter
         import logging
         logger = logging.getLogger("neural_compressor")
-        iteration_list = [1]
-        inspect_type = 'all'
-        save_to_disk = True
-        save_path = './nc_workspace/inspect_saved/'
+        if self.cfg.tuning.diagnosis and not self._diagnosis_done:
+            logger.debug(f'*** Start to do diagnosis (inspect tensor).')
+        else:
+            return
         inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(self._fp32_model,
                                                                       self.last_qmodel,
                                                                       self.tune_cfg,
@@ -1561,3 +1581,54 @@ class TuneStrategy(object):
                                     save_to_disk=save_to_disk,
                                     save_path= save_path + '/quan/',
                                     quantization_cfg=updated_cfg)
+        self._diagnosis_done = True
+        self._eval_baseline()
+        print_op_list(workload_location=self.cfg.tuning.workspace.path)
+        weights_details = get_weights_details(workload_location=self.cfg.tuning.workspace.path)
+
+        sorted_weights_details: List[WeightsDetails] = sorted(weights_details, key=lambda x: x.mse, reverse=True)
+        print_table(
+            title="Weights summary",
+            column_mapping={
+                "OP name": "op_name",
+                "MSE": "mse",
+                "Input model min": "input_stats.min",
+                "Input model max": "input_stats.max",
+                "Input model mean": "input_stats.mean",
+                "Input model standard deviation": "input_stats.std",
+                "Input model variance": "input_stats.var",
+                "Optimized model min": "optimized_stats.min",
+                "Optimized model max": "optimized_stats.max",
+                "Optimized model mean": "optimized_stats.mean",
+                "Optimized model standard deviation": "optimized_stats.std",
+                "Optimized model variance": "optimized_stats.var",
+            },
+            table_entries=sorted_weights_details
+        )
+        logger.info("For more details execute quantization with Neural Insights GUI.")
+
+        weights_table_file = os.path.join(
+            self.cfg.tuning.workspace.path,
+            "weights_table.csv",
+        )
+        dump_table(
+            filepath=weights_table_file,
+            column_mapping={
+                "OP name": "op_name",
+                "MSE": "mse",
+                "Input model min": "input_stats.min",
+                "Input model max": "input_stats.max",
+                "Input model mean": "input_stats.mean",
+                "Input model standard deviation": "input_stats.std",
+                "Input model variance": "input_stats.var",
+                "Optimized model min": "optimized_stats.min",
+                "Optimized model max": "optimized_stats.max",
+                "Optimized model mean": "optimized_stats.mean",
+                "Optimized model standard deviation": "optimized_stats.std",
+                "Optimized model variance": "optimized_stats.var",
+            },
+            table_entries=sorted_weights_details,
+            file_type="csv",
+        )
+
+        logger.info(f"Weights data has been saved to {weights_table_file}")

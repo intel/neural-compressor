@@ -88,9 +88,7 @@ def evaluate(model):
     # disable eager mode
     model.compile(run_eagerly=False)
     postprocess = LabelShift(label_shift=1)
-    from neural_compressor import METRICS
-    metrics = METRICS('tensorflow')
-    metric = metrics['topk']()
+    metric = Metric(name="topk", k=1)
     latency_list = []
     def eval_func(dataloader, metric):
         warmup = 5

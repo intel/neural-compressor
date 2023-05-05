@@ -27,7 +27,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
     """Fuse _QuantizedMatMul with the successor Dequantize Op."""
     fuse_patterns = [[
-        "_QuantizedMatMul", "_QuantizedBatchMatMul"
+        "_QuantizedMatMul"
     ], ['Dequantize', 'Cast']]
 
     def __init__(self, model, device='cpu'):
@@ -122,8 +122,6 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             if dequantize_node.op == "Dequantize":
                 Helper.set_attr_type_list(new_node, 'Thost_outputs', [dequantize_node.attr['dtype'].type])
                 new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr['dtype'].type))
-                if new_node.op == '_QuantizedBatchMatMul':
-                    new_node.attr["U"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr['DstT'].type))
                 if str(quantized_node.attr['fused_ops'].list.s) == str([b"Requantize"]):
                     new_node.attr["Tbias"].CopyFrom( \
                         attr_value_pb2.AttrValue(type=dequantize_node.attr['dtype'].type))
@@ -131,8 +129,6 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             else:
                 Helper.set_attr_type_list(new_node, 'Thost_outputs', [dequantize_node.attr['DstT'].type])
                 new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr['DstT'].type))
-                if new_node.op == '_QuantizedBatchMatMul':
-                    new_node.attr["U"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr['DstT'].type))
 
             top_node_name = Helper.node_name_from_input(quantized_node.input[0])
             if self.graph_info[dequantize_node_name].outputs:

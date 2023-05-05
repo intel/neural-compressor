@@ -204,6 +204,7 @@ class ONNXRTAugment:
                             self.model_wrapper.model_path + '_augment.onnx',
                             save_as_external_data=True,
                             all_tensors_to_one_file=True,
+                            location="weights.pb",
                             convert_attribute=False)
 
     def get_intermediate_outputs(self, q_config=None):
@@ -217,11 +218,11 @@ class ONNXRTAugment:
         session = onnxruntime.InferenceSession(
                     self.augmented_model.SerializeToString(),
                     so,
-                    providers=[self.backend]) if not self.model_wrapper.is_large_model else \
+                    provider=self.backend) if not self.model_wrapper.is_large_model else \
                   onnxruntime.InferenceSession(
                     self.model_wrapper.model_path  + '_augment.onnx',
                     so,
-                    providers=[self.backend])
+                    provider=self.backend)
 
         
         len_inputs = len(session.get_inputs())
@@ -231,11 +232,8 @@ class ONNXRTAugment:
                                  else self.dequantized_output[output.name] \
                              for output in session.get_outputs()]
         
-        augment_model_wrapper = ONNXModel(self.augmented_model) \
-            if not self.model_wrapper.is_large_model else \
-            ONNXModel(self.model_wrapper.model_path  + '_augment.onnx')
-        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
-        output_name_to_node = augment_model_wrapper.output_name_to_node
+        input_name_to_nodes = self.model_wrapper.input_name_to_nodes
+        output_name_to_node = self.model_wrapper.output_name_to_node
         name_to_node = {}
         for data_name in node_output_names:
             node = None
@@ -680,14 +678,7 @@ class ONNXRTAugment:
         tensors_to_dump = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_dump)
         self.augmented_model = self.model_wrapper.model
-        if self.model_wrapper.is_large_model:  # pragma: no cover
-            onnx.save_model(self.augmented_model,
-                            self.model_wrapper.model_path + '_augment.onnx',
-                            save_as_external_data=True,
-                            all_tensors_to_one_file=True,
-                            convert_attribute=False)
-            
-        _, output_dicts = self.get_intermediate_outputs()
+        _, output_dicts = self.get_intermediate_outputs(q_config)
 
         # remove the input tensors of {op_types} to outputs of the model
         self.model_wrapper.remove_tensors_from_outputs(tensors_to_dump)

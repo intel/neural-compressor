@@ -954,21 +954,7 @@ schema = Schema({
             Optional('path', default=None): str,
             Optional('resume'): str
         },
-        Optional('diagnosis', default = {
-            'diagnosis_after_tuning': False,
-            'op_list': [],
-            'iteration_list': [1],
-            'inspect_type': 'activation',
-            'save_to_disk': True,
-            'save_path': './nc_workspace/inspect_saved/',
-        }):{
-            Optional('diagnosis_after_tuning', default=False): And(bool, lambda s: s in [True, False]),
-            Optional('op_list', default=[]): And(Or(str, list), Use(input_to_list)),
-            Optional('iteration_list', default=[1]): And(Or(int, list), Use(input_to_list_int)),
-            Optional('inspect_type', default='all'): And(str, lambda s : s in ['all', 'activation', 'weight']),
-            Optional('save_to_disk', default=True): And(bool, lambda s: s in [True, False]),
-            Optional('save_path', default='./nc_workspace/inspect_saved/'): str,
-        },
+        Optional('diagnosis', default=False): And(bool, lambda s: s in [True, False]),
     },
     Optional('evaluation'): {
         Hook('accuracy', handler=_valid_multi_metrics): object,
@@ -1091,6 +1077,7 @@ schema = Schema({
                 Optional('transform'): postprocess_schema
             }
         },
+        Optional('diagnosis', default=False): And(bool, lambda s: s in [True, False]),
     },
     Optional('pruning'): {
         Hook('train', handler=_valid_prune_epoch): object,
@@ -1422,6 +1409,11 @@ class Conf(object):
                 'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
+            if pythonic_config.quantization.diagnosis:
+                mapping.update({
+                    'tuning.diagnosis': True,
+                    'tuning.exit_policy.max_trials': 1,
+                })
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
@@ -1477,6 +1469,9 @@ class Conf(object):
                 'evaluation.accuracy.configs.intra_num_of_threads':
                     pythonic_config.benchmark.intra_num_of_threads,
             })
+            if pythonic_config.benchmark.diagnosis:
+                mapping.update({'evaluation.diagnosis': pythonic_config.benchmark.diagnosis})
+
             if "model.backend" not in mapping:
                 mapping.update({
                     'model.backend': pythonic_config.benchmark.backend,

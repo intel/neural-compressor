@@ -261,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--quant_format',
         type=str,
-        default='default', 
+        default='default',
         choices=['default', 'QDQ', 'QOperator'],
         help="quantization format"
     )
@@ -269,6 +269,12 @@ if __name__ == "__main__":
         "--batch_size",
         default=1,
         type=int,
+    )
+    parser.add_argument(
+        '--profile',
+        dest='profile',
+        action='store_true',
+        help='use Neural Insights to profile model.',
     )
     args = parser.parse_args()
 
@@ -280,10 +286,18 @@ if __name__ == "__main__":
         return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
+        if args.profile and args.mode != "performance":
+            print("[ WARNING ] Profiling works only with performance benchmark.")
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(warmup=10, iteration=1000, cores_per_instance=4, num_of_instance=1)
+            conf = BenchmarkConfig(
+                warmup=10,
+                iteration=1000,
+                cores_per_instance=4,
+                num_of_instance=1,
+                profiling=args.profile,
+            )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval(model)

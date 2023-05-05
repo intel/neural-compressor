@@ -15,10 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Neural Compressor Quantization API."""
-
 import os
 import pickle
 import random
+from typing import Optional, Any
+
 import numpy as np
 from .config import _Config, options
 from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, MODELS
@@ -64,6 +65,7 @@ class _PostTrainingQuant:
         self._eval_dataloader = None
         self._model = None
         self._metric = None
+        self._raw_model = None
         self.callbacks = None
         if "model" in kwargs:
             self.model = kwargs["model"]
@@ -116,17 +118,34 @@ class _PostTrainingQuant:
 
     def execute(self):
         """Quantization execute routinue based on strategy design."""
+        ni_workload_id = None
+        if self.conf.usr_cfg.tuning.diagnosis:
+            ni_workload_id = register_neural_insights_workload(
+                workload_location=os.path.abspath(self.conf.usr_cfg.tuning.workspace.path),
+                model=self.raw_model,
+            )
         try:
             with time_limit(self.conf.quantization.tuning_criterion.timeout):
                 logger.debug("Dump user configuration:")
                 conf_dict = {}
                 dump_class_attrs(self.conf, conf_dict)
                 logger.info(conf_dict)
+                if ni_workload_id:
+                    update_neural_insights_workload(ni_workload_id, "wip")
                 self.strategy.traverse()
+            if ni_workload_id:
+                update_neural_insights_workload(ni_workload_id, "success")
+                update_neural_insights_workload_accuracy_data(
+                    ni_workload_id,
+                    self.strategy.baseline[0],
+                    self.strategy.cur_best_acc,
+                )
         except KeyboardInterrupt:
             pass
         except Exception as e: # pragma: no cover
             logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
+            if ni_workload_id:
+                update_neural_insights_workload(ni_workload_id, "failure")
             import traceback
             traceback.print_exc()
         finally:
@@ -176,6 +195,7 @@ class _PostTrainingQuant:
                         make sure the name is in supported slim model list.
 
         """
+        self._raw_model = user_model
         cfg = self.conf
         if cfg.quantization.framework is None:
             if isinstance(user_model, BaseModel): # pragma: no cover
@@ -385,6 +405,75 @@ class _PostTrainingQuant:
             hasattr(dataloader, 'batch_size'), \
             'dataloader must implement __iter__ method and batch_size attribute'
         self._calib_dataloader = dataloader
+
+    @property
+    def raw_model(self):
+        """Get the raw model."""
+        return self._raw_model
+
+
+def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
+    try:
+        import os
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
+
+        if isinstance(model, str):
+            model_path = os.path.abspath(model)
+        else:
+            import onnx
+            if isinstance(model, onnx.ModelProto):
+                model_path = os.path.join(workload_location, "input_model.onnx")
+                onnx.save(model, model_path)
+
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        ni_workload_uuid = neural_insights.add_workload(
+            workload_location=workload_location,
+            workload_mode=WorkloadModes.QUANTIZATION,
+            model_path=model_path,
+            # TODO: Get path for other frameworks than TF
+        )
+        logger.info("Registered quantization workload to Neural Insights.")
+        return ni_workload_uuid
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception:
+        logger.warning("Could not register workload to Neural Insights.")
+    return None
+
+
+def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
+    """Update status of specific workload."""
+    try:
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.update_workload_status(workload_uuid, status)
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception as err:
+        logger.warning(f"Could not update workload status: {err}.")
+
+
+def update_neural_insights_workload_accuracy_data(
+        workload_uuid: str,
+        baseline_accuracy: float,
+        optimized_accuracy: float,
+) -> None:
+    """Update accuracy data of specific workload."""
+    try:
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.update_workload_accuracy_data(
+            workload_uuid,
+            baseline_accuracy,
+            optimized_accuracy,
+        )
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception as err:
+        logger.warning(f"Could not update workload accuracy data: {err}.")
 
 
 def fit(model,

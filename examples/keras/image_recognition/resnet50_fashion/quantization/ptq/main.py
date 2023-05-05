@@ -62,9 +62,7 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor import METRICS
-    metrics = METRICS('tensorflow')
-    metric = metrics['topk']()
+    metric = Metric(name="topk", k=1)
 
     def eval_func(data_loader, metric):
         warmup = 5

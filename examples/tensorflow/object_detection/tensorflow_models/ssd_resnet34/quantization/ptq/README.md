@@ -82,19 +82,7 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 
 # Run
 
-## Quantization Config
-
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
-
-## 1. Quantization
+## 1. Tune
   
   ```shell
   # The cmd of running ssd_resnet34
