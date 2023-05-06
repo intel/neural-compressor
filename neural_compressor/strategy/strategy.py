@@ -66,8 +66,32 @@ def strategy_registry(cls):
     STRATEGIES[cls.__name__[:-len('TuneStrategy')].lower()] = cls
     return cls
 
+class TuneStrategyMeta(type):
+    """Tuning strategy metaclass."""
+
+    def __call__(cls, *args, pre_strategy=None, **kwargs):
+        """Create new strategy instance based on the previous one if has.
+
+        Args:
+            pre_strategy: The previous strategy instance. Defaults to None.
+
+        Returns:
+            The newly created strategy instance.
+        """
+        new_strategy = super().__call__(*args, **kwargs)
+        if pre_strategy:
+            new_strategy.adaptor = pre_strategy.adaptor
+            new_strategy.framework = pre_strategy.framework
+            new_strategy.baseline = deepcopy(pre_strategy.baseline)
+            new_strategy.trials_count = pre_strategy.trials_count
+            new_strategy.objectives.baseline = deepcopy(pre_strategy.baseline)
+            new_strategy.capability = pre_strategy.capability
+            new_strategy.tuning_space = pre_strategy.tuning_space
+            new_strategy.algo_scheduler = pre_strategy.algo_scheduler
+        return new_strategy
+
 @strategy_registry
-class TuneStrategy(object):
+class TuneStrategy(metaclass=TuneStrategyMeta):
     """Basic class for tuning strategy."""
 
     def __init__(self,

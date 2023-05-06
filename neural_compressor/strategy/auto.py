@@ -79,18 +79,10 @@ class AutoTuneStrategy(TuneStrategy):
                 eval_dataloader=self.eval_dataloader,
                 eval_metric=self.eval_metric,
                 resume=self._resume,
-                q_hooks=self.q_hooks)
+                q_hooks=self.q_hooks,
+                pre_strategy = pre_strategy
+                )
 
-            if pre_strategy:
-                #TODO add tuning history from the previous stage to current stage.
-                strategy.adaptor = pre_strategy.adaptor
-                strategy.framework = pre_strategy.framework
-                strategy.baseline = deepcopy(pre_strategy.baseline)
-                strategy.trials_count = pre_strategy.trials_count
-                strategy.objectives.baseline = deepcopy(pre_strategy.baseline)
-                strategy.capability = pre_strategy.capability
-                strategy.tuning_space = pre_strategy.tuning_space
-                strategy.algo_scheduler = pre_strategy.algo_scheduler
             pre_strategy = strategy
             strategy.traverse()
             self.best_qmodel = strategy.best_qmodel
