@@ -201,12 +201,21 @@ class ProgressivePatternUtils(object):
     @staticmethod
     def update_progressive_masks_scores_order(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         if progressive_configs['use_global']:
-            return ProgressivePatternUtils.update_progressive_masks_global_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+            return ProgressivePatternUtils.update_progressive_masks_global_scores(pre_masks, cur_masks, scores, \
+                    progressive_step, progressive_configs)
         else:
-            return ProgressivePatternUtils.update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs)  
+            return ProgressivePatternUtils.update_progressive_masks_local_scores(pre_masks, cur_masks, scores, \
+                    progressive_step, progressive_configs)  
     
     @staticmethod
-    def update_progressive_masks_linear_order(pre_masks, cur_masks, scores, progressive_step, progressive_configs: dict, block_sizes: dict):
+    def update_progressive_masks_linear_order(
+        pre_masks, 
+        cur_masks, 
+        scores, 
+        progressive_step, 
+        progressive_configs: dict, 
+        block_sizes: dict
+    ):
         progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
         new_added_masks = ProgressivePatternUtils.update_new_added_masks(pre_masks, cur_masks)
