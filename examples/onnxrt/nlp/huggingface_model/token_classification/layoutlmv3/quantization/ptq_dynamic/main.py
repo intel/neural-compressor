@@ -37,6 +37,8 @@ import torch
 import onnxruntime
 import onnx
 
+from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -322,14 +324,6 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    model = AutoModelForTokenClassification.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
 
     # Tokenizer check: this script requires a fast tokenizer.
     if not isinstance(tokenizer, PreTrainedTokenizerFast):
@@ -431,14 +425,6 @@ def main():
         load_from_cache_file=not data_args.overwrite_cache,
     )
 
-    # Data collator
-    data_collator = DataCollatorForKeyValueExtraction(
-        tokenizer,
-        pad_to_multiple_of=None,
-        padding=padding,
-        max_length=512,
-    )
-
     # Metrics
     metric = load_metric("seqeval")
 
@@ -475,17 +461,6 @@ def main():
                 "accuracy": results["overall_accuracy"],
             }
 
-    # Initialize our Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset if training_args.do_train else None,
-        eval_dataset=eval_dataset if training_args.do_eval else None,
-        tokenizer=tokenizer,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
-    )
-
     # Evaluation
     from model import ORTModel
 
@@ -503,7 +478,6 @@ def main():
         onnx_model = onnx.load(model_args.input_model)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
 
         calib_dataset = IncDataset(eval_dataset, onnx_model)
         config = PostTrainingQuantConfig(approach='dynamic')

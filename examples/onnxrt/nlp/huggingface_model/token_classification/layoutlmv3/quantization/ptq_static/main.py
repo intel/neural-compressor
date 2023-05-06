@@ -37,6 +37,8 @@ import torch
 import onnxruntime
 import onnx
 
+from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -326,14 +328,6 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    model = AutoModelForTokenClassification.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
 
     # Tokenizer check: this script requires a fast tokenizer.
     if not isinstance(tokenizer, PreTrainedTokenizerFast):
@@ -435,14 +429,6 @@ def main():
         load_from_cache_file=not data_args.overwrite_cache,
     )
 
-    # Data collator
-    data_collator = DataCollatorForKeyValueExtraction(
-        tokenizer,
-        pad_to_multiple_of=None,
-        padding=padding,
-        max_length=512,
-    )
-
     # Metrics
     metric = load_metric("seqeval")
 
@@ -496,17 +482,13 @@ def main():
         onnx_model = onnx.load(model_args.input_model)
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
-        from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-        from neural_compressor.config import TuningCriterion
 
         calib_dataset = IncDataset(eval_dataset, onnx_model)
-        tuning_criterion = TuningCriterion(max_trials=1)
         fp32_op_names = ['/layoutlmv3/encoder/layer.\d+/output/dense/MatMul',
                          '/layoutlmv3/encoder/layer.\d+/intermediate/dense/MatMul',]
         config = PostTrainingQuantConfig(approach='static',
                                          quant_level=1,
                                          quant_format=model_args.quant_format,
-                                         tuning_criterion=tuning_criterion,
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names})
         q_model = quantization.fit(onnx_model, 
                                     config,

@@ -20,8 +20,8 @@ import numpy as np
 from datasets import Dataset
 from transformers import EvalPrediction
 from transformers.trainer_pt_utils import nested_concat
+from transformers.trainer_utils import EvalLoopOutput
 import onnxruntime
-
 
 logger = logging.getLogger(__name__)
 

@@ -28,6 +28,7 @@ from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
 import onnxruntime
 import onnx
+from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -430,8 +431,6 @@ def main():
             onnx_model = model_optimizer.model
         
             from neural_compressor import quantization, PostTrainingQuantConfig
-            from neural_compressor.utils.constant import FP32
-            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
 
             config = PostTrainingQuantConfig(approach='dynamic')
             q_model = quantization.fit(onnx_model, 
