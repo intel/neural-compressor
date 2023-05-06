@@ -35,7 +35,7 @@ Functions
 
 
 
-.. py:function:: get_attributes(module, attrs: str)
+.. py:function:: get_attributes(module: neural_compressor.compression.pruner.utils.torch.nn.Module, attrs: str)
 
    Get a multi-level descent module of module.
 
@@ -53,7 +53,7 @@ Functions
    Print the auto slim logs.
 
 
-.. py:class:: RecipeSearcher(model, recipe: dict)
+.. py:class:: RecipeSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module, recipe: dict)
 
 
 
@@ -90,7 +90,7 @@ Functions
       The list/dict which store matched patterns.
 
 
-.. py:class:: JitBasicSearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+.. py:class:: JitBasicSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
 
 
 
@@ -129,7 +129,7 @@ Functions
       The list/dict which store matched patterns.
 
 
-.. py:class:: Linear2LinearSearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+.. py:class:: Linear2LinearSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
 
 
 
@@ -174,7 +174,7 @@ Functions
       a searching path to store searching status.
 
 
-.. py:class:: SelfMHASearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+.. py:class:: SelfMHASearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
 
 
 
@@ -203,7 +203,7 @@ Functions
       A list of string with the model's static graph inference details.
 
 
-.. py:class:: ClassifierHeadSearcher(model)
+.. py:class:: ClassifierHeadSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module)
 
 
 

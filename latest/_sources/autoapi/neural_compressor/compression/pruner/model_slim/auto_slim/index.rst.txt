@@ -27,7 +27,7 @@ Functions
 
 
 
-.. py:function:: model_slim(model, dataloader=None, round_multiplier=0)
+.. py:function:: model_slim(model, dataloader=None, round_multiplier=32)
 
    Slim the sparse model automatically.
 

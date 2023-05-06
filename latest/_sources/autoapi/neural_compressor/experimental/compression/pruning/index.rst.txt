@@ -35,7 +35,7 @@ Functions
    :return:
 
 
-.. py:function:: prepare_pruning(config, model, opt)
+.. py:function:: prepare_pruning(config, model: torch.nn.Module, opt: torch.optim.Optimizer)
 
    Wrapper the model and optimizer to support all the pruning functionality.
 
