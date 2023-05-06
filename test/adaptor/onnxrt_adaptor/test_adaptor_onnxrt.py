@@ -1087,7 +1087,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
  
-        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep')
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep', device='gpu')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
