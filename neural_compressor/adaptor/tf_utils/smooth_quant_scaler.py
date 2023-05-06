@@ -88,14 +88,14 @@ class SmoothQuantScaler:
             W = np.transpose(W, [1, 0])
             weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
 
-    def transform(self, max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_node_names):
+    def transform(self, max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_weight_node_names):
         """Apply scaling to weights and activations based on the maximum values per channel.
 
         Args:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel for each input node.
             sq_weight_tensors (dict): A dictionary containing the weight tensors for each input node.
             sq_weights_nodes (dict): A dictionary containing the constant nodes for each input node.
-            sq_node_names (dict): A dictionary containing the concrete weight nodes for each input node.
+            sq_weight_node_names (dict): A dictionary from weight node name to the its concrete output node name.
         
         Returns:
             tuple: A tuple containing the modified model and a list of the inserted multiplication nodes.
@@ -106,9 +106,9 @@ class SmoothQuantScaler:
             # 3. adjust activation
             for idx, input_node_name in enumerate(max_vals_per_channel):
                 A_max_per_in_channel = max_vals_per_channel[input_node_name]
-                W_lst = sq_weight_tensors[input_node_name]
-                W_const_node_lst = sq_weights_nodes[input_node_name]  # Use the const nodes before to get weight values
-                W_node_lst = sq_node_names[input_node_name] # Get the concrete weight node as the output of Mul insertion
+                W_lst = sq_weight_tensors[input_node_name]  # VQK weight value
+                W_const_node_lst = sq_weights_nodes[input_node_name]  # Use the const nodes before to get weight values     VQK ReadVariable
+                # W_node_lst = sq_node_names[input_node_name] # Get the concrete weight node as the output of Mul insertion   QKV ReadVariable
                 for w_i, W in enumerate(W_lst):
                     if len(W.shape) == 4:
                         # https://www.tensorflow.org/api_docs/python/tf/nn/conv2d
@@ -123,11 +123,12 @@ class SmoothQuantScaler:
                         W_max_per_in_channel = np.max(tensor, axis=1)
                     else:
                         assert False, "not supported"
+                    cur_const_node = W_const_node_lst[w_i]
                     try:
                         scale = np.power(A_max_per_in_channel, self.alpha) / np.power(W_max_per_in_channel, (1-self.alpha))
                     except ValueError as e:
                         logger.info(e)
-                        logger.info("Skip smoothing the node: {}".format(W_node_lst[w_i]))
+                        logger.info("Skip smoothing the node: {}".format(cur_const_node.name))
                         continue
                     # clip the scales that are too small
                     scale = np.clip(scale, a_min=1e-2, a_max=1e8)
@@ -136,8 +137,8 @@ class SmoothQuantScaler:
                         logger.info("skip smooth quant: {}".format(input_node_name))
                         continue
 
-                    self._adjust_weight(scale, W_const_node_lst[w_i], W)
-                    self._adjust_activation(1 / scale, input_node_name, W_node_lst[w_i], w_i)
+                    self._adjust_weight(scale, cur_const_node, W)
+                    self._adjust_activation(1 / scale, input_node_name, sq_weight_node_names[cur_const_node.name], w_i)
         else:
             pass
         return self.model, self.mul_list

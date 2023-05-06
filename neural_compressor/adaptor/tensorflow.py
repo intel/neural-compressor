@@ -1719,7 +1719,7 @@ class TensorFlowAdaptor(Adaptor):
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
         calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile, black_nodes)
-        max_vals_per_channel, sq_node_names = calibration()
+        max_vals_per_channel, sq_weight_node_names = calibration()
 
         # Get weight tensors and weight nodes based on the input tensor
         from neural_compressor.adaptor.tf_utils.util import get_weight_from_input_tensor
@@ -1729,7 +1729,7 @@ class TensorFlowAdaptor(Adaptor):
         # Calculate the smooth quant scaler and insert Mul op into the graph
         from .tf_utils.smooth_quant_scaler import SmoothQuantScaler
         scaler = SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
-        model, mul_list = scaler.transform(max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_node_names)
+        model, mul_list = scaler.transform(max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_weight_node_names)
         self.smooth_quant_mul_ops.extend(mul_list)
         self.smooth_quant_model = model
         return self.smooth_quant_model

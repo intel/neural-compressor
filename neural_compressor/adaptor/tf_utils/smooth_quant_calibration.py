@@ -50,7 +50,7 @@ class SmoothQuantCalibration:
         self.black_nodes = black_nodes
         self._sq_input_node_names = []
         self._sq_output_tensor_dict = {}
-        self._sq_node_names = {}    # mapping from input node name to concrete output node name
+        self._sq_weight_node_names = {} # mapping from its weight node name to the concrete output node name
 
     def _inference_for_calibration(self, model):
         """Run the calibration on the input graph.
@@ -155,10 +155,7 @@ class SmoothQuantCalibration:
             if node.op not in self.op_types or node.name in self.black_nodes:
                 continue
             self._sq_input_node_names.append(node.input[0])
-            if node.input[0] not in self._sq_node_names:
-                self._sq_node_names[node.input[0]] = [node.name]
-            else:
-                self._sq_node_names[node.input[0]].append(node.name)
+            self._sq_weight_node_names[node.input[1]] = node.name
 
         self._inference_for_calibration(self.model)
 
@@ -211,5 +208,5 @@ class SmoothQuantCalibration:
             max_val_per_channel = self._get_maxval_per_channel(
                 self._sq_output_tensor_dict[key], percentile=self.percentile)
             max_vals_per_channel[key] = max_val_per_channel
-        return max_vals_per_channel, self._sq_node_names
+        return max_vals_per_channel, self._sq_weight_node_names
 
