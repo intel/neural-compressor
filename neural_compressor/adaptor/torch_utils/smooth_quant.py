@@ -136,7 +136,7 @@ def quant_dequant_x(x, min_x=None, max_x=None, num_bits=8):
         min_x = torch.min(min_x)
     scale = (max_x - min_x) / (2 ** num_bits - 1)
     scale = torch.clip(scale, min=eps)
-    bias = torch.round(0 - min_x) / scale
+    bias = torch.round((0 - min_x) / scale)
     q_x = torch.round(x / scale + bias)
     q_x.clamp_(q_min, q_max)
     return scale * (q_x - bias)
