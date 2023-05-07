@@ -54,6 +54,19 @@ ILSVRC2012_img_val  val.txt
 ```
 
 # Run Command
+
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
 ## 1. Quantization
   ```shell
   bash run_tuning.sh --input_model=./SavedModel --output_model=./nc_SavedModel --dataset_location=/path/to/ImageNet/

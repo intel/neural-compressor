@@ -85,7 +85,19 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 
 Now we support both pb and saved_model formats.
 
-## 1. Tune
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
+## 1. Quantization
 ### For PB format
   
   ```shell
