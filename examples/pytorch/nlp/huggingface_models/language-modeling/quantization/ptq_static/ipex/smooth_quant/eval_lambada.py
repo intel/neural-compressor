@@ -119,7 +119,7 @@ from datasets import load_dataset
 
 model_name = args.model_name_or_path
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
-eval_dataset = load_dataset('lambada', split='validation')
+eval_dataset = load_dataset('lambada', split='train')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
