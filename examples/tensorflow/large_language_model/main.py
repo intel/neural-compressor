@@ -59,6 +59,8 @@ class Evaluator:
         infer = model.signatures["serving_default"]
         for input_ids, label, label_indices in tqdm(self.dataloader):
             attention_mask = self.get_attention_mask(input_ids)
+            input_ids = tf.constant(input_ids.numpy(), dtype=infer.inputs[0].dtype)
+            attention_mask = tf.constant(attention_mask.numpy(), dtype=infer.inputs[0].dtype)
             results = infer(input_ids=input_ids, attention_mask=attention_mask) # len: 25 Identity: [16, 196, 50272], Identity_1: [16, 12, 196, 64]
             last_token_logits = results['Identity'].numpy()[np.arange(len(label_indices)), label_indices, :]
             pred = last_token_logits.argmax(axis=-1)
@@ -151,7 +153,7 @@ tokenizer = transformers.AutoTokenizer.from_pretrained(
     cache_dir="/dev/shm/model_cache"
 )
 eval_dataset = load_dataset('lambada',split='validation', cache_dir="/dev/shm/model_cache")
-model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name, cache_dir="/dev/shm/model_cache")
 
 # model.eval()
 
