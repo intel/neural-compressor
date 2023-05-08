@@ -1049,6 +1049,7 @@ class TorchSmoothQuant:
                 absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes,
                                                                       best_alphas)
                 self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                loss_alphas = {}
             if cnt >= auto_calib_iter:
                 break
 
