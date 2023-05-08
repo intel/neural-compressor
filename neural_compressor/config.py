@@ -233,6 +233,7 @@ class BenchmarkConfig:
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
                                 Default value is 5.
         iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+        model_name (str, optional): The name of the model. Default value is None.
         cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
         num_of_instance (int, optional): The number of instances to use for performance testing.
                                          Default value is None.
@@ -256,8 +257,7 @@ class BenchmarkConfig:
                  device='cpu',
                  warmup=5,
                  iteration=-1,
-                 model=None,
-                 model_name='',
+                 model_name=None,
                  cores_per_instance=None,
                  num_of_instance=None,
                  inter_num_of_threads=None,
@@ -269,7 +269,6 @@ class BenchmarkConfig:
         self.device=device
         self.warmup = warmup
         self.iteration = iteration
-        self.model = model
         self.model_name = model_name
         self.cores_per_instance = cores_per_instance
         self.num_of_instance = num_of_instance
@@ -279,7 +278,7 @@ class BenchmarkConfig:
 
     def keys(self):
         """Returns keys of the dict."""
-        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', 'model', \
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', \
                 'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
                 'inter_num_of_threads','intra_num_of_threads')
 
@@ -399,16 +398,6 @@ class BenchmarkConfig:
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
                                                         intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
-
-    @property
-    def model(self):
-        """Get model."""
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        """Set model."""
-        self._model = model
 
     @property
     def model_name(self):
@@ -645,6 +634,7 @@ class _BaseQuantizationConfig:
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
                 If users set domain as auto, automatic detection for domain will be executed.
+        model_name: The name of the model. Default value is None.
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
@@ -703,7 +693,7 @@ class _BaseQuantizationConfig:
                  outputs=[],
                  backend="default",
                  domain="auto",
-                 model_name="",
+                 model_name=None,
                  recipes={},
                  quant_format="default",
                  device="cpu",
@@ -1235,6 +1225,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                           },
                       }
         reduce_range: Whether use 7 bit to quantization.
+        model_name: The name of the model. Default value is None.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
@@ -1268,7 +1259,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_dict=None,
                  op_name_dict=None,
                  reduce_range=None,
-                 model_name="",
+                 model_name=None,
                  quant_format="default",
                  excluded_precisions=[],
                  quant_level="auto",
@@ -1649,6 +1640,7 @@ class MixedPrecisionConfig(object):
                                  default is 'default'.
         precision (str, optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
+        model_name (str, optional): The name of the model. Default value is None.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
         tuning_criterion (TuningCriterion object, optional): Accuracy tuning settings,
@@ -1668,8 +1660,7 @@ class MixedPrecisionConfig(object):
                  device="cpu",
                  backend="default",
                  precision="bf16",
-                 model=None,
-                 model_name="",
+                 model_name=None,
                  inputs=[],
                  outputs=[],
                  tuning_criterion=tuning_criterion,
@@ -1685,7 +1676,6 @@ class MixedPrecisionConfig(object):
         self.tuning_criterion = tuning_criterion
         self.precision = precision
         self.use_bf16 = "bf16" in self.precision
-        self.model = model
         self.model_name = model_name
         self._framework = None
 
@@ -1704,16 +1694,6 @@ class MixedPrecisionConfig(object):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
             self._precision = precision
-
-    @property
-    def model(self):
-        """Get model."""
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        """Set model."""
-        self._model = model
 
     @property
     def model_name(self):
