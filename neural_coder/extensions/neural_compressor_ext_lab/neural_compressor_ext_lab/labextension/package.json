@@ -1,20 +1,20 @@
 {
-  "name": "jupyter-lab-neural-compressor",
-  "version": "1.0.2",
-  "description": "Intel® Neural Compressor auto-quantization plugin.",
+  "name": "neural_compressor_ext_lab_alibaba",
+  "version": "0.1.0",
+  "description": "A JupyterLab extension.",
   "keywords": [
     "jupyter",
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/intel/neural-compressor/tree/master/neural_coder/extensions/neural_compressor_ext_lab",
+  "homepage": "https://github.com/intel-sandbox/neural-coder/tree/lab_ext_ts/neural_coder/extensions",
   "bugs": {
-    "url": "https://github.com/intel/neural-compressor/tree/master/neural_coder/extensions/neural_compressor_ext_lab"
+    "url": "https://github.com/intel-sandbox/neural-coder/tree/lab_ext_ts/neural_coder/extensions/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
-    "name": "neural_compressor_ext_lab",
-    "email": "inc.maintainers@intel.com"
+    "name": "Neural_Coder",
+    "email": "rya.ashs@gmail.com"
   },
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
@@ -25,10 +25,9 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/intel/neural-compressor.git"
+    "url": "https://github.com/intel-sandbox/neural-coder/tree/lab_ext_ts/neural_coder/extensions.git"
   },
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
     "build": "jlpm build:lib && jlpm build:labextension:dev",
     "build:prod": "jlpm clean && jlpm build:lib && jlpm build:labextension",
     "build:labextension": "jupyter labextension build .",
@@ -37,7 +36,7 @@
     "clean": "jlpm clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-    "clean:labextension": "rimraf neural_compressor_ext_lab/labextension",
+    "clean:labextension": "rimraf neural_compressor_ext_lab_alibaba/labextension",
     "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -54,63 +53,24 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyterlab/application": "^3.4.7",
-    "@jupyterlab/apputils": "^3.4.7",
-    "@jupyterlab/cells": "^3.4.7",
-    "@jupyterlab/coreutils": "^5.4.7",
+    "@jupyterlab/application": "^3.1.0",
     "@jupyterlab/docregistry": "^3.4.7",
-    "@jupyterlab/fileeditor": "^3.4.6",
-    "@jupyterlab/mainmenu": "^3.4.6",
+    "@jupyterlab/mainmenu": "^3.4.7",
     "@jupyterlab/notebook": "^3.4.7",
-    "@jupyterlab/services": "^6.4.7",
-    "@jupyterlab/settingregistry": "^3.4.7",
-    "@jupyterlab/statedb": "^3.4.7",
-    "@lumino/coreutils": "^1.12.1",
-    "@lumino/messaging": "^1.10.2",
     "@phosphor/commands": "^1.7.2",
-    "@types/lerna__child-process": "^5.1.0",
-    "@types/shelljs": "^0.8.11",
-    "ajv": "^8.11.0",
-    "ajv-keywords": "^5.1.0",
-    "assert": "^2.0.0",
-    "browserify-fs": "^1.0.0",
-    "brython": "^3.10.6",
-    "buffer": "^6.0.3",
-    "cacheable-request": "^10.1.2",
-    "child_process": "^1.0.2",
-    "clone-response": "^2.0.0",
-    "constants": "^0.0.2",
-    "css-loader": "^6.7.1",
-    "duplicate-package-checker-webpack-plugin": "^3.0.0",
-    "enhanced-resolve": "^5.10.0",
-    "es-abstract": "^1.20.2",
-    "es-to-primitive": "^1.2.1",
-    "fs": "^0.0.1-security",
-    "has": "^1.0.3",
-    "icss-utils": "^5.1.0",
-    "loader-utils": "^2.0.3",
-    "react": "^17.0.2",
-    "react-sanitized-html": "^2.0.0",
-    "sanitize-html": "^2.7.2",
-    "shelljs": "^0.8.5",
-    "stream": "^0.0.2",
-    "util": "^0.12.4"
+    "react": "^16.2.0",
+    "react-sanitized-html": "^2.0.0"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.1.0",
-    "@types/fs-extra": "^9.0.13",
-    "@types/node": "^18.7.15",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
     "@typescript-eslint/parser": "^4.8.1",
-    "bl": "^1.2.3",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
-    "got": "^12.1.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "semver": "^4.3.2",
     "stylelint": "^14.3.0",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-recommended": "^6.0.0",
@@ -128,19 +88,12 @@
   },
   "jupyterlab": {
     "extension": true,
-    "outputDir": "neural_compressor_ext_lab/labextension",
+    "outputDir": "neural_compressor_ext_lab_alibaba/labextension",
     "_build": {
-      "load": "static/remoteEntry.34f9ad20791fd484f052.js",
+      "load": "static/remoteEntry.a3e9c30ec2e72660969d.js",
       "extension": "./extension",
       "style": "./style"
     }
-  },
-  "browser": {
-    "child_process": false,
-    "lerna__child_process": false,
-    "fs": false,
-    "path": false,
-    "os": false
   },
   "jupyter-releaser": {
     "hooks": {
@@ -152,13 +105,5 @@
         "jlpm clean:all"
       ]
     }
-  },
-  "resolutions": {
-    "got": "^12.1.0",
-    "semver": "^4.3.2",
-    "bl": "^1.2.3",
-    "loader-utils": "^2.0.3",
-    "json5": "^2.2.2",
-    "jsonwebtoken": "^9.0.0"
   }
 }
