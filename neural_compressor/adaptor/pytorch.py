@@ -1269,7 +1269,8 @@ class TemplateAdaptor(Adaptor):
 
         if not hasattr(self, 'sq') or force_re_smooth:
             from .torch_utils.smooth_quant import TorchSmoothQuant
-            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, example_inputs=self.example_inputs, q_func=self.q_func)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, \
+                                          example_inputs=self.example_inputs, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types
