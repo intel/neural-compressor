@@ -55,7 +55,8 @@ class SmoothQuantScaler:
         from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
         node_suffix = str(w_i)
         mul_const_node = Helper.create_constant_node(input_node_name + "/scale_mul" + node_suffix, scale, tf.float32)
-        mul_node = Helper.create_node('Mul', input_node_name + "_mul" + node_suffix, [input_node_name + "/scale_mul" + node_suffix, input_node_name])
+        mul_node = Helper.create_node('Mul', input_node_name + "_mul" + node_suffix,
+                            [input_node_name + "/scale_mul" + node_suffix, input_node_name])
         Helper.set_attr_dtype(mul_node, "T", dtypes.float32)
         self.mul_list.append(mul_node.name)
         from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
@@ -107,8 +108,10 @@ class SmoothQuantScaler:
             for idx, input_node_name in enumerate(max_vals_per_channel):
                 A_max_per_in_channel = max_vals_per_channel[input_node_name]
                 W_lst = sq_weight_tensors[input_node_name]  # VQK weight value
-                W_const_node_lst = sq_weights_nodes[input_node_name]  # Use the const nodes before to get weight values     VQK ReadVariable
-                # W_node_lst = sq_node_names[input_node_name] # Get the concrete weight node as the output of Mul insertion   QKV ReadVariable
+                # Use the const nodes before to get weight values, VQK ReadVariable
+                W_const_node_lst = sq_weights_nodes[input_node_name]
+                # W_node_lst = sq_node_names[input_node_name]
+                # Get the concrete weight node as the output of Mul insertion, QKV ReadVariable
                 for w_i, W in enumerate(W_lst):
                     if len(W.shape) == 4:
                         # https://www.tensorflow.org/api_docs/python/tf/nn/conv2d
@@ -125,7 +128,8 @@ class SmoothQuantScaler:
                         assert False, "not supported"
                     cur_const_node = W_const_node_lst[w_i]
                     try:
-                        scale = np.power(A_max_per_in_channel, self.alpha) / np.power(W_max_per_in_channel, (1-self.alpha))
+                        scale = np.power(A_max_per_in_channel, self.alpha) /  \
+                                np.power(W_max_per_in_channel, (1-self.alpha))
                     except ValueError as e:
                         logger.info(e)
                         logger.info("Skip smoothing the node: {}".format(cur_const_node.name))

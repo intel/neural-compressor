@@ -1715,8 +1715,8 @@ class TensorFlowAdaptor(Adaptor):
         # Get the nodes list which can't be quantized from tune_cfg
         black_nodes = []
         if tune_cfg is not None:
-            quantize_config = self._tuning_cfg_to_fw(tune_cfg)
-            black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
+            self._tuning_cfg_to_fw(tune_cfg)
+            black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == 'fp32']
 
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
@@ -1731,7 +1731,8 @@ class TensorFlowAdaptor(Adaptor):
         # Calculate the smooth quant scaler and insert Mul op into the graph
         from .tf_utils.smooth_quant_scaler import SmoothQuantScaler
         scaler = SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
-        model, mul_list = scaler.transform(max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_weight_node_names)
+        model, mul_list = scaler.transform(max_vals_per_channel, sq_weight_tensors,
+                                           sq_weights_nodes, sq_weight_node_names)
         self.smooth_quant_mul_ops.extend(mul_list)
         self.smooth_quant_model = model
         return self.smooth_quant_model

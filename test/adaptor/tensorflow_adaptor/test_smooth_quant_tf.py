@@ -54,11 +54,14 @@ class TestSmoothQuantTF(unittest.TestCase):
         from neural_compressor.data import Datasets
         dataset = Datasets('tensorflow')['dummy'](shape=(100, 56, 56, 16), label=True)
         dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size=1)
+        from neural_compressor import Metric
+        top1 = Metric(name="topk", k=1)
         output_graph = fit(
             model=output_graph_def,
             conf=config,
             calib_dataloader=dataloader,
-            eval_dataloader=dataloader)
+            eval_dataloader=dataloader,
+            eval_metric=top1)
 
         mul_count = 0
         for i in output_graph.graph_def.node:
@@ -92,11 +95,14 @@ class TestSmoothQuantTF(unittest.TestCase):
         from neural_compressor.data import Datasets
         dataset = Datasets('tensorflow')['dummy'](shape=(1024, 1024), label=True)
         dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size=1024)
+        from neural_compressor import Metric
+        top1 = Metric(name="topk", k=1)
         output_graph = fit(
             model=output_graph_def,
             conf=config,
             calib_dataloader=dataloader,
-            eval_dataloader=dataloader)
+            eval_dataloader=dataloader,
+            eval_metric=top1)
 
         mul_count = 0
         for i in output_graph.graph_def.node:
@@ -141,11 +147,14 @@ class TestSmoothQuantTF(unittest.TestCase):
         from neural_compressor.data import Datasets
         dataset = Datasets('tensorflow')['dummy'](shape=(100, 56, 56, 16), label=True)
         dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+        from neural_compressor import Metric
+        top1 = Metric(name="topk", k=1)
         output_graph = fit(
             model=output_graph_def,
             conf=config,
             calib_dataloader=dataloader,
-            eval_dataloader=dataloader)
+            eval_dataloader=dataloader,
+            eval_metric=top1)
 
         mul_count = 0
         for i in output_graph.graph_def.node:
