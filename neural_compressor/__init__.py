@@ -18,7 +18,6 @@
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
 from .version import __version__
 # we need to set a global 'NA' backend, or Model can't be used
-from .experimental.compression import prepare_pruning
 from .config import DistillationConfig, PostTrainingQuantConfig, \
                     WeightPruningConfig, QuantizationAwareTrainingConfig, \
                     MixedPrecisionConfig
