@@ -1269,7 +1269,7 @@ class TemplateAdaptor(Adaptor):
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
 
         if not hasattr(self, 'sq') or force_re_smooth:
-            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, q_func=self.q_func)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, example_inputs=self.example_inputs, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types
@@ -2974,7 +2974,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 ipex_conf.save(self.ipex_config_path)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
+                    assert self.q_dataloader is not None or self.example_inputs, \
+                            "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     static_qconfig = QConfig(activation=MinMaxObserver.with_args(
                         qscheme=torch.per_tensor_affine, dtype=torch.quint8),

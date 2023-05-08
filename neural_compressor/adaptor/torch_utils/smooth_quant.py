@@ -175,7 +175,7 @@ class TorchSmoothQuant:
     to recover the weights if needed
     """
 
-    def __init__(self, model, dataloader, q_func=None, traced_model=None):
+    def __init__(self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
@@ -188,6 +188,7 @@ class TorchSmoothQuant:
         self.device = device
         self.dtype = dtype
         self.dataloader = dataloader
+        self.example_inputs = example_inputs
         self.q_func = q_func
         self.input_values = {}
         self.output_values = {}
@@ -753,10 +754,12 @@ class TorchSmoothQuant:
         no_absorb_layers: A list saving the layers which could not find the absorb layer
         """
         tg = GraphTrace()
-        for idx, input in enumerate(self.dataloader):
-            example_inputs = input
-            break
-        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, example_inputs, op_types)
+        if self.example_inputs is None:
+            assert self.dataloader, "Please provide dataloader or example_inputs"
+            for idx, input in enumerate(self.dataloader):
+                self.example_inputs = input
+                break
+        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
         return absorb_to_layer, no_absorb_layers
 
 
