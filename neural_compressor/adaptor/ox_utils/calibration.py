@@ -204,7 +204,6 @@ class ONNXRTAugment:
                             self.model_wrapper.model_path + '_augment.onnx',
                             save_as_external_data=True,
                             all_tensors_to_one_file=True,
-                            location="weights.pb",
                             convert_attribute=False)
 
     def get_intermediate_outputs(self, q_config=None):
@@ -215,14 +214,15 @@ class ONNXRTAugment:
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 
+        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         session = onnxruntime.InferenceSession(
                     self.augmented_model.SerializeToString(),
                     so,
-                    provider=self.backend) if not self.model_wrapper.is_large_model else \
+                    providers=[backend]) if not self.model_wrapper.is_large_model else \
                   onnxruntime.InferenceSession(
                     self.model_wrapper.model_path  + '_augment.onnx',
                     so,
-                    provider=self.backend)
+                    providers=[backend])
 
         
         len_inputs = len(session.get_inputs())
@@ -681,7 +681,14 @@ class ONNXRTAugment:
         tensors_to_dump = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_dump)
         self.augmented_model = self.model_wrapper.model
-        _, output_dicts = self.get_intermediate_outputs(q_config)
+        if self.model_wrapper.is_large_model:  # pragma: no cover
+            onnx.save_model(self.augmented_model,
+                            self.model_wrapper.model_path + '_augment.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            convert_attribute=False)
+            
+        _, output_dicts = self.get_intermediate_outputs()
 
         # remove the input tensors of {op_types} to outputs of the model
         self.model_wrapper.remove_tensors_from_outputs(tensors_to_dump)

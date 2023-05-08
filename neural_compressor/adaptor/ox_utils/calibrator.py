@@ -89,8 +89,9 @@ class MinMaxCalibrator(CalibratorBase):
     def _collect_value(self, data):
         """Collect min/max value."""
         data = np.asarray(data)
-        local_min = np.min(data)
-        local_max = np.max(data)
+        
+        local_min = np.min(data[np.isinf(data) == False])
+        local_max = np.max(data[np.isinf(data) == False])
         if self._calib_min is None and self._calib_max is None:
             self._calib_min = local_min
             self._calib_max = local_max

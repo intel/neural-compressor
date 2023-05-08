@@ -988,7 +988,7 @@ def main():
     pruning_configs=[]
 
     # auto slim config
-    from neural_compressor.compression import parse_auto_slim_config
+    from neural_compressor.compression.pruner.model_slim import parse_auto_slim_config
     auto_slim_configs = parse_auto_slim_config(
         model, 
         ffn2_sparsity = args.prune_ffn2_sparsity, 
@@ -1208,7 +1208,7 @@ def main():
     #-----------------------------start auto slim----------------------------------#
     if args.auto_slim:
         from timers import CPUTimer, GPUTimer
-        from neural_compressor.compression import model_slim
+        from neural_compressor.compression.pruner.model_slim import model_slim
 
         logger.info(f"***** Running Evaluation before post-training compression*****")
         eval_acc_and_latency(model, eval_dataloader)
