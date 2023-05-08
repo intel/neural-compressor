@@ -22,7 +22,7 @@ from .utils import logger
 from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
                                WeightPruningConfig)
 from typing import Callable, List, Union
-from .compression import prepare_pruning
+from .experimental.compression import prepare_pruning
 
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
