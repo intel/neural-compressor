@@ -1,20 +1,27 @@
 1. eval fp32
 
 ```
-python main.py
+python main.py --model_name <MODEL_NAME>
 ```
 
 
 2. quantize
 
 ```
-python main.py --int8
+python main.py --model_name <MODEL_NAME> --int8
 ```
+
+MODEL_NAME can be following (will use facebook/opt-125m if not specify --model_name):
+
+facebook/opt-125m
+facebook/opt-1.3b
 
 3. sq
 
 ```
-python main.py --int8 --sq
+python main.py --model_name <MODEL_NAME> --int8 --sq
 ```
 
 4. eval int8
+
+TODO

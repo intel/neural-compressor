@@ -148,8 +148,9 @@ class INCDataloader:
 model_name = args.model_name_or_path
 tokenizer = transformers.AutoTokenizer.from_pretrained(
     model_name,
+    cache_dir="/dev/shm/model_cache"
 )
-eval_dataset = load_dataset('lambada',split='validation')
+eval_dataset = load_dataset('lambada',split='validation', cache_dir="/dev/shm/model_cache")
 model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
 
 # model.eval()
@@ -157,8 +158,8 @@ model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
 if args.int8: # int8
-    # calib_dataset = load_dataset('lambada', split='train')
-    calib_dataset = eval_dataset  # TODO for debug
+    calib_dataset = load_dataset('lambada', split='train', cache_dir="/dev/shm/model_cache")
+    # calib_dataset = eval_dataset  # TODO for debug
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
     
