@@ -44,6 +44,7 @@ from ..algorithm import AlgorithmScheduler, ALGORITHMS
 from .utils.tuning_space import  TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
+from .utils.utility import build_slave_faker_model
 
 
 STRATEGIES = {}
@@ -608,6 +609,10 @@ class TuneStrategy(object):
                 .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
+
+        # slaves have no q model, build a faker q model
+        if rank != 0:
+            self.best_qmodel = build_slave_faker_model()
 
     def _fallback_ops(self, tune_cfg, recipe_op_lst, tuning_space):
         """Fallback ops in recipe op list."""

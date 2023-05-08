@@ -172,18 +172,6 @@ class Quantization(Component):
 
     def execute(self):
         """Quantization execute routine based on strategy design."""
-        # auto check here the distributed flag
-        try:
-            from mpi4py import MPI
-            if MPI.COMM_WORLD.Get_size() > 2:
-                logger.info("Use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
-                return self.distributed_execute()
-            elif MPI.COMM_WORLD.Get_size() == 2:
-                logger.info("Use distributed tuning on {} nodes, will be fallback to normal tuning."\
-                    .format(MPI.COMM_WORLD.Get_size()))
-        except (ImportError, AttributeError):
-            logger.warning("If use distributed tuning, <mpi4py> needs to be installed correctly.")
-
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 logger.debug("Dump user yaml configuration:")
@@ -208,34 +196,6 @@ class Quantization(Component):
 
             return self.strategy.best_qmodel
 
-    def distributed_execute(self):
-        """Quantization distributed execute routinue based on strategy design."""
-        from ..utils.utility import LazyImport
-        MPI = LazyImport("mpi4py.MPI")
-        comm = MPI.COMM_WORLD
-        try:
-            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
-                self.strategy.traverse()
-        except KeyboardInterrupt:
-            pass
-        except Exception as e:
-            logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
-            import traceback
-            traceback.print_exc()
-        finally:
-            if self.strategy.best_qmodel:
-                logger.info(
-                    "Specified timeout or max trials is reached! "
-                    "Found a quantized model which meet accuracy goal. Exit.")
-                self.strategy.deploy_config()
-            else:
-                if comm.Get_rank() != 0:    # slaves have no q model
-                    return None
-                logger.error(
-                    "Specified timeout or max trials is reached! "
-                    "Not found any quantized model which meet accuracy goal. Exit.")
-
-            return self.strategy.best_qmodel
 
     def __call__(self):
         """Automatic quantization tuning main entry point.
