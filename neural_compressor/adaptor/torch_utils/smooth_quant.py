@@ -75,7 +75,7 @@ def model_forward(model, dataloader, iters, device):
                 break
 
 
-def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
+def quant_dequant_w(m, num_bits=8, scheme='sym'):  ##TODO take sym as default
     eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
         x = m.weight
@@ -716,17 +716,18 @@ class TorchSmoothQuant:
         :param loss_alpha: Loss alpha i for mean scale error
         :return: A tensor of the loss
         """
-        max_value = torch.max(torch.abs(output))##TODO need per batch
+        max_value = torch.max(torch.abs(output))  ##TODO need per batch
         if max_value == 0:
             max_value = 1e-5
-        output = output/max_value##FIXME need copy not replace
-        output_q = output_q/max_value
+        output = output / max_value  ##FIXME need copy not replace
+        output_q = output_q / max_value
         if loss_type == "nsr":
             output[output == 0] = 1e-5
-            loss = torch.sum(torch.log(1.0+torch.abs(output - output_q) / torch.abs(output)))
+            loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
             return loss
         elif loss_type == "abs":
-            return torch.sum(torch.pow(torch.abs(output - output_q),0.5))##TODO chang mean to sum for precision issue, overflow
+            return torch.sum(
+                torch.pow(torch.abs(output - output_q), 0.5))  ##TODO chang mean to sum for precision issue, overflow
         else:
             return torch.sum((output - output_q) ** 2)
 
@@ -793,6 +794,8 @@ class TorchSmoothQuant:
             fp32_output[name] = module.output
             module.output = None
         self._change_qdq_for_auto(enable=True)
+        absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, orig_best_alpha)
+        self._update_scales_for_auto(absorb_input_scales, weight_scales)
         forward_wrapper(self.model, input, self.device)  ##save quant_input
         loss_alphas = {}
         for name in module_names:
@@ -803,7 +806,8 @@ class TorchSmoothQuant:
                 cur_alpha = orig_best_alpha[name]
             key_name = str(cur_alpha)
             loss_alphas[name] = {key_name: loss}
-
+        # for name in module_names:
+        #     loss_alphas[name]={}
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
@@ -999,6 +1003,7 @@ class TorchSmoothQuant:
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
         alpha_space = [alpha / alpha_scale for alpha in alpha_space]
+        # alpha_space =[0.4, 0.5, 0.6]
         ##alpha_space.append(-1.0) ##TODO very confusing, why adding -1.0 will cause large acc degradtion
         ##alpha_space.reverse()
         ##wrapper new module
@@ -1026,7 +1031,6 @@ class TorchSmoothQuant:
                     layer_names = self.absorb_to_layer[key]
                     for layer_name in layer_names:
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
-
 
             loss_tmp = self._get_one_sample_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
             if loss_alphas == {}:
