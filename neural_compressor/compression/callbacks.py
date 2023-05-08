@@ -28,8 +28,6 @@ from ..model import BaseModel, Model
 from ..model.model import MODELS
 from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
-# model auto slim related
-
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 

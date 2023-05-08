@@ -49,7 +49,7 @@ class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,
                  op_types_to_quantize, fallback_list=['fp32'], reduce_range=None,
                  add_qdq_pair_to_weight=False, optypes_to_exclude_output_quant=[],
-                 dedicated_qdq_pair=False):
+                 dedicated_qdq_pair=False, backend='CPUExecutionProvider'):
         """Initialization.
 
         Args:
@@ -64,11 +64,13 @@ class Quantizer:
             add_qdq_pair_to_weight (bool, optional): add QDQ pair to weight or not. Defaults to False.
             optypes_to_exclude_output_quant (list, optional): optypes to exclude output quantization. Defaults to [].
             dedicated_qdq_pair (bool, optional): dedicate QDQ pair or not. Defaults to False.
+            backend (str, optional): backend of onnxrt adaptor. Defaults to CPUExecutionProvider
         """
         self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
             not self.model.is_large_model else self.model.model
         self.config = q_config
+        self.backend = backend
         self.reduce_range = reduce_range
         self.mode = mode # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
