@@ -61,9 +61,7 @@ def fit(model,
         calib_func (function, optional):      Calibration function for post-training static
                                               quantization. It is optional.
                                               This function takes "model" as input parameter
-                                              and executes entire inference process. If this
-                                              parameter specified, calib_dataloader is also needed
-                                              for FX trace if PyTorch >= 1.13.
+                                              and executes entire inference process.
         eval_func (function, optional):       The evaluation function provided by user.
                                               This function takes model as parameter,
                                               and evaluation dataset and metrics should be

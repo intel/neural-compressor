@@ -42,7 +42,7 @@ Supported precisions for mix precision include bf16 and fp16. If users want to g
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig(precisions='bf16')
+conf = MixedPrecisionConfig() # default precision is bf16
 converted_model = mix_precision.fit(model, conf=conf)
 converted_model.save('./path/to/save/')
 ```
