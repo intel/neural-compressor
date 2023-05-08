@@ -22,7 +22,7 @@ from ..conf.dotdict import DotDict
 class onnxrt:
     """ONNX helper configuration."""
     graph_optimization = DotDict({'level': None, 'gemm2matmul': True})
-    qdq_setting = DotDict({'OpTypesToExcludeOutputQuantizatioin': None, 
+    qdq_setting = DotDict({'OpTypesToExcludeOutputQuantizatioin': [], 
                            'AddQDQPairToWeight': False,
                            'DedicatedQDQPair': False})
 

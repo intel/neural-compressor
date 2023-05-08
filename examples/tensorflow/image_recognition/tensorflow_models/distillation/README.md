@@ -25,14 +25,6 @@ pip install tensorflow
 ```
 
 ### Install Intel Extension for Tensorflow
-#### Running the model on Intel GPU(Mandatory to install ITEX)
-Intel Extension for Tensorflow is mandatory to be installed for running the model on Intel GPUs.
-
-```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
-```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
-
 #### Running the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for running the model on Intel CPUs.
 

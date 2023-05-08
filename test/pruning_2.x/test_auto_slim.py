@@ -9,6 +9,11 @@ from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
+
+# auto slim
+from neural_compressor.compression.pruner.model_slim import parse_auto_slim_config
+from neural_compressor.compression.pruner.model_slim import model_slim
+
 import random
 
 class NaiveMLP(nn.Module):
@@ -36,13 +41,11 @@ class TestPruning(unittest.TestCase):
         prune_ffn2_sparsity = 0.5
         prune_mha_sparsity = 0.5
         hidden_size = 16
-        from neural_compressor.compression import parse_auto_slim_config
         # print("Run a naive MLP model")
         model = NaiveMLP(hidden_size)
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, hidden_size), low=0., high=1., dtype='float32', label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        from neural_compressor.compression import parse_auto_slim_config
         auto_slim_configs_0 = parse_auto_slim_config(
             model, 
             dummy_dataloader,
@@ -56,7 +59,6 @@ class TestPruning(unittest.TestCase):
                 _w = m.weight.clone()
                 _w[:, ffn2_chn_sparsity] = 0
                 setattr(m, 'weight', torch.nn.Parameter(_w.clone()))
-        from neural_compressor.compression import model_slim
         dummy_inputs = torch.randn([1, 16])
         outputs_before_slim = model(dummy_inputs)
         model = model_slim(model, dummy_dataloader)
@@ -114,7 +116,6 @@ class TestPruning(unittest.TestCase):
                 _w[:, 0:head_size] = 0
                 setattr(m, 'weight', torch.nn.Parameter(_w.clone()))
         # slim the model
-        from neural_compressor.compression import model_slim
         outputs_before_slim = model(dummy_inputs)
         model = model_slim(model)
         outputs_after_slim = model(dummy_inputs)

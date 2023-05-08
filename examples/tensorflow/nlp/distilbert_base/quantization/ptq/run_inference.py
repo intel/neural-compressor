@@ -28,6 +28,13 @@ from datasets import load_from_disk
 from tensorflow.core.protobuf import saved_model_pb2
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
+from tensorflow.python.client import timeline
+import os
+
+def boolean_string(s):
+    if s not in {'False', 'True'}:
+        raise ValueError('Not a valid boolean string')
+    return s == 'True'
 
 arg_parser = ArgumentParser(description="Distilbert inference")
 arg_parser.add_argument("--task-name", type=str,
@@ -60,12 +67,12 @@ arg_parser.add_argument("-m", "--mode", type=str,
                         dest="mode",
                         default="performance"
                         )
-arg_parser.add_argument("--tune", type=bool,
+arg_parser.add_argument("--tune", type=boolean_string,
                         help="whether to apply quantization",
                         dest="tune",
                         default=False
                         )
-arg_parser.add_argument("--benchmark", type=bool,
+arg_parser.add_argument("--benchmark", type=boolean_string,
                         help="whether to do benchmark",
                         dest="benchmark",
                         default=False
@@ -80,7 +87,7 @@ arg_parser.add_argument('-a', "--num-intra-threads", type=int,
                         dest="num_intra_threads",
                         default=28
                         )
-arg_parser.add_argument("--pad-to-max-length", type=bool,
+arg_parser.add_argument("--pad-to-max-length", type=boolean_string,
                         help="Padding option.",
                         dest="pad_to_max_length",
                         default=True
@@ -105,6 +112,9 @@ arg_parser.add_argument("--batch-size", type=int,
                         dest="batch_size",
                         default=128
                         )
+arg_parser.add_argument("--profile", dest='profile',
+                        type=boolean_string, help="profile",
+                        default=False)
 
 ARGS = arg_parser.parse_args()
 MAX_STEPS = 872
@@ -235,6 +245,8 @@ class Distilbert_base(object):
         config = tf.compat.v1.ConfigProto()
         config.intra_op_parallelism_threads=ARGS.num_intra_threads
         config.inter_op_parallelism_threads=ARGS.num_inter_threads
+        run_options = tf.compat.v1.RunOptions(trace_level=tf.compat.v1.RunOptions.FULL_TRACE)
+        run_metadata = tf.compat.v1.RunMetadata()
 
         output = graph.get_tensor_by_name('Identity:0')
         total_time = 0
@@ -250,13 +262,30 @@ class Distilbert_base(object):
             # Inference
             logger.info("Starting inference for {} steps...".format(ARGS.steps))
             total_correct_predictions = 0
+            iter = 0
             for feed_dict, labels in self.dataloader:
+                iter += 1
                 start_time = time.time()
-                pred = sess.run(output, feed_dict=feed_dict)
+                if ARGS.profile:
+                    pred = sess.run(output, feed_dict=feed_dict, options=run_options, run_metadata=run_metadata)
+                else:
+                    pred = sess.run(output, feed_dict=feed_dict)
                 run_time = time.time() - start_time
                 if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
                     total_correct_predictions += self.get_correct_predictions(pred, labels)
                 total_time += run_time
+                # save profiling file
+                if ARGS.profile and iter == int(self.dataloader.num_batch / 2):
+                        trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+                        model_dir = str(os.path.dirname(os.path.realpath(__file__))) + '/timeline'
+                        if not os.path.exists(model_dir):
+                            try:
+                                os.makedirs(model_dir)
+                            except:
+                                pass
+                        profiling_file = model_dir + '/timeline-' + str(iter + 1) + '-' + str(os.getpid()) + '.json'
+                        with open(profiling_file, 'w') as trace_file:
+                            trace_file.write(trace.generate_chrome_trace_format(show_memory=False))
         time_per_batch = total_time / float(ARGS.steps / ARGS.batch_size)
         if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
             accuracy = total_correct_predictions / ARGS.steps

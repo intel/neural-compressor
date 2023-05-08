@@ -348,7 +348,9 @@ def evaluate(model):
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         iteration = FLAGS.iters
-    metric = Metric(name="topk", k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(dataloader):
         latency_list = []

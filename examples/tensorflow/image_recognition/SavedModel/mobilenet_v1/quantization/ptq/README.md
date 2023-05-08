@@ -49,6 +49,18 @@ TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts
 We also prepared related scripts in [TF image_recognition example](/examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v1/quantization/ptq#3-prepare-dataset).
 
 # Run Command
+
+## Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
 ## 1. Quantization
   ```shell
   bash run_tuning.sh --input_model=./SavedModel --output_model=./nc_SavedModel --dataset_location=/path/to/imagenet/
