@@ -21,8 +21,8 @@ import pickle
 import random
 import numpy as np
 from .config import _Config, options
-from .data.dataloaders.dataloader import check_dataloader
-from .metric.metric import register_customer_metric
+from .data import check_dataloader
+from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger

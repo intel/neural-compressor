@@ -25,7 +25,7 @@ import signal
 import psutil
 from threading import Thread
 
-from neural_compressor.data.dataloaders.dataloader import check_dataloader
+from neural_compressor.data import check_dataloader
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
 from .config import BenchmarkConfig, options

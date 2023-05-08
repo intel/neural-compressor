@@ -23,7 +23,7 @@ import random
 from .adaptor import FRAMEWORKS
 from .compression.callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
 from .config import _Config, options
-from .metric.metric import register_customer_metric
+from .metric import register_customer_metric
 from .model.model import Model
 from .utils import logger
 from .utils.utility import time_limit

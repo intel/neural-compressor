@@ -21,8 +21,8 @@ import pickle
 import numpy as np
 import random
 
-from neural_compressor.data.dataloaders.dataloader import check_dataloader
-from neural_compressor.metric.metric import register_customer_metric
+from neural_compressor.data import check_dataloader
+from neural_compressor.metric import register_customer_metric
 from .utils.utility import time_limit, CpuInfo
 from .strategy import STRATEGIES
 from .config import _Config, options
@@ -31,7 +31,7 @@ from .model import Model
 
 
 def fit(model,
-        conf=None,
+        conf,
         eval_func=None,
         eval_dataloader=None,
         eval_metric=None,
