@@ -64,6 +64,7 @@ def build_slave_faker_model():
     """
     from ...utils import logger
     class FakerModel:
+
         def __call__(self, *args, **kwargs):
             logger.warning("Slave node has no quantized model, please handle it yourself.")
 
@@ -71,12 +72,7 @@ def build_slave_faker_model():
             return self.__getattr__(str(key))
 
         def __getattr__(self, name):
-            def get_attr(attr):
-                return self.__getattr__(f"{name}.{attr}")
+            logger.warning("Slave node has no quantized model, please handle it yourself.")
+            return self
 
-            if "." in name:
-                obj, attr = name.split(".", 1)
-                return get_attr(attr)
-            else:
-                return FakerModel()
     return FakerModel()
