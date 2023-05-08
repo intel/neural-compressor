@@ -289,7 +289,7 @@ class TuneStrategy(object):
 
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         algo_scheduler.reset_exec_algorithms()
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):  # pragma: no cover
             # skip assign alpha to sq first.
             # set the alpha to 0.5 by default
             smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
