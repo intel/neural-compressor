@@ -26,7 +26,8 @@ class TestPruning(unittest.TestCase):
             {
                 "op_names": ['layer2.*'],
                 'target_sparsity': 0.5,
-                'pattern': '2:4'
+                'pattern': '4:8',
+                "pruning_type": "snip_progressive",
             },
             {
                 "op_names": ['layer3.*'],

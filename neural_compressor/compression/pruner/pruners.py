@@ -70,7 +70,6 @@ def get_pruner(config, modules):
 
     Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
     """
-    # import pdb;pdb.set_trace()
     ## do the ugly work here
     if "progressive" not in config["pruning_type"]:
         name = config["pruning_type"]
