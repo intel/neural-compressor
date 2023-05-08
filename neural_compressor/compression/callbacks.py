@@ -35,8 +35,6 @@ from ..model.model import get_model_fwk_name
 from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
-# model auto slim related
-
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 

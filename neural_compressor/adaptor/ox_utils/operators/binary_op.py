@@ -34,6 +34,8 @@ class BinaryOperator(Operator):
         data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
         if not data_found:
             return False
+        if self.quantizer.backend == 'TensorrtExecutionProvider':
+            return True
         if not all([self.quantizer.is_valid_quantize_weight(i) for i in node.input]):
             return False
         return True

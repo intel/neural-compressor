@@ -201,7 +201,7 @@ class _Benchmark(object):
                     "Multiple instance benchmark failed with some instance!"
 
                 output_data = [
-                    ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
+                    ["Latency average [second/sample]", "{:.6f}".format((sum(latency_l)/len(latency_l))/1000)],
                     ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
                 ]
                 logger.info("********************************************")
@@ -353,10 +353,11 @@ class _Benchmark(object):
             assert self._b_dataloader is not None, "dataloader should not be None"
 
             from neural_compressor.utils.create_obj_from_config import create_eval_func
-            self._b_func = create_eval_func(self.framework, \
-                                    self._b_dataloader, \
-                                    adaptor, \
-                                    None)
+            self._b_func = create_eval_func(framework=self.framework, \
+                                    dataloader=self._b_dataloader, \
+                                    adaptor=adaptor, \
+                                    metric=None, \
+                                    iteration=cfg.iteration)
 
             self.objectives = MultiObjective(["performance"],
                                              {'relative': 0.1},
