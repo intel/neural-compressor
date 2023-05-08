@@ -59,6 +59,8 @@ class Evaluator:
         infer = model.signatures["serving_default"]
         for input_ids, label, label_indices in tqdm(self.dataloader):
             attention_mask = self.get_attention_mask(input_ids)
+            input_ids = tf.constant(input_ids.numpy(), dtype=infer.inputs[0].dtype)
+            attention_mask = tf.constant(attention_mask.numpy(), dtype=infer.inputs[0].dtype)
             results = infer(input_ids=input_ids, attention_mask=attention_mask) # len: 25 Identity: [16, 196, 50272], Identity_1: [16, 12, 196, 64]
             last_token_logits = results['Identity'].numpy()[np.arange(len(label_indices)), label_indices, :]
             pred = last_token_logits.argmax(axis=-1)
@@ -148,17 +150,18 @@ class INCDataloader:
 model_name = args.model_name_or_path
 tokenizer = transformers.AutoTokenizer.from_pretrained(
     model_name,
+    cache_dir="/dev/shm/model_cache"
 )
-eval_dataset = load_dataset('lambada',split='validation')
-model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+eval_dataset = load_dataset('lambada',split='validation', cache_dir="/dev/shm/model_cache")
+model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name, cache_dir="/dev/shm/model_cache")
 
 # model.eval()
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
 if args.int8: # int8
-    # calib_dataset = load_dataset('lambada', split='train')
-    calib_dataset = eval_dataset  # TODO for debug
+    calib_dataset = load_dataset('lambada', split='train', cache_dir="/dev/shm/model_cache")
+    # calib_dataset = eval_dataset  # TODO for debug
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
     
