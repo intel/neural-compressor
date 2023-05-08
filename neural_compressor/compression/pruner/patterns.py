@@ -142,6 +142,18 @@ class ProgressivePatternUtils(object):
 
     @staticmethod
     def update_progressive_masks_global_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         # three types: score-global (nxm and n:m), score-local(nxm and n:m), linear (only nxm)
         # score-local is a special type of score global therefore can be implemented with only one function
         progressive_steps = progressive_configs["progressive_steps"]
@@ -180,6 +192,18 @@ class ProgressivePatternUtils(object):
     
     @staticmethod
     def update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         # local is a speicial type of global, therefore we can call global to implement this
         progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
@@ -200,6 +224,18 @@ class ProgressivePatternUtils(object):
 
     @staticmethod
     def update_progressive_masks_scores_order(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         if progressive_configs['use_global']:
             return ProgressivePatternUtils.update_progressive_masks_global_scores(pre_masks, cur_masks, scores, \
                     progressive_step, progressive_configs)
@@ -216,6 +252,19 @@ class ProgressivePatternUtils(object):
         progressive_configs: dict, 
         block_sizes: dict
     ):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+            block_size: Dict{"layer_name": List or Tuple} that stores the block sizes, only for NxM patterns.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
         new_added_masks = ProgressivePatternUtils.update_new_added_masks(pre_masks, cur_masks)
