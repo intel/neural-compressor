@@ -1021,7 +1021,7 @@ class TuneStrategy(object):
         framework = self.config.framework.lower()
         framework_specific_info.update({'backend': self.config.backend})
         framework_specific_info.update({'format': getattr(self.config, 'quant_format', None)})
-        framework_specific_info.update({'domain': getattr(self.config, 'quant_format', None)})
+        framework_specific_info.update({'domain': getattr(self.config, 'domain', None)})
 
         self.mixed_precision_mode = isinstance(self.config, MixedPrecisionConfig)
 
