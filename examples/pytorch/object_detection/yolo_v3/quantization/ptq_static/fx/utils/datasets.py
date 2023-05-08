@@ -123,6 +123,8 @@ class ListDataset(Dataset):
 
             targets = torch.zeros((len(boxes), 6))
             targets[:, 1:] = boxes
+        else:
+            return None
 
         # Apply augmentations
         if self.augment:
@@ -132,9 +134,9 @@ class ListDataset(Dataset):
         return img_path, img, targets
 
     def collate_fn(self, batch):
+        # Remove empty placeholder data
+        batch = [data for data in batch if data is not None]
         paths, imgs, targets = list(zip(*batch))
-        # Remove empty placeholder targets
-        targets = [boxes for boxes in targets if boxes is not None]
         # Add sample index to targets
         for i, boxes in enumerate(targets):
             boxes[:, 0] = i
