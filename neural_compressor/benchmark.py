@@ -29,8 +29,7 @@ from neural_compressor.data import check_dataloader
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
 from .config import BenchmarkConfig, options
-from .utils import logger
-from .utils import OPTIONS
+from .utils import alias_param, logger, OPTIONS
 from .utils.utility import GLOBAL_STATE, MODE
 from .model import BaseModel, Model
 from .utils import logger
@@ -380,6 +379,7 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
     summary_benchmark()
 
 
+@alias_param("conf", param_alias='config')
 def fit(model, conf, b_dataloader=None, b_func=None):
     """Benchmark the model performance with the configure.
 

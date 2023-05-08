@@ -18,6 +18,7 @@
 import datetime
 import logging
 from schema import Schema, And, Optional
+from .utils import alias_param
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -162,7 +163,7 @@ class Options:
 
     Example::
 
-        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
@@ -1664,6 +1665,7 @@ class MixedPrecisionConfig(object):
         conf = MixedPrecisionConfig()
         converted_model = mix_precision.fit(model, conf=conf)
     """
+    @alias_param("precisions", param_alias="precision")
     def __init__(self,
                  device="cpu",
                  backend="default",

@@ -23,13 +23,14 @@ import random
 
 from neural_compressor.data import check_dataloader
 from neural_compressor.metric import register_customer_metric
-from .utils.utility import time_limit, CpuInfo
-from .strategy import STRATEGIES
 from .config import _Config, options
-from .utils import logger
 from .model import Model
+from .strategy import STRATEGIES
+from .utils import alias_param, logger
+from .utils.utility import time_limit, CpuInfo
 
 
+@alias_param("conf", param_alias='config')
 def fit(model,
         conf,
         eval_func=None,

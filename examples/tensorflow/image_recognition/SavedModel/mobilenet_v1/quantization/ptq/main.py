@@ -93,7 +93,7 @@ def evaluate(model):
 
 class eval_object_detection_optimized_graph(object):
     def run(self):
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
         if args.tune:
             from neural_compressor import quantization

@@ -183,7 +183,7 @@ class eval_classifier_optimized_graph:
         """
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         infer_graph = load_graph(self.args.input_graph)
         set_random_seed(9527)
 

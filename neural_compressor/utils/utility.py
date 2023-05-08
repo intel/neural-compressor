@@ -22,24 +22,26 @@ User should not change values in this file. Instead, user should write a config
 file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
 options.
 """
-import re
 import ast
-import os
-import time
-import sys
-import pickle
+import cpuinfo
 import logging
 import importlib
-from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
-import os.path as osp
-import threading, _thread
-import cpuinfo
+import re
 import numpy as np
-from neural_compressor.utils import logger
+import os
+import os.path as osp
+import pickle
 import prettytable as pt
 import psutil
 import subprocess
+import sys
+import threading
+import time
+import _thread
+from contextlib import contextmanager
+from functools import wraps
+from tempfile import NamedTemporaryFile
+from neural_compressor.utils import logger
 from enum import Enum
 from pkg_resources import parse_version
 
@@ -677,3 +679,25 @@ def compare_objects(obj1, obj2, ignore_attrs):
     for attr in attrs1 - set(ignore_attrs):
         if getattr(obj1, attr) != getattr(obj2, attr):
             return False
+
+
+def alias_param(param_name: str, param_alias: str):
+    """
+    Decorator for aliasing a param in a function
+
+    Args:
+        param_name: name of param in function to alias
+        param_alias: alias that can be used for this param
+    Returns:
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            alias_param_value = kwargs.get(param_alias)
+            if alias_param_value:
+                kwargs[param_name] = alias_param_value
+                del kwargs[param_alias]
+            result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator

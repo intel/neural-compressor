@@ -110,7 +110,7 @@ def evaluate(model):
     return acc
 
 def main(_):
-    from neural_compressor.utils import set_random_seed
+    from neural_compressor import set_random_seed
     set_random_seed(9527)
     if FLAGS.tune:
         from neural_compressor import quantization
