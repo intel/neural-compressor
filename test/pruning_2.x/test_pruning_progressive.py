@@ -49,6 +49,10 @@ class TestPruningPatterns(unittest.TestCase):
         )
         compression_manager = prepare_compression(model=self.model, confs=config)
         compression_manager.callbacks.on_train_begin()
+        # fix code coverage
+        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_configs['progressive_type'] = "linear"
+        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_configs['use_global'] = False
+        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_logger = True
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)

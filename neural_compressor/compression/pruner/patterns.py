@@ -448,6 +448,26 @@ class BasePattern:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
             return float(zero_cnt) / total_cnt
+
+    def get_sparsity_ratio_progressive(self, pre_masks, return_dict=False):
+        """Calculate the sparsity ratio of each layer.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+        
+        Returns:
+            A float representing the zero elements' ratio in pre_masks.
+        """
+        zero_cnt = 0
+        total_cnt = 0
+        for key in pre_masks.keys():
+            if key in self.invalid_layers:
+                continue
+            # progressive masks are unstructured, therefore directly find zeros
+            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
+            total_cnt += float(pre_masks[key].numel())
+        return (zero_cnt / total_cnt)
         
     def get_pattern_lock_masks(self, modules):
         """Obtain masks from original weight map according the pattern and weights' zero positions.
@@ -710,26 +730,6 @@ class PatternNxM(BasePattern):
             return {"sparsity_ratio": sparsity_ratio, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
             return sparsity_ratio
-
-    def get_sparsity_ratio_progressive(self, pre_masks, return_dict=False):
-        """Calculate the sparsity ratio of each layer.
-        
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
-        
-        Returns:
-            A float representing the zero elements' ratio in pre_masks.
-        """
-        zero_cnt = 0
-        total_cnt = 0
-        for key in pre_masks.keys():
-            if key in self.invalid_layers:
-                continue
-            # progressive masks are unstructured, therefore directly find zeros
-            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
-            total_cnt += float(pre_masks[key].numel())
-        return (zero_cnt / total_cnt)
 
     def _reshape_orig_to_2dims(self, data):
         """Process layers that are not two-dimensional(e.g conv layer).
