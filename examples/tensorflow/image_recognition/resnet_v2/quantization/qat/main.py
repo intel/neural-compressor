@@ -335,7 +335,7 @@ def evaluate(model):
 
     Args:
         model (tensorflow.Graph_def): The input model graph
-        
+
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """

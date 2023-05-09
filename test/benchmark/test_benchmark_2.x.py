@@ -8,6 +8,8 @@ import tensorflow as tf
 import tempfile
 import re
 from neural_compressor.adaptor.tf_utils.util import write_graph
+from neural_compressor.benchmark import benchmark_with_raw_cmd
+from neural_compressor.config import BenchmarkConfig
 
 
 def build_benchmark():
@@ -57,22 +59,42 @@ fit(args.input_model, conf, b_dataloader=b_dataloader)
     with open('fake_data_25.py', "w", encoding="utf-8") as f:
         f.writelines(fake_data_25)
 
+
 def build_benchmark2():
     seq = [
         "from argparse import ArgumentParser\n",
         "arg_parser = ArgumentParser(description='Parse args')\n",
         "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
         "args = arg_parser.parse_args()\n",
-        "from neural_compressor.benchmark import fit\n"
+        "import time\n",
+        "import numpy as np\n",
+        "from neural_compressor.benchmark import benchmark_with_raw_cmd\n",
         "from neural_compressor.data import Datasets\n",
+        "from neural_compressor.model import Model\n",
         "dataset = Datasets('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
 
         "from neural_compressor.data.dataloaders.dataloader import DataLoader\n",
         "b_dataloader = DataLoader(framework='tensorflow', dataset=dataset)\n",
-        "fit(args.input_model, b_dataloader=b_dataloader)\n"
+        "model = Model(args.input_model)\n",
+        "input_tensor = model.input_tensor\n",
+        "output_tensor = model.output_tensor if len(model.output_tensor)>1 else model.output_tensor[0]\n",
+        "iteration = 10\n",
+        "latency_list = []\n",
+        "for idx, (inputs, labels) in enumerate(b_dataloader):\n",
+        "    inputs = np.array([inputs])\n",
+        "    feed_dict = dict(zip(input_tensor, inputs))\n",
+        "    start = time.time()\n",
+        "    predictions = model.sess.run(output_tensor, feed_dict)\n",
+        "    end = time.time()\n",
+        "    latency_list.append(end-start)\n",
+        "    if idx + 1 == iteration:\n",
+        "        break\n",
+        "latency = np.array(latency_list).mean()\n",
+        "print('Latency: {:.3f} ms'.format(latency * 1000))\n",
+        "print('Throughput: {:.3f} images/sec'.format(1. / latency))\n"
     ]
 
-    with open('fake2.py', "w", encoding="utf-8") as f:
+    with open('fake_raw_cmd.py', "w", encoding="utf-8") as f:
         f.writelines(seq)
 
 
@@ -126,14 +148,14 @@ class TestObjective(unittest.TestCase):
     def tearDownClass(self):
         if os.path.exists('fake.py'):
             os.remove('fake.py')
-        if os.path.exists('fake2.py'):
-            os.remove('fake2.py')
         if os.path.exists('fake_data_5.py'):
             os.remove('fake_data_5.py')
         if os.path.exists('fake_data_15.py'):
             os.remove('fake_data_15.py')
         if os.path.exists('fake_data_25.py'):
             os.remove('fake_data_25.py')
+        if os.path.exists('fake_raw_cmd.py'):
+            os.remove('fake_raw_cmd.py')
         shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_benchmark(self):
@@ -171,6 +193,16 @@ class TestObjective(unittest.TestCase):
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
                 self.assertIsNotNone(throughput)
         os.system("rm *.log")
+
+    def test_benchmark_raw_cmd(self):
+        conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
+        raw_cmd = "python fake_raw_cmd.py --input_model={}".format(self.graph_path)
+        benchmark_with_raw_cmd(raw_cmd, conf=conf)
+        for i in range(2):
+            with open(f'2_4_{i}.log', "r") as f:
+                for line in f:
+                    throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
+                self.assertIsNotNone(throughput)
 
 
 if __name__ == "__main__":
