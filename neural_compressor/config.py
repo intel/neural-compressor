@@ -2142,9 +2142,7 @@ class _Config:
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
-                 keras=keras_config,
-                 accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion
+                 keras=keras_config
                  ):
         """Init a config object."""
         self._quantization = quantization
@@ -2158,8 +2156,6 @@ class _Config:
         self._pytorch = pytorch
         self._mxnet = mxnet
         self._keras = keras
-        self._accuracy = accuracy_criterion
-        self._tuning = tuning_criterion
 
     @property
     def distillation(self):
@@ -2216,14 +2212,5 @@ class _Config:
         """Get the onnxruntime object."""
         return self._onnxruntime
 
-    @property
-    def accuracy(self):
-        """Get the accuracy object."""
-        return self._accuracy
-
-    @property
-    def tuning(self):
-        """Get the tuning object."""
-        return self._tuning
 
 config = _Config()
