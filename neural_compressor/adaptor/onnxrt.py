@@ -1315,6 +1315,158 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         model.save(os.path.join(path, "best_model.onnx"))
 
+    def get_output_op_names(self, qmodel):
+        """Get the ouput ops' names."""
+        outputs = qmodel.output()
+        output_op_names = []
+        for output in outputs:
+            output_op_names.append(qmodel.output_name_to_node[output].name)
+        logger.debug(f"output op names: {output_op_names}")
+        return output_op_names
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """Compute the op sensitivity.
+        
+        The sensitivity metric is the mse between the output of the last quantized op of 
+        the quantized model and the output of its corresponding op in the fp32 model.
+        
+          1. Backup the tune cfg
+          2. Fallback each int8 op and compute its mse if use fallback (with 'fallback == True'),
+            or re-quantize each fp32 op(fallen back in the previous stage) and compute its MSE if not.
+          3. Sorted op name list according to its MSE
+        
+        Args:
+          fp32_model: The fp32 model.
+          dataloader: the dataloader with full dataset.
+          tune_cfg: tuning config
+          fallback: denote fallback stage or re-quantize stage
+          requantize_cfgs: the dict of tuning configs for all re-quantizable ops
+
+        Returns:
+          A list of op names, sorted by its MSE sensitivity.
+        """
+        from copy import deepcopy
+
+        fp32_op_cfg = {'activation': {'dtype': 'fp32', 'quant_mode': 'fp32'},
+                       'weight': {'dtype': 'fp32'}}
+
+        if fallback:
+            ops_list = [op for op, config in tune_cfg['op'].items()
+                       if config['activation']['quant_mode'] in ('static', 'dynamic')]
+            replace_cfgs = {op : fp32_op_cfg for op in tune_cfg['op']}
+        else:
+            ops_list = [op for op, config in tune_cfg['op'].items() 
+                       if config['activation']['quant_mode'] == 'fp32' and op in requantize_cfgs]
+            replace_cfgs = requantize_cfgs
+
+        # Step2. compute mse
+        mse_result = self._get_mse_order(
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, 
+            output_op_names, confidence_batches)
+
+        # Step3. sort
+        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
+        logger.debug("Dump MSE order:")
+        for op in mse_order:
+            logger.debug(f"{op}: {mse_result[op]}")
+        return mse_order
+
+    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, 
+                       output_op_names, confidence_batches):
+        """Compute MSE."""
+        op_cfg = tune_cfg['op']
+        mse_result = {}
+        partial_dataloader = self._partial_dataloader(dataloader, confidence_batches)
+        
+        fp32_output = self._inference_model_on_batches(
+            fp32_model, tune_cfg, partial_dataloader, output_op_names)
+
+        for op in ops_lst:
+            # backup and set replace tuning config
+            backup_cfg = op_cfg[op] 
+            op_cfg[op] = replace_cfgs[op]
+
+            # quantize and inference the model
+            q_model = self.quantize(tune_cfg, fp32_model, partial_dataloader)
+            q_output = self._inference_model_on_batches(
+                q_model, tune_cfg, partial_dataloader, output_op_names)
+
+            mse_result[op] = self._calculate_mse(fp32_output, q_output)
+
+            # recover tune_cfg
+            op_cfg[op] = backup_cfg
+
+        return mse_result
+
+    def _partial_dataset_of(self, dataloader, confidence_batches):
+        """Partial dataset."""
+        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+        from neural_compressor.data.datasets.dummy_dataset import DummyDataset as DummyDataset_v2_x
+        if isinstance(dataloader.dataset, DummyDataset) or isinstance(dataloader.dataset, DummyDataset_v2_x):
+            assert(isinstance(confidence_batches, int))
+            ds = copy.deepcopy(dataloader.dataset)
+            ds.dataset = ds.dataset[:confidence_batches]
+            return ds
+        else:
+            return dataloader.dataset.take(confidence_batches)
+
+    def _partial_dataloader(self, dataloader, confidence_batches):
+        """Partial dataloader."""
+        return type(dataloader)(
+            dataset=self._partial_dataset_of(dataloader, confidence_batches),
+            batch_size=dataloader.batch_size,
+            last_batch=dataloader.last_batch,
+            collate_fn=dataloader.collate_fn,
+            sampler=dataloader.sampler,
+            batch_sampler=dataloader.batch_sampler,
+            num_workers=dataloader.num_workers,
+            pin_memory=dataloader.pin_memory,
+            shuffle=dataloader.shuffle,
+            distributed=dataloader.distributed)
+
+    def _calculate_mse(self, fp32_output, q_output):
+        """MSE calculation."""
+        result = []
+        for i, j in zip(fp32_output, q_output):
+            result.append(np.square(i - j).mean())
+        return np.array(result).mean()
+
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader,
+                                    output_op_names):
+        """Inference model on batches."""
+        ort_inputs = {}
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        predictions = []
+
+        session = ort.InferenceSession(self.work_space + 'eval.onnx',
+                                       sess_options,
+                                       providers=[self.backend]) if input_graph.is_large_model else \
+                  ort.InferenceSession(input_graph.model.SerializeToString(),
+                                       sess_options,
+                                       providers=[self.backend])
+        for idx, (inputs, _) in enumerate(dataloader):
+            if len_inputs == 1:
+                ort_inputs.update(
+                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                )
+            else:
+                assert len_inputs == len(inputs), \
+                    'number of input tensors must align with graph inputs'
+
+                if isinstance(inputs, dict):  # pragma: no cover
+                    ort_inputs.update(inputs)
+                else:
+                    for i in range(len_inputs):
+                        # in case dataloader contains non-array input
+                        if not isinstance(inputs[i], np.ndarray):
+                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                        else:
+                            ort_inputs.update({inputs_names[i]: inputs[i]})
+
+            predictions.extend(session.run(None, ort_inputs))
+        return predictions
 
 @adaptor_registry
 class ONNXRT_QLinearOpsAdaptor(ONNXRUNTIMEAdaptor):
