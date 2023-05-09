@@ -932,49 +932,49 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>AlexNet</td>
+    <td>AlexNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>CaffeNet</td>
+    <td>CaffeNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>DenseNet</td>
+    <td>DenseNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
-    <td>EfficientNet</td>
+    <td>EfficientNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>FCN</td>
+    <td>FCN (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>GoogleNet</td>
+    <td>GoogleNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>Inception V1</td>
+    <td>Inception V1 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>MNIST</td>
+    <td>MNIST (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq_static">qlinearops</a></td>
@@ -992,13 +992,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>ShuffleNet V2</td>
+    <td>ShuffleNet V2 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>SqueezeNet</td>
+    <td>SqueezeNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/squeezenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/squeezenet/quantization/ptq_static">qdq</a></td>
@@ -1010,13 +1010,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>ZFNet</td>
+    <td>ZFNet (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>ArcFace</td>
+    <td>ArcFace (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">qlinearops</a></td>
@@ -1052,7 +1052,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/nlp/roberta/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/roberta/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>BERT SQuAD</td>
+    <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic">integerops</a> </td>
@@ -1070,7 +1070,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>BiDAF</td>
+    <td>BiDAF (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/BiDAF/quantization/ptq_dynamic">integerops</a></td>
@@ -1254,55 +1254,55 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>DUC</td>
+    <td>DUC (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/DUC/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
-    <td>Faster R-CNN</td>
+    <td>Faster R-CNN (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>Mask R-CNN</td>
+    <td>Mask R-CNN (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>SSD</td>
+    <td>SSD (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/ssd/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/ssd/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>Tiny YOLOv3</td>
+    <td>Tiny YOLOv3 (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/yolov3/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
-    <td>YOLOv3</td>
+    <td>YOLOv3 (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/yolov3/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
-    <td>YOLOv4</td>
+    <td>YOLOv4 (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/yolov4/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
-    <td>Emotion FERPlus</td>
+    <td>Emotion FERPlus (ONNX Model Zoo)</td>
     <td>Body Analysis</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
-    <td>Ultra Face</td>
+    <td>Ultra Face (ONNX Model Zoo)</td>
     <td>Body Analysis</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">qlinearops</a></td>

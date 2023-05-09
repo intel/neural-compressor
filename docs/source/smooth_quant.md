@@ -309,13 +309,13 @@ conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/g
 ```
 
 ## Validated Models
-neural_compressor: 2.1
+Neural Compressor: 2.1
 
-IPEX: 2.0
+IPEX (Intel Extension for PyTorch): 2.0
 
 Dataset: lambada
 
-task: text-generation
+Task: text-generation
 
 alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
 
@@ -351,18 +351,24 @@ smooth_quant_args description:
 
 "alpha": "auto" or a float value. Default is 0.5. "auto" means automatic tuning.
 
-"folding":
-- False: Allow inserting mul to update the input distribution and not absorbing. IPEX can fuse inserted mul automatically and folding=False is recommended. And for PyTorch FBGEMM backend, folding=False setting will only convert model to QDQ model.
-- True: Only allow inserting mul with the input scale that can be absorbed into the last layer. 
-- If folding not set in config, the default value is IPEX: False (True if version<2.1), Stock PyTorch: True.
+"folding": whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.
+- True: Fold inserted mul into the previous layer. IPEX will only insert mul for layers can do folding. 
+- False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.
 
+## Supported Framework Matrix
+
+| Framework | Alpha        | Folding    |
+|:---------:|--------------|------------|
+| PyTorch   | [0-1] / 'auto' | False      |
+| IPEX      | [0-1] / 'auto' | True / False(Version>2.1) |
+| ONNX      | [0-1]        | True       |
 
 ## Reference
 
-[^1]: Jason, Wei, et al. "Emergent Abilities of Large Language Models". Published in Transactions on Machine Learning Research (2022)
+[^1]: Jason, Wei, et al. "Emergent Abilities of Large Language Models". Published in Transactions on Machine Learning Research (2022).
 
 [^2]: Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
 
 [^3]: Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
 
-[^4]: Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022)..
+[^4]: Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).

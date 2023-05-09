@@ -20,7 +20,7 @@
 from .collect_layer_histogram import LayerHistogramCollector
 from .logger import log, info, debug, warn, warning, error, fatal
 from .options import OPTIONS
-from .utility import set_random_seed
+from .utility import alias_param
 
 __all__ = ["LayerHistogramCollector", "log", "info", "debug", "warn", "warning", "error", "fatal",
-           "OPTIONS", "set_random_seed"]
+           "OPTIONS", "alias_param"]

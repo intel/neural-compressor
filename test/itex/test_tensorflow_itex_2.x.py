@@ -7,7 +7,7 @@ from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.data.dataloaders.dataloader import DataLoader
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.utils.utility import set_random_seed
+from neural_compressor import set_random_seed
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 import tensorflow as tf

@@ -499,7 +499,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DataLoader("pytorch", dataset)
-        set_workspace=("./saved")
+        set_workspace("./saved")
         conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin,
                                    conf,
@@ -530,8 +530,11 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         dataset = Datasets("pytorch")["dummy"](((16, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
         q_model = fit(ori_model, conf=PostTrainingQuantConfig(), calib_dataloader=dataloader)
-        op_to_traces = hawq_top(fp32_model=pt_model, q_model=q_model, dataloader=dataloader, \
-             criterion=None, enable_act=True)
+        op_to_traces = hawq_top(fp32_model=pt_model,
+                                q_model=q_model,
+                                dataloader=dataloader,
+                                criterion=None,
+                                enable_act=True)
         self.assertIsNotNone(op_to_traces)
 
 
