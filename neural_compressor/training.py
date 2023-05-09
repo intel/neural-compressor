@@ -22,7 +22,7 @@ from .utils import logger
 from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
                                WeightPruningConfig)
 from typing import Callable, List, Union
-from .compression import prepare_pruning
+from .experimental.compression import prepare_pruning
 
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
@@ -165,6 +165,8 @@ class CompressionManager:
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
+                     weight: [0.5, 0.5],
+                     higher_is_better: [True, False]
                     }
         For the built-in metrics, please refer to below link:
         https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
@@ -269,8 +271,6 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         confs (Union[Callable, List]): The instance of QuantizationAwareTrainingConfig,
                                        PruningConfig and distillationConfig, or a list of
                                        config for orchestration optimization.
-        options (Options, optional):   The configure for random_seed, workspace,
-                                       resume path and tensorboard flag.
 
     Returns:
         An object of CompressionManager.

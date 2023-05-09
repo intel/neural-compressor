@@ -301,7 +301,7 @@ class TestGraphOptimization(unittest.TestCase):
             pass
         else:
             from neural_compressor.experimental import Graph_Optimization
-            from neural_compressor import conf
+            from neural_compressor.conf.config import conf
             import torchvision
             model = torchvision.models.resnet18()
 

@@ -315,7 +315,8 @@ class TestMixedPrecision(unittest.TestCase):
                                          eval_dataloader=self.matmul_dataloader,
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
         self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
-
+        
+    def test_mixed_precision_with_evaluation_old_api(self):
         from neural_compressor.conf.config import MixedPrecision_Conf
         from neural_compressor.experimental import MixedPrecision
         converter = MixedPrecision(MixedPrecision_Conf('test.yaml'))

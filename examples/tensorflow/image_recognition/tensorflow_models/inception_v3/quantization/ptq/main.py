@@ -114,8 +114,10 @@ class eval_classifier_optimized_graph:
             op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {
                'activation':  {'dtype': ['fp32']}}}
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100], op_name_dict=op_name_dict)
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                        eval_dataloader=eval_dataloader)
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
             q_model.save(args.output_graph)
 
         if args.benchmark:
@@ -127,8 +129,9 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import METRICS
+            metrics = METRICS('tensorflow')
+            top1 = metrics['topk']()
             def eval(model):
                 return evaluate(model, dataloader, top1)
 

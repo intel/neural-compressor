@@ -735,6 +735,20 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "gpt-j-6B": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/quantization/ptq_static",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/gpt-j-6b/model.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "gpt-j-6B_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/quantization/ptq_dynamic",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/gpt-j-6b/model.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
     "hf_roberta-large": {
       "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",
@@ -767,6 +781,34 @@
       "model_src_dir": "nlp/huggingface_model/language_modeling/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
       "input_model": "/tf_dataset2/models/onnx/hf_distilgpt2/distilgpt2.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_layoutlmv3_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_dynamic",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/hf_layoutlmv3/layoutlmv3-base-finetuned-funsd.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_layoutlmv3": {
+      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/hf_layoutlmv3/layoutlmv3-base-finetuned-funsd.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_layoutlmft_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_dynamic",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/hf_layoutlmft/layoutlmft-model.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "hf_layoutlmft": {
+      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_static",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/hf_layoutlmft/layoutlmft-model.onnx",
       "main_script": "main.py",
       "batch_size": 1
     }

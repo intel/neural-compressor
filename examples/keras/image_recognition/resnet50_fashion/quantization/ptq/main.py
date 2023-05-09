@@ -51,7 +51,7 @@ flags.DEFINE_integer(
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 
 def evaluate(model):
     """Custom evaluate function to inference the model for specified metric on validation dataset.
@@ -62,7 +62,9 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(data_loader, metric):
         warmup = 5
@@ -126,7 +128,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model import Model
-            model = Model(FLAGS.input_model).model
+            model = Model(FLAGS.input_model, backend='keras').model
             accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.batch_size)
             print("Accuracy: %.5f" % accuracy)

@@ -53,8 +53,9 @@ def evaluate(model):
     infer = model.signatures["serving_default"]
     output_dict_keys = infer.structured_outputs.keys()
     output_name = list(output_dict_keys )[0]
-    from neural_compressor.metric import TensorflowTopK
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(dataloader, metric):
         warmup = 5

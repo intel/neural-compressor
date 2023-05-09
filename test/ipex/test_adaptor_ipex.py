@@ -6,7 +6,7 @@ import unittest
 from neural_compressor.experimental import common
 from packaging.version import Version
 from neural_compressor.utils.utility import LazyImport
-from neural_compressor import config
+from neural_compressor.conf.pythonic_config import config
 from neural_compressor.utils.pytorch import load
 torch_utils = LazyImport("neural_compressor.adaptor.torch_utils")
 
@@ -125,7 +125,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     def test_tuning_ipex_for_ipex_autotune_func(self):
         from neural_compressor.experimental import Quantization
         model = M()
-        qconfig = ipex.quantization.default_static_qconfig
+        if PT_VERSION < Version("2.1").release:
+            qconfig = ipex.quantization.default_static_qconfig
+        else:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         quantizer = Quantization(config)
         quantizer.model = prepared_model
@@ -139,7 +142,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
 
     def test_copy_prepared_model(self):
         model = M()
-        qconfig = ipex.quantization.default_static_qconfig
+        if PT_VERSION < Version("2.1").release:
+            qconfig = ipex.quantization.default_static_qconfig
+        else:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         copy_model = torch_utils.util.auto_copy(prepared_model)
         self.assertTrue(isinstance(copy_model, torch.nn.Module))
@@ -147,7 +153,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     def test_bf16(self):
         from neural_compressor.experimental import Quantization
         model = M()
-        qconfig = ipex.quantization.default_static_qconfig
+        if PT_VERSION < Version("2.1").release:
+            qconfig = ipex.quantization.default_static_qconfig
+        else:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         config.quantization.use_bf16 = True
         config.quantization.performance_only = True

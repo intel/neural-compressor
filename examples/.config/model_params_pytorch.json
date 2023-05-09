@@ -338,13 +338,20 @@
        "batch_size": 1,
        "new_benchmark": false
     },
-    "hubert_fx":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
-       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
-       "input_model": "hubert",
-       "main_script": "run_asr.py",
+    "whisper_large":{
+       "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_dynamic/fx",
+       "dataset_location": "/tf_dataset2/datasets/datasets_cache",
+       "input_model": "",
+       "main_script": "run_whisper_large.py",
        "batch_size": 1
     },
+    "hubert_fx":{
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
+      "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
+      "input_model": "hubert",
+      "main_script": "run_asr.py",
+      "batch_size": 1
+   },
     "distilbert_base_MRPC_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
@@ -1057,5 +1064,6 @@
       "batch_size": 100,
       "new_benchmark": false
     }
+
   }
 }

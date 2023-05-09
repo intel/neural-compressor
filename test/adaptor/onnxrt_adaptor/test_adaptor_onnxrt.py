@@ -14,7 +14,7 @@ from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.adaptor.pytorch import get_torch_version
-from neural_compressor import conf
+from neural_compressor.conf.config import conf
 from packaging.version import Version
 from neural_compressor import quantization, PostTrainingQuantConfig
 
@@ -475,14 +475,18 @@ def build_conv_model():
         np.random.randint(-1, 2, [5, 3, 3, 3]).astype(np.float32), name='conv2_weight')
     conv2_node = helper.make_node('Conv', ['conv1_output', 'conv2_weight'], ['conv2_output'], name='conv2')
 
+    conv3_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [3, 3, 3, 3]).astype(np.float32), name='conv3_weight')
+    conv3_node = helper.make_node('Conv', ['input', 'conv3_weight'], ['conv3_output'], name='conv3')
+
     avg_args = {'kernel_shape': [3, 3]}
-    avgpool_node = helper.make_node('AveragePool', ['conv1_output'], ['avg_output'], name='AveragePool', **avg_args)
+    avgpool_node = helper.make_node('AveragePool', ['conv3_output'], ['avg_output'], name='AveragePool', **avg_args)
 
     concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'], 
         ['concat_output'], name='Concat', axis=1)
     output = helper.make_tensor_value_info('concat_output', TensorProto.FLOAT, [1, 8, 220, 220])
-    initializers = [conv1_weight_initializer, conv2_weight_initializer]
-    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node],
+    initializers = [conv1_weight_initializer, conv2_weight_initializer, conv3_weight_initializer]
+    graph = helper.make_graph([conv1_node, conv2_node, conv3_node, concat_node, avgpool_node],
         'test', [input], [output], initializer=initializers)
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
@@ -802,9 +806,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_auto_quant(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_auto_quant'
+        conf.quantization.optype_wise ={"Add|MatMul|Conv": {'weight': {'algorithm': ['minmax']}, \
+            'activation': {'algorithm': ['minmax']}}}
         conf.quantization.calibration.sampling_size = 1
         conf.tuning.exit_policy.timeout = 1000000
-        conf.tuning.exit_policy.max_trials = 5
+        conf.tuning.exit_policy.max_trials = 8
         conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
         quantizer = Quantization(conf)
         quantizer.calib_dataloader = self.cv_dataloader
@@ -820,6 +826,21 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.rn50_model
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
+
+    def test_auto_quant_v2(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        tuning_criterion = TuningCriterion(max_trials=8, timeout=10000)
+        accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01)
+        conf = PostTrainingQuantConfig(quant_level=1, approach="auto",
+                                       op_type_dict={"Add|MatMul|Conv": {'weight': {'algorithm': ['minmax']},\
+                                           'activation': {'algorithm': ['minmax']}}},
+                                       tuning_criterion=tuning_criterion, 
+                                       accuracy_criterion=accuracy_criterion)
+        conf.framework = "onnxrt_qlinearops"
+        q_model = fit(model=self.rn50_model, conf=conf, calib_dataloader=self.cv_dataloader, eval_func=lambda model: 1)
+        self.assertIsNotNone(q_model)
+
 
     def test_quantize_data_per_channel(self):
         from neural_compressor.adaptor.ox_utils.util import quantize_data_per_channel
@@ -1066,7 +1087,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
  
-        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep')
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep', device='gpu')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
@@ -1079,12 +1100,24 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
 
     def test_smooth_quant_args(self):
-        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
-            'smooth_quant_args': {'alpha': 0.6}})
-        q_model = quantization.fit(self.conv_model, config,
-            calib_dataloader=self.cv_dataloader)
-        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
-
+        from neural_compressor.model.onnx_model import ONNXModel
+        framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "backend": "default",
+                               "format": "default",
+                               "domain": "auto",
+                               "recipes": {},
+                               "workspace_path": './nc_workspace/{}/{}/'.format(
+                                                       'onnxrt',
+                                                       'imagenet')}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        adaptor.pre_optimized_model = ONNXModel(self.conv_model)
+        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        self.assertEqual(len([i for i in adaptor.pre_optimized_model.nodes() if i.op_type == 'Mul']), 1)
+ 
     def test_multi_metrics(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'

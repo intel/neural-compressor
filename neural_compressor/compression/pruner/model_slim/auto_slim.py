@@ -20,10 +20,16 @@ from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASear
 from .weight_slim import LinearCompressionIterator, MHACompression
 from ..utils import logger
 
-def model_slim(model, dataloader=None, round_multiplier=0):
+def model_slim(model, dataloader=None, round_multiplier=32):
     """Slim the sparse model automatically."""
-    model = model_slim_ffn2(model, dataloader, round_multiplier)
-    model = model_slim_mha(model, dataloader)
+    try:
+        model = model_slim_ffn2(model, dataloader, round_multiplier)
+    except:
+        logger.warning("model Linear2Linear slim failed.")
+    try:
+        model = model_slim_mha(model, dataloader)
+    except:
+        logger.warning("model MHA slim failed.")
     return model
 
 def model_slim_ffn2(model, dataloader = None, round_multiplier=32):

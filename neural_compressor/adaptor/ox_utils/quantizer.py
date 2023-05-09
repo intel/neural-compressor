@@ -49,7 +49,7 @@ class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,
                  op_types_to_quantize, fallback_list=['fp32'], reduce_range=None,
                  add_qdq_pair_to_weight=False, optypes_to_exclude_output_quant=[],
-                 dedicated_qdq_pair=False):
+                 dedicated_qdq_pair=False, backend='CPUExecutionProvider'):
         """Initialization.
 
         Args:
@@ -64,11 +64,13 @@ class Quantizer:
             add_qdq_pair_to_weight (bool, optional): add QDQ pair to weight or not. Defaults to False.
             optypes_to_exclude_output_quant (list, optional): optypes to exclude output quantization. Defaults to [].
             dedicated_qdq_pair (bool, optional): dedicate QDQ pair or not. Defaults to False.
+            backend (str, optional): backend of onnxrt adaptor. Defaults to CPUExecutionProvider
         """
         self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
             not self.model.is_large_model else self.model.model
         self.config = q_config
+        self.backend = backend
         self.reduce_range = reduce_range
         self.mode = mode # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
@@ -645,11 +647,13 @@ class Quantizer:
         """
         # get scale for weight
         weight_scale_initializer = find_by_name(weight_name + '_scale', self.model.initializer())
-        weight_scale = self.tensor_proto_to_array(weight_scale_initializer)
+        weight_scale = self.tensor_proto_to_array(weight_scale_initializer, os.path.dirname(self.model.model_path)) if \
+            self.model.model_path is not None else self.tensor_proto_to_array(weight_scale_initializer)
 
         # get bias
         bias_initializer = find_by_name(bias_name, self.model.initializer())
-        bias_data = self.tensor_proto_to_array(bias_initializer)
+        bias_data = self.tensor_proto_to_array(bias_initializer, os.path.dirname(self.model.model_path)) if \
+            self.model.model_path is not None else self.tensor_proto_to_array(bias_initializer)
         quantized_bias_name = bias_name + "_quantized"
 
         if input_name in self.quantized_value_map:
@@ -660,7 +664,8 @@ class Quantizer:
             raise ValueError("Expected {} to be in quantized value map \
                               for static quantization".format(input_name))
         inputscale_initializer = find_by_name(input_scale_name, self.model.initializer())
-        input_scale = self.tensor_proto_to_array(inputscale_initializer)
+        input_scale = self.tensor_proto_to_array(inputscale_initializer, os.path.dirname(self.model.model_path)) if \
+            self.model.model_path is not None else self.tensor_proto_to_array(inputscale_initializer)
 
         # calcuate scale for bias
 
@@ -782,7 +787,8 @@ class Quantizer:
             raise ValueError("{} is not an initializer", weight_name)
 
         if initializer.name not in self.quantized_value_map:
-            weights = self.tensor_proto_to_array(initializer)
+            weights = self.tensor_proto_to_array(initializer, os.path.dirname(self.model.model_path)) if \
+                self.model.model_path is not None else self.tensor_proto_to_array(initializer)
             rmin, rmax, zero_point, scale, quantized_weights = quantize_data_per_channel(
                 weights, channel_axis, _get_qrange_for_qType(weight_qType,self.reduce_range), weight_qType, scheme)
 
@@ -841,10 +847,10 @@ class Quantizer:
         self.model.initializer().extend([scale_initializer, zero_initializer])
 
     @staticmethod
-    def tensor_proto_to_array(initializer):
+    def tensor_proto_to_array(initializer, base_dir=""):
         """Convert TensorProto to array."""
         if initializer.data_type == onnx_proto.TensorProto.FLOAT:
-            weights = onnx.numpy_helper.to_array(initializer)
+            weights = onnx.numpy_helper.to_array(initializer, base_dir)
         else:
             raise ValueError('Only float type quantization is supported. \
                 Weights {} is {}.'.format(initializer.name, 
@@ -891,7 +897,8 @@ class Quantizer:
         """Get quantized weight."""
         if initializer.name in self.quantized_value_map:
             return self.quantized_value_map[initializer.name]
-        weights_data = self.tensor_proto_to_array(initializer)
+        weights_data = self.tensor_proto_to_array(initializer, os.path.dirname(self.model.model_path)) if \
+            self.model.model_path is not None else self.tensor_proto_to_array(initializer)
         rmin, rmax, zero_point, scale, quantized_weights_data = quantize_data(
             weights_data.flatten().tolist(), _get_qrange_for_qType(qType, \
             self.reduce_range), qType, scheme)

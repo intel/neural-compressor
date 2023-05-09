@@ -25,25 +25,32 @@ pip install tensorflow
 ```
 
 ### Install Intel Extension for Tensorflow
-#### Quantizing the model on Intel GPU
-Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
-
-```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
-```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
-
-#### Quantizing the model on Intel CPU(Experimental)
-Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+#### Running the model on Intel CPU(Optional to install ITEX)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for running the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ## 2. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download. 
   This example uses the raw ImageNet data. Therefore, users do not need to convert the data to TF Record format.
+
+  The data folder is expected to contain subfolders representing the classes to which
+    its images belong.
+
+    Please arrange data in this way:
+        dataset/class_1/xxx.png
+        dataset/class_1/xxy.png
+        dataset/class_1/xxz.png
+        ...
+        dataset/class_n/123.png
+        dataset/class_n/nsdf3.png
+        dataset/class_n/asd932_.png
+    Please put images of different categories into different folders.
 
 # Run
 

@@ -16,9 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+from ..utils import torch, logger
 import re
-from ..utils import logger
 
 JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
@@ -119,7 +118,7 @@ class JitBasicSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
@@ -168,7 +167,7 @@ class JitBasicSearcher(object):
             self.placeholder_shape = [1, 16]
             self.placeholder_dtype = torch.int64
         else:
-            logger.warning("Cannot generate dummy input automatically, please set it manually when initialzation.")
+            logger.warning("Cannot generate dummy input automatically.")
             self.placeholder_shape = [1, 16]
             self.placeholder_dtype = torch.int64
         return
@@ -183,44 +182,56 @@ class JitBasicSearcher(object):
                 torch.ones([1, 80, 3000]),
                 torch.ones([1, 448], dtype=torch.int64)
             ]
-        logger.info(f"Generating static graph from original model: start.")
-        self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
-         # re-org from original static codes. 
-        self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
-        logger.info(f"Generating static graph from original model: success.")
+        logger.info(f"Generating static graph from original model using auto dummy input: start.")
+        try:
+            self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
+            # re-org from original static codes. 
+            self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
+            logger.info(f"Generating static graph from original model using auto dummy input: success.")
+        except:
+            logger.info(f"Generating static graph from original model using auto dummy input: failed.")
     
     def generate_static_graph_with_dataloader(self):
         """Generate static graph from a external dataloader."""
-        dummy_input = self.dataloader[0]
-        logger.info(f"Generating static graph from original model: start.")
-        if isinstance(dummy_input, dict):
-            try:
-                dummy_input = dummy_input["input_ids"]
-                self.static_graph = torch.jit.trace(self.model, dummy_input.to(self.device), strict=False)
-            except:
-                pass
-        else:
-            try:
-                for idx in range(len(dummy_input)):
-                    dummy_input[idx] = dummy_input[idx].to(self.device)
-                self.static_graph = torch.jit.trace(self.model, dummy_input, strict=False)
-            except:
+        # dummy_input = self.dataloader[0]
+        logger.info(f"Generating static graph from original model using external data: start.")
+        # import pdb;pdb.set_trace()
+        for dummy_input in self.dataloader:
+            if isinstance(dummy_input, dict):
                 try:
-                    dummy_input = dummy_input[0]
+                    dummy_input = dummy_input["input_ids"]
                     self.static_graph = torch.jit.trace(self.model, dummy_input.to(self.device), strict=False)
                 except:
                     pass
+            else:
+                try:
+                    for idx in range(len(dummy_input)):
+                        dummy_input[idx] = dummy_input[idx].to(self.device)
+                    self.static_graph = torch.jit.trace(self.model, dummy_input, strict=False)
+                except:
+                    try:
+                        dummy_input = dummy_input[0]
+                        self.static_graph = torch.jit.trace(self.model, dummy_input.to(self.device), strict=False)
+                    except:
+                        pass
+            if self.static_graph != None:
+                # if jit graph is successfully generated, end iteration
+                break
         try:
             self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
-            logger.info(f"Generating static graph from original model: success.")
+            logger.info(f"Generating static graph from original model using external data: success.")
         except:
-            return
+            logger.warning(f"Generating static graph from original model using external data: failed.")
 
     def generate_static_graph(self):
         """Generate static graph with two methods: using dataloader or dummy input."""
-        try:
+        # first do the jit trace using dataloader
+        if self.dataloader != None:
             self.generate_static_graph_with_dataloader()
-        except:
+        # if dataloader based jit trace cannot work or not chosen, use dummy input
+        if self.static_graph != None:
+            return
+        else:
             self.generate_static_graph_with_dummyinput()
     
     def generate_dummy_inputs(self):
@@ -374,7 +385,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
         current_pattern: a searching path to store searching status.
     """
 
-    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
         super(Linear2LinearSearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
         self.target_op_lut = {}
@@ -455,6 +466,8 @@ class Linear2LinearSearcher(JitBasicSearcher):
         # Summary
         print_iterables(all_linear_structure_results)
         logger.info(f"Found {all_linear_structure_results.__len__()} linear2linear structures")
+        if all_linear_structure_results.__len__() == 0:
+            logger.warning("No linear2linear modules are hooked.")
         return all_linear_structure_results
     
     def from_layer_name_to_object(self, l2l_search_layers):
@@ -488,7 +501,7 @@ class SelfMHASearcher(JitBasicSearcher):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
         super(SelfMHASearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
 
@@ -629,6 +642,8 @@ class SelfMHASearcher(JitBasicSearcher):
         # summary
         print_iterables(self_attn_list)
         logger.info(f"Found {self_attn_list.__len__()} MHA modules")
+        if self_attn_list.__len__() == 0:
+            logger.warning("No MHA modules are hooked.")
         if not split_qkv_ffn:
             return self_attn_list, None
         else:
@@ -656,7 +671,7 @@ class ClassifierHeadSearcher(object):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model):
+    def __init__(self, model: torch.nn.Module):
         """Initialize."""
         super(ClassifierHeadSearcher, self).__init__()
         self.model = model
