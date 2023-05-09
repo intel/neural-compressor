@@ -1102,7 +1102,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center"> 
   <tr>
-    <td>AlexNet</td>
+    <td>AlexNet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>54.73%</td>
     <td>54.79%</td>
@@ -1112,7 +1112,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.05x</td>
   </tr>
   <tr>
-    <td>AlexNet</td>
+    <td>AlexNet (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>54.71%</td>
     <td>54.79%</td>
@@ -1122,7 +1122,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.01x</td>
   </tr>
   <tr>
-    <td>ArcFace</td>
+    <td>ArcFace (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>99.80%</td>
     <td>99.80%</td>
