@@ -682,19 +682,17 @@ def compare_objects(obj1, obj2, ignore_attrs):
 
 
 def alias_param(param_name: str, param_alias: str):
-    """
-    Decorator for aliasing a param in a function
+    """Decorator for aliasing a param in a function.
 
     Args:
-        param_name: name of param in function to alias
-        param_alias: alias that can be used for this param
-    Returns:
+        param_name: Name of param in function to alias.
+        param_alias: Alias that can be used for this param.
     """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             alias_param_value = kwargs.get(param_alias)
-            if alias_param_value:
+            if alias_param_value:  # pragma: no cover
                 kwargs[param_name] = alias_param_value
                 del kwargs[param_alias]
             result = func(*args, **kwargs)
