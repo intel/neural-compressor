@@ -1661,7 +1661,7 @@ class MixedPrecisionConfig(object):
     def __init__(self,
                  device="cpu",
                  backend="default",
-                 precision="bf16",
+                 precisions="bf16",
                  model_name=None,
                  inputs=[],
                  outputs=[],
@@ -1676,8 +1676,8 @@ class MixedPrecisionConfig(object):
         self.excluded_precisions = excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.tuning_criterion = tuning_criterion
-        self.precision = precision
-        self.use_bf16 = "bf16" in self.precision
+        self.precisions = precisions
+        self.use_bf16 = "bf16" in self.precisions
         self.model_name = model_name
         self._framework = None
 
