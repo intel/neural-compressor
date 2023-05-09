@@ -974,7 +974,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>MNIST</td>
+    <td>MNIST (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq_static">qlinearops</a></td>
