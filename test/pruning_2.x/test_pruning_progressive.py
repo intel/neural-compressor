@@ -18,9 +18,9 @@ class TestPruningPatterns(unittest.TestCase):
         local_configs = [
             {
                 "op_names": ['layer1.*'],
-                'target_sparsity': 0.5,
-                "pattern": '5:8',
-                "pruning_type": "magnitude"
+                'target_sparsity': 0.75,
+                "pattern": '6:8',
+                "pruning_type": "magnitude_progressive"
             },
             {
                 "op_names": ['layer2.*'],
