@@ -53,25 +53,25 @@ class Test_MSEV2Strategy(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('nc_workspace', ignore_errors=True)
 
-    def test_quantization_saved_tf(self):
+    def test_mse_v2_tf(self):
         i = [0] # use a mutable type (list) to wrap the int object
         def fake_eval_func(_):
             #               1, 2, 3, 4, 5, 6, 7, 8, 9, 10
             eval_list = [0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
             i[0] += 1
             return eval_list[i[0]]
-        
+
         from neural_compressor.quantization import fit
         from neural_compressor.config import TuningCriterion, PostTrainingQuantConfig
         from neural_compressor.data import Datasets, DATALOADERS
         dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS['tensorflow'](dataset)
-        
+
         conf = PostTrainingQuantConfig(
             approach="static",
             quant_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
-        
+
         q_model = fit(
             model=self.tf_model,
             conf=conf,
@@ -79,21 +79,21 @@ class Test_MSEV2Strategy(unittest.TestCase):
             eval_dataloader=dataloader,
             eval_func=fake_eval_func)
         self.assertIsNotNone(q_model)
-        
-    def test_quantization_saved_tf_with_confidence_batches(self):
+
+    def test_mse_v2_tf_with_confidence_batches(self):
         i = [0] # use a mutable type (list) to wrap the int object
         def fake_eval_func(_):
             #               1, 2, 3, 4, 5, 6, 7, 8, 9, 10
             eval_list = [0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
             i[0] += 1
             return eval_list[i[0]]
-        
+
         from neural_compressor.quantization import fit
         from neural_compressor.config import TuningCriterion, PostTrainingQuantConfig
         from neural_compressor.data import Datasets, DATALOADERS
         dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS['tensorflow'](dataset)
-        
+
         conf = PostTrainingQuantConfig(
             approach="static",
             quant_level=1,
@@ -102,7 +102,7 @@ class Test_MSEV2Strategy(unittest.TestCase):
                 strategy_kwargs={
                     "confidence_batches": 5,
                 }))
-        
+
         q_model = fit(
             model=self.tf_model,
             conf=conf,
@@ -110,25 +110,25 @@ class Test_MSEV2Strategy(unittest.TestCase):
             eval_dataloader=dataloader,
             eval_func=fake_eval_func)
         self.assertIsNotNone(q_model)
-        
-    def test_quantization_saved_torch(self):
+
+    def test_mse_v2_saved_torch(self):
         i = [0]
         def fake_eval_func(model):
             acc_lst = [1, 1, 0, 0, 0, 0, 1, 1.1, 1.5, 1.1]
             i[0] += 1
             return acc_lst[i[0]]
-        
+
         from neural_compressor.quantization import fit
         from neural_compressor.config import TuningCriterion, PostTrainingQuantConfig
         from neural_compressor.data import Datasets, DATALOADERS
         dataset = Datasets("pytorch")["dummy"](((1, 3, 224, 224)))
         dataloader = DATALOADERS['pytorch'](dataset)
-        
+
         conf = PostTrainingQuantConfig(
             approach="static",
             quant_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
-        
+
         q_model = fit(
             model=self.torch_model,
             conf=conf,
@@ -136,6 +136,6 @@ class Test_MSEV2Strategy(unittest.TestCase):
             eval_dataloader=dataloader,
             eval_func=fake_eval_func)
         self.assertIsNotNone(q_model)
-        
+
 if __name__ == "__main__":
     unittest.main()

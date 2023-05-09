@@ -27,7 +27,7 @@ import sys
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
-from neural_compressor.conf import config as cfg
+from neural_compressor import config as cfg
 from neural_compressor.model.base_model import BaseModel
 
 tf = LazyImport('tensorflow')
@@ -182,26 +182,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
     try:
         with graph.as_default():
-            if device == "cpu":
-                cpus = list_physical_devices("CPU")
-                node_device = cpus[0].name.replace('physical_device:', '')
-                with graph.device(node_device):
-                    tf.import_graph_def(model, name='')
-            else: # pragma: no cover
-                found_device = False
-                gpus = list_physical_devices("GPU")
-                for gpu in gpus:
-                    if gpu.name.replace('physical_device:', '') == device:
-                        found_device = True
-                xpus = list_physical_devices("XPU")
-                for xpu in xpus:
-                    if xpu.name.replace('physical_device:', '') == device:
-                        found_device = True
-                if found_device:
-                    with graph.device(device):
-                        tf.import_graph_def(model, name='')
-                else:
-                    tf.import_graph_def(model, name='')
+            tf.import_graph_def(model, name='')
     except:
         input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
             model, input_tensor_names, output_tensor_names)
@@ -212,26 +193,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_node_names = tensor_to_node(output_tensor_names)
         model = strip_unused_nodes(model, input_node_names, output_node_names)
         with graph.as_default():
-            if device == "cpu":
-                cpus = list_physical_devices("CPU")
-                node_device = cpus[0].name.replace('physical_device:', '')
-                with graph.device(node_device):
-                    tf.import_graph_def(model, name='')
-            else: # pragma: no cover
-                found_device = False
-                gpus = list_physical_devices("GPU")
-                for gpu in gpus:
-                    if gpu.name.replace('physical_device:', '') == device:
-                        found_device = True
-                xpus = list_physical_devices("XPU")
-                for xpu in xpus:
-                    if xpu.name.replace('physical_device:', '') == device:
-                        found_device = True
-                if found_device:
-                    with graph.device(device):
-                        tf.import_graph_def(model, name='')
-                else:
-                    tf.import_graph_def(model, name='')
+            tf.import_graph_def(model, name='')
 
     return graph_session(graph, input_tensor_names, output_tensor_names, **kwargs)
 
@@ -588,21 +550,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
                 saver = tf.compat.v1.train.import_meta_graph(\
                     os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
         else: # pragma: no cover
-            found_device = False
-            gpus = list_physical_devices("GPU")
-            for gpu in gpus:
-                if gpu.name.replace('physical_device:', '') == device:
-                    found_device = True
-            xpus = list_physical_devices("XPU")
-            for xpu in xpus:
-                if xpu.name.replace('physical_device:', '') == device:
-                    found_device = True
-            if found_device:
-                with graph.device(device):
-                    saver = tf.compat.v1.train.import_meta_graph(\
-                        os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
-            else:
-                saver = tf.compat.v1.train.import_meta_graph(\
+            saver = tf.compat.v1.train.import_meta_graph(\
                     os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
 
         sess.run(tf.compat.v1.global_variables_initializer())

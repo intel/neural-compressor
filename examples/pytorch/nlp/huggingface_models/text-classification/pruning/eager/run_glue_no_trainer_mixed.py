@@ -46,7 +46,8 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-from neural_compressor.training import prepare_pruning,WeightPruningConfig
+from neural_compressor import WeightPruningConfig
+from neural_compressor.experimental.compression import prepare_pruning
 
 logger = logging.getLogger(__name__)
 

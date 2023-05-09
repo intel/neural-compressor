@@ -103,7 +103,7 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
         config = MixedPrecisionConfig()
         q_model = mix_precision.fit(
             model='./models/saved_model',
-            config=config,
+            conf=config,
             eval_dataloader=dataloader, 
             eval_metric=MyMetric())
 

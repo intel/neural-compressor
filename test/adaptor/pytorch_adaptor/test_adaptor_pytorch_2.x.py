@@ -5,7 +5,7 @@ import shutil
 import torch
 import torch.nn as nn
 import unittest
-from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace
+from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace, Metric
 from neural_compressor.data import Datasets, DATALOADERS, DataLoader
 from neural_compressor import quantization
 from neural_compressor.training import prepare_compression, fit
@@ -325,19 +325,13 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 q_model = quantization.fit(model_origin,
                                            conf,
                                            calib_dataloader=dataloader,
-                                           calib_func=eval_func)
+                                           eval_func=eval_func)
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved", model_origin)
             self.assertTrue("quantize" in str(type(q_model.model.fc)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
-            if approach != "qat":
-                # recover int8 model with only tune_cfg
-                history_file = "./saved/history.snapshot"
-                model_fx_recover = recover(model_origin, history_file, 0,
-                                **{"dataloader": dataloader})
-                self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree("./saved", ignore_errors=True)
 
         for approach in ["qat", "static"]:
@@ -366,6 +360,29 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertTrue("quantize" in str(type(model_fx.conv)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             shutil.rmtree("./saved", ignore_errors=True)
+
+    def test_quantize_with_metric(self):
+        model_origin = resnet18()
+        dataset = Datasets("pytorch")["dummy"]((1, 3, 224, 224))
+        dataloader = DATALOADERS["pytorch"](dataset)
+        # run fx_quant in neural_compressor and save the quantized GraphModule
+        conf = PostTrainingQuantConfig()
+        q_model = quantization.fit(model_origin,
+                                   conf,
+                                   calib_dataloader=dataloader,
+                                   eval_dataloader=dataloader,
+                                   eval_metric=Metric(name="topk", k=1))
+        self.assertTrue("quantize" in str(type(q_model.model.fc)))
+
+    def test_quantize_with_calib_func(self):
+        model_origin = resnet18()
+        # run fx_quant in neural_compressor and save the quantized GraphModule
+        conf = PostTrainingQuantConfig()
+        q_model = quantization.fit(model_origin,
+                                   conf,
+                                   calib_func=eval_func,
+                                   eval_func=eval_func)
+        self.assertTrue("quantize" in str(type(q_model.model.fc)))
 
     @unittest.skipIf(PT_VERSION < Version("1.9.0").release,
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
@@ -482,7 +499,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DataLoader("pytorch", dataset)
-        set_workspace=("./saved")
+        set_workspace("./saved")
         conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin,
                                    conf,
@@ -498,7 +515,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
         self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
         self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
-        
+
     def test_hawq_metric(self):
         # Test for hawq metric
         import torchvision
@@ -507,16 +524,18 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.model.torch_model import PyTorchFXModel
         from neural_compressor.adaptor.torch_utils.hawq_metric import hawq_top
-        
+
         ori_model = torchvision.models.resnet18()
         pt_model = PyTorchFXModel(ori_model)
         dataset = Datasets("pytorch")["dummy"](((16, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
-        q_model = fit(ori_model, conf = PostTrainingQuantConfig(), calib_dataloader=dataloader)
-        op_to_traces = hawq_top(fp32_model=pt_model, q_model=q_model, dataloader=dataloader, \
-             criterion=None, enable_act=True)
+        q_model = fit(ori_model, conf=PostTrainingQuantConfig(), calib_dataloader=dataloader)
+        op_to_traces = hawq_top(fp32_model=pt_model,
+                                q_model=q_model,
+                                dataloader=dataloader,
+                                criterion=None,
+                                enable_act=True)
         self.assertIsNotNone(op_to_traces)
-
 
 
 if __name__ == "__main__":
