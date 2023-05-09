@@ -214,14 +214,15 @@ class ONNXRTAugment:
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 
+        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         session = onnxruntime.InferenceSession(
                     self.augmented_model.SerializeToString(),
                     so,
-                    providers=[self.backend]) if not self.model_wrapper.is_large_model else \
+                    providers=[backend]) if not self.model_wrapper.is_large_model else \
                   onnxruntime.InferenceSession(
                     self.model_wrapper.model_path  + '_augment.onnx',
                     so,
-                    providers=[self.backend])
+                    providers=[backend])
 
         
         len_inputs = len(session.get_inputs())

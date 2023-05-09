@@ -30,7 +30,6 @@ try:
     LazyImport('torch.nn')
     torch = LazyImport('torch')
     F = LazyImport('torch.nn.functional')
-    
 except:
     import torch
     import torch.nn.functional as F
@@ -38,7 +37,6 @@ except:
     import logging
     logger = logging.getLogger(__name__)
     from .schema_check import PrunerV2
-    
 
     class WeightPruningConfig:
         """Similiar to torch optimizer's interface."""
@@ -414,7 +412,7 @@ def parse_last_linear(model):
     """
     from .model_slim.pattern_analyzer import ClassifierHeadSearcher
     searcher = ClassifierHeadSearcher(model)
-    layer = searcher.search(return_name = True)
+    layer = searcher.search(return_name=True)
     return layer
 
 def parse_to_prune(config, model):

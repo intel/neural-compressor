@@ -128,7 +128,7 @@ class TestKerasInKerasOut(unittest.TestCase):
 
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor import set_random_seed
         from neural_compressor.data.dataloaders.dataloader import DataLoader
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex')
@@ -165,7 +165,7 @@ class TestKerasInKerasOut(unittest.TestCase):
 
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor import set_random_seed
         from neural_compressor.data.dataloaders.dataloader import DataLoader
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex')

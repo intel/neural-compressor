@@ -191,6 +191,7 @@ class TpeTuneStrategy(TuneStrategy):
     def traverse(self):
         """Tpe traverse logic."""
         logger.info("Start to run tpe strategy.")
+        self._prepare_tuning()
         # prepare log file
         trials_file = os.path.join(os.path.dirname(self.history_path), 'tpe_trials.csv')
         best_result_file = os.path.join(os.path.dirname(self.history_path), 'tpe_best_result.csv')

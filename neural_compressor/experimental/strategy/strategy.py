@@ -289,13 +289,20 @@ class TuneStrategy(object):
 
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         algo_scheduler.reset_exec_algorithms()
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):  # pragma: no cover
             # skip assign alpha to sq first.
             # set the alpha to 0.5 by default
-            # smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
+            smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
             sq_algo = ALGORITHMS()['smooth_quant']
-            #sq_algo.alpha = smooth_quant_args['alpha']
-            #logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
+            sq_algo.alpha = smooth_quant_args['alpha']
+            if 'folding' not in smooth_quant_args:
+                smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx'] \
+                  else False
+                logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
+                if self.framework == 'pytorch_ipex':
+                    smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
+            sq_algo.folding = smooth_quant_args['folding']
+            logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
             
             

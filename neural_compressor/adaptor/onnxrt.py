@@ -117,7 +117,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 static=self.static, 
                 format=self.format,
                 local_config_file=os.path.join(os.path.dirname(__file__), config_file))
- 
+
         self.work_space = framework_specific_info["workspace_path"]
         self.reduce_range = framework_specific_info["reduce_range"] if \
             "reduce_range" in framework_specific_info else not CpuInfo().vnni
@@ -133,7 +133,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     continue
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
- 
+
         if self.backend == 'TensorrtExecutionProvider':
             self.recipes['add_qdq_pair_to_weight'] = True
             self.recipes['dedicated_qdq_pair'] = True
@@ -347,14 +347,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.query_handler.get_fallback_list(),
             self.reduce_range,
             options.onnxrt.qdq_setting.AddQDQPairToWeight if \
-                not options.onnxrt.qdq_setting.AddQDQPairToWeight else \
+                'add_qdq_pair_to_weight' not in self.recipes else \
                 self.recipes.get('add_qdq_pair_to_weight', False),
             options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin if \
-                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None else \
+                'optypes_to_exclude_output_quant' not in self.recipes else \
                 self.recipes.get('optypes_to_exclude_output_quant', []),
             options.onnxrt.qdq_setting.DedicatedQDQPair if \
-                not options.onnxrt.qdq_setting.DedicatedQDQPair else \
-                self.recipes.get('dedicated_qdq_pair', False))
+                'dedicated_qdq_pair' not in self.recipes else \
+                self.recipes.get('dedicated_qdq_pair', False),
+            self.backend)
         quantizer.quantize_model()
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
@@ -704,14 +705,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
+        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         if not model.is_large_model:
             ort.InferenceSession(model.model.SerializeToString(),
                                  sess_options,
-                                 providers=[self.backend])
+                                 providers=[backend])
         elif model.model_path is not None: # pragma: no cover
             ort.InferenceSession(model.model_path,
                                  sess_options,
-                                 providers=[self.backend])
+                                 providers=[backend])
         else: # pragma: no cover 
             logger.warning('Please use model path instead of onnx model object to quantize')
 
@@ -1027,7 +1029,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if 'ReduceMean' not in [i.op_type for i in children]:
                     op_wise.update({(node.name, node.op_type): 
                         [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
-                continue
+                    continue
 
             if node.op_type in optype_wise:
                 if (exclude_first_quantizable_op and node in first_quantizable_node) \

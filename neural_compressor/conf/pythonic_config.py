@@ -111,12 +111,12 @@ class Options:
 
     Example::
 
-        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
         set_tensorboard(True)
-        
+
     """
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):

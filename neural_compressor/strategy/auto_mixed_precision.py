@@ -128,8 +128,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
     def traverse(self):
         """Traverse the tuning space according to auto-mixed precision strategy."""
-        # get fp32 model baseline
-        self._eval_baseline()
+        self._prepare_tuning()
 
         for op_tuning_cfg in self.next_tune_cfg():
             # add tune_cfg here as quantize use tune_cfg

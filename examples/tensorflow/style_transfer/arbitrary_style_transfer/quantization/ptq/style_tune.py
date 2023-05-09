@@ -122,7 +122,7 @@ def main(args=None):
                 tf.import_graph_def(frozen_graph, name='')
                 from neural_compressor import quantization
                 from neural_compressor.config import PostTrainingQuantConfig
-                from neural_compressor.utils import set_random_seed
+                from neural_compressor import set_random_seed
                 set_random_seed(9527)
 
                 from neural_compressor.utils.create_obj_from_config import create_dataloader
