@@ -252,8 +252,8 @@ class WrapperLayer(torch.nn.Module):
         self.quant = False
 
     def update_scale(self, input_scale, weight_scale):
-        self.weight_scale = weight_scale
         self.input_scale = input_scale
+        self.weight_scale = weight_scale
 
     ##TODO better tradeoff performance and memory, currently it's too slow
     def q_dq_forward(self, x, input_scale, weight_scale):
@@ -352,9 +352,11 @@ class TorchSmoothQuant:
             min_tensor = torch.min(input, dim=0)[0]
             k_index = int(input.shape[0] * percentile / 100)
             res, _ = torch.kthvalue(torch.abs(input), k_index, dim=0)
+            ##res = torch.max(torch.abs(input),dim=0)[0]
             self.input_maxes_abs[name].append(res)
             self.input_maxes[name].append(max_tensor)
             self.input_mins[name].append(min_tensor)
+            ##self.input_maxes_abs[name].append(max_tensor-min_tensor)
             # self.input_values[name] = input
             # self.output_values[name] = outputs
 
@@ -637,10 +639,10 @@ class TorchSmoothQuant:
                 scale = torch.ones((1), device=self.device)
             else:
                 input_max = absorb_to_input_maxes[key]
-                layers = absorb_to_layer[key]
+                layer_names = absorb_to_layer[key]
                 weights = []
-                for layer in layers:
-                    weight = self._reshape_in_channel_to_last(layer)
+                for layer_name in layer_names:
+                    weight = self._reshape_in_channel_to_last(layer_name)
                     weights.append(weight)
 
                 scale = cal_scale(input_max, weights, alpha_tmp)
@@ -716,20 +718,22 @@ class TorchSmoothQuant:
         :param loss_alpha: Loss alpha i for mean scale error
         :return: A tensor of the loss
         """
-        max_value = torch.max(torch.abs(output))  ##TODO need per batch
-        if max_value == 0:
-            max_value = 1e-5
-        output = output / max_value  ##FIXME need copy not replace
-        output_q = output_q / max_value
+
+        # max_value = torch.max(torch.abs(output.reshape(output.shape[0], -1)), dim=-1).values
+        # if max_value == 0:
+        #     max_value = 1e-5
+        # output = output / max_value  ##FIXME need copy not replace
+        # output_q = output_q / max_value
         if loss_type == "nsr":
             output[output == 0] = 1e-5
-            loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
+            loss = torch.mean(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
             return loss
         elif loss_type == "abs":
-            return torch.sum(
-                torch.pow(torch.abs(output - output_q), 0.5))  ##TODO chang mean to sum for precision issue, overflow
+            return torch.mean(
+                torch.pow(torch.abs(output - output_q),
+                          0.5))
         else:
-            return torch.sum((output - output_q) ** 2)
+            return torch.mean((output - output_q) ** 2)
 
     def _get_sq_layer_names(self):
         """Get the all the hook sq layer
@@ -1003,9 +1007,7 @@ class TorchSmoothQuant:
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
         alpha_space = [alpha / alpha_scale for alpha in alpha_space]
-        # alpha_space =[0.4, 0.5, 0.6]
-        ##alpha_space.append(-1.0) ##TODO very confusing, why adding -1.0 will cause large acc degradtion
-        ##alpha_space.reverse()
+
         ##wrapper new module
         self._qdq_model_wrapper_for_auto(save_q_input=True)
         ##set alpha to 0.5 as default
@@ -1018,7 +1020,7 @@ class TorchSmoothQuant:
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         loss_alphas = {}
         cnt = 0
-        multiply_factor = auto_calib_iter // 4 if auto_calib_iter >= 4 else auto_calib_iter
+        multiply_factor = auto_calib_iter // 2 if auto_calib_iter >= 2 else auto_calib_iter
 
         best_alphas = default_alpha
 
@@ -1040,7 +1042,7 @@ class TorchSmoothQuant:
                     cur_loss = loss_alphas[key]
                     for alpha_key in cur_loss.keys():
                         cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-            cnt += 1
+            cnt += input.shape[0]
 
             if cnt % multiply_factor == 0 and (auto_calib_iter - cnt) >= multiply_factor:
                 best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
