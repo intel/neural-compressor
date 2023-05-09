@@ -18,9 +18,10 @@
 
 import re
 import yaml
+from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
-    from ...config import WeightPruningConfig
+    from ...conf.pythonic_config import WeightPruningConfig
     from ...conf.config import PrunerV2
     from ...utils.utility import LazyImport
     from neural_compressor.conf.dotdict import DotDict
@@ -29,7 +30,6 @@ try:
     LazyImport('torch.nn')
     torch = LazyImport('torch')
     F = LazyImport('torch.nn.functional')
-    
 except:
     import torch
     import torch.nn.functional as F
@@ -37,7 +37,6 @@ except:
     import logging
     logger = logging.getLogger(__name__)
     from .schema_check import PrunerV2
-    
 
     class WeightPruningConfig:
         """Similiar to torch optimizer's interface."""
@@ -357,7 +356,7 @@ def process_and_check_config(val):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
-    if isinstance(val, WeightPruningConfig):
+    if isinstance(val, WeightPruningConfig) or isinstance(val, WeightPruningConf):
         global_configs = val.weight_compression
         pruning_configs = val.pruning_configs
         check_key_validity(default_config, pruning_configs)
@@ -398,7 +397,7 @@ def process_config(config):
                 "The yaml file format is not correct. Please refer to document."
             )
 
-    if isinstance(config, WeightPruningConfig):
+    if isinstance(config, WeightPruningConfig) or isinstance(config, WeightPruningConf):
         return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
@@ -413,7 +412,7 @@ def parse_last_linear(model):
     """
     from .model_slim.pattern_analyzer import ClassifierHeadSearcher
     searcher = ClassifierHeadSearcher(model)
-    layer = searcher.search(return_name = True)
+    layer = searcher.search(return_name=True)
     return layer
 
 def parse_to_prune(config, model):

@@ -1,5 +1,10 @@
-from neural_compressor.strategy.utils.tuning_sampler import OpTypeWiseTuningSampler, ModelWiseTuningSampler
-from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
+from neural_compressor.strategy.utils.tuning_sampler import (
+    OpTypeWiseTuningSampler,
+    ModelWiseTuningSampler,
+    OpWiseTuningSampler,
+    FallbackTuningSampler,
+    BlockFallbackTuningSampler
+    )
 from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
 from neural_compressor.strategy.utils.tuning_space import TuningSpace
 from collections import OrderedDict
@@ -151,11 +156,16 @@ op_cap = {
 }
 
 
+block_info = [[('op_name2', 'op_type1'),('op_name4', 'op_type3')],
+              [('op_name4', 'op_type3'), ('op_name1', 'op_type1')]]
+
+
+
 class TestTuningSampler(unittest.TestCase):
     def test_tuning_sampler(self):
         capability = {
             'calib': {'calib_sampling_size': [1, 10, 50]},
-            'op': op_cap
+            'op': deepcopy(op_cap)
         }
         conf = None
         tuning_space = TuningSpace(capability, conf)
@@ -165,6 +175,7 @@ class TestTuningSampler(unittest.TestCase):
             if item.item_type == 'op':
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+                print(initial_op_tuning_cfg[item.name])
         quant_mode_wise_items = OrderedDict()
         from neural_compressor.strategy.utils.constant import auto_query_order as query_order
         pre_items = set()
@@ -239,6 +250,53 @@ class TestTuningSampler(unittest.TestCase):
                     cnt = cnt + 1
             fallback_cnt.append(cnt)
         self.assertListEqual(fallback_cnt, [2, 3, 4])
+        
+    def test_block_sampler(self):
+        capability = {
+            'calib': {'calib_sampling_size': [1, 10, 50]},
+            'op': deepcopy(op_cap),
+            'block_info': block_info
+        }
+        conf = None
+        tuning_space = TuningSpace(capability, conf)
+        initial_op_tuning_cfg = {}
+        for item in tuning_space.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+                print(initial_op_tuning_cfg[item.name])
+        quant_mode_wise_items = OrderedDict()
+        from neural_compressor.strategy.utils.constant import auto_query_order as query_order
+        pre_items = set()
+        for quant_mode in query_order:
+            items = tuning_space.query_items_by_quant_mode(quant_mode)
+            filtered_items = [item for item in items if item not in pre_items]
+            pre_items = pre_items.union(set(items))
+            quant_mode_wise_items[quant_mode] = filtered_items
+
+        def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+            for item in items_lst:
+                op_item_dtype_dict[item.name] = target_quant_mode
+
+        op_item_dtype_dict = OrderedDict()
+        for quant_mode, quant_mode_items in quant_mode_wise_items.items():
+            initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
+        
+        op_block_lst = capability.get('block_info', [])
+        if op_block_lst:
+            # Fallback block by block
+            target_type_lst = set(tuning_space.query_items_by_quant_mode('fp32'))
+            fallback_items_lst = [item for item in target_type_lst]
+            op_block_fallback_lst = []
+            for op_block_index, op_block in enumerate(op_block_lst):
+                op_block_fallback_lst.append(op_block)
+            block_fallback_sampler = BlockFallbackTuningSampler(tuning_space=tuning_space,
+                                                                tuning_order_lst=[],
+                                                                initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                                op_block_lst=op_block_fallback_lst,
+                                                                accumulate=False,
+                                                                target_dtype='fp32')
+            self.assertEqual(2, len(list(block_fallback_sampler)))
         
 if __name__ == "__main__":
     unittest.main()

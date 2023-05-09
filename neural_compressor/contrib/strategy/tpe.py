@@ -82,13 +82,22 @@ class TpeTuneStrategy(TuneStrategy):
                                                Defaults to None.
 
     """
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
+    def __init__(self,
+                 model,
+                 conf,
+                 q_dataloader=None,
+                 q_func=None,
+                 eval_func=None,
+                 eval_dataloader=None,
+                 eval_metric=None,
+                 resume=None,
+                 q_hooks=None):
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        assert conf.usr_cfg.quantization.approach == 'post_training_static_quant', \
+        self.config = self._initialize_config(conf)
+        assert self.config.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
         """Initialize the tpe tuning strategy if the user specified to use it."""
-        strategy_name = conf.usr_cfg.tuning.strategy.name
+        strategy_name = self.config.tuning_criterion.strategy
         if strategy_name.lower() == "tpe":
             try:
                 import hyperopt
@@ -106,14 +115,19 @@ class TpeTuneStrategy(TuneStrategy):
         self.warm_start = False
         self.cfg_evaluated = False
         self.hpopt_trials = hyperopt.Trials()
-        self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
+        self.max_trials = 200
+        if self.config.tuning_criterion.max_trials:
+            self.max_trials = self.config.tuning_criterion.max_trials
+
         self.loss_function_config = {
-            'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
-                      conf.usr_cfg.tuning.accuracy_criterion and \
-                      conf.usr_cfg.tuning.accuracy_criterion.relative else 0.01,
-            'acc_weight': conf.usr_cfg.tuning.strategy.get('accuracy_weight', 1.0),
-            'lat_weight': conf.usr_cfg.tuning.strategy.get('latency_weight', 1.0)
+            'acc_th': 0.01,
+            'acc_weight': 1.0,
+            'lat_weight': 1.0
         }
+        accuracy_criterion = self.config.accuracy_criterion
+        if accuracy_criterion.criterion == 'relative':
+            self.loss_function_config['acc_th'] = accuracy_criterion.tolerable_loss
+
         self.tpe_params = {
             'n_initial_point': 10,
             'gamma': 0.3,
@@ -127,15 +141,15 @@ class TpeTuneStrategy(TuneStrategy):
         }
         self._algo = None
 
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+        super().__init__(model=model,
+                         conf=conf,
+                         q_dataloader=q_dataloader,
+                         q_func=q_func,
+                         eval_func=eval_func,
+                         eval_dataloader=eval_dataloader,
+                         eval_metric=eval_metric,
+                         resume=resume,
+                         q_hooks=q_hooks)
 
     def __getstate__(self):
         """Magic method for pickle saving.
@@ -144,7 +158,7 @@ class TpeTuneStrategy(TuneStrategy):
             dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
+            if self._same_conf(history['cfg'], self.conf):
                 history['warm_start'] = True
                 history['hpopt_trials'] = self.hpopt_trials
                 history['loss_function_config'] = self.loss_function_config
@@ -177,6 +191,7 @@ class TpeTuneStrategy(TuneStrategy):
     def traverse(self):
         """Tpe traverse logic."""
         logger.info("Start to run tpe strategy.")
+        self._prepare_tuning()
         # prepare log file
         trials_file = os.path.join(os.path.dirname(self.history_path), 'tpe_trials.csv')
         best_result_file = os.path.join(os.path.dirname(self.history_path), 'tpe_best_result.csv')
@@ -212,7 +227,7 @@ class TpeTuneStrategy(TuneStrategy):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
                                            op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
         self.opwise_tune_cfgs = {}
@@ -293,7 +308,7 @@ class TpeTuneStrategy(TuneStrategy):
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
                 self._save()
-                if self.stop(self.cfg.tuning.exit_policy.timeout, trials_count):
+                if self.stop(self.config.tuning_criterion.timeout, trials_count):
                     exit = True
         else:
             logger.warn("Can't create search space for input model.")
@@ -488,8 +503,8 @@ class TpeTuneStrategy(TuneStrategy):
                 del self.last_qmodel
 
         last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
-            self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
-            ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,self.cfg.quantization.dtype,y,z) \
+            'int8', self.last_tune_result[0], self.baseline[0]) + \
+            ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,'int8',y,z) \
             for x,y,z in zip(self.objectives.representation, \
             self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
             if self.last_tune_result else 'n/a'
@@ -505,7 +520,7 @@ class TpeTuneStrategy(TuneStrategy):
 
         if timeout == 0 and self.best_tune_result:
             need_stop = True
-        elif trials_count >= self.cfg.tuning.exit_policy.max_trials:
+        elif trials_count >= self.config.tuning_criterion.max_trials:
             need_stop = True
         else:
             need_stop = False

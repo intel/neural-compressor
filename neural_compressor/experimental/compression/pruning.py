@@ -21,7 +21,7 @@ from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import logger, torch
 
 
-def _generate_pruners(config, model):
+def _generate_pruners(config, model: torch.nn.Module):
     """Generate pruners.
 
     :param config: WeightPruningConfig
@@ -43,7 +43,7 @@ def _generate_pruners(config, model):
     return pruners
 
 
-def _register_on_step_begin(model):
+def _register_on_step_begin(model: torch.nn.Module):
     """Mount on_step_begin to the model.
 
     :param model:The torch module to be pruned
@@ -58,7 +58,7 @@ def _register_on_step_begin(model):
     return hook_handle
 
 
-def _rewrite_optimizer_step(opt):
+def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
     """Mount on_before/after_optimizer_step to optimizer.
 
     :param opt: user optimizer: should be a torch.optim.Optimizer object
@@ -145,7 +145,7 @@ def save(
         torch.orig_save(obj, f)
 
 
-def prepare_pruning(config, model, opt):
+def prepare_pruning(config, model: torch.nn.Module, opt: torch.optim.Optimizer):
     """Wrapper the model and optimizer to support all the pruning functionality.
 
     :param config: WeightPruningConfig

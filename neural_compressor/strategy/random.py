@@ -29,7 +29,7 @@ class RandomTuneStrategy(TuneStrategy):
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config by random searching in tuning space.
-        
+
         Random strategy is used to randomly choose quantization tuning configurations
         from the tuning space. As with the Exhaustive strategy, it also only considers
         quantization tuning configs to generate a better-performance quantized model.
@@ -39,7 +39,7 @@ class RandomTuneStrategy(TuneStrategy):
         """
         tuning_space = self.tuning_space
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-        op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [],
                                                             op_item_dtype_dict, initial_op_tuning_cfg)
         op_tuning_cfg_lst = list(op_wise_tuning_sampler)
         op_tuning_cfg_cnt = len(op_tuning_cfg_lst)

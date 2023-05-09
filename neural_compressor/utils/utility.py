@@ -22,24 +22,26 @@ User should not change values in this file. Instead, user should write a config
 file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
 options.
 """
-import re
 import ast
-import os
-import time
-import sys
-import pickle
+import cpuinfo
 import logging
 import importlib
-from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
-import os.path as osp
-import threading, _thread
-import cpuinfo
+import re
 import numpy as np
-from neural_compressor.utils import logger
+import os
+import os.path as osp
+import pickle
 import prettytable as pt
 import psutil
 import subprocess
+import sys
+import threading
+import time
+import _thread
+from contextlib import contextmanager
+from functools import wraps
+from tempfile import NamedTemporaryFile
+from neural_compressor.utils import logger
 from enum import Enum
 from pkg_resources import parse_version
 
@@ -54,21 +56,26 @@ required_libs = {
     'mxnet': ['mxnet'],
 }
 
+
 def version1_lt_version2(version1, version2):
     """Check whether version1 is less than version2."""
     return parse_version(version1) < parse_version(version2)
-    
+
+
 def version1_gt_version2(version1, version2):
     """Check whether version1 is greater than version2."""
     return parse_version(version1) > parse_version(version2)
+
 
 def version1_eq_version2(version1, version2):
     """Check whether version1 is equal to version2."""
     return parse_version(version1) == parse_version(version2)
 
+
 def version1_gte_version2(version1, version2):
     """Check whether version1 is greater than version2 or is equal to it."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
+
 
 def version1_lte_version2(version1, version2):
     """Check whether version1 is less than version2 or is equal to it."""
@@ -109,7 +116,7 @@ class LazyImport(object):
 
 def singleton(cls):
     """Not displayed in API Docs.
-    
+
     Singleton decorater.
     """
     instances = {}
@@ -173,7 +180,7 @@ def get_size(obj, seen=None):
 
 def compute_sparsity(tensor):
     """Compute the sparsity.
-    
+
     Args:
         tensor: Tensorflow or Pytorch tensor
 
@@ -363,7 +370,10 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
     tuning_history = get_tuning_history(tuning_history_path)
     target_history = tuning_history[0]['history']
     q_config = target_history[num]['q_config']
-    framework = tuning_history[0]['cfg']['model']['framework']
+    try:
+        framework = tuning_history[0]['cfg']['model']['framework']
+    except Exception as e:
+        framework = tuning_history[0]['cfg'].quantization.framework
 
     if 'pytorch' in framework:
         from neural_compressor.utils.pytorch import load
@@ -408,7 +418,6 @@ def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
         weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
 
 
-
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
     import numpy as np
@@ -422,7 +431,7 @@ def Dequantize(data, scale_info):
 
 class CaptureOutputToFile(object):
     """Not displayed in API Docs.
-    
+
     Capture the output to file.
     """
     def __init__(self, tmp_file_path, stream=sys.stderr):
@@ -447,7 +456,7 @@ class Statistics():
     """The statistics printer."""
     def __init__(self, data, header, field_names, output_handle=logger.info):
         """Init a Statistics object.
-        
+
         Args:
             data: The statistics data
             header: The table header
@@ -495,6 +504,7 @@ class GLOBAL_STATE():
     """Access the global model."""
     STATE = MODE.QUANTIZATION
 
+
 def load_data_from_pkl(path, filename):
     """Load data from local pkl file.
 
@@ -509,6 +519,7 @@ def load_data_from_pkl(path, filename):
             return data
     except FileExistsError:
         logging.getLogger("neural_compressor").info('Can not open %s.' % path)
+
 
 def dump_data_to_local(data, path, filename):
     """Dump data to local as pkl file.
@@ -528,7 +539,6 @@ def dump_data_to_local(data, path, filename):
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
-
 
 
 def set_random_seed(seed: int):
@@ -554,6 +564,7 @@ def set_tensorboard(tensorboard: bool):
     from neural_compressor.config import options
     options.tensorboard = tensorboard
 
+
 def show_memory_info(hint):
     """Show process full memory."""
     pid = os.getpid()
@@ -562,3 +573,129 @@ def show_memory_info(hint):
     info = p.memory_full_info()
     memory = info.uss / 1024. / 1024
     print('{} memory used: {} MB'.format(hint, memory))
+
+
+def dump_class_attrs(obj, result={}):
+    """Dump the attributes and values of a config class.
+
+    Args:
+        obj: An instance of a config class.
+        result: An dict for recording attributes and values.
+    """
+    obj_name = obj.__class__.__name__
+    if obj_name not in result:
+        result[obj_name] = {}
+    for attr in dir(obj):
+        if not attr.startswith("__"):
+            value = getattr(obj, attr)
+            value_class_name = value.__class__.__name__
+            if 'Config' in value_class_name or 'Criterion' in value_class_name:
+                dump_class_attrs(value, result=result[obj_name])
+            else:
+                attr = attr[1:] if attr.startswith('_') else attr
+                result[obj_name][attr] = value
+
+
+class DotDict(dict):
+    """access yaml using attributes instead of using the dictionary notation.
+
+    Args:
+        value (dict): The dict object to access.
+
+    """
+
+    def __init__(self, value=None):
+        """Init DotDict.
+
+        Args:
+            value: The value to be initialized. Defaults to None.
+        """
+        if value is None:
+            pass
+        elif isinstance(value, dict):
+            for key in value:
+                self.__setitem__(key, value[key])
+        else:
+            raise TypeError('expected dict')
+
+    def __getitem__(self, key):
+        """Get value by key.
+
+        Args:
+            key: The query item.
+        """
+        value = self.get(key, None)
+        return value
+
+    def __setitem__(self, key, value):
+        """Add new key and value pair.
+
+        Args:
+            key: something like key in dict.
+            value: value assigned to key. 
+        """
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            value = DotDict(value)
+        if isinstance(value, list) and len(value) == 1 and isinstance(
+                value[0], dict):
+            value = DotDict(value[0])
+        if isinstance(value, list) and len(value) > 1 and all(isinstance(
+                v, dict) for v in value):
+            value = DotDict({k: v for d in value for k, v in d.items()})
+        super(DotDict, self).__setitem__(key, value)
+
+    def __getstate__(self):
+        """Return self dict."""
+        return self.__dict__
+
+    def __setstate__(self, d):
+        """Update self dict."""
+        self.__dict__.update(d)
+
+    __setattr__, __getattr__ = __setitem__, __getitem__
+
+
+def compare_objects(obj1, obj2, ignore_attrs):
+    """Compare two objects and ignore the specified attributes.
+
+    Args:
+        obj1: The first object to compare.
+        obj2: The second object to compare.
+        ignore_attrs: A list of attribute names to ignore during the comparison.
+
+    Returns:
+        True if the objects are equal ignoring the specified attributes, False otherwise.
+    """
+    # Check if the objects are of the same type
+    if type(obj1) != type(obj2):
+        return False
+
+    # Check if the objects have the same set of attributes
+    attrs1 = set(obj1.__dict__.keys())
+    attrs2 = set(obj2.__dict__.keys())
+    if attrs1 != attrs2:
+        return False
+    # Compare the attributes, ignoring the specified ones
+    for attr in attrs1 - set(ignore_attrs):
+        if getattr(obj1, attr) != getattr(obj2, attr):
+            return False
+
+
+def alias_param(param_name: str, param_alias: str):
+    """Decorator for aliasing a param in a function.
+
+    Args:
+        param_name: Name of param in function to alias.
+        param_alias: Alias that can be used for this param.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            alias_param_value = kwargs.get(param_alias)
+            if alias_param_value:  # pragma: no cover
+                kwargs[param_name] = alias_param_value
+                del kwargs[param_alias]
+            result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator

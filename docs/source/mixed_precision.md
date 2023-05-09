@@ -42,8 +42,8 @@ Supported precisions for mix precision include bf16 and fp16. If users want to g
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig(precision='bf16')
-converted_model = mix_precision.fit(model, config=conf)
+conf = MixedPrecisionConfig() # default precision is bf16
+converted_model = mix_precision.fit(model, conf=conf)
 converted_model.save('./path/to/save/')
 ```
 
@@ -56,8 +56,8 @@ from neural_compressor.config import MixedPrecisionConfig
 conf = MixedPrecisionConfig(
         backend='onnxrt_cuda_ep',
         device='gpu',
-        precision='fp16')
-converted_model = mix_precision.fit(model, config=conf)
+        precisions='fp16')
+converted_model = mix_precision.fit(model, conf=conf)
 converted_model.save('./path/to/save/')
 ```
 
@@ -68,27 +68,26 @@ converted_model.save('./path/to/save/')
 
 There are some pre-requirements to run mixed precision examples for each framework. If the hardware requirements cannot be met, the program would exit consequently.
 
-- BF16： 
+- **BF16:** 
 
-
-    ### TensorFlow
+    #### TensorFlow
 
     1. Hardware: CPU supports `avx512_bf16` instruction set.
     2. Software: intel-tensorflow >= [2.3.0](https://pypi.org/project/intel-tensorflow/2.3.0/).
 
-    ### PyTorch
+    #### PyTorch
 
     1. Hardware: CPU supports `avx512_bf16` instruction set.
     2. Software: torch >= [1.11.0](https://download.pytorch.org/whl/torch_stable.html).
 
-    ### ONNX Runtime
+    #### ONNX Runtime
 
     1. Hardware: GPU, set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'.
     2. Software: onnxruntime-gpu.
 
-- FP16
+- **FP16:**
 
-    ### ONNX Runtime
+    #### ONNX Runtime
 
     1. Hardware: GPU, set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'.
     2. Software: onnxruntime-gpu.

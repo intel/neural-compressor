@@ -49,7 +49,7 @@ And please make sure `cores_per_instance * num_of_instance` must be less than CP
 from neural_compressor.config import BenchmarkConfig
 from neural_compressor.benchmark import fit
 conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
 ```
 
 ## Examples
