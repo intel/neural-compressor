@@ -89,14 +89,14 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.mix_precision.fit" title="neural_compressor.mix_precision.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model[, config, eval_func, eval_dataloader, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.mix_precision.fit" title="neural_compressor.mix_precision.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model, conf[, eval_func, eval_dataloader, eval_metric])</p></td>
 <td><p>Fit low precision model generation across multiple framework backends.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.mix_precision.fit">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.mix_precision.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.mix_precision.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Fit low precision model generation across multiple framework backends.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -109,7 +109,7 @@ instance. For onnx model, it chould be a path
 to .onnx file or onnx.onnx_ml_pb2.ModelProto.
 For MXNet model, it’s mxnet.symbol.Symbol
 or gluon.HybirdBlock instance.</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.MixedPrecisionConfig" title="neural_compressor.config.MixedPrecisionConfig"><em>MixedPrecisionConfig</em></a>) – The MixedPrecisionConfig class containing accuracy goal,
+<li><p><strong>conf</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.MixedPrecisionConfig" title="neural_compressor.config.MixedPrecisionConfig"><em>MixedPrecisionConfig</em></a>) – The MixedPrecisionConfig class containing accuracy goal,
 tuning objective and mixed_precision tuning space etc.</p></li>
 <li><p><strong>eval_func</strong> (<em>function</em><em>, </em><em>optional</em>) – The evaluation function provided by user.
 This function takes model as parameter,
@@ -135,7 +135,7 @@ mixed_precision.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A _MixedPrecision object that generates low precision model across various DL frameworks.</p>
+<dd class="field-even"><p>A Mixed precision model across various DL frameworks.</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>AssertionError.</strong> – </p>
@@ -146,7 +146,7 @@ mixed_precision.</p></li>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>
-<span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>

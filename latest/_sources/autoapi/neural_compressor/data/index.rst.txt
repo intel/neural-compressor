@@ -61,6 +61,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.data.dataset_registry
+   neural_compressor.data.check_dataloader
    neural_compressor.data.transform_registry
    neural_compressor.data.filter_registry
 
@@ -72,6 +73,7 @@ Attributes
 .. autoapisummary::
 
    neural_compressor.data.DATALOADERS
+
 
 
 

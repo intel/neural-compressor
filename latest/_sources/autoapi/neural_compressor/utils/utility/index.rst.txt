@@ -66,6 +66,7 @@ Functions
    neural_compressor.utils.utility.show_memory_info
    neural_compressor.utils.utility.dump_class_attrs
    neural_compressor.utils.utility.compare_objects
+   neural_compressor.utils.utility.alias_param
 
 
 
@@ -295,5 +296,13 @@ Functions
    :param ignore_attrs: A list of attribute names to ignore during the comparison.
 
    :returns: True if the objects are equal ignoring the specified attributes, False otherwise.
+
+
+.. py:function:: alias_param(param_name: str, param_alias: str)
+
+   Decorator for aliasing a param in a function.
+
+   :param param_name: Name of param in function to alias.
+   :param param_alias: Alias that can be used for this param.
 
 

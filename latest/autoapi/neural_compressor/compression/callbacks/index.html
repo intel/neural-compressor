@@ -117,7 +117,7 @@ In this class will apply all hooks for ‘Quantization’, ‘Pruning’ and ‘
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.callbacks.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingCallbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/callbacks.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.callbacks.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingCallbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/callbacks.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks" title="Permalink to this definition"></a></dt>
 <dd><p>This is the class for callbacks of quantization aware training.</p>
 <p>This design is mainly for Quantization-Aware Training.
 In this class will apply all hooks for Quantization-Aware Training.</p>
@@ -140,7 +140,7 @@ transfer the knowledge of the teacher model to the student model.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>conf</strong> – Distillation_Conf containing teacher model, distillation criterion etc.</p></li>
-<li><p><strong>model</strong> – Student model.</p></li>
+<li><p><strong>model</strong> – Student model. It should be neural compressor model.</p></li>
 </ul>
 </dd>
 </dl>

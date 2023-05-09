@@ -208,6 +208,9 @@ options.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.compare_objects" title="neural_compressor.utils.utility.compare_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_objects</span></code></a>(obj1, obj2, ignore_attrs)</p></td>
 <td><p>Compare two objects and ignore the specified attributes.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.alias_param" title="neural_compressor.utils.utility.alias_param"><code class="xref py py-obj docutils literal notranslate"><span class="pre">alias_param</span></code></a>(param_name, param_alias)</p></td>
+<td><p>Decorator for aliasing a param in a function.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -496,6 +499,20 @@ options.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True if the objects are equal ignoring the specified attributes, False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.alias_param">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">alias_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_alias</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.alias_param" title="Permalink to this definition"></a></dt>
+<dd><p>Decorator for aliasing a param in a function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>param_name</strong> – Name of param in function to alias.</p></li>
+<li><p><strong>param_alias</strong> – Alias that can be used for this param.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

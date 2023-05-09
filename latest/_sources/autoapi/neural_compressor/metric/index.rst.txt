@@ -48,6 +48,8 @@ Functions
 .. autoapisummary::
 
    neural_compressor.metric.metric_registry
+   neural_compressor.metric.register_customer_metric
+
 
 
 

@@ -40,7 +40,7 @@ Classes
    In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
 
 
-.. py:class:: QuantizationAwareTrainingCallbacks(conf=None, model=None)
+.. py:class:: QuantizationAwareTrainingCallbacks(conf=None, model=None, adaptor=None)
 
 
 
@@ -69,7 +69,7 @@ Classes
    transfer the knowledge of the teacher model to the student model.
 
    :param conf: Distillation_Conf containing teacher model, distillation criterion etc.
-   :param model: Student model.
+   :param model: Student model. It should be neural compressor model.
 
    .. attribute:: _epoch_ran
 

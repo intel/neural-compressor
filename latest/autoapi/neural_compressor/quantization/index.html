@@ -122,9 +122,7 @@ as well as it can be taken as model input.</p></li>
 <li><p><strong>calib_func</strong> (<em>function</em><em>, </em><em>optional</em>) – Calibration function for post-training static
 quantization. It is optional.
 This function takes “model” as input parameter
-and executes entire inference process. If this
-parameter specified, calib_dataloader is also needed
-for FX trace if PyTorch &gt;= 1.13.</p></li>
+and executes entire inference process.</p></li>
 <li><p><strong>eval_func</strong> (<em>function</em><em>, </em><em>optional</em>) – <p>The evaluation function provided by user.
 This function takes model as parameter,
 and evaluation dataset and metrics should be
@@ -156,8 +154,46 @@ and should set “eval_func” parameter as None.
 Tuner will combine model, eval_dataloader
 and pre-defined metrics to run evaluation
 process.</p></li>
-<li><p><strong>eval_metric</strong> (<em>dict</em><em> or </em><em>obj</em>) – Set metric class or a dict of built-in metric configures,
-and neural_compressor will initialize this class when evaluation.</p></li>
+<li><p><strong>eval_metric</strong> (<em>dict</em><em> or </em><em>obj</em>) – <dl class="simple">
+<dt>Set metric class or a dict of built-in metric configures,</dt><dd><p>and neural_compressor will initialize this class when evaluation.</p>
+</dd>
+</dl>
+<ol class="arabic">
+<li><p>neural_compressor have many built-in metrics,
+user can pass a metric configure dict to tell neural compressor what metric will be use.
+You also can set multi-metrics to evaluate the performance of a specific model.</p>
+<blockquote>
+<div><dl>
+<dt>Single metric:</dt><dd><p>{topk: 1}</p>
+</dd>
+<dt>Multi-metrics:</dt><dd><dl class="simple">
+<dt>{topk: 1,</dt><dd><p>MSE: {compare_label: False},
+weight: [0.5, 0.5],
+higher_is_better: [True, False]</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</div></blockquote>
+</li>
+</ol>
+</p></li>
+<li><p><strong>metrics</strong> (<em>For the built-in</em>) – </p></li>
+<li><p><strong>link</strong> (<em>please refer to below</em>) – </p></li>
+<li><p><strong>https</strong> – <p>//github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.</p>
+<ol class="arabic simple" start="2">
+<li><dl class="simple">
+<dt>User also can get the built-in metrics by neural_compressor.Metric:</dt><dd><p>Metric(name=”topk”, k=1)</p>
+</dd>
+</dl>
+</li>
+<li><p>User also can set specific metric through this api. The metric class should take the outputs of
+the model or postprocess(if have) as inputs, neural_compressor built-in metric always
+take (predictions, labels) as inputs for update, and user_metric.metric_cls should be
+sub_class of neural_compressor.metric.BaseMetric.</p></li>
+</ol>
+</p></li>
 </ul>
 </dd>
 </dl>

@@ -183,6 +183,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.metric.metric_registry" title="neural_compressor.metric.metric.metric_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metric_registry</span></code></a>(metric_type, framework)</p></td>
 <td><p>Decorate for registering all Metric subclasses.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.metric.metric.register_customer_metric" title="neural_compressor.metric.metric.register_customer_metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_customer_metric</span></code></a>(user_metric, framework)</p></td>
+<td><p>register customer metric class or a dict of built-in metric configures.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -567,6 +570,52 @@ the top k labels predicted.</p>
 <dt class="sig sig-object py" id="neural_compressor.metric.metric.ROC">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.metric.</span></span><span class="sig-name descname"><span class="pre">ROC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dlrm'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.metric.ROC" title="Permalink to this definition"></a></dt>
 <dd><p>Computes ROC score.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.metric.metric.register_customer_metric">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.metric.</span></span><span class="sig-name descname"><span class="pre">register_customer_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.metric.register_customer_metric" title="Permalink to this definition"></a></dt>
+<dd><p>register customer metric class or a dict of built-in metric configures.</p>
+<ol class="arabic">
+<li><p>neural_compressor have many built-in metrics,
+user can pass a metric configure dict to tell neural compressor what metric will be use.
+You also can set multi-metrics to evaluate the performance of a specific model.</p>
+<blockquote>
+<div><dl>
+<dt>Single metric:</dt><dd><p>{topk: 1}</p>
+</dd>
+<dt>Multi-metrics:</dt><dd><dl class="simple">
+<dt>{topk: 1,</dt><dd><p>MSE: {compare_label: False},
+weight: [0.5, 0.5],
+higher_is_better: [True, False]</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</div></blockquote>
+</li>
+</ol>
+<p>For the built-in metrics, please refer to below link:
+<a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix">https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix</a>.</p>
+<ol class="arabic simple" start="2">
+<li><dl class="simple">
+<dt>User also can get the built-in metrics by neural_compressor.Metric:</dt><dd><p>Metric(name=”topk”, k=1)</p>
+</dd>
+</dl>
+</li>
+<li><p>User also can set specific metric through this api. The metric class should take the outputs of the model or
+postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels)
+as inputs for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_metric</strong> (<em>neural_compressor.metric.Metric</em><em> or </em><em>a dict</em><em> of </em><em>built-in metric configurations</em>) – The object of Metric or a dict of built-in metric configurations.</p></li>
+<li><p><strong>framework</strong> – framework, such as: tensorflow, pytorch……</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

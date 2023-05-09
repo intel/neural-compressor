@@ -85,7 +85,7 @@ Classes
 
    Example::
 
-       from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+       from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
        set_random_seed(2022)
        set_workspace("workspace_path")
        set_resume_from("workspace_path")
@@ -127,7 +127,7 @@ Classes
        from neural_compressor.benchmark import fit
 
        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-       fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+       fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
 
 
 .. py:class:: AccuracyCriterion(higher_is_better=True, criterion='relative', tolerable_loss=0.01)
@@ -581,7 +581,7 @@ Classes
        model = compression_manager.model
 
 
-.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precision='bf16', model=None, model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model=None, model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
 
 
 
@@ -594,9 +594,9 @@ Classes
                    Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
                    default is 'default'.
    :type backend: str, optional
-   :param precision: Target precision for mix precision conversion.
-                     Support 'bf16' and 'fp16', default is 'bf16'.
-   :type precision: str, optional
+   :param precisions: Target precision for mix precision conversion.
+                      Support 'bf16' and 'fp16', default is 'bf16'.
+   :type precisions: [str, list], optional
    :param inputs: Inputs of model, default is [].
    :type inputs: list, optional
    :param outputs: Outputs of model, default is [].
@@ -616,7 +616,7 @@ Classes
    from neural_compressor.config import MixedPrecisionConfig
 
    conf = MixedPrecisionConfig()
-   converted_model = mix_precision.fit(model, config=conf)
+   converted_model = mix_precision.fit(model, conf=conf)
 
 
 .. py:class:: ExportConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None)

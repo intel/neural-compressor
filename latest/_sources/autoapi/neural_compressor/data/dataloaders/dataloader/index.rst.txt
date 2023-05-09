@@ -21,11 +21,24 @@ Classes
 
 
 
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.dataloaders.dataloader.check_dataloader
+
+
 
 .. py:class:: DataLoader
 
 
 
    Entrance of all configured DataLoaders.
+
+
+.. py:function:: check_dataloader(dataloader)
+
+   Check if the dataloader meets requirement of neural_compressor.
 
 

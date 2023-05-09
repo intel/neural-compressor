@@ -50,7 +50,7 @@ Functions
    neural_compressor.utils.warning
    neural_compressor.utils.error
    neural_compressor.utils.fatal
-   neural_compressor.utils.set_random_seed
+   neural_compressor.utils.alias_param
 
 
 

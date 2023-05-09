@@ -22,7 +22,7 @@ Functions
 
 
 
-.. py:function:: fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
+.. py:function:: fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
 
    Fit low precision model generation across multiple framework backends.
 
@@ -35,9 +35,9 @@ Functions
                  For MXNet model, it's mxnet.symbol.Symbol
                  or gluon.HybirdBlock instance.
    :type model: object
-   :param config: The MixedPrecisionConfig class containing accuracy goal,
-                  tuning objective and mixed_precision tuning space etc.
-   :type config: MixedPrecisionConfig
+   :param conf: The MixedPrecisionConfig class containing accuracy goal,
+                tuning objective and mixed_precision tuning space etc.
+   :type conf: MixedPrecisionConfig
    :param eval_func: The evaluation function provided by user.
                      This function takes model as parameter,
                      and evaluation dataset and metrics should be
@@ -63,7 +63,7 @@ Functions
                        mixed_precision.
    :type eval_metric: obj, optional
 
-   :returns: A _MixedPrecision object that generates low precision model across various DL frameworks.
+   :returns: A Mixed precision model across various DL frameworks.
 
    :raises AssertionError.:
 
@@ -73,6 +73,6 @@ Functions
        from neural_compressor.config import MixedPrecisionConfig
 
        conf = MixedPrecisionConfig()
-       converted_model = mix_precision.fit(model, config=conf)
+       converted_model = mix_precision.fit(model, conf=conf)
 
 

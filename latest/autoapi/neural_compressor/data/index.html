@@ -200,10 +200,13 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dataset_registry</span></code>(dataset_type, framework[, dataset_format])</p></td>
 <td><p>Register dataset subclasses.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_registry</span></code>(transform_type, process, framework)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_dataloader</span></code>(dataloader)</p></td>
+<td><p>Check if the dataloader meets requirement of neural_compressor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_registry</span></code>(transform_type, process, framework)</p></td>
 <td><p>Class decorator used to register all transform subclasses.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code>(filter_type, framework)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code>(filter_type, framework)</p></td>
 <td><p>Register all transform subclasses.</p></td>
 </tr>
 </tbody>
