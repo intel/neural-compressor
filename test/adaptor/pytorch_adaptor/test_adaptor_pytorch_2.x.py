@@ -534,6 +534,33 @@ class TestPytorchFXAdaptor(unittest.TestCase):
              criterion=None, enable_act=True)
         self.assertIsNotNone(op_to_traces)
 
+class TestPyTorchBlockDetector(unittest.TestCase):
+    # TODO add test for ipex
+    def test_block_detector(self):
+        from neural_compressor.adaptor.torch_utils.block_detector import TransformerModelBlockDetector, BLOCK_PATTERNS
+        from transformers import BertModel
+
+        model = BertModel.from_pretrained("bert-base-uncased")
+        detector = TransformerModelBlockDetector(model, BLOCK_PATTERNS)
+        result = detector.detect_block()
+        assert len(result['attention_blocks']), 12
+        assert len(result['ffn_blocks']), 12
+
+        found_attention_op = False
+        found_dense_op = False
+        for block in ['attention_blocks']:
+            for op in block:
+                if 'dense' in op:
+                    found_dense_op = True
+                    break
+
+        for block in ['ffn_blocks']:
+            for op in block:
+                if 'attention' in op:
+                    found_attention_op = True
+                    break
+        assert not found_attention_op
+        assert not found_dense_op
 
 if __name__ == "__main__":
     unittest.main()

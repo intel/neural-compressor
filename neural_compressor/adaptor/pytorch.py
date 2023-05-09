@@ -3111,7 +3111,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 self.output_tensor_id_op_name = output_tensor_id_op_name
         logger.info("map_op_name_to_fqn: ")
         logger.info(map_op_name_to_fqn)
-        from .torch_utils.util import search_blocks_for_ipex
         att_blocks_info, ffn_blocks = attention_block, ffn_blocks
 
         logger.info("Atten Block info")
@@ -3918,6 +3917,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             None
         """
         from .torch_utils.block_detector import TransformerModelBlockDetector
+        from .torch_utils.util import _get_op_type_by_name
         detector = TransformerModelBlockDetector(model)
         detect_result = detector.detect_block()
         attention_block = detect_result.get("attention_blocks", None)
@@ -3941,15 +3941,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        #TODO move it to utility
-        block_info = [[(name, self._get_op_type(name, quantizable_ops)) for name in block] for block in ffn_blocks]
+        block_info = [[(name, _get_op_type_by_name(name, quantizable_ops)) for name in block] for block in ffn_blocks]
         self.block_info = block_info
-        
-    def _get_op_type(self, op_name, quantizable_ops):
-        for pair in quantizable_ops:
-            if pair[0] == op_name:
-                return pair[1]
-        return None
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.

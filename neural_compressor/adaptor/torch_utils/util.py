@@ -1001,55 +1001,6 @@ def calculate_quant_min_max(unsigned, num_bits):
     else:
         quant_min, quant_max = -1 * 2.0**(num_bits - 1), 2.0**(num_bits - 1) - 1
     return quant_min, quant_max
-    
-    
-def search_blocks_for_ipex(map_op_name_to_fqn):
-    # TODO remove it before merge
-    revert_map = {v:k for k, v in map_op_name_to_fqn.items()}
-    print(map_op_name_to_fqn)
-    #map_op_name_to_fqn
-    #(op_name, op_type): fqn
-    #()
-
-    att_blocks_info = [] # [[transformer.h.26.attn.out_proj, transformer.h.26.attn.k_proj, ...], [[transformer.h.27.attn.out_proj, transformer.h.27.attn.k_proj, ...]]
-    ffn_blocks_info = [] # [[transformer.h.26.mlp.fc_in, transformer.h.26.mlp.fc_out], [transformer.h.27.mlp.fc_in, transformer.h.27.mlp.fc_out]]
-
-
-    # step0 filter all layer
-    # step1 one group by layer
-    layer_blocks_info = [] 
-    """
-    [
-        [transformer.h.26.attn.out_proj, transformer.h.26.attn.k_proj, ..., transformer.h.26.mlp.fc_in, transformer.h.26.mlp.fc_out],
-        ...
-
-    ]
-
-    """
-    from collections import defaultdict
-    blocks = defaultdict(list) # block_name: [fqn1, fqn2,...]
-    for fqn, op_info in revert_map.items():
-        if op_info[1] == 'linear':
-            layer_name = fqn[:len('transformer.h.27')]
-            blocks[layer_name].append(fqn)
-    print("-"*10)
-    print(blocks)
-    for block_name, fqn_lst in blocks.items():
-        att_blocks = [revert_map[fqn] for fqn in fqn_lst if 'attn' in fqn]
-        ffn_blocks = [revert_map[fqn] for fqn in fqn_lst if 'mlp' in fqn]
-        
-        if att_blocks:
-            att_blocks_info.append(att_blocks)
-        if ffn_blocks:
-            ffn_blocks_info.append(ffn_blocks)
-        
-    print("-"*10)
-    print(att_blocks_info)
-
-    print("-"*10)
-    print(ffn_blocks_info)
-    return att_blocks_info, ffn_blocks_info
-
 
 def get_depth(d) -> int:
     """Query the depth of the dict."""
@@ -1073,3 +1024,10 @@ def get_element_under_depth(d, ops_lst):
             get_element_under_depth(v, ops_lst)
     else:
         ops_lst.append(d)
+
+def _get_op_type_by_name(op_name, quantizable_ops):
+    """Get op type by op name."""
+    for pair in quantizable_ops:
+        if pair[0] == op_name:
+            return pair[1]
+    return None
