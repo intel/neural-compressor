@@ -26,7 +26,8 @@ function run_tuning {
 
     python eval_lambada.py \
         --model_name_or_path ${input_model} \
-        --int8 
+        --int8 \
+        --sq
 }
 
 main "$@"
