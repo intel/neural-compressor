@@ -2652,7 +2652,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                self.calib_func(q_model, dataloader, tmp_iterations=2)
+                self._simple_inference(q_model, dataloader, iterations=2)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                     if self.version.release < Version("1.12.0").release: # pragma: no cover
@@ -3019,15 +3019,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
                                             example_inputs=self.example_inputs, inplace=True)
-                if self.q_func is None:
-                    self.model_calibration(tmp_model, self.q_dataloader)
+                if self.q_dataloader is not None:
+                    self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
                 else:
                     try:
                         self.q_func(tmp_model)
-                    except:
-                        logger.error("The q_func failed when calibrating with ipex, "+\
-                                     "using dataloader with 1 iteration insteadly.")
-                        self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
+                    except Exception as e:
+                        logger.error('Calibration with IPEX failed due to:', e)
+                        logger.error("Please using calib_dataloader insteadly.")
+                        exit(0)
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
                 if hasattr(self, 'sq_module_name_list') and self.performance_only:
                     # recover model before SmoothQuant, tmp_model is copied when prepare.
