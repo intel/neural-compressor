@@ -260,7 +260,7 @@ class BenchmarkConfig:
                  iteration=-1,
                  model_name="",
                  cores_per_instance=None,
-                 num_of_instance=None,
+                 num_of_instance=1,
                  inter_num_of_threads=None,
                  intra_num_of_threads=None):
         """Init a BenchmarkConfig object."""
@@ -373,7 +373,7 @@ class BenchmarkConfig:
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
         """Set num_of_instance."""
-        if num_of_instance is None or _check_value('num_of_instance', num_of_instance, int):
+        if _check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
