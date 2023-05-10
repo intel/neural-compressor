@@ -237,7 +237,7 @@ class BenchmarkConfig:
         model_name (str, optional): The name of the model. Default value is empty.
         cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
         num_of_instance (int, optional): The number of instances to use for performance testing.
-                                         Default value is None.
+                                         Default value is 1.
         inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
                                               Default value is None.
         intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
