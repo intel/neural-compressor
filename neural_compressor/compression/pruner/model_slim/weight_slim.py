@@ -20,6 +20,15 @@ from ..utils import torch
 import random
 from ..utils import logger
 
+# since we have to modify the attribute's name in MHA module after slim,
+# we need to locate them automatically.
+# support: BERT, OPT, 
+MHA_ATTRIBUTE_NAMES = {
+    "head_nums": ["num_attention_heads", "num_heads"],
+    "head_size": ["attention_head_size", "head_dim"],
+    "hidden_size": ["all_head_size", "embed_dim", "hidden_size"],
+}
+
 class PostCompressionUtils(object):
     """Operations library related to weight compression."""
 
@@ -344,18 +353,38 @@ class MHACompression_v2(object):
             'mha_module': [torch.nn.Module] (keep not change)
         }
         """
+        # import pdb;pdb.set_trace()
         self.qkv = mha_object['qkv'] # list
         self.ffn = mha_object['ffn'] # list
         self.mha = mha_object['mha_module'] # list
 
+        self.attributes_for_this_mha = self.check_mha_attributes(self.mha[0])
+        logger.info(f"Following attributes are hooked and might be modified: {self.attributes_for_this_mha}")
         # hook related features
-        self.hidden_size = self.qkv[0].in_features
-        try:
-            self.num_attention_heads = self.mha[0].num_attention_heads # TODO to be improved
-            self.head_size = self.hidden_size // self.num_attention_heads
-        except:
-            pass
+        # self.hidden_size = self.qkv[0].in_features
+        # try:
+        #     self.num_attention_heads = self.mha[0].num_attention_heads # TODO to be improved
+        #     self.head_size = self.hidden_size // self.num_attention_heads
+        # except:
+        #     pass
         self.device = self.qkv[0].weight.device
+
+    def check_mha_attributes(self, mha: torch.nn.Module):
+        attributes_for_this_mha = {
+            "head_nums": None,
+            "head_size": None,
+            "hidden_size": None,
+        }
+        # start matching
+        for k, v in MHA_ATTRIBUTE_NAMES.items():
+            for attr_name in v:
+                if hasattr(mha, attr_name):
+                    attributes_for_this_mha[k] = attr_name
+        for k, v in attributes_for_this_mha.items():
+            if v == None:
+                logger.warning(f"Cannot locate attributes {k} in {type(mha).__name__}, please set them manually.")
+                raise NotImplementedError
+        return attributes_for_this_mha
 
     def find_common_indice(self, d):
         common_indice = d[0]
@@ -368,18 +397,22 @@ class MHACompression_v2(object):
         for qkv, prune output channel, for output, prune input channel
         four linear shares identical masks (attention mask)
         """
+        # obtain mha attributes
+        hidden_size = getattr(self.mha[0], self.attributes_for_this_mha['hidden_size'])
+        head_nums = getattr(self.mha[0], self.attributes_for_this_mha['head_nums'])
+        head_size = getattr(self.mha[0], self.attributes_for_this_mha['head_size'])
         qkv_indice = [
             PostCompressionUtils.get_mha_output_indice(
                 layer.weight, 
-                self.hidden_size, 
-                self.num_attention_heads
+                hidden_size, 
+                head_nums,
             ) for layer in self.qkv
         ]
         ffn_indice = [
             PostCompressionUtils.get_mha_input_indice(
                 layer.weight, 
-                self.hidden_size, 
-                self.num_attention_heads
+                hidden_size, 
+                head_nums,
             ) for layer in self.ffn
         ]
         all_indice_to_prune = {
@@ -395,7 +428,7 @@ class MHACompression_v2(object):
         prune_indice = self.find_common_indice(all_indice_to_prune_list)
         logger.info(f"head indice to be slim: {prune_indice}")
         # 1 refer to channel-wise pruning
-        _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, self.num_attention_heads, self.head_size)
+        _, indice_to_keep = PostCompressionUtils.find_pruneable_indices(prune_indice, head_nums, head_size)
         # prune qkv, outputs
         # Prune linear layers
         for qkv_layer in self.qkv:
@@ -404,6 +437,12 @@ class MHACompression_v2(object):
             PostCompressionUtils.prune_linear(ffn_layer, indice_to_keep, self.device, dim=1, prune_bias=False)
 
         # TODO Update hyper params and store pruned heads
+        # for mha in self.mha:
+        #     mha.num_attention_heads = mha.num_attention_heads - len(prune_indice)
+        #     mha.all_head_size = mha.attention_head_size * mha.num_attention_heads
+        # update mha attributes:
         for mha in self.mha:
-            mha.num_attention_heads = mha.num_attention_heads - len(prune_indice)
-            mha.all_head_size = mha.attention_head_size * mha.num_attention_heads
+            new_head_nums = getattr(mha, self.attributes_for_this_mha['head_nums']) - len(prune_indice)
+            new_hidden_size = getattr(mha, self.attributes_for_this_mha['head_size']) * new_head_nums
+            setattr(mha, self.attributes_for_this_mha['head_nums'], new_head_nums)
+            setattr(mha, self.attributes_for_this_mha['hidden_size'], new_hidden_size)
