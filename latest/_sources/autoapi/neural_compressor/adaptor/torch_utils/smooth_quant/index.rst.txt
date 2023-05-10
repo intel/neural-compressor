@@ -51,7 +51,7 @@ Functions
    :type new_module: torch.nn.Module
 
 
-.. py:class:: TorchSmoothQuant(model, dataloader, q_func=None, traced_model=None)
+.. py:class:: TorchSmoothQuant(model, dataloader, example_inputs=None, q_func=None, traced_model=None)
 
    Fake input channel quantization, for more details please refer to
    [1] SmoothQuant: Accurate and Efficient
