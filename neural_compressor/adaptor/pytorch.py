@@ -1269,7 +1269,8 @@ class TemplateAdaptor(Adaptor):
 
         if not hasattr(self, 'sq') or force_re_smooth:
             from .torch_utils.smooth_quant import TorchSmoothQuant
-            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, q_func=self.q_func)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, \
+                                          example_inputs=self.example_inputs, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types
@@ -2986,7 +2987,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 ipex_conf.save(self.ipex_config_path)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
+                    assert self.q_dataloader or self.example_inputs, \
+                            "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     if self.version.release >= Version("2.1").release:
                         # HistogramObserver will cause a performance issue.
