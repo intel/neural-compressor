@@ -623,7 +623,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
-            benchmark.fit(int8_model, config=b_conf, b_func=benchmark_func)
+            benchmark.fit(int8_model, conf=b_conf, b_func=benchmark_func)
     else:
         if args.accuracy:
             eval_func(raw_model)
@@ -631,7 +631,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
-            benchmark.fit(raw_model, config=b_conf, b_func=benchmark_func)
+            benchmark.fit(raw_model, conf=b_conf, b_func=benchmark_func)
 
     runner.finish()
     lg.DestroyQSL(qsl)

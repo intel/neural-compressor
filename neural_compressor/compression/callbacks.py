@@ -21,18 +21,11 @@ The Component class will be inherited by the class 'QuantizationAwareTrainingCal
 'PruningCallbacks' and 'DistillationCallbacks'.
 """
 
-import numpy as np
-import os
-import pickle
-import random
 from .distillation.criterions import Criterions
-from ..adaptor import FRAMEWORKS
-from ..config import _Config, options
 from ..utils import logger
-from ..utils.utility import time_limit, LazyImport
+from ..utils.utility import LazyImport
 from ..model import BaseModel, Model
-from ..model.model import get_model_fwk_name
-from ..strategy import STRATEGIES
+from ..model.model import MODELS
 from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
 LazyImport('torch.nn')
@@ -54,21 +47,13 @@ class BaseCallbacks(object):
             conf: A Config object which definds the compressor behavior.
                   Just like: QuantizationAwareTrainingConfig, WeightPruningConfig \
                     and DistillationConfig.
-            model: Model to be compressed in this object.
+            model: Model to be compressed in this object. It should be neural compressor model.
         """
-        self.conf = None
-        self.cfg = None
+        assert model is None or isinstance(model, BaseModel), "The model should be a instanceof BaseModel"
+        self.conf = conf
         self.framework = None
-        self._model = None
         self.model = model
-        self._train_func = None
-        self._train_dataloader = None
-        self._eval_func = None
-        self._eval_dataloader = None
-        self._train_distributed = False
-        self._evaluation_distributed = False
         self.adaptor = None
-        self._metric = None
         self.hooks = {
             'on_train_begin': self.on_train_begin,
             'on_train_end': self.on_train_end,
@@ -183,281 +168,6 @@ class BaseCallbacks(object):
         """Represent this class."""
         pass
 
-    @property
-    def model(self):
-        """Getter of model in neural_compressor.model."""
-        return self._model
-
-    @model.setter
-    def model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object.
-
-        Args:
-            user_model: user are supported to set model from original framework model format
-                        (eg, tensorflow frozen_pb or path to a saved model),
-                        but not recommended. Best practice is to set from a initialized
-                        neural_compressor.Model.
-                        If tensorflow model is used, model's inputs/outputs will be
-                        auto inferenced, but sometimes auto inferenced
-                        inputs/outputs will not meet your requests,
-                        set them manually in config yaml file.
-                        Another corner case is slim model of tensorflow,
-                        be careful of the name of model configured in yaml file,
-                        make sure the name is in supported slim model list.
-
-        """
-        if user_model is None:
-            return
-
-        if self.framework == None:
-            self.framework = get_model_fwk_name(
-                user_model.model if isinstance(user_model, BaseModel) else user_model)
-            if self.framework == "tensorflow":
-                from ..model.tensorflow_model import get_model_type
-                if not isinstance(user_model, BaseModel) and get_model_type(user_model) == 'keras'\
-                     and self.conf.backend == 'itex':
-                    self.framework = 'keras'
-            if self.framework == "pytorch":
-                try:
-                    if self.conf.quantization.backend == "default":
-                        self.framework = "pytorch_fx"
-                    elif self.conf.quantization.backend == "ipex":
-                        self.framework = "pytorch_ipex"
-                    self.conf.quantization.framework = self.framework
-                except Exception as e:
-                    pass
-
-        if not isinstance(user_model, BaseModel):
-            logger.warning("Force convert framework model to neural_compressor model.")
-            if "tensorflow" in self.framework or self.framework == "keras":
-                if self.conf.quantization and self.conf.quantization.approach == "quant_aware_training":
-                    self._model = Model(user_model, backend='tensorflow_qat', device=self.conf.device)
-                else:
-                    self._model = Model(user_model, backend=self.framework, device=self.conf.device)
-            else:
-                self._model = Model(user_model, backend=self.framework)
-        else:
-            self._model = user_model
-
-        if 'tensorflow' in self.framework:
-            try:
-                self._model.name = self.conf.quantization.model_name
-                self._model.output_tensor_names = self.conf.quantization.outputs
-                self._model.input_tensor_names = self.conf.quantization.inputs
-                self._model.workspace_path = options.workspace
-            except Exception as e:
-                self._model.name = None
-                self._model.output_tensor_names = None
-                self._model.input_tensor_names = None
-                self._model.workspace_path = None
-
-    def pre_process(self):
-        """Create strategy to optimize model."""
-        # Remove qat hooks if user want to tune accuracy with train function.
-        if self.adaptor is not None and hasattr(self.adaptor, "_pre_hook_for_qat"):
-            self.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
-            self.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
-
-        strategy = self.conf.quantization.tuning_criterion.strategy.lower()
-        if self.conf.quantization.quant_level == 0:
-            strategy = "conservative"
-            logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
-
-        if strategy == "mse_v2":
-            if not (self.conf.quantization.framework.startswith("tensorflow") \
-                    or self.conf.quantization.framework == 'pytorch_fx'): # pragma: no cover
-                strategy = "basic"
-                logger.warning(f"MSE_v2 does not support \
-                               {self.conf.quantization.framework} now, use basic instead.")
-                logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
-        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
-
-        _resume = None
-        # check if interrupted tuning procedure exists. if yes, it will resume the
-        # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
-                           if options.workspace and options.resume_from else None
-        if self.resume_file:
-            assert os.path.exists(self.resume_file), \
-                "The specified resume file {} doesn't exist!".format(self.resume_file)
-            with open(self.resume_file, 'rb') as f:
-                _resume = pickle.load(f).__dict__
-
-        self.strategy = STRATEGIES[strategy](
-            model = self.model,
-            conf = self.conf,
-            q_dataloader=None,
-            q_func=self._train_func,
-            eval_func=self._eval_func,
-            eval_dataloader=self._eval_dataloader,
-            eval_metric=self.metric,
-            resume=_resume,
-            q_hooks=None)
-
-    def execute(self):
-        """Quantization Aware Training execute routinue based on strategy design."""
-        try:
-            with time_limit(self.conf.quantization.tuning_criterion.timeout):
-                logger.debug("Dump user yaml configuration:")
-                logger.debug(self.conf)
-                self.strategy.traverse()
-        except KeyboardInterrupt:
-            pass
-        except Exception as e:
-            logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
-            import traceback
-            traceback.print_exc()
-        finally:
-            if self.strategy.best_qmodel:
-                logger.info(
-                    "Specified timeout or max trials is reached! "
-                    "Found a quantized model which meet accuracy goal. Exit.")
-                self.strategy.deploy_config()
-            else:
-                logger.error(
-                    "Specified timeout or max trials is reached! "
-                    "Not found any quantized model which meet accuracy goal. Exit.")
-
-            return self.strategy.best_qmodel
-
-    def __call__(self):
-        """Execute this class.
-
-        For derived classes, an override function is required.
-        """
-        self.pre_process()
-        results = self.execute()
-        return results
-
-    fit = __call__
-
-    @property
-    def train_func(self):
-        """Not support get train_func."""
-        assert False, 'Should not try to get the value of `train_func` attribute.'
-        return None
-
-    @train_func.setter
-    def train_func(self, user_train_func):
-        """Training function.
-
-        Args:
-            user_train_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If training_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed. training_func will return
-                         a trained model.
-        """
-        self._train_func = user_train_func
-
-    @property
-    def eval_func(self):
-        """Not support get eval_func."""
-        assert False, 'Should not try to get the value of `eval_func` attribute.'
-        return None
-
-    @eval_func.setter
-    def eval_func(self, user_eval_func):
-        """Eval function for component.
-
-        Args:
-            user_eval_func: This function takes "model" as input parameter
-                         and executes entire evaluation process with self
-                         contained metrics. If eval_func set,
-                         an evaluation process must be triggered
-                         to make evaluation of the model executed.
-        """
-        self._eval_func = user_eval_func
-
-    @property
-    def eval_dataloader(self):
-        """Getter to eval dataloader."""
-        return self._eval_dataloader
-
-    @eval_dataloader.setter
-    def eval_dataloader(self, dataloader):
-        """Set Data loader for evaluation of component.
-
-        It is iterable and the batched data should consists of yield (input, _).
-        the input in the batched data will be used for model inference, so it
-        should satisfy the input format of specific model.
-        User only need to set eval_dataloader when eval_dataloader can not be
-        configured from yaml file.
-
-        Args:
-            dataloader(generator): user are supported to set a user defined dataloader
-                                   which meet the requirements that can yield tuple of
-                                   (input, label)/(input, _) batched data. Another good
-                                   practice is to use neural_compressor.experimental.common.DataLoader
-                                   to initialize a neural_compressor dataloader object. Notice
-                                   neural_compressor.experimental.common.DataLoader is just a wrapper of the
-                                   information needed to build a dataloader, it can't yield
-                                   batched data and only in this setter method
-                                   a 'real' train_dataloader will be created,
-                                   the reason is we have to know the framework info
-                                   and only after the Component object created then
-                                   framework information can be known.
-                                   Future we will support creating iterable dataloader
-                                   from neural_compressor.experimental.common.DataLoader.
-        """
-        assert hasattr(dataloader, '__iter__') and \
-            hasattr(dataloader, 'batch_size'), \
-            'dataloader must implement __iter__ method and batch_size attribute'
-        self._eval_dataloader = dataloader
-
-    @property
-    def metric(self):
-        """Get `metric` attribute."""
-        return self._metric
-
-    @metric.setter
-    def metric(self, user_metric):
-        """Set metric class or a dict of built-in metric configures,
-        and neural_compressor will initialize this class when evaluation.
-
-        1. neural_compressor have many built-in metrics,
-           user can pass a metric configure dict to tell neural compressor what metric will be use.
-           You can set multi-metrics to evaluate the performance of a specific model.
-                Single metric:
-                    {topk: 1}
-                Multi-metrics:
-                    {topk: 1,
-                     MSE: {compare_label: False},
-                     weight: [0.5, 0.5],
-                     higher_is_better: [True, False]
-                    }
-        For the built-in metrics, please refer to below link:
-        https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
-
-        2. User also can set specific metric through this api. The metric class should take the outputs of the model or
-           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels)
-           as inputs for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
-
-        Args:
-            user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
-
-        """
-        from ..metric import Metric as NCMetric, METRICS
-        if isinstance(user_metric, dict):
-            metric_cfg = user_metric
-        else:
-            if isinstance(user_metric, NCMetric):
-                name = user_metric.name
-                metric_cls = user_metric.metric_cls
-                metric_cfg = {name: {**user_metric.kwargs}}
-            else:
-                for i in ['reset', 'update', 'result']:
-                    assert hasattr(user_metric, i), 'Please realise {} function' \
-                                                    'in user defined metric'.format(i)
-                metric_cls = type(user_metric).__name__
-                name = 'user_' + metric_cls
-                metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.quantization.framework)
-            metrics.register(name, metric_cls)
-        self._metric = metric_cfg
-
     def remove_hook(self, scope, hook):
         """Remove hooks if user want to tune accuracy with train_func."""
         for registed_hook in self.hooks_dict[scope]:
@@ -472,40 +182,16 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
     In this class will apply all hooks for Quantization-Aware Training.
     """
 
-    def __init__(self, conf=None, model=None):
+    def __init__(self, conf=None, model=None, adaptor=None):
         """Construct all the necessary attributes for the callbacks object.
 
         Args:
             conf: A QuantizationAwareTrainingConfig object which definds the compressor behavior.
-            model: Model to be quantized in this object.
+            model: Model to be quantized in this object. It should be neural compressor model.
         """
-        super(QuantizationAwareTrainingCallbacks, self).__init__(conf=None)
-        self.conf = _Config(quantization=conf, benchmark=None,pruning=None, distillation=None, nas=None)
-        self.model = model
-
-        seed = options.random_seed
-        random.seed(seed)
-        np.random.seed(seed)
-
-        framework_specific_info = {'device': self.conf.quantization.device,
-                                   'random_seed': options.random_seed,
-                                   'workspace_path': options.workspace,
-                                   'q_dataloader': None,
-                                   'backend': self.conf.quantization.backend if \
-                                    self.conf.quantization.backend is not None else 'default',
-                                   'format': self.conf.quantization.quant_format if \
-                                    self.conf.quantization.quant_format is not None else 'default'}
-        if self.conf.quantization.approach is not None:
-            framework_specific_info['approach'] = self.conf.quantization.approach
-
-        if 'tensorflow' in self.framework:
-            framework_specific_info.update(
-                {"inputs": self.conf.quantization.inputs, \
-                 "outputs": self.conf.quantization.outputs})
-        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
-        self.adaptor.model = self.model
-        self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
-        self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
+        super(QuantizationAwareTrainingCallbacks, self).__init__(conf=conf, model=model)
+        self.register_hook('on_train_begin', adaptor._pre_hook_for_qat)
+        self.register_hook('on_train_end', adaptor._post_hook_for_qat)
 
     def __repr__(self):
         """Represent this class."""
@@ -523,14 +209,10 @@ class PruningCallbacks(BaseCallbacks):
 
         Args:
             conf: A WeightPruningConfig object which definds the compressor behavior.
-            model: Model to be Pruning in this object.
+            model: Model to be Pruning in this object. It should be neural compressor model.
         """
-        super(PruningCallbacks, self).__init__(conf=None)
-        self.conf = _Config(pruning=conf, quantization=None, benchmark=None
-                           , distillation=None, nas=None)
-        self.cfg = self.conf.pruning
-        self.model = model
-        self.pruners_info = process_config(self.cfg)
+        super(PruningCallbacks, self).__init__(conf=conf, model=model)
+        self.pruners_info = process_config(self.conf)
         self.pruners = []
         self._generate_pruners()
         self.generate_hooks()
@@ -539,8 +221,8 @@ class PruningCallbacks(BaseCallbacks):
         """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
-        if isinstance(self._model.model, torch.nn.Module):
-            get_sparsity_ratio(self.pruners, self._model)
+        if isinstance(self.model.model, torch.nn.Module):
+            get_sparsity_ratio(self.pruners, self.model)
 
     def __repr__(self):
         """Return the class's string representation."""
@@ -555,9 +237,9 @@ class PruningCallbacks(BaseCallbacks):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        if isinstance(self._model.model, torch.nn.Module):
+        if isinstance(self.model.model, torch.nn.Module):
             for info in self.pruners_info:
-                modules = parse_to_prune(info, self._model.model)
+                modules = parse_to_prune(info, self.model.model)
                 if modules == {}:
                     logger.warning("one pruner hooks no layers, please have a check")
 
@@ -577,7 +259,7 @@ class DistillationCallbacks(BaseCallbacks):
 
     Args:
         conf: Distillation_Conf containing teacher model, distillation criterion etc.
-        model: Student model.
+        model: Student model. It should be neural compressor model.
 
     Attributes:
         _epoch_ran: A integer indicating how much epochs ran.
@@ -589,11 +271,9 @@ class DistillationCallbacks(BaseCallbacks):
 
     def __init__(self, conf=None, model=None):
         """Initialize the attributes."""
-        super(DistillationCallbacks, self).__init__()
-        self.conf = _Config(quantization=None, benchmark=None, pruning=None, distillation=conf, nas=None)
-        self.cfg = self.conf.distillation
-        self.model = model
+        super(DistillationCallbacks, self).__init__(conf=conf, model=model)
 
+        self.framework = list(MODELS.keys())[list(MODELS.values()).index(type(model))]
         self._teacher_model = None
         self._criterion = None
         self._epoch_ran = 0
@@ -602,9 +282,8 @@ class DistillationCallbacks(BaseCallbacks):
         self.best_score = 0
         self.best_model = None
         self.hooks_registered = False
-        assert hasattr(self.cfg, "teacher_model"),\
-              "Please assign teacher model in DistillationConfig."
-        self.teacher_model = self.cfg.teacher_model
+        assert hasattr(self.conf, "teacher_model"), "Please assign teacher model in DistillationConfig."
+        self.teacher_model = self.conf.teacher_model
         self.generate_hooks()
         self.create_criterion()
 
@@ -640,7 +319,7 @@ class DistillationCallbacks(BaseCallbacks):
         """Initialize the training configuration."""
         if self._train_cfg is None:
             # train section of distillation section in yaml file should be configured.
-            self._train_cfg = self.cfg.criterion
+            self._train_cfg = self.conf.criterion
         assert self._train_cfg, "train field of distillation section in yaml file must " \
                                 "be configured for distillation if train_func is NOT set."
 
@@ -732,7 +411,7 @@ class DistillationCallbacks(BaseCallbacks):
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            self._teacher_model = Model(user_model, backend=self.framework)
+            self._teacher_model = Model(user_model)
         else:
             self._teacher_model = user_model
 
@@ -743,7 +422,7 @@ class DistillationCallbacks(BaseCallbacks):
         Returns:
             The student model used in the distillation process.
         """
-        return self._model
+        return self.model
 
     @property
     def train_cfg(self):
