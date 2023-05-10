@@ -272,7 +272,7 @@ def main():
         accuracy_criterion.relative = 0.11
         config = PostTrainingQuantConfig(approach='dynamic',
                                          accuracy_criterion=accuracy_criterion)
-        q_model = quantization.fit(model, 
+        q_model = quantization.fit(model,
                                    config,
                                    eval_func=eval_func)
         q_model.save(args.output_model)
