@@ -688,7 +688,6 @@ class ClassifierHeadSearcher(object):
                     all_lc_modules.append(n)
             else:
                 continue
-        # import pdb;pdb.set_trace()
         last_lc = all_lc_modules[-1]
         if last_lc == all_modules[-1]: return last_lc
         else: return None
