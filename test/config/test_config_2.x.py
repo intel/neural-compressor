@@ -47,7 +47,7 @@ class TestGeneralConf(unittest.TestCase):
 
         cfg = MixedPrecisionConfig()
         a = conf(mixed_precision=cfg)
-        self.assertEqual(a.mixed_precision.precision, ["bf16"])
+        self.assertEqual(a.mixed_precision.precisions, ["bf16"])
 
         cfg = MXNet()
         cfg.precisions = "bf16"
