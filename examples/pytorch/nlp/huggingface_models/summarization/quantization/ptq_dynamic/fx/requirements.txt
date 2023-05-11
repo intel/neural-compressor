@@ -5,4 +5,4 @@ protobuf>=3.19.0, <=3.20.3
 rouge-score
 nltk
 py7zr
-transformers>=4.16.0
+transformers==4.28.1
