@@ -15,10 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Neural Compressor Quantization API."""
-
 import os
 import pickle
 import random
+from typing import Optional, Any
+
 import numpy as np
 from .config import _Config, options
 from .data import check_dataloader
@@ -27,6 +28,72 @@ from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import time_limit, dump_class_attrs
+
+
+def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
+    try:
+        import os
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
+
+        model_path = None
+        if isinstance(model, str):
+            model_path = os.path.abspath(model)
+        else:
+            import onnx
+            if isinstance(model, onnx.ModelProto):
+                model_path = os.path.join(workload_location, "input_model.onnx")
+                onnx.save(model, model_path)
+        assert isinstance(model_path, str), 'Model path not detected'
+
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        ni_workload_uuid = neural_insights.add_workload(
+            workload_location=workload_location,
+            workload_mode=WorkloadModes.QUANTIZATION,
+            model_path=model_path,
+            # TODO: Get path for other frameworks than TF
+        )
+        logger.info("Registered quantization workload to Neural Insights.")
+        return ni_workload_uuid
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception:
+        logger.warning("Could not register workload to Neural Insights.")
+    return None
+
+
+def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
+    """Update status of specific workload."""
+    try:
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.update_workload_status(workload_uuid, status)
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception as err:
+        logger.warning(f"Could not update workload status: {err}.")
+
+
+def update_neural_insights_workload_accuracy_data(
+        workload_uuid: str,
+        baseline_accuracy: float,
+        optimized_accuracy: float,
+) -> None:
+    """Update accuracy data of specific workload."""
+    try:
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.update_workload_accuracy_data(
+            workload_uuid,
+            baseline_accuracy,
+            optimized_accuracy,
+        )
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception as err:
+        logger.warning(f"Could not update workload accuracy data: {err}.")
 
 
 def fit(model,
@@ -135,6 +202,9 @@ def fit(model,
         # Saved quantized model in ./saved folder
         q_model.save("./saved")
     """
+    _raw_model = model
+    ni_workload_id = None
+
     if calib_dataloader is not None:
         check_dataloader(calib_dataloader)
     if eval_dataloader is not None:
@@ -199,11 +269,27 @@ def fit(model,
             conf_dict = {}
             dump_class_attrs(conf, conf_dict)
             logger.info(conf_dict)
+            if conf.diagnosis:
+                ni_workload_id = register_neural_insights_workload(
+                    workload_location=os.path.abspath(options.workspace),
+                    model=_raw_model,
+                )
+                if ni_workload_id:
+                    update_neural_insights_workload(ni_workload_id, "wip")
             strategy.traverse()
+            if ni_workload_id:
+                update_neural_insights_workload(ni_workload_id, "success")
+                update_neural_insights_workload_accuracy_data(
+                    ni_workload_id,
+                    strategy.baseline[0],
+                    strategy.cur_best_acc,
+                )
     except KeyboardInterrupt:
         pass
     except Exception as e:  # pragma: no cover
         logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
+        if ni_workload_id:
+            update_neural_insights_workload(ni_workload_id, "failure")
         import traceback
         traceback.print_exc()
     finally:

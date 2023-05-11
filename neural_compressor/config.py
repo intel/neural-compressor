@@ -262,7 +262,9 @@ class BenchmarkConfig:
                  cores_per_instance=None,
                  num_of_instance=None,
                  inter_num_of_threads=None,
-                 intra_num_of_threads=None):
+                 intra_num_of_threads=None,
+                 diagnosis=False,
+                 ):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -276,6 +278,7 @@ class BenchmarkConfig:
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
+        self.diagnosis = diagnosis
         self._framework = None
 
     def keys(self):
@@ -400,6 +403,17 @@ class BenchmarkConfig:
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
                                                         intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def diagnosis(self):
+        """Get diagnosis property."""
+        return self._diagnosis
+
+    @diagnosis.setter
+    def diagnosis(self, diagnosis):
+        """Set diagnosis property."""
+        if _check_value('diagnosis', diagnosis, bool):
+            self._diagnosis = diagnosis
 
     @property
     def model(self):
@@ -717,7 +731,8 @@ class _BaseQuantizationConfig:
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion,
-                 use_distributed_tuning=False):
+                 use_distributed_tuning=False,
+                 diagnosis=False):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
@@ -738,6 +753,7 @@ class _BaseQuantizationConfig:
         self.quant_level = quant_level
         self.use_distributed_tuning = use_distributed_tuning
         self._framework = None
+        self.diagnosis = diagnosis
         self._example_inputs = example_inputs
 
     @property
@@ -1169,7 +1185,9 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
                          tuning_criterion=tuning_criterion,
-                         use_distributed_tuning=use_distributed_tuning)
+                         use_distributed_tuning=use_distributed_tuning,
+                         diagnosis=diagnosis,
+                         )
         self.approach = approach
         self.diagnosis = diagnosis
 
@@ -2164,7 +2182,8 @@ class _Config:
                  mxnet=mxnet_config,
                  keras=keras_config,
                  accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion
+                 tuning_criterion=tuning_criterion,
+                 diagnosis=None,
                  ):
         """Init a config object."""
         self._quantization = quantization
@@ -2179,7 +2198,14 @@ class _Config:
         self._mxnet = mxnet
         self._keras = keras
         self._accuracy = accuracy_criterion
+        if diagnosis is None:
+            diagnosis = False
+            if quantization.diagnosis or benchmark.diagnosis:
+                diagnosis = True
+        if diagnosis:
+            tuning_criterion.max_trials = 1
         self._tuning = tuning_criterion
+        self._diagnosis = diagnosis
 
     @property
     def distillation(self):
@@ -2245,5 +2271,10 @@ class _Config:
     def tuning(self):
         """Get the tuning object."""
         return self._tuning
+
+    @property
+    def diagnosis(self):
+        """Get the diagnosis value."""
+        return self._diagnosis
 
 config = _Config()

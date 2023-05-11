@@ -22,28 +22,31 @@ User should not change values in this file. Instead, user should write a config
 file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
 options.
 """
+import _thread
 import ast
-import cpuinfo
-import logging
 import importlib
-import re
-import numpy as np
+import logging
 import os
 import os.path as osp
 import pickle
-import prettytable as pt
-import psutil
+import re
 import subprocess
 import sys
 import threading
 import time
-import _thread
 from contextlib import contextmanager
+from enum import Enum
 from functools import wraps
 from tempfile import NamedTemporaryFile
-from neural_compressor.utils import logger
-from enum import Enum
+from typing import Dict, List, Any, Optional
+
+import cpuinfo
+import numpy as np
+import prettytable as pt
+import psutil
 from pkg_resources import parse_version
+
+from neural_compressor.utils import logger
 
 required_libs = {
     'tensorflow': ['tensorflow'],
@@ -699,3 +702,192 @@ def alias_param(param_name: str, param_alias: str):
             return result
         return wrapper
     return decorator
+
+
+def print_table(
+        column_mapping: Dict[str, str],
+        table_entries: List[Any],
+        output_handler=logger.info,
+        title: Optional[str] = None,
+        insert_newlines=False,
+) -> None:
+    """
+    Print table with prettytable.
+
+    Args:
+        :
+        column_mapping (dict): Dictionary where key is a column header and value corresponds
+             to object's attribute.
+        table_entries (list): List of objects to be included in the table.
+        output_handler (func, optional): Output handler function.
+
+    Returns:
+        None
+    """
+    from functools import reduce
+    table = pt.PrettyTable(min_table_width=40)
+    if title is not None:
+        table.title = title
+    table.field_names = list(column_mapping.keys())
+    for entry in table_entries:
+        table_row = []
+        for _, attribute in column_mapping.items():
+            if isinstance(entry, dict):
+                table_row.append(entry.get(attribute))
+            else:
+                value = reduce(getattr, [entry] + attribute.split("."))
+                table_row.append(value)
+        table.add_row(table_row)
+    lines = table.get_string().split('\n')
+    for i in lines:
+        if insert_newlines:
+            i += "\n"
+        output_handler(i)
+
+
+def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:
+    """Get information about tensors."""
+    tensors_filenames = {
+        "input": os.path.join("fp32", "inspect_result.pkl"),
+        "optimized": os.path.join("quan", "inspect_result.pkl"),
+    }
+
+    tensors_filename = tensors_filenames.get(model_type, None)
+    if tensors_filename is None:
+        raise Exception(f"Could not find tensors data for {model_type} model.")
+    tensors_path = os.path.join(
+        workload_location,
+        "inspect_saved",
+        tensors_filename,
+    )
+    if not os.path.exists(tensors_path):
+        raise Exception("Could not find tensor data for specified optimization.")
+    with open(tensors_path, "rb") as tensors_pickle:
+        dump_tensor_result = pickle.load(tensors_pickle)
+    return dump_tensor_result
+
+
+def get_weights_details(workload_location: str) -> list:
+    """Get weights details for model."""
+    from neural_compressor.utils.weights_details import WeightsDetails
+    weights_details = []
+
+    input_model_tensors: dict = get_tensors_info(workload_location, model_type="input")["weight"]
+    optimized_model_tensors: dict = get_tensors_info(workload_location, model_type="optimized")[
+        "weight"
+    ]
+
+    common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+    for op_name in common_ops:
+
+        input_model_op_tensors = input_model_tensors[op_name]
+        optimized_model_op_tensors = optimized_model_tensors[op_name]
+
+        if isinstance(input_model_op_tensors, dict):
+            tensors_data = zip(input_model_op_tensors.items(), optimized_model_op_tensors.items())
+            for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in tensors_data:
+                if input_op_values.shape != optimized_op_values.shape:
+                    continue
+
+                weights_entry = WeightsDetails(
+                    input_op_name,
+                    input_op_values,
+                    optimized_op_values,
+                )
+                weights_details.append(weights_entry)
+    return weights_details
+
+
+def dump_table(
+        filepath: str,
+        column_mapping: Dict[str, str],
+        table_entries: List[Any],
+        file_type: str = "csv",
+) -> None:
+    """
+    Dump table data to file.
+
+    Args:
+        :
+        filepath (str): The path of the file to which the data is to be dumped.
+        column_mapping (dict): Dictionary where key is a column header and value corresponds
+             to object's attribute.
+        table_entries (list): List of objects to be included in the table.
+        file_type (str): name of the file extension. Currently only csv is supported.
+
+    Returns:
+        None
+    """
+    supported_filetypes = {
+        "csv": dump_table_to_csv,
+    }
+
+    dump_function = supported_filetypes.get(file_type, None)
+    if dump_function is None:
+        raise Exception(f"{file_type} is not supported")
+    dump_function(
+        filepath=filepath,
+        column_mapping=column_mapping,
+        table_entries=table_entries,
+    )
+
+
+def dump_table_to_csv(
+    filepath: str,
+    column_mapping: Dict[str, str],
+    table_entries: List[Any],
+):
+    """
+        Dump table data to csv file.
+
+        Args:
+            :
+            filepath (str): The path of the file to which the data is to be dumped.
+            column_mapping (dict): Dictionary where key is a column header and value corresponds
+                 to object's attribute.
+            table_entries (list): List of objects to be included in the table.
+
+        Returns:
+            None
+        """
+    from csv import DictWriter
+    from functools import reduce
+
+    fieldnames = list(column_mapping.keys())
+
+    parsed_entries = []
+
+    for entry in table_entries:
+        parsed_entry = {}
+        for column_name, attribute in column_mapping.items():
+            if isinstance(entry, dict):
+                parsed_entry.update({column_name: entry.get(attribute)})
+            else:
+                value = reduce(getattr, [entry] + attribute.split("."))
+                parsed_entry.update({column_name: value})
+        parsed_entries.append(parsed_entry)
+
+    with open(filepath, "w", newline="") as csv_file:
+        writer = DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(parsed_entries)
+
+
+def get_number_of_sockets() -> int:
+    """Get number of sockets in platform."""
+    cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
+    if sys.platform == "win32":
+        cmd = 'wmic cpu get DeviceID | find /c "CPU"'
+
+    proc = subprocess.Popen(
+        args=cmd,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=False,
+    )
+    proc.wait()
+    if proc.stdout:
+        for line in proc.stdout:
+            return int(line.decode("utf-8", errors="ignore").strip())
+    return 0

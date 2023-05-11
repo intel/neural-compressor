@@ -298,7 +298,7 @@ class Benchmark(object):
                 len(core_list), ','.join(core_list.astype(str)))
         elif sys.platform in ['win32']:  # pragma: no cover
             # (TODO) should we move the hw_info from ux?
-            from neural_compressor.ux.utils.hw_info import get_number_of_sockets
+            from neural_compressor.utils.utility import get_number_of_sockets
             num_of_socket = int(get_number_of_sockets())
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket

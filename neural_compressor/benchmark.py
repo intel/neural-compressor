@@ -15,24 +15,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Benchmark is used for evaluating the model performance."""
-
+import json
 import os
 import re
-import sys
-import numpy as np
-import subprocess
 import signal
-import psutil
+import subprocess
+import sys
 from threading import Thread
+from typing import Optional, Any
 
-from neural_compressor.data import check_dataloader
+import numpy as np
+import psutil
+
+from neural_compressor.profiling.parser.factory import ParserFactory
+from neural_compressor.profiling.profiler.factory import ProfilerFactory
 from .adaptor import FRAMEWORKS
-from .objective import MultiObjective
-from .config import BenchmarkConfig, options
-from .utils import alias_param, logger, OPTIONS
-from .utils.utility import GLOBAL_STATE, MODE
+from .config import BenchmarkConfig
+from .config import options
+from .data import check_dataloader
 from .model import BaseModel, Model
-from .utils import logger
+from .objective import MultiObjective
+from .profiling.parser.parser import ProfilingParser
+from .profiling.profiler.profiler import Profiler
+from .utils import alias_param, logger, OPTIONS
+from .utils.utility import GLOBAL_STATE, MODE, print_table, dump_table
 from .utils.utility import Statistics
 
 
@@ -184,6 +190,18 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
                                   adaptor,
                                   None,
                                   iteration=conf.iteration)
+        logger.info("Start to run Profiling")
+        if conf.diagnosis and os.environ.get('NC_ENV_CONF', None) in [None, 'False']:
+            ni_workload_id = register_neural_insights_workload(
+                workload_location=os.path.abspath(os.path.abspath(options.workspace)),
+                model=model.model,
+            )
+            try:
+                update_neural_insights_workload(ni_workload_id, "wip")
+                profile(model, conf, b_dataloader)
+                update_neural_insights_workload(ni_workload_id, "success")
+            except Exception:
+                update_neural_insights_workload(ni_workload_id, "failure")
 
         objectives = MultiObjective(["performance"],
                                     {'relative': 0.1},
@@ -227,7 +245,7 @@ def generate_prefix(core_list):
             len(core_list), ','.join(core_list.astype(str)))
     elif sys.platform in ['win32']:  # pragma: no cover
         # (TODO) should we move the hw_info from ux?
-        from neural_compressor.ux.utils.hw_info import get_number_of_sockets
+        from neural_compressor.utils.utility import get_number_of_sockets
         num_of_socket = int(get_number_of_sockets())
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
         cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
@@ -351,6 +369,97 @@ def summary_benchmark():
         pass
 
 
+def profile(model, conf, b_dataloader) -> None:
+    """Execute profiling for benchmark configuration."""
+    intra_num_of_threads = 1
+    inter_num_of_threads = 1
+    num_warmup = 10
+
+    intra_num_of_threads_conf = conf.intra_num_of_threads
+    if intra_num_of_threads_conf is not None:
+        intra_num_of_threads = intra_num_of_threads_conf
+    else:
+        logger.warning(
+            f"Could not find intra_num_of_threads value in config. Using: {intra_num_of_threads}",
+        )
+
+    inter_num_of_threads_conf = conf.inter_num_of_threads
+    if inter_num_of_threads_conf is not None:
+        inter_num_of_threads = inter_num_of_threads_conf
+    else:
+        logger.warning(
+            f"Could not find inter_num_of_threads value in config. Using: {inter_num_of_threads}",
+        )
+
+    num_warmup_conf = conf.warmup
+    if num_warmup_conf is not None:
+        num_warmup = num_warmup_conf
+    else:
+        logger.warning(
+            f"Could not get find num_warmup value in config. Using: {num_warmup}",
+        )
+
+    profiling_log = os.path.abspath(
+        os.path.join(
+            options.workspace,
+            "diagnosis.log",
+        ),
+    )
+    profiler: Profiler = ProfilerFactory.get_profiler(
+        model=model,
+        dataloader=b_dataloader,
+        log_file=profiling_log,
+    )
+    profiler.profile_model(
+        intra_num_of_threads=intra_num_of_threads,
+        inter_num_of_threads=inter_num_of_threads,
+        num_warmup=num_warmup,
+    )
+    parser: ProfilingParser = ParserFactory.get_parser(
+        model=model,
+        logs=[profiling_log],
+    )
+    parsed_results = parser.process()
+    print_table(
+        title="Profiling",
+        column_mapping={
+            "Node name": "node_name",
+            "Total execution time [us]": "total_execution_time",
+            "Accelerator execution time [us]": "accelerator_execution_time",
+            "CPU execution time [us]": "cpu_execution_time",
+            "OP run": "op_run",
+            "OP defined": "op_defined",
+        },
+        table_entries=parsed_results,
+    )
+
+    profiling_table_file = os.path.join(
+        options.workspace,
+        "profiling_table.csv",
+    )
+
+    dump_table(
+        filepath=profiling_table_file,
+        column_mapping={
+            "Node name": "node_name",
+            "Total execution time [us]": "total_execution_time",
+            "Accelerator execution time [us]": "accelerator_execution_time",
+            "CPU execution time [us]": "cpu_execution_time",
+            "OP run": "op_run",
+            "OP defined": "op_defined",
+        },
+        table_entries=parsed_results,
+        file_type="csv",
+    )
+
+    profiling_data_file = os.path.join(
+        options.workspace,
+        "profiling_data.json",
+    )
+    with open(profiling_data_file, "w") as profiling_json:
+        json.dump(parsed_results, profiling_json, indent=4)
+
+
 def benchmark_with_raw_cmd(raw_cmd, conf=None):
     """Benchmark the model performance with the raw commend.
 
@@ -370,13 +479,58 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
     """
     if conf is not None:
         if conf.backend == "ipex":
-            import intel_extension_for_pytorch
+            pass
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         # disable multi-instance for running bechmark on GPU device
         set_all_env_var(conf)
 
     config_instance(raw_cmd)
     summary_benchmark()
+
+
+def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
+    try:
+        import os
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
+
+        model_path = None
+        if isinstance(model, str):
+            model_path: str = os.path.abspath(model)
+        else:
+            import onnx
+            if isinstance(model, onnx.ModelProto):
+                model_path: str = os.path.join(workload_location, "input_model.onnx")
+                os.makedirs(workload_location, exist_ok=True)
+                onnx.save(model, model_path)
+        assert isinstance(model_path, str), 'Model path not detected'
+
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        ni_workload_uuid = neural_insights.add_workload(
+            workload_location=workload_location,
+            workload_mode=WorkloadModes.BENCHMARK,
+            model_path=model_path,
+        )
+        logger.info("Registered benchmark workload to Neural Insights.")
+        return ni_workload_uuid
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception as err:
+        logger.warning(f"Could not register workload to Neural Insights: {err}.")
+    return None
+
+
+def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
+    """Update status of specific workload."""
+    try:
+        from neural_insights import NeuralInsights
+        from neural_insights.utils.consts import WORKDIR_LOCATION
+        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
+        neural_insights.update_workload_status(workload_uuid, status)
+    except ImportError:
+        logger.info("Neural Insights not found.")
+    except Exception as err:
+        logger.warning(f"Could not update workload status: {err}.")
 
 
 @alias_param("conf", param_alias='config')
@@ -401,7 +555,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
     if conf.backend == "ipex":
-        import intel_extension_for_pytorch
+        pass
 
     wrapped_model = Model(model, conf=conf)
 
