@@ -535,7 +535,6 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         self.assertIsNotNone(op_to_traces)
 
 class TestPyTorchBlockDetector(unittest.TestCase):
-    # TODO add test for ipex
     def test_block_detector(self):
         from neural_compressor.adaptor.torch_utils.block_detector import TransformerModelBlockDetector, BLOCK_PATTERNS
         from transformers import BertModel

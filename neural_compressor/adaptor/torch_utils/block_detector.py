@@ -96,7 +96,7 @@ class TransformerModelBlockDetector:
             indent = "    "*depth
             new_name = prefix + '.' + name if prefix != "" else name
             model_type = sub_module.__class__.__name__
-            logger.info( f"Depth: [{depth}]" + indent + f"[{model_type}]{ new_name}")
+            logger.debug( f"Depth: [{depth}]" + indent + f"[{model_type}]{ new_name}")
             sub_key = (depth, i, model_type)
             if sub_key not in result[key]:
                 result[key][sub_key] = dict()

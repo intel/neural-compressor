@@ -1054,7 +1054,7 @@ class TemplateAdaptor(Adaptor):
         q_capability['opwise'] = OrderedDict()
         # add block ops
         if self.block_info:
-            logger.info(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
+            logger.debug(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
         q_capability['block_info'] = self.block_info
         
         quant_datatypes = self.query_handler.get_quant_datatypes()
