@@ -23,6 +23,7 @@ if [[ "${tensorflow_version}" == *"-official" ]]; then
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
     pip install /tf_dataset/tf_binary/221212/tensorflow*.whl
     pip install protobuf==3.20.3
+    pip install horovod==0.27.0
     if [[ $? -ne 0 ]]; then
       exit 1
     fi
