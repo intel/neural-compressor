@@ -16,9 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..utils import torch
-import random
-from ..utils import logger
+from ..utils import torch, logger
+import random 
 
 class PostCompressionUtils(object):
     """Operations library related to weight compression."""

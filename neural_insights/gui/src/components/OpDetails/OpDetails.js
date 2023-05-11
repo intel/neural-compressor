@@ -34,7 +34,7 @@ export default function OpDetails({ selectedWorkload, selectedOp, setHistogramTy
   });
 
   useEffect(() => {
-    if (selectedOp.length) {
+    if (selectedOp?.length) {
       api.post('api/diagnosis/op_details?token=asd', { workload_id: selectedWorkload.uuid, op_name: selectedOp })
         .then(
           response => {

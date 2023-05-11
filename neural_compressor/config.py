@@ -18,6 +18,7 @@
 import datetime
 import logging
 from schema import Schema, And, Optional
+from .utils import alias_param
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -162,7 +163,7 @@ class Options:
 
     Example::
 
-        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
@@ -247,7 +248,7 @@ class BenchmarkConfig:
         from neural_compressor.benchmark import fit
 
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+        fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
     def __init__(self,
                  inputs=[],
@@ -1313,12 +1314,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def approach(self):
         """Get approach."""
         return self._approach
-    
+
     @property
     def framework(self):
         """Get framework."""
         return self._framework
-    
+
     @framework.setter
     def framework(self, framework):
         """Set framework."""
@@ -1327,7 +1328,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
 class WeightPruningConfig:
     """Config Class for Pruning. Define a single or a sequence of pruning configs.
-    
+
     Args:
         pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
             Parameters defined out of pruning_configs are valid for all layers.
@@ -1665,7 +1666,7 @@ class MixedPrecisionConfig(object):
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
                                  default is 'default'.
-        precision (str, optional): Target precision for mix precision conversion.
+        precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
@@ -1680,12 +1681,13 @@ class MixedPrecisionConfig(object):
         from neural_compressor.config import MixedPrecisionConfig
 
         conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+        converted_model = mix_precision.fit(model, conf=conf)
     """
+    @alias_param("precisions", param_alias="precision")
     def __init__(self,
                  device="cpu",
                  backend="default",
-                 precision="bf16",
+                 precisions="bf16",
                  model=None,
                  model_name="",
                  inputs=[],
@@ -1701,27 +1703,27 @@ class MixedPrecisionConfig(object):
         self.excluded_precisions = excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.tuning_criterion = tuning_criterion
-        self.precision = precision
-        self.use_bf16 = "bf16" in self.precision
+        self.precisions = precisions
+        self.use_bf16 = "bf16" in self.precisions
         self.model = model
         self.model_name = model_name
         self._framework = None
 
     @property
-    def precision(self):
+    def precisions(self):
         """Get precision."""
-        return self._precision
+        return self._precisions
 
-    @precision.setter
-    def precision(self, precision):
+    @precisions.setter
+    def precisions(self, precision):
         """Set precision."""
         if isinstance(precision, str):
             assert precision in ["fp16", "bf16"], "Only support 'fp16' and 'bf16' for mix precision."
-            self._precision = [precision]
+            self._precisions = [precision]
         elif isinstance(precision, list):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
-            self._precision = precision
+            self._precisions = precision
 
     @property
     def model(self):
@@ -2106,7 +2108,7 @@ class MXNet:
         if not isinstance(precisions, list):
             precisions = [precisions]
         for pr in precisions:
-            _check_value('precision', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
+            _check_value('precisions', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
         self._precisions = precisions
 
 
@@ -2180,7 +2182,8 @@ class _Config:
                  mxnet=mxnet_config,
                  keras=keras_config,
                  accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion
+                 tuning_criterion=tuning_criterion,
+                 diagnosis=None,
                  ):
         """Init a config object."""
         self._quantization = quantization
@@ -2195,7 +2198,14 @@ class _Config:
         self._mxnet = mxnet
         self._keras = keras
         self._accuracy = accuracy_criterion
+        if diagnosis is None:
+            diagnosis = False
+            if quantization.diagnosis or benchmark.diagnosis:
+                diagnosis = True
+        if diagnosis:
+            tuning_criterion.max_trials = 1
         self._tuning = tuning_criterion
+        self._diagnosis = diagnosis
 
     @property
     def distillation(self):
@@ -2256,10 +2266,15 @@ class _Config:
     def accuracy(self):
         """Get the accuracy object."""
         return self._accuracy
-    
+
     @property
     def tuning(self):
         """Get the tuning object."""
         return self._tuning
+
+    @property
+    def diagnosis(self):
+        """Get the diagnosis value."""
+        return self._diagnosis
 
 config = _Config()

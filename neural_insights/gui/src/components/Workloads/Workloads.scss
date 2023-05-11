@@ -28,3 +28,11 @@
   max-height: 35vh;
   max-width: 400px;
 }
+
+.spinner {
+  color: #5B69FF;
+  position: absolute;
+  top: 50vh;
+  left: 50vw;
+  z-index: 1000;
+}

@@ -12,11 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './Diagnosis.scss';
-import Table from 'react-bootstrap/Table';
 import Graph from './../Graph/Graph';
 import OpDetails from './../OpDetails/OpDetails';
+import OpList from './../OpList/OpList';
 import Histogram from './../Histogram/Histogram';
 import Workloads from './../Workloads/Workloads';
 import Profiling from './../Profiling/Profiling';
@@ -24,7 +24,6 @@ import Warning from './../Warning/Warning';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/esm/Button';
-import { api } from './../../App';
 
 function Diagnosis() {
   const [selectedNode, setSelectedNode] = useState(null);
@@ -41,9 +40,9 @@ function Diagnosis() {
         <div className="flex-item">
           <div className="flexbox-inside">
             <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} />
-            {selectedWorkload?.mode === 'quantization' &&
+            {/* {selectedWorkload?.mode === 'quantization' &&
               <NodeSearch />
-            }
+            } */}
             {selectedWorkload?.mode === 'quantization' &&
               <NodeProperties selectedNode={selectedNode} />
             }
@@ -80,61 +79,7 @@ function Diagnosis() {
   )
 };
 
-function OpList({ selectedWorkload, setSelectedOp, selectedOp, setWarningText }) {
-  const [opList, setOpList] = useState([]);
-
-  useEffect(() => {
-    if (selectedWorkload) {
-      api.post('api/diagnosis/op_list?token=asd', { workload_id: selectedWorkload.uuid })
-        .then(
-          response => {
-            setOpList(response.data);
-          })
-        .catch(error => {
-          setWarningText(error.message + ': ' + error?.response?.data);
-        });
-    }
-  }, [selectedWorkload, selectedOp]);
-
-  const tableContent =
-    opList.map(opData => {
-      return (
-        <tr key={opData['OP name']}
-          className={opData['OP name'] === selectedOp ? 'clickable active' : 'clickable'}
-          onClick={() => {
-            setSelectedOp(opData['OP name']);
-            setTimeout(() => {
-              document.getElementById('opDetails').scrollIntoView({ behavior: 'smooth' });
-            }, 500)
-          }}>
-          <td className="cell">{opData['OP name']}</td>
-          <td className="cell right nowrap">{opData['MSE'].toExponential(3)}</td>
-          <td className="cell right">{opData['Activation Min'].toFixed(2)}</td>
-          <td className="cell right">{opData['Activation Max'].toFixed(2)}</td>
-        </tr>
-      )
-    });
-
-  return (
-    <div className="overflow-table">
-      <Table className="rounded" hover>
-        <thead>
-          <tr>
-            <th className="header center">OP Name</th>
-            <th className="header center">MSE</th>
-            <th className="header center">Activation Min</th>
-            <th className="header center">Activation Max</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableContent}
-        </tbody>
-      </Table>
-    </div>
-  );
-}
-
-export function NodeProperties({ selectedNode }) {
+function NodeProperties({ selectedNode }) {
   if (selectedNode) {
     const propertyList = Object.entries(selectedNode.properties).map(([key, value]) => {
       return (

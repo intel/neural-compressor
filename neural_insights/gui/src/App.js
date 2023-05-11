@@ -17,7 +17,7 @@ import Diagnosis from './components/Diagnosis/Diagnosis';
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: `https://10.91.48.210:4567/`
+  baseURL: `/`
 });
 
 function App() {

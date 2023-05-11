@@ -14,6 +14,7 @@
 // limitations under the License.
 import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/esm/Button';
+import Spinner from 'react-bootstrap/Spinner';
 import './Workloads.scss';
 import moment from 'moment';
 import { api } from './../../App';
@@ -22,10 +23,10 @@ import { io } from 'socket.io-client';
 
 export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText }) {
   const [workloads, setWorkloads] = useState([]);
+  const [spinner, setSpinner] = useState(true);
 
-  let socket = io('https://10.91.48.210:4567/');
+  let socket = io('/');
   socket.on('Config update', data => {
-    console.log(data);
     getWorkloads();
   });
 
@@ -38,11 +39,13 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
       .then(
         response => {
           setSelectedWorkload(response.data.workloads[0]);
-          setWorkloads(response.data.workloads)
+          setWorkloads(response.data.workloads);
+          setSpinner(false);
         }
       )
       .catch(error => {
         setWarningText(error.message);
+        setSpinner(false);
       });
   }
 
@@ -59,6 +62,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   return (
     <div>
+      {spinner && <Spinner className="spinner" animation="border" />}
       {workloadsList.length > 0 &&
         <div className="data-panel workloads-list">
           <h3>Workloads</h3>

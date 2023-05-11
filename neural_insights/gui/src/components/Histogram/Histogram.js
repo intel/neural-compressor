@@ -16,12 +16,14 @@ import React, { useEffect, useState } from 'react';
 import './Histogram.scss';
 import Plot from 'react-plotly.js';
 import { api } from './../../App';
+import Spinner from 'react-bootstrap/Spinner';
 
 function Histogram({ selectedWorkload, selectedOp, histogramType, setWarningText }) {
-  const [histogramData, setHistogramData] = useState([]);
+  const [histogramData, setHistogramData] = useState(null);
 
   useEffect(() => {
     if (selectedOp.length && histogramType.length) {
+      setHistogramData(null);
       api.post('api/diagnosis/histogram?token=asd', { workload_id: selectedWorkload.uuid, op_name: selectedOp, type: histogramType })
         .then(
           response => {
@@ -36,10 +38,11 @@ function Histogram({ selectedWorkload, selectedOp, histogramType, setWarningText
   return (
     <div className="Histogram">
       <h3>Histogram</h3>
+      {!histogramData && <Spinner className="spinner" animation="border" />}
 
-      {histogramData.length === 0 && <p>No histogram data for this OP.</p>}
+      {histogramData?.length === 0 && <p>No histogram data for this OP.</p>}
 
-      {histogramData.length > 0 &&
+      {histogramData?.length > 0 &&
         <div>
           <div>
             When you hover over the chart a menu will appear in the top right corner.<br />

@@ -31,7 +31,6 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..data.dataloaders.base_dataloader import BaseDataLoader
-from .torch_utils.smooth_quant import TorchSmoothQuant
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -1269,6 +1268,7 @@ class TemplateAdaptor(Adaptor):
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
 
         if not hasattr(self, 'sq') or force_re_smooth:
+            from .torch_utils.smooth_quant import TorchSmoothQuant
             self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
@@ -1341,7 +1341,7 @@ class TemplateAdaptor(Adaptor):
 
         return model
 
-    def _wrapper_sq_linear(self, tmp_model):
+    def _wrapper_sq_linear(self, tmp_model, recover=False):
         """Help function for _get_quantizable_ops_recursively to align smoothquant processed model"""
         class SQLinearWrapper(torch.nn.Module):
             def __init__(self, module):
@@ -1351,16 +1351,22 @@ class TemplateAdaptor(Adaptor):
             def forward(self, X):
                 return self.sq_linear(X)
 
-        module_name_list = []
         from .torch_utils.smooth_quant import get_module, set_module
-        for name, module in tmp_model.named_modules():
-            if 'Linear' == str(module.__class__.__name__):
-                module_name_list.append(name)
-        for name in module_name_list:
-            module = get_module(tmp_model, name)
-            new_module = SQLinearWrapper(module)
-            set_module(tmp_model, name, new_module)
-        return tmp_model
+        if recover:
+            for name in self.sq_module_name_list:
+                new_module = get_module(tmp_model, name+'.sq_linear')
+                set_module(tmp_model, name, new_module)
+            return tmp_model
+        else:
+            self.sq_module_name_list = []
+            for name, module in tmp_model.named_modules():
+                if 'Linear' == str(module.__class__.__name__):
+                    self.sq_module_name_list.append(name)
+            for name in self.sq_module_name_list:
+                module = get_module(tmp_model, name)
+                new_module = SQLinearWrapper(module)
+                set_module(tmp_model, name, new_module)
+            return tmp_model
 
 
 unify_op_type_mapping = {
@@ -2550,10 +2556,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                                             inplace=True)  # pylint: disable=E1121
                     else:
                         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                        qscheme=torch.per_channel_symmetric))
+                        if self.version.release >= Version("2.1").release:
+                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        else:
+                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                            qscheme=torch.per_channel_symmetric))
 
                         q_model = ipex.quantization.prepare(model._model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=True)
@@ -2671,10 +2680,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                     repr(e)))
                                 self.tmp_model = model
                         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                        qscheme=torch.per_channel_symmetric))
+                        if self.version.release >= Version("2.1").release:
+                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        else:
+                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                            qscheme=torch.per_channel_symmetric))
                         q_model = ipex.quantization.prepare(model._model, static_qconfig, \
                                                 example_inputs=self.example_inputs, inplace=False)
                         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
@@ -2707,7 +2719,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                         # At the 2nd run, the llga pass will be triggered and the model is turned into
                         # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                        self.calib_func(q_model, dataloader, tmp_iterations=2)
+                        self._simple_inference(q_model, dataloader, iterations=2)
 
             self.tmp_model._model = q_model
             with open(self.ipex_config_path, 'r') as f:
@@ -2976,10 +2988,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                qscheme=torch.per_channel_symmetric))
+                    if self.version.release >= Version("2.1").release:
+                        # HistogramObserver will cause a performance issue.
+                        # static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                        qconfig = QConfig(activation=MinMaxObserver.with_args(
+                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                    qscheme=torch.per_channel_symmetric))
+                        from torch.ao.quantization import QConfigMapping
+                        static_qconfig = QConfigMapping().set_global(qconfig)
+                    else:
+                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                    qscheme=torch.per_channel_symmetric))
                     # For smoothquant optimized model, need ipex version >= 2.1
                     if self.recipes and self.recipes.get('smooth_quant', False) \
                       and self.version.release >= Version("2.1").release:  # pragma: no cover
@@ -2998,8 +3020,16 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 if self.q_func is None:
                     self.model_calibration(tmp_model, self.q_dataloader)
                 else:
-                    self.q_func(tmp_model)
+                    try:
+                        self.q_func(tmp_model)
+                    except:
+                        logger.error("The q_func failed when calibrating with ipex, "+\
+                                     "using dataloader with 1 iteration insteadly.")
+                        self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+                if hasattr(self, 'sq_module_name_list') and self.performance_only:
+                    # recover model before SmoothQuant, tmp_model is copied when prepare.
+                    model = self._wrapper_sq_linear(model, recover=True)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
@@ -3114,12 +3144,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # fetch SmoothQuant scale info from pre-optimized model
         from .torch_utils.model_wrapper import SQLinearWrapper
-        from .torch_utils.smooth_quant import update_sq_scale
+        from .torch_utils.util import update_sq_scale
         smoothquant_scale_info = {}
         for name, module in q_model.named_modules():
             if isinstance(module, SQLinearWrapper):
+                weight_scale = module._get_weight_scale()
                 smoothquant_scale_info[name + '.sq_linear'] = {
                     'alpha': module.alpha,
+                    'input_scale_for_mul': module.input_scale,
+                    'input_scale_after_mul': module.scale,
+                    'input_zero_point_after_mul': module.zero_point,
+                    'input_dtype': module.dtype,
+                    'weight_scale_after_mul': weight_scale,
                 }
                 module.ipex = True
                 # Note: save weight scale before recover
@@ -3127,23 +3163,37 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+        if self.performance_only:
+            logger.error("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
-        self.calib_func(q_model, dataloader, tmp_iterations=1) # fake calibration for save qconf
-        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # enable fallback
+        self._simple_inference(q_model, dataloader, iterations=1)   # fake calibration for save qconf
+        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._cfg_to_qconfig(tune_cfg)
-        # update ipex_config.json with smoothquant_scale_info
+        # TODO: update_sq_scale is used to update observer, should fuse in _cfg_to_qconfig
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
+
         # real calibration for other operators
-        if q_func is not None:
-            q_func(q_model)
-        else:
-            iterations = tune_cfg.get('calib_iteration', 1)
-            self.model_calibration(q_model, dataloader, iterations, None,
+        try:
+            # IPEX may raise an error on the second iteration.
+            # OverflowError: cannot convert float infinity to integer
+            if q_func is not None:
+                q_func(q_model)
+            else:
+                iterations = tune_cfg.get('calib_iteration', 1)
+                self.model_calibration(q_model, dataloader, iterations, None,
                                     tune_cfg.get('calib_sampling_size', 1))
+        except:
+            logger.error("The calibration failed when calibrating with ipex, "+\
+                         "using dataloader with 1 iteration insteadly.")
+
+        # update ipex_config.json with smoothquant_scale_info
+        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+        q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
@@ -3151,7 +3201,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 with torch.cpu.amp.autocast():
                     q_model = ipex.quantization.convert(q_model, inplace=True)
                     # inference once after convert for SmoothQuant
-                    self.calib_func(q_model, dataloader, tmp_iterations=1)
+                    self._simple_inference(q_model, dataloader, iterations=1)
                     try:
                         q_model = torch.jit.trace(q_model, self.example_inputs)
                         q_model = torch.jit.freeze(q_model.eval())
@@ -3161,7 +3211,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         else:
             q_model = ipex.quantization.convert(q_model, inplace=True)
             # inference once after convert for SmoothQuant
-            self.calib_func(q_model, dataloader, tmp_iterations=1)
+            self._simple_inference(q_model, dataloader, iterations=1)
             with torch.no_grad():
                 try:
                     q_model = torch.jit.trace(q_model, self.example_inputs)
@@ -3172,7 +3222,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
         # At the 2nd run, the llga pass will be triggered and the model is turned into
         # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-        self.calib_func(q_model, dataloader, tmp_iterations=2)
+        self._simple_inference(q_model, dataloader, iterations=2)
         self.tmp_model._model = q_model
 
         with open(self.ipex_config_path, 'r') as f:
@@ -3202,6 +3252,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                        inspect_type='activation',
                        save_to_disk=False):
         assert False, "Inspect_tensor didn't support IPEX backend now!"
+
+    def _simple_inference(self, q_model, dataloader, iterations=1):
+        """The function is used for ipex warm-up inference."""
+        if self.example_inputs is not None and isinstance(self.example_inputs, (list, tuple)):
+            for _ in range(iterations):
+                q_model(*self.example_inputs)
+        else:
+            self.calib_func(q_model, dataloader, iterations)
 
 
 @adaptor_registry
@@ -4253,7 +4311,7 @@ class PyTorchQuery(QueryBackendCapability):
 
     def get_quant_datatypes(self):
         """Got low-precision data types for quantization.
-        
+
         Collects all data types for quantization, such as int8, int4.
         """
         # TODO to handle other data types such FP8, FP8E4M3

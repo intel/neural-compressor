@@ -45,7 +45,7 @@ function ProfilingTable({ selectedWorkload, profilingTable, setProfilingTable, s
             const showOnChart = {};
             const chartData = [];
             response.data.forEach((node, index) => {
-              if (index > response.data.length - 10) {
+              if (index < 10) {
                 showOnChart[node.node_name] = true;
                 chartData.push(node);
               } else {
