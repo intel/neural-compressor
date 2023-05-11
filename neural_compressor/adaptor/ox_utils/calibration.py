@@ -548,12 +548,14 @@ class ONNXRTAugment:
                 if rmin < 0:
                     rmin = 0
             elif next_node.op_type == 'Clip' and len(next_node.input) == 3:
-                clip_min = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[1]))
-                clip_max = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[2]))
-                if rmin < clip_min:
-                    rmin = clip_min.tolist() if not isinstance(clip_min.tolist(), list)  else clip_min.tolist()[0]
-                if rmax > clip_max:
-                    rmax = clip_max.tolist() if not isinstance(clip_max.tolist(), list)  else clip_max.tolist()[0]
+                if self.model_wrapper.get_initializer(next_node.input[1]) is not None:
+                    clip_min = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[1]))
+                    if rmin < clip_min:
+                        rmin = clip_min.tolist() if not isinstance(clip_min.tolist(), list)  else clip_min.tolist()[0]
+                if self.model_wrapper.get_initializer(next_node.input[2]) is not None:
+                    clip_max = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[2]))
+                    if rmax > clip_max:
+                        rmax = clip_max.tolist() if not isinstance(clip_max.tolist(), list)  else clip_max.tolist()[0]
 
         if last_node:
             if last_node.op_type in ['Conv', 'FusedConv']:
