@@ -198,7 +198,7 @@ class BasicTuneStrategy(TuneStrategy):
             block_fallback_sampler = BlockFallbackTuningSampler(tuning_space=tuning_space,
                                                                 tuning_order_lst=[],
                                                                 initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                                op_block_lst=op_block_fallback_lst[::-1],
+                                                                op_block_lst=op_block_fallback_lst,
                                                                 accumulate=True,
                                                                 target_dtype=target_dtype)
             for op_block_index, op_tuning_cfg in enumerate(block_fallback_sampler):

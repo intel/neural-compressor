@@ -1046,7 +1046,7 @@ class TemplateAdaptor(Adaptor):
         tmp_model = model
         tmp_model.eval()
         quantizable_ops = []
-        self.block_info =None
+        self.block_info =[]
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         q_capability = {}
         q_capability['block_info'] = None
@@ -1055,7 +1055,7 @@ class TemplateAdaptor(Adaptor):
         # add block ops
         if self.block_info:
             logger.debug(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
-        q_capability['block_info'] = self.block_info
+        q_capability['block_info'] = self.block_info[::-1] if self.block_info else None
         
         quant_datatypes = self.query_handler.get_quant_datatypes()
         if self.approach == "quant_aware_training":
