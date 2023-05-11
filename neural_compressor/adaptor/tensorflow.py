@@ -1709,6 +1709,7 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             model: A smoothed Tensorflow model
         """
+        logger.info("Start Smoothing process for Smooth Quantization.")
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
 

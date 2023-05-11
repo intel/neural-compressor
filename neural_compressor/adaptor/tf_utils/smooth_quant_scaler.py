@@ -20,6 +20,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 import logging
 
 logger = logging.getLogger("neural_compressor")
@@ -36,12 +37,14 @@ class SmoothQuantScaler:
     """
 
     def __init__(self, model, dataloader, alpha, scales_per_op):
-        """Initilization."""
+        """Initialization."""
         self.model = model
         self.dataloader = dataloader
         self.alpha = alpha
         self.scales_per_op = scales_per_op
         self.mul_list = []
+        self.g_analyzer = GraphAnalyzer()
+        self.g_analyzer.graph = self.model
 
     def _adjust_activation(self, scale, input_node_name, output_node_name, w_i):
         """Insert the Mul node after the activation before the weight node.
@@ -59,14 +62,8 @@ class SmoothQuantScaler:
                             [input_node_name + "/scale_mul" + node_suffix, input_node_name])
         Helper.set_attr_dtype(mul_node, "T", dtypes.float32)
         self.mul_list.append(mul_node.name)
-        from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-        g = GraphAnalyzer()
-        g.graph = self.model
-        g.add_node(mul_node, input_node_name, [output_node_name]) # v0/conv0/conv2d/Conv2D
-        g.add_node(mul_const_node, None, [input_node_name + "_mul" + node_suffix])
-        sq_graph_def = g.dump_graph()
-        sq_graph_def.library.CopyFrom(self.model.graph_def.library)
-        self.model.graph_def = sq_graph_def
+        self.g_analyzer.add_node(mul_node, input_node_name, [output_node_name])
+        self.g_analyzer.add_node(mul_const_node, None, [input_node_name + "_mul" + node_suffix])
 
     def _adjust_weight(self, scale, weight_node, original_weight):
         """In-place adjust weight by scale.
@@ -101,6 +98,7 @@ class SmoothQuantScaler:
         Returns:
             tuple: A tuple containing the modified model and a list of the inserted multiplication nodes.
         """
+        logger.info("Start scaling on model graph for Smooth Quantization.")
         if self.scales_per_op:
             # 1. obtain the smooth scale per op
             # 2. adjust weight
@@ -135,14 +133,16 @@ class SmoothQuantScaler:
                         logger.info("Skip smoothing the node: {}".format(cur_const_node.name))
                         continue
                     # clip the scales that are too small
-                    scale = np.clip(scale, a_min=1e-2, a_max=1e8)
+                    scale = np.clip(scale, a_min=1e-5, a_max=1e8)
                     # skip smoothing the op where scale has elements that less than 1
                     # if np.any(scale < 1):
                     #     logger.info("skip smooth quant: {}".format(input_node_name))
                     #     continue
-
                     self._adjust_weight(scale, cur_const_node, W)
                     self._adjust_activation(1 / scale, input_node_name, sq_weight_node_names[cur_const_node.name], w_i)
         else:
             pass
+        sq_graph_def = self.g_analyzer.dump_graph()
+        sq_graph_def.library.CopyFrom(self.model.graph_def.library)
+        self.model.graph_def = sq_graph_def
         return self.model, self.mul_list

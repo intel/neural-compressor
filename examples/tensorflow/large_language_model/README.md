@@ -1,27 +1,24 @@
-1. eval fp32
+1. Get fp32 accuracy
 
 ```
-python main.py --model_name <MODEL_NAME>
+python main.py --model_name_or_path <MODEL_NAME>
 ```
 
 
-2. quantize
+2. Do int8 quantization
 
 ```
-python main.py --model_name <MODEL_NAME> --int8
+python main.py --model_name_or_path <MODEL_NAME> --int8
 ```
 
-MODEL_NAME can be following (will use facebook/opt-125m if not specify --model_name):
+`<MODEL_NAME>` can be following:
 
-facebook/opt-125m
-facebook/opt-1.3b
+- gpt2
+- gpt2-medium
+- facebook/opt-125m
 
-3. sq
+3. Do int8 smooth quantization
 
 ```
-python main.py --model_name <MODEL_NAME> --int8 --sq
+python main.py --model_name_or_path <MODEL_NAME> --int8 --sq
 ```
-
-4. eval int8
-
-TODO

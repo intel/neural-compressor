@@ -148,6 +148,7 @@ class INCDataloader:
 
 
 model_name = args.model_name_or_path
+
 tokenizer = transformers.AutoTokenizer.from_pretrained(
     model_name,
     cache_dir="/dev/shm/model_cache"
@@ -185,7 +186,7 @@ if args.int8: # int8
     conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
                                    recipes=recipes,
                                    op_type_dict=op_type_dict, accuracy_criterion=AccuracyCriterion(
-  tolerable_loss=0.9,      # TODO remove for debug
+  tolerable_loss=0.05,      # TODO remove for debug
 ))
 
     q_model = quantization.fit(model,
@@ -193,7 +194,7 @@ if args.int8: # int8
                                calib_dataloader=calib_dataloader,
                                eval_func=eval_func)
     save_model_name = model_name.split("/")[-1]
-    q_model.save(f"{save_model_name}")
+    q_model.save(f"{save_model_name}_int8")
 else:
     acc = evaluator.evaluate(model)
     print(f'Original model accuracy: {acc}')
