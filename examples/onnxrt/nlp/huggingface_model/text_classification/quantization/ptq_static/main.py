@@ -293,6 +293,12 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
+        '--diagnose',
+        dest='diagnose',
+        action='store_true',
+        help='use Neural Insights to diagnose tuning and benchmark.',
+    )
+    parser.add_argument(
        '--config',
        type=str,
        help="config yaml path"
@@ -375,13 +381,18 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
+        if args.diagnose and args.mode != "performance":
+            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         model = onnx.load(args.model_path)
         if args.mode == 'performance':            
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=28,
-                                   num_of_instance=1)
+            conf = BenchmarkConfig(
+                iteration=100,
+                cores_per_instance=28,
+                num_of_instance=1,
+                diagnosis=args.diagnose,
+            )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
@@ -414,10 +425,13 @@ if __name__ == "__main__":
             fp32_op_names = ['/model/(en|de)coder/layers.*/fc(1|2)/MatMul']
         elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
             fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
-        config = PostTrainingQuantConfig(approach='static',
-                                         quant_format=args.quant_format,
-                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
-                                            if fp32_op_names else None,)
+        config = PostTrainingQuantConfig(
+            approach='static',
+            quant_format=args.quant_format,
+            op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
+                                            if fp32_op_names else None,
+            diagnosis=args.diagnose,
+        )
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

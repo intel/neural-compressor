@@ -56,6 +56,13 @@ parser.add_argument(
     help="whether quantize the model"
 )
 parser.add_argument(
+    '--diagnose',
+    dest='diagnose',
+    action='store_true',
+    help='use Neural Insights to diagnose tuning and benchmark.',
+)
+
+parser.add_argument(
     '--config',
     type=str,
     help="config yaml path"
@@ -126,12 +133,17 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
+        if args.diagnose and args.mode != "performance":
+            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=4,
-                                   num_of_instance=1)
+            conf = BenchmarkConfig(
+                iteration=100,
+                cores_per_instance=4,
+                num_of_instance=1,
+                diagnosis=args.diagnose,
+            )
             fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
@@ -143,9 +155,12 @@ if __name__ == "__main__":
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.absolute = 0.01
-        config = PostTrainingQuantConfig(approach='static', 
-                                         accuracy_criterion=accuracy_criterion,
-                                         quant_format=args.quant_format,
-                                         calibration_sampling_size=[50])
+        config = PostTrainingQuantConfig(
+            approach='static',
+            accuracy_criterion=accuracy_criterion,
+            quant_format=args.quant_format,
+            calibration_sampling_size=[50],
+            diagnosis=args.diagnose,
+        )
         q_model = quantization.fit(model, config, calib_dataloader=calib_dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

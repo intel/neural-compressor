@@ -51,6 +51,12 @@ parser.add_argument(
     help="whether quantize the model"
 )
 parser.add_argument(
+    '--diagnose',
+    dest='diagnose',
+    action='store_true',
+    help='use Neural Insights to diagnose tuning and benchmark.',
+)
+parser.add_argument(
     '--output_model',
     type=str,
     default=None,
@@ -185,12 +191,17 @@ if __name__ == "__main__":
         return eval_func(model, dataloader, args.workspace, args.pad_max)
 
     if args.benchmark:
+        if args.diagnose and args.mode != "performance":
+            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         if args.mode == 'performance':            
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=28,
-                                   num_of_instance=1)
+            conf = BenchmarkConfig(
+                iteration=100,
+                cores_per_instance=28,
+                num_of_instance=1,
+                diagnosis=args.diagnose,
+            )
             fit(args.model_path, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval(args.model_path)
@@ -203,7 +214,9 @@ if __name__ == "__main__":
             quant_format='QDQ',
             calibration_sampling_size=[8],
             recipes={'optypes_to_exclude_output_quant': ['MatMul']},
-            op_type_dict={'^((?!(MatMul|Gather)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
+            op_type_dict={'^((?!(MatMul|Gather)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}},
+            diagnosis=args.diagnose,
+        )
         q_model = quantization.fit(args.model_path, config, eval_func=eval, calib_dataloader=Dataloader(batch_size=1))
         if args.quant_format == 'QOperator':
             sess_options = ort.SessionOptions()

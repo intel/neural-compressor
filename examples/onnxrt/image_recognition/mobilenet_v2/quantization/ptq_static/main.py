@@ -249,6 +249,12 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
+        '--diagnose',
+        dest='diagnose',
+        action='store_true',
+        help='use Neural Insights to diagnose tuning and benchmark.',
+    )
+    parser.add_argument(
         '--output_model',
         type=str,
         help="output model path"
@@ -261,7 +267,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--quant_format',
         type=str,
-        default='default', 
+        default='default',
         choices=['default', 'QDQ', 'QOperator'],
         help="quantization format"
     )
@@ -280,10 +286,18 @@ if __name__ == "__main__":
         return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
+        if args.diagnose and args.mode != "performance":
+            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(warmup=10, iteration=1000, cores_per_instance=4, num_of_instance=1)
+            conf = BenchmarkConfig(
+                warmup=10,
+                iteration=1000,
+                cores_per_instance=4,
+                num_of_instance=1,
+                diagnosis=args.diagnose,
+            )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval(model)
@@ -297,7 +311,9 @@ if __name__ == "__main__":
 
         config = PostTrainingQuantConfig(
             quant_format=args.quant_format,
-            accuracy_criterion=accuracy_criterion)
+            accuracy_criterion=accuracy_criterion,
+            diagnosis=args.diagnose,
+        )
  
         q_model = quantization.fit(model, config, calib_dataloader=dataloader,
 			     eval_func=eval)

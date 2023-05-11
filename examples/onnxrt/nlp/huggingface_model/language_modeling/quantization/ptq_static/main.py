@@ -177,6 +177,8 @@ def main():
                         help="Overwrite the cached training and evaluation sets")
     parser.add_argument('--tune',action='store_true', default=False,
                         help='Get bert tuning quantization model with neural_compressor.')
+    parser.add_argument('--diagnose', dest='diagnose', action='store_true',
+                        help='use Neural Insights to diagnose tuning and benchmark.')
     parser.add_argument('--output_model',type=str, default='gpt2_tune.onnx',
                         help='output model path and name')
     parser.add_argument('--benchmark',action='store_true', default=False,
@@ -213,13 +215,18 @@ def main():
         return evaluate(args, model, tokenizer)
 
     if args.benchmark:
+        if args.diagnose and args.mode != "performance":
+            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-            conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=4,
-                                   num_of_instance=1)
+            conf = BenchmarkConfig(
+                iteration=100,
+                cores_per_instance=4,
+                num_of_instance=1,
+                diagnosis=args.diagnose,
+            )
             b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
@@ -252,10 +259,13 @@ def main():
             fp32_op_names = ['Attention_5_matmul']
         elif args.model_name_or_path == 'gpt2':
             fp32_op_names = ['Attention_11_matmul']
-        config = PostTrainingQuantConfig(approach='static', 
-                                         op_type_dict={'Add':FP32},
-                                         accuracy_criterion=accuracy_criterion,
-                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,)
+        config = PostTrainingQuantConfig(
+            approach='static',
+            op_type_dict={'Add':FP32},
+            accuracy_criterion=accuracy_criterion,
+            op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,
+            diagnosis=args.diagnose,
+        )
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
