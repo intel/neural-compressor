@@ -658,7 +658,7 @@ def eval_ssd_r34_mlperf_coco(args):
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
         b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
-        benchmark.fit(ssd_r34, config=b_conf, b_func=coco_eval)
+        benchmark.fit(ssd_r34, conf=b_conf, b_func=coco_eval)
         return
 
 

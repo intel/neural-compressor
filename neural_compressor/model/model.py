@@ -21,6 +21,7 @@ import copy
 import os
 import importlib
 import sys
+from neural_compressor.config import options
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.utils import logger
 from neural_compressor.model.base_model import BaseModel
@@ -162,27 +163,82 @@ class Model(object):
         Returns:
             BaseModel: neural_compressor built-in model
         """
-        backend = kwargs.get("backend", "NA")
-        if backend == "NA" or backend == "default":
-            backend_tmp = get_model_fwk_name(root)
-            if backend_tmp == "pytorch":
-                backend = "pytorch_fx"
+        conf = kwargs.pop("conf", "NA")
+        if isinstance(root, BaseModel):
+            if conf != "NA" and conf.framework is None:
+                conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(root))]
+                if conf.backend == "ipex":
+                    assert conf.framework == "pytorch_ipex",\
+                          "Please wrap the model with correct Model class!"
+                if conf.backend == "itex":
+                    if get_model_type(root.model) == 'keras':
+                        assert conf.framework == "keras",\
+                              "Please wrap the model with KerasModel class!"
+                    else:
+                        assert conf.framework == "tensorflow", \
+                            "Please wrap the model with TensorflowModel class!"
+                        conf.framework = "tensorflow_itex"
+                if getattr(conf, "approach", None) == "quant_aware_training":
+                    assert conf.framework == "tensorflow_qat", \
+                            "Please wrap the model with TensorflowQATModel class!"
             else:
-                backend = backend_tmp
-        elif backend == "ipex":
-            backend = "pytorch_ipex"
-
-        if 'tensorflow' in backend or backend == 'keras':
-            if kwargs.get("approach", None) == "quant_aware_training" or backend == 'tensorflow_qat':
-                return MODELS['tensorflow_qat'](root, **kwargs)
-
-            if 'modelType' in kwargs:
-                model_type = kwargs['modelType']
-            else:
-                model_type = get_model_type(root)
-            if backend == 'keras' and model_type == 'keras':
-                return MODELS['keras'](root, **kwargs)
-            model = MODELS['tensorflow'](model_type, root, **kwargs)
+                if 'tensorflow' in conf.framework:
+                    if getattr(root, "name", None) is None:
+                        root.name = conf.model_name
+                    if getattr(root, "output_tensor_names", None) is None:
+                        root.output_tensor_names = conf.outputs
+                    if getattr(root, "input_tensor_names", None) is None:
+                        root.input_tensor_names = conf.inputs
+                    if getattr(root, "workspace_path", None) is None:
+                        root.workspace_path = options.workspace
+            return root
         else:
-            model = MODELS[backend](root, **kwargs)
+            framework = get_model_fwk_name(root)
+            if conf == "NA":
+                if framework == "pytorch":
+                    framework = "pytorch_fx"
+                if 'tensorflow' in framework:
+                    if kwargs.get("approach", None) == "quant_aware_training":
+                        return MODELS['tensorflow_qat'](root, **kwargs)
+                    if 'modelType' in kwargs:
+                        model_type = kwargs['modelType']
+                    else:
+                        model_type = get_model_type(root)
+                    if model_type == "keras" and kwargs.get("backend", None) == "itex":
+                        return MODELS['keras'](root, **kwargs)
+                    else:
+                        return MODELS[framework](model_type, root, **kwargs)
+                return MODELS[framework](root, **kwargs)
+            else:
+                conf.framework = framework
+                if conf.backend == "default":
+                    if framework == "pytorch":
+                        conf.framework = "pytorch_fx"
+                elif conf.backend == "ipex":
+                    conf.framework = "pytorch_ipex"
+
+                if 'tensorflow' in conf.framework:
+                    if getattr(conf, "approach", None) == "quant_aware_training":
+                        model = MODELS['tensorflow_qat'](root, **kwargs)
+                    else:
+                        if 'modelType' in kwargs:
+                            model_type = kwargs['modelType']
+                        else:
+                            model_type = get_model_type(root)
+                        if conf.backend == "itex":
+                            if model_type == 'keras':
+                                conf.framework = "keras"
+                                model = MODELS[conf.framework](root, **kwargs)
+                            else:
+                                conf.framework = "tensorflow_itex"
+                                model = MODELS[conf.framework](model_type, root, **kwargs)
+                        else:
+                            model = MODELS['tensorflow'](model_type, root, **kwargs)
+                else:
+                    model = MODELS[conf.framework](root, **kwargs)
+                if 'tensorflow' in conf.framework:
+                    model.name = conf.model_name
+                    model.output_tensor_names = conf.outputs
+                    model.input_tensor_names = conf.inputs
+                    model.workspace_path = options.workspace
         return model

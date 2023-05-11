@@ -75,6 +75,10 @@ class MyMetric(BaseMetric):
             np.array(self.pred_list) == np.array(self.label_list))
         return correct_num / self.samples
 
+class MyMetric_keras(MyMetric):
+    def __init__(self, *args):
+        super(MyMetric_keras, self).__init__(*args)
+
 class TestMixedPrecisionWithKerasModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -99,7 +103,7 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
         config = MixedPrecisionConfig()
         q_model = mix_precision.fit(
             model='./models/saved_model',
-            config=config,
+            conf=config,
             eval_dataloader=dataloader, 
             eval_metric=MyMetric())
 
@@ -116,6 +120,30 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
                 found_cast = True
                 break
         self.assertEqual(found_cast, True)
+
+    def test_mixed_precision_with_keras_adaptor(self):
+        from neural_compressor.data import DataLoader
+        dataset = Dataset()
+        dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+
+        from neural_compressor.config import MixedPrecisionConfig
+        from neural_compressor import mix_precision
+        # add backend='itex' to run on keras adaptor
+        config = MixedPrecisionConfig(backend='itex')
+
+        bf16_model = mix_precision.fit(
+            model='./models/saved_model',
+            config=config,
+            eval_dataloader=dataloader, 
+            eval_metric=MyMetric_keras())
+
+        bf16_policy = keras.mixed_precision.Policy('mixed_bfloat16')
+        # bf16_model.model is an obj of tf.keras.Model
+        model_policy = bf16_model.model.dtype_policy
+        conv2d_layer_policy = bf16_model.model.get_layer('conv2d').dtype_policy
+
+        self.assertEqual(model_policy.compute_dtype, bf16_policy.compute_dtype)
+        self.assertEqual(conv2d_layer_policy.compute_dtype, bf16_policy.compute_dtype)
 
 if __name__ == "__main__":
     unittest.main()

@@ -108,7 +108,7 @@ class PreOptimization():
         """
         from neural_compressor.model import Model
 
-        origin_model = Model(self.model._model, **self.model.kwargs)
+        origin_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
         origin_model.name = self.model.name
         origin_model.model_type = self.model.model_type
         origin_model.output_tensor_names = self.model.output_tensor_names

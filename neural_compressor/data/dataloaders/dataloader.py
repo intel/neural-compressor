@@ -80,6 +80,7 @@ class DataLoader(object):
                                       shuffle=shuffle,
                                       distributed=distributed)
 
+
 def _generate_common_dataloader(dataloader, framework, distributed=False):
     """Generate common dataloader.
 
@@ -112,3 +113,11 @@ def _generate_common_dataloader(dataloader, framework, distributed=False):
             pin_memory=dataloader.pin_memory,
             shuffle=dataloader.shuffle,
             distributed=bool(dataloader.distributed or distributed))
+
+
+def check_dataloader(dataloader):
+    """Check if the dataloader meets requirement of neural_compressor."""
+    assert hasattr(dataloader, '__iter__') and \
+        hasattr(dataloader, 'batch_size'), \
+        'dataloader must implement __iter__ method and batch_size attribute'
+    return True
