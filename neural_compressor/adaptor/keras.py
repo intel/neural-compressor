@@ -39,6 +39,7 @@ def _add_supported_quantized_objects(custom_objects):
   from neural_compressor.adaptor.keras_utils.depthwise_conv2d import QDepthwiseConv2D
   from neural_compressor.adaptor.keras_utils.separable_conv2d import QSeparableConv2D
   from neural_compressor.adaptor.keras_utils.dense import QDense
+  from neural_compressor.adaptor.keras_utils.pool2d import QMaxPool2D, QAvgPool2D
   custom_objects["Quantize"] = Quantize
   custom_objects["DeQuantize"] = DeQuantize
   custom_objects["FakeQuant"] = FakeQuant
@@ -46,6 +47,10 @@ def _add_supported_quantized_objects(custom_objects):
   custom_objects["QDepthwiseConv2D"] = QDepthwiseConv2D
   custom_objects["QSeparableConv2D"] = QSeparableConv2D
   custom_objects["QDense"] = QDense
+  custom_objects["QMaxPool2D"] = QMaxPool2D
+  custom_objects["QAvgPool2D"] = QAvgPool2D
+  custom_objects["QMaxPooling2D"] = QMaxPool2D
+  custom_objects["QAveragePooling2D"] = QAvgPool2D
   return custom_objects
 
 @adaptor_registry
@@ -62,11 +67,13 @@ class KerasAdaptor(Adaptor):
         #self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         #os.makedirs(self.work_dir, exist_ok=True)
-        self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D']
+        self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D', 'AveragePooling2D', 
+        'MaxPooling2D', 'AvgPool2D', 'MaxPool2D']
 
         self.pre_optimized_object = None
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
+        self.bf16_ops = []
         self.fp32_ops = []
         self.query_handler = KerasQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), 'keras.yaml'))
@@ -84,6 +91,8 @@ class KerasAdaptor(Adaptor):
         self.quantize_config['device'] = self.device
         self.quantize_config['advance'] = deep_get(tuning_cfg, 'advance')
         fp32_ops = []
+        bf16_ops = []
+        bf16_type = set(self.query_handler.get_op_types_by_precision(precision='bf16'))
         dispatched_op_names = [j[0] for j in tuning_cfg['op']]
         invalid_op_names = [i for i in self.quantize_config['op_wise_config']
                             if i not in dispatched_op_names]
@@ -93,6 +102,12 @@ class KerasAdaptor(Adaptor):
 
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
+
+            if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'bf16':
+                if each_op_info[1] in bf16_type:
+                    bf16_ops.append(op_name)
+                continue
+
             if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
                 if op_name in self.quantize_config['op_wise_config']:
                     self.quantize_config['op_wise_config'].pop(op_name)
@@ -114,6 +129,8 @@ class KerasAdaptor(Adaptor):
                                                                algorithm,
                                                                is_asymmetric,
                                                                weight_bit)
+        self.bf16_ops = bf16_ops
+        self.bf16_ops.pop(-1)
         self.fp32_ops = fp32_ops
 
     def _pre_optimize(self, model):
@@ -266,6 +283,10 @@ class KerasAdaptor(Adaptor):
                q_func (optional): training function for quantization aware training mode.
         '''
         self.tuning_cfg_to_fw(tune_cfg)
+        # just convert the input model to mixed_bfloat16
+        if self.bf16_ops and not self.quantize_config['op_wise_config']:
+            converted_model = self.convert_bf16()
+            return converted_model
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
@@ -394,16 +415,23 @@ class KerasAdaptor(Adaptor):
                 q_layer_name = 'Q' + layer['class_name']
                 # this is for inbounds search
                 q_name  = layer['config']['name']
-                kernel = self.layer_weights[layer['config']['name']][0]
-                dim = list(range(0, kernel.ndim)) 
-                t_dim = [dim.pop(-1)]
-                t_dim.extend(dim)
-                channel_size = kernel.shape[-1]
-                kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
-                layer_config['min_value'] = json.dumps(\
-                        np.min(kernel_channel, axis=1).tolist())
-                layer_config['max_value'] = json.dumps(\
-                        np.max(kernel_channel, axis=1).tolist())
+                # for layers that have weights
+                if layer['config']['name'] in self.layer_weights:
+                    kernel = self.layer_weights[layer['config']['name']][0]
+                    dim = list(range(0, kernel.ndim)) 
+                    t_dim = [dim.pop(-1)]
+                    t_dim.extend(dim)
+                    channel_size = kernel.shape[-1]
+                    kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
+                    layer_config['min_value'] = json.dumps(\
+                            np.min(kernel_channel, axis=1).tolist())
+                    layer_config['max_value'] = json.dumps(\
+                            np.max(kernel_channel, axis=1).tolist())
+                else:
+                    # default value, but never expected to be used
+                    # cause no kernel weights for this layer
+                    layer_config['min_value'] = json.dumps([-10000])
+                    layer_config['max_value'] = json.dumps([10000])
                 layer_config['name'] = q_name
                 q_layer = {'class_name': q_layer_name,
                            'name': q_name,
@@ -418,6 +446,22 @@ class KerasAdaptor(Adaptor):
         quantized_model = self._restore_model_from_json(json_model)
         return quantized_model
 
+    def convert_bf16(self):
+        '''Execute the BF16 conversion.
+        '''
+        tf.keras.mixed_precision.set_global_policy('mixed_bfloat16')
+        json_model = copy.deepcopy(json.loads(self.pre_optimized_object.to_json()))
+
+        for layer in json_model['config']['layers']:
+            if layer['config']['name'] in self.bf16_ops:
+                layer['config']['dtype'] = 'mixed_bfloat16'
+            
+        converted_model = self._restore_model_from_json(json_model)
+        tf.keras.mixed_precision.set_global_policy('float32')
+        
+        from neural_compressor.model.keras_model import KerasModel
+        converted_model = KerasModel(converted_model)
+        return converted_model
 
     #(TODO) choose the properly quantize mode
     def _check_quantize_mode(self, json_model):
@@ -510,12 +554,15 @@ class KerasAdaptor(Adaptor):
                model (object): The model to query quantization tuning capability.
         '''
         fp32_config = {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}
+        bf16_config = {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
         int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
         op_capability = self.query_handler.get_quantization_capability()
         conv_config = copy.deepcopy(op_capability['int8']['Conv2D'])
         conv_config = copy.deepcopy(op_capability['int8']['SeparableConv2D'])
         conv_config = copy.deepcopy(op_capability['int8']['DepthwiseConv2D'])
         dense_config = copy.deepcopy(op_capability['int8']['Dense'])
+        maxpool_config = copy.deepcopy(op_capability['int8']['MaxPooling2D'])
+        avgpool_config = copy.deepcopy(op_capability['int8']['AveragePooling2D'])
         other_config = copy.deepcopy(op_capability['int8']['default'])
 
         # # get fp32 layer weights
@@ -545,11 +592,15 @@ class KerasAdaptor(Adaptor):
             node_op = details['class_name']
             node_name = details['config']['name']
             if node_op == 'Conv2D': 
-                quantizable_op_details[(node_name, node_op)] = [conv_config, fp32_config]
+                quantizable_op_details[(node_name, node_op)] = [conv_config, bf16_config, fp32_config]
             elif node_op == 'Dense':
-                quantizable_op_details[(node_name, node_op)] = [dense_config, fp32_config]
+                quantizable_op_details[(node_name, node_op)] = [dense_config, bf16_config, fp32_config]
+            elif node_op in {'AveragePooling2D', 'AvgPool2D'}:
+                quantizable_op_details[(node_name, node_op)] = [avgpool_config, bf16_config, fp32_config]
+            elif node_op in {'MaxPooling2D', 'MaxPool2D'}:
+                quantizable_op_details[(node_name, node_op)] = [maxpool_config, bf16_config, fp32_config]
             else:
-                quantizable_op_details[(node_name, node_op)] = [fp32_config]
+                quantizable_op_details[(node_name, node_op)] = [bf16_config, fp32_config]
 
         capability = {
             'opwise': copy.deepcopy(quantizable_op_details),
