@@ -41,7 +41,7 @@ from ..utils import logger
 from ..version import __version__
 from ..algorithm import AlgorithmScheduler, ALGORITHMS
 
-from .utils.tuning_space import  TuningSpace
+from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
 from .utils.utility import build_slave_faker_model
@@ -347,6 +347,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             Tuning config
         """
         config = conf.quantization
+        config.diagnosis = getattr(config, 'diagnosis', None)
         return config
 
     @abstractmethod

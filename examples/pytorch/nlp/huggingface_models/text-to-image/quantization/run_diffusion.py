@@ -322,7 +322,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
 
             b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
-            fit(model, config=b_conf, b_func=b_func)
+            fit(model, conf=b_conf, b_func=b_func)
         if args.accuracy_only:
             setattr(pipe, "unet", model)
             accuracy(pipe, generator, _rows, args)

@@ -10,6 +10,7 @@ ll ~/.keras/datasets
 
 echo "install dependencies..."
 echo "tensorflow version is $tensorflow_version"
+echo "itex version is $itex_version"
 echo "pytorch version is $pytorch_version"
 echo "torchvision version is $torchvision_version"
 echo "ipex version is $ipex_version"
@@ -22,6 +23,7 @@ if [[ "${tensorflow_version}" == *"-official" ]]; then
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
     pip install /tf_dataset/tf_binary/221212/tensorflow*.whl
     pip install protobuf==3.20.3
+    pip install horovod==0.27.0
     if [[ $? -ne 0 ]]; then
       exit 1
     fi
@@ -49,6 +51,9 @@ if [[ "${ipex_version}" == "1.12.0+cpu" ]]; then
     pip install $ipex_whl
 elif [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
     ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp38-cp38-manylinux2014_x86_64.whl"
+    pip install $ipex_whl
+elif [[ "${ipex_version}" == "2.0.0+cpu" ]]; then
+    ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
     pip install $ipex_whl
 fi
 

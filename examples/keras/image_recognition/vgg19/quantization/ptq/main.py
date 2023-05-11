@@ -110,7 +110,7 @@ def evaluate(model):
     return acc
 
 def main(_):
-    from neural_compressor.utils import set_random_seed
+    from neural_compressor import set_random_seed
     set_random_seed(9527)
     if FLAGS.tune:
         from neural_compressor import quantization
@@ -130,7 +130,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model import Model
-            model = Model(FLAGS.input_model, backend='keras').model
+            model = Model(FLAGS.input_model, backend='itex').model
             accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.batch_size)
             print("Accuracy: %.5f" % accuracy)

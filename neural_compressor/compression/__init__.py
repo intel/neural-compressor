@@ -16,4 +16,3 @@
 # limitations under the License.
 
 from .callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
-from .. import WeightPruningConfig
