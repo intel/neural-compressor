@@ -17,7 +17,7 @@
 # limitations under the License.
 # model slim related
 from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASearcher
-from .weight_slim import LinearCompressionIterator, MHACompression, MHACompression_v2
+from .weight_slim import LinearCompressionIterator, MHACompression
 from ..utils import logger
 
 def model_slim(model, dataloader=None, round_multiplier=0):
@@ -59,7 +59,7 @@ def model_slim_mha(model, dataloader = None):
     layers = pa_obj.obtain_mha_module(layers)
     layers = pa_obj.from_layer_name_to_object(layers)
     for layer in layers:
-        mha_compression = MHACompression_v2(layer)
+        mha_compression = MHACompression(layer)
         mha_compression()
     return model
 
