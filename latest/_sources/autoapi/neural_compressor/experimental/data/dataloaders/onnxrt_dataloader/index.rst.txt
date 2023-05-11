@@ -23,7 +23,7 @@ Classes
 
 
 
-.. py:class:: ONNXRTBertDataLoader
+.. py:class:: ONNXRTBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
 
 
