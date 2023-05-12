@@ -676,16 +676,18 @@ class ClassifierHeadSearcher(object):
         super(ClassifierHeadSearcher, self).__init__()
         self.model = model
         self.pruning_ops = ["Linear", "Conv2d"]
+        self.excluded_ops = ["Dropout"] # to be extended
     
     def search(self, return_name=True):
-        # import pdb;pdb.set_trace()
         all_modules = []
         all_lc_modules = []
         for n, m in self.model.named_modules():
-            all_modules.append(n)
-            if type(m).__name__ in self.pruning_ops:
-                all_lc_modules.append(n)
-        # import pdb;pdb.set_trace()
+            if type(m).__name__ not in self.excluded_ops:
+                all_modules.append(n)
+                if type(m).__name__ in self.pruning_ops:
+                    all_lc_modules.append(n)
+            else:
+                continue
         last_lc = all_lc_modules[-1]
         if last_lc == all_modules[-1]: return last_lc
         else: return None
