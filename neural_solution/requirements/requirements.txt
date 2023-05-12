@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+gunicorn
+pydantic
+pysqlite3
+uuid
+watchdog
+websocket
+pandas
+mpi4py
