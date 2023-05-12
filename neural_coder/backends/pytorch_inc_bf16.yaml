@@ -19,11 +19,10 @@ transformation:
     - |-
       [+] import torch
       [+] torch.backends.quantized.engine = 'onednn'
-      [+] from neural_compressor.experimental import MixedPrecision
-      [+] converter = MixedPrecision()
-      [+] converter.precisions = 'bf16'
-      [+] converter.model = MODEL_NAME
-      [+] MODEL_NAME = converter()
+      [+] from neural_compressor.config import MixedPrecisionConfig
+      [+] from neural_compressor import mix_precision
+      [+] config = MixedPrecisionConfig()
+      [+] MODEL_NAME = mix_precision.fit(model=MODEL_NAME, config=config)
       [+] try:
       [+]     with torch.no_grad():
       [+]         MODEL_NAME = torch.jit.script(MODEL_NAME)

@@ -87,7 +87,7 @@ elif [[ "${framework}" == "pytorch" ]]; then
     pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
     pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
 elif [[ "${framework}" == "onnxrt" ]]; then
-    pip install onnx==1.12.0
+    pip install onnx==1.13.1
     pip install onnxruntime==${fwk_ver}
 elif [[ "${framework}" == "mxnet" ]]; then
     pip install numpy==1.23.5

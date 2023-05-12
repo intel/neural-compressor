@@ -1,10 +1,10 @@
 #!/bin/bash
 
+source ${ONEAPI_ROOT}/intelpython/python3.9/etc/profile.d/conda.sh
 ENV_NAME=env_inc
 conda deactivate
-conda env remove -n $ENV_NAME
-conda create -n $ENV_NAME -c ${ONEAPI_ROOT}/conda_channel python=`python -V| awk '{print $2}'` -y
+conda env remove -n $ENV_NAME -y 
+conda create -n $ENV_NAME python=3.9 -y
 conda activate $ENV_NAME
-conda install -n $ENV_NAME -c ${ONEAPI_ROOT}/conda_channel tensorflow python-flatbuffers -y
-conda install -n $ENV_NAME -c ${ONEAPI_ROOT}/conda_channel neural-compressor -c intel -y 
-conda install -n $ENV_NAME runipy notebook -y
+which python3.9
+python3.9 -m pip install -r requirements.txt
