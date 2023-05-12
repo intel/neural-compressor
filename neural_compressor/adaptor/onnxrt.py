@@ -1014,6 +1014,28 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         index + block_len - 1 < len(attention_matmul):
                         ffn_matmul.append([attention_matmul[index + block_len - 2], 
                                         attention_matmul[index + block_len - 1]])
+        else:
+            qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
+            if len(qkv) != 0:
+                attention_starts = [nodes[0] for nodes in qkv]
+                attention_index = [np.where(np.array([n.name for n in attention_matmul]) \
+                                            == attention_start)[0].tolist()[0] \
+                                                for attention_start in attention_starts]
+                block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+                for idx in range(len(attention_index)):
+                    # to find matmul in ffn
+                    if idx != len(attention_index) - 1:
+                        index = attention_index[idx + 1]
+                        if index - 2 >= 0 and index - 1 >= 0:
+                            ffn_matmul.append([attention_matmul[index - 2],
+                                            attention_matmul[index - 1]])
+                    else:
+                        index = attention_index[idx]
+                        if index + block_len - 2 < len(attention_matmul) and \
+                            index + block_len - 1 < len(attention_matmul):
+                            ffn_matmul.append([attention_matmul[index + block_len - 2],
+                                            attention_matmul[index + block_len - 1]])
+
         block_info = []
         for block in reversed(ffn_matmul):
             node_info = []
