@@ -1,2 +1,0 @@
-intel_tensorflow
-datasets
