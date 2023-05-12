@@ -3103,7 +3103,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                             module_key = op_name[0]
                             op_cfg_id = op_name[2]
                             op_type += self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
-                        # TODO: assume the pattern is linear/conv + activation function
                         quantizable_ops.append((tuple(name), op_type))
                         _module_key = name[0][0]
                         _op_cfg_id = name[0][2]
