@@ -369,7 +369,7 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                             pre_op_infos['output_tensor_infos'] = pre_op_output_infos
                             cfgs[pre_op_module][pre_op_state][pre_op_index] = pre_op_infos
                         else:
-                            print("Don't track the previous op name for ", name)
+                            pass
             cfgs[name[0]][name[1]][name[2]] = ipex_op_cfg
     return cfgs
 
