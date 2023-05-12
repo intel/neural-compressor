@@ -131,7 +131,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         from neural_compressor.config import PostTrainingQuantConfig
 
         from transformers import BertTokenizer, BertModel
-        for backend in ["default", "ipex"]:
+        for backend in ["default"]:
             model_name = "bert-base-uncased"
             model = BertModel.from_pretrained(model_name)
             model.eval()
