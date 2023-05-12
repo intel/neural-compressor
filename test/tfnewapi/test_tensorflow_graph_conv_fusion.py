@@ -613,7 +613,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250", '2.11.0202317'], "deconv2d quantization only support 2.11")
     def test_deconv2d_biasadd_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1,2,2,1], name="input")
         conv_weights2 = tf.compat.v1.get_variable("weight2", [3,3,1,1], 
@@ -650,7 +650,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_deconv2d_fusion, True)
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250", '2.11.0202317'], "deconv2d quantization only support 2.11")
     def test_single_deconv2d_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1,2,2,1], name="input")
         conv_weights2 = tf.compat.v1.get_variable("weight2", [3,3,1,1], 
@@ -685,7 +685,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_deconv2d_fusion, True)
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250", '2.11.0202317'], "deconv2d quantization only support 2.11")
     def test_deconv3d_biasadd_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 2, 2, 2, 1], name="input")
         conv3d_weights = tf.compat.v1.get_variable("weight_conv3d_1", [3, 3, 3, 1, 1],
@@ -721,7 +721,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_deconv3d_fusion, True)
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250", '2.11.0202317'], "deconv2d quantization only support 2.11")
     def test_single_deconv3d_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 2, 2, 2, 1], name="input")
         conv3d_weights = tf.compat.v1.get_variable("weight_conv3d_1", [3, 3, 3, 1, 1],

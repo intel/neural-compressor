@@ -214,7 +214,6 @@ if __name__ == "__main__":
             model=graph,
             conf=config,
             calib_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
-            eval_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
             eval_func=eval_func)
         try:
             q_model.save(args.output_model)
