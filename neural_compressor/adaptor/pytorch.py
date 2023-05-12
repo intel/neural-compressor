@@ -2538,7 +2538,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                self.calib_func(q_model, dataloader, tmp_iterations=2)
+                self._simple_inference(q_model, dataloader, iterations=2)
             else:
                 assert not self.version.release < Version("1.10.0").release, \
                     "INC support IPEX version >= 1.10.0"
@@ -2597,7 +2597,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                         # At the 2nd run, the llga pass will be triggered and the model is turned into
                         # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                        self.calib_func(q_model, dataloader, tmp_iterations=2)
+                        self._simple_inference(q_model, dataloader, iterations=2)
             model._model = q_model
             with open(self.ipex_config_path, 'r') as f:
                 model.tune_cfg = json.load(f)
