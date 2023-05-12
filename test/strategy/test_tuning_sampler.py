@@ -156,7 +156,7 @@ op_cap = {
 }
 
 
-block_info = [[('op_name2', 'op_type1'),('op_name4', 'op_type3')],
+block_wise = [[('op_name2', 'op_type1'),('op_name4', 'op_type3')],
               [('op_name4', 'op_type3'), ('op_name1', 'op_type1')]]
 
 
@@ -255,7 +255,7 @@ class TestTuningSampler(unittest.TestCase):
         capability = {
             'calib': {'calib_sampling_size': [1, 10, 50]},
             'op': deepcopy(op_cap),
-            'block_info': block_info
+            'block_wise': block_wise
         }
         conf = None
         tuning_space = TuningSpace(capability, conf)
@@ -282,7 +282,7 @@ class TestTuningSampler(unittest.TestCase):
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
         
-        op_block_lst = capability.get('block_info', [])
+        op_block_lst = capability.get('block_wise', [])
         if op_block_lst:
             # Fallback block by block
             target_type_lst = set(tuning_space.query_items_by_quant_mode('fp32'))
