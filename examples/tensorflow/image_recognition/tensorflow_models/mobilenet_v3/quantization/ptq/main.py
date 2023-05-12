@@ -272,7 +272,7 @@ class eval_classifier_optimized_graph:
             def eval(model):
                 return evaluate(model, dataloader, top1)
 
-            if args.diagnosis and args.mode != "performance":
+            if args.diagnose and args.mode != "performance":
                 print("[ WARNING ] Profiling works only with performance benchmark.")
 
             if args.mode == 'performance':
