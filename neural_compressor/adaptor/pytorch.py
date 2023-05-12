@@ -1046,16 +1046,16 @@ class TemplateAdaptor(Adaptor):
         tmp_model = model
         tmp_model.eval()
         quantizable_ops = []
-        self.block_info =[]
+        self.block_wise =[]
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         q_capability = {}
-        q_capability['block_info'] = None
+        q_capability['block_wise'] = None
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
         # add block ops
-        if self.block_info:
-            logger.debug(f"*** Found {len(self.block_info)} blocks: {self.block_info}")
-        q_capability['block_info'] = self.block_info[::-1] if self.block_info else None
+        if self.block_wise:
+            logger.debug(f"*** Found {len(self.block_wise)} blocks: {self.block_wise}")
+        q_capability['block_wise'] = self.block_wise[::-1] if self.block_wise else None
         
         quant_datatypes = self.query_handler.get_quant_datatypes()
         if self.approach == "quant_aware_training":
@@ -2950,8 +2950,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         """
         
         # group ops by postion for transform-based model
-        from .torch_utils.block_detector import TransformerModelBlockDetector
-        detector = TransformerModelBlockDetector(model)
+        from .torch_utils.pattern_detector import TransformerBasedModelBlockPatternDetector
+        detector = TransformerBasedModelBlockPatternDetector(model)
         detect_result = detector.detect_block()
         attention_block = detect_result.get("attention_blocks", None)
         ffn_blocks = detect_result.get("ffn_blocks", None) 
@@ -3110,16 +3110,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
                 self.op_infos_from_cfgs = op_infos_from_cfgs
                 self.output_tensor_id_op_name = output_tensor_id_op_name
-        logger.info("map_op_name_to_fqn: ")
-        logger.info(map_op_name_to_fqn)
-        att_blocks_info, ffn_blocks = attention_block, ffn_blocks
-
-        logger.info("Atten Block info")
-        logger.info(att_blocks_info)
-    
-        logger.info("FFN Block info")
+        logger.debug("Map op name to fqn: ")
+        logger.debug(map_op_name_to_fqn)
+        logger.info("Attention Blocks : ")
+        logger.info(attention_block)
+        logger.info("FFN Blocks : ")
         logger.info(ffn_blocks)
-        self.block_info = ffn_blocks
+        self.block_wise = ffn_blocks
         
 
         os.remove(self.ipex_config_path)
@@ -3917,9 +3914,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        from .torch_utils.block_detector import TransformerModelBlockDetector
-        from .torch_utils.util import _get_op_type_by_name
-        detector = TransformerModelBlockDetector(model)
+        from .torch_utils.pattern_detector import TransformerBasedModelBlockPatternDetector
+        from .torch_utils.util import get_op_type_by_name
+        detector = TransformerBasedModelBlockPatternDetector(model)
         detect_result = detector.detect_block()
         attention_block = detect_result.get("attention_blocks", None)
         ffn_blocks = detect_result.get("ffn_blocks", None) 
@@ -3942,8 +3939,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        block_info = [[(name, _get_op_type_by_name(name, quantizable_ops)) for name in block] for block in ffn_blocks]
-        self.block_info = block_info
+        block_wise = [[(name, get_op_type_by_name(name, quantizable_ops)) for name in block] for block in ffn_blocks]
+        self.block_wise = block_wise
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.

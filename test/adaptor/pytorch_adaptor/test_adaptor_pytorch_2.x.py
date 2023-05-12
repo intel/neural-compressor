@@ -537,13 +537,16 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                 enable_act=True)
         self.assertIsNotNone(op_to_traces)
 
+@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
 class TestPyTorchBlockDetector(unittest.TestCase):
     def test_block_detector(self):
-        from neural_compressor.adaptor.torch_utils.block_detector import TransformerModelBlockDetector, BLOCK_PATTERNS
+        from neural_compressor.adaptor.torch_utils.pattern_detector import (
+            TransformerBasedModelBlockPatternDetector, 
+            BLOCK_PATTERNS)
         from transformers import BertModel
 
         model = BertModel.from_pretrained("bert-base-uncased")
-        detector = TransformerModelBlockDetector(model, BLOCK_PATTERNS)
+        detector = TransformerBasedModelBlockPatternDetector(model, BLOCK_PATTERNS)
         result = detector.detect_block()
         assert len(result['attention_blocks']), 12
         assert len(result['ffn_blocks']), 12

@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ BLOCK_PATTERNS = [
 ]
 
 
-class TransformerModelBlockDetector:
+class TransformerBasedModelBlockPatternDetector:
     """Detect the attention block and FFN block in transformer-based model."""
     
     def __init__(self, model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS) -> None:
@@ -65,12 +65,12 @@ class TransformerModelBlockDetector:
         # Step 2: Traverse all blocks in different depths and record the blocks that matched the pattern
         detect_result = []
         for pattern in self.pattern_lst:
-            _, result = self.search_pattern(pos_info, pattern)
+            _, result = self._search_pattern(pos_info, pattern)
             if result:
                 detect_result.append((result, pattern))
         # Step 3: Get the attention blocks and ffn blocks
         blocks = {"attention_blocks": None, "ffn_blocks": None}
-        blocks["attention_blocks"], blocks["ffn_blocks"] = self.group_block(detect_result)
+        blocks["attention_blocks"], blocks["ffn_blocks"] = self._group_block(detect_result)
         logger.info(f'FFN BLOCKS: {blocks["ffn_blocks"]}')
         logger.info(f'Attention BLOCKS: {blocks["attention_blocks"]}')
         return blocks
@@ -100,11 +100,11 @@ class TransformerModelBlockDetector:
             sub_key = (depth, i, model_type)
             if sub_key not in result[key]:
                 result[key][sub_key] = dict()
-            TransformerModelBlockDetector.traverse_model(sub_module, prefix=new_name, \
+            TransformerBasedModelBlockPatternDetector.traverse_model(sub_module, prefix=new_name, \
                 depth=depth+1, result=result[key], key = sub_key)
             
     @staticmethod
-    def search_pattern(pos_info: Dict, pattern: List[List[Union[str, int]]]) -> List[List[str]]:
+    def _search_pattern(pos_info: Dict, pattern: List[List[Union[str, int]]]) -> List[List[str]]:
         """Search all blocks that matched the pattern.
 
         Args:
@@ -147,7 +147,7 @@ class TransformerModelBlockDetector:
         return matched_cnt, result
     
     @staticmethod
-    def group_block(detect_result):
+    def _group_block(detect_result):
         """Collect attention and ffn blocks from detect result."""
         import itertools
         ffn_block_lst = []

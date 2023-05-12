@@ -1025,7 +1025,7 @@ def get_element_under_depth(d, ops_lst):
     else:
         ops_lst.append(d)
 
-def _get_op_type_by_name(op_name, quantizable_ops):
+def get_op_type_by_name(op_name, quantizable_ops):
     """Get op type by op name."""
     for pair in quantizable_ops:
         if pair[0] == op_name:

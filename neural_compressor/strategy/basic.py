@@ -179,7 +179,7 @@ class BasicTuneStrategy(TuneStrategy):
             dict: op_tuning_cfg fall-backed by block
         """
         from copy import deepcopy
-        op_block_lst = self.capability.get('block_info', [])
+        op_block_lst = self.capability.get('block_wise', [])
         if op_block_lst:
             # Fallback block by block
             fallback_items_name_lst = [item.name for item in fallback_items_lst]
