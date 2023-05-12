@@ -93,7 +93,7 @@ Classes
 
 
 
-.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model=None, model_name='', cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None)
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None)
 
    Config Class for Benchmark.
 
@@ -109,10 +109,12 @@ Classes
    :type warmup: int, optional
    :param iteration: The number of iterations to run performance tests. Default is -1.
    :type iteration: int, optional
+   :param model_name: The name of the model. Default value is empty.
+   :type model_name: str, optional
    :param cores_per_instance: The number of CPU cores to use per instance. Default value is None.
    :type cores_per_instance: int, optional
    :param num_of_instance: The number of instances to use for performance testing.
-                           Default value is None.
+                           Default value is 1.
    :type num_of_instance: int, optional
    :param inter_num_of_threads: The number of threads to use for inter-thread operations.
                                 Default value is None.
@@ -312,6 +314,7 @@ Classes
                             },
                         }
    :param reduce_range: Whether use 7 bit to quantization.
+   :param model_name: The name of the model. Default value is empty.
    :param excluded_precisions: Precisions to be excluded, Default value is empty list.
                                Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                                If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
@@ -581,7 +584,7 @@ Classes
        model = compression_manager.model
 
 
-.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model=None, model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
 
 
 
@@ -597,6 +600,8 @@ Classes
    :param precisions: Target precision for mix precision conversion.
                       Support 'bf16' and 'fp16', default is 'bf16'.
    :type precisions: [str, list], optional
+   :param model_name: The name of the model. Default value is empty.
+   :type model_name: str, optional
    :param inputs: Inputs of model, default is [].
    :type inputs: list, optional
    :param outputs: Outputs of model, default is [].
