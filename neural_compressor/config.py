@@ -2160,7 +2160,7 @@ class _Config:
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
-                 keras=keras_config
+                 keras=keras_config,
                  diagnosis=None,
                  ):
         """Init a config object."""
