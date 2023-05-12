@@ -190,18 +190,6 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
                                   adaptor,
                                   None,
                                   iteration=conf.iteration)
-        logger.info("Start to run Profiling")
-        if conf.diagnosis and os.environ.get('NC_ENV_CONF', None) in [None, 'False']:
-            ni_workload_id = register_neural_insights_workload(
-                workload_location=os.path.abspath(os.path.abspath(options.workspace)),
-                model=model.model,
-            )
-            try:
-                update_neural_insights_workload(ni_workload_id, "wip")
-                profile(model, conf, b_dataloader)
-                update_neural_insights_workload(ni_workload_id, "success")
-            except Exception:
-                update_neural_insights_workload(ni_workload_id, "failure")
 
         objectives = MultiObjective(["performance"],
                                     {'relative': 0.1},
@@ -563,10 +551,23 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         check_dataloader(b_dataloader)
 
     assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
-    # disable multi-instance for running bechmark on GPU device
+    # disable multi-instance for running benchmark on GPU device
     set_all_env_var(conf)
     if conf.device == 'gpu':
         set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
+
+    if conf.diagnosis and os.environ.get('NC_ENV_CONF', None) in [None, 'False']:
+        logger.info("Start to run Profiling")
+        ni_workload_id = register_neural_insights_workload(
+            workload_location=os.path.abspath(os.path.abspath(options.workspace)),
+            model=model,
+        )
+        try:
+            update_neural_insights_workload(ni_workload_id, "wip")
+            profile(wrapped_model, conf, b_dataloader)
+            update_neural_insights_workload(ni_workload_id, "success")
+        except Exception as e:
+            update_neural_insights_workload(ni_workload_id, "failure")
 
     logger.info("Start to run Benchmark.")
     if os.environ.get('NC_ENV_CONF') == 'True':
