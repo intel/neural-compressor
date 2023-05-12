@@ -35,6 +35,24 @@ wikitext-2-raw
 
 # Run
 
+## Diagnosis
+Neural Compressor offers quantization and benchmark diagnosis. Adding `diagnosis` parameter to Quantization/Benchmark config will provide additional details useful in diagnostics.
+### Quantization diagnosis
+```
+config = PostTrainingQuantConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
+### Benchmark diagnosis
+```
+config = BenchmarkConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
 ## 1. Quantization
 
 Dynamic quantization:

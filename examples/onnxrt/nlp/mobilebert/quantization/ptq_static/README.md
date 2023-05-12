@@ -56,6 +56,24 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
 
 # Run
 
+## Diagnosis
+Neural Compressor offers quantization and benchmark diagnosis. Adding `diagnosis` parameter to Quantization/Benchmark config will provide additional details useful in diagnostics.
+### Quantization diagnosis
+```
+config = PostTrainingQuantConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
+### Benchmark diagnosis
+```
+config = BenchmarkConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
 ## 1. Quantization
 
 Static quantization with QDQ format:

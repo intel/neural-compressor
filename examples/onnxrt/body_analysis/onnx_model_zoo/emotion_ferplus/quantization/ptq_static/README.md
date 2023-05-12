@@ -34,6 +34,24 @@ Download dataset [Emotion FER dataset](https://www.kaggle.com/c/challenges-in-re
 
 # Run
 
+## Diagnosis
+Neural Compressor offers quantization and benchmark diagnosis. Adding `diagnosis` parameter to Quantization/Benchmark config will provide additional details useful in diagnostics.
+### Quantization diagnosis
+```
+config = PostTrainingQuantConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
+### Benchmark diagnosis
+```
+config = BenchmarkConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
 ## 1. Quantization
 
 ```bash

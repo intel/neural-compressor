@@ -109,8 +109,6 @@ def main():
                         help='datseset path')
     parser.add_argument('--tune', action='store_true', default=False, 
                         help='run neural_compressor tune')
-    parser.add_argument('--diagnose', dest='diagnose', action='store_true',
-                        help='use Neural Insights to diagnose tuning and benchmark.')
     parser.add_argument('--benchmark', action='store_true', default=False, 
                         help='run benchmark')
     parser.add_argument('--mode', type=str, default='performance',
@@ -140,29 +138,20 @@ def main():
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(
-            approach='dynamic',
-            calibration_sampling_size=[8],
-            diagnosis=args.diagnose,
-        )
+        config = PostTrainingQuantConfig(approach='dynamic', 
+                                        calibration_sampling_size=[8])
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)
         q_model.save(args.save_path)
 
     if args.benchmark:
-        if args.diagnose and args.mode != "performance":
-            print("[ WARNING ] Diagnosis works only with performance benchmark.")
-
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(
-                iteration=100,
-                cores_per_instance=4,
-                num_of_instance=7,
-                diagnosis=args.diagnose,
-            )
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=4,
+                                   num_of_instance=7)
             fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
