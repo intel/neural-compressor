@@ -1436,16 +1436,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                     output_op_names):
         """Inference model on batches."""
         ort_inputs = {}
-        len_inputs = len(session.get_inputs())
-        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
         predictions = []
 
         session = ort.InferenceSession(self.work_space + 'eval.onnx',
-                                       sess_options,
-                                       providers=[self.backend]) if input_graph.is_large_model else \
-                  ort.InferenceSession(input_graph.model.SerializeToString(),
-                                       sess_options,
+                                       providers=[self.backend]) if model.is_large_model else \
+                  ort.InferenceSession(model.model.SerializeToString(),
                                        providers=[self.backend])
+        inputs_names = [i.name for i in session.get_inputs()]
+        len_inputs = len(session.get_inputs())
         for idx, (inputs, _) in enumerate(dataloader):
             if len_inputs == 1:
                 ort_inputs.update(
