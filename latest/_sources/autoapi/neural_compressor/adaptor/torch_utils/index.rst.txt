@@ -18,6 +18,7 @@ Submodules
    bf16_convert/index.rst
    hawq_metric/index.rst
    model_wrapper/index.rst
+   pattern_detector/index.rst
    symbolic_trace/index.rst
    util/index.rst
 

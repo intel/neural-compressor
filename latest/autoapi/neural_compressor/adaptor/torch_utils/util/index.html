@@ -152,6 +152,18 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max" title="neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_quant_min_max</span></code></a>(unsigned, num_bits)</p></td>
 <td><p>Calculate the qmin and qmax according to the datatype.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.get_depth" title="neural_compressor.adaptor.torch_utils.util.get_depth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_depth</span></code></a>(→ int)</p></td>
+<td><p>Query the depth of the dict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.get_dict_at_depth" title="neural_compressor.adaptor.torch_utils.util.get_dict_at_depth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dict_at_depth</span></code></a>(d, target_depth, result[, depth])</p></td>
+<td><p>Get all sub-dicts that are at a specified depth in a nested dict.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.get_element_under_depth" title="neural_compressor.adaptor.torch_utils.util.get_element_under_depth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_element_under_depth</span></code></a>(d, ops_lst)</p></td>
+<td><p>Get all values in a nested dict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.get_op_type_by_name" title="neural_compressor.adaptor.torch_utils.util.get_op_type_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_op_type_by_name</span></code></a>(op_name, quantizable_ops)</p></td>
+<td><p>Get op type by op name.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -485,6 +497,30 @@ output_tensor_ids_op_name (dict): dictionary of output tensor op names.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">calculate_quant_min_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unsigned</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.calculate_quant_min_max" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the qmin and qmax according to the datatype.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.get_depth">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.get_depth" title="Permalink to this definition"></a></dt>
+<dd><p>Query the depth of the dict.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.get_dict_at_depth">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_dict_at_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.get_dict_at_depth" title="Permalink to this definition"></a></dt>
+<dd><p>Get all sub-dicts that are at a specified depth in a nested dict.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.get_element_under_depth">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_element_under_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ops_lst</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.get_element_under_depth" title="Permalink to this definition"></a></dt>
+<dd><p>Get all values in a nested dict.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.get_op_type_by_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_op_type_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizable_ops</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.get_op_type_by_name" title="Permalink to this definition"></a></dt>
+<dd><p>Get op type by op name.</p>
 </dd></dl>
 
 </section>
