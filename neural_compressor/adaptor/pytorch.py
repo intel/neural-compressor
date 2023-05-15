@@ -3108,7 +3108,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         for op_name in name:
                             module_key = op_name[0]
                             op_cfg_id = op_name[2]
-                            op_type += self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                            single_op_type = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                            if single_op_type in unify_op_type_mapping_ipex:
+                                single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                            op_type += "&" + single_op_type if op_type else single_op_type
                         quantizable_ops.append((tuple(name), op_type))
                         _module_key = name[0][0]
                         _op_cfg_id = name[0][2]
@@ -3232,6 +3235,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
+            logger.warning("SmoothQuant folding=False with bf16 may cause accuracy=0!")
             with torch.no_grad():
                 with torch.cpu.amp.autocast():
                     q_model = ipex.quantization.convert(q_model, inplace=True)
