@@ -477,6 +477,7 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
 
 
 def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
+    """Register workload to Neural Insights."""
     try:
         import os
         from neural_insights import NeuralInsights

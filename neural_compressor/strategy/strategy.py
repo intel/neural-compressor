@@ -849,7 +849,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             # evaluate the baseline for diagnosis
             if self.config.diagnosis:
                 logger.debug(f'*** Start to do diagnosis.')
-                self._diagnosis(tune_cfg)
+                self._diagnosis()
     def _remove_redundant_qmodel(self):
         """Remove the redundant quantized model to reduce memory use.
 

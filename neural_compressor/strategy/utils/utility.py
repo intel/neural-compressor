@@ -182,8 +182,7 @@ def calculate_mse(
 
 
 def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
-    """
-    Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+    """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
     Args:
         fp32_tensor (tensor): The FP32 tensor.

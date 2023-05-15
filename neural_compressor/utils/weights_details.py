@@ -48,7 +48,6 @@ class WeightsStatistics:
 
     def __init__(self, tensor_data) -> None:
         """Initialize Weights details."""
-
         self.min: float = np.min(tensor_data)
         self.max: float = np.max(tensor_data)
         self.mean: float = np.mean(tensor_data)

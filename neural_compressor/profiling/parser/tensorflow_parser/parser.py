@@ -57,7 +57,7 @@ class TensorFlowProfilingParser(ProfilingParser):
         profiling_header = self.patterns.get("profiling_header", None)
         profiling_entry = self.patterns.get("profiling_entry", None)
         if any(pattern is None for pattern in [profiling_header, profiling_entry]):
-            raise ("Could not find patterns to search.")
+            raise Exception("Could not find patterns to search.")
 
         for log_file in self._logs:
             with open(log_file) as file:

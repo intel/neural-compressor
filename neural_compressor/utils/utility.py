@@ -711,8 +711,7 @@ def print_table(
         title: Optional[str] = None,
         insert_newlines=False,
 ) -> None:
-    """
-    Print table with prettytable.
+    """Print table with prettytable.
 
     Args:
         :
@@ -804,8 +803,7 @@ def dump_table(
         table_entries: List[Any],
         file_type: str = "csv",
 ) -> None:
-    """
-    Dump table data to file.
+    """Dump table data to file.
 
     Args:
         :
@@ -837,19 +835,18 @@ def dump_table_to_csv(
     column_mapping: Dict[str, str],
     table_entries: List[Any],
 ):
+    """Dump table data to csv file.
+
+    Args:
+        :
+        filepath (str): The path of the file to which the data is to be dumped.
+        column_mapping (dict): Dictionary where key is a column header and value corresponds
+             to object's attribute.
+        table_entries (list): List of objects to be included in the table.
+
+    Returns:
+        None
     """
-        Dump table data to csv file.
-
-        Args:
-            :
-            filepath (str): The path of the file to which the data is to be dumped.
-            column_mapping (dict): Dictionary where key is a column header and value corresponds
-                 to object's attribute.
-            table_entries (list): List of objects to be included in the table.
-
-        Returns:
-            None
-        """
     from csv import DictWriter
     from functools import reduce
 

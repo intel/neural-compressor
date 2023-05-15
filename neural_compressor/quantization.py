@@ -31,6 +31,7 @@ from .utils.utility import time_limit, dump_class_attrs
 
 
 def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
+    """Register workload to Neural Insights."""
     try:
         import os
         from neural_insights import NeuralInsights
