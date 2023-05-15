@@ -5,20 +5,20 @@ from unittest.mock import patch, mock_open
 
 from frontend.fastapi.utils import serialize, deserialize, get_config, get_cluster_info,\
     get_cluster_table, get_res_during_tuning, get_baseline_during_tuning, check_log_exists
-from frontend.fastapi.utils import TASK_LOG_path, INC_SERVE_WORKSPACE
+from frontend.fastapi.utils import TASK_LOG_path, NEURAL_SOLUTION_WORKSPACE
 
 
 class TestMyModule(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(self):
         if not os.path.exists(TASK_LOG_path):
             os.makedirs(TASK_LOG_path)
-    
+
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree(INC_SERVE_WORKSPACE, ignore_errors=True)
-        
+        shutil.rmtree(NEURAL_SOLUTION_WORKSPACE, ignore_errors=True)
+
     def test_serialize(self):
         request = {"key": "value"}
         expected_result = b'{"key": "value"}'

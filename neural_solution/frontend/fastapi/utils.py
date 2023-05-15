@@ -18,10 +18,10 @@ import sqlite3
 import re
 import pandas as pd
 import os
-INC_SERVE_WORKSPACE = os.path.abspath("../../ns_workspace")
-DB_PATH = INC_SERVE_WORKSPACE + "/db"
-TASK_WORKSPACE =  INC_SERVE_WORKSPACE + "/task_workspace"
-TASK_LOG_path = INC_SERVE_WORKSPACE + "/task_log"
+NEURAL_SOLUTION_WORKSPACE = os.path.abspath("../../ns_workspace")
+DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
+TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
+TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
 
 def serialize(request: dict) -> bytes:
     """Serialize a dict object to bytes for inter-process communication."""

@@ -88,7 +88,6 @@ def list_to_string(lst: list):
 async def submit_task(task: Task):
     msg = "Task submitted successfully"
     status = "successfully"
-    tid = "-1"
     # search the current
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
@@ -110,7 +109,7 @@ async def submit_task(task: Task):
         conn.close()
     else:
         msg = "Task Submitted fail! db not found!"
-        return {"msg": msg}
+        return {"msg": msg} # TODO to align with return message when submit task successfully
     return {"status": status, "task_id": task_id, "msg": msg}
 
 @app.get("/task/{task_id}")
