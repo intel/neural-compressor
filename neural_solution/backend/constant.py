@@ -15,7 +15,7 @@
 #Constant for server
 TASK_MONITOR_PORT = 2222
 RESULT_MONITOR_PORT = 3333
-SERVE_PORT = 9001
+SERVE_PORT = 8000
 
 
 NEURAL_SOLUTION_WORKSPACE = "./ns_workspace"
@@ -32,5 +32,5 @@ NUM_SOCKETS = 2
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 
 #Constant for conda # TODO remove it
-CONDA_ENV_NAME = "inc" # TODO detect it automatically
+CONDA_ENV_NAME = "inc"
 INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor" # TODO detect it automatically

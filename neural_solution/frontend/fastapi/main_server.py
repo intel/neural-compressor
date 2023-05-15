@@ -14,8 +14,8 @@
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
-from frontend.fastapi.task_submitter import TaskSubmitter, Task
-from frontend.fastapi.utils import (
+from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
+from neural_solution.frontend.fastapi.utils import (
     get_config,
     get_cluster_info,
     get_cluster_table,
@@ -32,7 +32,7 @@ from watchdog.events import FileSystemEventHandler
 import asyncio
 import json
 import socket
-from frontend.fastapi.utils import DB_PATH, TASK_LOG_path
+from neural_solution.frontend.fastapi.utils import DB_PATH, TASK_LOG_path
 
 app = FastAPI()
 task_monitor_port, result_monitor_port = get_config()
