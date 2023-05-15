@@ -2177,7 +2177,8 @@ class _Config:
         self._keras = keras
         if diagnosis is None:
             diagnosis = False
-            if quantization.diagnosis or benchmark.diagnosis:
+            if (quantization is not None and quantization.diagnosis) or \
+                    (benchmark is not None and benchmark.diagnosis):
                 diagnosis = True
         if diagnosis:
             tuning_criterion.max_trials = 1
