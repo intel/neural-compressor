@@ -17,6 +17,7 @@
 # limitations under the License.
 
 import copy
+import re
 from .utils import torch, F
 from functools import partial
 from .patterns import get_pattern
@@ -24,6 +25,9 @@ from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
+# auto slim related: head pruning objects
+from .model_slim.pattern_analyzer import SelfMHASearcher
+from .model_slim.weight_slim import MHACompression
 
 PRUNERS = {}
 
@@ -71,6 +75,10 @@ def get_pruner(config, modules):
     Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
     """
     ## do the ugly work here
+    ## check if it is doing self-multihead-attention pruning
+    if "mha" in config["pattern"]:
+        return PRUNERS[name](config, modules)
+    ## if enable progressive pruning or not.
     if "progressive" not in config["pruning_type"]:
         name = config["pruning_type"]
         config["progressive"] = False
@@ -681,7 +689,7 @@ class RetrainFreePruner(BasePruner):
 class ProgressivePruner(BasicPruner):
     """Pruning Pruner.
 
-    A Pruner class derived from BasePruner. In this pruner, mask interpolation will be applied.
+    A Pruner class derived from BasicPruner. In this pruner, mask interpolation will be applied.
     Mask interpolation is a fine-grained improvement for NxM structured pruning by adding interval
         masks between masks of two pruning steps.
 
@@ -888,5 +896,116 @@ class ProgressivePruner(BasicPruner):
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
 
+@register_pruner('mha')
+class MultiheadAttentionPruner(object):
+    """Pruning Pruner.
 
+    In this pruner, We apply pruning for multi-head attentions.
+    multi-head attention pruning means remove partial QKV layers and their corresponding feedward layers simultaneously. 
 
+    Args:
+        mha_modules: A List 
+        [
+            {
+                'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn_name': ['attention_ffn_name'],
+                'mha_name': ['mha_name'] (keep not change),
+                'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+                'ffn_module': [torch.nn.Linear],
+                'mha_module': [torch.nn.Module] (keep not change),
+            }
+            ...
+        ]
+        that stores the pruning mha modules.
+        config: A config dict object that contains the pruner information.
+
+    Attributes:
+        Inherit from parent class Pruner.
+    """
+    def __init__(self, config, mha_modules):
+        """Initialize."""
+        # use pattern search techique to obtain multihead attention modules
+        # modules is a dict that fits the mha auto slim process
+        self.config = config
+        self.mha_modules = mha_modules
+        # main initialize process.
+        # define some attributes. 
+        self.mha_compression_luts = {} # {key: mha_name, value: mha_compression object}
+        self.linear_layer_luts = {} # {key: layer_name, value: corresponding linear object}
+        self.head_mask_luts = {} # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num can be traced in corresponding mha_compression obejct
+        # general pruning components (head pruning does not need a pattern component)
+        # main initialization process
+        self._init_luts()
+    
+    def _init_luts(self):
+        # initialize self.mha_compression_luts, self.linear_layer_luts, self.head_mask_luts
+        # similar to original mha slim process, but only hook mha modules and their attributes, 
+        # do not call slim main functions.
+        for mha_module in self.mha_modules:
+            # initialize self.mha_compression_luts
+            mha_comp = MHACompression(mha_module)
+            self.mha_compression_luts[mha_module['mha_name'][0]] = mha_comp
+            head_nums_for_this_mha =  getattr(mha_comp.mha[0], self.attributes_for_this_mha['head_nums'])
+            # initialize head_masks
+            self.head_mask_luts[mha_module['mha_name'][0]] = torch.ones(head_nums_for_this_mha)
+            # initialize self.linear_layer_luts
+            for idx in range(mha_module['qkv_name'].__len__()):
+                # update qkv layers
+                self.linear_layer_luts[mha_module['qkv_name'][idx]] = mha_module['qkv_module'][idx]
+            for idx in range(mha_module['ffn_name'].__len__()):
+                self.linear_layer_luts[mha_module['ffn_name'][idx]] = mha_module['ffn_module'][idx]
+
+    def mask_mha_weights(self, mha_module, head_mask):
+        pass
+    
+    def compile_mha_scores(self, mha_module):
+        # obtain a score from 
+        pass
+    
+    # main api functions
+    def on_step_begin(self, local_step):
+        """Implement at the start of each step."""
+        if self.handled_global_step == self.global_step:
+            return
+        self.update_masks(local_step)
+        self.handled_global_step = self.global_step
+
+    def update_masks(self, local_step):
+        """Update the masks at a given local step."""
+        pass
+
+    def on_epoch_end(self):
+        """Implement at the end of each epoch."""
+        pass
+
+    def on_step_end(self):
+        """Implement at the end of each step."""
+        pass
+
+    def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
+        pass
+
+    def on_after_optimizer_step(self):
+        """Implement after optimizer.step().
+
+        Prune the model after optimization.
+        """
+        self.mask_weights()
+        self.global_step += 1
+
+    def on_train_begin(self, dataloader=None):
+        """Implement at the beginning of training phase."""
+        pass
+
+    def on_train_end(self):
+        """Implement at the end of training phase."""
+        pass
+
+    def on_before_eval(self):
+        """Implement at the beginning of evaluation phase."""
+        pass
+
+    def on_after_eval(self):
+        """Implement at the end of evaluation phase."""
+        pass

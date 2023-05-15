@@ -286,15 +286,17 @@ class MHACompression(object):
         mha_object: a mha object searched by pattern_analyzer.SelfMHASearcher, refer to it.
         its data structure:
         {
-            'qkv': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
-            'ffn': [torch.nn.Linear]
-            'mha_name': ['mha_name'] (keep not change)
-            'mha_module': [torch.nn.Module] (keep not change)
-        }
+            'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+            'ffn_name': ['attention_ffn_name'],
+            'mha_name': ['mha_name'] (keep not change),
+            'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+            'ffn_module': [torch.nn.Linear],
+            'mha_module': [torch.nn.Module] (keep not change),
+        }   
         """
         # import pdb;pdb.set_trace()
-        self.qkv = mha_object['qkv'] # list
-        self.ffn = mha_object['ffn'] # list
+        self.qkv = mha_object['qkv_module'] # list
+        self.ffn = mha_object['ffn_module'] # list
         self.mha = mha_object['mha_module'] # list
 
         self.attributes_for_this_mha = self.check_mha_attributes(self.mha[0])

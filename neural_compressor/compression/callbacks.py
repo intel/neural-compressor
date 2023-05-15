@@ -36,6 +36,7 @@ from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
 # model auto slim related
+from .pruner.model_slim.pattern_analyzer import SelfMHASearcher
 
 LazyImport('torch.nn')
 torch = LazyImport('torch')
@@ -559,14 +560,24 @@ class PruningCallbacks(BaseCallbacks):
         """Obtain Pruner objects."""
         if isinstance(self._model.model, torch.nn.Module):
             for info in self.pruners_info:
-                modules = parse_to_prune(info, self._model.model)
-                if modules == {}:
-                    logger.warning("one pruner hooks no layers, please have a check")
+                if 'mha' in info['pattern']:
+                    # head pruning
+                    pa_obj = SelfMHASearcher(model, dataloader)
+                    modules, _ = pa_obj.search(split_qkv_ffn = False)
+                    modules = pa_obj.obtain_mha_module(modules)
+                    if len(modules) == 0:
+                        logger.warning("one pruner hooks no mha modules, please have a check")
+                    self.pruners.append(get_pruner(info, modules))
+                else:
+                    # original pruning types, e.g NxM or N:M
+                    modules = parse_to_prune(info, self._model.model)
+                    if modules == {}:
+                        logger.warning("one pruner hooks no layers, please have a check")
 
-                self.pruners.append(get_pruner(info, modules))
-                info['modules'] = [key for key in modules.keys()]
-                info['len_of_modules'] = len(info['modules'])
-                logger.info(info)
+                    self.pruners.append(get_pruner(info, modules))
+                    info['modules'] = [key for key in modules.keys()]
+                    info['len_of_modules'] = len(info['modules'])
+                    logger.info(info)
         else:
             assert False, 'now only support {}'.format(PRUNERS.keys())
 

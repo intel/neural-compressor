@@ -680,32 +680,40 @@ class SelfMHASearcher(JitBasicSearcher):
 
     def from_layer_name_to_object(self, mha_search_layers):
         """Obtain the layer object themselves from their names.
-        {
-            'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
-            'ffn': ['attention_ffn_name']
-            'mha_name': ['mha_name'] # bert.encoder.layer.0, etc.
-            'mha_module': torch.nn.Module, which corresponds to mha_name above.
-        }
+        [
+            {
+                'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn': ['attention_ffn_name']
+                'mha_name': ['mha_name'] # bert.encoder.layer.0, etc.
+                'mha_module': [torch.nn.Module] # which corresponds to mha_name above.
+            }
+            ...
+        ]
         ->
-        {
-            'qkv': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
-            'ffn': [torch.nn.Linear]
-            'mha_name': ['mha_name'] (keep not change)
-            'mha_module': torch.nn.Module (keep not change)
-        }
+        [
+            {
+                'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn_name': ['attention_ffn_name'],
+                'mha_name': ['mha_name'] (keep not change),
+                'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+                'ffn_module': [torch.nn.Linear],
+                'mha_module': [torch.nn.Module] (keep not change),
+            }
+            ...
+        ]
         """
         layer_objs = []
         for mha_search_layer in mha_search_layers:
+            # copy layer names
             layer_obj = {
-                "qkv": [],
-                "ffn": [],
-                "mha_name": None,
-                "mha_module": None,
+                "qkv_name": mha_search_layer['qkv'][:],
+                "ffn_name": mha_search_layer['ffn'][:],
+                "mha_name": mha_search_layer['mha_name'][:],
             }
-            layer_obj['qkv'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['qkv']]
-            layer_obj['ffn'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['ffn']]
-            layer_obj['mha_name'] = mha_search_layer['mha_name'][:]
-            layer_obj['mha_module'] = mha_search_layer['mha_module']
+            # obtain pytorch module
+            layer_obj['qkv_module'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['qkv']]
+            layer_obj['ffn_module'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['ffn']]
+            layer_obj['mha_module'] = mha_search_layer['mha_module'][:] # we can directly copy since we have already obtai this module before
             layer_objs.append(layer_obj)
         return layer_objs
     
@@ -744,11 +752,6 @@ class SelfMHASearcher(JitBasicSearcher):
                 get_attributes(self.model, mha_module_name) for mha_module_name in self_attention_list[idx]['mha_name']
             ]
         return self_attention_list
-        
-    def hook_mha_attributes(self, mha_module):
-        if hasattr(mha_module, "num_attention_heads"):
-            logger.info("Good.")
-        # to add more implementations
             
 class ClassifierHeadSearcher(object):
     """Static graph searcher for multi-head attention modules.
