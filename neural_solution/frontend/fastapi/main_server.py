@@ -101,7 +101,7 @@ async def submit_task(task: Task):
         try:
             serve.submit_task(task_id)
         except ConnectionRefusedError:
-            msg = "Task Submitted fail! Make sure inc serve runner is running!"
+            msg = "Task Submitted fail! Make sure neural solution runner is running!"
             status = "failed"
         except Exception as e:
             msg = "Task Submitted fail! {}".format(e)
