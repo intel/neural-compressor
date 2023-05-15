@@ -11,25 +11,65 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Common utilities for all frontend components."""
 
 
-import json
 import sqlite3
-import re
-import pandas as pd
 import os
-NEURAL_SOLUTION_WORKSPACE = os.path.abspath("../../ns_workspace")
+import re
+import uuid
+import pandas as pd
+
+from neural_solution.config import (
+    NEURAL_SOLUTION_WORKSPACE,
+    TASK_MONITOR_PORT,
+    RESULT_MONITOR_PORT)
+from neural_solution.frontend.task_submitter import TaskSubmitter
+
 DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
 TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
 TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
+DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
 
-def serialize(request: dict) -> bytes:
-    """Serialize a dict object to bytes for inter-process communication."""
-    return json.dumps(request).encode()
 
-def deserialize(request: bytes) -> dict:
-    """Deserialize the received bytes to a dict object"""
-    return json.loads(request)
+task_submitter = TaskSubmitter(task_monitor_port=TASK_MONITOR_PORT, result_monitor_port=RESULT_MONITOR_PORT)
+db_path = f"{DB_PATH}/task.db"
+
+def submit_task_to_db(task):
+    msg = "Task submitted failed"
+    status = "failed"
+    task_id = "-1"
+    result = {"status": status, "task_id": task_id, "msg": msg}
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        task_id = str(uuid.uuid4()).replace('-','')
+        sql = r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)" +\
+         r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
+             task_id,
+             task.script_url,
+             task.optimized,
+             list_to_string(task.arguments),
+             task.approach,
+             list_to_string(task.requirements),
+             task.workers)
+        cursor.execute(sql)
+        conn.commit()
+        try:
+            task_submitter.submit_task(task_id)
+        except ConnectionRefusedError:
+            msg = "Task Submitted fail! Make sure neural solution runner is running!"
+        except Exception as e:
+            msg = "Task Submitted fail! {}".format(e)
+        conn.close()
+        status = "successfully"
+        msg = "Task submitted successfully"
+    else:
+        msg = "Task Submitted fail! db not found!"
+    result["status"] = status
+    result["task_id"] = task_id
+    result["msg"]=msg
+    return result
 
 def get_config():
     """Get ports from ../../backend/constant.py
@@ -40,7 +80,8 @@ def get_config():
     # task_monitor_port, result_monitor_port = 2222, 3333
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(base_dir.replace("frontend", "backend"), "constant.py")
+    print(base_dir)
+    path = os.path.join(base_dir, "config.py")
     for line in open(path,'r').readlines():
         if "TASK_MONITOR_PORT" in line.split():
             task_monitor_port = line.split()[-1]

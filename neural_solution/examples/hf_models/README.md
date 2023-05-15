@@ -32,7 +32,7 @@ bash serve.sh help
      stop       : stop serve
 
   more start parameters: [usage: bash serve.sh start {--parameter=value}] [e.g. --serve_port=8000]
-    --hostfile           : start inc serve host file which contains all available nodes
+    --hostfile           : start neural solution host file which contains all available nodes
     --serve_port          : start web serve with {serve_port}, defult 8000
     --api_type           : start web serve with grpc/http, defult http
     --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222
@@ -47,7 +47,7 @@ bash serve.sh help
 
 ```shell
 [user@server hf_model]$ cd path/to/inc-server/examples/helloworld/hf_model
-[user@server hf_model]$ cat task_request.json 
+[user@server hf_model]$ cat task_request.json
 {
     "script_url": "https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
     "optimized": "False",

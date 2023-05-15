@@ -1,10 +1,10 @@
 import unittest
 import asyncio
-from unittest.mock import patch, Mock, MagicMock 
+from unittest.mock import patch, Mock, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import WebSocket
 from frontend.fastapi.main_server import app, serve, websocket_endpoint, LogEventHandler, start_log_watcher, Observer
-from frontend.fastapi.utils import serialize, DB_PATH, INC_SERVE_WORKSPACE, TASK_LOG_path
+from frontend.fastapi.utils import serialize, DB_PATH, NEURAL_SOLUTION_WORKSPACE, TASK_LOG_path
 from frontend.fastapi.task_submitter import Task
 import sqlite3
 import os
@@ -30,7 +30,7 @@ def build_db():
 
     conn.commit()
     conn.close
-    
+
 def delete_db():
     if os.path.exists(DB_PATH):
         shutil.rmtree(DB_PATH)
@@ -45,17 +45,17 @@ def use_db():
     return f
 
 class TestMain(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(self):
         if not os.path.exists(TASK_LOG_path):
             os.makedirs(TASK_LOG_path)
-    
+
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree(INC_SERVE_WORKSPACE, ignore_errors=True)
+        shutil.rmtree(NEURAL_SOLUTION_WORKSPACE, ignore_errors=True)
         delete_db()
-    
+
     def test_read_root(self):
         response = client.get("/")
         assert response.status_code == 200
@@ -104,7 +104,7 @@ class TestMain(unittest.TestCase):
             "requirements": ["req1", "req2"],
             "workers": 3
         }
-        
+
         # test no db case
         delete_db()
         response = client.post("/task/submit/", json=task)
@@ -112,7 +112,7 @@ class TestMain(unittest.TestCase):
         self.assertIn("msg", response.json())
         self.assertIn("Task Submitted fail! db not found!", response.json()["msg"])
         mock_submit_task.assert_not_called()
-        
+
         # test successfully
         build_db()
         response = client.post("/task/submit/", json=task)
@@ -122,8 +122,8 @@ class TestMain(unittest.TestCase):
         self.assertIn("msg", response.json())
         self.assertIn("successfully", response.json()["status"])
         mock_submit_task.assert_called_once()
-        
-        
+
+
         # test ConnectionRefusedError case
         mock_submit_task.side_effect = ConnectionRefusedError
         response = client.post("/task/submit/", json=task)
@@ -134,7 +134,7 @@ class TestMain(unittest.TestCase):
         self.assertEqual(response.json()["status"], "failed")
         self.assertIn("Make sure Neural Solution runner is running!", response.json()["msg"])
         mock_submit_task.assert_called()
-        
+
         # test generic Exception case
         mock_submit_task.side_effect = Exception("Something went wrong")
         response = client.post("/task/submit/", json=task)
@@ -145,10 +145,10 @@ class TestMain(unittest.TestCase):
         self.assertEqual(response.json()["status"], "failed")
         self.assertIn("Something went wrong", response.json()["msg"])
         mock_submit_task.assert_called()
-        
+
         delete_db()
 
-    @use_db()    
+    @use_db()
     @patch("frontend.fastapi.main_server.serve.submit_task")
     def test_get_task_by_id(self, mock_submit_task):
         task = {
@@ -173,7 +173,7 @@ class TestMain(unittest.TestCase):
         response = client.get("/task/")
         assert response.status_code == 200
         assert response.json()["message"] is None
-        
+
     @use_db()
     @patch("frontend.fastapi.main_server.serve.submit_task")
     def test_get_task_status_by_id(self, mock_submit_task):
@@ -190,7 +190,7 @@ class TestMain(unittest.TestCase):
         response = client.get(f"/task/status/{task_id}")
         assert response.status_code == 200
         self.assertIn("pending", response.text)
-        
+
         response = client.get(f"/task/status/error_id")
         assert response.status_code == 200
         self.assertIn("Please check url", response.text)
@@ -227,12 +227,12 @@ class TestLogEventHandler(unittest.TestCase):
         log_path = f"{TASK_LOG_path}/task_{task_id}.txt"
         if not os.path.exists(TASK_LOG_path):
             os.makedirs(TASK_LOG_path)
-        
+
         with open(log_path, "w") as f:
             f.write(f"I am {task_id}.")
-        
+
         handler = LogEventHandler(mock_websocket, "1234", 0)
-        
+
         handler.queue.put_nowait("test message")
         event = MagicMock()
         task_id = "1234"
@@ -247,7 +247,7 @@ class TestLogEventHandler(unittest.TestCase):
             mock_file.return_value.__enter__.return_value.readlines.assert_called_once()
             # handler.queue.put_nowait.assert_called_once_with("test line")
         os.remove(log_path)
-        
+
 class TestStartLogWatcher(unittest.TestCase):
 
     def setUp(self):
@@ -265,7 +265,7 @@ class TestWebsocketEndpoint(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
         self.client = TestClient(app)
-    
+
     def test_websocket_endpoint(self):
         pass
         # with self.assertRaises(HTTPException):

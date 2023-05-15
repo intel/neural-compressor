@@ -14,8 +14,8 @@
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
-from frontend.fastapi.task_submitter import TaskSubmitter, Task
-from frontend.fastapi.utils import (
+from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
+from neural_solution.frontend.fastapi.utils import (
     get_config,
     get_cluster_info,
     get_cluster_table,
@@ -32,7 +32,7 @@ from watchdog.events import FileSystemEventHandler
 import asyncio
 import json
 import socket
-from frontend.fastapi.utils import DB_PATH, TASK_LOG_path
+from neural_solution.frontend.fastapi.utils import DB_PATH, TASK_LOG_path
 
 app = FastAPI()
 task_monitor_port, result_monitor_port = get_config()
@@ -88,7 +88,6 @@ def list_to_string(lst: list):
 async def submit_task(task: Task):
     msg = "Task submitted successfully"
     status = "successfully"
-    tid = "-1"
     # search the current
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
@@ -102,7 +101,7 @@ async def submit_task(task: Task):
         try:
             serve.submit_task(task_id)
         except ConnectionRefusedError:
-            msg = "Task Submitted fail! Make sure inc serve runner is running!"
+            msg = "Task Submitted fail! Make sure neural solution runner is running!"
             status = "failed"
         except Exception as e:
             msg = "Task Submitted fail! {}".format(e)
@@ -110,7 +109,7 @@ async def submit_task(task: Task):
         conn.close()
     else:
         msg = "Task Submitted fail! db not found!"
-        return {"msg": msg}
+        return {"msg": msg} # TODO to align with return message when submit task successfully
     return {"status": status, "task_id": task_id, "msg": msg}
 
 @app.get("/task/{task_id}")
