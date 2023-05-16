@@ -3267,6 +3267,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         with open(self.ipex_config_path, 'r') as f:
             self.tmp_model.tune_cfg = json.load(f)
         self.tmp_model.ipex_config_path = self.ipex_config_path
+        self._dump_model_op_stats(tune_cfg)
         return self.tmp_model
 
     @dump_elapsed_time("Pass save quantized model")
