@@ -109,7 +109,6 @@ class TestDistillation(unittest.TestCase):
         opt_model = self.student_model.load_state_dict(stat)
 
     def test_distillation_tf(self):
-        from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
         tf_datasets = Datasets('tensorflow')
         dummy_dataset = tf_datasets['dummy'](shape=(100, 224, 224, 3), low=0., high=1., label=True)
         default_workspace = './nc_workspace/{}/'.format(
