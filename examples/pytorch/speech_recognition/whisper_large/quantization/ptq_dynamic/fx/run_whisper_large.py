@@ -61,9 +61,8 @@ if args.tune:
             }
     conf = PostTrainingQuantConfig(approach="dynamic", op_type_dict=op_type_dict)
     q_model = quantization.fit(model,
-                        conf=conf,
-                        eval_func=eval_func,
-                        )
+                               conf=conf,
+                               eval_func=eval_func)
     q_model.save(args.output_dir)
     exit(0)
 

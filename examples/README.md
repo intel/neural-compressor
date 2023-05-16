@@ -611,6 +611,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-to-image/quantization">fx</a></td>
   </tr>
+  <tr>
+    <td>openai/whisper-large</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/whisper_large/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+
 </tbody>
 </table>
 

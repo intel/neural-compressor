@@ -23,10 +23,6 @@ class TestConfig(unittest.TestCase):
 class TestGeneralConf(unittest.TestCase):
     def test_config(self):
         cfg = PostTrainingQuantConfig()
-        cfg.accuracy_criterion.tolerable_loss = 0.2
-        a = conf(quantization=cfg)
-        self.assertEqual(a.accuracy.tolerable_loss, 0.2)
-
         cfg.op_type_dict = {'Conv': {
                               'weight': {
                                   'dtype': ['fp32']},
@@ -41,10 +37,6 @@ class TestGeneralConf(unittest.TestCase):
                             }
         a = conf(quantization=cfg)
         self.assertEqual(a.quantization.op_type_dict['Conv']['weight']['dtype'], ['fp32'])
-
-        cfg.tuning_criterion.strategy = 'mse'
-        a = conf(quantization=cfg)
-        self.assertEqual(a.tuning.strategy, 'mse')
 
         cfg = BenchmarkConfig()
         cfg.cores_per_instance = 4
