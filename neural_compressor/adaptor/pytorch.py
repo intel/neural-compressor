@@ -2428,18 +2428,18 @@ class PyTorchAdaptor(TemplateAdaptor):
 
 
 unify_op_type_mapping_ipex = {
-    "Convolution_Relu": "conv2d",
-    "Convolution_Sum_Relu": "conv2d",
-    "Convolution_BatchNorm": "conv2d",
-    "<class 'torch.nn.modules.conv.Conv1d'>": "conv1d",
-    "<class 'torch.nn.modules.conv.Conv2d'>": "conv2d",
-    "<class 'torch.nn.modules.conv.Conv3d'>": "conv3d",
-    "<class 'torch.nn.modules.activation.ReLU'>": "relu",
+    "Convolution_Relu": "Conv2d",
+    "Convolution_Sum_Relu": "Conv2d",
+    "Convolution_BatchNorm": "Conv2d",
+    "<class 'torch.nn.modules.conv.Conv1d'>": "Conv1d",
+    "<class 'torch.nn.modules.conv.Conv2d'>": "Conv2d",
+    "<class 'torch.nn.modules.conv.Conv3d'>": "Conv3d",
+    "<class 'torch.nn.modules.activation.ReLU'>": "ReLU",
     "<method 'add' of 'torch._C._TensorBase' objects>": "add",
-    "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "adaptiveavgpool2d",
-    "Linear_Relu": "linear",
-    "<class 'torch.nn.modules.linear.Linear'>": "linear",
-    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "maxpool2d",
+    "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "AdaptiveAvgPool2d",
+    "Linear_Relu": "Linear",
+    "<class 'torch.nn.modules.linear.Linear'>": "Linear",
+    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "MaxPool2d",
     're': {
         "<built-in method matmul of type object at": "matmul"
     }
