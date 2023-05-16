@@ -1377,10 +1377,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """Compute MSE."""
         op_cfg = tune_cfg['op']
         mse_result = {}
-        partial_dataloader = self._partial_dataloader(dataloader, confidence_batches)
         
         fp32_output = self._inference_model_on_batches(
-            fp32_model, tune_cfg, partial_dataloader, output_op_names)
+            fp32_model, tune_cfg, dataloader, output_op_names, confidence_batches)
 
         for op in ops_lst:
             # backup and set replace tuning config
@@ -1388,9 +1387,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             op_cfg[op] = replace_cfgs[op]
 
             # quantize and inference the model
-            q_model = self.quantize(tune_cfg, fp32_model, partial_dataloader)
+            q_model = self.quantize(tune_cfg, fp32_model, dataloader)
             q_output = self._inference_model_on_batches(
-                q_model, tune_cfg, partial_dataloader, output_op_names)
+                q_model, tune_cfg, dataloader, output_op_names, confidence_batches)
 
             mse_result[op] = self._calculate_mse(fp32_output, q_output)
 
@@ -1398,32 +1397,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             op_cfg[op] = backup_cfg
 
         return mse_result
-
-    def _partial_dataset_of(self, dataloader, confidence_batches):
-        """Partial dataset."""
-        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
-        from neural_compressor.data.datasets.dummy_dataset import DummyDataset as DummyDataset_v2_x
-        if isinstance(dataloader.dataset, DummyDataset) or isinstance(dataloader.dataset, DummyDataset_v2_x):
-            assert(isinstance(confidence_batches, int))
-            ds = copy.deepcopy(dataloader.dataset)
-            ds.dataset = ds.dataset[:confidence_batches]
-            return ds
-        else:
-            return dataloader.dataset.take(confidence_batches)
-
-    def _partial_dataloader(self, dataloader, confidence_batches):
-        """Partial dataloader."""
-        return type(dataloader)(
-            dataset=self._partial_dataset_of(dataloader, confidence_batches),
-            batch_size=dataloader.batch_size,
-            last_batch=dataloader.last_batch,
-            collate_fn=dataloader.collate_fn,
-            sampler=dataloader.sampler,
-            batch_sampler=dataloader.batch_sampler,
-            num_workers=dataloader.num_workers,
-            pin_memory=dataloader.pin_memory,
-            shuffle=dataloader.shuffle,
-            distributed=dataloader.distributed)
 
     def _calculate_mse(self, fp32_output, q_output):
         """MSE calculation."""
@@ -1433,7 +1406,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return np.array(result).mean()
 
     def _inference_model_on_batches(self, model, tune_cfg, dataloader,
-                                    output_op_names):
+                                    output_op_name, iterations):
         """Inference model on batches."""
         ort_inputs = {}
         predictions = []
@@ -1445,6 +1418,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         inputs_names = [i.name for i in session.get_inputs()]
         len_inputs = len(session.get_inputs())
         for idx, (inputs, _) in enumerate(dataloader):
+            if idx + 1 > iterations:
+                break
             if len_inputs == 1:
                 ort_inputs.update(
                     inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
