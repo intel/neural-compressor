@@ -15,15 +15,9 @@
 """Config for both frontend and backend."""
 import os
 
-#Constant for server
-TASK_MONITOR_PORT = 2222
-RESULT_MONITOR_PORT = 3333
-SERVE_PORT = 9001
 
-
-
-NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "neural_solution" ,"ns_workspace")
-DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
+NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
+DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db/task.db"
 TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
 TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
 SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
@@ -36,5 +30,4 @@ NUM_SOCKETS = 2
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 
 #Constant for conda # TODO remove it
-CONDA_ENV_NAME = "inc" # TODO detect it automatically
 INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor" # TODO detect it automatically

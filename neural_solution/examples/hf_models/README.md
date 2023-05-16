@@ -18,7 +18,7 @@ conda activate ENV
 bash serve.sh start
 
 # Start inc-serve with custom configuration
-bash serve.sh start --task_monitor_port=22222 --result_monitor_port=33333 --serve_port=8001
+bash Launcher.sh start --task_monitor_port=22222 --result_monitor_port=33333 --serve_port=8001
 
 # Stop inc-serve with default configuration
 bash serve.sh stop

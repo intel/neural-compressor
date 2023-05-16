@@ -3,12 +3,17 @@ import asyncio
 from unittest.mock import patch, Mock, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import WebSocket
-from frontend.fastapi.main_server import app, serve, websocket_endpoint, LogEventHandler, start_log_watcher, Observer
-from frontend.fastapi.utils import serialize, DB_PATH, NEURAL_SOLUTION_WORKSPACE, TASK_LOG_path
-from frontend.fastapi.task_submitter import Task
+from neural_solution.frontend.fastapi.main_server import app, serve, websocket_endpoint, LogEventHandler, start_log_watcher, Observer
+from neural_solution.frontend.fastapi.task_submitter import Task
 import sqlite3
 import os
 import shutil
+
+NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
+DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
+TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
+TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
+SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
 client = TestClient(app)
 def build_db():
@@ -61,7 +66,7 @@ class TestMain(unittest.TestCase):
         assert response.status_code == 200
         self.assertEqual(response.json(), {"message": "Welcome to NeuralSolution OaaS!"})
 
-    @patch('frontend.fastapi.main_server.socket')
+    @patch('neural_solution.frontend.fastapi.main_server.socket')
     def test_ping(self, mock_socket):
         response = client.get("/ping")
         self.assertEqual(response.status_code, 200)
@@ -93,8 +98,9 @@ class TestMain(unittest.TestCase):
         response = client.get("/description")
         assert response.status_code == 200
         assert "description" in response.text
+        shutil.rmtree(path)
 
-    @patch("frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
     def test_submit_task(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -132,7 +138,7 @@ class TestMain(unittest.TestCase):
         self.assertIn("task_id", response.json())
         self.assertIn("msg", response.json())
         self.assertEqual(response.json()["status"], "failed")
-        self.assertIn("Make sure Neural Solution runner is running!", response.json()["msg"])
+        self.assertIn("Task Submitted fail! Make sure Neural Solution runner is running!", response.json()["msg"])
         mock_submit_task.assert_called()
 
         # test generic Exception case
@@ -149,7 +155,7 @@ class TestMain(unittest.TestCase):
         delete_db()
 
     @use_db()
-    @patch("frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
     def test_get_task_by_id(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -175,7 +181,7 @@ class TestMain(unittest.TestCase):
         assert response.json()["message"] is None
 
     @use_db()
-    @patch("frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
     def test_get_task_status_by_id(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -256,7 +262,7 @@ class TestStartLogWatcher(unittest.TestCase):
     def test_start_log_watcher(self):
         mock_observer = MagicMock()
         mock_observer.schedule = MagicMock()
-        with patch('frontend.fastapi.main_server.Observer', MagicMock(return_value=mock_observer)):
+        with patch('neural_solution.frontend.fastapi.main_server.Observer', MagicMock(return_value=mock_observer)):
             observer = start_log_watcher("test_websocket", "1234", 0)
             self.assertIsInstance(observer, type(mock_observer))
 

@@ -2,7 +2,7 @@ import json
 import os
 from ..utils import logger
 from urllib.parse import urlparse
-from ..constant import NUM_CORES_PER_SOCKET, NUM_SOCKETS, TASK_WORKSPACE, TASK_LOG_path
+from neural_solution.config import NUM_CORES_PER_SOCKET, NUM_SOCKETS, TASK_WORKSPACE, TASK_LOG_path
 
 
 def serialize(request: dict) -> bytes:
@@ -116,5 +116,5 @@ def is_remote_url(url_or_filename):
 
 def create_dir(path):
     """Create the (nested) path if not exist."""
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))

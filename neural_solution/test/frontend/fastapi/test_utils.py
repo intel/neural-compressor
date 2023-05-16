@@ -3,10 +3,16 @@ import os
 import shutil
 from unittest.mock import patch, mock_open
 
-from frontend.fastapi.utils import serialize, deserialize, get_config, get_cluster_info,\
-    get_cluster_table, get_res_during_tuning, get_baseline_during_tuning, check_log_exists
-from frontend.fastapi.utils import TASK_LOG_path, NEURAL_SOLUTION_WORKSPACE
-
+from neural_solution.frontend.utility import (
+    serialize, deserialize,
+    get_cluster_info,get_cluster_table,
+    get_res_during_tuning, get_baseline_during_tuning,
+    check_log_exists, list_to_string)
+NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
+DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db/task.db"
+TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
+TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
+SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
 class TestMyModule(unittest.TestCase):
 
@@ -29,17 +35,12 @@ class TestMyModule(unittest.TestCase):
         expected_result = {"key": "value"}
         self.assertEqual(deserialize(request), expected_result)
 
-    @patch("builtins.open", new_callable=mock_open, read_data='TASK_MONITOR_PORT = 2222\nRESULT_MONITOR_PORT = 3333\n')
-    def test_get_config(self, mock_file):
-        expected_result = (2222, 3333)
-        self.assertEqual(get_config(), expected_result)
-
     @patch('sqlite3.connect')
     def test_get_cluster_info(self, mock_connect):
         mock_cursor = mock_connect().cursor.return_value
         mock_cursor.fetchall.return_value = [(1, "node info", "status", 1, 2, 3)]
         expected_result = {"Cluster info": [(1, "node info", "status", 1, 2, 3)]}
-        self.assertEqual(get_cluster_info(), expected_result)
+        self.assertEqual(get_cluster_info(TASK_LOG_path), expected_result)
 
     @patch('sqlite3.connect')
     def test_get_cluster_table(self, mock_connect):
@@ -67,7 +68,7 @@ class TestMyModule(unittest.TestCase):
                     '    </tr>\n'
                     '  </tbody>\n'
                     '</table>')
-        self.assertEqual(get_cluster_table(), expected_result)
+        self.assertEqual(get_cluster_table(TASK_LOG_path), expected_result)
 
     def test_get_res_during_tuning(self):
         task_id = "12345"
@@ -75,7 +76,7 @@ class TestMyModule(unittest.TestCase):
         with open(log_path, "w") as f:
             f.write("Tune 1 result is: (int8|fp32): 0.123 (int8|fp32): 0.456")
         expected_result = {"Tuning count": "1", "Accuracy": "0.123", "Duration (seconds)": "0.456"}
-        self.assertEqual(get_res_during_tuning(task_id), expected_result)
+        self.assertEqual(get_res_during_tuning(task_id, TASK_LOG_path), expected_result)
         os.remove(log_path)
 
     def test_get_baseline_during_tuning(self):
@@ -84,7 +85,7 @@ class TestMyModule(unittest.TestCase):
         with open(log_path, "w") as f:
             f.write("FP32 baseline is: 0.123 0.456")
         expected_result = {"Accuracy": "0.123", "Duration (seconds)": "0.456"}
-        self.assertEqual(get_baseline_during_tuning(task_id), expected_result)
+        self.assertEqual(get_baseline_during_tuning(task_id, TASK_LOG_path), expected_result)
         os.remove(log_path)
 
     def test_check_log_exists(self):
@@ -92,9 +93,14 @@ class TestMyModule(unittest.TestCase):
         log_path = f"{TASK_LOG_path}/task_{task_id}.txt"
         with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-            self.assertTrue(check_log_exists(task_id))
+            self.assertTrue(check_log_exists(task_id, TASK_LOG_path))
             mock_exists.return_value = False
-            self.assertFalse(check_log_exists(task_id))
+            self.assertFalse(check_log_exists(task_id, TASK_LOG_path))
+
+    def test_list_to_string(self):
+        lst = ["Hello", "Neural", "Solution"]
+        expected_result = "Hello Neural Solution"
+        self.assertEqual(list_to_string(lst), expected_result)
 
 if __name__ == '__main__':
     unittest.main()

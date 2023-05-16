@@ -25,7 +25,7 @@ import shutil
 from .task import Task
 from .cluster import Cluster
 from .task_db import TaskDB
-from .constant import NUM_THREADS_PER_PROCESS, CONDA_ENV_NAME, INC_ENV_PATH_TEMP
+from neural_solution.config import NUM_THREADS_PER_PROCESS, INC_ENV_PATH_TEMP
 from .utils.utility import (
     serialize,
     dump_elapsed_time,
@@ -40,7 +40,7 @@ cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
 class Scheduler:
-    def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port):
+    def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, conda_env_name=None):
         """Scheduler dispatches the task with the available resources, calls the mpi command and report results.
 
         Attributes:
@@ -51,6 +51,7 @@ class Scheduler:
         self.cluster = cluster
         self.task_db = task_db
         self.result_monitor_port = result_monitor_port
+        self.conda_env_name = conda_env_name
 
     def prepare_env(self, task:Task):
         """Check and create a conda environment.
@@ -61,7 +62,7 @@ class Scheduler:
             task (Task): _description_
         """
         # Define the prefix of the conda environment name
-        env_prefix = CONDA_ENV_NAME
+        env_prefix = self.conda_env_name
         requirement = task.requirement.split(" ")
         # Skip check when requirement is empty.
         if requirement == ['']:

@@ -20,7 +20,7 @@ import sqlite3
 import os
 from .utils import logger
 from .utils.utility import create_dir
-from .constant import DB_PATH
+from neural_solution.config import DB_PATH
 
 class TaskDB:
     """TaskDb manages all the tasks.
@@ -35,7 +35,7 @@ class TaskDB:
     def __init__(self):
         self.task_queue = deque()
         create_dir(DB_PATH)
-        self.conn = sqlite3.connect(f'{DB_PATH}/task.db', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        self.conn = sqlite3.connect(f'{DB_PATH}', check_same_thread=False)  # sqlite should set this check_same_thread to False
         self.cursor = self.conn.cursor()
         self.cursor.execute(
             'create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), ' +

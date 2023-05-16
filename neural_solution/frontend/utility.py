@@ -13,27 +13,23 @@
 # limitations under the License.
 """Common utilities for all frontend components."""
 
-
+import json
 import sqlite3
 import os
 import re
 import uuid
 import pandas as pd
 
-from neural_solution.config import (
-    NEURAL_SOLUTION_WORKSPACE,
-    TASK_MONITOR_PORT,
-    RESULT_MONITOR_PORT)
+
 from neural_solution.frontend.task_submitter import TaskSubmitter
+from neural_solution.config import DB_PATH
 
-DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
-TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
-TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
-DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
+# Get config from Launcher.sh
+task_monitor_port = int(os.environ.get("TASK_MONITOR_PORT", 2222))
+result_monitor_port = int(os.environ.get('RESULT_MONITOR_PORT', 3333))
 
-
-task_submitter = TaskSubmitter(task_monitor_port=TASK_MONITOR_PORT, result_monitor_port=RESULT_MONITOR_PORT)
-db_path = f"{DB_PATH}/task.db"
+task_submitter = TaskSubmitter(task_monitor_port=task_monitor_port, result_monitor_port=task_monitor_port)
+db_path = DB_PATH
 
 def submit_task_to_db(task):
     msg = "Task submitted failed"
@@ -71,31 +67,21 @@ def submit_task_to_db(task):
     result["msg"]=msg
     return result
 
-def get_config():
-    """Get ports from ../../backend/constant.py
+def serialize(request: dict) -> bytes:
+    """Serialize a dict object to bytes for inter-process communication."""
+    return json.dumps(request).encode()
 
-    Returns:
-        int, int: task monitor port & result monitor port
-    """
-    # task_monitor_port, result_monitor_port = 2222, 3333
-    import os
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    print(base_dir)
-    path = os.path.join(base_dir, "config.py")
-    for line in open(path,'r').readlines():
-        if "TASK_MONITOR_PORT" in line.split():
-            task_monitor_port = line.split()[-1]
-        if "RESULT_MONITOR_PORT" in line.split():
-            result_monitor_port = line.split()[-1]
-    return int(task_monitor_port), int(result_monitor_port)
+def deserialize(request: bytes) -> dict:
+    """Deserialize the received bytes to a dict object"""
+    return json.loads(request)
 
-def get_cluster_info():
+def get_cluster_info(db_path:str):
     """Get cluster information from database
 
     Returns:
         json: cluster information includes the number of nodes and node information.
     """
-    conn = sqlite3.connect(f"{DB_PATH}/task.db")
+    conn = sqlite3.connect(f"{db_path}")
     cursor = conn.cursor()
     cursor.execute(r"select * from cluster")
     conn.commit()
@@ -103,13 +89,13 @@ def get_cluster_info():
     conn.close()
     return {"Cluster info": rows}
 
-def get_cluster_table():
+def get_cluster_table(db_path:str):
     """Get cluster table from database
 
     Returns:
         html: table of cluster information.
     """
-    conn = sqlite3.connect(f"{DB_PATH}/task.db")
+    conn = sqlite3.connect(f"{db_path}")
     cursor = conn.cursor()
     cursor.execute(r"select * from cluster")
     conn.commit()
@@ -119,7 +105,7 @@ def get_cluster_table():
     conn.close()
     return html_table
 
-def get_res_during_tuning(task_id: str):
+def get_res_during_tuning(task_id: str, task_log_path):
     """Get result during tuning.
 
     Args:
@@ -129,7 +115,7 @@ def get_res_during_tuning(task_id: str):
         dict: the result of {"Tuning count":, "Accuracy":, "Duration (seconds)"}.
     """
     results = {}
-    log_path = "{}/task_{}.txt".format(TASK_LOG_path, task_id)
+    log_path = "{}/task_{}.txt".format(task_log_path, task_id)
     for line in reversed(open(log_path).readlines()):
         res_pattern = r'Tune (\d+) result is: '
         res_pattern = r'Tune (\d+) result is:\s.*?\(int8\|fp32\):\s+(\d+\.\d+).*?\(int8\|fp32\):\s+(\d+\.\d+).*?'
@@ -144,7 +130,7 @@ def get_res_during_tuning(task_id: str):
     print("Query results: {}".format(results))
     return  results if results else "Tune 1 running..."
 
-def get_baseline_during_tuning(task_id: str):
+def get_baseline_during_tuning(task_id: str, task_log_path):
     """Get result during tuning.
 
     Args:
@@ -154,7 +140,7 @@ def get_baseline_during_tuning(task_id: str):
         dict: the baseline of {"Accuracy":,"Duration (seconds)":}.
     """
     results = {}
-    log_path = "{}/task_{}.txt".format(TASK_LOG_path, task_id)
+    log_path = "{}/task_{}.txt".format(task_log_path, task_id)
     for line in reversed(open(log_path).readlines()):
         res_pattern = "FP32 baseline is:\s+.*?(\d+\.\d+).*?(\d+\.\d+).*?"
         res_matches = re.findall(res_pattern, line)
@@ -167,7 +153,7 @@ def get_baseline_during_tuning(task_id: str):
     print("FP32 baseline: {}".format(results))
     return  results if results else "Getting FP32 baseline..."
 
-def check_log_exists(task_id: str):
+def check_log_exists(task_id: str, task_log_path):
     """Check whether the log file exists
 
     Args:
@@ -176,7 +162,7 @@ def check_log_exists(task_id: str):
     Returns:
         bool: Does the log file exist.
     """
-    log_path = "{}/task_{}.txt".format(TASK_LOG_path, task_id)
+    log_path = "{}/task_{}.txt".format(task_log_path, task_id)
     if os.path.exists(log_path):
         return True
     else:

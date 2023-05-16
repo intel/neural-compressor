@@ -18,7 +18,6 @@ import threading
 import socket
 import time
 
-from backend.constant import TASK_MONITOR_PORT, RESULT_MONITOR_PORT
 from backend.cluster import Node, Cluster
 from backend.utils.utility import build_cluster
 from backend.utils import logger
@@ -33,6 +32,12 @@ def parse_args(args=None):
 
     parser.add_argument("-H", "--hostfile", type=str, default=None, \
         help="Path to the host file which contains all available nodes.")
+    parser.add_argument("-TMP", "--task_monitor_port", type=int, default=2222, \
+        help="Port to monitor task.")
+    parser.add_argument("-RMP", "--result_monitor_port", type=int, default=3333, \
+        help="Port to monitor result.")
+    parser.add_argument("-CEN", "--conda_env_name", type=str, default="inc", \
+        help="Conda environment for task execution")
     # ...
     return parser.parse_args(args=args)
 
@@ -46,19 +51,19 @@ def main(args=None):
     task_db = TaskDB()
 
     # start three threads
-    rm = ResultMonitor(RESULT_MONITOR_PORT, task_db)
+    rm = ResultMonitor(args.result_monitor_port, task_db)
     t_rm = threading.Thread(target=rm.wait_result)
 
-    ts = Scheduler(cluster, task_db, RESULT_MONITOR_PORT)
+    ts = Scheduler(cluster, task_db, args.result_monitor_port, conda_env_name=args.conda_env_name)
     t_ts = threading.Thread(target=ts.schedule_tasks)
 
-    tm = TaskMonitor(TASK_MONITOR_PORT, task_db)
+    tm = TaskMonitor(args.task_monitor_port, task_db)
     t_tm = threading.Thread(target=tm.wait_new_task)
 
     t_rm.start()
     t_ts.start()
     t_tm.start()
-    logger.info("task monitor port {} and result monitor port {}".format(TASK_MONITOR_PORT, RESULT_MONITOR_PORT))
+    logger.info("task monitor port {} and result monitor port {}".format(args.task_monitor_port, args.result_monitor_port))
     logger.info("server start...")
 
     t_rm.join()

@@ -15,8 +15,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
-from neural_solution.frontend.fastapi.utils import (
-    get_config,
+from neural_solution.frontend.utility import (
     get_cluster_info,
     get_cluster_table,
     serialize, deserialize,
@@ -32,16 +31,26 @@ from watchdog.events import FileSystemEventHandler
 import asyncio
 import json
 import socket
-from neural_solution.frontend.fastapi.utils import DB_PATH, TASK_LOG_path
+
+import argparse
+
+from neural_solution.config import (
+    NEURAL_SOLUTION_WORKSPACE,
+    DB_PATH,
+    TASK_WORKSPACE,
+    TASK_LOG_path,
+    )
+
+# Get config from Launcher.sh
+task_monitor_port = int(os.environ.get("TASK_MONITOR_PORT", 2222))
+result_monitor_port = int(os.environ.get('RESULT_MONITOR_PORT', 3333))
 
 app = FastAPI()
-task_monitor_port, result_monitor_port = get_config()
 serve = TaskSubmitter(task_monitor_port=task_monitor_port, result_monitor_port=result_monitor_port)
-db_path = f"{DB_PATH}/task.db"
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to NeuralSolution OaaS!"}
+    return {"message": f"Welcome to NeuralSolution OaaS!"}
 
 @app.get("/ping")
 def ping():
@@ -69,11 +78,11 @@ def ping():
 
 @app.get("/cluster")
 def get_cluster():
-    return get_cluster_info()
+    return get_cluster_info(db_path=DB_PATH)
 
 @app.get("/clusters")
 def get_cluster():
-    return HTMLResponse(content=get_cluster_table())
+    return HTMLResponse(content=get_cluster_table(db_path=DB_PATH))
 
 @app.get("/description")
 async def get_description():
@@ -89,8 +98,8 @@ async def submit_task(task: Task):
     msg = "Task submitted successfully"
     status = "successfully"
     # search the current
-    if os.path.isfile(db_path):
-        conn = sqlite3.connect(db_path)
+    if os.path.isfile(DB_PATH):
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         task_id = str(uuid.uuid4()).replace('-','')
         sql = r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)" +\
@@ -101,7 +110,7 @@ async def submit_task(task: Task):
         try:
             serve.submit_task(task_id)
         except ConnectionRefusedError:
-            msg = "Task Submitted fail! Make sure neural solution runner is running!"
+            msg = "Task Submitted fail! Make sure Neural Solution runner is running!"
             status = "failed"
         except Exception as e:
             msg = "Task Submitted fail! {}".format(e)
@@ -115,8 +124,8 @@ async def submit_task(task: Task):
 @app.get("/task/{task_id}")
 def get_task_by_id(task_id: str):
     res = None
-    if os.path.isfile(db_path):
-        conn = sqlite3.connect(db_path)
+    if os.path.isfile(DB_PATH):
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id,))
         res = cursor.fetchone()
@@ -127,8 +136,8 @@ def get_task_by_id(task_id: str):
 @app.get("/task/")
 def get_all_tasks():
     res = None
-    if os.path.isfile(db_path):
-        conn = sqlite3.connect(db_path)
+    if os.path.isfile(DB_PATH):
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute(r"select * from task")
         res = cursor.fetchall()
@@ -139,8 +148,8 @@ def get_all_tasks():
 @app.get("/task/status/{task_id}")
 def get_task_status_by_id(task_id: str):
     res = None
-    if os.path.isfile(db_path):
-        conn = sqlite3.connect(db_path)
+    if os.path.isfile(DB_PATH):
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
         res = cursor.fetchone()
@@ -153,8 +162,8 @@ def get_task_status_by_id(task_id: str):
     elif res[0] == "pending":
         return {"task pending"}
     else:
-        baseline = get_baseline_during_tuning(task_id)
-        result = get_res_during_tuning(task_id)
+        baseline = get_baseline_during_tuning(task_id,TASK_LOG_path)
+        result = get_res_during_tuning(task_id, TASK_LOG_path)
         return {"status": res[0], "baseline": baseline, "message": result}
 
 @app.get("/task/log/{task_id}")
@@ -220,7 +229,7 @@ def start_log_watcher(websocket, task_id, last_position):
 
 @app.websocket("/task/screen/{task_id}")
 async def websocket_endpoint(websocket: WebSocket, task_id: str):
-    if not check_log_exists(task_id=task_id):
+    if not check_log_exists(task_id=task_id, task_log_path=TASK_LOG_path):
         raise HTTPException(status_code=404, detail="Task not found")
     await websocket.accept()
 

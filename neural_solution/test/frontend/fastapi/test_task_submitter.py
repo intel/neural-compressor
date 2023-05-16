@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 import socket
-from frontend.fastapi.task_submitter import TaskSubmitter, Task
+from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
 
 class TestTask(unittest.TestCase):
     def test_task_creation(self):

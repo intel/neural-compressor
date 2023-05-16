@@ -49,9 +49,6 @@ function init_params {
          --serve_port=*)
          serve_port=$(echo $var |cut -f2 -d=)
          check_port $serve_port
-         ori_str="SERVE_PORT .*"
-         des_str='SERVE_PORT = '"$serve_port"''
-         sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
          ;;
          --api_type=*)
          api_type=$(echo $var |cut -f2 -d=)
@@ -59,16 +56,10 @@ function init_params {
          --task_monitor_port=*)
          task_monitor_port=$(echo $var |cut -f2 -d=)
          check_port $task_monitor_port
-         ori_str="TASK_MONITOR_PORT .*"
-         des_str='TASK_MONITOR_PORT = '"$task_monitor_port"''
-         sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
          ;;
          --result_monitor_port=*)
          check_port $result_monitor_port
          result_monitor_port=$(echo $var |cut -f2 -d=)
-         ori_str="RESULT_MONITOR_PORT .*"
-         des_str='RESULT_MONITOR_PORT = '"$result_monitor_port"''
-         sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
          ;;
          --serve_log_dir=*)
          serve_log_dir=$(echo $var |cut -f2 -d=)
@@ -122,14 +113,10 @@ function serve {
                exit 1
             else
                echo "No environment specified, use environment activated: ($CONDA_ENV) as the task runtime environment."
-               ori_str="CONDA_ENV_NAME .*"
-               des_str='CONDA_ENV_NAME = "'"$CONDA_ENV"'"'
-               sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
+               conda_env_name=$CONDA_ENV
             fi
          else
-            ori_str="CONDA_ENV_NAME .*"
-            des_str='CONDA_ENV_NAME = "'"$conda_env"'"'
-            sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
+            conda_env_name=$conda_env
          fi
          # Check completed
 
@@ -138,10 +125,17 @@ function serve {
          date_suffix=
          >$serve_log_dir/backend$date_suffix.log
          >$serve_log_dir/frontend$date_suffix.log
-         export PYTHONDONTWRITEBYTECODE=1 && python ./backend/Runner.py -H ${hostfile} >> \
-         $serve_log_dir/backend$date_suffix.log  2>&1 &
-         export PYTHONDONTWRITEBYTECODE=1 && cd ./frontend/fastapi && gunicorn -b 0.0.0.0:${serve_port} \
-         -k uvicorn.workers.UvicornWorker main_server:app &>>../../$serve_log_dir/frontend$date_suffix.log &
+         export PYTHONDONTWRITEBYTECODE=1 && python ./backend/Runner.py \
+         --hostfile ${hostfile} \
+         --task_monitor_port $task_monitor_port \
+         --result_monitor_port $result_monitor_port \
+         --conda_env_name $conda_env_name \
+          >> $serve_log_dir/backend$date_suffix.log  2>&1 &
+         export PYTHONDONTWRITEBYTECODE=1 && gunicorn -b 0.0.0.0:${serve_port} \
+         -k uvicorn.workers.UvicornWorker  frontend.fastapi.main_server:app \
+         --env TASK_MONITOR_PORT=$task_monitor_port \
+         --env RESULT_MONITOR_PORT=$result_monitor_port \
+         &>>$serve_log_dir/frontend$date_suffix.log &
          ip_address=$(hostname -I | awk '{print $1}')
 
          # Check if the service is started
@@ -202,27 +196,13 @@ function serve {
 
       ;;
       stop)
-         task_monitor_port=$(head -n -3 backend/constant.py | grep TASK | cut -d " " -f3)
-         result_monitor_port=$(head -n -3 backend/constant.py | grep RESULT | cut -d " " -f3)
-         serve_port=$(head -n -4 backend/constant.py | grep SERVE_PORT | cut -d " " -f3)
-         lsof -i:${task_monitor_port} | grep python|awk '{print $2}' | xargs kill -9
-         lsof -i:$result_monitor_port | grep python|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
-         lsof -i:${serve_port} | grep gunicorn|awk '{print $2}' | xargs kill -9
 
          # kill the remaining processes
+         lsof -i | grep gunicorn| grep LISTEN |awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
          lsof -i | grep mpirun|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
          lsof -i | grep python|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
 
-         # restore constant.py
-         ori_str="TASK_MONITOR_PORT .*"
-         des_str='TASK_MONITOR_PORT = 2222'
-         sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
-         ori_str="RESULT_MONITOR_PORT .*"
-         des_str='RESULT_MONITOR_PORT = 3333'
-         sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
-         ori_str="SERVE_PORT .*"
-         des_str='SERVE_PORT = 8000'
-         sed -i 's/'"$ori_str"'/'"$des_str"'/g' backend/constant.py
+         # Service End
          echo "Neural Solution END!"
       ;;
       help)
