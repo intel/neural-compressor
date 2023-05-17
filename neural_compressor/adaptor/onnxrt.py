@@ -995,14 +995,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
+        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
         if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            # model is optimized and Attention is fused,
+            # index of Attention is used as split to find FFN MatMul
             first_attention_index = attention_matmul_optype.index('Attention')
             attention_matmul_optype = attention_matmul_optype[first_attention_index:]
             attention_matmul = attention_matmul[first_attention_index:]
             attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
             block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
             for idx in range(len(attention_index)):
-                # to find matmul in ffn
                 if idx != len(attention_index) - 1:
                     index = attention_index[idx + 1]
                     if index - 2 >= 0 and index - 1 >= 0:
@@ -1015,6 +1017,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         ffn_matmul.append([attention_matmul[index + block_len - 2], 
                                         attention_matmul[index + block_len - 1]])
         else:
+            # if model is not optimized or Attention isn't fused, 
+            # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
             qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
             if len(qkv) != 0:
                 attention_starts = [nodes[0] for nodes in qkv]
@@ -1023,7 +1027,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                                 for attention_start in attention_starts]
                 block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
                 for idx in range(len(attention_index)):
-                    # to find matmul in ffn
                     if idx != len(attention_index) - 1:
                         index = attention_index[idx + 1]
                         if index - 2 >= 0 and index - 1 >= 0:
