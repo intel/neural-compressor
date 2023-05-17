@@ -499,7 +499,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DataLoader("pytorch", dataset)
-        set_workspace=("./saved")
+        set_workspace("./saved")
         conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin,
                                    conf,
@@ -530,10 +530,42 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         dataset = Datasets("pytorch")["dummy"](((16, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
         q_model = fit(ori_model, conf=PostTrainingQuantConfig(), calib_dataloader=dataloader)
-        op_to_traces = hawq_top(fp32_model=pt_model, q_model=q_model, dataloader=dataloader, \
-             criterion=None, enable_act=True)
+        op_to_traces = hawq_top(fp32_model=pt_model,
+                                q_model=q_model,
+                                dataloader=dataloader,
+                                criterion=None,
+                                enable_act=True)
         self.assertIsNotNone(op_to_traces)
 
+@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+class TestPyTorchBlockDetector(unittest.TestCase):
+    def test_block_detector(self):
+        from neural_compressor.adaptor.torch_utils.pattern_detector import (
+            TransformerBasedModelBlockPatternDetector, 
+            BLOCK_PATTERNS)
+        from transformers import BertModel
+
+        model = BertModel.from_pretrained("bert-base-uncased")
+        detector = TransformerBasedModelBlockPatternDetector(model, BLOCK_PATTERNS)
+        result = detector.detect_block()
+        assert len(result['attention_blocks']), 12
+        assert len(result['ffn_blocks']), 12
+
+        found_attention_op = False
+        found_dense_op = False
+        for block in ['attention_blocks']:
+            for op in block:
+                if 'dense' in op:
+                    found_dense_op = True
+                    break
+
+        for block in ['ffn_blocks']:
+            for op in block:
+                if 'attention' in op:
+                    found_attention_op = True
+                    break
+        assert not found_attention_op
+        assert not found_dense_op
 
 if __name__ == "__main__":
     unittest.main()

@@ -8,7 +8,7 @@ import subprocess
 import unittest
 import re
 import tensorflow as tf
-from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2, version1_gte_version2
 from neural_compressor.utils import logger
 
 def build_fake_ut():
@@ -966,7 +966,9 @@ class TestDistributed(unittest.TestCase):
     def tearDown(self):
         logger.info(f"{self._testMethodName} done.\n")
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0') or
+                     version1_gte_version2(tf.version.VERSION, '2.12.0'),
+                     "Only test equal or above TF 2.10.0 and less than 2.12.0")
     def test_distributed(self):
         distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
         p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,

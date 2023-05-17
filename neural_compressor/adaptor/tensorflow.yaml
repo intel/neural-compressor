@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: ['2.11.0202242', '2.11.0202250']
+    name: ['2.11.0202242', '2.11.0202250', '2.11.0202317']
 
   bf16: ["_MklLayerNorm", "Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
           "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
@@ -153,7 +153,7 @@
   version:
     name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.6.1', '2.6.2', '2.7.0', '2.8.0', '2.9.0', '2.9.1', '2.10.0', '2.11.0', '1.15.0-up1', '1.15.0-up2', 1.15.0-up3]
 
-  bf16: ['Conv2D']
+  bf16: ['Conv2D', 'Conv3D', 'MatMul', 'BatchMatMul', 'MaxPool', 'MaxPool3D', 'AvgPool', 'AvgPool3D', 'DepthwiseConv2dNative']
   fp32: ['*'] # '*' means all op types
 
   int8: {

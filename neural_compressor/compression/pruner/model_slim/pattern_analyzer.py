@@ -16,15 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..utils import torch
+from ..utils import torch, logger
 import re
-from ..utils import logger
 
 JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
-def get_attributes(module, attrs: str):
+def get_attributes(module: torch.nn.Module, attrs: str):
     """Get a multi-level descent module of module.
 
     Args:
@@ -85,7 +84,7 @@ class RecipeSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model, recipe: dict):
+    def __init__(self, model: torch.nn.Module, recipe: dict):
         """Initialize the attributes."""
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
@@ -132,7 +131,7 @@ class JitBasicSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
@@ -399,7 +398,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
         current_pattern: a searching path to store searching status.
     """
 
-    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
         super(Linear2LinearSearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
         self.target_op_lut = {}
@@ -525,7 +524,7 @@ class SelfMHASearcher(JitBasicSearcher):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
         super(SelfMHASearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
 
@@ -769,21 +768,23 @@ class ClassifierHeadSearcher(object):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model):
+    def __init__(self, model: torch.nn.Module):
         """Initialize."""
         super(ClassifierHeadSearcher, self).__init__()
         self.model = model
         self.pruning_ops = ["Linear", "Conv2d"]
+        self.excluded_ops = ["Dropout"] # to be extended
     
     def search(self, return_name=True):
-        # import pdb;pdb.set_trace()
         all_modules = []
         all_lc_modules = []
         for n, m in self.model.named_modules():
-            all_modules.append(n)
-            if type(m).__name__ in self.pruning_ops:
-                all_lc_modules.append(n)
-        # import pdb;pdb.set_trace()
+            if type(m).__name__ not in self.excluded_ops:
+                all_modules.append(n)
+                if type(m).__name__ in self.pruning_ops:
+                    all_lc_modules.append(n)
+            else:
+                continue
         last_lc = all_lc_modules[-1]
         if last_lc == all_modules[-1]: return last_lc
         else: return None

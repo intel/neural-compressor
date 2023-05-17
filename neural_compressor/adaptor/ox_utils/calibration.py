@@ -204,7 +204,6 @@ class ONNXRTAugment:
                             self.model_wrapper.model_path + '_augment.onnx',
                             save_as_external_data=True,
                             all_tensors_to_one_file=True,
-                            location="weights.pb",
                             convert_attribute=False)
 
     def get_intermediate_outputs(self, q_config=None):
@@ -215,14 +214,15 @@ class ONNXRTAugment:
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 
+        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         session = onnxruntime.InferenceSession(
                     self.augmented_model.SerializeToString(),
                     so,
-                    provider=self.backend) if not self.model_wrapper.is_large_model else \
+                    providers=[backend]) if not self.model_wrapper.is_large_model else \
                   onnxruntime.InferenceSession(
                     self.model_wrapper.model_path  + '_augment.onnx',
                     so,
-                    provider=self.backend)
+                    providers=[backend])
 
         
         len_inputs = len(session.get_inputs())
@@ -232,8 +232,11 @@ class ONNXRTAugment:
                                  else self.dequantized_output[output.name] \
                              for output in session.get_outputs()]
         
-        input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-        output_name_to_node = self.model_wrapper.output_name_to_node
+        augment_model_wrapper = ONNXModel(self.augmented_model) \
+            if not self.model_wrapper.is_large_model else \
+            ONNXModel(self.model_wrapper.model_path  + '_augment.onnx')
+        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
+        output_name_to_node = augment_model_wrapper.output_name_to_node
         name_to_node = {}
         for data_name in node_output_names:
             node = None
@@ -545,12 +548,14 @@ class ONNXRTAugment:
                 if rmin < 0:
                     rmin = 0
             elif next_node.op_type == 'Clip' and len(next_node.input) == 3:
-                clip_min = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[1]))
-                clip_max = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[2]))
-                if rmin < clip_min:
-                    rmin = clip_min.tolist() if not isinstance(clip_min.tolist(), list)  else clip_min.tolist()[0]
-                if rmax > clip_max:
-                    rmax = clip_max.tolist() if not isinstance(clip_max.tolist(), list)  else clip_max.tolist()[0]
+                if self.model_wrapper.get_initializer(next_node.input[1]) is not None:
+                    clip_min = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[1]))
+                    if rmin < clip_min:
+                        rmin = clip_min.tolist() if not isinstance(clip_min.tolist(), list)  else clip_min.tolist()[0]
+                if self.model_wrapper.get_initializer(next_node.input[2]) is not None:
+                    clip_max = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[2]))
+                    if rmax > clip_max:
+                        rmax = clip_max.tolist() if not isinstance(clip_max.tolist(), list)  else clip_max.tolist()[0]
 
         if last_node:
             if last_node.op_type in ['Conv', 'FusedConv']:
@@ -678,7 +683,14 @@ class ONNXRTAugment:
         tensors_to_dump = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_dump)
         self.augmented_model = self.model_wrapper.model
-        _, output_dicts = self.get_intermediate_outputs(q_config)
+        if self.model_wrapper.is_large_model:  # pragma: no cover
+            onnx.save_model(self.augmented_model,
+                            self.model_wrapper.model_path + '_augment.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            convert_attribute=False)
+            
+        _, output_dicts = self.get_intermediate_outputs()
 
         # remove the input tensors of {op_types} to outputs of the model
         self.model_wrapper.remove_tensors_from_outputs(tensors_to_dump)

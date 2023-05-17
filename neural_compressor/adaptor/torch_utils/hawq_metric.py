@@ -52,9 +52,9 @@ class Node_collector:
 class HessianTrace:
     """HessianTrace Class.
 
-    Please refer to Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian." 
+    Please refer to Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian."
     2020 IEEE international conference on big data (Big data). IEEE, 2020.
-    Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks." 
+    Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks."
     Advances in neural information processing systems 33 (2020): 18518-18529.
     https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
     """
@@ -173,7 +173,7 @@ class HessianTrace:
     def _get_enable_act_grad_hook(self, name):
         def enable_act_grad_hook(model, inputs, outputs):
             input = inputs[0]
-            if input.requires_grad is False:
+            if input.requires_grad is False: #
                 input.requires_grad = True
             self.layer_acts[name] = input
 
@@ -251,13 +251,13 @@ class HessianTrace:
             r.masked_fill_(r == 0, -1)
             samples.append(r)
         return samples
-    
+
     def _sample_rademacher_like_params(self):
         def sample(parameter):
             r = torch.randint_like(parameter, high=2, device=self.device)
             return r.masked_fill_(r == 0, -1)
         return [sample(p) for p in self.params]
-    
+
     def _sample_normal_like_params(self):
         return [torch.randn(p.size(), device=self.device) for p in self.params]
 
@@ -391,7 +391,7 @@ class HessianTrace:
         for layer, module in model.named_modules():
             for target_module in target_module_list:
                 # print("layer:",layer)
-                # print("target_model:",target_module)   
+                # print("target_model:",target_module)
                 if layer == target_module:
                     logging.debug("Collect: %s" % (module))
                     # print("Collect: %s" % (module))
@@ -408,7 +408,7 @@ class HessianTrace:
                 # print("layer:",layer)
                 length = len("_model.")
                 new_key = layer[length:]
-                # print("target_model:",target_module)   
+                # print("target_model:",target_module)
                 if new_key == target_module:
                     logging.debug("Collect: %s" % (module))
                     # print("Collect: %s" % (module))
@@ -521,7 +521,7 @@ def compare_weights(
         float_dict: Dict[str, Any], quantized_dict: Dict[str, Any]
 ) -> Dict[str, Dict[str, torch.Tensor]]:
     r"""Compare the weights of the float module with its corresponding quantized module.
-    
+
     Returns a dict with key corresponding to module names and each entry being
     a dictionary with two keys 'float' and 'quantized', containing the float and
     quantized weights. This dict can be used to compare and compute the quantization
@@ -608,7 +608,7 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
         diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)
         pertur_lst[key] = diff_l2
-    
+
     if enable_act:
         act_to_traces = traces['activation']
         for trace_i, pertur_i, act_i in zip(op_to_traces.keys(), pertur_lst.keys(), act_to_traces.keys()):

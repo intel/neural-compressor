@@ -20,7 +20,7 @@ from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASear
 from .weight_slim import LinearCompressionIterator, MHACompression
 from ..utils import logger
 
-def model_slim(model, dataloader=None, round_multiplier=0):
+def model_slim(model, dataloader=None, round_multiplier=32):
     """Slim the sparse model automatically."""
     try:
         model = model_slim_ffn2(model, dataloader, round_multiplier)

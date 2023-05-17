@@ -16,9 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..utils import torch
-import random
-from ..utils import logger
+from ..utils import torch, logger
+import random 
 
 # since we have to modify the attribute's name in MHA module after slim,
 # we need to locate them automatically.

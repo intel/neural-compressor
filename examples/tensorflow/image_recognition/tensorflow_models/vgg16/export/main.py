@@ -113,7 +113,6 @@ class eval_classifier_optimized_graph:
             raise ValueError("Only support tensorflow export to ONNX for QDQ format, "
                 "please make sure input the correct quant_format.")
 
-        top1 = Metric(name="topk", k=1)
         postprocess = LabelShift(label_shift=1)
 
         if args.export:
@@ -138,6 +137,8 @@ class eval_classifier_optimized_graph:
                 eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
                 conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
                                             outputs=['softmax_tensor'])
+                from neural_compressor import Metric
+                top1 = Metric(name="topk", k=1)
                 def eval(model):
                     return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
@@ -168,8 +169,14 @@ class eval_classifier_optimized_graph:
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             def eval(model):
                 if isinstance(model, str):
+                    from neural_compressor import METRICS
+                    metrics = METRICS('tensorflow')
+                    top1 = metrics['topk']()
                     return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 else:
+                    from neural_compressor import METRICS
+                    metrics = METRICS('onnxrt_qlinearops')
+                    top1 = metrics['topk']()
                     return eval_func_onnx(model, eval_dataloader, top1, postprocess)
 
             if args.mode == 'performance':

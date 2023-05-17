@@ -93,7 +93,7 @@ class eval_classifier_optimized_graph:
 
     def run(self):
         """This is neural_compressor function include tuning, export and benchmark option."""
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
 
         if args.tune:
@@ -134,8 +134,9 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor import Metric
-            top1 = Metric(name="topk", k=1)
+            from neural_compressor import METRICS
+            metrics = METRICS('tensorflow')
+            top1 = metrics['topk']()
             def eval(model):
                 return evaluate(model, dataloader, top1)
 

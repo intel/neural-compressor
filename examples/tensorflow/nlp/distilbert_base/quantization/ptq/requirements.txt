@@ -4,3 +4,4 @@ scipy>=1.9.3
 sklearn==0.0
 tokenizers==0.13.1
 transformers==4.23.1
+intel-tensorflow>=2.12.0

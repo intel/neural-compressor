@@ -194,7 +194,7 @@ class SigOptTuneStrategy(TuneStrategy):
 
         This is SigOpt version of traverse -- with additional constraints setting to HPO.
         """
-        self._eval_baseline()
+        self._prepare_tuning()
 
         baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
             ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
