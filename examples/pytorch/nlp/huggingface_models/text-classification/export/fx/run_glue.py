@@ -522,7 +522,6 @@ def main():
         from neural_compressor.model import Model
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
-            dtype=model_args.export_dtype,
             opset_version=14,
             example_inputs=tuple(input.values()),
             input_names=list(input.keys()),
@@ -551,9 +550,7 @@ def main():
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
 
         int8_onnx_config = Torch2ONNXConfig(
-            dtype=model_args.export_dtype,
             opset_version=14,
-            quant_format=model_args.quant_format,
             example_inputs=tuple(input.values()),
             input_names=list(input.keys()),
             output_names=['labels'],
