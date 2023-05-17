@@ -28,14 +28,11 @@ class TensorFlowKerasINC(object):
                 model_name = "model"
                 indent_level = get_line_indent_level(line)
                 self.result.append(line)
-                self.result.append(" " * indent_level + "from neural_compressor.conf.config import QuantConf")
-                self.result.append(" " * indent_level + "from neural_compressor.experimental import Quantization")
-                self.result.append(" " * indent_level + "from neural_compressor.experimental import common")
-                self.result.append(" " * indent_level + "quant_config = QuantConf()")
-                self.result.append(" " * indent_level + "quant_config.usr_cfg.model.framework = 'tensorflow'")
-                self.result.append(" " * indent_level + "quantizer = Quantization(quant_config)")
-                self.result.append(" " * indent_level + "quantizer.model = common.Model(" + model_name + ")")
-                self.result.append(" " * indent_level + model_name + " = quantizer.fit()")
+                self.result.append(" " * indent_level + "from neural_compressor.quantization import fit")
+                self.result.append(" " * indent_level + "from neural_compressor.config import PostTrainingQuantConfig")
+                self.result.append(" " * indent_level + "from neural_compressor import common")
+                self.result.append(" " * indent_level + "config = PostTrainingQuantConfig()")
+                self.result.append(" " * indent_level + model_name + " = fit(" + model_name + ", conf=config)")
             else:
                 self.result.append(line)
         for index, line in enumerate(self.result):

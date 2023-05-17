@@ -89,7 +89,8 @@ def get_pruner(config, modules):
                 name = "basic"  ##return the basic pruner
         else:
             config['criterion_type'] = name
-            name = "progressive"  ## return the progressive pruner
+            # name = "progressive"  ## return the progressive pruner
+            name = "progressive"
 
     if name not in PRUNERS.keys():
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
@@ -678,7 +679,6 @@ class RetrainFreePruner(BasePruner):
                         mask.grad.requires_grad_(False)
                     mask.grad.zero_()
 
-
 @register_pruner('progressive')
 class ProgressivePruner(BasicPruner):
     """Pruning Pruner.
@@ -724,9 +724,9 @@ class ProgressivePruner(BasicPruner):
         """Auxiliary function for initializing progressive pruning."""
         # detailed progressive parameters will stored at patterns.py
         # step 1: check if pattern is NxM
-        if "x" not in self.pattern.pattern:
-            raise NotImplementedError(f"Currently progressive only " \
-                                      f"support NxM and per-channel pruning patterns.")
+        # if "x" not in self.pattern.pattern:
+        #     raise NotImplementedError(f"Currently progressive only " \
+        #                               f"support NxM and per-channel pruning patterns.")
 
         # step 2: check if current set up will "degrade" into non-progressive
         degrading_flag = False
@@ -758,6 +758,8 @@ class ProgressivePruner(BasicPruner):
         """Check if the settings of progressive pruning are valid."""
         # check some problematic settings
         if self.progressive_type == "linear":
+            # linear based progressive pruning, only valid for NxM pattern
+            assert type(self.pattern).__name__ == "PatternNxM", "Progressive linear pruning only support NxM."
             if self.use_global:
                 # when global progressive is applied, linear type is contradict.
                 raise NotImplementedError("Global progressive pruning do not support linear pattern")
@@ -770,13 +772,23 @@ class ProgressivePruner(BasicPruner):
                         f"In layer {key}, its pruning pattern is {block_size}, " \
                         f"while progressive steps {self.progressive_steps} is indivisible.")
         else:
-            for key in self.pattern.block_size.keys():
-                block_size = self.pattern.block_size[key]
-                total_block_size = block_size[0] * block_size[1]
-                if total_block_size < self.progressive_steps:
+            # score based progressive pruning, support both NxM and N:M patterns
+            if type(self.pattern).__name__ == "PatternNxM":
+                for key in self.pattern.block_size.keys():
+                    block_size = self.pattern.block_size[key]
+                    total_block_size = block_size[0] * block_size[1]
+                    if total_block_size < self.progressive_steps:
+                        raise ValueError(
+                            f"In layer {key}, its pruning pattern is {block_size}, " \
+                            f"while progressive steps {self.progressive_steps} is overflowing.")
+            elif type(self.pattern).__name__ == "PatternNInM":
+                if self.pattern.N < self.progressive_steps:
                     raise ValueError(
-                        f"In layer {key}, its pruning pattern is {block_size}, " \
-                        f"while progressive steps {self.progressive_steps} is overflowing.")
+                            f"Pruning pattern is {self.pattern.N} in {self.pattern.M}, " \
+                            f"while progressive steps {self.progressive_steps} is overflowing.")
+            else:
+                raise NotImplementedError
+
 
     def check_is_pruned_progressive_step(self, step):
         """Check if a progressive pruning process should be performed at the current step.

@@ -2,6 +2,7 @@ onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.10'
 transformers
+accelerate
 tensorboard
 numpy==1.23.5
 datasets >= 1.8.0

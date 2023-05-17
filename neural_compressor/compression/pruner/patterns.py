@@ -68,6 +68,229 @@ def get_pattern(config, modules):
 
 SparsityInfo = namedtuple("SparsityInfo", ['zero_cnt', 'total_cnt', 'sparsity_ratio'])
 
+class ProgressivePatternUtils(object):
+    @staticmethod
+    def _reshape_orig_to_2dims(data):
+        """Process layers that are not two-dimensional(e.g conv layer).
+
+        Args:
+            data: Input.
+            
+        Returns:
+            Reshaped data.
+        """
+        if len(data.shape) == 4:  ##TODO need to verify whether it's ok for transposed conv
+            data = data.permute(0, 2, 3, 1)  ##cout,k,k,cin
+            data = data.reshape(data.shape[0], -1)
+        return data
+
+    @staticmethod
+    def _reshape_2dims_to_orig(data, orig_shape):
+        """Recover layers that are not two-dimensional(e.g conv layer).
+
+        Args:
+            data: Input.
+            
+        Returns:
+            Reshaped data.
+        """
+        if len(orig_shape) == 4:
+            data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
+            data = data.permute(0, 3, 1, 2)
+        return data
+
+    # some util functions which can be used.
+    @staticmethod
+    def count_new_masked_cnts(new_added_masks):
+        """Count the number of elements to be masked.
+        
+        Args:
+            new_added_masks: A dict {"layer_name": Tensor} that stores the added masks.
+
+        Returns:
+            The number of masked weights.
+        """
+        # count how many elements are to masked,
+        new_masked_cnts = 0
+        for key in new_added_masks.keys():
+            new_masked_cnts += torch.nonzero(1 - new_added_masks[key]).size()[0]
+        return new_masked_cnts
+
+    @staticmethod
+    def update_new_added_masks(pre_masks, cur_masks):
+        """Obtain the new set-to-zero masks during a pruning procedure.
+
+        Pre_masks, cur_masks should have identical keys bacause they represent the same model.
+
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+        
+        Returns:
+            A dict {"layer_name": Tensor} that stores the added masks.
+        """
+        # obtain the new set-to-zero mask during a pruning procedure.
+        # pre_masks, cur_masks should have identical keys bacause they stands for one model.
+        new_added_masks = {}
+        for key in pre_masks.keys():
+            pre_mask = pre_masks[key]
+            cur_mask = cur_masks[key]
+            zero = torch.tensor([0.]).to(pre_mask.device)
+            one = torch.tensor([1.]).to(cur_mask.device)
+            new_added_masks[key] = torch.where(pre_mask == cur_mask, one, zero)
+        return new_added_masks
+
+    @staticmethod
+    def update_progressive_masks_global_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
+        # three types: score-global (nxm and n:m), score-local(nxm and n:m), linear (only nxm)
+        # score-local is a special type of score global therefore can be implemented with only one function
+        progressive_steps = progressive_configs["progressive_steps"]
+        progressive_masks = {}
+        global_new_added_score_list = []
+        new_added_masks = ProgressivePatternUtils.update_new_added_masks(pre_masks, cur_masks)
+        new_added_masks_cnts = ProgressivePatternUtils.count_new_masked_cnts(new_added_masks)
+        kth_masked_position = (new_added_masks_cnts * progressive_step) // progressive_steps
+        for key in scores.keys():
+            # block_size = self.block_size[key]
+            # mask_num_each_block = progressive_step * int((block_size[0] * block_size[1]) // progressive_steps)
+            new_added_filter = 1 - new_added_masks[key]
+            new_added_cnts = torch.nonzero(new_added_filter).size()[0]
+            score = scores[key]
+
+            score_masked = (score * new_added_filter).abs()
+            score_masked_row, _ = torch.sort(score_masked.flatten(), descending=True)
+            score_masked_row = score_masked_row[:new_added_cnts]
+            global_new_added_score_list.append(score_masked_row)
+
+        global_new_added_scores = torch.cat(global_new_added_score_list, dim=0)
+        if global_new_added_scores.size()[0] == 0:
+            # an empty tensor, at target sparsity is 0 situation
+            return pre_masks
+        threshold, _ = torch.kthvalue(global_new_added_scores, kth_masked_position, dim=0)
+        for key in scores.keys():
+            new_added_mask = new_added_masks[key]
+            score = scores[key]
+            new_added_filter = 1 - new_added_mask
+            score_masked = (score * new_added_filter).abs()
+            zero = torch.tensor([0.]).to(score.device)
+            one = torch.tensor([1.]).to(score.device)
+            progressive_mask = (new_added_mask + torch.where(score_masked <= threshold, zero, one)) * pre_masks[key]
+            progressive_masks[key] = progressive_mask
+        return progressive_masks
+    
+    @staticmethod
+    def update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
+        # local is a speicial type of global, therefore we can call global to implement this
+        progressive_steps = progressive_configs["progressive_steps"]
+        progressive_masks = {}
+        for key in scores.keys():
+            # for local use
+            pre_masks_for_this = {key: pre_masks[key]}
+            cur_masks_for_this = {key: cur_masks[key]}
+            scores_for_this = {key: scores[key]}
+            progressive_masks_for_this = ProgressivePatternUtils.update_progressive_masks_global_scores(
+                pre_masks_for_this,
+                cur_masks_for_this,
+                scores_for_this,
+                progressive_step,
+                progressive_configs
+            )
+            progressive_masks.update(progressive_masks_for_this)
+        return progressive_masks
+
+    @staticmethod
+    def update_progressive_masks_scores_order(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
+        if progressive_configs['use_global']:
+            return ProgressivePatternUtils.update_progressive_masks_global_scores(pre_masks, cur_masks, scores, \
+                    progressive_step, progressive_configs)
+        else:
+            return ProgressivePatternUtils.update_progressive_masks_local_scores(pre_masks, cur_masks, scores, \
+                    progressive_step, progressive_configs)  
+    
+    @staticmethod
+    def update_progressive_masks_linear_order(
+        pre_masks, 
+        cur_masks, 
+        scores, 
+        progressive_step, 
+        progressive_configs: dict, 
+        block_sizes: dict
+    ):
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+            block_size: Dict{"layer_name": List or Tuple} that stores the block sizes, only for NxM patterns.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
+        progressive_steps = progressive_configs["progressive_steps"]
+        progressive_masks = {}
+        new_added_masks = ProgressivePatternUtils.update_new_added_masks(pre_masks, cur_masks)
+        for key in pre_masks.keys():
+            block_size = block_sizes[key]
+            new_added_mask = new_added_masks[key]
+            # conv
+            new_added_mask = ProgressivePatternUtils._reshape_orig_to_2dims(new_added_mask)
+            shape = new_added_mask.shape
+            # progressive masks are generated in the direction of block's large dim.
+            if block_size[0] >= block_size[1]:
+                # NxM (N>=M), output channel pruning
+                new_shape = [shape[0] // block_size[0], progressive_steps, block_size[0] // progressive_steps,
+                             shape[1] // block_size[1], block_size[1]]
+                new_added_mask_reshape = new_added_mask.reshape(new_shape)
+                new_added_mask_reshape[:, progressive_step:, :, :, :] = 1.0
+            else:
+                # NxM (N<M), input channel pruning
+                new_shape = [shape[0] // block_size[0], block_size[0], shape[1] // block_size[1],
+                             progressive_steps, block_size[1] // progressive_steps]
+                new_added_mask_reshape = new_added_mask.reshape(new_shape)
+                new_added_mask_reshape[:, :, :, progressive_step:, :] = 1.0
+            new_added_mask = new_added_mask_reshape.reshape(shape)
+            new_added_mask = ProgressivePatternUtils._reshape_2dims_to_orig(new_added_mask, pre_masks[key].shape)
+            progressive_masks[key] = pre_masks[key] * new_added_mask
+        return progressive_masks      
 
 class BasePattern:
     """Pruning Pattern.
@@ -225,6 +448,26 @@ class BasePattern:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
             return float(zero_cnt) / total_cnt
+
+    def get_sparsity_ratio_progressive(self, pre_masks, return_dict=False):
+        """Calculate the sparsity ratio of each layer.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+        
+        Returns:
+            A float representing the zero elements' ratio in pre_masks.
+        """
+        zero_cnt = 0
+        total_cnt = 0
+        for key in pre_masks.keys():
+            if key in self.invalid_layers:
+                continue
+            # progressive masks are unstructured, therefore directly find zeros
+            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
+            total_cnt += float(pre_masks[key].numel())
+        return (zero_cnt / total_cnt)
         
     def get_pattern_lock_masks(self, modules):
         """Obtain masks from original weight map according the pattern and weights' zero positions.
@@ -488,26 +731,6 @@ class PatternNxM(BasePattern):
         else:
             return sparsity_ratio
 
-    def get_sparsity_ratio_progressive(self, pre_masks, return_dict=False):
-        """Calculate the sparsity ratio of each layer.
-        
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
-        
-        Returns:
-            A float representing the zero elements' ratio in pre_masks.
-        """
-        zero_cnt = 0
-        total_cnt = 0
-        for key in pre_masks.keys():
-            if key in self.invalid_layers:
-                continue
-            # progressive masks are unstructured, therefore directly find zeros
-            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
-            total_cnt += float(pre_masks[key].numel())
-        return (zero_cnt / total_cnt)
-
     def _reshape_orig_to_2dims(self, data):
         """Process layers that are not two-dimensional(e.g conv layer).
 
@@ -746,46 +969,6 @@ class PatternNxM(BasePattern):
                     block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
             reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
             module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
-            
-
-    # ---------------progressive related--------------------
-    def count_new_masked_cnts(self, new_added_masks):
-        """Count the number of elements to be masked.
-        
-        Args:
-            new_added_masks: A dict {"layer_name": Tensor} that stores the added masks.
-
-        Returns:
-            The number of masked weights.
-        """
-        # count how many elements are to masked,
-        new_masked_cnts = 0
-        for key in new_added_masks.keys():
-            new_masked_cnts += torch.nonzero(1 - new_added_masks[key]).size()[0]
-        return new_masked_cnts
-
-    def update_new_added_masks(self, pre_masks, cur_masks):
-        """Obtain the new set-to-zero masks during a pruning procedure.
-
-        Pre_masks, cur_masks should have identical keys bacause they represent the same model.
-
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
-        
-        Returns:
-            A dict {"layer_name": Tensor} that stores the added masks.
-        """
-        # obtain the new set-to-zero mask during a pruning procedure.
-        # pre_masks, cur_masks should have identical keys bacause they stands for one model.
-        new_added_masks = {}
-        for key in pre_masks.keys():
-            pre_mask = pre_masks[key]
-            cur_mask = cur_masks[key]
-            zero = torch.tensor([0.]).to(pre_mask.device)
-            one = torch.tensor([1.]).to(cur_mask.device)
-            new_added_masks[key] = torch.where(pre_mask == cur_mask, one, zero)
-        return new_added_masks
 
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         """Generate the progressive masks.
@@ -800,171 +983,15 @@ class PatternNxM(BasePattern):
         Returns:
             A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
         """
-        use_global = progressive_configs["use_global"]
-        if use_global:
-            return self.update_progressive_masks_global(pre_masks, cur_masks, scores, \
+        score_or_linear = progressive_configs['progressive_type'] # "scores" or "linear"
+        if score_or_linear == "scores":
+            return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores, \
                                                         progressive_step, progressive_configs)
-        else:
-            return self.update_progressive_masks_local(pre_masks, cur_masks, scores, \
-                                                       progressive_step, progressive_configs)
-
-    def update_progressive_masks_linear(self, pre_masks, cur_masks, progressive_step, progressive_configs):
-        """Generate the progressive masks along the block's larger dimension.
-        
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
-            progressive_step: An integer representing the number of current step in progressive pruning.
-            progressive_configs: A dict that stores configurations of progressive pruning.
-
-        Returns:
-            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
-        """
-        progressive_steps = progressive_configs["progressive_steps"]
-        progressive_masks = {}
-        new_added_masks = self.update_new_added_masks(pre_masks, cur_masks)
-        for key in pre_masks.keys():
-            block_size = self.block_size[key]
-            new_added_mask = new_added_masks[key]
-            # conv
-            new_added_mask = self._reshape_orig_to_2dims(new_added_mask)
-            shape = new_added_mask.shape
-            # progressive masks are generated in the direction of block's large dim.
-            if block_size[0] >= block_size[1]:
-                # NxM (N>=M), output channel pruning
-                new_shape = [shape[0] // block_size[0], progressive_steps, block_size[0] // progressive_steps,
-                             shape[1] // block_size[1], block_size[1]]
-                new_added_mask_reshape = new_added_mask.reshape(new_shape)
-                new_added_mask_reshape[:, progressive_step:, :, :, :] = 1.0
-            else:
-                # NxM (N<M), input channel pruning
-                new_shape = [shape[0] // block_size[0], block_size[0], shape[1] // block_size[1],
-                             progressive_steps, block_size[1] // progressive_steps]
-                new_added_mask_reshape = new_added_mask.reshape(new_shape)
-                new_added_mask_reshape[:, :, :, progressive_step:, :] = 1.0
-            new_added_mask = new_added_mask_reshape.reshape(shape)
-            new_added_mask = self._reshape_2dims_to_orig(new_added_mask, pre_masks[key].shape)
-            progressive_masks[key] = pre_masks[key] * new_added_mask
-        return progressive_masks
-
-    def update_progressive_masks_scores(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Generate the progressive masks based on scores.
-        
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
-            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
-            progressive_step: An integer representing the number of current step in progressive pruning.
-            progressive_configs: A dict that stores configurations of progressive pruning.
-
-        Returns:
-            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
-        """
-        progressive_steps = progressive_configs["progressive_steps"]
-        progressive_masks = {}
-        new_added_masks = self.update_new_added_masks(pre_masks, cur_masks)
-        for key in scores.keys():
-            block_size = self.block_size[key]
-            mask_num_each_block = progressive_step * int((block_size[0] * block_size[1]) / progressive_steps)
-            new_added_filter = 1 - new_added_masks[key]
-            score = scores[key]
-            score_masked = (score * new_added_filter).abs()
-            score_masked = self._reshape_orig_to_2dims(score_masked)
-
-            # similar to n:m type
-            # generate progressive masks from scores
-            shape = score_masked.shape
-            new_shape = [shape[0] // block_size[0], block_size[0], shape[1] // block_size[1], block_size[1]]
-            score_masked_new = score_masked.clone()
-            score_masked_new_shape = score_masked_new.reshape(new_shape)
-            score_masked_new_shape = score_masked_new_shape.permute(0, 2, 1, 3)
-            score_masked_new_flatten = torch.flatten(score_masked_new_shape, start_dim=2, end_dim=3)
-            threshold, _ = torch.kthvalue(score_masked_new_flatten, mask_num_each_block, dim=2)
-            threshold = threshold.unsqueeze(-1)
-            threshold = threshold.repeat(1, 1, (block_size[0] * block_size[1]))
-            threshold = threshold.reshape([threshold.shape[0], threshold.shape[1], block_size[0], block_size[1]])
-            threshold = threshold.permute(0, 2, 1, 3)
-            threshold = threshold.reshape((shape[0], shape[1]))
-            one = torch.tensor([1.]).to(score.device)
-            zero = torch.tensor([0.]).to(score.device)
-            mask = torch.where(score_masked <= threshold, zero, one)
-
-            mask = self._reshape_2dims_to_orig(mask, pre_masks[key].shape)
-            progressive_mask = pre_masks[key] * (mask + new_added_masks[key])
-            progressive_masks[key] = torch.where(progressive_mask == 0, zero, one)  # binary
-        return progressive_masks
-
-    def update_progressive_masks_local(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Generate progressive masks in a local pruning domain.
-        
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
-            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
-            progressive_step: An integer representing the number of current step in progressive pruning.
-            progressive_configs: A dict that stores configurations of progressive pruning.
-        
-        Returns:
-            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
-        """
-        progressive_type = progressive_configs["progressive_type"]
-        if progressive_type == "linear":
-            progressive_masks = self.update_progressive_masks_linear(pre_masks, cur_masks, \
-                                                                     progressive_step, progressive_configs)
-        elif progressive_type == "scores":
-            progressive_masks = self.update_progressive_masks_scores(pre_masks, cur_masks, scores, \
-                                                                     progressive_step, progressive_configs)
+        elif score_or_linear == "linear":
+            return ProgressivePatternUtils.update_progressive_masks_linear_order(pre_masks, cur_masks, scores, \
+                                                        progressive_step, progressive_configs, self.block_size)
         else:
             raise NotImplementedError
-        return progressive_masks
-
-    def update_progressive_masks_global(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Gather all layer's scores to obtain a threshold that would be applied to all layers.
-        
-        Args:
-            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
-            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
-            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
-            progressive_step: An integer representing the number of current step in progressive pruning.
-            progressive_configs: A dict that stores configurations of progressive pruning.
-        
-        Returns:
-            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
-        """
-        progressive_steps = progressive_configs["progressive_steps"]
-        progressive_masks = {}
-        global_new_added_score_list = []
-        new_added_masks = self.update_new_added_masks(pre_masks, cur_masks)
-        new_added_masks_cnts = self.count_new_masked_cnts(new_added_masks)
-        kth_masked_position = (new_added_masks_cnts * progressive_step) // progressive_steps
-        for key in scores.keys():
-            block_size = self.block_size[key]
-            mask_num_each_block = progressive_step * int((block_size[0] * block_size[1]) // progressive_steps)
-            new_added_filter = 1 - new_added_masks[key]
-            new_added_cnts = torch.nonzero(new_added_filter).size()[0]
-            score = scores[key]
-
-            score_masked = (score * new_added_filter).abs()
-            score_masked_row, _ = torch.sort(score_masked.flatten(), descending=True)
-            score_masked_row = score_masked_row[:new_added_cnts]
-            global_new_added_score_list.append(score_masked_row)
-
-        global_new_added_scores = torch.cat(global_new_added_score_list, dim=0)
-        if global_new_added_scores.size()[0] == 0:
-            # an empty tensor, at target sparsity is 0 situation
-            return pre_masks
-        threshold, _ = torch.kthvalue(global_new_added_scores, kth_masked_position, dim=0)
-        for key in scores.keys():
-            new_added_mask = new_added_masks[key]
-            score = scores[key]
-            new_added_filter = 1 - new_added_mask
-            score_masked = (score * new_added_filter).abs()
-            zero = torch.tensor([0.]).to(score.device)
-            one = torch.tensor([1.]).to(score.device)
-            progressive_mask = (new_added_mask + torch.where(score_masked <= threshold, zero, one)) * pre_masks[key]
-            progressive_masks[key] = progressive_mask
-        return progressive_masks
-
 
 @register_pattern('N:M')
 class PatternNInM(BasePattern):
@@ -1294,5 +1321,8 @@ class PatternNInM(BasePattern):
             pattern_lock_masks[key] = mask
         return pattern_lock_masks
 
-
-
+    def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        assert progressive_configs['progressive_type'] == "scores", f"N:M progressive pruning only supports 'scores'."
+        # we only have to handle global score or local score
+        return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores, \
+                progressive_step, progressive_configs)

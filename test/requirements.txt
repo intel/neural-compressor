@@ -1,4 +1,4 @@
-intel-tensorflow
+intel-tensorflow>=2.12.0
 onnx
 onnxruntime
 --find-links https://download.pytorch.org/whl/torch_stable.html
