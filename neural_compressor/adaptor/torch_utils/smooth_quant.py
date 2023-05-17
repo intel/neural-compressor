@@ -30,31 +30,32 @@ except:
     logger = logging.getLogger()
 from collections import UserDict
 
+def move_input_to_device(input, device):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        for inp in input.keys():
+            input[inp] = input[inp].to(device) \
+                if isinstance(input[inp], torch.Tensor) else input[inp]
+
+    elif isinstance(input, list) or isinstance(input, tuple):
+        input = [inp.to(device) \
+                     if isinstance(inp, torch.Tensor) else inp
+                 for inp in input]  # pylint: disable=E1133
+    else:
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
 
 ##TODO potential bug, data type
 def forward_wrapper(model, input, device='cpu'):
+    input = move_input_to_device(input, device)
     if isinstance(input, dict) or isinstance(input, UserDict):
-        if device == 'cpu':
-            output = model(**input)
-        else:  # pragma: no cover
-            for inp in input.keys():
-                input[inp] = input[inp].to(device) \
-                    if isinstance(input[inp], torch.Tensor) else input[inp]
-            output = model(**input)
+
+        output = model(**input)
     elif isinstance(input, list) or isinstance(input, tuple):
-        if device == 'cpu':
-            output = model(*input)
-        else:  # pragma: no cover
-            input = [inp.to(device) \
-                         if isinstance(inp, torch.Tensor) else inp
-                     for inp in input]  # pylint: disable=E1133
-            output = model(*input)
+
+        output = model(*input)
     else:
-        if device == 'cpu' or not isinstance(input, torch.Tensor):
-            output = model(input)
-        else:  # pragma: no cover
-            input = input.to(device)  # pylint: disable=no-member
-            output = model(input)
+        output = model(input)
     return output
 
 
@@ -1297,6 +1298,10 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
+        orig_device = model.device
+        if orig_device!="cpu":
+            model = model.to("cpu")
+            dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict):
             try:
                 traced_model = torch.jit.trace(model, dummy_input["input_ids"], strict=False)
@@ -1313,6 +1318,8 @@ class GraphTrace:
                     traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
                 except:
                     pass
+        if orig_device != "cpu":
+            model = model.to(orig_device)
         return traced_model
 
     def get_nodes(self, traced_model, op_types=['Linear']):
