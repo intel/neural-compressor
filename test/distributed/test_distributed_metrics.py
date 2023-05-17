@@ -966,7 +966,7 @@ class TestDistributed(unittest.TestCase):
     def tearDown(self):
         logger.info(f"{self._testMethodName} done.\n")
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0') and
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0') or
                      version1_gte_version2(tf.version.VERSION, '2.12.0'),
                      "Only test equal or above TF 2.10.0 and less than 2.12.0")
     def test_distributed(self):
