@@ -4,10 +4,9 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 
 # Why Neural Solution?
 <!-- TODO what does the ns provide -->
-- Efficient: Neural Solution speed up the optimization process by seamlessly parallelizes the tuning process across multi nodes.
-- Security: REST and gRPC supported for optimization submission.
-- Code Less: For hugging Face models, Neural Solution drive the optimization process without code modification by integrate the functionality of Neural Coder.
-
+- Efficiency: Neural Solution accelerates the optimization process by seamlessly parallelizing the tuning across multiple nodes.
+- APIs: REST and gRPC are supported for submitting optimization tasks.
+- Code Less: When working with Hugging Face models, Neural Solution drives the optimization process without requiring any code modifications by integrating the Neural Coder's functionality.
 
 # How does Nueral Solution Work?
 <!-- TODO Added Architecture diagram -->
