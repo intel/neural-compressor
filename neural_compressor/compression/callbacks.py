@@ -558,13 +558,15 @@ class PruningCallbacks(BaseCallbacks):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
+        import pdb;pdb.set_trace()
         if isinstance(self._model.model, torch.nn.Module):
             for info in self.pruners_info:
                 if 'mha' in info['pattern']:
                     # head pruning
-                    pa_obj = SelfMHASearcher(model, dataloader)
+                    pa_obj = SelfMHASearcher(self._model.model)
                     modules, _ = pa_obj.search(split_qkv_ffn = False)
                     modules = pa_obj.obtain_mha_module(modules)
+                    modules = pa_obj.from_layer_name_to_object(modules)
                     if len(modules) == 0:
                         logger.warning("one pruner hooks no mha modules, please have a check")
                     self.pruners.append(get_pruner(info, modules))

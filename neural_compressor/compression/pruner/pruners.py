@@ -77,7 +77,7 @@ def get_pruner(config, modules):
     ## do the ugly work here
     ## check if it is doing self-multihead-attention pruning
     if "mha" in config["pattern"]:
-        return PRUNERS[name](config, modules)
+        return PRUNERS["mha"](config, modules)
     ## if enable progressive pruning or not.
     if "progressive" not in config["pruning_type"]:
         name = config["pruning_type"]
@@ -897,7 +897,7 @@ class ProgressivePruner(BasicPruner):
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
 
 @register_pruner('mha')
-class MultiheadAttentionPruner(object):
+class MultiheadAttentionPruner(BasePruner):
     """Pruning Pruner.
 
     In this pruner, We apply pruning for multi-head attentions.
@@ -923,45 +923,162 @@ class MultiheadAttentionPruner(object):
         Inherit from parent class Pruner.
     """
     def __init__(self, config, mha_modules):
+        import pdb;pdb.set_trace()
         """Initialize."""
         # use pattern search techique to obtain multihead attention modules
         # modules is a dict that fits the mha auto slim process
+        #----------------------------------------- 
         self.config = config
         self.mha_modules = mha_modules
+        self.global_step = 0
+        self.handled_global_step = -1
+        self.start_step = self.config['start_step']
+        self.end_step = self.config['end_step']
+        self.pruning_frequency = self.config['pruning_frequency']
+        ##this is different with original code
+        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) \
+                               // self.pruning_frequency
+        self.completed_pruned_cnt = 0
+        self.total_prune_cnt -= 1  ## not pruning at step 0
+        if self.total_prune_cnt == 0:
+            self.total_prune_cnt = 1
+            self.completed_pruned_cnt = 1
+        self.target_sparsity_ratio = self.config['target_sparsity']
+        self.current_sparsity_ratio = 0.0
+        self.init_sparsity_ratio = 0.0
+        self.criterion_reduce_type = self.config['criterion_reduce_type']
+        self.pruning_scope = self.config['pruning_scope']
+        #-----------------------------------------------------------------------------------------------
+        #---------------------------------------Custom attributes for MHA Pruner
         # main initialize process.
         # define some attributes. 
-        self.mha_compression_luts = {} # {key: mha_name, value: mha_compression object}
-        self.linear_layer_luts = {} # {key: layer_name, value: corresponding linear object}
-        self.head_mask_luts = {} # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num can be traced in corresponding mha_compression obejct
+        self.mha_compressions = {} # {key: mha_name, value: mha_compression object}
+        self.linear_layers = {} # {key: layer_name, value: corresponding linear object}
+        self.head_masks = {} # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num can be traced in corresponding mha_compression obejct
         # general pruning components (head pruning does not need a pattern component)
+        self.mha_scores = {} # {}
         # main initialization process
-        self._init_luts()
+        # initialize custom attributes
+        self._init_mha_attrs()
+        # initialize custom attributes: criterion for example. user can still determine whether to use snip-momnetum, snip, magnitude, etc.
+        self.pattern = get_pattern(self.config, modules = None) # we have hook modules in mha_compressions therefore do not pass them to patterns
+        self.criterion = get_criterion(self.config, self.linear_layers) # criterion hooks on linear themselves.
+        self.scheduler = get_scheduler(self.config)
+        #-----------------------------------------------------------------------------------------------
     
-    def _init_luts(self):
-        # initialize self.mha_compression_luts, self.linear_layer_luts, self.head_mask_luts
+    def _init_mha_attrs(self):
+        # initialize self.mha_compressions, self.linear_layers, self.head_masks
         # similar to original mha slim process, but only hook mha modules and their attributes, 
         # do not call slim main functions.
+        # import pdb;pdb.set_trace()
         for mha_module in self.mha_modules:
-            # initialize self.mha_compression_luts
+            # initialize self.mha_compressions
             mha_comp = MHACompression(mha_module)
-            self.mha_compression_luts[mha_module['mha_name'][0]] = mha_comp
-            head_nums_for_this_mha =  getattr(mha_comp.mha[0], self.attributes_for_this_mha['head_nums'])
+            self.mha_compressions[mha_module['mha_name'][0]] = mha_comp
+            head_nums_for_this_mha =  getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha['head_nums'])
             # initialize head_masks
-            self.head_mask_luts[mha_module['mha_name'][0]] = torch.ones(head_nums_for_this_mha)
-            # initialize self.linear_layer_luts
+            # why use 1 x head_num shape? because this provides convenience for permute mask for qkv and ffn
+            self.head_masks[mha_module['mha_name'][0]] = torch.ones(1, head_nums_for_this_mha)
+            # initialize self.linear_layers
             for idx in range(mha_module['qkv_name'].__len__()):
                 # update qkv layers
-                self.linear_layer_luts[mha_module['qkv_name'][idx]] = mha_module['qkv_module'][idx]
+                self.linear_layers[mha_module['qkv_name'][idx]] = mha_module['qkv_module'][idx]
             for idx in range(mha_module['ffn_name'].__len__()):
-                self.linear_layer_luts[mha_module['ffn_name'][idx]] = mha_module['ffn_module'][idx]
+                self.linear_layers[mha_module['ffn_name'][idx]] = mha_module['ffn_module'][idx]
 
     def mask_mha_weights(self, mha_module, head_mask):
-        pass
+        for mha_name in self.mha_compressions.keys():
+            self.mha_compressions[mha_name].mask_mha_weights(self.head_masks[mha_name])
     
-    def compile_mha_scores(self, mha_module):
-        # obtain a score from 
-        pass
+    def reduce_mha_scores(self, score, dim = 0):
+        # an 2D tensor, return its compiled scores
+        if self.criterion_reduce_type == "mean":
+            return torch.mean(score, dim)
+        elif self.criterion_reduce_type == "sum":
+            return torch.sum(score, dim)
+        elif self.criterion_reduce_type == "max":
+            return torch.max(score, dim)
+        else:
+            raise NotImplementedError
+
+    def update_mha_scores(self):
+        for mha_name, mha_comp in self.mha_compressions.items():
+            # step 0: obtain hooked attributes in mha modules
+            head_size = getattr(mha_comp, mha_comp.attributes_for_this_mha['head_size'])
+            head_nums = getattr(mha_comp, mha_comp.attributes_for_this_mha['head_nums'])
+            # step 1: gather qkv and ffn which belong to same mha together
+            qkv_scores_for_this_mha = {}
+            ffn_scores_for_this_mha = {}
+            for layer_name, layer_score in self.criterion.scores.items():
+                if k in mha_comp.qkv_name:
+                    qkv_scores_for_this_mha[layer_name] = layer_score
+                elif k in mha_comp.ffn_name:
+                    ffn_scores_for_this_mha[layer_name] = layer_score
+                else:
+                    continue
+            # step 2: get qkv and ffn reduce_dim scores (commonly use: mean)
+            qkv_gather_scores = torch.zeros(head_nums, 1)
+            qkv_shape = mha_comp.qkv[0].weight.shape
+            qkv_block_size = [head_size, qkv_shape[1]]
+            qkv_new_shape = [qkv_shape[0] // qkv_block_size[0], qkv_block_size[0], qkv_shape[1] // qkv_block_size[1], qkv_block_size[1]]
+            for qkv_name, qkv_score in qkv_scores_for_this_mha.items():
+                qkv_score_new = qkv_score.reshape(qkv_new_shape)
+                qkv_score_new = self.reduce_mha_scores(self.reduce_mha_scores(qkv_score_new, -1), 1)
+                # qkv_scores_for_this_mha[qkv_name] = qkv_score_new # [head_nums, 1]
+                qkv_gather_scores += qkv_score_new
+            ffn_gather_scores = torch.zeros(1, head_nums)
+            ffn_shape = mha_comp.ffn[0].weight.shape
+            ffn_block_size = [ffn_shape[0], head_size]
+            ffn_new_shape = [ffn_shape[0] // ffn_block_size[0], ffn_block_size[0], ffn_shape[1] // ffn_block_size[1], ffn_block_size[1]]
+            for ffn_name, ffn_score in ffn_scores_for_this_mha.items():
+                ffn_score_new = ffn_score.reshape(ffn_new_shape)
+                ffn_score_new = self.reduce_mha_scores(self.reduce_mha_scores(ffn_score_new, -1), 1)
+                # ffn_scores_for_this_mha[ffn_name] = ffn_score_new # [1, head_nums]
+                ffn_gather_scores += ffn_score_new
+            # step 3: compile qkv ffn scores to obtain individual head's score
+            self.mha_scores[mha_name] = qkv_gather_scores + ffn_gather_scores.permute(1, 0)
+            self.mha_scores[mha_name] /= (len(qkv_scores_for_this_mha) + len(ffn_scores_for_this_mha)) # should be 4
+        return True
+
+    def update_masks(self, local_step):
+        """Update the masks at a given local step."""
+        if self.global_step == self.start_step:
+            if self.config['lock_init_sparsity']:
+                self.masks = self.pattern.get_pattern_lock_masks(self.modules)
+                self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
+                self.current_sparsity_ratio = self.init_sparsity_ratio
+
+        if not self.check_is_pruned_step(self.global_step):
+            return
+
+        if self.current_sparsity_ratio > self.target_sparsity_ratio:
+            return
+
+        self.criterion.on_step_begin()
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
+                                                                             self.completed_pruned_cnt,
+                                                                             self.total_prune_cnt, 
+                                                                             self.head_masks,
+                                                                             self.init_sparsity_ratio)
+        logger.info(f"current target ratio is {current_target_sparsity_ratio}")
+
+        self.completed_pruned_cnt += 1
+        if self.criterion.scores == {}:
+            return
+
+        # self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
+        # self.mask_weights()
+        self.update_mha_scores() # update self.mha_scores
+        self.head_masks = self.pattern.get_masks(self.mha_scores, current_target_sparsity_ratio, self.self.head_mask_luts)
+        self.mask_weights()
+
+        self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
+        logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
     
+    def mask_weights(self):
+        for mha_name, mha_compression in self.mha_compressions:
+            mha_compression.mask_mha_weights(self.head_masks[mha_name])
+
     # main api functions
     def on_step_begin(self, local_step):
         """Implement at the start of each step."""
@@ -970,21 +1087,9 @@ class MultiheadAttentionPruner(object):
         self.update_masks(local_step)
         self.handled_global_step = self.global_step
 
-    def update_masks(self, local_step):
-        """Update the masks at a given local step."""
-        pass
-
-    def on_epoch_end(self):
-        """Implement at the end of each epoch."""
-        pass
-
-    def on_step_end(self):
-        """Implement at the end of each step."""
-        pass
-
     def on_before_optimizer_step(self):
         """Implement before optimizer.step()."""
-        pass
+        self.criterion.on_before_optimizer_step()
 
     def on_after_optimizer_step(self):
         """Implement after optimizer.step().
@@ -993,19 +1098,3 @@ class MultiheadAttentionPruner(object):
         """
         self.mask_weights()
         self.global_step += 1
-
-    def on_train_begin(self, dataloader=None):
-        """Implement at the beginning of training phase."""
-        pass
-
-    def on_train_end(self):
-        """Implement at the end of training phase."""
-        pass
-
-    def on_before_eval(self):
-        """Implement at the beginning of evaluation phase."""
-        pass
-
-    def on_after_eval(self):
-        """Implement at the end of evaluation phase."""
-        pass
