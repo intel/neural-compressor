@@ -29,11 +29,15 @@ To enable accuracy-aware tuning with various frameworks, Intel® Neural Compress
 
     end
 ```
-- 1. **Strategy**: Drives the overall tuning process and utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
-- 2. **Adaptor**: Parses the framework YAML, filters some corner cases, and constructs the framework capability. This includes the capabilities of each operator and other model-related information.
-- 3. **Strategy**: Constructs the tuning space based on the framework capability and initiates the tuning process.
-- 4. **Strategy**: Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
-- 5. **Adaptor** Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
+1. **Strategy**: Drives the overall tuning process and utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
+
+2. **Adaptor**: Parses the framework YAML, filters some corner cases, and constructs the framework capability. This includes the capabilities of each operator and other model-related information.
+
+3. **Strategy**: Constructs the tuning space based on the framework capability and initiates the tuning process.
+
+4. **Strategy**: Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
+
+5. **Adaptor** Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
 
 The following section provides an example of extending the PyTorch `Conv2d` operator to include support for 4-bit quantization.
