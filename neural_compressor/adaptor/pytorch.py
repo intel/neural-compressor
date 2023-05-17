@@ -3226,7 +3226,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                     tune_cfg.get('calib_sampling_size', 1))
         except:
             logger.warning("The calibration failed when calibrating with ipex, "+\
-                         "using dataloader with 1 iteration insteadly.")
+                           "using scale info from SmoothQuant for Linear and " +\
+                           "one iter calibration for other ops.")
 
         # update ipex_config.json with smoothquant_scale_info
         q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
@@ -3235,7 +3236,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
-            logger.warning("SmoothQuant folding=False with bf16 may cause accuracy=0!")
+            logger.warning("SmoothQuant folding=False with bf16 may cause accuracy=0! " +\
+                            "Please consider setting excluded_precisions=['bf16'] in your config.")
             with torch.no_grad():
                 with torch.cpu.amp.autocast():
                     q_model = ipex.quantization.convert(q_model, inplace=True)
