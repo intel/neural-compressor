@@ -206,7 +206,7 @@ if __name__ == "__main__":
         from neural_compressor.data import DataLoader
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(calibration_sampling_size=[40])
 
@@ -214,7 +214,6 @@ if __name__ == "__main__":
             model=graph,
             conf=config,
             calib_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
-            eval_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
             eval_func=eval_func)
         try:
             q_model.save(args.output_model)

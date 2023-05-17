@@ -18,6 +18,7 @@
 import datetime
 import logging
 from schema import Schema, And, Optional
+from .utils import alias_param
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -162,7 +163,7 @@ class Options:
 
     Example::
 
-        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
@@ -233,9 +234,10 @@ class BenchmarkConfig:
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
                                 Default value is 5.
         iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+        model_name (str, optional): The name of the model. Default value is empty.
         cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
         num_of_instance (int, optional): The number of instances to use for performance testing.
-                                         Default value is None.
+                                         Default value is 1.
         inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
                                               Default value is None.
         intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
@@ -247,7 +249,7 @@ class BenchmarkConfig:
         from neural_compressor.benchmark import fit
 
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+        fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
     def __init__(self,
                  inputs=[],
@@ -256,10 +258,9 @@ class BenchmarkConfig:
                  device='cpu',
                  warmup=5,
                  iteration=-1,
-                 model=None,
-                 model_name='',
+                 model_name="",
                  cores_per_instance=None,
-                 num_of_instance=None,
+                 num_of_instance=1,
                  inter_num_of_threads=None,
                  intra_num_of_threads=None):
         """Init a BenchmarkConfig object."""
@@ -269,7 +270,6 @@ class BenchmarkConfig:
         self.device=device
         self.warmup = warmup
         self.iteration = iteration
-        self.model = model
         self.model_name = model_name
         self.cores_per_instance = cores_per_instance
         self.num_of_instance = num_of_instance
@@ -279,7 +279,7 @@ class BenchmarkConfig:
 
     def keys(self):
         """Returns keys of the dict."""
-        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', 'model', \
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', \
                 'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
                 'inter_num_of_threads','intra_num_of_threads')
 
@@ -373,7 +373,7 @@ class BenchmarkConfig:
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
         """Set num_of_instance."""
-        if num_of_instance is None or _check_value('num_of_instance', num_of_instance, int):
+        if _check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
@@ -399,16 +399,6 @@ class BenchmarkConfig:
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
                                                         intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
-
-    @property
-    def model(self):
-        """Get model."""
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        """Set model."""
-        self._model = model
 
     @property
     def model_name(self):
@@ -645,6 +635,7 @@ class _BaseQuantizationConfig:
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
                 If users set domain as auto, automatic detection for domain will be executed.
+        model_name: The name of the model. Default value is empty.
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
@@ -1235,6 +1226,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                           },
                       }
         reduce_range: Whether use 7 bit to quantization.
+        model_name: The name of the model. Default value is empty.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
@@ -1295,12 +1287,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def approach(self):
         """Get approach."""
         return self._approach
-    
+
     @property
     def framework(self):
         """Get framework."""
         return self._framework
-    
+
     @framework.setter
     def framework(self, framework):
         """Set framework."""
@@ -1309,7 +1301,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
 class WeightPruningConfig:
     """Config Class for Pruning. Define a single or a sequence of pruning configs.
-    
+
     Args:
         pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
             Parameters defined out of pruning_configs are valid for all layers.
@@ -1647,8 +1639,9 @@ class MixedPrecisionConfig(object):
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
                                  default is 'default'.
-        precision (str, optional): Target precision for mix precision conversion.
+        precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
+        model_name (str, optional): The name of the model. Default value is empty.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
         tuning_criterion (TuningCriterion object, optional): Accuracy tuning settings,
@@ -1662,13 +1655,13 @@ class MixedPrecisionConfig(object):
         from neural_compressor.config import MixedPrecisionConfig
 
         conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+        converted_model = mix_precision.fit(model, conf=conf)
     """
+    @alias_param("precisions", param_alias="precision")
     def __init__(self,
                  device="cpu",
                  backend="default",
-                 precision="bf16",
-                 model=None,
+                 precisions="bf16",
                  model_name="",
                  inputs=[],
                  outputs=[],
@@ -1683,37 +1676,26 @@ class MixedPrecisionConfig(object):
         self.excluded_precisions = excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.tuning_criterion = tuning_criterion
-        self.precision = precision
-        self.use_bf16 = "bf16" in self.precision
-        self.model = model
+        self.precisions = precisions
+        self.use_bf16 = "bf16" in self.precisions
         self.model_name = model_name
         self._framework = None
 
     @property
-    def precision(self):
+    def precisions(self):
         """Get precision."""
-        return self._precision
+        return self._precisions
 
-    @precision.setter
-    def precision(self, precision):
+    @precisions.setter
+    def precisions(self, precision):
         """Set precision."""
         if isinstance(precision, str):
             assert precision in ["fp16", "bf16"], "Only support 'fp16' and 'bf16' for mix precision."
-            self._precision = [precision]
+            self._precisions = [precision]
         elif isinstance(precision, list):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
-            self._precision = precision
-
-    @property
-    def model(self):
-        """Get model."""
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        """Set model."""
-        self._model = model
+            self._precisions = precision
 
     @property
     def model_name(self):
@@ -2088,7 +2070,7 @@ class MXNet:
         if not isinstance(precisions, list):
             precisions = [precisions]
         for pr in precisions:
-            _check_value('precision', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
+            _check_value('precisions', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
         self._precisions = precisions
 
 
@@ -2160,9 +2142,7 @@ class _Config:
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
-                 keras=keras_config,
-                 accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion
+                 keras=keras_config
                  ):
         """Init a config object."""
         self._quantization = quantization
@@ -2176,8 +2156,6 @@ class _Config:
         self._pytorch = pytorch
         self._mxnet = mxnet
         self._keras = keras
-        self._accuracy = accuracy_criterion
-        self._tuning = tuning_criterion
 
     @property
     def distillation(self):
@@ -2234,14 +2212,5 @@ class _Config:
         """Get the onnxruntime object."""
         return self._onnxruntime
 
-    @property
-    def accuracy(self):
-        """Get the accuracy object."""
-        return self._accuracy
-    
-    @property
-    def tuning(self):
-        """Get the tuning object."""
-        return self._tuning
 
 config = _Config()

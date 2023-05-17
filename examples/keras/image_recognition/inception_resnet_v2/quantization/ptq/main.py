@@ -119,7 +119,7 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex', 
             calibration_sampling_size=[20, 150])
@@ -127,7 +127,6 @@ def main(_):
             model=FLAGS.input_model,
             conf=config,
             calib_dataloader=calib_dataloader,
-            eval_dataloader=eval_dataloader,
             eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
@@ -139,7 +138,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model.model import Model
-            accuracy = evaluate(Model(FLAGS.input_model, backend='keras').model)
+            accuracy = evaluate(Model(FLAGS.input_model, backend='itex').model)
             logger.info('Batch size = %d' % FLAGS.batch_size)
             logger.info("Accuracy: %.5f" % accuracy)
 

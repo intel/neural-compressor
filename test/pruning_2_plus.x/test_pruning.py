@@ -9,7 +9,7 @@ sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from neural_compressor.training import prepare_pruning
+from neural_compressor.experimental.compression import prepare_pruning
 
 
 class TestPruning(unittest.TestCase):

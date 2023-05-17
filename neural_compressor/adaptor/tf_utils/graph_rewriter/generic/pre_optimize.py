@@ -108,7 +108,7 @@ class PreOptimization():
         """
         from neural_compressor.model import Model
 
-        origin_model = Model(self.model._model, **self.model.kwargs)
+        origin_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
         origin_model.name = self.model.name
         origin_model.model_type = self.model.model_type
         origin_model.output_tensor_names = self.model.output_tensor_names
@@ -235,7 +235,6 @@ class PreOptimization():
         if self.new_api or itex_mode:
             self._tmp_graph_def = DilatedContraction(
                 self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         # node device info will be removed by GrapplerOptimizer, insert it again.
         if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
@@ -265,6 +264,8 @@ class PreOptimization():
             node = graph_info[node_name].node
             node.device = node_device
         self._tmp_graph_def = cur_graph.dump_graph()
+
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         for function_def in self.model.graph_def.library.function:
             if function_def.signature.name == 'swish_f32':

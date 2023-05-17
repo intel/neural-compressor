@@ -432,7 +432,6 @@ class FallbackTuningSampler(TuningSampler):
 
 class BlockFallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
-
     def __init__(self,
                  tuning_space: TuningSpace,
                  tuning_order_lst: List[TuningOrder],
@@ -484,4 +483,3 @@ class BlockFallbackTuningSampler(TuningSampler):
                 logger.debug(f"[BlockFallbackTuningSampler] updated_tuning_cfg {op_name_type}: {new_op_config}")
                 logger.debug(f"[BlockFallbackTuningSampler] fallback {op_name_type} to {self.target_dtype}")
             yield new_tune_cfg
-

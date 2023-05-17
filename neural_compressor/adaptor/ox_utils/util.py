@@ -768,7 +768,11 @@ def fold_scale(model, scales):
                 tensor = model.get_initializer(inp)
                 new_tensor = numpy_helper.to_array(tensor, os.path.dirname(model.model_path)) * scale if \
                     model.model_path is not None else numpy_helper.to_array(tensor) * scale
-                model.set_initializer(inp, new_tensor)
+                model.remove_initializer(tensor)
+                model.add_initializer(helper.make_tensor(name=tensor.name,
+                                                         data_type=1,
+                                                         dims=new_tensor.shape if len(new_tensor.shape) != 0 else [],
+                                                         vals=new_tensor))
         return True
 
     def conv(node, scale): # pragma: no cover
