@@ -850,3 +850,72 @@ def torch_to_int8_onnx(
     logger.info("*"*len(info))
     logger.info(info)
     logger.info("*"*len(info))
+
+
+def torch_to_onnx(
+    pt_model,
+    save_path,
+    example_inputs,
+    opset_version=14,
+    dynamic_axes={"input": {0: "batch_size"},
+                  "output": {0: "batch_size"}},
+    input_names=None,
+    output_names=None,
+    do_constant_folding=True,
+    verbose=True,
+):  
+    from neural_compressor.utils.pytorch import is_int8_model
+    dtype ='INT8' if is_int8_model(pt_model) else 'FP32'
+    logger.info("The PyTorch model to be exported is detected in {} format.".format(dtype.upper()))
+
+    if input_names is None and \
+      (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
+        input_names = list(example_inputs.keys())
+        example_inputs = list(example_inputs.values())
+    elif isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
+        example_inputs = list(example_inputs.values())
+    # match input_names with inspected input_order, especailly for bert in hugginface.
+    if input_names and len(input_names) > 1:
+        import inspect
+        input_order = inspect.signature(pt_model.forward).parameters.keys()
+        flag = [name in input_order for name in input_names] # whether should be checked
+        if all(flag):
+            new_input_names = []
+            new_example_inputs = []
+            for name in input_order:
+                if name in input_names:
+                    new_input_names.append(name)
+                    id = input_names.index(name)
+                    new_example_inputs.append(example_inputs[id])
+            input_names = new_input_names
+            example_inputs = new_example_inputs
+
+    def model_wrapper(model_fn):
+        def wrapper(*args, **kwargs):
+            output = model_fn(*args, **kwargs)
+            if isinstance(output, dict):
+                return tuple(v for v in output.values() if v is not None)
+            else:
+                return output
+        return wrapper
+    pt_model.forward = model_wrapper(pt_model.forward)
+
+    if is_int8_model(pt_model):
+        pt_model = torch.jit.trace(pt_model, input2tuple(example_inputs), strict=False)
+    
+    with torch.no_grad():
+        torch.onnx.export(
+            pt_model,
+            input2tuple(example_inputs),
+            save_path, 
+            opset_version=opset_version,
+            input_names=input_names,
+            output_names=output_names,
+            dynamic_axes=dynamic_axes,
+            do_constant_folding=do_constant_folding,
+            )
+        if verbose:
+            info = "The {0} ONNX Model exported to path: {1}".format(dtype.upper(), save_path)
+            logger.info("*"*len(info))
+            logger.info(info)
+            logger.info("*"*len(info))

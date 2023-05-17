@@ -348,10 +348,33 @@ class PyTorchModel(PyTorchBaseModel):
         conf,
     ):
         """Export PyTorch model to ONNX model."""
+        from packaging.version import Version
+        from ..adaptor.pytorch import get_torch_version
+        version = get_torch_version()
+        if version.release < Version("1.12.0").release:
+            assert False, "PyTorch to ONNX export function requires a minimum torch version of {}, " \
+                "but the torch version found is {}".format(Version("1.12.0"), version)
+
         from neural_compressor.experimental.export import (
             torch_to_fp32_onnx,
-            torch_to_int8_onnx
+            torch_to_int8_onnx,
+            torch_to_onnx
         )
+        
+
+        torch_to_onnx(
+            self.model,
+            save_path,
+            conf.example_inputs,
+            opset_version=conf.opset_version,
+            dynamic_axes=conf.dynamic_axes,
+            input_names=conf.input_names,
+            output_names=conf.output_names,
+            do_constant_folding=True,
+            verbose=True,
+        )
+        return
+
         if conf.dtype == 'int8':
             torch_to_int8_onnx(
                 self.fp32_model,
