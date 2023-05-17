@@ -1180,6 +1180,14 @@ Intel® Neural Compressor validated examples with multiple compression technique
     </td>
   </tr>
   <tr>
+    <td>DeBERTa v3 base MRPC (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
     <td>Spanbert SQuAD (HuggingFace)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
