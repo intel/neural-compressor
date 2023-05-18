@@ -3202,7 +3202,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         if self.performance_only:
-            logger.error("Right now, Smoothquant for ipex doesn't support performance_only")
+            logger.warning("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
 
