@@ -4,26 +4,56 @@ import shutil
 import os
 import unittest
 
-from neural_solution.backend.cluster import Node, Cluster
+
+import unittest
+from neural_solution.backend.cluster import Cluster, Node
+from neural_solution.backend.task import Task
+
 
 class TestCluster(unittest.TestCase):
-
     @classmethod
-    def setUpClass(self):
-        ns_path = os.path.dirname(importlib.util.find_spec('neural_solution').origin)
-        self.workspace = os.path.join(ns_path, '../', 'ns_workspace')
-        print(self.workspace)
+    def setUp(self):
+        node_lst = [Node("node1", "localhost", 2, 4), Node("node2", "localhost", 2, 4)]
+        self.cluster = Cluster(node_lst)
+        
+        self.task = Task(
+            task_id = "1",
+            arguments = ["arg1", "arg2"],
+            workers = 2,
+            status = "pending",
+            script_url = "https://example.com",
+            optimized = True,
+            approach = "static",
+            requirement = ["req1", "req2"],
+            result = "",
+            q_model_path = "q_model_path"
+        )
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree(self.workspace)
+        shutil.rmtree("ns_workspace")
 
-    def test_cluster(self):
-        node1 = Node(name='node1',num_sockets=2, num_cores_per_socket=20)
-        node2 = Node(name='node2',num_sockets=2, num_cores_per_socket=20)
-        node3 = Node(name='node3',num_sockets=2, num_cores_per_socket=20)
-        node_lst = [node1, node2, node3]
-        cluster = Cluster(node_lst=node_lst)
+    def test_reserve_resource(self):
+        task = self.task
+        reserved_resource_lst = self.cluster.reserve_resource(task)
+        self.assertEqual(len(reserved_resource_lst), 2)
+        self.assertEqual(self.cluster.socket_queue, ["2 node2", "2 node2"])
 
-if __name__ == "__main__":
+    def test_free_resource(self):
+        task = self.task
+        reserved_resource_lst = self.cluster.reserve_resource(task)
+        self.cluster.free_resource(reserved_resource_lst)
+        self.assertEqual(self.cluster.socket_queue, ['2 node2', '2 node2', '1 node1', '1 node1'])
+
+    def test_get_free_socket(self):
+        free_socket_lst = self.cluster.get_free_socket(4)
+        self.assertEqual(len(free_socket_lst), 4)
+        self.assertEqual(free_socket_lst, ["1 node1", "1 node1", "2 node2", "2 node2"])
+        self.assertEqual(self.cluster.socket_queue, [])
+
+        # Attempting to over allocate resources
+        free_socket_lst = self.cluster.get_free_socket(10)
+        self.assertEqual(free_socket_lst, 0)
+
+if __name__ == '__main__':
     unittest.main()

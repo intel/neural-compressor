@@ -43,7 +43,7 @@ def get_task_log_path(task_id):
     return log_file_path
 
 def build_local_cluster():
-    from backend.cluster import Node, Cluster
+    from neural_solution.backend.cluster import Node, Cluster
     hostname = 'localhost'
     node1 = Node(name=hostname,num_sockets=2, num_cores_per_socket=5)
     node2 = Node(name=hostname,num_sockets=2, num_cores_per_socket=5)
@@ -62,14 +62,13 @@ def build_cluster(file_path):
     Returns:
         Cluster: return cluster object.
     """
-    from backend.cluster import Node, Cluster
+    from neural_solution.backend.cluster import Node, Cluster
     # If no file is specified, build a local cluster
     if file_path == "None" or file_path is None:
         return build_local_cluster()
 
     if not os.path.exists(file_path):
-        logger.info(f"Please check the path of host file: {file_path}.")
-        exit(1)
+        raise Exception(f"Please check the path of host file: {file_path}.")
 
     node_lst = []
     with open(file_path, 'r') as f:

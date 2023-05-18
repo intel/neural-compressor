@@ -35,12 +35,3 @@ class Task:
         self.requirement = requirement
         self.result = result
         self.q_model_path = q_model_path
-
-    def get_execute_command(self) -> List[str]:
-        """Return the execution command
-
-        Returns:
-            command_lst: the command for execution.
-        """
-        command_lst = self.arguments.split(" ") # TODO, replace it with the task
-        return command_lst

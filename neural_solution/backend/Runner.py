@@ -13,14 +13,14 @@
 # limitations under the License.
 
 
-from backend import Cluster, TaskDB, Scheduler, TaskMonitor, ResultMonitor
+from neural_solution.backend import Cluster, TaskDB, Scheduler, TaskMonitor, ResultMonitor
 import threading
 import socket
 import time
 
-from backend.cluster import Node, Cluster
-from backend.utils.utility import build_cluster
-from backend.utils import logger
+from neural_solution.backend.cluster import Node, Cluster
+from neural_solution.backend.utils.utility import build_cluster
+from neural_solution.backend.utils import logger
 
 import threading
 import argparse

@@ -61,8 +61,7 @@ class TaskDB:
         task_lst = self.cursor.fetchall()
         res_lst = []
         for task_tuple in task_lst:
-            task_id, arguments, workers, status, result = task_tuple
-            res_lst.append(Task(task_id, arguments, workers, status, result))
+            res_lst.append(Task(*task_tuple))
         return res_lst
 
     def update_task_status(self, task_id, status):

@@ -22,8 +22,6 @@ from .utils import logger
 from neural_solution.config import DB_PATH
 from collections import Counter
 
-logger.info(f"[Cluster]{DB_PATH}")
-
 class Cluster:
     def __init__(self, node_lst=[]):
         """Cluster manages all the server resources.
@@ -41,7 +39,6 @@ class Cluster:
         self.lock = threading.Lock()
         self.node_lst = node_lst
         self.socket_queue = []
-        logger.info(DB_PATH)
         create_dir(DB_PATH)
         self.conn = sqlite3.connect(f'{DB_PATH}', check_same_thread=False)
         self.initial_cluster_from_node_lst(node_lst)

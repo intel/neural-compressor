@@ -16,6 +16,7 @@ import socket
 import threading
 from .utils.utility import serialize, deserialize
 from .utils import logger
+from neural_solution.backend.task_db import TaskDB
 
 class ResultMonitor:
     """ResultMonitor is a thread that monitors the coming task results and update the task collection in the TaskDb.
@@ -24,7 +25,7 @@ class ResultMonitor:
         port: The port that ResultMonitor listens to
         task_db: the TaskDb object that manages the tasks
     """
-    def __init__(self, port, task_db):
+    def __init__(self, port, task_db: TaskDB):
         self.s = socket.socket()
         self.port = port
         self.task_db = task_db
