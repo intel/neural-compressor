@@ -125,6 +125,10 @@ class TestBasicTuningStrategy(unittest.TestCase):
         q_model = fit(model=model, conf=conf, calib_dataloader=dataloader)
         self.assertIsNotNone(q_model)
 
+        # test specified framework
+        conf.framework = "pytorch"
+        q_model = fit(model=model, conf=conf, calib_dataloader=dataloader)
+        self.assertIsNotNone(q_model)
 
     def test_block_wise_tuining_stock_pt(self):
         from neural_compressor.quantization import fit
