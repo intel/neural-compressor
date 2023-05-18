@@ -23,9 +23,9 @@ pip install -r requirements.txt
   # install dependency required by data preprocessing script
   git clone https://github.com/MIC-DKFZ/nnUNet.git --recursive
   cd nnUNet/
+  git checkout b38c69b345b2f60cd0d053039669e8f988b0c0af
   # replace sklearn in the older version with scikit-learn
   sed -i 's/sklearn/scikit-learn/g' setup.py
-  git checkout b38c69b345b2f60cd0d053039669e8f988b0c0af
   python setup.py install
   cd ..
 
