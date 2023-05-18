@@ -1293,7 +1293,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         q_capability = adaptor.query_fw_capability(Model(self.distilbert_model))
-        self.assertEqual(len(q_capability['block_info']), 6)
+        self.assertEqual(len(q_capability['block_wise']), 6)
 
 if __name__ == "__main__":
     unittest.main()
