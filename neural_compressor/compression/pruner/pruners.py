@@ -937,7 +937,6 @@ class MultiheadAttentionPruner(BasePruner):
         Inherit from parent class Pruner.
     """
     def __init__(self, config, mha_modules):
-        import pdb;pdb.set_trace()
         """Initialize."""
         # use pattern search techique to obtain multihead attention modules
         # modules is a dict that fits the mha auto slim process
