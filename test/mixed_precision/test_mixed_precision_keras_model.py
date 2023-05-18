@@ -9,10 +9,6 @@ from neural_compressor.config import MixedPrecisionConfig
 
 def build_sequential_model():
 
-    (train_images, train_labels), (test_images, test_labels) = keras.datasets.fashion_mnist.load_data()
-    train_images = train_images.astype(np.float32) / 255.0
-    test_images = test_images.astype(np.float32) / 255.0
-
     # Create Keras model
     model = keras.Sequential([
         keras.layers.InputLayer(input_shape=(28, 28), name="input"),
@@ -36,8 +32,6 @@ def build_sequential_model():
                 loss="sparse_categorical_crossentropy",
                 metrics=["accuracy"])
 
-    # Train model
-    model.fit(x={"input": train_images}, y={"output": train_labels}, epochs=1)
     model.save("./models/saved_model")
 
     return
@@ -84,7 +78,7 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
         shutil.rmtree("./nc_workspace", ignore_errors=True)
 
     def test_mixed_precision_with_keras_model(self):
-        from neural_compressor.data import DataLoader, Datasets
+        # use dummy dataset for UT test
         dataset = Datasets('tensorflow')['dummy'](shape=(10, 28, 28), low=0., high=1., label=True)
 
         dataloader = DataLoader(framework='tensorflow', dataset=dataset)
@@ -111,7 +105,7 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
         self.assertEqual(found_cast, True)
 
     def test_mixed_precision_with_keras_adaptor(self):
-        from neural_compressor.data import DataLoader, Datasets
+        # use dummy dataset for UT test
         dataset = Datasets('tensorflow')['dummy'](shape=(10, 28, 28), low=0., high=1., label=True)
         dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 
