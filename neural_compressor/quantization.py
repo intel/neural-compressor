@@ -160,7 +160,7 @@ def fit(model,
 
     if strategy_name == "mse_v2":
         if not (conf.framework.startswith("tensorflow")\
-                 or conf.framework == 'pytorch_fx'): # pragma: no cover
+                 or conf.framework in ['pytorch_fx', 'onnxruntime']): # pragma: no cover
             strategy_name = "basic"
             logger.warning(f"MSE_v2 does not support {conf.framework} now, use basic instead.")
             logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
