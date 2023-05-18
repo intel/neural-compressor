@@ -88,6 +88,7 @@ class TuneStrategyMeta(type):
             new_strategy.capability = pre_strategy.capability
             new_strategy.tuning_space = pre_strategy.tuning_space
             new_strategy.algo_scheduler = pre_strategy.algo_scheduler
+            new_strategy.tuning_history = pre_strategy.tuning_history
         return new_strategy
 
 @strategy_registry

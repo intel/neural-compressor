@@ -25,7 +25,7 @@ def build_conv_model():
     avg_args = {'kernel_shape': [3, 3]}
     avgpool_node = helper.make_node('AveragePool', ['conv1_output'], ['avg_output'], name='AveragePool', **avg_args)
 
-    concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'], 
+    concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'],
         ['concat_output'], name='Concat', axis=1)
     output = helper.make_tensor_value_info('concat_output', TensorProto.FLOAT, [1, 8, 220, 220])
     initializers = [conv1_weight_initializer, conv2_weight_initializer]
@@ -119,19 +119,19 @@ class TestQuantLevel(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree('saved', ignore_errors=True)
         shutil.rmtree('nc_workspace', ignore_errors=True)
-        
+
     def test_quant_level_auto(self):
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor.quantization import fit
-                
+
         acc_lst = [1.0, 0.9, 1.1, 0.8]
         def fake_eval(model):
             result = acc_lst[0]
             del acc_lst[0]
-            return result       
+            return result
 
         conf = PostTrainingQuantConfig(approach='static')
-        
+
         q_model = fit(model=self.ort_cv_model, conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval)
         node_names = [i.name for i in q_model.nodes()]
@@ -139,7 +139,7 @@ class TestQuantLevel(unittest.TestCase):
         for node_name in node_names:
             if 'conv' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
-    
+
     def test2_quant_level_auto(self):
         # All conv will be quantized but matmul not
         acc_lst = [1.0, 0.9, 1.1, 0.8]
@@ -147,12 +147,12 @@ class TestQuantLevel(unittest.TestCase):
             result = acc_lst[0]
             del acc_lst[0]
             return result
-        
+
         conf = PostTrainingQuantConfig(approach='static')
         q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval)
         node_names = [i.name for i in q_model.nodes()]
-        
+
         for node_name in node_names:
             if 'conv' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
@@ -170,11 +170,11 @@ class TestQuantLevel(unittest.TestCase):
         q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval3)
         node_names = [i.name for i in q_model.nodes()]
-        
+
         for node_name in node_names:
             if 'conv' in node_name or 'MatMul' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
-                
+
     def test4_quant_level_auto(self):
         # All matmul will be quantized but conv not
         acc_lst = [1.0, 0.9, 0.8, 1.1]
@@ -187,13 +187,13 @@ class TestQuantLevel(unittest.TestCase):
         q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval4)
         node_names = [i.name for i in q_model.nodes()]
-        
+
         for node_name in node_names:
             if 'MatMul' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
             if 'conv' in node_name:
                 self.assertTrue('quant' not in node_name and 'Quant' not in node_name)
-                
+
     def test5_quant_level_auto(self):
         # All matmul and conv will be quantized, return with all int8.
         acc_lst = [1.0, 1.2, 0.8, 1.1]
@@ -206,13 +206,13 @@ class TestQuantLevel(unittest.TestCase):
         q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval5)
         node_names = [i.name for i in q_model.nodes()]
-        
+
         for node_name in node_names:
             if 'MatMul' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
             if 'conv' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
-                
+
     def test6_quant_level_auto(self):
         # start with basic
         acc_lst = [1.0, 0.7, 0.8, 0.9, 1.1]
@@ -225,13 +225,13 @@ class TestQuantLevel(unittest.TestCase):
         q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval6)
         node_names = [i.name for i in q_model.nodes()]
-        
+
         for node_name in node_names:
             if 'MatMul' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
             if 'conv' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
-                
+
     def test7_quant_level_auto(self):
         # start with basic and return at the 3th of basic stage
         acc_lst = [1.0, 0.7, 0.8, 0.9, 0.95, 0.98, 1.1]
@@ -244,7 +244,7 @@ class TestQuantLevel(unittest.TestCase):
         q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
             calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval7)
         node_names = [i.name for i in q_model.nodes()]
-        
+
         for node_name in node_names:
             if 'MatMul' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
@@ -257,7 +257,7 @@ class TestQuantLevel(unittest.TestCase):
         from neural_compressor.data import Datasets, DATALOADERS
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor.quantization import fit
-        
+
         resnet18 = torchvision.models.resnet18()
         acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
         def _fake_eval(model):
@@ -361,6 +361,27 @@ class TestQuantLevel(unittest.TestCase):
                       eval_dataloader=dataloader,
                       eval_func=_fake_eval)
         self.assertIsNotNone(q_model)
+
+
+    def test_quant_level_auto_ort(self):
+        # All conv/matmul will be quantized
+        acc_lst = [1.0, 0.9, 0.9, 0.9, 1.1]
+        def fake_eval3(model):
+            result = acc_lst[0]
+            del acc_lst[0]
+            return result
+        conf = PostTrainingQuantConfig(approach='static')
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval3)
+        node_names = [i.name for i in q_model.nodes()]
+        found_fp32_conv = False
+        for node_name in node_names:
+            if 'MatMul' in node_name:
+                self.assertTrue('quant' not in node_name)
+            if 'conv' in node_name and ('quant' in node_name or 'Quant' in node_name):
+                found_fp32_conv = True
+        self.assertTrue(found_fp32_conv)
+
 
 if __name__ == "__main__":
     unittest.main()
