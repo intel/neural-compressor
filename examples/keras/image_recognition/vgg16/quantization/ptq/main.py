@@ -73,7 +73,7 @@ def evaluate(model):
     """Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+        model (tf.keras.Model): The input model will be the objection of tf.keras.Model.
 
     Returns:
         accuracy (float): evaluation result, the larger is better.
