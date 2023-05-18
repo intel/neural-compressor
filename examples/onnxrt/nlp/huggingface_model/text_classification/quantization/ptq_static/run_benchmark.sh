@@ -85,7 +85,7 @@ function run_benchmark {
         model_name_or_path="Intel/bart-large-mrpc"
         TASK_NAME='mrpc'
     fi
-    if [[ "${input_model}" =~ "deberta-v3" ]]; then
+    if [[ "${input_model}" =~ "deberta" ]]; then
         model_name_or_path="microsoft/deberta-v3-base"
         TASK_NAME='mrpc'
     fi
