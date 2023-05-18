@@ -30,6 +30,7 @@ except:
     logger = logging.getLogger()
 from collections import UserDict
 
+
 def move_input_to_device(input, device):
     if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
@@ -259,11 +260,15 @@ class WrapperLayer(torch.nn.Module):
     ##TODO better tradeoff performance and memory, currently it's too slow
     def q_dq_forward(self, x, input_scale, weight_scale):
         layer_copy = copy.deepcopy(self.orig_layer)
-        layer_copy.weight *= weight_scale
+        if weight_scale != None:
+            layer_copy.weight *= weight_scale
         q_dq_weight = quant_dequant_w(layer_copy)
         layer_copy.weight.data.copy_(q_dq_weight)
-        x = input_scale * x
-        x = quant_dequant_x(x, self.input_min, self.input_max)
+        if input_scale == None:
+            x = quant_dequant_x(x, self.input_min, self.input_max)
+        else:
+            x = input_scale * x
+            x = quant_dequant_x(x, self.input_min * input_scale, self.input_max * input_scale)  ##FIXME
         output = layer_copy(x)
         return output
 
@@ -423,19 +428,25 @@ class TorchSmoothQuant:
         :param calib_iter: Data size for calibration
         :return: A dict that saved the layer name and the channe-wised max value info
         """
-        layer_to_absorb = {}
-        for key in absorb_to_layer:
-            for layer_name in absorb_to_layer[key]:
-                layer_to_absorb[layer_name] = key
-        hook_module_names = [absorb_to_layer[key][0] for key in absorb_to_layer.keys()]
+        # layer_to_absorb = {}
+        # for key in absorb_to_layer:
+        #     for layer_name in absorb_to_layer[key]:
+        #         layer_to_absorb[layer_name] = key
+        # hook_module_names = [absorb_to_layer[key][0] for key in absorb_to_layer.keys()]
+        # hook_modules = {}
+        #
+        # for index, name in enumerate(hook_module_names):
+        #     module = get_module(self.model, name)
+        #     if module.__class__.__name__.split(".")[-1] in self.op_types:
+        #         hook_modules[name] = module
+        # if len(hook_modules) == 0:
+        #     return {}
+        ##hook all the module
         hook_modules = {}
-
-        for index, name in enumerate(hook_module_names):
-            module = get_module(self.model, name)
+        for n, module in self.model.named_modules():
             if module.__class__.__name__.split(".")[-1] in self.op_types:
-                hook_modules[name] = module
-        if len(hook_modules) == 0:
-            return {}
+                hook_modules[n] = module
+
         self._add_min_max_observer(hook_modules, percentile)
         if save_input_output:
             self._add_input_output_observer()
@@ -719,22 +730,23 @@ class TorchSmoothQuant:
         :param loss_alpha: Loss alpha i for mean scale error
         :return: A tensor of the loss
         """
-
-        # max_value = torch.max(torch.abs(output.reshape(output.shape[0], -1)), dim=-1).values
-        # if max_value == 0:
-        #     max_value = 1e-5
-        # output = output / max_value  ##FIXME need copy not replace
-        # output_q = output_q / max_value
+        if len(output.shape) <= 2:
+            max_value = torch.max(torch.abs(output))
+        else:
+            max_value = torch.max(torch.abs(output.reshape(output.shape[0], -1)), dim=-1).values
+            max_value = torch.clip(max_value, 1e-5)
+        output = output / max_value  ##FIXME need copy not replace
+        output_q = output_q / max_value
         if loss_type == "nsr":
             output[output == 0] = 1e-5
-            loss = torch.mean(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
+            loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
             return loss
         elif loss_type == "abs":
-            return torch.mean(
+            return torch.sum(
                 torch.pow(torch.abs(output - output_q),
                           0.5))
         else:
-            return torch.mean((output - output_q) ** 2)
+            return torch.sum((output - output_q) ** 2)
 
     def _get_sq_layer_names(self):
         """Get the all the hook sq layer
@@ -746,19 +758,22 @@ class TorchSmoothQuant:
             module_names += self.absorb_to_layer[key]
         return module_names
 
+    def _get_all_hook_module_names(self):
+        module_names = []
+        for n, module in self.model.named_modules():
+            if module.__class__.__name__.split(".")[-1] in self.op_types:
+                module_names.append(n)
+        return module_names
+
     def _qdq_model_wrapper_for_auto(self, save_q_input=False):
         """Wrapper all the module with qdq
         :return:
         """
-        module_names = self._get_sq_layer_names()
-        min_max_mapping = {}
-        for absorb_key in self.absorb_to_layer.keys():
-            for layer_name in self.absorb_to_layer[absorb_key]:
-                min_max_mapping[layer_name] = self.absorb_to_layer[absorb_key][0]
+        module_names = self._get_all_hook_module_names()
         for name in module_names:
             module = get_module(self.model, name)
-            set_module(self.model, name, WrapperLayer(module, self.input_mins[min_max_mapping[name]],
-                                                      self.input_maxes[min_max_mapping[name]],
+            set_module(self.model, name, WrapperLayer(module, self.input_mins[name],
+                                                      self.input_maxes[name],
                                                       save_q_input=save_q_input))
 
     def _qdq_model_unwrapper_for_auto(self):
@@ -769,8 +784,9 @@ class TorchSmoothQuant:
             set_module(self.model, name, module.orig_layer)
 
     def _change_qdq_for_auto(self, enable=True):
-        module_names = self._get_sq_layer_names()
+        module_names = self._get_all_hook_module_names()
         for name in module_names:
+            name = name[:-11]  ##ugly trick remove orig_layer
             module = get_module(self.model, name)
             if enable:
                 module.enable_quant()
@@ -1003,25 +1019,24 @@ class TorchSmoothQuant:
         :return:
         """
         # alpha_step=0.1
-        logger.info("start auto tuning")
+        logger.info("start sq auto tuning")
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
         alpha_space = [alpha / alpha_scale for alpha in alpha_space]
-
+        ##alpha_space.append(-1.0)
         ##wrapper new module
         self._qdq_model_wrapper_for_auto(save_q_input=True)
         ##set alpha to 0.5 as default
         default_alpha = alpha_space[len(alpha_space) // 2]
         if 0.5 in alpha_space:
             default_alpha = 0.5
-
         absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes,
                                                               default_alpha)
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         loss_alphas = {}
         cnt = 0
-        multiply_factor = auto_calib_iter // 2 if auto_calib_iter >= 2 else auto_calib_iter
+        multiply_factor = auto_calib_iter // 4 if auto_calib_iter >= 4 else auto_calib_iter
 
         best_alphas = default_alpha
 
@@ -1052,7 +1067,7 @@ class TorchSmoothQuant:
                 absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes,
                                                                       best_alphas)
                 self._update_scales_for_auto(absorb_input_scales, weight_scales)
-                loss_alphas = {}
+                loss_alphas = {}##TODO check need to remove this one
             if cnt >= auto_calib_iter:
                 break
 
@@ -1299,7 +1314,7 @@ class GraphTrace:
         traced_model = None
         optimize_numerics = False
         orig_device = model.device
-        if orig_device!="cpu":
+        if orig_device != "cpu":
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict):
