@@ -1017,7 +1017,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         ffn_matmul.append([attention_matmul[index + block_len - 2], 
                                         attention_matmul[index + block_len - 1]])
         else:
-            # if model is not optimized or Attention isn't fused, 
+            # model is not optimized or Attention isn't fused, 
             # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
             qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
             if len(qkv) != 0:
