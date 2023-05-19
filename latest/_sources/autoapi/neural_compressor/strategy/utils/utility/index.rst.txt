@@ -29,6 +29,7 @@ Functions
    neural_compressor.strategy.utils.utility.extract_data_type
    neural_compressor.strategy.utils.utility.reverted_data_type
    neural_compressor.strategy.utils.utility.get_adaptor_name
+   neural_compressor.strategy.utils.utility.build_slave_faker_model
 
 
 
@@ -58,5 +59,13 @@ Functions
    Get adaptor name.
 
    :param adaptor: adaptor instance.
+
+
+.. py:function:: build_slave_faker_model()
+
+   Slave does not have a model, so construct a fake model.
+
+   :returns: a class object where all properties and methods are virtual.
+   :rtype: object
 
 

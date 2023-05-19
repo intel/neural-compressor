@@ -179,7 +179,7 @@ Classes
        )
 
 
-.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, use_distributed_tuning=False, diagnosis=False)
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, diagnosis=False)
 
 
 
@@ -259,7 +259,6 @@ Classes
                               Instance of AccuracyCriterion class. In this class you can set higher_is_better,
                                   criterion and tolerable_loss.
                               Please refer to docstring of AccuracyCriterion class.
-   :param use_distributed_tuning: Whether use distributed tuning or not.
    :param diagnosis: This flag indicates whether to do diagnosis.
                      Default value is False.
    :type diagnosis: bool

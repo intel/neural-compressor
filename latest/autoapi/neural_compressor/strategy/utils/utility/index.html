@@ -108,6 +108,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.utility.get_adaptor_name" title="neural_compressor.strategy.utils.utility.get_adaptor_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_adaptor_name</span></code></a>(adaptor)</p></td>
 <td><p>Get adaptor name.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.utility.build_slave_faker_model" title="neural_compressor.strategy.utils.utility.build_slave_faker_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_slave_faker_model</span></code></a>()</p></td>
+<td><p>Slave does not have a model, so construct a fake model.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -143,6 +146,20 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>adaptor</strong> – adaptor instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.utility.build_slave_faker_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.utility.</span></span><span class="sig-name descname"><span class="pre">build_slave_faker_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/strategy/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.strategy.utils.utility.build_slave_faker_model" title="Permalink to this definition"></a></dt>
+<dd><p>Slave does not have a model, so construct a fake model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a class object where all properties and methods are virtual.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>object</p>
 </dd>
 </dl>
 </dd></dl>

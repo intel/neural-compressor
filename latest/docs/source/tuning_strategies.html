@@ -502,10 +502,8 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 </section>
 <section id="id22">
 <h3>Usage<a class="headerlink" href="#id22" title="Permalink to this heading"></a></h3>
-<p>To use Distributed Tuning, the <code class="docutils literal notranslate"><span class="pre">use_distributed_tuning</span></code> field in the <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
-
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">use_distributed_tuning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<p>To use Distributed Tuning, the number of processes should be specified to be greater than 1.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number_of_processes&gt;<span class="w"> </span>&lt;RUN_CMD&gt;
 </pre></div>
 </div>
 <p>An example of distributed tuning can be reached at <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">ptq_static_mrpc</a>.</p>
