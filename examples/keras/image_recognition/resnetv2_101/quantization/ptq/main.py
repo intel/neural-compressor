@@ -74,7 +74,7 @@ def evaluate(model):
     Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.keras.Model): The input model will be the class of tf.keras.Model.
+        model (tf.keras.Model): The input model will be the objection of tf.keras.Model.
 
     Returns:
         accuracy (float): evaluation result, the larger is better.

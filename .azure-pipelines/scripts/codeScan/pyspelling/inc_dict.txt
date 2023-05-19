@@ -2608,3 +2608,5 @@ funsd
 layoutlmft
 nielsr
 HYPJUDY
+DeBERTa
+unilm
