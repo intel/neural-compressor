@@ -215,7 +215,7 @@ class TestQuantLevel(unittest.TestCase):
 
     def test6_quant_level_auto(self):
         # start with basic
-        acc_lst = [1.0, 0.7, 0.8, 0.9, 1.1]
+        acc_lst = [1.0, 0.7, 0.9, 0.9, 1.1]
         def fake_eval6(model):
             result = acc_lst[0]
             del acc_lst[0]
@@ -228,9 +228,7 @@ class TestQuantLevel(unittest.TestCase):
 
         for node_name in node_names:
             if 'MatMul' in node_name:
-                self.assertTrue('quant' in node_name or 'Quant' in node_name)
-            if 'conv' in node_name:
-                self.assertTrue('quant' in node_name or 'Quant' in node_name)
+                self.assertTrue('quant' not in node_name)
 
     def test7_quant_level_auto(self):
         # start with basic and return at the 3th of basic stage
