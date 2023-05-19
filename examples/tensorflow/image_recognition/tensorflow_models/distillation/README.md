@@ -61,21 +61,3 @@ bash run_distillation.sh --topology=mobilenet --teacher=densenet201 --dataset_lo
 
 > Note: `--topology` is the student model and `--teacher` is the teacher model.
 
-
-## Diagnosis
-Neural Compressor offers quantization and benchmark diagnosis. Adding `diagnosis` parameter to Quantization/Benchmark config will provide additional details useful in diagnostics.
-### Quantization diagnosis
-```
-config = PostTrainingQuantConfig(
-    diagnosis=True,
-    ...
-)
-``` 
-
-### Benchmark diagnosis
-```
-config = BenchmarkConfig(
-    diagnosis=True,
-    ...
-)
-``` 
