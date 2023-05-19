@@ -313,7 +313,7 @@
     },
     "3dunet": {
       "model_src_dir": "image_recognition/3d-unet/quantization/ptq/fx",
-      "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build",
+      "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build/preprocessed_data",
       "input_model": "/tf_dataset/pytorch/mlperf_3dunet/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1",
       "batch_size": 100,
       "main_script": "run.py"
