@@ -1046,18 +1046,18 @@ class TemplateAdaptor(Adaptor):
         tmp_model = model
         tmp_model.eval()
         quantizable_ops = []
+        self.block_wise =[]
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        # capability = self.query_handler.get_quantization_capability()['dynamic'] \
-        #     if self.approach == "post_training_dynamic_quant" else \
-        #     self.query_handler.get_quantization_capability()['quant_aware'] \
-        #     if self.approach == "quant_aware_training" else \
-        #     self.query_handler.get_quantization_capability()['static']
-        
         q_capability = {}
+        q_capability['block_wise'] = None
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
+        # add block ops
+        if self.block_wise:
+            logger.debug(f"*** Found {len(self.block_wise)} blocks: {self.block_wise}")
+        q_capability['block_wise'] = self.block_wise[::-1] if self.block_wise else None
+        
         quant_datatypes = self.query_handler.get_quant_datatypes()
-
         if self.approach == "quant_aware_training":
             capability_pair = [(self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
             fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
@@ -2538,7 +2538,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                self.calib_func(q_model, dataloader, tmp_iterations=2)
+                self._simple_inference(q_model, dataloader, iterations=2)
             else:
                 assert not self.version.release < Version("1.10.0").release, \
                     "INC support IPEX version >= 1.10.0"
@@ -2597,7 +2597,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                         # At the 2nd run, the llga pass will be triggered and the model is turned into
                         # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                        self.calib_func(q_model, dataloader, tmp_iterations=2)
+                        self._simple_inference(q_model, dataloader, iterations=2)
             model._model = q_model
             with open(self.ipex_config_path, 'r') as f:
                 model.tune_cfg = json.load(f)
@@ -2948,7 +2948,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
+        
+        # group ops by postion for transform-based model
+        from .torch_utils.pattern_detector import TransformerBasedModelBlockPatternDetector
+        detector = TransformerBasedModelBlockPatternDetector(model)
+        detect_result = detector.detect_block()
+        attention_block = detect_result.get("attention_blocks", None)
+        ffn_blocks = detect_result.get("ffn_blocks", None) 
+        logger.info(f"Attention Blocks: {len(attention_block)}")
+        logger.info(f"FFN Blocks: {len(ffn_blocks)}")
         if not os.path.exists(self.ipex_config_path):
             assert isinstance(model, torch.nn.Module), \
                     "The model passed in is not the instance of torch.nn.Module"
@@ -3040,7 +3048,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 del tmp_model
                 import gc
                 gc.collect()
-
+        map_op_name_to_fqn = {}
+        
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release: # pragma: no cover
@@ -3071,18 +3080,23 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         module_key = name[0][0]
                         op_cfg_id = name[0][2]
                         ipex_op_type = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                        module_fqn = self.cfgs[module_key]['q_op_infos'][op_cfg_id].get('fqn', None)
+                        
                         if ipex_op_type in unify_op_type_mapping_ipex:
                             quantizable_ops.append((tuple(name), 
                                                     unify_op_type_mapping_ipex[ipex_op_type]))
+                            map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                         else:
                             re_flag = False
                             for pattern, unify_op_type in unify_op_type_mapping_ipex['re'].items():
                                 if re.match(pattern, ipex_op_type):
                                     re_flag = True
                                     quantizable_ops.append((tuple(name), unify_op_type))
+                                    map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
                                     break
                             if not re_flag:
                                 quantizable_ops.append((tuple(name), ipex_op_type))
+                                map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                     else:
                         op_type = ""
                         for op_name in name:
@@ -3090,8 +3104,21 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                             op_cfg_id = op_name[2]
                             op_type += self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
                         quantizable_ops.append((tuple(name), op_type))
+                        _module_key = name[0][0]
+                        _op_cfg_id = name[0][2]
+                        module_fqn = self.cfgs[_module_key]['q_op_infos'][_op_cfg_id]['fqn']
+                        map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
                 self.op_infos_from_cfgs = op_infos_from_cfgs
                 self.output_tensor_id_op_name = output_tensor_id_op_name
+        logger.debug("Map op name to fqn: ")
+        logger.debug(map_op_name_to_fqn)
+        logger.info("Attention Blocks : ")
+        logger.info(attention_block)
+        logger.info("FFN Blocks : ")
+        logger.info(ffn_blocks)
+        self.block_wise = ffn_blocks
+        
+
         os.remove(self.ipex_config_path)
 
     def get_fuse_ops(self, default_cfgs):
@@ -3887,6 +3914,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
+        from .torch_utils.pattern_detector import TransformerBasedModelBlockPatternDetector
+        from .torch_utils.util import get_op_type_by_name
+        detector = TransformerBasedModelBlockPatternDetector(model)
+        detect_result = detector.detect_block()
+        attention_block = detect_result.get("attention_blocks", None)
+        ffn_blocks = detect_result.get("ffn_blocks", None) 
+        logger.info(f"Attention Blocks: {len(attention_block)}")
+        logger.info(f"FFN Blocks: {len(ffn_blocks)}")
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3894,7 +3929,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     module_prefix = op_name + '.' + name
                     if module_prefix in module_dict:
                         module_dict.pop(module_prefix)  # remove sub-modules of fused modules
-
+        q_ops_set = set()
         for op_name, child in module_dict.items():
             if type(child) in self.white_list \
                and type(child) != torch.nn.Sequential \
@@ -3903,6 +3938,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     (op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
+                q_ops_set.add(op_name)
+        block_wise = [[(name, get_op_type_by_name(name, quantizable_ops)) for name in block] for block in ffn_blocks]
+        self.block_wise = block_wise
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.

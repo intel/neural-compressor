@@ -3,14 +3,19 @@ import os
 import shutil
 import unittest
 import torch
+import datetime
 import torchvision
 import torch.nn as nn
 import tensorflow as tf
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.conf.dotdict import DotDict
+from neural_compressor.utils import create_obj_from_config
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 from neural_compressor.config import DistillationConfig, \
     KnowledgeDistillationLossConfig, IntermediateLayersKnowledgeDistillationLossConfig
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.training import prepare_compression
 
 class TestDistillation(unittest.TestCase):
@@ -102,6 +107,50 @@ class TestDistillation(unittest.TestCase):
         model.save('./saved')
         stat = torch.load('./saved/best_model.pt')
         opt_model = self.student_model.load_state_dict(stat)
+
+    def test_distillation_tf(self):
+        from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
+        tf_datasets = Datasets('tensorflow')
+        dummy_dataset = tf_datasets['dummy'](shape=(100, 224, 224, 3), low=0., high=1., label=True)
+        default_workspace = './nc_workspace/{}/'.format(
+                        datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        train_dataloader = TensorflowDataLoader(dataset=dummy_dataset , batch_size=100)
+        framework_specific_info = {
+            'device': 'cpu', 'random_seed': 9527, 
+            'workspace_path': default_workspace, 
+            'format': 'default', 'backend': 'default'
+        }
+        adaptor = FRAMEWORKS['tensorflow'](framework_specific_info)
+        train_cfg = {
+            'start_epoch': 0, 
+            'end_epoch': 2,
+            'iteration': 10,
+            'frequency': 1,
+            'dataloader': train_dataloader,
+            'criterion': {'KnowledgeDistillationLoss': {'temperature': 1.0, 
+                                                        'loss_types': ['CE', 'CE'],
+                                                        'loss_weights': [0.5, 0.5]}}, 
+            'optimizer': {'SGD': {'learning_rate': 0.001, 'momentum': 0.1, 
+                                    'weight_decay': 0.001, 'nesterov': True}}, 
+        }
+        train_cfg = DotDict(train_cfg)
+        model = tf.keras.applications.MobileNet(weights='imagenet')
+        teacher_model = tf.keras.applications.DenseNet201(weights='imagenet')
+        distil_loss = KnowledgeDistillationLossConfig()
+        conf = DistillationConfig(teacher_model=teacher_model, criterion=distil_loss)
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+
+        train_func = create_obj_from_config.create_train_func(
+                        'tensorflow', \
+                        train_dataloader, \
+                        adaptor, \
+                        train_cfg, \
+                        hooks=compression_manager.callbacks.callbacks_list[0].hooks)
+        train_func(model)
+
+        compression_manager.callbacks.on_train_end()
 
 if __name__ == "__main__":
     unittest.main()

@@ -35,7 +35,7 @@ class ConvertAddToBiasAddOptimizer(GraphRewriterBase):
         graph_info = g.parse_graph()
 
         import tensorflow as tf
-        if tf.version.VERSION not in ('2.11.0202242', '2.11.0202250'):
+        if tf.version.VERSION not in ('2.11.0202242', '2.11.0202250', '2.11.0202317'):
             target_nodes = g.query_fusion_pattern_nodes([['MatMul', 'Conv2D'], ['Add', 'AddV2']])
         else:
             target_nodes = g.query_fusion_pattern_nodes([['MatMul'], ['Add', 'AddV2']])

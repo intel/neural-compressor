@@ -133,7 +133,6 @@ def main(_):
             model=FLAGS.input_model,
             conf=config,
             calib_dataloader=calib_dataloader,
-            eval_dataloader=eval_dataloader,
             eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
