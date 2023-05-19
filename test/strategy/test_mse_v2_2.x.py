@@ -32,6 +32,26 @@ def build_ox_model():
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
 
+def build_ox_model2():
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 5, 5])
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 5, 2])
+    H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 5, 2])
+    F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [1, 5, 2])
+
+    e_value = np.random.randint(2, size=(10)).astype(np.float32)
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [5, 2], e_value.reshape(10).tolist())
+    E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 5, 2], e_value.reshape(10).tolist())
+
+    matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    add = onnx.helper.make_node('Add', ['C', 'E'], ['D'], name='add')
+
+    add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
+
+    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, F], [H], [B_init, E_init])
+    model = helper.make_model(graph)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
 def build_fake_model():
     try:
         graph = tf.Graph()
@@ -74,6 +94,7 @@ class Test_MSEV2Strategy(unittest.TestCase):
         self.tf_model = build_fake_model()
         self.torch_model = torchvision.models.resnet18()
         self.onnx_model = build_ox_model()
+        self.onnx_model2 = build_ox_model2()
 
     @classmethod
     def tearDownClass(self):
@@ -184,6 +205,17 @@ class Test_MSEV2Strategy(unittest.TestCase):
 
         q_model = fit(
             model=self.onnx_model,
+            conf=conf,
+            calib_dataloader=dataloader,
+            eval_dataloader=dataloader,
+            eval_func=fake_eval_func)
+        self.assertIsNotNone(q_model)
+
+        i = [0]
+        dataset = Datasets("onnxrt_qdq")["dummy_v2"]([(5,5), (5,2)], [(5,1), (5,1)])
+        dataloader = DATALOADERS["onnxrt_qdq"](dataset)
+        q_model = fit(
+            model=self.onnx_model2,
             conf=conf,
             calib_dataloader=dataloader,
             eval_dataloader=dataloader,
