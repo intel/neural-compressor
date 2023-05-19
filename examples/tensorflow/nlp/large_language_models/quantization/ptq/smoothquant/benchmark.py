@@ -12,13 +12,13 @@ sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--int8', action='store_true', help="eval fp32 model or int8 model")
-parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-560m')
+parser.add_argument('--model_name_or_path', type=str, default='facebook/opt-125m')
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--warmup', type=int, default=0)
 args = parser.parse_args()
 
 class Evaluator:
-    def __init__(self, dataset, tokenizer, device, batch_size=16):
+    def __init__(self, dataset, tokenizer, device, batch_size=args.batch_size):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.device = device
@@ -150,9 +150,8 @@ from datasets import load_dataset
 model_name = args.model_name_or_path
 tokenizer = transformers.AutoTokenizer.from_pretrained(
     model_name,
-    cache_dir="/dev/shm/model_cache"
 )
-eval_dataset = load_dataset('lambada', split='validation', cache_dir="/dev/shm/model_cache")
+eval_dataset = load_dataset('lambada', split='validation')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
@@ -165,7 +164,7 @@ if args.int8:
     model = tf.saved_model.load(int8_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
 else:
     print("benchmaking fp32 model")
-    model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name, cache_dir="/dev/shm/model_cache")
+    model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
     # fp32_folder = model_name.split('/')[-1] + "_fp32"
     # model.save(fp32_folder)
     # model = tf.keras.models.load_model(fp32_folder)

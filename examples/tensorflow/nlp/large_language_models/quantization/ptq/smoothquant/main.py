@@ -24,7 +24,7 @@ parser.add_argument('--fallback_add', action='store_true', default=False, help="
 args = parser.parse_args()
 
 class Evaluator:
-    def __init__(self, dataset, tokenizer, device, batch_size=16):
+    def __init__(self, dataset, tokenizer, device, batch_size=args.batch_size):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.device = device
@@ -151,19 +151,16 @@ class INCDataloader:
 
 model_name = args.model_name_or_path
 
-tokenizer = transformers.AutoTokenizer.from_pretrained(
-    model_name,
-    cache_dir="/dev/shm/model_cache"
-)
-eval_dataset = load_dataset('lambada', split='validation', cache_dir="/dev/shm/model_cache")
-model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name, cache_dir="/dev/shm/model_cache")
+tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+eval_dataset = load_dataset('lambada', split='validation')
 
 # model.eval()
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
 if args.int8:
-    calib_dataset = load_dataset('lambada', split='train', cache_dir="/dev/shm/model_cache")
+    calib_dataset = load_dataset('lambada', split='train')
     # calib_dataset = eval_dataset  # TODO for debug
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)

@@ -1766,6 +1766,27 @@
       "main_script": "run_inference.py",
       "batch_size": 128
     },
+    "distilbert_base_sq": {
+      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
+      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
+      "main_script": "run_inference.py",
+      "batch_size": 128
+    },
+    "gpt2_medium": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/gpt2-medium",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "opt_125m": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/facebook-opt-125m",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
   }
 }
 

@@ -72,7 +72,7 @@ arg_parser.add_argument("--tune", type=boolean_string,
                         dest="tune",
                         default=False
                         )
-arg_parser.add_argument('--smooth-quant', dest='sq', action='store_true', help='smooth quantization')
+arg_parser.add_argument('--sq', type=boolean_string, dest='sq', help='smooth quantization', default=False)
 arg_parser.add_argument("--benchmark", type=boolean_string,
                         help="whether to do benchmark",
                         dest="benchmark",
