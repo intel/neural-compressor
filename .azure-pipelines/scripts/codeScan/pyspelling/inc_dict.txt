@@ -2600,6 +2600,7 @@ cdrdv
 NeuralCompressor
 zp
 TensorflowTopK
+mpirun
 FUNSD
 LayoutLMv
 layoutlmv

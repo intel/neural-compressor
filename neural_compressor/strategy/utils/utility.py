@@ -55,3 +55,24 @@ def get_adaptor_name(adaptor):
         if adaptor_name.startswith(name):
             return name
     return ""
+
+def build_slave_faker_model():
+    """Slave does not have a model, so construct a fake model.
+
+    Returns:
+        object:  a class object where all properties and methods are virtual.
+    """
+    from ...utils import logger
+    class FakerModel:
+
+        def __call__(self, *args, **kwargs):
+            logger.warning("Slave node has no quantized model, please handle it yourself.")
+
+        def __getitem__(self, key):
+            return self.__getattr__(str(key))
+
+        def __getattr__(self, name):
+            logger.warning("Slave node has no quantized model, please handle it yourself.")
+            return self
+
+    return FakerModel()
