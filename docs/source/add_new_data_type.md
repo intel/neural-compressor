@@ -21,7 +21,7 @@ To enable accuracy-aware tuning with various frameworks, Intel® Neural Compress
   sequenceDiagram
   	autonumber
     Strategy ->> Adaptor: query framework capability
-    Adaptor ->> Adaptor: Parse the framework YAML and return capability
+    Adaptor ->> Strategy: Parse the framework YAML and return capability
     Strategy ->> Strategy: Build tuning space
     loop Traverse tuning space
     	Strategy->> Adaptor: generate next tuning cfg
