@@ -259,7 +259,7 @@ class TestQuantLevel(unittest.TestCase):
         from neural_compressor.quantization import fit
 
         resnet18 = torchvision.models.resnet18()
-        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
+        acc_lst =  [2.0, 1.0, 1.1, 2.2, 2.3]
         def _fake_eval(model):
             result = acc_lst[0]
             del acc_lst[0]
