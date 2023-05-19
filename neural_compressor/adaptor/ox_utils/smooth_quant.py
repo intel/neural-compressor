@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""SmoothQuant for onnxrt adaptor."""
 
 import os
 import onnx
@@ -37,6 +37,15 @@ dtype_map = {np.dtype('float32'): 1,
              np.dtype('double'): 11}
  
 def get_quant_dequant_output(model, input_data, output_data, reduce_range, backend):
+    """Get loss between fp32 output and QDQ output.
+    
+    Args:
+        model (object): model
+        input_data (numpy.ndarray): fp32 input
+        output_data (numpy.ndarray): fp32 output
+        reduce_range (bool): use 7 bit or not
+        backend (str): execution provider
+    """
     import onnxruntime as ort
     input_data = quant_dequant_data(input_data, reduce_range, 2, 'asym')
     sess = ort.InferenceSession(model.SerializeToString(), providers=[backend])
@@ -45,6 +54,15 @@ def get_quant_dequant_output(model, input_data, output_data, reduce_range, backe
     return loss
 
 def make_sub_graph(node, inits, input_data, output_data, reduce_range):
+    """Build a model with the specific node.
+    
+    Args:
+        node (object): node
+        inits (list): initializer inputs of this node
+        input_data (numpy.ndarray): fp32 input
+        output_data (numpy.ndarray): fp32 output
+        reduce_range (bool): use 7 bit or not
+    """
     from onnx import helper, TensorProto, numpy_helper
     input = helper.make_tensor_value_info(node.input[0], dtype_map[input_data.dtype], input_data.shape)
     output = helper.make_tensor_value_info(node.output[0], dtype_map[output_data.dtype], output_data.shape)
@@ -64,20 +82,30 @@ def make_sub_graph(node, inits, input_data, output_data, reduce_range):
     return model
 
 def quant_dequant_data(data, reduce_range=False, qType=3, scheme='sym'):
+    """Quantize and then dequantize data.
+
+    Args:
+        data (numpy.ndarray): target data
+        reduce_range (bool): use 7 bit or not
+        qType (int): data type
+        scheme (str): sym or asym quantization
+    """
     rmin, rmax, zero_point, scale, quantized_data = quantize_data(
         data.flatten().tolist(), _get_qrange_for_qType(qType, reduce_range), qType, scheme)
     return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(data.shape)
 
 class ORTSmoothQuant:
-    """
-    Fake input channel quantization, for more details please refer to
-    [1] SmoothQuant: Accurate and Efficient
-    Post-Training Quantization for Large Language Models
-    [2] SPIQ: Data-Free Per-Channel Static Input Quantization
-    We only support inplace mode which means the model weights will be changed, you can call recover function
-    to recover the weights if needed
+    """Fake input channel quantization.
+    
+       For more details please refer to:
+       [1] SmoothQuant: Accurate and Efficient
+       Post-Training Quantization for Large Language Models
+       [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+       We only support inplace mode which means the model weights will be changed,
+       you can call recover function to recover the weights if needed.
     """
     def __init__(self, model, dataloader, reduce_range=False, backend='CPUExecutionProvider'):
+         """Initialize the attributes of class."""
         self.model = model if isinstance(model, BaseModel) else ONNXModel(model) 
         self.dataloader = dataloader
         self.reduce_range = reduce_range

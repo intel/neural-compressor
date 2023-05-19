@@ -607,7 +607,7 @@ class ONNXRTAugment:
                 weight_name = node.input[1]
                 weight_shape = numpy_helper.to_array(
                     model.graph.initializer[name_to_indices[weight_name]]).shape
-                input_channel = weight_shape.shape[1]
+                input_channel = weight_shape[1]
                 if input_channel != 1:  # TODO need to double check
                     return True
         return False
