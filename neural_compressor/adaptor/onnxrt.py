@@ -152,20 +152,21 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, percentile=99.999,
-            op_types=['FusedConv', 'MatMul', 'Linear', 'Conv'], scales_per_op=True, **kwargs):
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=True,
+            percentile=99.999, op_types=['MatMul', 'Gemm', 'Conv', 'FusedConv'], scales_per_op=True):
         """Get augmented model with smooth quant.
 
         Args:
-            model_wrapper: origin_model
-            dataloader: dataloader
-            iterations: iterations
-            tune_cfg: quantization config
-            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
-            percentile:Percentile of calibration to remove outliers
-            op_types: The op types whose input tensor will be dumped
-            scales_per_op: True, each op will have an individual scale, mainly for accuracy
-                           False, ops with the same input will share a scale, mainly for performance
+            model_wrapper (object): origin_model
+            dataloader (object): dataloader
+            iterations (int): iterations
+            tune_cfg (dict): quantization config
+            alpha (float or str): smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            folding (bool): whether fold those foldable Mul which are inserted for SmoothQuant
+            percentile (float): percentile of calibration to remove outliers
+            op_types (list): The op types whose input tensor will be dumped
+            scales_per_op (bool): True, each op will have an individual scale, mainly for accuracy
+                                  False, ops with the same input will share a scale, mainly for performance
 
         Returns:
             model: A modified onnx model
@@ -174,9 +175,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return self.smooth_quant_model
 
         from .ox_utils.smooth_quant import ORTSmoothQuant
-        quantize_config = None
-        sq = ORTSmoothQuant(self.pre_optimized_model, dataloader)
-        self.smooth_quant_model = sq.transform(alpha, percentile, op_types, scales_per_op, iterations)
+        quantize_config = self._cfg_to_quantize_config(tune_cfg) if tune_cfg is not None else None
+        sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
+        self.smooth_quant_model = sq.transform(
+            alpha, folding, percentile, op_types, scales_per_op, iterations, quantize_config)
         return self.smooth_quant_model
 
     @dump_elapsed_time("Pass quantize model")

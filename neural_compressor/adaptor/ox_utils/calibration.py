@@ -696,8 +696,10 @@ class ONNXRTAugment:
         self.model_wrapper.remove_tensors_from_outputs(tensors_to_node.keys())
         max_vals_per_channel = {}
         shape_infos = {}
-        for key in tensors_to_node.keys():
+        for key, val in tensors_to_node.items():
             max_val_per_channel = self._get_max_per_channel(output_dicts[key], percentile=percentile)
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
+            for item in val:
+                shape_infos[item[1][1]] = numpy_helper.to_array(self.model_wrapper.get_initializer(item[1][1])).shape
         return max_vals_per_channel, shape_infos, tensors_to_node

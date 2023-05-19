@@ -16,26 +16,39 @@
 # limitations under the License.
 #
 
+import os
+import onnx
+import logging
 import numpy as np
+from onnx import onnx_pb as onnx_proto
+from neural_compressor.model.model import BaseModel
+from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import find_by_name, quantize_data, _get_qrange_for_qType
+from onnx import numpy_helper, helper
 
-dtype_map = {np.float32: 1,
-             np.uint8: 2
-             np.int8: 3,
-             np.int32: 6,
-             np.int64: 7,
-             np.float16: 10,
-             np.double: 11}
+logger = logging.getLogger("neural_compressor")
+
+dtype_map = {np.dtype('float32'): 1,
+             np.dtype('uint8'): 2,
+             np.dtype('int8'): 3,
+             np.dtype('int32'): 6,
+             np.dtype('int64'): 7,
+             np.dtype('float16'): 10,
+             np.dtype('double'): 11}
  
-def get_quant_dequant_output(node, inits, input_data, output_data, reduce_range):
+def get_quant_dequant_output(model, input_data, output_data, reduce_range, backend):
     import onnxruntime as ort
+    input_data = quant_dequant_data(input_data, reduce_range, 2, 'asym')
+    sess = ort.InferenceSession(model.SerializeToString(), providers=[backend])
+    preds = sess.run(None, {model.graph.input[0].name: input_data})
+    loss = np.sum(np.abs(output_data - preds) ** 2)
+    return loss
+
+def make_sub_graph(node, inits, input_data, output_data, reduce_range):
     from onnx import helper, TensorProto, numpy_helper
-    inputs = []
-    outputs = []
-    for idx, inp in enumerate(node.input):
-        inputs.append(helper.make_tensor_value_info(inp, dtype_map[inputs[idx].dtype, inputs[idx].shape))
-    for idx, out in enumerate(node.output):
-        outputs.append(helper.make_tensor_value_info(out, dtype_map[outputs[idx].dtype, outputs[idx].shape))
+    input = helper.make_tensor_value_info(node.input[0], dtype_map[input_data.dtype], input_data.shape)
+    output = helper.make_tensor_value_info(node.output[0], dtype_map[output_data.dtype], output_data.shape)
+
     for init in inits:
         q_dq_val = quant_dequant_data(numpy_helper.to_array(init), reduce_range)
         new_tensor = helper.make_tensor(
@@ -46,19 +59,14 @@ def get_quant_dequant_output(node, inits, input_data, output_data, reduce_range)
                             vals=q_dq_val if \
                                 len(numpy_helper.to_array(init)) != 0 else [numpy_helper.to_array(init)])
         init.CopyFrom(new_tensor)
-    for idx, data in enumerate(input_data):
-        input_data[idx] = quant_dequant_data(data, reduce_range, 2, 'asym')
-    graph = helper.make_graph([node], 'sub_graph', inputs, outputs, inits)
+    graph = helper.make_graph([node], 'sub_graph', [input], [output], inits)
     model = helper.make_model(graph)
-    sess = ort.InferenceSession(model.SerializeToString(), providers=['CPUExecutionProvider'])
-    preds = sess.run([i.name for i in outputs], dict(zip(node.input, input_data)))
-    loss = np.sum(np.abs(output_data - preds) ** 2)
-    return preds
+    return model
 
 def quant_dequant_data(data, reduce_range=False, qType=3, scheme='sym'):
     rmin, rmax, zero_point, scale, quantized_data = quantize_data(
-        weight.flatten().tolist(), _get_qrange_for_qType(qType, reduce_range), qType, scheme)
-    return (quantized_data - zero_point) * scale
+        data.flatten().tolist(), _get_qrange_for_qType(qType, reduce_range), qType, scheme)
+    return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(data.shape)
 
 class ORTSmoothQuant:
     """
@@ -69,10 +77,11 @@ class ORTSmoothQuant:
     We only support inplace mode which means the model weights will be changed, you can call recover function
     to recover the weights if needed
     """
-    def __init__(self, model, dataloader, q_func=None):
-        self.mdoel = model
+    def __init__(self, model, dataloader, reduce_range=False, backend='CPUExecutionProvider'):
+        self.model = model if isinstance(model, BaseModel) else ONNXModel(model) 
         self.dataloader = dataloader
-        self.q_func = q_func
+        self.reduce_range = reduce_range
+        self.backend = backend
         self.tensor_scales_info = {}
         self.new_added_mul_nodes = []
         self.new_init_tensors = []  # scales_tensor
@@ -86,23 +95,26 @@ class ORTSmoothQuant:
         self.tensors_to_node = {}
         self.replace_input = []
         self.ops_to_absorb = []
-        self.could_absorb_optype = ["LayerNormalization", "BatchNormalization", "InstanceNormalization",
-                                    "SimplifiedLayerNormalization", "MatMul", "Gemm", "Conv", "FusedConv", "Mul"]
+        self._build_absorb_function()
         
-    def transform(self, alpha=0.5, folding=False, percentile=99.999, op_types=['Gemm', 'Conv', 'MatMul', 'FusedConv'],
-                  scales_per_op=False, calib_iter=100,
+    def transform(self, alpha=0.5, folding=True, percentile=99.999, op_types=['Gemm', 'Conv', 'MatMul', 'FusedConv'],
+                  scales_per_op=False, calib_iter=100, quantize_config=None,
                   auto_alpha_args={'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}):
-        """
-        The main entry of smooth quant
-        :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
-        to the paper for more details
-        :param folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
-        :param percentile: Not supported now
-        :param op_types: The op typed to be smooth quantized
-        :param scales_per_op: Not supported now
-        :param calib_iter: Data size for calibration
-        :return: A FP32 model with the same architecture as the orig model but with different weight which will be
-        benefit to quantization
+        """The main entry of smooth quant.
+
+        Args:
+            alpha (float or str): alpha value to balance the quantization difficulty of activation and weight.
+            folding (bool): whether fold those foldable Mul which are inserted for smooth quant
+            percentile (float): percentile of calibration to remove outliers
+            op_types (list): the op type to be smooth quantized
+            scales_per_op (bool): True, each op will have an individual scale, mainlyfor accuracy
+                                  False, ops with the same input will share a scale, mainly for performance
+            calib_iter (int): iteration num for calibration
+            quantize_config (dict): quantize config
+
+        Returns:
+            A FP32 model with the same architecture as the orig model but with different weight which will be
+            benefit to quantization
         """
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("alpha should be a float value in [0, 1] or 'auto' ")
@@ -118,33 +130,35 @@ class ORTSmoothQuant:
             self._dump_op_info(percentile, op_types, calib_iter, quantize_config)
 
             if alpha == 'auto':
-                alpha = self._auto_tune_alpha(input_maxes_abs, **auto_alpha_args)
+                alpha = self._auto_tune_alpha(calib_iter, **auto_alpha_args)
 
             scales = self._get_smooth_scales(alpha)
             self._insert_smooth_mul_op(scales)
             self._adjust_weights(scales)
-
         self.model.add_nodes(self.new_added_mul_nodes)
         self.model.add_initializers(self.new_init_tensors)
         for node, old_input_name, new_input_name in self.replace_input:
             self.model.replace_node_input(node, old_input_name, new_input_name)
 
         self.model.update()
-        self._fold_scale(scales)
+        if folding:
+            self._fold_scale(scales)
         self.model.topological_sort()
         self.model.remove_unused_constant()
         return self.model
 
     def recover(self):
-        """
-        recover the model weights
-        :return:
-        """
-        for tensor_name, scale in self.tensor_scales_info.items():
-            tensor = self.model.get_initializer(tensor_name)
-            new_tensor = numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale if \
-                self.model.model_path is not None else numpy_helper.to_array(tensor) * scale
-            self.model.set_initializer(tensor_name, new_tensor)
+        """Recover the model weights."""
+        for tensor_name, nodes in self.tensors_to_node.items():
+            for node_info in nodes:
+                key = node_info[0] if self.scales_per_op else tensor_name
+                if key not in self.tensor_scales_info:
+                    continue
+                input = node_info[1][1]
+                weight = numpy_helper.to_array(self.model.get_initializer(input))
+                scale = self.tensor_scales_info[key]
+                new_weight = weight * scale
+                self.model.set_initializer(input, new_weight)
 
         for node, old_input_name, new_input_name in self.replace_input:
             self.model.replace_node_input(node, new_input_name, old_input_name)
@@ -154,14 +168,14 @@ class ORTSmoothQuant:
         self.tensor_scales_info = {}
 
     def _check_need_calibration(self, alpha, percentile, op_types, scales_per_op, calib_iter):
-        """
-        check need calibration or not
-        :param alpha: current alpha
-        :param percentile: current percentile
-        :param op_types: current op_types
-        :param scales_per_op: current scales_per_op
-        :param calib_iter:: current scales_per_op
-        :return:
+        """Check need calibration or not.
+
+        Args:
+            alpha (float or str): current alpha
+            percentile (float): current percentile
+            op_types (list): current op_types
+            scales_per_op (bool): current scales_per_op
+            calib_iter (int): current calib_iter
         """
         need_calib = True
 
@@ -176,11 +190,8 @@ class ORTSmoothQuant:
         self.calib_iter = calib_iter
         return need_calib
 
-    def _fold_scale(self, scales):
-        """Absorb the scale to the operator at output channel.
-        Args:
-            scales: A dict, tensor: smooth quant scale
-        """
+    def _build_absorb_function(self):
+        """Build function mapping for scale folding."""
         from onnx import numpy_helper
         def norm(node, scale): # pragma: no cover
             for idx in [1, 2]:
@@ -188,7 +199,9 @@ class ORTSmoothQuant:
                 new_tensor = numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale if \
                     self.model.model_path is not None else numpy_helper.to_array(tensor) * scale
                 self.model.set_initializer(node.input[idx], new_tensor)
-                self.tensor_scales_info[node.input[idx]] = 1. / scale
+                self.tensor_scales_info[node.input[idx]] = 1. / scale if \
+                    node.input[idx] not in self.tensor_scales_info else \
+                    self.tensor_scales_info[node.input[idx]] * 1. / scale
             return True
     
         def mul(node, scale): # pragma: no cover
@@ -196,11 +209,13 @@ class ORTSmoothQuant:
                 return False
             for inp in node.input:
                 if self.model.get_initializer(inp) is not None:
+                    key = node.input[0].split('_smooth_output')[0]
                     tensor = self.model.get_initializer(inp)
                     new_tensor = numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale if \
                         self.model.model_path is not None else numpy_helper.to_array(tensor) * scale
                     self.model.set_initializer(inp, new_tensor)
-                    self.tensor_scales_info[inp] = 1. / scale
+                    self.tensor_scales_info[key] = 1. / scale if key not in self.tensor_scales_info \
+                        else 1. / scale * self.tensor_scales_info[key]
             return True
     
         def conv(node, scale): # pragma: no cover
@@ -216,31 +231,37 @@ class ORTSmoothQuant:
                 new_tensor = numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale if \
                     self.model.model_path is not None else numpy_helper.to_array(tensor) * scale
                 self.model.set_initializer(node.input[1], new_tensor)
-                self.tensor_scales_info[node.input[1]] = 1. / scale
+                self.tensor_scales_info[node.input[1]] = 1. / scale if \
+                    node.input[1] not in self.tensor_scales_info else \
+                    self.tensor_scales_info[node.input[1]] * 1. / scale
             return True
     
-        could_absorb_optype = {"LayerNormalization": norm,
-                               "BatchNormalization": norm,
-                               "InstanceNormalization": norm,
-                               "SimplifiedLayerNormalization": mul,
-                               "MatMul": mul, 
-                               "Gemm": mul,
-                               "Conv": conv,
-                               "FusedConv": conv,
-                               "Mul": mul
-                               }
+        self.could_absorb_optype = {"LayerNormalization": norm,
+                                    "BatchNormalization": norm,
+                                    "InstanceNormalization": norm,
+                                    "SimplifiedLayerNormalization": mul,
+                                    "MatMul": mul, 
+                                    "Gemm": mul,
+                                    "Conv": conv,
+                                    "FusedConv": conv,
+                                    "Mul": mul
+                                    }
+
+    def _fold_scale(self, scales):
+        """Absorb the scale to the operator at output channel.
+
+        Args:
+            scales (dict): scales for smooth quant, {tensor_name: smooth quant scale}
+        """
         remove_nodes = []
-    
-        scales_per_op = self.model.get_initializer(list(scales.keys())[0]) is None
-    
         for node in self.model.nodes():
-            if node.op_type == "Mul"  and node.name.endswith("_smooth_mul"):
+            if node.op_type == "Mul"  and node.name.endswith("_smooth_mul") and node not in remove_nodes:
                 parent = self.model.get_parent(node, 0)
                 if parent is None:
                     continue
-                if parent.op_type in could_absorb_optype and len(self.model.get_children(parent)) == 1:
+                if parent.op_type in self.could_absorb_optype and len(self.model.get_children(parent)) == 1:
                     if node.output[0].split("_smooth_output")[0] in scales:
-                        if could_absorb_optype[parent.op_type](parent,
+                        if self.could_absorb_optype[parent.op_type](parent,
                                 1.0 / scales[node.output[0].split("_smooth_output")[0]]):
                             remove_nodes.append(node)
                             children = [i for i in self.model.nodes() if node.output[0] in i.input]
@@ -251,84 +272,113 @@ class ORTSmoothQuant:
         self.model.remove_nodes(remove_nodes)
 
     def _dump_op_info(self, percentile, op_types, iterations, quantize_config=None):
+        """Dump op info for smooth quant.
+        
+        Args:
+            percentile (float): percentile of calibration to remove outliers
+            op_types (list): the op type to be smooth quantized
+            iterations (int): iterations
+            quantize_config (dict): quantize config
+        """
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
-        if quantize_config is not None:
-            black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
-            white_nodes = [node for node in quantize_config if quantize_config[node] != 'fp32']
         augment = ONNXRTAugment(self.model,
                                 self.dataloader,
-                                quantizable_op_types,
-                                black_nodes=black_nodes,
-                                white_nodes=white_nodes,
+                                [],
                                 iterations=list(range(0, iterations)),
                                 backend=self.backend,
                                 reduce_range=self.reduce_range)
-        self.max_vals_per_channel, self.shape_infos, self.tensors_to_node = \
-                                            augment.calib_smooth(op_types, quantize_config)
+        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = \
+            augment.calib_smooth(percentile, op_types, None)
         for node in self.model.nodes():
             for out in node.output:
                 if out in self.tensors_to_node and node.op_type in self.could_absorb_optype and \
                     self.model.get_initializer(node.input[1]) is not None :
                      self.ops_to_absorb.append(node.name)
 
-    def _get_output_loss(self, node_name, scale):
+    def _get_output_loss(self, node_name, scale, calib_iter):
+        """Get output loss of specific node after inserting QDQ pair.
+        
+        Args:
+            node_name (str): node name
+            scale (float): scale of the specific node
+            calib_iter (int): iterations
+        """
         from onnx import helper
         import onnxruntime as ort
         node = [i for i in self.model.nodes() if i.name == node_name]
-        weights = []
+        loss = 0
         if len(node) > 0:
-            if node[0].op_type in ['Conv', 'FusedConv']:
+            node = node[0]
+
+            added_tensors = [node.input[0], node.output[0]]
+            self.model.add_tensors_to_outputs(added_tensors)
+
+            session = ort.InferenceSession(self.model.model_path  + '_augment.onnx',
+                                           providers=[self.backend]) if \
+                                           self.model.is_large_model else \
+                      ort.InferenceSession(self.model.model.SerializeToString(),
+                                           providers=[self.backend])
+            base_dir = '' if not self.model.is_large_model else os.path.dirname(self.model.model_path)
+            if node.op_type in ['Conv', 'FusedConv']:
                 weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
-                weight_q = quant_dequant_w(weight)
-            elif node[0].op_type in ['MatMul', 'Gemm']:
+                weight_q = quant_dequant_data(weight)
+            elif node.op_type in ['MatMul', 'Gemm']:
                 weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
-                weight_q = quant_dequant_w(weight)
+                weight_q = quant_dequant_data(weight)
 
-        added_tensors = [node.input[1], node.output[0]]
-        self.model.add_tensors_to_outputs(added_tensors)
+            base_dir = '' if not self.model.is_large_model else os.path.dirname(self.model.model_path)
+            if node.op_type in ['Conv', 'FusedConv']:
+                weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
+                weight_q = quant_dequant_data(weight)
+            elif node.op_type in ['MatMul', 'Gemm']:
+                weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
+                weight_q = quant_dequant_data(weight)
 
-        session = ort.InferenceSession(self.model.model_path  + '_augment.onnx',
-                                       providers=['CPUExecutionProvider']) if \
-                                       self.model.is_large_model else \
-                  ort.InferenceSession(self.model.model.SerializeToString(),
-                                       providers=['CPUExecutionProvider'])
+            self.model.set_initializer(node.input[1], weight_q)
+            inits = [self.model.get_initializer(i) for i in node.input if self.model.get_initializer(i) is not None]
+ 
+            inputs_names = [i.name for i in session.get_inputs()]
+            model = None
+            for idx, (inputs, labels) in enumerate(self.dataloader):
+                if idx + 1 > calib_iter:
+                    break
+                if isinstance(inputs, dict):
+                    ort_inputs = inputs
+                elif len(inputs_names) == 1:
+                    ort_inputs = {inputs_names[0]: inputs}
+                else:
+                    ort_inputs = dict(zip(inputs_names, [np.array(i) for i in inputs]))
+                outputs = session.run(added_tensors, ort_inputs)
+                if model is None:
+                    model = make_sub_graph(node, inits, outputs[0], outputs[1], self.reduce_range)
+                loss += get_quant_dequant_output(model, outputs[0], outputs[1], self.reduce_range, self.backend)
 
-        inputs_names = [i.name for i in session.get_inputs()]
-        for idx, (inputs, labels) in enumerate(self.dataloader):
-            if isinstance(inputs, dict):
-                ort_inputs = inputs
-            elif len(inputs_names) == 1:
-                ort_inputs = {inputs_names[0]: inputs})
-            else:
-                ort_inputs = dict(zip(inputs_names, [np.array(i) for i in inputs]))
-            outputs = session.run(added_tensors, ort_inputs)
-            break
-
-        self.model.remove_tensors_from_outputs(added_tensors)
-        loss = get_quant_dequant_output(node, inits, outputs[0], outputs[1], self.reduce_range)
+            self.model.remove_tensors_from_outputs(added_tensors)
+            self.model.set_initializer(node.input[1], weight)
         return loss
 
-    def _reshape_scale_for_input(self, tensor):
-        """
-        reshape the scale for input feature in channel
-        :param layer:
-        :param scale:
-        :return:
+    def _reshape_scale_for_input(self, tensor, key):
+        """Reshape the scale for input feature in channel.
+
+        Args:
+            tensor (str): tensor name
+            key (str): scale key of this tensor
         """
         if len(self.shape_info[tensor]) == 4:
-            scale = np.reshape(self.tensor_scales_info[tensor], (1, self.tensor_scales_info[tensor].shape[0], 1, 1))
+            scale = np.reshape(self.tensor_scales_info[key], (1, self.tensor_scales_info[key].shape[1], 1, 1))
         else:
-            scale = np.reshape(self.tensor_scales_info[tensor], (1, self.tensor_scales_info[tensor].shape[0]))
+            scale = np.reshape(self.tensor_scales_info[key], (1, self.tensor_scales_info[key].shape[0]))
         return scale
 
-    def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
-        """
-        Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
-        input_maxes:
-        alpha_min: min value of alpha search space.
-        alpha_max: max value of alpha search space.
-        alpha_step: step size of alpha search space.
-        attn_method: criterion method used on attention ops; currently min, max and mean are supported.
+    def _auto_tune_alpha(self, calib_iter, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method='min'):
+        """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
+
+        Args:
+            calib_iter (int): iterations
+            alpha_min (float): min value of alpha search space.
+            alpha_max (float): max value of alpha search space.
+            alpha_step (float): step size of alpha search space.
+            attn_method (str): criterion method used on attention ops; currently min, max and mean are supported.
         """
         logger.info("auto tuning alpha")
         import copy
@@ -356,21 +406,22 @@ class ORTSmoothQuant:
                 for alpha in alpha_space:
                     scale = self._get_smooth_scales(alpha, [key])
                     self._adjust_weights(scale)
-                    loss = self._get_output_loss(node_info[0], input_scale)
+                    input_scale = self._reshape_scale_for_input(tensor_name, key)
+                    loss = self._get_output_loss(node_info[0], input_scale, calib_iter)
                     loss_alpha[alpha] = loss
-                    self.recover()
                     if key not in optimal_alphas:  # Update alpha results
                         optimal_alphas[key] = alpha
                     else:
-                        optimal_alphas[key] = alpha if loss < loss_alpha[optimal_alphas[key]] \
-                                                                          else optimal_alphas[key]
+                        optimal_alphas[key] = alpha if optimal_alphas[key] in loss_alpha and \
+                            loss < loss_alpha[optimal_alphas[key]] else optimal_alphas[key]
+                    self.recover()
                 loss_all_ops[key] = loss_alpha
         logger.info("auto tuning alpha done")
         if self.model.is_large_model:
             from onnx.external_data_helper import load_external_data_for_model
             load_external_data_for_model(self.model.model, os.path.split(model.model_path)[0])
             os.remove(self.model.model_path + '_augment.onnx')
-            os.remove(os.path.join(os.path.dirname(self.model.model_path, "weights.pb")
+            os.remove(os.path.join(os.path.dirname(self.model.model_path, "weights.pb")))
         return optimal_alphas
     
     def _get_smooth_scales(self, alpha, target_list=[]):
@@ -388,6 +439,7 @@ class ORTSmoothQuant:
         """
         scales = {}
         for tensor, nodes in self.tensors_to_node.items():
+            # if scales_per_op the key of scales is the node name, otherwise the activation of node
             if self.scales_per_op:
                 for node_info in nodes:
                     if len(target_list) > 0 and node_info[0] not in target_list:
@@ -399,7 +451,7 @@ class ORTSmoothQuant:
                         else:
                             weight = np.moveaxis(weight, 0, 1)
                     specific_alpha = alpha[node_info[0]] if isinstance(alpha, dict) else alpha
-                    scales[node_info[0]] = self._get_smooth_scale(weigths_stack, specific_alpha)
+                    scales[node_info[0]] = self._get_smooth_scale(weight, specific_alpha, tensor)
             else:
                 if len(target_list) > 0 and tensor not in target_list:
                     continue
@@ -415,39 +467,50 @@ class ORTSmoothQuant:
                     weight = weight.reshape(weight.shape[0], -1)
                     cur_max = np.amax(weight, axis=-1)
                     weights_in_channel_max.append(cur_max)
-                weigths_stack = np.stack(weights_in_channel_max, axis=-1)
+                weights_stack = np.stack(weights_in_channel_max, axis=-1)
                 specific_alpha = alpha[tensor] if isinstance(alpha, dict) else alpha
-                scales[tensor] = self._get_smooth_scale(weigths_stack, specific_alpha)
+                scales[tensor] = self._get_smooth_scale(weights_stack, specific_alpha, tensor)
  
         return scales
     
-    def _get_smooth_scale(self, weight, specific_alpha):
-        weigths = np.abs(weigths.reshape(weigths.shape[0], -1))
-        weights_max = np.amax(weigths, axis=-1)
+    def _get_smooth_scale(self, weights, specific_alpha, tensor):
+        """Get smooth scale for specific weight.
+
+        Args:
+            weights (numpy.ndarray): weight data
+            specific_alpha (float): current alpha for this weigths
+            tensor (str): tensor name
+        """
+        weights = np.abs(weights.reshape(weights.shape[0], -1))
+        weights_max = np.amax(weights, axis=-1)
         input_power = np.power(self.max_vals_per_channel[tensor], specific_alpha)
         weight_power = np.power(weights_max, 1 - specific_alpha)
         scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
         return scale
 
     def _insert_smooth_mul_op(self, scales):
-        """Insert the mul layer after inupt.
+        """Insert the Mul after inupt.
     
         The ops with the same input will share one mul layer.
     
         Args:
-            scales: The smooth scales
+            scales (dict): The smooth scales
         """
         for key in scales.keys():
+            input_name = key if not self.scales_per_op else self.model.get_node(key).input[0]
+            weight_name = self.tensors_to_node[key][0][1][1] if not self.scales_per_op \
+                                                        else self.model.get_node(key).input[1]
             scale_factor = 1.0 / scales[key]
-            if len(self.shape_info[key]) == 3 or len(self.shape_info[key]) == 2:  # the last dim is input channel
+            if len(self.shape_info[weight_name]) == 3 or \
+                len(self.shape_info[weight_name]) == 2:  # the last dim is input channel
                 pass
-            elif len(self.shape_info[key]) == 4:
+            elif len(self.shape_info[weight_name]) == 4:
                 scale_factor = np.reshape(scale_factor, (1, -1, 1, 1))
             else:
                 assert False, "not support"
             name = key + "_" + "smooth_scale"
             scale_tensor = helper.make_tensor(
-                name=name,
+                name=input_name + "_" + "smooth_scale",
                 data_type=onnx_proto.TensorProto.FLOAT,
                 dims=scale_factor.shape,
                 vals=scale_factor.flatten().tolist())
@@ -455,25 +518,22 @@ class ORTSmoothQuant:
             mul_output_name = key + "_smooth_output"
             mul_node = helper.make_node(
                 "Mul",
-                inputs=[key, key + "_" + "smooth_scale"],
+                inputs=[input_name, input_name + "_" + "smooth_scale"],
                 outputs=[mul_output_name],
                 name=key + "_smooth_mul"
             )
             self.new_added_mul_nodes.append(mul_node)
             if self.scales_per_op:
-                self.replace_input.append([find_by_name(key, self.model.nodes()), key, mul_output_name])
+                self.replace_input.append([self.model.get_node(key), input_name, mul_output_name])
             else:
                 for node_info in self.tensors_to_node[key]:
-                    self.replace_input.append([find_by_name(node_info[0], self.model.nodes()),
-                                                             node_info[1][0], mul_output_name])
+                    self.replace_input.append([self.model.get_node(node_info[0]), key, mul_output_name])
     
     def _adjust_weights(self, scales):
-        """Adjust the weights per input scale.
-    
-        Each op has one individual Mul layer.
+        """Adjust the weights with scale.
     
         Args:
-            scales: The input scales
+            scales (dict): The input scales
         """
         for tensor_name, nodes in self.tensors_to_node.items():
             for node_info in nodes:
@@ -493,3 +553,4 @@ class ORTSmoothQuant:
                     assert False, "not support"
                 self.tensor_scales_info[key] = 1. / scale
                 self.model.set_initializer(input, new_weight)
+
