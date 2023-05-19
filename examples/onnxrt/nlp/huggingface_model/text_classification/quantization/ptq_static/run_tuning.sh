@@ -109,6 +109,12 @@ function run_tuning {
         num_heads=16
         hidden_size=4096
     fi
+    if [[ "${input_model}" =~ "deberta" ]]; then
+        model_name_or_path="microsoft/deberta-v3-base"
+        TASK_NAME='mrpc'
+        num_heads=12
+        hidden_size=768
+    fi
 
     python main.py \
             --model_name_or_path ${model_name_or_path} \
