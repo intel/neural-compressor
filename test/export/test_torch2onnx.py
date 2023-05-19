@@ -4,6 +4,9 @@ import shutil
 import torch
 import unittest
 import numpy as np
+import copy
+import sys
+sys.path.append('/home/yuwenzho/export/enable-export')
 from neural_compressor import quantization
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
@@ -100,14 +103,12 @@ class TestPytorch2ONNX(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree('nc_workspace', ignore_errors=True)
         os.remove('fp32-cv-model.onnx')
-        os.remove('int8-cv-qdq-model.onnx')
-        os.remove('int8-cv-qlinear-model.onnx')
+        os.remove('int8-cv-model.onnx')
         os.remove('fp32-nlp-model.onnx')
-        os.remove('int8-nlp-qdq-model.onnx')
-        os.remove('int8-nlp-qlinear-model.onnx')
+        os.remove('int8-nlp-model.onnx')
 
     def test_fp32_CV_models(self):
-        model = self.cv_model
+        model = copy.deepcopy(self.cv_model)
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
             example_inputs=torch.randn(1, 3, 224, 224),
@@ -121,7 +122,7 @@ class TestPytorch2ONNX(unittest.TestCase):
 
     def test_int8_CV_models(self):
         for fake_yaml in ["static", "qat"]:
-            model = self.cv_model
+            model = copy.deepcopy(self.cv_model)
             if fake_yaml == "qat":
                 quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
@@ -161,7 +162,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
         dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
 
-        model = self.nlp_model
+        model = copy.deepcopy(self.nlp_model)
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
             example_inputs=self.nlp_input,
@@ -177,7 +178,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
 
         for fake_yaml in ["static", "qat"]:
-            model = self.nlp_model
+            model = copy.deepcopy(self.nlp_model)
             if fake_yaml == "qat":
                 quant_conf = QuantizationAwareTrainingConfig(
                     op_type_dict={"Embedding":FP32},

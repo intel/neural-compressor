@@ -366,6 +366,7 @@ class PyTorchModel(PyTorchBaseModel):
             self.model,
             save_path,
             conf.example_inputs,
+            self.q_config,
             opset_version=conf.opset_version,
             dynamic_axes=conf.dynamic_axes,
             input_names=conf.input_names,

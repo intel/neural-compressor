@@ -500,6 +500,10 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
         if self.conf.quantization.approach is not None:
             framework_specific_info['approach'] = self.conf.quantization.approach
 
+        if framework_specific_info['approach'] == 'quant_aware_training':
+            framework_specific_info['optype_wise'] = self.conf.quantization.op_type_dict
+            framework_specific_info['op_wise'] = self.conf.quantization.op_name_dict
+
         if 'tensorflow' in self.framework:
             framework_specific_info.update(
                 {"inputs": self.conf.quantization.inputs, \

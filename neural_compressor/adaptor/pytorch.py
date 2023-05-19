@@ -29,6 +29,7 @@ from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
 from ..utils.utility import Statistics
 from ..utils import logger
+from ..utils.constant import FP32
 from .query import QueryBackendCapability
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 from .torch_utils.smooth_quant import TorchSmoothQuant
@@ -830,6 +831,10 @@ class TemplateAdaptor(Adaptor):
                 if not self.benchmark:
                     assert False, "Unsupport approach: {}".format(self.approach)
 
+        if self.approach == 'quant_aware_training':
+            self.optype_wise = framework_specific_info.get('optype_wise', None)
+            self.op_wise = framework_specific_info.get('op_wise', None)
+        
         self.fp32_results = []
         self.fp32_preds_as_label = False
 
@@ -3507,6 +3512,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
+        self._remove_fallback_ops_for_qat(quantizable_ops)
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
@@ -3617,6 +3623,39 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
         self._dump_model_op_stats(self.model._model, self.model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(self.model._model)
+
+    def _get_fallback_ops_for_qat(self):
+        # get fallback ops for quant aware training approach
+        fallback_ops = {'op_wise': [], 'optype_wise': []}
+        if self.optype_wise is not None:
+            for optype, optype_config in self.optype_wise.items():
+                if 'weight' in optype_config and 'dtype' in optype_config['weight']:
+                    if optype_config['weight']['dtype'] == ['fp32']:
+                        fallback_ops['optype_wise'].append(optype)
+                    else:
+                        assert False, "'op_type_dict' in QuantizationAwareTrainingConfig " \
+                        "can only be used to set fp32 config like '{}', " \
+                        "but detect '{}'".format(FP32, optype_config)
+        if self.op_wise is not None:
+            for op, op_config in self.op_wise.items():
+                if 'weight' in op_config and 'dtype' in op_config['weight']:
+                    if op_config['weight']['dtype'] == ['fp32']:
+                        fallback_ops['op_wise'].append(op)
+                    else:
+                        assert False, "'op_name_dict' in QuantizationAwareTrainingConfig " \
+                        "can only be used to set fp32 config like '{}', " \
+                        "but detect '{}'".format(FP32, op_config)
+        return fallback_ops
+    
+    def _remove_fallback_ops_for_qat(self, quantizable_ops):
+        # remove fallback ops from quantizable_ops for quant aware training approach
+        fallback_ops = self._get_fallback_ops_for_qat()
+        remove_ops = []
+        for (op_name, op_type) in quantizable_ops:
+            if op_name in fallback_ops['op_wise'] or op_type in fallback_ops['optype_wise']:
+                remove_ops.append((op_name, op_type))
+        for (op_name, op_type) in remove_ops:
+            quantizable_ops.remove((op_name, op_type))
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.

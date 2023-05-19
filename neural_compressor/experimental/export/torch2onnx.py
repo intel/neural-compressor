@@ -856,6 +856,7 @@ def torch_to_onnx(
     pt_model,
     save_path,
     example_inputs,
+    q_config,
     opset_version=14,
     dynamic_axes={"input": {0: "batch_size"},
                   "output": {0: "batch_size"}},
@@ -867,6 +868,14 @@ def torch_to_onnx(
     from neural_compressor.utils.pytorch import is_int8_model
     dtype ='INT8' if is_int8_model(pt_model) else 'FP32'
     logger.info("The PyTorch model to be exported is detected in {} format.".format(dtype.upper()))
+
+    assert not (dtype == 'INT8' and q_config is None), "'q_config' is needed when exporte an INT8 model."
+
+    if dtype == 'INT8' and q_config['approach'] == 'post_training_dynamic_quant':
+        assert False, "Post training dynamic quantizated PyTorch model is not supported to export to ONNX. " \
+        "Please follow this step to get a post training dynamic quantizated PyTorch model: " \
+        "1. export FP32 PyTorch model to FP32 ONNX model. " \
+        "2. use FP32 ONNX model as input model to do post training dynamic quantizatation."
 
     if input_names is None and \
       (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
@@ -899,9 +908,6 @@ def torch_to_onnx(
                 return output
         return wrapper
     pt_model.forward = model_wrapper(pt_model.forward)
-
-    if is_int8_model(pt_model):
-        pt_model = torch.jit.trace(pt_model, input2tuple(example_inputs), strict=False)
     
     with torch.no_grad():
         torch.onnx.export(
