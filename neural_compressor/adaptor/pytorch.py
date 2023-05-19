@@ -2970,6 +2970,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             if self.performance_only:
                 if self.recipes and self.recipes.get('smooth_quant', False) \
                     and self.version.release >= Version("2.1").release:  # pragma: no cover
+                    logger.warning("Right now, Smoothquant for ipex requires a deepcopy of model")
                     try:
                         tmp_model = copy.deepcopy(model)
                     except Exception as e:  # pragma: no cover
@@ -3201,8 +3202,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-        if self.performance_only:
-            logger.warning("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
 
