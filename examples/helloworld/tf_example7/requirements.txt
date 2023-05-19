@@ -1,1 +1,1 @@
-tensorflow
+intel-tensorflow>=2.12.0

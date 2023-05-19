@@ -1,6 +1,6 @@
 numpy
 matplotlib
-tensorflow
+tensorflow>=2.11.1
 tensorboard
 terminaltables
 pillow>=8.2.0

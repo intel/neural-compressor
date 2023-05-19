@@ -995,14 +995,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
+        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
         if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            # model is optimized and Attention is fused,
+            # index of Attention is used as split to find FFN MatMul
             first_attention_index = attention_matmul_optype.index('Attention')
             attention_matmul_optype = attention_matmul_optype[first_attention_index:]
             attention_matmul = attention_matmul[first_attention_index:]
             attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
             block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
             for idx in range(len(attention_index)):
-                # to find matmul in ffn
                 if idx != len(attention_index) - 1:
                     index = attention_index[idx + 1]
                     if index - 2 >= 0 and index - 1 >= 0:
@@ -1014,13 +1016,36 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         index + block_len - 1 < len(attention_matmul):
                         ffn_matmul.append([attention_matmul[index + block_len - 2], 
                                         attention_matmul[index + block_len - 1]])
-        block_info = []
+        else:
+            # model is not optimized or Attention isn't fused, 
+            # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
+            qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
+            if len(qkv) != 0:
+                attention_starts = [nodes[0] for nodes in qkv]
+                attention_index = [np.where(np.array([n.name for n in attention_matmul]) \
+                                            == attention_start)[0].tolist()[0] \
+                                                for attention_start in attention_starts]
+                block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+                for idx in range(len(attention_index)):
+                    if idx != len(attention_index) - 1:
+                        index = attention_index[idx + 1]
+                        if index - 2 >= 0 and index - 1 >= 0:
+                            ffn_matmul.append([attention_matmul[index - 2],
+                                            attention_matmul[index - 1]])
+                    else:
+                        index = attention_index[idx]
+                        if index + block_len - 2 < len(attention_matmul) and \
+                            index + block_len - 1 < len(attention_matmul):
+                            ffn_matmul.append([attention_matmul[index + block_len - 2],
+                                            attention_matmul[index + block_len - 1]])
+
+        block_wise = []
         for block in reversed(ffn_matmul):
             node_info = []
             for node in block:
                 node_info.append((node.name, node.op_type))
             if len(node_info) != 0:
-                block_info.append(node_info)
+                block_wise.append(node_info)
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             # for TRT EP, only insert Q/DQ to inputs of Add nodes followed by ReduceMean
@@ -1081,7 +1106,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                             op_wise.update(
                                 {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
-        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_info': block_info}
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_wise': block_wise}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
         """Filter optypes that don't support per_channel in QDQ format.

@@ -30,7 +30,8 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |        Intel/electra-small-discriminator-mrpc   |
 |         M-FAC/bert-mini-finetuned-mrpc          |
 |           Intel/xlnet-base-cased-mrpc           |
-|            Intel/bart-large-mrpc                |
+|            Intel/bart-large-mrpc                |.
+|             Intel/deberta-v3-base-mrpc          |
 
 ```bash
 python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other supported model identifier

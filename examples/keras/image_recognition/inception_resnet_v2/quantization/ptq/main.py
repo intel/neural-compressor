@@ -74,7 +74,7 @@ def evaluate(model):
     Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+        model (tf.keras.Model): The input model will be the objection of tf.keras.Model.
         measurer (object, optional): for benchmark measurement of duration.
 
     Returns:
@@ -121,7 +121,18 @@ def main(_):
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor import set_random_seed
         set_random_seed(9527)
-        config = PostTrainingQuantConfig(backend='itex', 
+        op_name_dict = {
+            'average_pooling2d':{
+            'activation':  {'dtype': ['fp32']},
+            },
+            'max_pooling2d_2':{
+            'activation':  {'dtype': ['fp32']},
+            },
+            'max_pooling2d_3':{
+            'activation':  {'dtype': ['fp32']},
+            },
+        }
+        config = PostTrainingQuantConfig(backend='itex', op_name_dict=op_name_dict,
             calibration_sampling_size=[20, 150])
         q_model = fit(
             model=FLAGS.input_model,

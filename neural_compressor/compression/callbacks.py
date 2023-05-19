@@ -273,7 +273,7 @@ class DistillationCallbacks(BaseCallbacks):
         """Initialize the attributes."""
         super(DistillationCallbacks, self).__init__(conf=conf, model=model)
 
-        self.framework = list(MODELS.keys())[list(MODELS.values()).index(type(model))]
+        self.framework = list(MODELS.keys())[list(MODELS.values()).index(self._parse_model_class(model))]
         self._teacher_model = None
         self._criterion = None
         self._epoch_ran = 0
@@ -286,6 +286,19 @@ class DistillationCallbacks(BaseCallbacks):
         self.teacher_model = self.conf.teacher_model
         self.generate_hooks()
         self.create_criterion()
+
+    def _parse_model_class(self, model):
+        """Parse model class for getting framework."""
+        from neural_compressor.model.tensorflow_model import (
+            TensorflowBaseModel,
+            TensorflowModel,
+            TensorflowQATModel,
+            )
+        if isinstance(model, TensorflowQATModel):
+            return type(model)
+        if isinstance(model, TensorflowBaseModel):
+            return TensorflowModel
+        return type(model)
 
     def _on_step_begin(self, batch_id):
         """Operations called on the beginning of batches."""
