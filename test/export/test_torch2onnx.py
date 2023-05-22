@@ -5,8 +5,6 @@ import torch
 import unittest
 import numpy as np
 import copy
-import sys
-sys.path.append('/home/yuwenzho/export/enable-export')
 from neural_compressor import quantization
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
@@ -103,14 +101,17 @@ class TestPytorch2ONNX(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree('nc_workspace', ignore_errors=True)
         os.remove('fp32-cv-model.onnx')
-        os.remove('int8-cv-model.onnx')
+        os.remove('int8-cv-qdq-model.onnx')
+        os.remove('int8-cv-qlinear-model.onnx')
         os.remove('fp32-nlp-model.onnx')
-        os.remove('int8-nlp-model.onnx')
+        os.remove('int8-nlp-qdq-model.onnx')
+        os.remove('int8-nlp-qlinear-model.onnx')
 
     def test_fp32_CV_models(self):
         model = copy.deepcopy(self.cv_model)
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
+            dtype="fp32",
             example_inputs=torch.randn(1, 3, 224, 224),
             input_names=['input'],
             output_names=['output'],
@@ -147,15 +148,30 @@ class TestPytorch2ONNX(unittest.TestCase):
                     calib_dataloader=self.cv_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
+                dtype="int8",
                 opset_version=14,
+                quant_format="QDQ",
                 example_inputs=torch.randn(1, 3, 224, 224),
                 input_names=['input'],
                 output_names=['output'],
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
             )
-            q_model.export('int8-cv-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-model.onnx', self.cv_dataloader)
+            q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
+            check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
+
+            int8_onnx_config = Torch2ONNXConfig(
+                dtype="int8",
+                opset_version=14,
+                quant_format="QLinear",
+                example_inputs=torch.randn(1, 3, 224, 224),
+                input_names=['input'],
+                output_names=['output'],
+                dynamic_axes={"input": {0: "batch_size"},
+                              "output": {0: "batch_size"}},
+            )
+            q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
+            check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
 
 
     def test_fp32_NLP_models(self):
@@ -165,6 +181,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         model = copy.deepcopy(self.nlp_model)
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
+            dtype="fp32",
             example_inputs=self.nlp_input,
             input_names=list(self.nlp_input.keys()),
             output_names=['labels'],
@@ -210,14 +227,28 @@ class TestPytorch2ONNX(unittest.TestCase):
                     calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
+                dtype="int8",
                 opset_version=14,
+                quant_format="QDQ",
                 example_inputs=tuple(self.nlp_input.values()),
                 input_names=list(self.nlp_input.keys()),
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            q_model.export('int8-nlp-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-model.onnx', self.nlp_input)
+            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+            check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
+
+            int8_onnx_config = Torch2ONNXConfig(
+                dtype="int8",
+                opset_version=14,
+                quant_format="QLinear",
+                example_inputs=tuple(self.nlp_input.values()),
+                input_names=list(self.nlp_input.keys()),
+                output_names=['labels'],
+                dynamic_axes=dynamic_axes,
+            )
+            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
+            check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
 
 if __name__ == "__main__":
     unittest.main()

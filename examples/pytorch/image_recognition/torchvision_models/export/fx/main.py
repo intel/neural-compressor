@@ -3,9 +3,6 @@ import os
 import random
 import shutil
 import time
-import warnings
-import sys
-
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -181,6 +178,7 @@ def main():
         from neural_compressor.model import Model
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
+            dtype="fp32",
             example_inputs=torch.randn(1, 3, 224, 224),
             input_names=['input'],
             output_names=['output'],
@@ -199,6 +197,9 @@ def main():
                                     eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         int8_onnx_config = Torch2ONNXConfig(
+            dtype="int8",
+            opset_version=14,
+            quant_format=args.quant_format,
             example_inputs=torch.randn(1, 3, 224, 224),
             input_names=['input'],
             output_names=['output'],

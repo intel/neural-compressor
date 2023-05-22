@@ -357,43 +357,23 @@ class PyTorchModel(PyTorchBaseModel):
 
         from neural_compressor.experimental.export import (
             torch_to_fp32_onnx,
-            torch_to_int8_onnx,
-            torch_to_onnx
-        )
-        
-
-        torch_to_onnx(
-            self.model,
-            save_path,
-            conf.example_inputs,
-            self.q_config,
-            opset_version=conf.opset_version,
-            dynamic_axes=conf.dynamic_axes,
-            input_names=conf.input_names,
-            output_names=conf.output_names,
-            do_constant_folding=True,
-            verbose=True,
-        )
-        return
+            torch_to_int8_onnx)
 
         if conf.dtype == 'int8':
             torch_to_int8_onnx(
-                self.fp32_model,
                 self.model,
-                self.q_config,
                 save_path,
                 conf.example_inputs,
+                self.q_config,
                 opset_version=conf.opset_version,
                 dynamic_axes=conf.dynamic_axes,
                 input_names=conf.input_names,
                 output_names=conf.output_names,
                 quant_format=conf.quant_format,
-                dtype='U8S8',
-                recipe=conf.recipe,
-            )
+                verbose=True,)
         elif conf.dtype == 'fp32':
             torch_to_fp32_onnx(
-                self.fp32_model,
+                self.model,
                 save_path,
                 conf.example_inputs,
                 opset_version=conf.opset_version,
@@ -401,8 +381,7 @@ class PyTorchModel(PyTorchBaseModel):
                 input_names=conf.input_names,
                 output_names=conf.output_names,
                 do_constant_folding=True,
-                verbose=True,
-            )
+                verbose=True,)
         else:   # pragma: no cover
             assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
 
