@@ -10,7 +10,6 @@ import numpy as np
 sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
 # parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
 parser.add_argument('--model_name_or_path', type=str, default="facebook/opt-125m")
@@ -159,41 +158,37 @@ eval_dataset = load_dataset('lambada', split='validation')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
-if args.int8:
-    calib_dataset = load_dataset('lambada', split='train')
-    # calib_dataset = eval_dataset  # TODO for debug
-    calib_dataset = calib_dataset.shuffle(seed=42)
-    calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
-    
-    def eval_func(model):
-        acc = evaluator.evaluate_tf_v1(model)
-        return acc
-    
-    from neural_compressor import PostTrainingQuantConfig
-    from neural_compressor.config import AccuracyCriterion
+calib_dataset = load_dataset('lambada', split='train')
+# calib_dataset = eval_dataset  # TODO for debug
+calib_dataset = calib_dataset.shuffle(seed=42)
+calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
 
-    from neural_compressor import quantization
+def eval_func(model):
+    acc = evaluator.evaluate_tf_v1(model)
+    return acc
 
-    recipes = {}
-    if args.sq:
-        recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
-    op_type_dict = {}
-    if args.kl:
-        op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
-    if args.fallback_add:
-        op_type_dict["add"] = {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
-    conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
-                                   recipes=recipes,
-                                   op_type_dict=op_type_dict, accuracy_criterion=AccuracyCriterion(
-  tolerable_loss=0.011,      # TODO remove for debug
+from neural_compressor import PostTrainingQuantConfig
+from neural_compressor.config import AccuracyCriterion
+
+from neural_compressor import quantization
+
+recipes = {}
+if args.sq:
+    recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
+op_type_dict = {}
+if args.kl:
+    op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
+if args.fallback_add:
+    op_type_dict["add"] = {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
+conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
+                                recipes=recipes,
+                                op_type_dict=op_type_dict, accuracy_criterion=AccuracyCriterion(
+tolerable_loss=0.011,      # TODO remove for debug
 ))
 
-    q_model = quantization.fit(model,
-                               conf,
-                               calib_dataloader=calib_dataloader,
-                               eval_func=eval_func)
-    save_model_name = model_name.split("/")[-1]
-    q_model.save(f"{save_model_name}_int8")
-else:
-    acc = evaluator.evaluate(model)
-    print(f'Original model accuracy: {acc}')
+q_model = quantization.fit(model,
+                            conf,
+                            calib_dataloader=calib_dataloader,
+                            eval_func=eval_func)
+save_model_name = model_name.split("/")[-1]
+q_model.save(f"{save_model_name}_int8")

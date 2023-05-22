@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--int8', action='store_true', help="eval fp32 model or int8 model")
 parser.add_argument('--model_name_or_path', type=str, default='facebook/opt-125m')
 parser.add_argument('--batch_size', type=int, default=16)
-parser.add_argument('--warmup', type=int, default=0)
+parser.add_argument('--warmup', type=int, default=10)
 args = parser.parse_args()
 
 class Evaluator:
@@ -59,7 +59,8 @@ class Evaluator:
             start = time.time()
             results = infer(input_ids=input_ids, attention_mask=attention_mask) # len: 25 Identity: [16, 196, 50272], Identity_1: [16, 12, 196, 64]
             batch_infer_time = time.time() - start
-            overall_infer_duration += batch_infer_time
+            if index > args.warmup:
+                overall_infer_duration += batch_infer_time
             last_token_logits = results['Identity'].numpy()[np.arange(len(label_indices)), label_indices, :]
             pred = last_token_logits.argmax(axis=-1)
             total += label.shape[0]
@@ -69,7 +70,7 @@ class Evaluator:
         print("\nEvaluation result: ")
         print(f"Accuracy: {acc}")
         print(
-            f"Throughput: {len(self.dataloader) / overall_infer_duration} samples/sec"
+            f"Throughput: {(len(self.dataloader) - args.warmup * args.batch_size) / overall_infer_duration} samples/sec"
         )
 
 class INCDataloader:

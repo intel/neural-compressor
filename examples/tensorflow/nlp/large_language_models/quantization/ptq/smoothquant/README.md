@@ -16,7 +16,7 @@ pip install -r requirements
 ### Basic quantization
 
 ```
-python main.py --model_name_or_path <MODEL_NAME> --int8
+python main.py --model_name_or_path <MODEL_NAME>
 ```
 
 `<MODEL_NAME>` can be following:
@@ -33,7 +33,7 @@ bash run_tuning.sh --input_model=<MODEL_NAME>
 Or you can use
 
 ```
-python main.py --model_name_or_path <MODEL_NAME> --int8 --sq
+python main.py --model_name_or_path <MODEL_NAME> --sq
 ```
 
 ## Benchmark
