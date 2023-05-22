@@ -28,8 +28,8 @@ include_packages = find_packages(include=['neural_compressor', 'neural_compresso
 neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'])
 
 # define package data
-package_data = {'neural_compressor': ['*.yaml'], 'neural_coder': ['*.yaml']}
-neural_insights_data = {'neural_insights': ['*.yaml', 'web/app/*.*']}
+package_data = {'': ['*.yaml']}
+neural_insights_data = {'': ['*.yaml', 'web/app/*.*']}
 
 # define install requirements
 install_requires_list = fetch_requirements('requirements.txt')
