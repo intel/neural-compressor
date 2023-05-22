@@ -263,8 +263,7 @@ class BenchmarkConfig:
                  num_of_instance=1,
                  inter_num_of_threads=None,
                  intra_num_of_threads=None,
-                 diagnosis=False,
-                 ):
+                 diagnosis=False):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -1143,8 +1142,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion,
-                 diagnosis=False
-    ):
+                 diagnosis=False):
         """Init a PostTrainingQuantConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -1162,8 +1160,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
                          tuning_criterion=tuning_criterion,
-                         diagnosis=diagnosis,
-                         )
+                         diagnosis=diagnosis)
         self.approach = approach
         self.diagnosis = diagnosis
 
@@ -2147,8 +2144,7 @@ class _Config:
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
                  keras=keras_config,
-                 diagnosis=None,
-                 ):
+                 diagnosis=None):
         """Init a config object."""
         self._quantization = quantization
         self._benchmark = benchmark
