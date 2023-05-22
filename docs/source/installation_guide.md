@@ -33,7 +33,6 @@ The following prerequisites and requirements must be satisfied for a successful 
 - Python version: 3.7 or 3.8 or 3.9 or 3.10
 
 > Notes:
-> - Please choose one of the basic or full installation mode for your environment, **DO NOT** install both. If you want to re-install with the other mode, please uninstall the current package at first.
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
 
 ### Install from Binary
@@ -41,8 +40,6 @@ The following prerequisites and requirements must be satisfied for a successful 
   ```Shell
   # install stable basic version from pypi
   pip install neural-compressor
-  # or install stable full version from pypi (including GUI)
-  pip install neural-compressor-full
   ```
 
   ```Shell
@@ -52,15 +49,11 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install -r requirements.txt
   # install nightly basic version from pypi
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # or install nightly full version from pypi (including GUI)
-  pip install -i https://test.pypi.org/simple/ neural-compressor-full
   ```
+
   ```Shell
   # install stable basic version from from conda
   conda install neural-compressor -c conda-forge -c intel
-  # or install stable full version from from conda (including GUI)
-  conda install sqlalchemy=1.4.27 alembic=1.7.7 -c conda-forge
-  conda install neural-compressor-full -c conda-forge -c intel
   ```
 
 ### Install from Source
@@ -71,8 +64,6 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install -r requirements.txt
   # build with basic functionality
   python setup.py install
-  # build with full functionality (including GUI)
-  python setup.py --full install
   ```
 
 ### Install from AI Kit
@@ -98,18 +89,12 @@ The following prerequisites and requirements must be satisfied for a successful 
   ```Shell
   # install stable basic version from pypi
   pip install neural-compressor
-  # or install stable full version from pypi (including GUI)
-  pip install neural-compressor-full
   ```
 
   ```Shell
   # install stable basic version from from conda
   conda install pycocotools -c esri
   conda install neural-compressor -c conda-forge -c intel
-  # or install stable full version from from conda (including GUI)
-  conda install pycocotools -c esri
-  conda install sqlalchemy=1.4.27 alembic=1.7.7 -c conda-forge
-  conda install neural-compressor-full -c conda-forge -c intel
   ```
 
 ### Install from Source
@@ -120,8 +105,6 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install -r requirements.txt
   # build with basic functionality
   python setup.py install
-  # build with full functionality (including GUI)
-  python setup.py --full install
   ```
 
 ## System Requirements

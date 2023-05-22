@@ -73,13 +73,8 @@ q_model = fit(
     <tr>
       <td colspan="2" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
       <td colspan="2" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/bench.md">GUI</a></td>
-    </tr>
-    <tr>
-      <td colspan="2" align="center"><a href="examples/README.md#notebook-examples">Notebook</a></td>
       <td colspan="2" align="center"><a href="examples/README.md">Examples</a></td>
-      <td colspan="4" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
     </tr>
   </tbody>
   <thead>
@@ -125,6 +120,17 @@ q_model = fit(
           <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
           <td colspan="2" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
           <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Neural Tools</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="4" align="center">Neural Insights(coming soon)</td>
+          <td colspan="4" align="center">Neural Solution(coming soon)</td>
       </tr>
   </tbody>
 </table>
