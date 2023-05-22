@@ -130,10 +130,9 @@ q_model = fit(
 </table>
 
 ## Selected Publications/Events
+* Blog on Medium: [Intel Optimization at Netflix](https://medium.com/@amerather_9719/intel-optimization-at-netflix-79ef0efb9d2) (May 2023)
 * Blog on Medium: [Effective Post-training Quantization for Large Language Models with Enhanced SmoothQuant Approach](https://medium.com/@NeuralCompressor/effective-post-training-quantization-for-large-language-models-with-enhanced-smoothquant-approach-93e9d104fb98) (Apr 2023)
 * Blog by Intel: [Intel® Xeon® Processors Are Still the Only CPU With MLPerf Results, Raising the Bar By 5x](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Intel-Xeon-Processors-Are-Still-the-Only-CPU-With-MLPerf-Results/post/1472750) (Apr 2023)
-* Post on Social Media: [Adopt with Tencent TACO: Heterogeneous optimization is also key to improving AI computing power](https://mp.weixin.qq.com/s/I-FQqOuW7HTnwXegLGNAtw) (Mar 2023)
-* Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
