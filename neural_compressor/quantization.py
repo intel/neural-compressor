@@ -99,14 +99,14 @@ def update_neural_insights_workload_accuracy_data(
 ) -> None:
     """Update accuracy data of specific workload.
 
-        Args:
-            workload_uuid: string with Neural Insight workload UUID if registered else None
-            baseline_accuracy: accuracy of input model
-            optimized_accuracy: accuracy of optimized model
+    Args:
+        workload_uuid: string with Neural Insight workload UUID if registered else None
+        baseline_accuracy: accuracy of input model
+        optimized_accuracy: accuracy of optimized model
 
-        Returns:
-            None
-        """
+    Returns:
+        None
+    """
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION

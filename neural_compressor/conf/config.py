@@ -17,6 +17,8 @@
 
 import yaml
 from schema import Schema, And, Use, Optional, Or, Hook
+
+from .pythonic_config import Config, QuantizationConfig, BenchmarkConfig
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils import logger
@@ -1408,11 +1410,13 @@ class Conf(object):
                 'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
-            if pythonic_config.tuning.diagnosis:
+
+            if pythonic_config.quantization.diagnosis:
                 mapping.update({
                     'tuning.diagnosis': True,
                     'tuning.exit_policy.max_trials': 1,
                 })
+
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \

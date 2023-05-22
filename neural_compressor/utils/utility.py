@@ -747,6 +747,7 @@ def print_table(
 
 def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:
     """Get information about tensors.
+
     Args:
         workload_location: path to workload directory
         model_type: type of model. Supported model types: "input", "optimized"
