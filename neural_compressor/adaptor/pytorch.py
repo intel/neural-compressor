@@ -3822,7 +3822,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         continue
                     op_class = type(modules[node.target])
                     op_type = str(op_class.__name__)
-                    if 'quantized' in str(op_class) or quantized_mode:
+                    if 'quantized' in str(op_class) \
+                      or (quantized_mode and 'pooling' in str(op_class)):
                         if op_type not in res.keys():
                             res[op_type] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
                         res[op_type]['INT8'] += 1
