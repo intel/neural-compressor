@@ -103,7 +103,8 @@ class CompressionManager:
                             {"inputs": conf.inputs,
                              "outputs": conf.outputs})
                     
-                    # Enable op_type_dict and op_name_dicts setting for quant_aware_training
+                    # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+                    # for quant_aware_training can be handled in strategy
                     framework_specific_info['qat_optype_wise'] = conf.op_type_dict
                     framework_specific_info['qat_op_wise'] = conf.op_name_dict
 
@@ -139,7 +140,8 @@ class CompressionManager:
                         {"inputs": confs.inputs,
                          "outputs": confs.outputs})
                 
-                # Enable op_type_dict and op_name_dicts setting for quant_aware_training
+                # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+                # for quant_aware_training can be handled in strategy
                 framework_specific_info['qat_optype_wise'] = confs.op_type_dict
                 framework_specific_info['qat_op_wise'] = confs.op_name_dict
 

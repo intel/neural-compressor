@@ -9,17 +9,17 @@ Export
 
 4. [Appendix](#appendix)
 
-# Introduction
+## Introduction
 Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. For Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.
 
 Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 <a target="_blank" href="./imgs/export.png" text-align:center>
     <center> 
-        <img src="./imgs/export.png" alt="Architecture" width=650 height=200> 
+        <img src="./imgs/export.png" alt="Architecture" width=700 height=200> 
     </center>
 </a>
 
-# Supported Framework Model Matrix
+## Supported Framework Model Matrix
 
 | Export | PyTorch | TensorFlow |
 | :---: | :---: |:----------:|
@@ -27,11 +27,11 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 | INT8 Model -> INT8 QDQ ONNX Model | &#10004; |  &#10004;  |
 | INT8 Model -> INT8 QLinear ONNX Model | &#10004; | :x: |
 
-# Examples
+## Examples
 
-## PyTorch Model
+### PyTorch Model
 
-### FP32 Model Export
+#### FP32 Model Export
 
 ```python
 from neural_compressor.experimental.common import Model
@@ -48,7 +48,7 @@ fp32_onnx_config = Torch2ONNXConfig(
 inc_model.export('fp32-model.onnx', fp32_onnx_config)
 ```
 
-### INT8 Model Export
+#### INT8 Model Export
 
 ```python
 # q_model is a Neural Compressor model after performing quantization.
@@ -69,9 +69,9 @@ q_model.export('int8-model.onnx', int8_onnx_config)
  - [Image recognition](/examples/pytorch/image_recognition/torchvision_models/export/fx/)
  - [Text classification](/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/)
 
-## Tensorflow Model
+### Tensorflow Model
 
-### FP32 Model Export
+#### FP32 Model Export
 
 ```python
 from neural_compressor.experimental.common import Model
@@ -98,11 +98,11 @@ q_model.export('int8-model.onnx', config)
  - [mobilenet_v2](/examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export)
  - [faster_rcnn_resnet50](examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export)
 
-# Appendix
+## Appendix
 
-## Supported quantized ops
+### Supported quantized ops
 
-This table lists the TorchScript operators that are supported by ONNX export with torch v2.0. Refer to xthis [link](https://pytorch.org/docs/stable/onnx_supported_aten_ops.html) for more supported/unsupported ops.
+This table lists the TorchScript operators that are supported by ONNX export with torch v2.0. Refer to this [link](https://pytorch.org/docs/stable/onnx_supported_aten_ops.html) for more supported/unsupported ops.
 
 | Operator                     | opset_version(s) |
 | ---------------------------- | ---------------- |

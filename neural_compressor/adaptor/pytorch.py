@@ -830,6 +830,8 @@ class TemplateAdaptor(Adaptor):
                 if not self.benchmark:
                     assert False, "Unsupport approach: {}".format(self.approach)
 
+        # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+        # for quant_aware_training can be handled in strategy
         if self.approach == 'quant_aware_training':
             self.qat_optype_wise = framework_specific_info.get('qat_optype_wise', None)
             self.qat_op_wise = framework_specific_info.get('qat_op_wise', None)
