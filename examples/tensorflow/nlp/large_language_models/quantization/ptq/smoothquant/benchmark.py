@@ -68,6 +68,7 @@ class Evaluator:
             index += 1
         acc = hit / total
         print("\nEvaluation result: ")
+        print(f"Batch size = {args.batch_size}")
         print(f"Accuracy: {acc}")
         print(
             f"Throughput: {(len(self.dataloader) - args.warmup * args.batch_size) / overall_infer_duration} samples/sec"
