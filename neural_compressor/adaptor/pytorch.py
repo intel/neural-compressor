@@ -1351,6 +1351,7 @@ class TemplateAdaptor(Adaptor):
             def __init__(self, module):
                 super().__init__()
                 self.add_module('sq_linear', module)
+                self.weight = self.sq_linear.weight
 
             def forward(self, X):
                 return self.sq_linear(X)
