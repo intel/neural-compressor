@@ -17,7 +17,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from neural_compressor.strategy.utils.utility import mse_metric_gap
+from neural_compressor.utils.utility import mse_metric_gap
 
 
 class WeightsDetails:
