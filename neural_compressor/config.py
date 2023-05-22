@@ -1936,7 +1936,6 @@ class Torch2ONNXConfig(ExportConfig):
        input_names=None,
        output_names=None,
        dynamic_axes=None,
-       recipe='QDQ_OP_FP32_BIAS',
        **kwargs,
     ):
         """Init a Torch2ONNXConfig object."""
@@ -1949,7 +1948,6 @@ class Torch2ONNXConfig(ExportConfig):
             output_names=output_names,
             dynamic_axes=dynamic_axes,
         )
-        self.recipe = recipe
         self.kwargs = kwargs
 
 
