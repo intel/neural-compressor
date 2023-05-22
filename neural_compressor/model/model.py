@@ -206,6 +206,8 @@ class Model(object):
                         model_type = get_model_type(root)
                     if model_type == "keras" and kwargs.get("backend", None) == "itex":
                         return MODELS['keras'](root, **kwargs)
+                    elif model_type == 'AutoTrackable':
+                        return MODELS[framework]("keras", root, **kwargs)
                     else:
                         return MODELS[framework](model_type, root, **kwargs)
                 return MODELS[framework](root, **kwargs)
@@ -229,6 +231,9 @@ class Model(object):
                             if model_type == 'keras':
                                 conf.framework = "keras"
                                 model = MODELS[conf.framework](root, **kwargs)
+                            elif model_type == 'AutoTrackable': # Workaround using HF model with ITEX
+                                conf.framework = "tensorflow_itex"
+                                model = MODELS[conf.framework]("keras", root, **kwargs)
                             else:
                                 conf.framework = "tensorflow_itex"
                                 model = MODELS[conf.framework](model_type, root, **kwargs)

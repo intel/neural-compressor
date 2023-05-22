@@ -47,7 +47,10 @@ class Model(object):
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
-            model = MODELS['tensorflow'](model_type, root, **kwargs)
+            if model_type =='AutoTrackable':
+                model = MODELS['tensorflow']("keras", root, **kwargs)
+            else:
+                model = MODELS['tensorflow'](model_type, root, **kwargs)
         elif framework == 'keras':
             model = MODELS['keras'](root, **kwargs)
         elif framework == 'pytorch':
