@@ -21,11 +21,17 @@ if "neural_insights" in sys.argv:
     neural_insights = True
     sys.argv.remove("neural_insights")
 
+
+# define include packages
+include_packages = find_packages(include=['neural_compressor', 'neural_compressor.*',
+                                 'neural_coder', 'neural_coder.*'])
+neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'])
+
 # define package data
-package_data = {'neural_compressor': ['*.py', '*.yaml'],
-                'neural_coder': ['*.py', '*.yaml'],
+package_data = {'neural_compressor': ['*.yaml'],
+                'neural_coder': ['*.yaml'],
                 '': ['LICENSE', 'third-party-programs.txt']}
-neural_insights_data = {'neural_insights': ['*.py', '*.yaml', 'web/app/*.*']}
+neural_insights_data = {'neural_insights': ['*.yaml', 'web/app/*.*']}
 
 # define install requirements
 install_requires_list = fetch_requirements('requirements.txt')
@@ -40,6 +46,7 @@ if neural_insights:
     package_data = neural_insights_data
     install_requires_list = neural_insights_requires
     scripts_list = neural_insights_scripts_list
+    include_packages = neural_insights_packages
 else:
     project_name = "neural_compressor"
 
@@ -56,6 +63,7 @@ if __name__ == '__main__':
         keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training',
         license='Apache 2.0',
         url="https://github.com/intel/neural-compressor",
+        packages=include_packages,
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires_list,
