@@ -432,6 +432,26 @@ def build_matmul_model2():
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return  model
 
+def build_matmul_gather_model():
+    input = helper.make_tensor_value_info('input0', TensorProto.INT64, [1, 1])
+    output = helper.make_tensor_value_info('output0', TensorProto.FLOAT, [1, 1])
+
+    axes = helper.make_tensor('axes', TensorProto.INT64, [1], [1])
+    squeeze = onnx.helper.make_node('Squeeze', ['input0', 'axes'], ['A'], name='squeeze')
+
+    b_value = np.random.random((1, 2048))
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [1, 2048], b_value.reshape(2048).tolist())
+
+    gather = onnx.helper.make_node('Gather', ['B', 'A'], ['C'], name='gather')
+
+    d_value = np.random.random((2048, 1)).astype('float32')
+    D_init = helper.make_tensor('D', TensorProto.FLOAT, [2048, 1], d_value.reshape(2048).tolist())
+    matmul = onnx.helper.make_node('MatMul', ['C', 'D'], ['output0'])
+
+    graph = helper.make_graph([squeeze, gather, matmul], 'test_graph_1', [input], [output], [B_init, D_init, axes])
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
 def build_model_with_gather():
     b_value = np.random.randint(2, size=(10)).astype(np.int32)
     B_init = helper.make_tensor('B', TensorProto.INT32, [10], b_value.reshape(10).tolist())
@@ -670,6 +690,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.conv_model2 = build_conv_model2()
         export_onnx_nlp_model(self.distilbert_model, self.distilbert_export_path, 14)
         self.distilbert_model = onnx.load(self.distilbert_export_path)
+        self.gather_matmul_model = build_matmul_gather_model()
         build_benchmark()
 
     @classmethod
@@ -1117,6 +1138,28 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
+
+        config = PostTrainingQuantConfig(approach='static', recipes={'optypes_to_exclude_output_quant': ['MatMul']})
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('MatMulIntegerToFloat' in [i.op_type for i in q_model.nodes()])
+
+        dataset = Datasets("onnxrt_qdq")["dummy"]((1,1), low=0., high=0., dtype='int64')
+        dataloader = DATALOADERS["onnxrt_qdq"](dataset)
+        config = PostTrainingQuantConfig()
+        q_model = quantization.fit(self.gather_matmul_model, config,
+            calib_dataloader=dataloader, eval_func=eval)
+
+        config = PostTrainingQuantConfig(quant_format='QDQ')
+        q_model2 = quantization.fit(self.gather_matmul_model, config,
+            calib_dataloader=dataloader, eval_func=eval)
+
+        sess1 = ort.InferenceSession(q_model.model.SerializeToString(), providers=['CPUExecutionProvider'])
+        sess2 = ort.InferenceSession(q_model2.model.SerializeToString(), providers=['CPUExecutionProvider'])
+        for data, _ in dataloader:
+            output1 = sess1.run(None, {'input0': data})
+            output2 = sess2.run(None, {'input0': data})
+        self.assertAlmostEqual(output1[0][0], output2[0][0])
 
     def test_smooth_quant(self):
         config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
