@@ -943,3 +943,67 @@ def print_op_list(workload_location: str):
         table_entries=sorted_op_list,
         file_type="csv",
     )
+
+
+def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) -> List[OpEntry]:
+    """Get OP list for model."""
+    with open(minmax_file_path, "rb") as min_max_file:
+        min_max_data: dict = pickle.load(min_max_file)
+
+    op_list: List[OpEntry] = []
+
+    for op_name, min_max in min_max_data.items():
+        mse = calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
+        if mse is None:
+            continue
+        min = float(min_max.get("min", None))
+        max = float(min_max.get("max", None))
+        op_entry = OpEntry(op_name, mse, min, max)
+        op_list.append(op_entry)
+    return op_list
+
+
+def calculate_mse(
+    op_name: str,
+    input_model_tensors: dict,
+    optimized_model_tensors: dict,
+) -> Optional[float]:
+    """Calculate MSE for specified OP."""
+    input_model_op_data = input_model_tensors.get(op_name, None)
+    optimized_model_op_data = optimized_model_tensors.get(op_name, None)
+
+    if input_model_op_data is None or optimized_model_op_data is None:
+        return None
+
+    mse: float = mse_metric_gap(
+        next(iter(input_model_op_data.values()))[0],
+        next(iter(optimized_model_op_data.values()))[0],
+    )
+
+    return mse
+
+
+def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
+    """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+
+    Args:
+        fp32_tensor (tensor): The FP32 tensor.
+        dequantize_tensor (tensor): The INT8 dequantize tensor.
+    """
+    import numpy as np
+
+    fp32_max = np.max(fp32_tensor)  # type: ignore
+    fp32_min = np.min(fp32_tensor)  # type: ignore
+    dequantize_max = np.max(dequantize_tensor)  # type: ignore
+    dequantize_min = np.min(dequantize_tensor)  # type: ignore
+    fp32_tensor_norm = fp32_tensor
+    dequantize_tensor_norm = dequantize_tensor
+    if (fp32_max - fp32_min) != 0:
+        fp32_tensor_norm = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
+
+    if (dequantize_max - dequantize_min) != 0:
+        dequantize_tensor_norm = (dequantize_tensor - dequantize_min) / (dequantize_max - dequantize_min)
+
+    diff_tensor = fp32_tensor_norm - dequantize_tensor_norm
+    euclidean_dist = np.sum(diff_tensor**2)  # type: ignore
+    return euclidean_dist / fp32_tensor.size
