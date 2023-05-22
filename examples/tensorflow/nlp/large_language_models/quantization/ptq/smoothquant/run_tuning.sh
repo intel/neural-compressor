@@ -25,7 +25,6 @@ function init_params {
 function run_tuning {
     python main.py \
         --model_name_or_path ${input_model} \
-        --int8 \
         --sq
 }
 
