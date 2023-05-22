@@ -97,15 +97,15 @@ def quant_dequant_data(data, reduce_range=False, qType=3, scheme='sym'):
 class ORTSmoothQuant:
     """Fake input channel quantization.
     
-       For more details please refer to:
-       [1] SmoothQuant: Accurate and Efficient
-       Post-Training Quantization for Large Language Models
-       [2] SPIQ: Data-Free Per-Channel Static Input Quantization
-       We only support inplace mode which means the model weights will be changed,
-       you can call recover function to recover the weights if needed.
+    For more details please refer to:
+    [1] SmoothQuant: Accurate and Efficient
+    Post-Training Quantization for Large Language Models
+    [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+    We only support inplace mode which means the model weights will be changed,
+    you can call recover function to recover the weights if needed.
     """
     def __init__(self, model, dataloader, reduce_range=False, backend='CPUExecutionProvider'):
-         """Initialize the attributes of class."""
+        """Initialize the attributes of class."""
         self.model = model if isinstance(model, BaseModel) else ONNXModel(model) 
         self.dataloader = dataloader
         self.reduce_range = reduce_range
