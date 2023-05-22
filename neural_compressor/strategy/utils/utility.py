@@ -24,7 +24,7 @@ from typing import List, Optional, Any
 import prettytable
 
 from neural_compressor.utils import logger
-from neural_compressor.utils.utility import print_table, dump_table
+from neural_compressor.utils.utility import print_table, dump_table, OpEntry
 
 
 class OrderedDefaultDict(OrderedDict):
@@ -65,59 +65,6 @@ def get_adaptor_name(adaptor):
         if adaptor_name.startswith(name):
             return name
     return ""
-
-class OpEntry:
-    """OP entry class."""
-
-    def __init__(self, op_name: str, mse: float, activation_min: float, activation_max: float):
-        """Initialize OP entry."""
-        self.op_name: str = op_name
-        self.mse: float = mse
-        self.activation_min: float = activation_min
-        self.activation_max: float = activation_max
-
-
-def print_op_list(workload_location: str):
-    """Print OP table."""
-    minmax_file_path = os.path.join(workload_location, "inspect_saved", "dequan_min_max.pkl")
-    input_model_tensors = get_tensors_info(
-        workload_location,
-        model_type="input",
-    )["activation"][0]
-    optimized_model_tensors = get_tensors_info(
-        workload_location,
-        model_type="optimized",
-    )["activation"][0]
-    op_list = get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors)
-    sorted_op_list = sorted(op_list, key=lambda x: x.mse, reverse=True)
-    if len(op_list) <= 0:
-        return
-    print_table(
-        title="Activations summary",
-        column_mapping={
-            "OP name": "op_name",
-            "MSE": "mse",
-            "Activation min": "activation_min",
-            "Activation max": "activation_max",
-        },
-        table_entries=sorted_op_list,
-    )
-
-    activations_table_file = os.path.join(
-        workload_location,
-        "activations_table.csv",
-    )
-    dump_table(
-        filepath=activations_table_file,
-        column_mapping={
-            "OP name": "op_name",
-            "MSE": "mse",
-            "Activation min": "activation_min",
-            "Activation max": "activation_max",
-        },
-        table_entries=sorted_op_list,
-        file_type="csv",
-    )
 
 
 def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:

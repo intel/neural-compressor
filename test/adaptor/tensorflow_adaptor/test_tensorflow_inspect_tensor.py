@@ -104,12 +104,7 @@ def build_fake_diagnosis_yaml():
               name: mse
             accuracy_criterion:
               relative: -0.01
-            diagnosis:
-                diagnosis_after_tuning: True
-                op_list:  conv2d_1 conv2d_2 depthwise_conv2d_1
-                iteration_list: 1
-                inspect_type: activation
-                save_to_disk: True
+            diagnosis: True
         '''
     y = yaml.load(fake_diagnosis_yaml, Loader=yaml.SafeLoader)
     with open('fake_diagnosis_yaml.yaml', 'w', encoding='utf-8') as f:
@@ -141,12 +136,7 @@ def build_fake_diagnosis_yaml2():
               name: mse
             accuracy_criterion:
               relative: -0.01
-            diagnosis:
-                diagnosis_after_tuning: True
-                iteration_list: 1
-                inspect_type: activation
-                save_to_disk: True
-                save_path: save_path_test
+            diagnosis: True
         '''
     y = yaml.load(fake_diagnosis_yaml2, Loader=yaml.SafeLoader)
     with open('fake_diagnosis_yaml2.yaml', 'w', encoding='utf-8') as f:
@@ -157,6 +147,7 @@ class TestTensorflowInspectTensor(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
+        from neural_compressor.config import options
         build_fake_yaml()
         build_fake_diagnosis_yaml()
         build_fake_diagnosis_yaml2()
@@ -165,7 +156,7 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         self.quan_dumped_tensor_path = os.path.join(os.getcwd(), './fake_graph_inspect_res_quan/')
         self.fp32_dumped_tensor_file_path = os.path.join(self.fp32_dumped_tensor_path, 'inspect_result.pkl')
         self.quan_dumped_tensor_file_path = os.path.join(self.quan_dumped_tensor_path, 'inspect_result.pkl')
-        self.workspace = os.path.join(os.getcwd(), 'nc_workspace')
+        self.workspace = os.path.abspath(options.workspace)
 
     @classmethod
     def tearDownClass(self):
@@ -175,7 +166,7 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         os.remove(self.quan_dumped_tensor_file_path)
         os.rmdir(self.quan_dumped_tensor_path)
         shutil.rmtree(self.workspace)
-        shutil.rmtree(os.path.join(os.getcwd(), 'save_path_test'))
+        # shutil.rmtree(os.path.join(os.getcwd(), 'save_path_test'))
 
     def test_tensorflow_inspect_tensor(self):
         from neural_compressor.experimental import Quantization, common
@@ -240,8 +231,9 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.model
         quantizer.fit()
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/fp32/inspect_result.pkl')), True)
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/quan/inspect_result.pkl')), True)
+
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/fp32/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/quan/inspect_result.pkl')), True)
 
     def test_tensorflow_diagnosis2(self):
         from neural_compressor.experimental import Quantization, common
@@ -253,8 +245,8 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.model
         quantizer.fit()
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './save_path_test/fp32/inspect_result.pkl')), True)
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './save_path_test/quan/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/fp32/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/quan/inspect_result.pkl')), True)
 
 
 if __name__ == '__main__':

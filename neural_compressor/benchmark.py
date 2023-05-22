@@ -467,7 +467,7 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
     """
     if conf is not None:
         if conf.backend == "ipex":
-            pass
+            import intel_extension_for_pytorch
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         # disable multi-instance for running bechmark on GPU device
         set_all_env_var(conf)
@@ -544,7 +544,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
     if conf.backend == "ipex":
-        pass
+        import intel_extension_for_pytorch
 
     wrapped_model = Model(model, conf=conf)
 

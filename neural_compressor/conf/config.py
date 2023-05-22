@@ -1408,7 +1408,7 @@ class Conf(object):
                 'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
-            if pythonic_config.quantization.diagnosis:
+            if pythonic_config.tuning.diagnosis:
                 mapping.update({
                     'tuning.diagnosis': True,
                     'tuning.exit_policy.max_trials': 1,

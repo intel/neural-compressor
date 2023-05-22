@@ -36,7 +36,6 @@ from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
 from .utils.constant import FALLBACK_RECIPES_SET
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
-from .utils.utility import print_op_list
 from ..adaptor import FRAMEWORKS
 from ..algorithm import AlgorithmScheduler, ALGORITHMS
 from ..config import MixedPrecisionConfig, options
@@ -44,7 +43,7 @@ from ..objective import MultiObjective
 from ..utils import logger
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils.utility import Statistics, fault_tolerant_file, GLOBAL_STATE, MODE, LazyImport, \
-    DotDict, print_table, get_weights_details, dump_table
+    DotDict, print_table, get_weights_details, dump_table, print_op_list
 from ..utils.weights_details import WeightsDetails
 from ..version import __version__
 
