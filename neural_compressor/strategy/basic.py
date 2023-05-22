@@ -235,6 +235,9 @@ class BasicTuneStrategy(TuneStrategy):
             op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],\
                 op_item_dtype_dict, initial_op_tuning_cfg)
             for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
+                initial_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                if not self.cur_best_tuning_cfg:
+                    self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:
