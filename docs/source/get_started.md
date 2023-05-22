@@ -6,8 +6,6 @@
 
     1.2 [Quantization with JupyterLab Extension](#quantization-with-jupyterlab-extension)
 
-    1.3 [Quantization with GUI](#quantization-with-gui)
-
 2. [Validated Models](#validated-models)
 
 ## Quick Samples
@@ -44,20 +42,6 @@ Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in Jupyt
 <a target="_blank" href="/neural_coder/extensions/screenshots/extmanager.png">
   <img src="/neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
 </a>
-
-### Quantization with [GUI](./bench.md)
-
-```shell
-# Install Intel Neural Compressor and ONNX
-pip install neural-compressor-full
-pip install onnx==1.12.0 onnxruntime==1.12.1 onnxruntime-extensions
-# Prepare fp32 model
-wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet50-v1-12.onnx
-# Start GUI
-inc_bench
-```
-
-![Architecture](./imgs/INC_GUI.gif)
 
 ## Validated Models
 Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo). 
