@@ -1261,11 +1261,14 @@ class TemplateAdaptor(Adaptor):
         if hasattr(model._model, '_smoothquant_optimized') and model._model._smoothquant_optimized:
             logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
-        if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and folding is None:
-            if self.version.release < Version("2.1").release:
+        if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and self.version.release < \
+          Version("2.1").release:
+            if folding is None:
                 folding = True
                 logger.info(
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
+            else:
+                assert folding, "IPEX version >= 2.1 is required for SmoothQuant folding=False."
 
         if not hasattr(self, 'sq') or force_re_smooth:
             from .torch_utils.smooth_quant import TorchSmoothQuant
@@ -2970,6 +2973,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             if self.performance_only:
                 if self.recipes and self.recipes.get('smooth_quant', False) \
                     and self.version.release >= Version("2.1").release:  # pragma: no cover
+                    logger.warning("Right now, Smoothquant for ipex requires a deepcopy of model")
                     try:
                         tmp_model = copy.deepcopy(model)
                     except Exception as e:  # pragma: no cover
@@ -3042,9 +3046,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     try:
                         self.q_func(tmp_model)
                     except Exception as e:
-                        logger.error('Calibration with IPEX failed due to:', e)
-                        logger.error("Please using calib_dataloader insteadly.")
-                        exit(0)
+                        logger.error("Calibration with IPEX failed due to:{}".format(e))
+                        assert False, "Please pass in example_inputs or calib_dataloader to bypass."
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
@@ -3201,8 +3204,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-        if self.performance_only:
-            logger.error("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
 
