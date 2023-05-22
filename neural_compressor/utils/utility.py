@@ -632,7 +632,7 @@ class DotDict(dict):
 
         Args:
             key: something like key in dict.
-            value: value assigned to key. 
+            value: value assigned to key.
         """
         if isinstance(value, dict) and not isinstance(value, DotDict):
             value = DotDict(value)
@@ -679,6 +679,7 @@ def compare_objects(obj1, obj2, ignore_attrs):
     for attr in attrs1 - set(ignore_attrs):
         if getattr(obj1, attr) != getattr(obj2, attr):
             return False
+    return True
 
 
 def alias_param(param_name: str, param_alias: str):
