@@ -170,15 +170,15 @@ def torch_to_int8_onnx(
                 output_names=output_names,
                 dynamic_axes=dynamic_axes,
                 )
-        except:
+        except Exception as e:
             config_name = "QuantizationAwareTrainingConfig" \
                 if q_config['approach'] == "quant_aware_training" else "PostTrainingQuantConfig"
-            logger.error("Export failed. The failure might be caused by unsupported quantized ops. "
-                         "Check link for supported ops.")
+            logger.error("Export failed, possibly because unsupported quantized ops. Check " 
+                         "neural-compressor/docs/source/export.md#supported-quantized-ops "
+                         "for supported ops.")
             logger.error("Please fallback unsupported quantized ops by setting 'op_type_dict' or "
-                         "'op_name_dict' in '{}' config. " 
-                         "Fallback examples please refer to link".format(config_name))
-            sys.exit(0)
+                         "'op_name_dict' in '{}' config. ".format(config_name))
+            return
             
     if quant_format != "QDQ":
         sess_options = ort.SessionOptions()
