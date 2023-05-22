@@ -15,7 +15,7 @@
 """The Weights details class."""
 from typing import Any, Dict, Optional
 
-from neural_compressor.strategy.utils.utility import mse_metric_gap
+from neural_compressor.utils.utility import mse_metric_gap
 from neural_insights.utils.json_serializer import JsonSerializer
 from neural_insights.utils.utils import check_module
 
