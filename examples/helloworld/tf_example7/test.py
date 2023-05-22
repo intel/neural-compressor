@@ -4,6 +4,7 @@ from neural_compressor.data import DataLoader
 from neural_compressor.data import Datasets
 from neural_compressor.quantization import fit
 
+
 def main():
 
     # Built-in dummy dataset
@@ -20,6 +21,7 @@ def main():
                   calib_dataloader=dataloader,
                   eval_dataloader=dataloader,
                   eval_metric=top1)
+
 
 if __name__ == "__main__":
     main()

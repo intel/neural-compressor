@@ -1261,11 +1261,14 @@ class TemplateAdaptor(Adaptor):
         if hasattr(model._model, '_smoothquant_optimized') and model._model._smoothquant_optimized:
             logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
-        if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and folding is None:
-            if self.version.release < Version("2.1").release:
+        if self.__class__.__name__ == 'PyTorch_IPEXAdaptor' and self.version.release < \
+          Version("2.1").release:
+            if folding is None:
                 folding = True
                 logger.info(
                     "IPEX version >= 2.1 is required for SmoothQuant folding=False, reset folding=True.")
+            else:
+                assert folding, "IPEX version >= 2.1 is required for SmoothQuant folding=False."
 
         if not hasattr(self, 'sq') or force_re_smooth:
             from .torch_utils.smooth_quant import TorchSmoothQuant
@@ -2428,18 +2431,18 @@ class PyTorchAdaptor(TemplateAdaptor):
 
 
 unify_op_type_mapping_ipex = {
-    "Convolution_Relu": "conv2d",
-    "Convolution_Sum_Relu": "conv2d",
-    "Convolution_BatchNorm": "conv2d",
-    "<class 'torch.nn.modules.conv.Conv1d'>": "conv1d",
-    "<class 'torch.nn.modules.conv.Conv2d'>": "conv2d",
-    "<class 'torch.nn.modules.conv.Conv3d'>": "conv3d",
-    "<class 'torch.nn.modules.activation.ReLU'>": "relu",
+    "Convolution_Relu": "Conv2d",
+    "Convolution_Sum_Relu": "Conv2d",
+    "Convolution_BatchNorm": "Conv2d",
+    "<class 'torch.nn.modules.conv.Conv1d'>": "Conv1d",
+    "<class 'torch.nn.modules.conv.Conv2d'>": "Conv2d",
+    "<class 'torch.nn.modules.conv.Conv3d'>": "Conv3d",
+    "<class 'torch.nn.modules.activation.ReLU'>": "ReLU",
     "<method 'add' of 'torch._C._TensorBase' objects>": "add",
-    "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "adaptiveavgpool2d",
-    "Linear_Relu": "linear",
-    "<class 'torch.nn.modules.linear.Linear'>": "linear",
-    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "maxpool2d",
+    "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "AdaptiveAvgPool2d",
+    "Linear_Relu": "Linear",
+    "<class 'torch.nn.modules.linear.Linear'>": "Linear",
+    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "MaxPool2d",
     're': {
         "<built-in method matmul of type object at": "matmul"
     }
@@ -2968,7 +2971,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 self.example_inputs = get_example_inputs(model, self.q_dataloader)
         else:
             if self.performance_only:
-                tmp_model = model
+                if self.recipes and self.recipes.get('smooth_quant', False) \
+                    and self.version.release >= Version("2.1").release:  # pragma: no cover
+                    logger.warning("Right now, Smoothquant for ipex requires a deepcopy of model")
+                    try:
+                        tmp_model = copy.deepcopy(model)
+                    except Exception as e:  # pragma: no cover
+                        logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                            repr(e)))
+                        raise
+                else:
+                    tmp_model = model
             else:
                 try:
                     tmp_model = copy.deepcopy(model)
@@ -3027,19 +3040,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
                                             example_inputs=self.example_inputs, inplace=True)
-                if self.q_dataloader is not None:
+                if self.q_dataloader or self.example_inputs:
                     self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
                 else:
                     try:
                         self.q_func(tmp_model)
                     except Exception as e:
-                        logger.error('Calibration with IPEX failed due to:', e)
-                        logger.error("Please using calib_dataloader insteadly.")
-                        exit(0)
+                        logger.error("Calibration with IPEX failed due to:{}".format(e))
+                        assert False, "Please pass in example_inputs or calib_dataloader to bypass."
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                if hasattr(self, 'sq_module_name_list') and self.performance_only:
-                    # recover model before SmoothQuant, tmp_model is copied when prepare.
-                    model = self._wrapper_sq_linear(model, recover=True)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
@@ -3102,7 +3111,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         for op_name in name:
                             module_key = op_name[0]
                             op_cfg_id = op_name[2]
-                            op_type += self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                            single_op_type = self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                            if single_op_type in unify_op_type_mapping_ipex:
+                                single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                            op_type += "&" + single_op_type if op_type else single_op_type
                         quantizable_ops.append((tuple(name), op_type))
                         _module_key = name[0][0]
                         _op_cfg_id = name[0][2]
@@ -3192,8 +3204,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-        if self.performance_only:
-            logger.error("Right now, Smoothquant for ipex doesn't support performance_only")
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
 
@@ -3216,8 +3226,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 self.model_calibration(q_model, dataloader, iterations, None,
                                     tune_cfg.get('calib_sampling_size', 1))
         except:
-            logger.error("The calibration failed when calibrating with ipex, "+\
-                         "using dataloader with 1 iteration insteadly.")
+            logger.warning("The calibration failed when calibrating with ipex, "+\
+                           "using scale info from SmoothQuant for Linear and " +\
+                           "one iter calibration for other ops.")
 
         # update ipex_config.json with smoothquant_scale_info
         q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
@@ -3226,6 +3237,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
+            logger.warning("SmoothQuant folding=False with bf16 may cause accuracy=0! " +\
+                            "Please consider setting excluded_precisions=['bf16'] in your config.")
             with torch.no_grad():
                 with torch.cpu.amp.autocast():
                     q_model = ipex.quantization.convert(q_model, inplace=True)
@@ -3257,6 +3270,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         with open(self.ipex_config_path, 'r') as f:
             self.tmp_model.tune_cfg = json.load(f)
         self.tmp_model.ipex_config_path = self.ipex_config_path
+        self._dump_model_op_stats(tune_cfg)
         return self.tmp_model
 
     @dump_elapsed_time("Pass save quantized model")
@@ -3809,7 +3823,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         continue
                     op_class = type(modules[node.target])
                     op_type = str(op_class.__name__)
-                    if 'quantized' in str(op_class) or quantized_mode:
+                    if 'quantized' in str(op_class) \
+                      or (quantized_mode and 'pooling' in str(op_class)):
                         if op_type not in res.keys():
                             res[op_type] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
                         res[op_type]['INT8'] += 1

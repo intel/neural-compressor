@@ -213,5 +213,37 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         )
         q_model.save('./saved')
 
+    def test_fallback_fused_op_type(self):
+        class M(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.conv = torch.nn.Conv2d(3, 1, 1)
+                self.linear = torch.nn.Linear(224 * 224, 5)
+
+            def forward(self, a):
+                x = self.conv(a)
+                x += x
+                x = x.view(1, -1)
+                x = self.linear(x)
+                return x
+        
+        model = M()
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        op_type_dict = {
+            "Conv2d&add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}},
+        }
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            op_type_dict=op_type_dict,
+        )
+        calib_dataloader = Dataloader()
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_dataloader=calib_dataloader,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

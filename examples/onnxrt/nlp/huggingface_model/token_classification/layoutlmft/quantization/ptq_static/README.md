@@ -14,7 +14,7 @@ bash install_layoutlmft.sh
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
-Finetune on FUNSD
+Finetune on FUNSD. Refer to the [link](https://github.com/microsoft/unilm/tree/master/layoutlm#fine-tuning-example-on-funsd)
 
 ```bash
 python main.py \

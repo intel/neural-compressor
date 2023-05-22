@@ -44,6 +44,7 @@ from ..algorithm import AlgorithmScheduler, ALGORITHMS
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
+from .utils.utility import build_slave_faker_model
 
 
 STRATEGIES = {}
@@ -88,6 +89,7 @@ class TuneStrategyMeta(type):
             new_strategy.capability = pre_strategy.capability
             new_strategy.tuning_space = pre_strategy.tuning_space
             new_strategy.algo_scheduler = pre_strategy.algo_scheduler
+            new_strategy.tuning_history = pre_strategy.tuning_history
         return new_strategy
 
 @strategy_registry
@@ -368,10 +370,19 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
 
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
+        # try to tune on multiple nodes based on the rank size.
+        try:
+            from mpi4py import MPI
+            if MPI.COMM_WORLD.Get_size() > 2:
+                logger.info("Use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
+                return self.distributed_traverse()
+            elif MPI.COMM_WORLD.Get_size() == 2:
+                logger.info("Use distributed tuning on {} nodes, will be fallback to normal tuning."\
+                    .format(MPI.COMM_WORLD.Get_size()))
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"[Strategy] <mpi4py> needs to be installed correctly for distributed tuning. {e}")
+
         self._prepare_tuning()
-        if self.config.use_distributed_tuning:
-            logger.info("use distributed traverse: {}".format(self.config.use_distributed_tuning))
-            return self.distributed_traverse()
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
             tuning_start_time = time()
@@ -742,6 +753,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
+
+        # slaves have no q model, build a faker q model
+        if rank != 0:
+            self.best_qmodel = build_slave_faker_model()
 
     def _fallback_ops(self, tune_cfg, recipe_op_lst, tuning_space):
         """Fallback ops in recipe op list."""

@@ -536,6 +536,9 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        assert self.approach != "post_training_dynamic_quant", \
+            "Dynamic quantization is not supported on TensorFlow framework now!"
+
         if self.approach == "quant_aware_training": # pragma: no cover
             assert q_func is not None, "quantization aware training mode \
                 is not configured correctly"
