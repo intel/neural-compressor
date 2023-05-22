@@ -447,9 +447,9 @@ class ORTSmoothQuant:
         logger.info("auto tuning alpha done")
         if self.model.is_large_model:
             from onnx.external_data_helper import load_external_data_for_model
-            load_external_data_for_model(self.model.model, os.path.split(model.model_path)[0])
+            load_external_data_for_model(self.model.model, os.path.split(self.model.model_path)[0])
             os.remove(self.model.model_path + '_augment.onnx')
-            os.remove(os.path.join(os.path.dirname(self.model.model_path, "weights.pb")))
+            os.remove(os.path.join(os.path.dirname(self.model.model_path), "weights.pb"))
         return optimal_alphas
     
     def _get_smooth_scales(self, alpha, target_list=[]):
