@@ -1,7 +1,7 @@
 {% set version = "2.2" %}
 {% set buildnumber = 0 %}
 package:
-  name: neural-compressor-full
+  name: neural-insights
   version: {{version}}
 build:
   script_env:
@@ -10,7 +10,7 @@ build:
   noarch: python
   script: pip install --no-deps {{NC_WHL}}
   entry_points:
-    - inc_bench = neural_compressor.ux.inc_bench:main
+    - neural_insights = neural_insights.bin.neural_insights:main
 requirements:
   build:
     - python
@@ -18,32 +18,16 @@ requirements:
   run:
     - python
     - pip
-    - numpy<=1.22.3
-    - pyyaml
-    - scikit-learn
-    - schema
-    - py-cpuinfo
-    - pandas
-    - pycocotools
-    - opencv
+    - neural_compressor>=2.2
     - Flask
     - Flask-Cors
     - Flask-SocketIO
     - gevent
     - gevent-websocket
-    - psutil
-    - Pillow
-    - requests
-    - prettytable
-    - cryptography
-    - sqlalchemy==1.4.27
-    - alembic==1.7.7
     - pywin32  # [win]
-    - packaging
-    - deprecated
 test:
   imports:
-    - neural_compressor
+    - neural_insights
 about:
   home: https://github.com/intel/neural-compressor
   license: Apache 2.0
