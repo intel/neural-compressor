@@ -33,7 +33,13 @@ class Profiler(Parent):
             dataloader: TensorflowDataLoader,
             log_file: Optional[str] = None,
     ) -> None:
-        """Initialize profiler for specified model."""
+        """Initialize profiler for specified model.
+
+        Args:
+            model: model to be profiled
+            dataloader: DataLoader object
+            log_file: optional path to log file
+        """
         import tensorflow.compat.v1 as tf_v1
 
         self.model = model
@@ -52,7 +58,17 @@ class Profiler(Parent):
             inter_num_of_threads: int = 1,
             num_warmup: int = 10,
     ) -> None:
-        """Execute model profiling."""
+        """"Execute model profiling.
+
+        Args:
+            intra_num_of_threads: number of threads used within an individual op for parallelism
+            inter_num_of_threads: number of threads used for parallelism
+                                  between independent operations
+            num_warmup: number of warmup iterations
+
+        Returns:
+            None
+        """
         import tensorflow.compat.v1 as tf_v1
         from tensorflow.python.profiler import model_analyzer, option_builder
         tf_v1.enable_eager_execution()

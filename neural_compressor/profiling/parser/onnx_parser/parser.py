@@ -24,8 +24,11 @@ from neural_compressor.profiling.parser.result import ProfilingResult
 class OnnxProfilingParser(ProfilingParser):
     """Parser class is responsible for parsing profiling log files."""
     def process(self) -> List[dict]:
-        """Process profiling logs."""
+        """Process profiling logs.
 
+        Returns:
+            list of dicts with processed profiling results
+        """
         summarized = defaultdict(
             lambda: {
                 "node_name": "",

@@ -28,5 +28,14 @@ class TensorFlowParserFactory:
         *args,
         **kwargs,
     ) -> Optional[TensorFlowProfilingParser]:
-        """Get ProfilingParser for specified workload."""
+        """Get ProfilingParser for specified workload.
+
+        Args:
+            logs: list of path to logs
+            *args: list with additional arguments
+            **kwargs: dict with named arguments
+
+        Returns:
+            TensorFlowProfilingParser instance if model is supported else None
+        """
         return TensorFlowProfilingParser(logs)

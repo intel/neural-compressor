@@ -16,8 +16,18 @@
 
 from typing import Any
 
+
 def create_onnx_config(ort: Any, intra_num_of_threads: int, inter_num_of_threads: int) -> Any:
-    """Create tensorflow config."""
+    """Create tensorflow config.
+
+    Args:
+        ort: onnxruntime library
+        intra_num_of_threads: number of threads used within an individual op for parallelism
+        inter_num_of_threads: number of threads used for parallelism between independent operations
+
+    Returns:
+        ONNX SessionOptions object
+    """
     options = ort.SessionOptions()
     options.enable_profiling = True
     options.intra_op_num_threads = intra_num_of_threads

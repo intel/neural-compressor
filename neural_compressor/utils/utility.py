@@ -746,7 +746,14 @@ def print_table(
 
 
 def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:
-    """Get information about tensors."""
+    """Get information about tensors.
+    Args:
+        workload_location: path to workload directory
+        model_type: type of model. Supported model types: "input", "optimized"
+
+    Returns:
+        dictionary with tensors info
+    """
     tensors_filenames = {
         "input": os.path.join("fp32", "inspect_result.pkl"),
         "optimized": os.path.join("quan", "inspect_result.pkl"),
@@ -768,7 +775,14 @@ def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:
 
 
 def get_weights_details(workload_location: str) -> list:
-    """Get weights details for model."""
+    """Get weights details for model.
+
+    Args:
+        workload_location: path to workload directory
+
+    Returns:
+        list of WeightDetails objects
+    """
     from neural_compressor.utils.weights_details import WeightsDetails
     weights_details = []
 
@@ -895,7 +909,17 @@ class OpEntry:
     """OP entry class."""
 
     def __init__(self, op_name: str, mse: float, activation_min: float, activation_max: float):
-        """Initialize OP entry."""
+        """Initialize OP entry.
+
+        Args:
+            op_name: name of the OP
+            mse: MSE value for OP
+            activation_min: minimum value of activation
+            activation_max: maximum value of activation
+
+        Returns:
+            None
+        """
         self.op_name: str = op_name
         self.mse: float = mse
         self.activation_min: float = activation_min
@@ -903,7 +927,14 @@ class OpEntry:
 
 
 def print_op_list(workload_location: str):
-    """Print OP table."""
+    """Print OP table and dump it to CSV.
+
+    Args:
+        workload_location: path to workload directory
+
+    Returns:
+        None
+    """
     minmax_file_path = os.path.join(workload_location, "inspect_saved", "dequan_min_max.pkl")
     input_model_tensors = get_tensors_info(
         workload_location,
@@ -946,7 +977,16 @@ def print_op_list(workload_location: str):
 
 
 def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) -> List[OpEntry]:
-    """Get OP list for model."""
+    """Get OP list for model.
+
+    Args:
+        minmax_file_path: path to dequan_min_max.pkl
+        input_model_tensors: dict with input tensors details
+        optimized_model_tensors: dict with optimized tensors details
+
+    Returns:
+        list of OpEntry elements
+    """
     with open(minmax_file_path, "rb") as min_max_file:
         min_max_data: dict = pickle.load(min_max_file)
 
@@ -968,7 +1008,16 @@ def calculate_mse(
     input_model_tensors: dict,
     optimized_model_tensors: dict,
 ) -> Optional[float]:
-    """Calculate MSE for specified OP."""
+    """Calculate MSE for specified OP.
+
+    Args:
+        op_name: name of the OP
+        input_model_tensors: dict with input tensors details
+        optimized_model_tensors: dict with optimized tensors details
+
+    Returns:
+        MSE value for specified op_name
+    """
     input_model_op_data = input_model_tensors.get(op_name, None)
     optimized_model_op_data = optimized_model_tensors.get(op_name, None)
 
@@ -989,6 +1038,9 @@ def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
     Args:
         fp32_tensor (tensor): The FP32 tensor.
         dequantize_tensor (tensor): The INT8 dequantize tensor.
+
+    Returns:
+        MSE value
     """
     import numpy as np
 

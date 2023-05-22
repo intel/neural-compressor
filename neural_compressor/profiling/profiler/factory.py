@@ -35,7 +35,16 @@ class ProfilerFactory:
             dataloader: BaseDataLoader,
             log_file: Optional[str] = None,
     ) -> Optional[Profiler]:
-        """Get profiling for specified framework."""
+        """Get profiling for specified framework.
+
+        Args:
+            model: model to be profiled
+            dataloader: DataLoader object
+            log_file: optional path to log file
+
+        Returns:
+            Profiler instance if model is supported else None
+        """
         framework_profilers = {
             "tensorflow": TensorflowProfilerFactory.get_profiler,
             "onnxruntime": OnnxrtProfilerFactory.get_profiler,

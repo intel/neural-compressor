@@ -219,7 +219,6 @@ def web_socket_publisher(web_socket: SocketIO) -> None:
     queue = MessageQueue()
     while True:
         message = queue.get()
-        print(f"Sending message via WS: {message.subject}")
         web_socket.emit(
             message.subject,
             {"status": message.status, "data": message.data},

@@ -47,7 +47,14 @@ class WeightsStatistics:
     """Weights statistics class."""
 
     def __init__(self, tensor_data) -> None:
-        """Initialize Weights details."""
+        """Initialize Weights details.
+
+        Args:
+            tensor_data: numpy array with tensor data
+
+        Returns:
+            None
+        """
         self.min: float = np.min(tensor_data)
         self.max: float = np.max(tensor_data)
         self.mean: float = np.mean(tensor_data)
@@ -55,7 +62,11 @@ class WeightsStatistics:
         self.var: float = np.var(tensor_data)
 
     def serialize(self) -> Dict[str, Any]:
-        """Serialize Weights details."""
+        """Serialize Weights details.
+
+        Returns:
+            Dictionary with serialized WeightsStatistics object
+        """
         return {
             "Min weight": self.min,
             "Max weight": self.max,
@@ -63,8 +74,3 @@ class WeightsStatistics:
             "Standard deviation": self.std,
             "Variance": self.var,
         }
-
-
-
-
-

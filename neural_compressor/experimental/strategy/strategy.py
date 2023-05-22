@@ -400,7 +400,6 @@ class TuneStrategy(object):
             logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
 
             self._dump_tuning_process_statistics()
-            print(f"Need stop: {need_stop}")
             if need_stop:
                 if self.re_quant:
                     logger.info("*** Do not stop the tuning process, re-quantize the ops.")
@@ -408,8 +407,6 @@ class TuneStrategy(object):
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
                 if self.cfg.tuning.diagnosis:
-                    print(f"{self.cfg.tuning.diagnosis=}")
-                    logger.info(f"{self.cfg.tuning.diagnosis=}")
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \

@@ -358,7 +358,18 @@ def summary_benchmark():
 
 
 def profile(model, conf, b_dataloader) -> None:
-    """Execute profiling for benchmark configuration."""
+    """Execute profiling for benchmark configuration.
+
+    Args:
+        model: The model to be profiled.
+        conf: The configuration for benchmark containing accuracy goal,
+              tuning objective and preferred calibration & quantization
+              tuning space etc.
+        b_dataloader: The dataloader for frameworks.
+
+    Returns:
+        None
+    """
     intra_num_of_threads = 1
     inter_num_of_threads = 1
     num_warmup = 10
@@ -477,7 +488,15 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
 
 
 def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
-    """Register workload to Neural Insights."""
+    """Register workload to Neural Insights.
+
+    Args:
+        workload_location: path to workload directory
+        model: model to be registered
+
+    Returns:
+        String with Neural Insight workload UUID if registered else None
+    """
     try:
         import os
         from neural_insights import NeuralInsights
@@ -510,7 +529,15 @@ def register_neural_insights_workload(workload_location: str, model: Any) -> Opt
 
 
 def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
-    """Update status of specific workload."""
+    """Update status of specific workload.
+
+    Args:
+        workload_uuid: string with Neural Insight workload UUID if registered else None
+        status: workload status to be set
+
+    Returns:
+        None
+    """
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION

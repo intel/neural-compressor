@@ -14,7 +14,7 @@
 # limitations under the License.
 """Profiling class factory."""
 
-from typing import Optional, Any
+from typing import Optional
 
 from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import \
     ONNXRTDataLoader
@@ -33,5 +33,14 @@ class ProfilerFactory:
             *args,
             **kwargs,
     ) -> Profiler:
-        """Get profiling for specified workload."""
+        """Get profiling for specified framework.
+
+        Args:
+            model: model to be profiled
+            dataloader: DataLoader object
+            log_file: optional path to log file
+
+        Returns:
+            Profiler instance if model is supported else None
+        """
         return Profiler(model, dataloader, log_file)

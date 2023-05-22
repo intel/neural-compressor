@@ -18,7 +18,14 @@ from typing import Any
 
 
 def delete_assign(graph_def: Any) -> Any:
-    """Modify graph nodes."""
+    """Modify graph nodes.
+
+    Args:
+        graph_def: TensorFlow GraphDef
+
+    Returns:
+
+    """
     for node in graph_def.node:
         if node.op == "RefSwitch":
             node.op = "Switch"
@@ -38,7 +45,16 @@ def delete_assign(graph_def: Any) -> Any:
 
 
 def create_tf_config(tf_module: Any, intra_num_of_threads: int, inter_num_of_threads: int) -> Any:
-    """Create tensorflow config."""
+    """Create tensorflow config.
+
+    Args:
+        tf_module: tensorflow module
+        intra_num_of_threads: number of threads used within an individual op for parallelism
+        inter_num_of_threads: number of threads used for parallelism between independent operations
+
+    Returns:
+        TensorFlow ConfigProto object
+    """
     config = tf_module.ConfigProto()
     config.allow_soft_placement = True
     config.intra_op_parallelism_threads = intra_num_of_threads
@@ -47,7 +63,14 @@ def create_tf_config(tf_module: Any, intra_num_of_threads: int, inter_num_of_thr
 
 
 def set_eager_execution(input_graph: str) -> None:
-    """Set eager execution as required by model."""
+    """Set eager execution as required by model.
+
+    Args:
+        input_graph: path to tensorflow model
+
+    Returns:
+        None
+    """
     from neural_compressor.model.model import get_model_type
 
     model_type = get_model_type(input_graph)
