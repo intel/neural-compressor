@@ -124,13 +124,13 @@ q_model = fit(
   </tbody>
   <thead>
       <tr>
-        <th colspan="8">Neural Tools</th>
+        <th colspan="8">Innovations for Productivity</th>
       </tr>
   </thead>
   <tbody>
       <tr>
-          <td colspan="4" align="center">Neural Insights(coming soon)</td>
-          <td colspan="4" align="center">Neural Solution(coming soon)</td>
+          <td colspan="4" align="center">Neural Insights (coming soon)</td>
+          <td colspan="4" align="center">Neural Solution (coming soon)</td>
       </tr>
   </tbody>
 </table>
