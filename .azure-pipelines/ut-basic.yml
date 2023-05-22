@@ -13,8 +13,6 @@ pr:
       - setup.py
       - .azure-pipelines/scripts/ut
     exclude:
-      - neural_compressor/ux
-      - test/ux
       - test/neural_coder
 
 pool: ICX-16C
