@@ -274,7 +274,7 @@ class TestMixedPrecisionOnNonEnabledHost(unittest.TestCase):
             output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
-        conf = MixedPrecisionConfig(precision="fp16")
+        conf = MixedPrecisionConfig(precisions="fp16")
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.tf_model, conf)
         self.assertEqual(cm.exception.code, 0)
@@ -309,13 +309,13 @@ class TestMixedPrecision(unittest.TestCase):
         #self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
         tuning_criterion = TuningCriterion(max_trials=3, timeout=1000000)
-        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep', precision="fp16")
+        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep', precisions="fp16")
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
                                          eval_dataloader=self.matmul_dataloader,
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
         self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
-        
+
     def test_mixed_precision_with_evaluation_old_api(self):
         from neural_compressor.conf.config import MixedPrecision_Conf
         from neural_compressor.experimental import MixedPrecision

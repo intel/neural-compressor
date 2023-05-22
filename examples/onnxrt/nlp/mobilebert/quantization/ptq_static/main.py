@@ -414,7 +414,7 @@ if __name__ == "__main__":
         config = PostTrainingQuantConfig(approach="static",
                                          quant_format=args.quant_format,
                                          recipes={"optypes_to_exclude_output_quant": ["MatMul"]})
-        q_model = quantization.fit(model, 
+        q_model = quantization.fit(model,
                                    config,
                                    eval_func=eval_func,
                                    calib_dataloader=dataloader)

@@ -125,7 +125,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     def test_tuning_ipex_for_ipex_autotune_func(self):
         from neural_compressor.experimental import Quantization
         model = M()
-        qconfig = ipex.quantization.default_static_qconfig
+        if PT_VERSION < Version("2.1").release:
+            qconfig = ipex.quantization.default_static_qconfig
+        else:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         quantizer = Quantization(config)
         quantizer.model = prepared_model
@@ -139,7 +142,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
 
     def test_copy_prepared_model(self):
         model = M()
-        qconfig = ipex.quantization.default_static_qconfig
+        if PT_VERSION < Version("2.1").release:
+            qconfig = ipex.quantization.default_static_qconfig
+        else:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         copy_model = torch_utils.util.auto_copy(prepared_model)
         self.assertTrue(isinstance(copy_model, torch.nn.Module))
@@ -147,7 +153,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     def test_bf16(self):
         from neural_compressor.experimental import Quantization
         model = M()
-        qconfig = ipex.quantization.default_static_qconfig
+        if PT_VERSION < Version("2.1").release:
+            qconfig = ipex.quantization.default_static_qconfig
+        else:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         config.quantization.use_bf16 = True
         config.quantization.performance_only = True
@@ -203,6 +212,38 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_dataloader=calib_dataloader,
         )
         q_model.save('./saved')
+
+    def test_fallback_fused_op_type(self):
+        class M(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.conv = torch.nn.Conv2d(3, 1, 1)
+                self.linear = torch.nn.Linear(224 * 224, 5)
+
+            def forward(self, a):
+                x = self.conv(a)
+                x += x
+                x = x.view(1, -1)
+                x = self.linear(x)
+                return x
+        
+        model = M()
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        op_type_dict = {
+            "Conv2d&add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}},
+        }
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            op_type_dict=op_type_dict,
+        )
+        calib_dataloader = Dataloader()
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_dataloader=calib_dataloader,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

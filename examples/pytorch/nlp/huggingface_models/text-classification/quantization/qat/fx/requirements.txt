@@ -1,5 +1,6 @@
 neural-compressor
 transformers>=4.16.0
+accelerate
 datasets>=1.18.0
 sentencepiece!=0.1.92
 protobuf<=3.20.3

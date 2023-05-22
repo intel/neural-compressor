@@ -33,7 +33,7 @@ from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 
 tensorflow = LazyImport('tensorflow')
-spr_base_verions = ('2.11.0202242', '2.11.0202250')
+spr_base_verions = ('2.11.0202242', '2.11.0202250', '2.11.0202317')
 
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
@@ -534,6 +534,9 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        assert self.approach != "post_training_dynamic_quant", \
+            "Dynamic quantization is not supported on TensorFlow framework now!"
+
         if self.approach == "quant_aware_training": # pragma: no cover
             assert q_func is not None, "quantization aware training mode \
                 is not configured correctly"
@@ -1849,7 +1852,7 @@ class TensorflowQuery(QueryBackendCapability):
             if self.version in sub_data['version']['name']:
                 return sub_data
             else:
-                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250']:
+                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250', '2.11.0202317']:
                     continue
                 sorted_list = copy.deepcopy(sub_data['version']['name'])
                 sorted_list.remove('default') if 'default' in sorted_list else None

@@ -1,6 +1,6 @@
 onnx
 onnxruntime
-intel-tensorflow==2.10.0
+intel-tensorflow==2.12.0
 tf2onnx
 torch
 onnxruntime-extensions; python_version < '3.10'

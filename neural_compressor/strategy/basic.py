@@ -179,7 +179,7 @@ class BasicTuneStrategy(TuneStrategy):
             dict: op_tuning_cfg fall-backed by block
         """
         from copy import deepcopy
-        op_block_lst = self.capability.get('block_info', [])
+        op_block_lst = self.capability.get('block_wise', [])
         if op_block_lst:
             # Fallback block by block
             fallback_items_name_lst = [item.name for item in fallback_items_lst]
@@ -192,7 +192,6 @@ class BasicTuneStrategy(TuneStrategy):
                     op_block_fallback_lst.append(op_block)
 
             initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-
             # Fallback by accumulating blocks
             if op_block_fallback_lst:
                 logger.info(f"Start to fallback op to {target_dtype} by blocks")
@@ -236,6 +235,9 @@ class BasicTuneStrategy(TuneStrategy):
             op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],\
                 op_item_dtype_dict, initial_op_tuning_cfg)
             for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
+                initial_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                if not self.cur_best_tuning_cfg:
+                    self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:

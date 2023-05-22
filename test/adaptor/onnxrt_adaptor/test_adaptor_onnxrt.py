@@ -9,14 +9,16 @@ import numpy as np
 from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
+from packaging.version import Version
+from transformers import AutoConfig, AutoModelForSequenceClassification
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.adaptor.pytorch import get_torch_version
 from neural_compressor.conf.config import conf
-from packaging.version import Version
 from neural_compressor import quantization, PostTrainingQuantConfig
+from neural_compressor.model import Model
 
 def build_static_yaml():
     fake_yaml = """
@@ -330,7 +332,7 @@ def eval_func(model):
     return 1.0
 
 
-def export_onnx_model(model, path, opset=12):
+def export_onnx_cv_model(model, path, opset=12):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
     torch_out = model(x)
 
@@ -345,6 +347,22 @@ def export_onnx_model(model, path, opset=12):
                     output_names = ["output"], # the model"s output names
                     dynamic_axes={"input" : {0 : "batch_size"},    # variable length axes
                                   "output" : {0 : "batch_size"}})
+
+def export_onnx_nlp_model(model, path, opset=12):
+    symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+    inputs = {'input_ids':      torch.ones(1, 128, dtype=torch.int64),
+              'attention_mask': torch.ones(1, 128, dtype=torch.int64)}
+    torch.onnx.export(model,                            # model being run
+                    (inputs['input_ids'],               # model input (or a tuple for multiple inputs) 
+                    inputs['attention_mask']),          
+                    path,                  # where to save the model (can be a file or file-like object)
+                    opset_version=opset,                   # the ONNX version to export the model
+                    do_constant_folding=True,           # whether to execute constant folding
+                    input_names=['input_ids',           # the model's input names
+                                  'attention_mask'],
+                    output_names=['logits'],
+                    dynamic_axes={'input_ids': symbolic_names,        # variable length axes
+                                  'attention_mask' : symbolic_names})
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''
@@ -599,6 +617,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
     rn50_export_path = "rn50.onnx"
     rn50_model = torchvision.models.resnet50()
 
+    model_name_or_path = "distilbert-base-uncased-finetuned-sst-2-english"
+    distilbert_model = AutoModelForSequenceClassification.from_pretrained(
+        model_name_or_path,
+        config=AutoConfig.from_pretrained(model_name_or_path))
+    distilbert_export_path = "distilbert.onnx"
+
     datasets = Datasets('onnxrt_qlinearops')
     cv_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
@@ -631,10 +655,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         build_benchmark_yaml()
         build_recipe_yaml()
         build_recipe2_yaml()
-        export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
+        export_onnx_cv_model(self.mb_v2_model, self.mb_v2_export_path)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
-        export_onnx_model(self.rn50_model, self.rn50_export_path, 12)
-        export_onnx_model(self.rn50_model, 'rn50_9.onnx', 9)
+        export_onnx_cv_model(self.rn50_model, self.rn50_export_path, 12)
+        export_onnx_cv_model(self.rn50_model, 'rn50_9.onnx', 9)
         self.rn50_model = onnx.load(self.rn50_export_path)
         self.ir3_model = build_ir3_model()
         self.gather_model = build_model_with_gather()
@@ -644,6 +668,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.conv_model = build_conv_model()
         self.gemm_model = build_gemm_model()
         self.conv_model2 = build_conv_model2()
+        export_onnx_nlp_model(self.distilbert_model, self.distilbert_export_path, 14)
+        self.distilbert_model = onnx.load(self.distilbert_export_path)
         build_benchmark()
 
     @classmethod
@@ -1087,7 +1113,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
  
-        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep')
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep', device='gpu')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
@@ -1252,8 +1278,22 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertIsNone(res[1])
         del calibrator
 
-
-
+    def test_query_block_info(self):
+        framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "backend": "default",
+                               "format": "default",
+                               "domain": "auto",
+                               "recipes": {},
+                               "workspace_path": './nc_workspace/{}/{}/'.format(
+                                                       'onnxrt',
+                                                       'imagenet')}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        q_capability = adaptor.query_fw_capability(Model(self.distilbert_model))
+        self.assertEqual(len(q_capability['block_wise']), 6)
 
 if __name__ == "__main__":
     unittest.main()
