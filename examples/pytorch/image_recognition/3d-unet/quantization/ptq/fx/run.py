@@ -116,8 +116,6 @@ def eval_func(model):
 
     if args.accuracy:
         settings.mode = lg.TestMode.AccuracyOnly
-    else:
-        settings.mode = lg.TestMode.PerformanceOnly
 
     log_path = "build/logs"
     if not os.path.exists(log_path):
@@ -129,11 +127,7 @@ def eval_func(model):
     log_settings.log_output = log_output_settings
 
     print("Running Loadgen test...")
-    if args.performance:
-        start = time.time()
     lg.StartTestWithLogSettings(sut.sut, sut.qsl.qsl, settings, log_settings)
-    if args.performance:
-        end = time.time()
 
     if args.accuracy:
         print("Running accuracy script...")
@@ -142,12 +136,6 @@ def eval_func(model):
 
         print(out)
         print("Done!", float(err))
-
-        if args.performance:
-            print('Batch size = 1')
-            print('Latency: %.3f ms' % ((end - start) * 1000 / sut.qsl.count))
-            print('Throughput: %.3f images/sec' % (sut.qsl.count / (end - start)))
-            print('Accuracy: {mean:.5f}'.format(mean=float(err)))
 
     print("Destroying SUT...")
     lg.DestroySUT(sut.sut)
