@@ -34,6 +34,8 @@ from .utils.utility import (
     build_workspace,
     is_remote_url
 )
+
+from neural_solution.utility import get_task_log_workspace, get_task_workspace
 from .utils import logger
 
 cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
@@ -41,7 +43,7 @@ CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
 class Scheduler:
     def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, \
-        conda_env_name=None, upload_path="./examples"):
+        conda_env_name=None, upload_path="./examples", config=None):
         """Scheduler dispatches the task with the available resources, calls the mpi command and report results.
 
         Attributes:
@@ -56,6 +58,7 @@ class Scheduler:
         self.result_monitor_port = result_monitor_port
         self.conda_env_name = conda_env_name
         self.upload_path = upload_path
+        self.config = config
 
     def prepare_env(self, task:Task):
         """Check and create a conda environment.
@@ -111,7 +114,7 @@ class Scheduler:
         Args:
             task (Task): _description_
         """
-        self.task_path = build_workspace(task_id=task.task_id)
+        self.task_path = build_workspace(path=get_task_workspace(self.config.workspace), task_id=task.task_id)
         if is_remote_url(task.script_url):
             task_url = task.script_url.replace('github.com', 'raw.githubusercontent.com').replace('blob','')
             try:
@@ -240,7 +243,7 @@ class Scheduler:
         """
         full_cmd = self._parse_cmd(task, resource)
         logger.info(f"[TaskScheduler] Parsed the command from task: {full_cmd}")
-        log_path = get_task_log_path(task.task_id)
+        log_path = get_task_log_path(log_path=get_task_log_workspace(self.config.workspace), task_id=task.task_id)
         p = subprocess.Popen(full_cmd, stdout=open(log_path, 'w+'), stderr=subprocess.STDOUT, shell=True)
         logger.info(f"[TaskScheduler] Start run task {task.task_id}, dump log into {log_path}")
         start_time = time.time()

@@ -18,7 +18,8 @@ from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
 from neural_solution.frontend.utility import (
     get_cluster_info,
     get_cluster_table,
-    serialize, deserialize,
+    serialize,
+    deserialize,
     get_res_during_tuning,
     get_baseline_during_tuning,
     check_log_exists,
@@ -31,35 +32,58 @@ from watchdog.events import FileSystemEventHandler
 import asyncio
 import json
 import socket
+import uvicorn
+
+from neural_solution.utility import (
+    get_task_log_workspace,
+    get_db_path
+)
+
+from neural_solution.config import config
+
+
+# Get config from Launcher.sh
+task_monitor_port = None
+result_monitor_port = None
+TASK_LOG_path = None
+DB_PATH = None
+
+app = FastAPI()
+
 
 import argparse
 
-from neural_solution.config import (
-    NEURAL_SOLUTION_WORKSPACE,
-    DB_PATH,
-    TASK_WORKSPACE,
-    TASK_LOG_path,
-    )
+args = None
 
-# Get config from Launcher.sh
-task_monitor_port = int(os.environ.get("TASK_MONITOR_PORT", 2222))
-result_monitor_port = int(os.environ.get('RESULT_MONITOR_PORT', 3333))
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Frontend with RESTful API")
+    parser.add_argument("-H", "--host", type=str, default="0.0.0.0", \
+        help="The address to submit task.")
+    parser.add_argument("-FP", "--fastapi_port", type=int, default=8000, \
+        help="Port to submit task by user.")
+    parser.add_argument("-TMP", "--task_monitor_port", type=int, default=2222, \
+        help="Port to monitor task.")
+    parser.add_argument("-RMP", "--result_monitor_port", type=int, default=3333, \
+        help="Port to monitor result.")
+    parser.add_argument("-WS", "--workspace", type=str, default="./", \
+        help="Work space.")
+    args = parser.parse_args()
+    print(f" task_monitor_port, {args.task_monitor_port}")
+    return args
 
-app = FastAPI()
-serve = TaskSubmitter(task_monitor_port=task_monitor_port, result_monitor_port=result_monitor_port)
 
 @app.get("/")
 def read_root():
-    return {"message": f"Welcome to NeuralSolution OaaS!"}
+    return {"message": "Welcome to Neural Solution!"}
 
 @app.get("/ping")
 def ping():
     count = 0
     msg = "Neural Solution is running."
-    for port in [serve.task_monitor_port, serve.result_monitor_port]:
+    for port in [config.task_monitor_port, config.result_monitor_port]:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            sock.connect((serve.inc_serve_ip, port))
+            sock.connect((config.service_address, port))
             sock.send(serialize({"ping": "test"}))
             sock.settimeout(5)
             response = sock.recv(1024)
@@ -108,7 +132,7 @@ async def submit_task(task: Task):
         cursor.execute(sql)
         conn.commit()
         try:
-            serve.submit_task(task_id)
+            task_submitter.submit_task(task_id)
         except ConnectionRefusedError:
             msg = "Task Submitted fail! Make sure Neural Solution runner is running!"
             status = "failed"
@@ -254,3 +278,19 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     except WebSocketDisconnect:
         observer.stop()
         await observer.join()
+
+
+if __name__ == "__main__":
+    # parse the args and modified the config accordingly
+    args = parse_arguments()
+    TASK_LOG_path = get_task_log_workspace(args.workspace)
+    config.workspace = args.workspace
+    DB_PATH = get_db_path(config.workspace)
+    config.task_monitor_port = args.task_monitor_port
+    config.result_monitor_port = args.result_monitor_port
+    # initialize the task submitter
+    task_submitter = TaskSubmitter(task_monitor_port=args.task_monitor_port,
+                          result_monitor_port=args.result_monitor_port)
+    config.service_address = task_submitter.service_address
+    # start the app
+    uvicorn.run(app, host=args.host, port=args.fastapi_port)

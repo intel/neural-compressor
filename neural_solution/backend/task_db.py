@@ -17,10 +17,8 @@ from .task import Task
 import threading
 from collections import deque
 import sqlite3
-import os
 from .utils import logger
 from .utils.utility import create_dir
-from neural_solution.config import DB_PATH
 
 class TaskDB:
     """TaskDb manages all the tasks.
@@ -32,10 +30,10 @@ class TaskDB:
         task_collections: a growing-only list of all task objects and their details (no garbage collection currently)
         lock: the lock on the data structures to provide atomic operations
     """
-    def __init__(self):
+    def __init__(self, db_path):
         self.task_queue = deque()
-        create_dir(DB_PATH)
-        self.conn = sqlite3.connect(f'{DB_PATH}', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        create_dir(db_path)
+        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)  # sqlite should set this check_same_thread to False
         self.cursor = self.conn.cursor()
         self.cursor.execute(
             'create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), ' +

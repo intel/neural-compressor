@@ -26,10 +26,10 @@ class Task(BaseModel):
     workers: int
 
 class TaskSubmitter:
-    def __init__(self, task_monitor_port=2222, result_monitor_port=3333, inc_serve_ip="localhost"):
+    def __init__(self, task_monitor_port=2222, result_monitor_port=3333, service_address="localhost"):
         self.task_monitor_port = task_monitor_port
         self.result_monitor_port = result_monitor_port
-        self.inc_serve_ip = inc_serve_ip
+        self.service_address = service_address
 
     def serialize(self, tid: str) -> bytes:
         d = {"task_id": tid}
@@ -37,6 +37,6 @@ class TaskSubmitter:
 
     def submit_task(self, tid):
         s = socket.socket()
-        s.connect((self.inc_serve_ip, self.task_monitor_port))
+        s.connect((self.service_address, self.task_monitor_port))
         s.send(self.serialize(tid))
         s.close()

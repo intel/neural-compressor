@@ -39,6 +39,7 @@ function init_params {
    task_monitor_port=2222
    result_monitor_port=3333
    serve_log_dir=ns_workspace/serve_log
+   workspace='./ns_workspace'
    upload_path=examples
 
    for var in "$@"
@@ -46,6 +47,9 @@ function init_params {
       case $var in
          --hostfile=*)
          hostfile=$(echo $var |cut -f2 -d=)
+         ;;
+         --workspace=*)
+         workspace=$(echo $var |cut -f2 -d=)
          ;;
          --serve_port=*)
          serve_port=$(echo $var |cut -f2 -d=)
@@ -123,7 +127,7 @@ function serve {
             conda_env_name=$conda_env
          fi
          # Check completed
-
+         serve_log_dir=$workspace"/serve_log"
          mkdir -p $serve_log_dir
          date_suffix=_$(date +%Y%m%d-%H%M%S)
          date_suffix=
@@ -133,13 +137,20 @@ function serve {
          --hostfile ${hostfile} \
          --task_monitor_port $task_monitor_port \
          --result_monitor_port $result_monitor_port \
+         --workspace $workspace\
          --conda_env_name $conda_env_name \
          --upload_path $upload_path \
           >> $serve_log_dir/backend$date_suffix.log  2>&1 &
-         export PYTHONDONTWRITEBYTECODE=1 && gunicorn -b 0.0.0.0:${serve_port} \
-         -k uvicorn.workers.UvicornWorker  frontend.fastapi.main_server:app \
-         --env TASK_MONITOR_PORT=$task_monitor_port \
-         --env RESULT_MONITOR_PORT=$result_monitor_port \
+        #  export PYTHONDONTWRITEBYTECODE=1 && gunicorn -b 0.0.0.0:${serve_port} \
+        #  -k uvicorn.workers.UvicornWorker  frontend.fastapi.main_server:app \
+        #  --env TASK_MONITOR_PORT=$task_monitor_port \
+        #  --env RESULT_MONITOR_PORT=$result_monitor_port \
+         export PYTHONDONTWRITEBYTECODE=1 && python ./frontend/fastapi/main_server.py \
+         --host "0.0.0.0"\
+         --fastapi_port $serve_port\
+         --task_monitor_port $task_monitor_port\
+         --result_monitor_port $result_monitor_port\
+         --workspace $workspace\
          &>>$serve_log_dir/frontend$date_suffix.log &
          ip_address=$(hostname -I | awk '{print $1}')
 
@@ -204,6 +215,7 @@ function serve {
 
          # kill the remaining processes
          lsof -i | grep gunicorn| grep LISTEN |awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
+         # TODO update it with new start way
          lsof -i | grep mpirun|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
          lsof -i | grep python|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
 
@@ -222,13 +234,15 @@ function serve {
          echo '    --api_type           : start web serve with grpc/http, defult http'
          echo '    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222'
          echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, defult 3333'
+         echo '    --workspace          : neural solution workspace, defult "./"'
          echo '    --serve_log_dir      : save the serve log to {serve_log_dir}, defult serve_log'
+         # TODO serve_log_dir should not exposed to user
          echo '    --conda_env          : specify the running environment for the task'
          echo '    --upload_path        : specify the file path for the tasks'
 
       ;;
       --hostfile=*|--serve_port=*|--result_monitor_port=*|--task_monitor_port=*|--api_type=*|*serve_log_dir=*|\
-      --upload_path=*|--conda_env=*)
+      --upload_path=*|--conda_env=*|--workspace=*)
       ;;
       *)
          echo "Error: No such parameter: ${var}"

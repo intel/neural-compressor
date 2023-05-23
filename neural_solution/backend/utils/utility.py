@@ -1,8 +1,22 @@
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
 from ..utils import logger
 from urllib.parse import urlparse
-from neural_solution.config import NUM_CORES_PER_SOCKET, NUM_SOCKETS, TASK_WORKSPACE, TASK_LOG_path
+from neural_solution.config import NUM_CORES_PER_SOCKET, NUM_SOCKETS
 
 
 def serialize(request: dict) -> bytes:
@@ -31,18 +45,32 @@ def dump_elapsed_time(customized_msg=""):
         return fi
     return f
 
-def get_task_log_path(task_id):
+def get_task_log_path(log_path, task_id):
     """Get the task log file path.
 
     Args:
         task_id: _description_
     """
-    if not os.path.exists(TASK_LOG_path):
-        os.makedirs(TASK_LOG_path)
-    log_file_path =  "{}/task_{}.txt".format(TASK_LOG_path,task_id)
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
+    log_file_path =  "{}/task_{}.txt".format(log_path,task_id)
     return log_file_path
 
-def build_local_cluster():
+
+def get_db_path(workspace="./"):
+    return os.path.join(workspace, "db", "task.db")
+
+def get_task_workspace(workspace="./"):
+    return os.path.join(workspace, "task_workspace")
+
+def get_task_log_workspace(workspace="./"):
+    return os.path.join(workspace, "task_log")
+
+def get_serve_log_workspace(workspace="./"):
+    return os.path.join(workspace, "serve_log")
+
+
+def build_local_cluster(db_path):
     from neural_solution.backend.cluster import Node, Cluster
     hostname = 'localhost'
     node1 = Node(name=hostname,num_sockets=2, num_cores_per_socket=5)
@@ -50,10 +78,10 @@ def build_local_cluster():
     node3 = Node(name=hostname,num_sockets=2, num_cores_per_socket=5)
 
     node_lst = [node1, node2, node3]
-    cluster = Cluster(node_lst=node_lst)
+    cluster = Cluster(node_lst=node_lst, db_path=db_path)
     return cluster
 
-def build_cluster(file_path):
+def build_cluster(file_path, db_path):
     """Build cluster according to the host file.
 
     Args:
@@ -65,7 +93,7 @@ def build_cluster(file_path):
     from neural_solution.backend.cluster import Node, Cluster
     # If no file is specified, build a local cluster
     if file_path == "None" or file_path is None:
-        return build_local_cluster()
+        return build_local_cluster(db_path)
 
     if not os.path.exists(file_path):
         raise Exception(f"Please check the path of host file: {file_path}.")
@@ -76,7 +104,7 @@ def build_cluster(file_path):
             hostname = line.strip()
             node = Node(name=hostname, num_sockets=NUM_SOCKETS, num_cores_per_socket=NUM_CORES_PER_SOCKET)
             node_lst.append(node)
-    cluster = Cluster(node_lst=node_lst)
+    cluster = Cluster(node_lst=node_lst, db_path=db_path)
     return cluster
 
 def get_current_time():
@@ -89,7 +117,7 @@ def synchronized(func):
             return func(self, *args, **kwargs)
     return wrapper
 
-def build_workspace(path=TASK_WORKSPACE, task_id=""):
+def build_workspace(path, task_id=""):
     """Build workspace of running tasks.
 
     Args:
