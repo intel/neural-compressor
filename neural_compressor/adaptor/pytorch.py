@@ -3735,19 +3735,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 if 'weight' in optype_config and 'dtype' in optype_config['weight']:
                     if optype_config['weight']['dtype'] == ['fp32']:
                         fallback_ops['optype_wise'].append(optype)
-                    else:
-                        assert False, "'op_type_dict' in QuantizationAwareTrainingConfig " \
-                        "can only be used to set fp32 config like '{}', " \
-                        "but detect '{}'".format(FP32, optype_config)
         if self.qat_op_wise is not None:
             for op, op_config in self.qat_op_wise.items():
                 if 'weight' in op_config and 'dtype' in op_config['weight']:
                     if op_config['weight']['dtype'] == ['fp32']:
                         fallback_ops['op_wise'].append(op)
-                    else:
-                        assert False, "'op_name_dict' in QuantizationAwareTrainingConfig " \
-                        "can only be used to set fp32 config like '{}', " \
-                        "but detect '{}'".format(FP32, op_config)
         return fallback_ops
     
     def _remove_fallback_ops_for_qat(self, quantizable_ops):
