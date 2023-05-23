@@ -69,8 +69,8 @@ parser.add_argument('--performance', dest='performance', action='store_true',
                     help='run benchmark')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark for int8')
-parser.add_argument('-b', '--batch-size', default=512, type=int,
-                    metavar='N', help='mini-batch size (default: 512)')
+parser.add_argument('-b', '--batch_size', default=8, type=int,
+                    metavar='N', help='mini-batch size (default: 8)')
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
@@ -135,12 +135,10 @@ def eval_func(model):
         out, err = process.communicate()
 
         print(out)
-        print("Done!", float(err))
+        print("Batch size = ", args.batch_size)
+        print("Accuracy: ", float(err))
 
-    print("Destroying SUT...")
     lg.DestroySUT(sut.sut)
-
-    print("Destroying QSL...")
     lg.DestroyQSL(sut.qsl.qsl)
     return float(err)
 
