@@ -33,7 +33,7 @@ ortq = LazyImport('onnxruntime.quantization')
 def _prepare_intputs(pt_model, input_names, example_inputs):
     """Prepare input_names and example_inputs."""
     if input_names is None and \
-      (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
+      (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)): # pragma: no cover
         input_names = list(example_inputs.keys())
         example_inputs = list(example_inputs.values())
     elif isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
@@ -141,11 +141,12 @@ def torch_to_int8_onnx(
     
     assert not q_config is None, "'q_config' is needed when export an INT8 model."
 
-    if q_config['approach'] == 'post_training_dynamic_quant':
-        assert False, "Post training dynamic quantizated PyTorch model is not supported to export to ONNX. " \
-        "Please follow this step to get a post training dynamic quantizated PyTorch model: " \
+    if q_config['approach'] == 'post_training_dynamic_quant': # pragma: no cover
+        assert False, "Post training dynamic quantizated PyTorch model is not supported " \
+        "to export to ONNX directly. Please follow this step to get a post training " \
+        "dynamic quantizated ONNX model: " \
         "1. export FP32 PyTorch model to FP32 ONNX model. " \
-        "2. use FP32 ONNX model as input model to do post training dynamic quantizatation."
+        "2. use FP32 ONNX model as the input model for post training dynamic quantizatation."
 
     input_names, example_inputs = _prepare_intputs(pt_model, input_names, example_inputs)
 

@@ -351,7 +351,7 @@ class PyTorchModel(PyTorchBaseModel):
         from packaging.version import Version
         from ..adaptor.pytorch import get_torch_version
         version = get_torch_version()
-        if version.release < Version("1.12.0").release:
+        if version.release < Version("1.12.0").release: # pragma: no cover
             assert False, "PyTorch to ONNX export function requires a minimum torch version of {}, " \
                 "but the torch version found is {}".format(Version("1.12.0"), version)
 

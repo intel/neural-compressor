@@ -37,15 +37,15 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
   </tr>
   <tr>
     <td>Post-Training Static Quantized INT8</td>
-    <td>QDQ/QLinear INT8</td>
+    <td>QLinear/QDQ INT8</td>
   </tr>
   <tr>
     <td>Post-Training Dynamic Quantized INT8</td>
-    <td>not supported</td>
+    <td>/</td>
   </tr>
   <tr>
     <td>Quantization-aware Training INT8</td>
-    <td>QDQ/QLinear INT8</td>
+    <td>QLinear/QDQ INT8</td>
   </tr>
   <tr>
     <td rowspan="3">TensorFlow</td>
@@ -62,6 +62,10 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
   </tr>
 </tbody>
 </table>
+
+> **Note**: Follow this step to export a post training dynamic quantizated ONNX model from PyTorch model: \
+        1. export FP32 PyTorch model to FP32 ONNX model.  \
+        2. use FP32 ONNX model as the input model for post training dynamic quantizatation.
 
 ## Examples
 
@@ -92,7 +96,7 @@ from neural_compressor.config import Torch2ONNXConfig
 int8_onnx_config = Torch2ONNXConfig(
     dtype="int8",
     opset_version=14,
-    quant_format="QDQ", # or QLinear
+    quant_format="QLinear", # or QDQ
     example_inputs=torch.randn(1, 3, 224, 224),
     input_names=['input'],
     output_names=['output'],
