@@ -28,7 +28,15 @@ class ParserFactory:
         model: BaseModel,
         logs: list,
     ) -> Optional[ProfilingParser]:
-        """Get parser for specified framework."""
+        """Get parser for specified framework.
+
+        Args:
+            model: model to be profiled
+            logs: list of path to logs
+
+        Returns:
+            ProfilingParser instance if model is supported else None
+        """
         framework_parser = {
             "tensorflow": TensorFlowParserFactory.get_parser,
             "onnxruntime": OnnxrtParserFactory.get_parser,

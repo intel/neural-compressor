@@ -28,13 +28,13 @@ class TensorFlowProfilingParser(ProfilingParser):
 
     @staticmethod
     def unify_time(string_value: str) -> float:
-        """
-        Unify time with unit to micro seconds float value.
+        """Unify time with unit to micro seconds float value.
 
-        :param string_value: time value with unit, e.g. 125.6ms
-        :type string_value: str
-        :return: time value in microseconds
-        :rtype: float
+        Args:
+            string_value: string containing time value with unit
+
+        Returns:
+            float with time value in micro seconds
         """
         search = re.search(r"(\d+(\.\d+)?)\s*(\w+)", string_value)
 
@@ -52,8 +52,11 @@ class TensorFlowProfilingParser(ProfilingParser):
         return value * unit_modifier
 
     def process(self) -> List[dict]:
-        """Process profiling logs."""
-        parsed_data: List[dict] = []
+        """Process profiling logs.
+
+        Returns:
+            list of dicts with processed profiling results
+        """
         profiling_header = self.patterns.get("profiling_header", None)
         profiling_entry = self.patterns.get("profiling_entry", None)
         if any(pattern is None for pattern in [profiling_header, profiling_entry]):
@@ -89,7 +92,11 @@ class TensorFlowProfilingParser(ProfilingParser):
 
     @property
     def patterns(self) -> dict:
-        """Set patterns to get metrics from lines."""
+        """Set patterns to get metrics from lines.
+
+        Returns:
+            dict with regex patterns
+        """
         return {
             "profiling_entry": r"^(\S+)\s+(\d+(\.\d+)?\w+)\s\((\d+(\.\d+)?)%,"
             r"\s(\d+(\.\d+)?)%\),\s+(\d+(\.\d+)?\w+)\s\((\d+(\.\d+)?)%,"

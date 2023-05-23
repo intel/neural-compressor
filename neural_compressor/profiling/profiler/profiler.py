@@ -18,8 +18,15 @@
 class Profiler:
     """Profiler class."""
 
-    def __init__(self, input_graph: str):
-        """Profiler constructor."""
+    def __init__(self, input_graph: str) -> None:
+        """Profiler constructor.
+
+        Args:
+            input_graph: path to model.
+
+        Returns:
+            None
+        """
         self.input_graph = input_graph
 
     def profile_model(self, *args, **kwargs) -> None:

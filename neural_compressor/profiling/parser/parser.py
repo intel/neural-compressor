@@ -23,26 +23,52 @@ from typing import List
 class ProfilingParser(ABC):
     """Parser class is responsible for parsing profiling log files."""
     def __init__(self, logs: list) -> None:
-        """Initialize parser."""
+        """Initialize parser.
+
+        Args:
+            logs: list of path to logs
+
+        Returns:
+            None
+        """
         self._logs = logs
         self._results: List[ProfilingResult] = []
 
     @property
     def results(self) -> List[ProfilingResult]:
-        """Get profiling results."""
+        """Get profiling results.
+
+        Returns: list of ProfilingResult entries
+
+        """
         return self._results
 
     def add_result(self, result: ProfilingResult) -> None:
-        """Add result to list."""
+        """Add result to list.
+
+        Args:
+            result: ProfilingResult object
+
+        Returns:
+            None
+        """
         self._results.append(result)
 
     @abstractmethod
     def process(self) -> List[dict]:
-        """Process profiling logs."""
+        """Process profiling logs.
+
+        Returns:
+            list of dicts with processed profiling results
+        """
         raise NotImplementedError
 
     def _serialize_results(self) -> list:
-        """Serialize Results list."""
+        """Serialize Results list.
+
+        Returns:
+            list of serialized results
+        """
         sorted_results = sorted(
             self.results,
             key=lambda result: result.total_execution_time,

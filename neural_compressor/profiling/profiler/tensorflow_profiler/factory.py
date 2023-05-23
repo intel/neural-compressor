@@ -24,6 +24,7 @@ from neural_compressor.profiling.profiler.tensorflow_profiler.profiler import (
     Profiler as FrozenPbProfiler
 )
 
+
 class ProfilerFactory:
     """Profiler factory."""
 
@@ -35,7 +36,16 @@ class ProfilerFactory:
             *args,
             **kwargs,
     ) -> Profiler:
-        """Get profiling for specified TF workload."""
+        """Get profiling for specified framework.
+
+        Args:
+            model: model to be profiled
+            dataloader: DataLoader object
+            log_file: optional path to log file
+
+        Returns:
+            Profiler instance if model is supported else None
+        """
         framework_profilers = {
             "frozen_pb": FrozenPbProfiler,
         }

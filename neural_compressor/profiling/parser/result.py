@@ -28,7 +28,19 @@ class ProfilingResult:
             op_run: int,
             op_defined: int,
     ) -> None:
-        """Create profiling result instance."""
+        """Create profiling result instance.
+
+        Args:
+            node_name: name of the node
+            total_execution_time: sum of cpu and accelerator execution times in us
+            accelerator_execution_time: accelerator execution time in us
+            cpu_execution_time: cpu execution time in us
+            op_run: number of run OPs
+            op_defined: number of defined OPs
+
+        Returns:
+            None
+        """
         self.node_name = node_name
         self.total_execution_time = total_execution_time
         self.accelerator_execution_time = accelerator_execution_time
@@ -37,7 +49,11 @@ class ProfilingResult:
         self.op_defined = op_defined
 
     def serialize(self) -> dict:
-        """Serialize profiling result."""
+        """Serialize profiling result.
+
+        Returns:
+            Serialized profiling result
+        """
         return {
             "node_name": self.node_name,
             "total_execution_time": self.total_execution_time,

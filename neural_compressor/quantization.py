@@ -31,7 +31,15 @@ from .utils.utility import time_limit, dump_class_attrs
 
 
 def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
-    """Register workload to Neural Insights."""
+    """Register workload to Neural Insights.
+
+    Args:
+        workload_location: path to workload directory
+        model: model to be registered
+
+    Returns:
+        String with Neural Insight workload UUID if registered else None
+    """
     try:
         import os
         from neural_insights import NeuralInsights
@@ -64,7 +72,15 @@ def register_neural_insights_workload(workload_location: str, model: Any) -> Opt
 
 
 def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
-    """Update status of specific workload."""
+    """Update status of specific workload.
+
+    Args:
+        workload_uuid: string with Neural Insight workload UUID if registered else None
+        status: workload status to be set
+
+    Returns:
+        None
+    """
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION
@@ -81,7 +97,16 @@ def update_neural_insights_workload_accuracy_data(
         baseline_accuracy: float,
         optimized_accuracy: float,
 ) -> None:
-    """Update accuracy data of specific workload."""
+    """Update accuracy data of specific workload.
+
+    Args:
+        workload_uuid: string with Neural Insight workload UUID if registered else None
+        baseline_accuracy: accuracy of input model
+        optimized_accuracy: accuracy of optimized model
+
+    Returns:
+        None
+    """
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION

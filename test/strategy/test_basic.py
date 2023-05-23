@@ -4,6 +4,9 @@ import unittest
 import shutil
 import os
 
+from neural_compressor.config import options
+
+
 def build_fake_model():
     import tensorflow as tf
     try:
@@ -46,7 +49,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
-        self.workspace = os.path.join(os.getcwd(), 'nc_workspace')
+        self.workspace = os.path.abspath(options.workspace)
 
     @classmethod
     def tearDownClass(self):
@@ -67,7 +70,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         
         # tuning and accuracy criterion
         conf = PostTrainingQuantConfig()
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_func=fake_eval)
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
         self.assertIsNotNone(q_model)
 
 
@@ -84,8 +87,8 @@ class TestBasicTuningStrategy(unittest.TestCase):
         conf = PostTrainingQuantConfig(diagnosis=True)
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader,\
                 eval_func=lambda model: 1)
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/fp32/inspect_result.pkl')), True)
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/quan/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/fp32/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/quan/inspect_result.pkl')), True)
 
         
 

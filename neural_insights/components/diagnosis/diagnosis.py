@@ -192,7 +192,6 @@ class Diagnosis:
 
         op_histograms = []
         for tensor_name, tensor_data_raw in op_tensors.items():
-            print(f"{tensor_name} shape: {tensor_data_raw.shape} (ndim: {tensor_data_raw.ndim})")
             tensor_histograms = []
 
             if tensor_data_raw.ndim == 1:
@@ -207,7 +206,7 @@ class Diagnosis:
                         "data": tensor_channel_data.flatten().tolist(),
                     },
                 )
-            print(f"Num of histograms: {len(tensor_histograms)}")
+
             op_histograms.append(
                 {
                     "name": f"{tensor_name} {inspect_type} histogram",
@@ -267,7 +266,6 @@ class Diagnosis:
 
         weights = []
         for tensor_name, tensor_data_raw in op_tensors.items():
-            print(f"{tensor_name} shape: {tensor_data_raw.shape} (ndim: {tensor_data_raw.ndim})")
             if tensor_data_raw.ndim != 4:
                 continue
             tensor_data = tensor_data_raw[0]
@@ -279,7 +277,6 @@ class Diagnosis:
             tensor_data = np.transpose(tensor_data, new_order)
 
             if tensor_data.shape[1] != tensor_data.shape[2]:
-                print("Shape is not a square!")
                 continue
 
             for tensor in tensor_data:
