@@ -15,16 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The basic tuning strategy."""
-import copy
-import numpy as np
+
+from copy import deepcopy
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
-from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .utils.tuning_sampler import BlockFallbackTuningSampler
+from .utils.tuning_sampler import (
+    OpTypeWiseTuningSampler,
+    FallbackTuningSampler,
+    BlockFallbackTuningSampler,
+    LowerBitsSampler)
+
 from .utils.tuning_structs import OpTuningConfig
-from .utils.constant import TUNING_ITEMS_LST
+from .utils.constant import TUNING_ITEMS_LST, PRECISION_LIST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
@@ -205,6 +209,19 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
 
+    def requant_to_lower_bits(self, initial_op_tuning_cfg, calib_sampling_size):
+        from .utils.constant import QUNAT_BIT_LIST
+        for quant_bit in QUNAT_BIT_LIST:
+            ops = self.tuning_space.collect_op_by_quant_bits(quant_bit)
+            op_item_dtype_dict = {op.name: quant_bit for op in ops}
+            lower_bits_sampler = LowerBitsSampler(deepcopy(self.tuning_space), [],
+                                                  initial_op_tuning_cfg, op_item_dtype_dict,
+                                                  accumulate=False, skip_first=True)
+            for tune_cfg in lower_bits_sampler:
+                tune_cfg['calib_sampling_size'] = calib_sampling_size
+                yield tune_cfg
+
+
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
 
@@ -279,7 +296,7 @@ class BasicTuneStrategy(TuneStrategy):
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
             # Fallback
-            for target_dtype in ['bf16', 'fp32']:
+            for target_dtype in PRECISION_LIST:
                 target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
                 fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
 

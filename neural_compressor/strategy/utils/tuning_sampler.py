@@ -430,6 +430,59 @@ class FallbackTuningSampler(TuningSampler):
             logger.debug(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
+class LowerBitsSampler(TuningSampler):
+    """Not displayed in API Docs."""
+
+    def __init__(self,
+                 tuning_space: TuningSpace,
+                 tuning_order_lst: List[TuningOrder],
+                 initial_op_tuning_cfg: Dict[tuple, Any],
+                 op_dtypes: Dict[str, str],
+                 accumulate: bool,
+                 skip_first: bool = True
+                 ):
+        """Generate tuning config with lower bits.
+
+        Args:
+            tuning_space: Tuning space.
+            tuning_order_lst: The tuning orders.
+            initial_op_tuning_cfg: The initial tuning config.
+            op_dtypes: The (op name, op type) and its target data type.
+            accumulate: Fallback accumulated or not.
+            skip_first: Skip fallback the first op or not. Defaults to True.
+        """
+        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
+        self.op_dtypes = op_dtypes
+        self.accumulate = accumulate
+        self.skip_first = skip_first
+
+    def __iter__(self):
+        """Yield the next tuning config.
+
+        Yields:
+            The next tuning config.
+        """
+        new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+        skip_first = self.skip_first
+        for op_name_type, target_dtype in self.op_dtypes.items():
+            # Only support fallback to lower precision.
+            if not self.accumulate:
+                new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+            full_path = self.tuning_space.get_op_default_path_by_quant_bits(op_name_type, target_dtype)
+            self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
+            config_args = {}
+            self._set_dtype(op_name_type, config_args)
+            quant_mode = full_path['weight'][0]
+            new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1],
+                                           quant_mode, self.tuning_space,
+                                           kwargs=config_args)
+            new_tune_cfg.update({op_name_type: new_op_config})
+            if self.accumulate and skip_first:  # skip the first one
+                skip_first = False
+                continue
+            logger.debug(f"Quantize {op_name_type} to {target_dtype}")
+            yield new_tune_cfg  # need to skip the first one
+
 class BlockFallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
     def __init__(self,
