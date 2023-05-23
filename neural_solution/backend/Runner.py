@@ -38,6 +38,8 @@ def parse_args(args=None):
         help="Port to monitor result.")
     parser.add_argument("-CEN", "--conda_env_name", type=str, default="inc", \
         help="Conda environment for task execution")
+    parser.add_argument("-UP", "--upload_path", type=str, default="./examples", \
+        help="Custom example path.")
     # ...
     return parser.parse_args(args=args)
 
@@ -54,7 +56,8 @@ def main(args=None):
     rm = ResultMonitor(args.result_monitor_port, task_db)
     t_rm = threading.Thread(target=rm.wait_result)
 
-    ts = Scheduler(cluster, task_db, args.result_monitor_port, conda_env_name=args.conda_env_name)
+    ts = Scheduler(cluster, task_db, args.result_monitor_port, \
+        conda_env_name=args.conda_env_name, upload_path=args.upload_path)
     t_ts = threading.Thread(target=ts.schedule_tasks)
 
     tm = TaskMonitor(args.task_monitor_port, task_db)
@@ -63,7 +66,8 @@ def main(args=None):
     t_rm.start()
     t_ts.start()
     t_tm.start()
-    logger.info("task monitor port {} and result monitor port {}".format(args.task_monitor_port, args.result_monitor_port))
+    logger.info("task monitor port {} and result monitor port {}".\
+        format(args.task_monitor_port, args.result_monitor_port))
     logger.info("server start...")
 
     t_rm.join()

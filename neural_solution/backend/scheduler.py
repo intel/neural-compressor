@@ -40,18 +40,22 @@ cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
 class Scheduler:
-    def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, conda_env_name=None):
+    def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, \
+        conda_env_name=None, upload_path="./examples"):
         """Scheduler dispatches the task with the available resources, calls the mpi command and report results.
 
         Attributes:
             cluster: the Cluster object that manages the server resources
             task_db: the TaskDb object that manages the tasks
             result_monitor_port: The result monitor port to report the accuracy and performance result
+            conda_env_name: The basic environment for task execution
+            upload_path： Custom example path.
         """
         self.cluster = cluster
         self.task_db = task_db
         self.result_monitor_port = result_monitor_port
         self.conda_env_name = conda_env_name
+        self.upload_path = upload_path
 
     def prepare_env(self, task:Task):
         """Check and create a conda environment.
@@ -115,9 +119,8 @@ class Scheduler:
             except subprocess.CalledProcessError as e:
                 logger.info("Failed: {}".format(e.cmd))
         else:
-            # TODO: Assuming the file is uploaded in directory examples
-            upload_path = "./examples"
-            example_path = os.path.abspath(os.path.join(upload_path, task.script_url))
+            # Assuming the file is uploaded in directory examples
+            example_path = os.path.abspath(os.path.join(self.upload_path, task.script_url))
             # only one python file
             script_path = glob.glob(os.path.join(example_path, '*.py'))[0]
             # script_path = glob.glob(os.path.join(example_path, f'*{extension}'))[0]

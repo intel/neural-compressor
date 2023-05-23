@@ -39,6 +39,7 @@ function init_params {
    task_monitor_port=2222
    result_monitor_port=3333
    serve_log_dir=ns_workspace/serve_log
+   upload_path=examples
 
    for var in "$@"
    do
@@ -66,6 +67,9 @@ function init_params {
          ;;
          --conda_env=*)
          conda_env=$(echo $var |cut -f2 -d=)
+         ;;
+         --upload_path=*)
+         upload_path=$(echo $var |cut -f2 -d=)
          ;;
          help|start|stop)
          ;;
@@ -130,6 +134,7 @@ function serve {
          --task_monitor_port $task_monitor_port \
          --result_monitor_port $result_monitor_port \
          --conda_env_name $conda_env_name \
+         --upload_path $upload_path \
           >> $serve_log_dir/backend$date_suffix.log  2>&1 &
          export PYTHONDONTWRITEBYTECODE=1 && gunicorn -b 0.0.0.0:${serve_port} \
          -k uvicorn.workers.UvicornWorker  frontend.fastapi.main_server:app \
@@ -219,9 +224,11 @@ function serve {
          echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, defult 3333'
          echo '    --serve_log_dir      : save the serve log to {serve_log_dir}, defult serve_log'
          echo '    --conda_env          : specify the running environment for the task'
+         echo '    --upload_path        : specify the file path for the tasks'
 
       ;;
-      --hostfile=*|--serve_port=*|--result_monitor_port=*|--task_monitor_port=*|--api_type=*|*serve_log_dir=*|--conda_env=*)
+      --hostfile=*|--serve_port=*|--result_monitor_port=*|--task_monitor_port=*|--api_type=*|*serve_log_dir=*|\
+      --upload_path=*|--conda_env=*)
       ;;
       *)
          echo "Error: No such parameter: ${var}"
