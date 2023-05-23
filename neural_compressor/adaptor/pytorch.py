@@ -29,7 +29,6 @@ from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
 from ..utils.utility import Statistics
 from ..utils import logger
-from ..utils.constant import FP32
 from .query import QueryBackendCapability
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 torch = LazyImport("torch")
