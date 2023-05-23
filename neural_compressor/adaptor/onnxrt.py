@@ -65,6 +65,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.recipes = framework_specific_info.get("recipes", {})
         self.backend = PROVIDERS[framework_specific_info["backend"]]
         self.performance_only = framework_specific_info.get("performance_only", False)
+        self.use_bf16 = framework_specific_info.get("use_bf16", False)
+        self.use_fp16 = framework_specific_info.get("use_fp16", False)
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
@@ -93,6 +95,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             config_file = 'onnxrt_trt.yaml'
         elif self.backend == 'CUDAExecutionProvider':
             config_file = 'onnxrt_cuda.yaml'
+        elif self.backend == 'DnnlExecutionProvider':
+            config_file = 'onnxrt_dnnl.yaml'
         else: # pragma: no cover
             assert False, "{} provider is not supported in current environment, " \
                 "supported providers: {}".format(self.backend,
@@ -590,9 +594,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # typically, NLP models have multiple inputs, 
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
         if not model.is_large_model:
-            sess = ort.InferenceSession(model.model.SerializeToString(), providers=[self.backend])
+            sess = ort.InferenceSession(model.model.SerializeToString(), providers=ort.get_available_providers())
         elif model.model_path is not None: # pragma: no cover
-            sess = ort.InferenceSession(model.model_path, providers=[self.backend])
+            sess = ort.InferenceSession(model.model_path, providers=ort.get_available_providers())
         else: # pragma: no cover
             assert False, "Please use model path instead of onnx model object to quantize."
         input_shape_lens = [len(input.shape) for input in  sess.get_inputs()]
@@ -619,48 +623,51 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         from neural_compressor.adaptor.ox_utils.util import \
             remove_init_from_model_input, split_shared_bias
         remove_init_from_model_input(model)
-        sess_options = ort.SessionOptions()
-        optimization_levels = {
+        try:
+            sess_options = ort.SessionOptions()
+            optimization_levels = {
                 'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
                 'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
                 'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
                 'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
-        if not isinstance(self.query_handler.get_graph_optimization(), list):
-            level = self.query_handler.get_graph_optimization()
-        elif options.onnxrt.graph_optimization.level is not None:
-            level = options.onnxrt.graph_optimization.level
-        elif self.recipes.get('graph_optimization_level', None) is not None:
-            level = self.recipes['graph_optimization_level']
-        else:
-            if self.domain == "auto" and self._detect_domain(model):
-                self.domain = 'nlp' 
-            level = 'ENABLE_EXTENDED' if self.domain == 'nlp' else 'ENABLE_BASIC'
-            logger.warning("Graph optimization level is automatically set to {}. "
-                "You can use 'recipe' argument in 'PostTrainingQuantConfig'" 
-                "to overwrite it".format(level))
-        sess_options.graph_optimization_level = optimization_levels[level]
-        sess_options.optimized_model_filepath = os.path.join(self.work_space, \
-            "Optimized_model.onnx")
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
-            from onnxruntime_extensions import get_library_path
-            sess_options.register_custom_ops_library(get_library_path())
-        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
-        if not model.is_large_model:
-            ort.InferenceSession(model.model.SerializeToString(),
-                                 sess_options,
-                                 providers=[backend])
-        elif model.model_path is not None: # pragma: no cover
-            ort.InferenceSession(model.model_path,
-                                 sess_options,
-                                 providers=[backend])
-        else: # pragma: no cover 
-            logger.warning('Please use model path instead of onnx model object to quantize')
+            if not isinstance(self.query_handler.get_graph_optimization(), list):
+                level = self.query_handler.get_graph_optimization()
+            elif options.onnxrt.graph_optimization.level is not None:
+                level = options.onnxrt.graph_optimization.level
+            elif self.recipes.get('graph_optimization_level', None) is not None:
+                level = self.recipes['graph_optimization_level']
+            else:
+                if self.domain == "auto" and self._detect_domain(model):
+                    self.domain = 'nlp' 
+                level = 'ENABLE_EXTENDED' if self.domain == 'nlp' else 'ENABLE_BASIC'
+                logger.warning("Graph optimization level is automatically set to {}. "
+                    "You can use 'recipe' argument in 'PostTrainingQuantConfig'" 
+                    "to overwrite it".format(level))
+            sess_options.graph_optimization_level = optimization_levels[level]
+            sess_options.optimized_model_filepath = os.path.join(self.work_space, \
+                "Optimized_model.onnx")
+            if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+                from onnxruntime_extensions import get_library_path
+                sess_options.register_custom_ops_library(get_library_path())
+            if not model.is_large_model:
+                ort.InferenceSession(model.model.SerializeToString(),
+                                    sess_options,
+                                    providers=[self.backend])
+            elif model.model_path is not None: # pragma: no cover
+                ort.InferenceSession(model.model_path,
+                                    sess_options,
+                                    providers=[self.backend])
+            else: # pragma: no cover 
+                logger.warning('Please use model path instead of onnx model object to quantize')
 
-        tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
-        if model.is_large_model: # pragma: no cover
-            from onnx.external_data_helper import load_external_data_for_model
-            load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
-        model.model_path = sess_options.optimized_model_filepath
+            tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
+
+            if model.is_large_model: # pragma: no cover
+                from onnx.external_data_helper import load_external_data_for_model
+                load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
+            model.model_path = sess_options.optimized_model_filepath
+        except:
+            tmp_model = model
         model.model = self._replace_gemm_with_matmul(tmp_model).model if \
             options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get('gemm_to_matmul', True) else \
             tmp_model
@@ -859,10 +866,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision in ['fp16', 'bf16'] and (self.device == 'cpu' or self.backend != 'CUDAExecutionProvider'):
+                if precision == 'fp16' and \
+                    (not self.use_fp16 or 'CUDAExecutionProvider' not in ort.get_available_providers()):
                     continue
-                elif precision == 'bf16' and 'CUDAExecutionProvider' not in ort.get_available_providers():
+                if precision == 'bf16' and \
+                    (not self.use_bf16 or (not CpuInfo().bf16 and os.getenv('FORCE_BF16') != '1')):
                     continue
+ 
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
