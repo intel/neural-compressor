@@ -3,8 +3,7 @@ import asyncio
 from unittest.mock import patch, Mock, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import WebSocket
-from neural_solution.frontend.fastapi.main_server import app, serve, websocket_endpoint, LogEventHandler, start_log_watcher, Observer
-from neural_solution.frontend.fastapi.task_submitter import Task
+from neural_solution.frontend.fastapi.main_server import app,  LogEventHandler, start_log_watcher, Observer
 import sqlite3
 import os
 import shutil
@@ -64,7 +63,7 @@ class TestMain(unittest.TestCase):
     def test_read_root(self):
         response = client.get("/")
         assert response.status_code == 200
-        self.assertEqual(response.json(), {"message": "Welcome to NeuralSolution OaaS!"})
+        self.assertEqual(response.json(), {"message": "Welcome to Neural Solution!"})
 
     @patch('neural_solution.frontend.fastapi.main_server.socket')
     def test_ping(self, mock_socket):

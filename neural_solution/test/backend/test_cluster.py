@@ -10,12 +10,18 @@ from neural_solution.backend.cluster import Cluster, Node
 from neural_solution.backend.task import Task
 
 
+from neural_solution.utility import get_task_workspace, get_task_log_workspace, get_db_path
+
+NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
+db_path = get_db_path(NEURAL_SOLUTION_WORKSPACE)
+
+
 class TestCluster(unittest.TestCase):
     @classmethod
     def setUp(self):
         node_lst = [Node("node1", "localhost", 2, 4), Node("node2", "localhost", 2, 4)]
-        self.cluster = Cluster(node_lst)
-        
+        self.cluster = Cluster(node_lst, db_path=db_path)
+
         self.task = Task(
             task_id = "1",
             arguments = ["arg1", "arg2"],

@@ -10,33 +10,42 @@ from neural_solution.backend.cluster import Cluster
 from neural_solution.backend.task_db import TaskDB
 from neural_solution.backend.utils.utility import dump_elapsed_time, get_task_log_path
 
+import os
+
+from neural_solution.utility import get_db_path
+from neural_solution.config import config
+
+NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
+db_path = get_db_path(NEURAL_SOLUTION_WORKSPACE)
+config.workspace = NEURAL_SOLUTION_WORKSPACE
+
 class TestScheduler(unittest.TestCase):
     def setUp(self):
-        self.cluster = Cluster()
-        self.task_db = TaskDB()
+        self.cluster = Cluster(db_path=db_path)
+        self.task_db = TaskDB(db_path=db_path)
         self.result_monitor_port = 1234
-        self.scheduler = Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="for_ns_test")
+        self.scheduler = Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="for_ns_test", config=config)
 
     def tearDown(self) -> None:
         shutil.rmtree("ns_workspace")
-        
+
     @classmethod
     def tearDownClass(cls) -> None:
         shutil.rmtree("examples")
-        
+
     def test_prepare_env(self):
         task = Task("test_task", "test_arguments", "test_workers", "test_status", "test_script_url", \
         "test_optimized", "test_approach", "pip", "test_result", "test_q_model_path")
         result = self.scheduler.prepare_env(task)
         self.assertTrue(result.startswith(self.scheduler.conda_env_name))
-        
+
         # Test requirement in {conda_env} case
         task = Task("test_task", "test_arguments", "test_workers", "test_status", "test_script_url", \
         "test_optimized", "test_approach", "pip", "test_result", "test_q_model_path")
-        scheduler_test = Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="base")
+        scheduler_test = Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="base", config=config)
         result = scheduler_test.prepare_env(task)
         self.assertTrue(result.startswith('base'))
-        
+
         # Test requirement is '' case
         task = Task("test_task", "test_arguments", "test_workers", "test_status", "test_script_url", \
         "test_optimized", "test_approach", "", "test_result", "test_q_model_path")
@@ -52,13 +61,13 @@ class TestScheduler(unittest.TestCase):
             os.makedirs(test_path)
         with open(os.path.join(test_path, "test.py"), "w") as f:
             f.write("# For Test")
-        
+
         self.scheduler.prepare_task(task)
-        
+
         # url case
         with patch('neural_solution.backend.scheduler.is_remote_url', return_value=True):
             self.scheduler.prepare_task(task)
-        
+
         # optimized is False case
         task = Task("test_task", "test_arguments", "test_workers", "test_status",\
             "test_example", \
@@ -70,15 +79,15 @@ class TestScheduler(unittest.TestCase):
             "test_example/test.py", \
             False, "test_approach", "test_requirement", "test_result", "test_q_model_path")
             self.scheduler.prepare_task(task)
-        
-        
+
+
     def test_check_task_status(self):
         log_path = "test_log_path"
-        # done case      
+        # done case
         with patch('builtins.open', mock_open(read_data='[INFO] Save deploy yaml to\n')) as mock_file:
             result = self.scheduler.check_task_status(log_path)
             self.assertEqual(result, 'done')
-    
+
         # failed case
         with patch('builtins.open', mock_open(read_data='[INFO] Deploying...\n')) as mock_file:
             result = self.scheduler.check_task_status(log_path)
@@ -118,8 +127,8 @@ class TestScheduler(unittest.TestCase):
         mock_socket.assert_called_once_with()
         mock_socket.return_value.connect.assert_called_once_with(('localhost', 1234))
         mock_socket.return_value.send.assert_called_once()
-    
-    
+
+
     @patch('neural_solution.backend.scheduler.Scheduler.prepare_task')
     @patch('neural_solution.backend.scheduler.Scheduler.prepare_env')
     @patch('neural_solution.backend.scheduler.Scheduler._parse_cmd')
@@ -139,7 +148,7 @@ class TestScheduler(unittest.TestCase):
 
         self.scheduler.launch_task(task, resource)
 
-    
+
 
     @patch('neural_solution.backend.scheduler.Scheduler.launch_task')
     @patch('neural_solution.backend.cluster.Cluster.reserve_resource')
@@ -149,7 +158,7 @@ class TestScheduler(unittest.TestCase):
         self.task_db.cursor.execute("insert into task values ('1', 'test_arguments', 'test_workers', \
             'test_status', 'test_script_url', \
             'test_optimized', 'test_approach', 'test_requirement', 'test_result', 'test_q_model_path')")
-        
+
         # no pending task case
         adding_abort = threading.Thread(
             target=self.scheduler.schedule_tasks,
@@ -158,7 +167,7 @@ class TestScheduler(unittest.TestCase):
         )
         adding_abort.start()
         adding_abort.join(timeout=10)
-        
+
         # task case
         self.task_db.append_task(task1)
         mock_reserve_resource.return_value = [("node1", 8)]
@@ -171,7 +180,7 @@ class TestScheduler(unittest.TestCase):
         )
         adding_abort.start()
         adding_abort.join(timeout=10)
-        
+
         # no resource case
         self.task_db.append_task(task1)
         mock_reserve_resource.return_value = False
@@ -182,16 +191,16 @@ class TestScheduler(unittest.TestCase):
         )
         adding_abort.start()
         adding_abort.join(timeout=10)
-        
+
 
 class TestParseCmd(unittest.TestCase):
 
     def setUp(self):
-        self.cluster = Cluster()
-        self.task_db = TaskDB()
+        self.cluster = Cluster(db_path=db_path)
+        self.task_db = TaskDB(db_path=db_path)
         self.result_monitor_port = 1234
         self.task_scheduler = \
-            Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="for_ns_test")
+            Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="for_ns_test", config=config)
         self.task = MagicMock()
         self.resource = ['1 node1', '2 node2', '3 node3']
         self.task.workers = 3
@@ -206,7 +215,7 @@ class TestParseCmd(unittest.TestCase):
         self.task.task_path = self.task_path
         self.task_scheduler.script_name = self.script_name
         self.task_scheduler.task_path = self.task_path
-        
+
     def test__parse_cmd(self):
         expected_cmd = 'cd /path/to/task\nmpirun -np 3 -host node1,node2,node3 -map-by socket:pe=5' + \
         ' -mca btl_tcp_if_include 192.168.20.0/24 -x OMP_NUM_THREADS=5 --report-bindings bash distributed_run.sh'
@@ -217,7 +226,7 @@ class TestParseCmd(unittest.TestCase):
             patch('neural_solution.backend.scheduler.os.makedirs') as mock_os_makedirs, \
             patch('builtins.open', create=True) as mock_open, \
             patch('neural_solution.backend.scheduler.os.path.join') as mock_os_path_join:
-            
+
             mock_prepare_task.return_value = None
             mock_prepare_env.return_value = 'test_env'
             mock_logger_info.return_value = None
@@ -226,10 +235,10 @@ class TestParseCmd(unittest.TestCase):
             mock_open.return_value.__enter__ = lambda x: x
             mock_open.return_value.__exit__ = MagicMock()
             mock_os_path_join.return_value = '/path/to/task/distributed_run.sh'
-            
+
             result = self.task_scheduler._parse_cmd(self.task, self.resource)
             self.assertEqual(result, expected_cmd)
-            
+
             mock_prepare_task.assert_called_once_with(self.task)
             mock_prepare_env.assert_called_once_with(self.task)
             mock_logger_info.assert_called_once_with('[TaskScheduler] host resource: node1,node2,node3')
@@ -237,7 +246,7 @@ class TestParseCmd(unittest.TestCase):
             mock_os_makedirs.assert_called_once_with('/path/to/task/q_model_path')
             mock_open.assert_called_once_with('/path/to/task/distributed_run.sh', 'w', encoding='utf-8')
             mock_os_path_join.assert_called_once_with('/path/to/task', 'distributed_run.sh')
-           
+
             self.task.optimized = False
             result = self.task_scheduler._parse_cmd(self.task, self.resource)
             self.assertEqual(result, expected_cmd)

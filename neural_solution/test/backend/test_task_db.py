@@ -3,15 +3,21 @@ import unittest
 from unittest.mock import patch, MagicMock
 from neural_solution.backend.task_db import TaskDB, Task
 import shutil
+import os
+
+from neural_solution.utility import get_db_path
+
+NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
+db_path = get_db_path(NEURAL_SOLUTION_WORKSPACE)
 
 class TestTaskDB(unittest.TestCase):
 
     def setUp(self):
-        self.taskdb = TaskDB()
+        self.taskdb = TaskDB(db_path=db_path)
         self.task = Task(
             '1',
             'arguments',
-            1, 
+            1,
             'pending',
             'script_url',
             0, 'approach',
