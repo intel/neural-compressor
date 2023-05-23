@@ -31,7 +31,7 @@ ort = LazyImport('onnxruntime')
 ortq = LazyImport('onnxruntime.quantization')
 
 def _prepare_intputs(pt_model, input_names, example_inputs):
-    """prepare input_names and example_inputs"""
+    """Prepare input_names and example_inputs."""
     if input_names is None and \
       (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
         input_names = list(example_inputs.keys())
@@ -75,7 +75,8 @@ def torch_to_fp32_onnx(
         save_path (str): save path of ONNX model.
         example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
         opset_version (int, optional): opset version. Defaults to 14.
-        dynamic_axes (dict, optional): dynamic axes. Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+        dynamic_axes (dict, optional): dynamic axes. Defaults to 
+            {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
         input_names (dict, optional): input names. Defaults to None.
         output_names (dict, optional): output names. Defaults to None.
         do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
@@ -127,7 +128,8 @@ def torch_to_int8_onnx(
         example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
         q_config (dict): containing quantization configuration.
         opset_version (int, optional): opset version. Defaults to 14.
-        dynamic_axes (dict, optional): dynamic axes. Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+        dynamic_axes (dict, optional): dynamic axes. Defaults to 
+            {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
         input_names (dict, optional): input names. Defaults to None.
         output_names (dict, optional): output names. Defaults to None.
         quant_format (str, optional): _quantization format of ONNX model. Defaults to 'QDQ'.

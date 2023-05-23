@@ -21,11 +21,47 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 
 ## Supported Framework Model Matrix
 
-| Export | PyTorch | TensorFlow |
-| :---: | :---: |:----------:|
-| FP32 Model -> FP32 ONNX Model | &#10004; |  &#10004;  |
-| INT8 Model -> INT8 QDQ ONNX Model | &#10004; |  &#10004;  |
-| INT8 Model -> INT8 QLinear ONNX Model | &#10004; | :x: |
+<table>
+<thead>
+  <tr>
+    <th>Framework</th>
+    <th>model type</th>
+    <th>exported ONNX model type</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="4">PyTorch</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QDQ/QLinear INT8</td>
+  </tr>
+  <tr>
+    <td>Post-Training Dynamic Quantized INT8</td>
+    <td>not supported</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QDQ/QLinear INT8</td>
+  </tr>
+  <tr>
+    <td rowspan="3">TensorFlow</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+</tbody>
+</table>
 
 ## Examples
 
