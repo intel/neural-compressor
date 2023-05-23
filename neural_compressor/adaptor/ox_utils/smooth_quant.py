@@ -53,7 +53,7 @@ def get_quant_dequant_output(model, input_data, output_data, reduce_range, backe
     loss = np.sum(np.abs(output_data - preds) ** 2)
     return loss
 
-def make_sub_graph(node, inits, input_data, output_data, reduce_range):
+def make_sub_graph(node, inits, input_data, output_data, reduce_range, opset):
     """Build a model with the specific node.
     
     Args:
@@ -62,6 +62,7 @@ def make_sub_graph(node, inits, input_data, output_data, reduce_range):
         input_data (numpy.ndarray): fp32 input
         output_data (numpy.ndarray): fp32 output
         reduce_range (bool): use 7 bit or not
+        opset (object): opset of the model
     """
     from onnx import helper, TensorProto, numpy_helper
     input = helper.make_tensor_value_info(node.input[0], dtype_map[input_data.dtype], input_data.shape)
@@ -78,7 +79,7 @@ def make_sub_graph(node, inits, input_data, output_data, reduce_range):
                                 len(numpy_helper.to_array(init)) != 0 else [numpy_helper.to_array(init)])
         init.CopyFrom(new_tensor)
     graph = helper.make_graph([node], 'sub_graph', [input], [output], inits)
-    model = helper.make_model(graph)
+    model = helper.make_model(graph, opset_imports=opset)
     return model
 
 def quant_dequant_data(data, reduce_range=False, qType=3, scheme='sym'):
@@ -378,7 +379,7 @@ class ORTSmoothQuant:
                     ort_inputs = dict(zip(inputs_names, [np.array(i) for i in inputs]))
                 outputs = session.run(added_tensors, ort_inputs)
                 if model is None:
-                    model = make_sub_graph(node, inits, outputs[0], outputs[1], self.reduce_range)
+                    model = make_sub_graph(node, inits, outputs[0], outputs[1], self.reduce_range, self.model.model.opset_import)
                 loss += get_quant_dequant_output(model, outputs[0], outputs[1], self.reduce_range, self.backend)
 
             self.model.remove_tensors_from_outputs(added_tensors)
