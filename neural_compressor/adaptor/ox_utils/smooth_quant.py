@@ -379,7 +379,8 @@ class ORTSmoothQuant:
                     ort_inputs = dict(zip(inputs_names, [np.array(i) for i in inputs]))
                 outputs = session.run(added_tensors, ort_inputs)
                 if model is None:
-                    model = make_sub_graph(node, inits, outputs[0], outputs[1], self.reduce_range, self.model.model.opset_import)
+                    model = make_sub_graph(node, inits, outputs[0], outputs[1],
+                        self.reduce_range, self.model.model.opset_import)
                 loss += get_quant_dequant_output(model, outputs[0], outputs[1], self.reduce_range, self.backend)
 
             self.model.remove_tensors_from_outputs(added_tensors)
