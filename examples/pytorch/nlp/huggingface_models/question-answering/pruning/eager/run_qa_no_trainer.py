@@ -988,7 +988,7 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
-    import pdb;pdb.set_trace()
+    
     compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
@@ -1175,5 +1175,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
