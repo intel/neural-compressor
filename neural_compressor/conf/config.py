@@ -18,7 +18,6 @@
 import yaml
 from schema import Schema, And, Use, Optional, Or, Hook
 
-from .pythonic_config import Config, QuantizationConfig, BenchmarkConfig
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils import logger

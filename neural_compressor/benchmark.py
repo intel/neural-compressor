@@ -22,7 +22,6 @@ import signal
 import subprocess
 import sys
 from threading import Thread
-from typing import Optional, Any
 
 import numpy as np
 import psutil
@@ -38,6 +37,8 @@ from .objective import MultiObjective
 from .profiling.parser.parser import ProfilingParser
 from .profiling.profiler.profiler import Profiler
 from .utils import alias_param, logger, OPTIONS
+from .utils.neural_insights_utils import register_neural_insights_workload, \
+    update_neural_insights_workload
 from .utils.utility import GLOBAL_STATE, MODE, print_table, dump_table
 from .utils.utility import Statistics
 
@@ -487,68 +488,6 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
     summary_benchmark()
 
 
-def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
-    """Register workload to Neural Insights.
-
-    Args:
-        workload_location: path to workload directory
-        model: model to be registered
-
-    Returns:
-        String with Neural Insight workload UUID if registered else None
-    """
-    try:
-        import os
-        from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
-
-        model_path = None
-        if isinstance(model, str):
-            model_path: str = os.path.abspath(model)
-        else:
-            import onnx
-            if isinstance(model, onnx.ModelProto):
-                model_path: str = os.path.join(workload_location, "input_model.onnx")
-                os.makedirs(workload_location, exist_ok=True)
-                onnx.save(model, model_path)
-        assert isinstance(model_path, str), 'Model path not detected'
-
-        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
-        ni_workload_uuid = neural_insights.add_workload(
-            workload_location=workload_location,
-            workload_mode=WorkloadModes.BENCHMARK,
-            model_path=model_path,
-        )
-        logger.info("Registered benchmark workload to Neural Insights.")
-        return ni_workload_uuid
-    except ImportError:
-        logger.info("Neural Insights not found.")
-    except Exception as err:
-        logger.warning(f"Could not register workload to Neural Insights: {err}.")
-    return None
-
-
-def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
-    """Update status of specific workload.
-
-    Args:
-        workload_uuid: string with Neural Insight workload UUID if registered else None
-        status: workload status to be set
-
-    Returns:
-        None
-    """
-    try:
-        from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WORKDIR_LOCATION
-        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
-        neural_insights.update_workload_status(workload_uuid, status)
-    except ImportError:
-        logger.info("Neural Insights not found.")
-    except Exception as err:
-        logger.warning(f"Could not update workload status: {err}.")
-
-
 @alias_param("conf", param_alias='config')
 def fit(model, conf, b_dataloader=None, b_func=None):
     """Benchmark the model performance with the configure.
@@ -589,6 +528,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         ni_workload_id = register_neural_insights_workload(
             workload_location=os.path.abspath(os.path.abspath(options.workspace)),
             model=model,
+            workload_mode="benchmark",
         )
         try:
             update_neural_insights_workload(ni_workload_id, "wip")

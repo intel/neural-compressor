@@ -18,7 +18,6 @@
 import os
 import pickle
 import random
-from typing import Optional, Any
 
 import numpy as np
 from .config import _Config, options
@@ -27,99 +26,9 @@ from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
+from .utils.neural_insights_utils import register_neural_insights_workload, \
+    update_neural_insights_workload, update_neural_insights_workload_accuracy_data
 from .utils.utility import time_limit, dump_class_attrs
-
-
-def register_neural_insights_workload(workload_location: str, model: Any) -> Optional[str]:
-    """Register workload to Neural Insights.
-
-    Args:
-        workload_location: path to workload directory
-        model: model to be registered
-
-    Returns:
-        String with Neural Insight workload UUID if registered else None
-    """
-    try:
-        import os
-        from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
-
-        model_path = None
-        if isinstance(model, str):
-            model_path = os.path.abspath(model)
-        else:
-            import onnx
-            if isinstance(model, onnx.ModelProto):
-                model_path = os.path.join(workload_location, "input_model.onnx")
-                onnx.save(model, model_path)
-        assert isinstance(model_path, str), 'Model path not detected'
-
-        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
-        ni_workload_uuid = neural_insights.add_workload(
-            workload_location=workload_location,
-            workload_mode=WorkloadModes.QUANTIZATION,
-            model_path=model_path,
-            # TODO: Get path for other frameworks than TF
-        )
-        logger.info("Registered quantization workload to Neural Insights.")
-        return ni_workload_uuid
-    except ImportError:
-        logger.info("Neural Insights not found.")
-    except Exception:
-        logger.warning("Could not register workload to Neural Insights.")
-    return None
-
-
-def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
-    """Update status of specific workload.
-
-    Args:
-        workload_uuid: string with Neural Insight workload UUID if registered else None
-        status: workload status to be set
-
-    Returns:
-        None
-    """
-    try:
-        from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WORKDIR_LOCATION
-        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
-        neural_insights.update_workload_status(workload_uuid, status)
-    except ImportError:
-        logger.info("Neural Insights not found.")
-    except Exception as err:
-        logger.warning(f"Could not update workload status: {err}.")
-
-
-def update_neural_insights_workload_accuracy_data(
-        workload_uuid: str,
-        baseline_accuracy: float,
-        optimized_accuracy: float,
-) -> None:
-    """Update accuracy data of specific workload.
-
-    Args:
-        workload_uuid: string with Neural Insight workload UUID if registered else None
-        baseline_accuracy: accuracy of input model
-        optimized_accuracy: accuracy of optimized model
-
-    Returns:
-        None
-    """
-    try:
-        from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WORKDIR_LOCATION
-        neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
-        neural_insights.update_workload_accuracy_data(
-            workload_uuid,
-            baseline_accuracy,
-            optimized_accuracy,
-        )
-    except ImportError:
-        logger.info("Neural Insights not found.")
-    except Exception as err:
-        logger.warning(f"Could not update workload accuracy data: {err}.")
 
 
 def fit(model,
@@ -299,6 +208,7 @@ def fit(model,
                 ni_workload_id = register_neural_insights_workload(
                     workload_location=os.path.abspath(options.workspace),
                     model=_raw_model,
+                    workload_mode="quantization",
                 )
                 if ni_workload_id:
                     update_neural_insights_workload(ni_workload_id, "wip")
