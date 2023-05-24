@@ -7,11 +7,11 @@ import shutil
 from neural_solution.backend.Runner import parse_args, main
 
 class TestMain(unittest.TestCase):
-    
+
     @classmethod
     def tearDownClass(cls) -> None:
         os.remove('test.txt')
-        shutil.rmtree("ns_workspace")
+        shutil.rmtree("ns_workspace", ignore_errors=True)
 
     def test_parse_args(self):
         args = ['-H', 'path/to/hostfile', '-TMP', '2222', '-RMP', '3333', '-CEN', 'inc']
@@ -34,6 +34,6 @@ class TestMain(unittest.TestCase):
         )
         adding_abort.start()
         adding_abort.join(timeout=2)
-        
+
 if __name__ == '__main__':
     unittest.main()

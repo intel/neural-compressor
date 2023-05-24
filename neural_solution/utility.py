@@ -12,23 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Config for both frontend and backend."""
+import os
 
-#Constant for execute MPI task
-NUM_THREADS_PER_PROCESS = 5
-NUM_CORES_PER_SOCKET = 5 # TODO replace it according the node
-NUM_SOCKETS = 2
+def get_db_path(workspace="./"):
+    return os.path.join(workspace, "db", "task.db")
 
-INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
+def get_task_workspace(workspace="./"):
+    return os.path.join(workspace, "task_workspace")
 
-#Constant for conda # TODO remove it
-INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor" # TODO detect it automatically
+def get_task_log_workspace(workspace="./"):
+    return os.path.join(workspace, "task_log")
 
-class Config:
-    workspace = "./ns_workspace"
-    task_monitor_port = 2222
-    result_monitor_port = 3333
-    service_address = "localhost"
-    #TODO add set and get methods for each attribute
-
-config = Config()
+def get_serve_log_workspace(workspace="./"):
+    return os.path.join(workspace, "serve_log")

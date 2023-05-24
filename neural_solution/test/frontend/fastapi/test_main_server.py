@@ -3,11 +3,12 @@ import asyncio
 from unittest.mock import patch, Mock, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import WebSocket
-from neural_solution.frontend.fastapi.main_server import app, serve, websocket_endpoint, LogEventHandler, start_log_watcher, Observer
-from neural_solution.frontend.fastapi.task_submitter import Task
+from neural_solution.frontend.fastapi.main_server import app,  LogEventHandler, start_log_watcher, Observer
 import sqlite3
 import os
 import shutil
+
+from neural_solution.config import config
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
@@ -16,6 +17,8 @@ TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
 SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
 client = TestClient(app)
+
+
 def build_db():
     if not os.path.exists(DB_PATH):
         os.makedirs(DB_PATH)
@@ -64,7 +67,7 @@ class TestMain(unittest.TestCase):
     def test_read_root(self):
         response = client.get("/")
         assert response.status_code == 200
-        self.assertEqual(response.json(), {"message": "Welcome to NeuralSolution OaaS!"})
+        self.assertEqual(response.json(), {"message": "Welcome to Neural Solution!"})
 
     @patch('neural_solution.frontend.fastapi.main_server.socket')
     def test_ping(self, mock_socket):
@@ -100,7 +103,7 @@ class TestMain(unittest.TestCase):
         assert "description" in response.text
         shutil.rmtree(path)
 
-    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.task_submitter.submit_task")
     def test_submit_task(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -155,7 +158,7 @@ class TestMain(unittest.TestCase):
         delete_db()
 
     @use_db()
-    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.task_submitter.submit_task")
     def test_get_task_by_id(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -181,7 +184,7 @@ class TestMain(unittest.TestCase):
         assert response.json()["message"] is None
 
     @use_db()
-    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.task_submitter.submit_task")
     def test_get_task_status_by_id(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -227,6 +230,8 @@ class TestLogEventHandler(unittest.TestCase):
         self.assertIsInstance(handler.timer, asyncio.Task)
 
     def test_on_modified(self):
+        from neural_solution.config import config
+        config.workspace = NEURAL_SOLUTION_WORKSPACE
         mock_websocket = MagicMock()
         mock_websocket.send_text = MagicMock()
         task_id = "1234"

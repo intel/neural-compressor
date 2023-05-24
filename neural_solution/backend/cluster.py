@@ -19,11 +19,10 @@ from typing import List
 from .task import Task
 from .utils.utility import synchronized, create_dir
 from .utils import logger
-from neural_solution.config import DB_PATH
 from collections import Counter
 
 class Cluster:
-    def __init__(self, node_lst=[]):
+    def __init__(self, node_lst=[], db_path=None):
         """Cluster manages all the server resources.
 
         TaskDb provides atomic operations on managing the resource dict.
@@ -39,8 +38,9 @@ class Cluster:
         self.lock = threading.Lock()
         self.node_lst = node_lst
         self.socket_queue = []
-        create_dir(DB_PATH)
-        self.conn = sqlite3.connect(f'{DB_PATH}', check_same_thread=False)
+        self.db_path = db_path
+        create_dir(db_path)
+        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)
         self.initial_cluster_from_node_lst(node_lst)
         self.lock = threading.Lock()
 
@@ -104,7 +104,7 @@ class Cluster:
 
     @synchronized
     def initial_cluster_from_node_lst(self, node_lst):
-        self.conn = sqlite3.connect(f'{DB_PATH}', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        self.conn = sqlite3.connect(f'{self.db_path}', check_same_thread=False)  # sqlite should set this check_same_thread to False
         self.cursor = self.conn.cursor()
         self.cursor.execute('drop table if exists cluster ')
         self.cursor.execute(r'create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,' +

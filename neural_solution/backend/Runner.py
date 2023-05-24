@@ -11,20 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-from neural_solution.backend import Cluster, TaskDB, Scheduler, TaskMonitor, ResultMonitor
-import threading
-import socket
-import time
-
-from neural_solution.backend.cluster import Node, Cluster
-from neural_solution.backend.utils.utility import build_cluster
-from neural_solution.backend.utils import logger
+"""Main backend runner."""
 
 import threading
 import argparse
 
+from neural_solution.backend import TaskDB, Scheduler, TaskMonitor, ResultMonitor
+from neural_solution.backend.utils import logger
+from neural_solution.backend.utils.utility import (
+    build_cluster,
+    get_db_path
+    )
+from neural_solution.config import config
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Incserve runner automatically schedules multiple inc tasks and\
@@ -36,28 +34,42 @@ def parse_args(args=None):
         help="Port to monitor task.")
     parser.add_argument("-RMP", "--result_monitor_port", type=int, default=3333, \
         help="Port to monitor result.")
+    parser.add_argument("-WS", "--workspace", type=str, default="./", \
+        help="Work space.")
     parser.add_argument("-CEN", "--conda_env_name", type=str, default="inc", \
         help="Conda environment for task execution")
     parser.add_argument("-UP", "--upload_path", type=str, default="./examples", \
         help="Custom example path.")
-    # ...
+
     return parser.parse_args(args=args)
 
 def main(args=None):
+    """_summary_
+
+    The main entry of backend:
+        create the task db
+        start the result monitor
+        start the task scheduler
+        start the task monitor
+    """
     args = parse_args(args)
 
+    logger.info(f"Current workspace {args.workspace}")
+    db_path = get_db_path(args.workspace)
+
     # Initialize cluster from the host file. If there is no host file, build one local cluster.
-    cluster = build_cluster(args.hostfile)
+    cluster = build_cluster(args.hostfile, db_path)
 
     # initialize the task db
-    task_db = TaskDB()
+    task_db = TaskDB(db_path)
 
     # start three threads
     rm = ResultMonitor(args.result_monitor_port, task_db)
     t_rm = threading.Thread(target=rm.wait_result)
+    config.workspace = args.workspace
 
     ts = Scheduler(cluster, task_db, args.result_monitor_port, \
-        conda_env_name=args.conda_env_name, upload_path=args.upload_path)
+        conda_env_name=args.conda_env_name, upload_path=args.upload_path, config=config)
     t_ts = threading.Thread(target=ts.schedule_tasks)
 
     tm = TaskMonitor(args.task_monitor_port, task_db)

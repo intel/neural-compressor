@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
 class Task:
     """A Task is an abstraction of a user tuning request that is handled in inc-serve.
 

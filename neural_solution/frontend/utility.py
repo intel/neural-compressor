@@ -22,14 +22,16 @@ import pandas as pd
 
 
 from neural_solution.frontend.task_submitter import TaskSubmitter
-from neural_solution.config import DB_PATH
+from neural_solution.config import config
+from neural_solution.utility import get_db_path
+
 
 # Get config from Launcher.sh
 task_monitor_port = int(os.environ.get("TASK_MONITOR_PORT", 2222))
 result_monitor_port = int(os.environ.get('RESULT_MONITOR_PORT', 3333))
 
 task_submitter = TaskSubmitter(task_monitor_port=task_monitor_port, result_monitor_port=task_monitor_port)
-db_path = DB_PATH
+db_path = get_db_path(config.workspace)
 
 def submit_task_to_db(task):
     msg = "Task submitted failed"

@@ -10,5 +10,5 @@ def test_launch_task():
     scheduler = Scheduler(cluster=cluster, task_db=task_db, result_monitor_port=None)
     resource = cluster.get_free_socket(task.unit_num)
     scheduler.launch_task(task=task, resource=resource)
-    
+
 test_launch_task()
