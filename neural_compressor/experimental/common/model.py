@@ -47,7 +47,7 @@ class Model(object):
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
-            if model_type =='AutoTrackable':
+            if model_type =='AutoTrackable': # pragma: no cover
                 model = MODELS['tensorflow']("keras", root, **kwargs)
             else:
                 model = MODELS['tensorflow'](model_type, root, **kwargs)

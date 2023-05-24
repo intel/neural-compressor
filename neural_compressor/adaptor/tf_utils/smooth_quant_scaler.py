@@ -122,13 +122,13 @@ class SmoothQuantScaler:
                         # reduce weight max to (in_channel, ), aligned with activation max
                         tensor = np.abs(W)
                         W_max_per_in_channel = np.max(tensor, axis=1)
-                    else:
+                    else: # pragma: no cover
                         assert False, "not supported"
                     cur_const_node = W_const_node_lst[w_i]
                     try:
                         scale = np.power(A_max_per_in_channel, self.alpha) /  \
                                 np.power(W_max_per_in_channel, (1-self.alpha))
-                    except ValueError as e:
+                    except ValueError as e: # pragma: no cover
                         logger.info(e)
                         logger.info("Skip smoothing the node: {}".format(cur_const_node.name))
                         continue

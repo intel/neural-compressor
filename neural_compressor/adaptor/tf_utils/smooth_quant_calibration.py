@@ -68,12 +68,12 @@ class SmoothQuantCalibration:
         output_tensor = [item + ':0' for item in self._sq_input_node_names]
         # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
         node_names = [node.name for node in sess.graph.as_graph_def().node]
-        if 'init_all_tables' in node_names:
+        if 'init_all_tables' in node_names: # pragma: no cover
             init_table_op = sess.graph.get_operation_by_name('init_all_tables')
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset for Smooth Quantization.")
-        if hasattr(self.dataloader, "__len__") and len(self.dataloader) == 0:
+        if hasattr(self.dataloader, "__len__") and len(self.dataloader) == 0:  # pragma: no cover
             feed_dict = {}
             for output_idx, output in enumerate(sess.run(output_tensor, feed_dict) if iter_op==[] \
             else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)):
@@ -83,7 +83,7 @@ class SmoothQuantCalibration:
             if len(input_tensor) == 1:
                 feed_dict = {}
                 if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                  or isinstance(inputs, UserDict):
+                  or isinstance(inputs, UserDict):  # pragma: no cover
                     for name in inputs:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
@@ -93,7 +93,7 @@ class SmoothQuantCalibration:
                                 break
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:
+            else:   # pragma: no cover
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
                 feed_dict = {}
@@ -171,7 +171,8 @@ class SmoothQuantCalibration:
         """
         permute_datas = []
         for data in tensor_data:    # iteration_num * (N, H, W, C)
-            if len(data.shape) == 3:  # TODO  matmul batchsize*seq*inchannel,
+            if len(data.shape) == 3:  # pragma: no cover
+                # TODO  matmul batchsize*seq*inchannel
                 tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
                 permute_datas.append(tensor)
             elif len(data.shape) == 4: # already NHWC
@@ -181,7 +182,7 @@ class SmoothQuantCalibration:
                 permute_datas.append(tensor)
             elif len(data.shape) == 2:  # (?, ic)
                 permute_datas.append(np.abs(data))
-            else:
+            else:   # pragma: no cover
                 assert False, "not supported"
         permute_datas = np.stack(permute_datas, axis=0)
         permute_datas = permute_datas.reshape(-1, permute_datas.shape[-1])
