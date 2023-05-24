@@ -66,9 +66,6 @@ function init_params {
          check_port $result_monitor_port
          result_monitor_port=$(echo $var |cut -f2 -d=)
          ;;
-         --serve_log_dir=*)
-         serve_log_dir=$(echo $var |cut -f2 -d=)
-         ;;
          --conda_env=*)
          conda_env=$(echo $var |cut -f2 -d=)
          ;;
@@ -141,10 +138,6 @@ function serve {
          --conda_env_name $conda_env_name \
          --upload_path $upload_path \
           >> $serve_log_dir/backend$date_suffix.log  2>&1 &
-        #  export PYTHONDONTWRITEBYTECODE=1 && gunicorn -b 0.0.0.0:${serve_port} \
-        #  -k uvicorn.workers.UvicornWorker  frontend.fastapi.main_server:app \
-        #  --env TASK_MONITOR_PORT=$task_monitor_port \
-        #  --env RESULT_MONITOR_PORT=$result_monitor_port \
          export PYTHONDONTWRITEBYTECODE=1 && python ./frontend/fastapi/main_server.py \
          --host "0.0.0.0"\
          --fastapi_port $serve_port\
@@ -214,13 +207,11 @@ function serve {
       stop)
 
          # kill the remaining processes
-         lsof -i | grep gunicorn| grep LISTEN |awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
-         # TODO update it with new start way
          lsof -i | grep mpirun|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
          lsof -i | grep python|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
 
          # Service End
-         echo "Neural Solution END!"
+         echo "Neural Solution STOPPED!"
       ;;
       help)
          echo
@@ -235,8 +226,6 @@ function serve {
          echo '    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222'
          echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, defult 3333'
          echo '    --workspace          : neural solution workspace, defult "./"'
-         echo '    --serve_log_dir      : save the serve log to {serve_log_dir}, defult serve_log'
-         # TODO serve_log_dir should not exposed to user
          echo '    --conda_env          : specify the running environment for the task'
          echo '    --upload_path        : specify the file path for the tasks'
 

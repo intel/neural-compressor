@@ -54,7 +54,7 @@ def main(args=None):
     """
     args = parse_args(args)
 
-    print(f"args. workspace {args.workspace}")
+    logger.info(f"Current workspace {args.workspace}")
     db_path = get_db_path(args.workspace)
 
     # Initialize cluster from the host file. If there is no host file, build one local cluster.

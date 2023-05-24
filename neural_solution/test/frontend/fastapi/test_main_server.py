@@ -8,6 +8,8 @@ import sqlite3
 import os
 import shutil
 
+from neural_solution.config import config
+
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
 TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
@@ -15,6 +17,8 @@ TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
 SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
 client = TestClient(app)
+
+
 def build_db():
     if not os.path.exists(DB_PATH):
         os.makedirs(DB_PATH)
@@ -99,7 +103,7 @@ class TestMain(unittest.TestCase):
         assert "description" in response.text
         shutil.rmtree(path)
 
-    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.task_submitter.submit_task")
     def test_submit_task(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -154,7 +158,7 @@ class TestMain(unittest.TestCase):
         delete_db()
 
     @use_db()
-    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.task_submitter.submit_task")
     def test_get_task_by_id(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -180,7 +184,7 @@ class TestMain(unittest.TestCase):
         assert response.json()["message"] is None
 
     @use_db()
-    @patch("neural_solution.frontend.fastapi.main_server.serve.submit_task")
+    @patch("neural_solution.frontend.fastapi.main_server.task_submitter.submit_task")
     def test_get_task_status_by_id(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
@@ -226,6 +230,8 @@ class TestLogEventHandler(unittest.TestCase):
         self.assertIsInstance(handler.timer, asyncio.Task)
 
     def test_on_modified(self):
+        from neural_solution.config import config
+        config.workspace = NEURAL_SOLUTION_WORKSPACE
         mock_websocket = MagicMock()
         mock_websocket.send_text = MagicMock()
         task_id = "1234"

@@ -25,6 +25,7 @@ from neural_solution.frontend.task_submitter import TaskSubmitter
 from neural_solution.config import config
 from neural_solution.utility import get_db_path
 
+
 # Get config from Launcher.sh
 task_monitor_port = int(os.environ.get("TASK_MONITOR_PORT", 2222))
 result_monitor_port = int(os.environ.get('RESULT_MONITOR_PORT', 3333))

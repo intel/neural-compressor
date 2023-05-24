@@ -115,6 +115,7 @@ class Scheduler:
             task (Task): _description_
         """
         self.task_path = build_workspace(path=get_task_workspace(self.config.workspace), task_id=task.task_id)
+        logger.info(f"****TASK PATH: {self.task_path}")
         if is_remote_url(task.script_url):
             task_url = task.script_url.replace('github.com', 'raw.githubusercontent.com').replace('blob','')
             try:
