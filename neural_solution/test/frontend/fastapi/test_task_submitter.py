@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 import socket
-from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
+from neural_solution.frontend.task_submitter import TaskSubmitter, Task
 
 class TestTask(unittest.TestCase):
     def test_task_creation(self):
@@ -39,4 +39,4 @@ class TestTaskSubmitter(unittest.TestCase):
         mock_socket.return_value.close.assert_called_once()
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

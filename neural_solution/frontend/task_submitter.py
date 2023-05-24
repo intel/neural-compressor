@@ -17,6 +17,8 @@ import socket
 import json
 from pydantic import BaseModel
 
+from neural_solution.config import config
+
 class Task(BaseModel):
     script_url: str
     optimized: bool
@@ -40,3 +42,6 @@ class TaskSubmitter:
         s.connect((self.service_address, self.task_monitor_port))
         s.send(self.serialize(tid))
         s.close()
+
+task_submitter = TaskSubmitter(task_monitor_port=config.task_monitor_port,
+                               result_monitor_port=config.result_monitor_port)

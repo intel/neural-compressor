@@ -14,7 +14,7 @@
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
-from neural_solution.frontend.fastapi.task_submitter import TaskSubmitter, Task
+from neural_solution.frontend.task_submitter import Task, task_submitter
 from neural_solution.frontend.utility import (
     get_cluster_info,
     get_cluster_table,
@@ -41,15 +41,10 @@ from neural_solution.utility import (
 
 from neural_solution.config import config
 
-task_submitter = TaskSubmitter(task_monitor_port=config.task_monitor_port,
-                               result_monitor_port=config.result_monitor_port)
-
-
 
 # Get config from Launcher.sh
 task_monitor_port = None
 result_monitor_port = None
-TASK_LOG_path = get_task_log_workspace(config.workspace)
 DB_PATH = None
 
 app = FastAPI()
@@ -292,7 +287,6 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
 if __name__ == "__main__":
     # parse the args and modified the config accordingly
     args = parse_arguments()
-    TASK_LOG_path = get_task_log_workspace(args.workspace)
     config.workspace = args.workspace
     DB_PATH = get_db_path(config.workspace)
     config.task_monitor_port = args.task_monitor_port
