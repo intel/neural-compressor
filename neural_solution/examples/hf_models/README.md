@@ -18,7 +18,7 @@ conda activate ENV
 bash serve.sh start
 
 # Start inc-serve with custom configuration
-bash Launcher.sh start --task_monitor_port=22222 --result_monitor_port=33333 --serve_port=8001
+bash Launcher.sh start --task_monitor_port=22222 --result_monitor_port=33333 --restful_api_port=8001
 
 # Stop inc-serve with default configuration
 bash serve.sh stop
@@ -31,9 +31,9 @@ bash serve.sh help
      start      : start serve
      stop       : stop serve
 
-  more start parameters: [usage: bash serve.sh start {--parameter=value}] [e.g. --serve_port=8000]
+  more start parameters: [usage: bash serve.sh start {--parameter=value}] [e.g. --restful_api_port=8000]
     --hostfile           : start neural solution host file which contains all available nodes
-    --serve_port          : start web serve with {serve_port}, defult 8000
+    --restful_api_port          : start web serve with {restful_api_port}, defult 8000
     --api_type           : start web serve with grpc/http, defult http
     --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222
     --result_monitor_port: start serve for task monitor at {result_monitor_port}, defult 3333

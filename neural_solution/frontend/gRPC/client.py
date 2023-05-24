@@ -19,10 +19,11 @@ from neural_solution.frontend.gRPC.proto import (
     neural_solution_pb2,
     neural_solution_pb2_grpc
 )
+from neural_solution.config import config
 
 def run():
     # Create a gRPC channel
-    port = '50051'
+    port = str(config.grpc_api_port)
     channel = grpc.insecure_channel('localhost:' + port)
 
     # Create a stub (client)
@@ -35,7 +36,7 @@ def run():
         arguments=["--model_name_or_path", "bert-base-cased",  "--task_name mrpc", "--do_eval", "--output_dir" "result"],
         approach="approach",
         requirements=[],
-        workers=5
+        workers=1
     )
 
     # Call the SubmitTask RPC on the server

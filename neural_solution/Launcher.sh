@@ -34,8 +34,9 @@ check_port() {
 function init_params {
 
    hostfile=None
-   api_type=http
-   serve_port=8000
+   api_type=http # http, grpc, all
+   restful_api_port=8000
+   grpc_api_port=8001
    task_monitor_port=2222
    result_monitor_port=3333
    serve_log_dir=ns_workspace/serve_log
@@ -51,9 +52,13 @@ function init_params {
          --workspace=*)
          workspace=$(echo $var |cut -f2 -d=)
          ;;
-         --serve_port=*)
-         serve_port=$(echo $var |cut -f2 -d=)
-         check_port $serve_port
+         --restful_api_port=*)
+         restful_api_port=$(echo $var |cut -f2 -d=)
+         check_port $restful_api_port
+         ;;
+         --grpc_api_port=*)
+         grpc_api_port=$(echo $var |cut -f2 -d=)
+         check_port $grpc_api_port
          ;;
          --api_type=*)
          api_type=$(echo $var |cut -f2 -d=)
@@ -94,7 +99,7 @@ function serve {
       start)
          # Check ports
          ports_flag=0
-         for port in $serve_port $task_monitor_port $result_monitor_port;
+         for port in $restful_api_port $task_monitor_port $result_monitor_port;
          do
             # Check if the port is occupied
             if lsof -i ":$port"  > /dev/null 2>&1; then
@@ -140,11 +145,17 @@ function serve {
           >> $serve_log_dir/backend$date_suffix.log  2>&1 &
          export PYTHONDONTWRITEBYTECODE=1 && python ./frontend/fastapi/main_server.py \
          --host "0.0.0.0"\
-         --fastapi_port $serve_port\
+         --fastapi_port $restful_api_port\
          --task_monitor_port $task_monitor_port\
          --result_monitor_port $result_monitor_port\
          --workspace $workspace\
          &>>$serve_log_dir/frontend$date_suffix.log &
+         export PYTHONDONTWRITEBYTECODE=1 && python ./frontend/gRPC/server.py \
+         --grpc_api_port $restful_api_port\
+         --task_monitor_port $task_monitor_port\
+         --result_monitor_port $result_monitor_port\
+         --workspace $workspace\
+         &>>$serve_log_dir/frontend_grpc.log &
          ip_address=$(hostname -I | awk '{print $1}')
 
          # Check if the service is started
@@ -182,7 +193,7 @@ function serve {
          done
 
          # Check if the serve port is occupied
-         if lsof -i ":$serve_port" > /dev/null 2>&1; then
+         if lsof -i ":$restful_api_port" > /dev/null 2>&1; then
             ports_flag=$((ports_flag+1))
          else
             fail_msg="$fail_msg\nPlease check frontend serve log!"
@@ -200,7 +211,7 @@ function serve {
 
          echo "Neural Solution START!"
          echo "Serve log saving path is in \"$(cd $serve_log_dir; pwd)\""
-         echo "Start at: $ip_address:$serve_port/task/submit/"
+         echo "Start at: $ip_address:$restful_api_port/task/submit/"
          echo "[Tip] bash Launcher.sh help"
 
       ;;
@@ -219,9 +230,9 @@ function serve {
          echo "     start      : start serve"
          echo "     stop       : stop serve"
          echo
-         echo "  more start parameters: [usage: bash serve.sh start {--parameter=value}] [e.g. --serve_port=8000]"
+         echo "  more start parameters: [usage: bash serve.sh start {--parameter=value}] [e.g. --restful_api_port=8000]"
          echo '    --hostfile           : start backend serve host file which contains all available nodes'
-         echo '    --serve_port         : start web serve with {serve_port}, defult 8000'
+         echo '    --restful_api_port         : start web serve with {restful_api_port}, defult 8000'
          echo '    --api_type           : start web serve with grpc/http, defult http'
          echo '    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222'
          echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, defult 3333'
@@ -230,7 +241,7 @@ function serve {
          echo '    --upload_path        : specify the file path for the tasks'
 
       ;;
-      --hostfile=*|--serve_port=*|--result_monitor_port=*|--task_monitor_port=*|--api_type=*|*serve_log_dir=*|\
+      --hostfile=*|--restful_api_port=*|--result_monitor_port=*|--task_monitor_port=*|--api_type=*|*serve_log_dir=*|\
       --upload_path=*|--conda_env=*|--workspace=*)
       ;;
       *)

@@ -25,10 +25,11 @@ INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor" # TODO detect it automatically
 
 class Config:
-    workspace = "./ns_workspace"
-    task_monitor_port = 2222
-    result_monitor_port = 3333
-    service_address = "localhost"
+    workspace: str = "./ns_workspace"
+    task_monitor_port: int = 2222
+    result_monitor_port: int = 3333
+    service_address: str = "localhost"
+    grpc_api_port: int = 4444
     #TODO add set and get methods for each attribute
 
 config = Config()

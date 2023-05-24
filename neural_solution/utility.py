@@ -15,7 +15,8 @@
 import os
 
 def get_db_path(workspace="./"):
-    return os.path.join(workspace, "db", "task.db")
+    db_path = os.path.join(workspace, "db", "task.db")
+    return os.path.abspath(db_path)
 
 def get_task_workspace(workspace="./"):
     return os.path.join(workspace, "task_workspace")

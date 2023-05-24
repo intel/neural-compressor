@@ -18,12 +18,17 @@
 from concurrent import futures
 import logging
 import grpc
+import argparse
 
 from neural_solution.frontend.gRPC.proto import (
     neural_solution_pb2,
     neural_solution_pb2_grpc)
 
+
+from neural_solution.config import config
+from neural_solution.utility import get_db_path
 from neural_solution.frontend.utility import submit_task_to_db
+from neural_solution.frontend.task_submitter import task_submitter
 
 
 class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
@@ -33,14 +38,17 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
     def SubmitTask(self, task, context):
         # Process the task
         print(f"Submit task to task db")
-        result = submit_task_to_db(task)
+        db_path = get_db_path(config.workspace)
+        print(db_path)
+        result = submit_task_to_db(task=task, task_submitter=task_submitter, db_path=get_db_path(config.workspace))
         # Return a response
         response = neural_solution_pb2.TaskResponse(**result)
         return response
 
 
+
 def serve():
-    port = '50051' # TODO exposed it to user
+    port = str(config.grpc_api_port)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     neural_solution_pb2_grpc.add_TaskServiceServicer_to_server(
         TaskSubmitterServicer(), server)
@@ -50,6 +58,26 @@ def serve():
     server.wait_for_termination()
 
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Frontend with RESTful API")
+    parser.add_argument("-H", "--host", type=str, default="0.0.0.0", \
+        help="The address to submit task.")
+    parser.add_argument("-FP", "--grpc_api_port", type=int, default=8001, \
+        help="Port to submit task by user.")
+    parser.add_argument("-TMP", "--task_monitor_port", type=int, default=2222, \
+        help="Port to monitor task.")
+    parser.add_argument("-RMP", "--result_monitor_port", type=int, default=3333, \
+        help="Port to monitor result.")
+    parser.add_argument("-WS", "--workspace", type=str, default="./ns_workspace", \
+        help="Work space.")
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == '__main__':
     logging.basicConfig()
+    args = parse_arguments()
+    print(args.workspace)
+    config.workspace = args.workspace
+    config.grpc_api_port = config.grpc_api_port
     serve()
