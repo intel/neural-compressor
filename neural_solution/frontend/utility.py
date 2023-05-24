@@ -19,6 +19,72 @@ import os
 import re
 import uuid
 import pandas as pd
+import socket
+from neural_solution.utility import get_task_log_workspace
+
+def query_task_status(task_id, db_path):
+    res = None
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id,))
+        res = cursor.fetchone()
+        cursor.close()
+        conn.close()
+    return {"status": res[0], 'optimized_result': deserialize(res[1]) if res[1] else res[1], "result_path": res[2]}
+
+def query_task_result(task_id, db_path, workspace):
+    status = "unknown"
+    tuning_info = {}
+    optimization_result = {}
+
+    res = None
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
+        res = cursor.fetchone()
+        cursor.close()
+        conn.close()
+    print(f"in query")
+    if not res:
+        status  = "Please check url."
+    elif res[0] == "done":
+        status = res[0]
+        optimization_result = deserialize(res[1]) if res[1] else res[1]
+        optimization_result["result_path"] = res[2]
+    elif res[0] == "pending":
+        status = "pending"
+    else:
+        baseline = get_baseline_during_tuning(task_id, get_task_log_workspace(workspace))
+        tuning_result = get_res_during_tuning(task_id, get_task_log_workspace(workspace))
+        status = res[0]
+        tuning_info = {"baseline": baseline, "message": tuning_result}
+    result = {"status": status, "tuning_information": tuning_info, "optimization_result": optimization_result}
+    return result
+
+def check_service_status(port_lst, service_address):
+    count = 0
+    msg = "Neural Solution is running."
+    for port in port_lst:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect((service_address, port))
+            sock.send(serialize({"ping": "test"}))
+            sock.settimeout(5)
+            response = sock.recv(1024)
+            if response == b"ok":
+                count += 1
+                sock.close()
+                continue
+        except ConnectionRefusedError:
+             msg = "Ping fail! Make sure Neural Solution runner is running!"
+             break
+        except Exception as e:
+            msg = "Ping fail! {}".format(e)
+            break
+        sock.close()
+    return {"status": "Healthy", "msg": msg} if count == 1 else {"status": "Failed", "msg": msg}
 
 
 def submit_task_to_db(task, task_submitter, db_path):

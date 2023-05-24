@@ -14,13 +14,17 @@
 
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package neural_solution;
 
 
 // Interface exported by the server
 service TaskService {
-  rpc SubmitTask(Task) returns (TaskResponse) {}
-  rpc GetTaskById(TaskId) returns (TaskStatus) {}
+    rpc Ping(google.protobuf.Empty) returns (ResponsePingMessage) {}
+    rpc SubmitTask(Task) returns (TaskResponse) {}
+    rpc GetTaskById(TaskId) returns (TaskStatus) {}
+    rpc QueryTaskResult(TaskId) returns (ResponseTaskResult) {}
 }
 
 
@@ -57,5 +61,41 @@ message TaskStatus {
 
 // empty message
 message EmptyRequest {}
+
+// /
+message WelcomeMessage {
+    // repsonce welcome message
+    string message = 1;
+}
+
+// /ping
+message ResponsePingMessage {
+    // repsonce message for ping
+    string status = 1;
+    string msg = 2;
+}
+
+// // optimization result message
+// message OptimizatonResult{
+//     string optimization_time = 1;
+//     string accuracy = 2;
+//     string duration = 3;
+//     string result_path = 4;
+// }
+
+// // tuning information
+
+// message TuningInformation{
+//     string bseline = 1;
+//     string message = 2;
+// }
+
+// /task/status/{task_id}
+message ResponseTaskResult {
+    string status = 1;
+    string tuning_information = 2;
+    string optimization_result = 3;
+}
+
 
 

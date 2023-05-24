@@ -174,6 +174,11 @@ def get_all_tasks():
 
 @app.get("/task/status/{task_id}")
 def get_task_status_by_id(task_id: str):
+
+    status = "unknown"
+    tuning_info = {}
+    optimization_result = {}
+
     res = None
     DB_PATH = get_db_path(config.workspace)
     if os.path.isfile(DB_PATH):
@@ -184,15 +189,22 @@ def get_task_status_by_id(task_id: str):
         cursor.close()
         conn.close()
     if not res:
-        return {"Please check url."}
+        status  = "Please check url."
     elif res[0] == "done":
-        return {"status": res[0], 'optimized_result': deserialize(res[1]) if res[1] else res[1], "result_path": res[2]}
+        status = res[0]
+        optimization_result = deserialize(res[1]) if res[1] else res[1]
+        optimization_result["result_path"] = res[2]
     elif res[0] == "pending":
-        return {"task pending"}
+        status = "pending"
     else:
         baseline = get_baseline_during_tuning(task_id,get_task_log_workspace(config.workspace))
-        result = get_res_during_tuning(task_id, get_task_log_workspace(config.workspace))
-        return {"status": res[0], "baseline": baseline, "message": result}
+        tuning_result = get_res_during_tuning(task_id, get_task_log_workspace(config.workspace))
+        status = res[0]
+        tuning_info = {
+            "baseline": baseline,
+            "message": tuning_result}
+    result = {"status": status, "tuning_info": tuning_info, "optimization_result": optimization_result}
+    return result
 
 @app.get("/task/log/{task_id}")
 async def read_logs(task_id: str):

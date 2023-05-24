@@ -19,6 +19,7 @@ from neural_solution.frontend.gRPC.proto import (
     neural_solution_pb2,
     neural_solution_pb2_grpc
 )
+
 from neural_solution.config import config
 
 def run():
@@ -28,6 +29,12 @@ def run():
 
     # Create a stub (client)
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
+
+    # Ping serve
+    request = neural_solution_pb2.EmptyRequest()
+    response = stub.Ping(request)
+    print(response.status)
+    print(response.msg)
 
     # Create a task request with the desired fields
     request = neural_solution_pb2.Task(
@@ -48,5 +55,36 @@ def run():
     print(response.msg)
 
 
+def run_query_task_result(task_id="38e459ef31bc41ddbb4228004d7b2979"):
+    # Create a gRPC channel
+    port = str(config.grpc_api_port)
+    channel = grpc.insecure_channel('localhost:' + port)
+
+    # Create a stub (client)
+    stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
+
+    request = neural_solution_pb2.TaskId(task_id=task_id)
+    response = stub.QueryTaskResult(request)
+    print(response.status)
+    print(response.tuning_information)
+    print(response.optimization_result)
+
+def run_query_task_status(task_id):
+    # Create a gRPC channel
+    port = str(config.grpc_api_port)
+    channel = grpc.insecure_channel('localhost:' + port)
+
+    # Create a stub (client)
+    stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
+
+    request = neural_solution_pb2.TaskId(task_id=task_id)
+    response = stub.GetTaskById(request)
+    print(response.status)
+    print(response.optimized_result)
+    print(response.result_path)
+
+
+
+
 if __name__ == '__main__':
-    run()
+    run_query_task_result()

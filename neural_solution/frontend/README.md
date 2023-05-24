@@ -1,4 +1,4 @@
 # Client
 
 - [x] fastapi
-- [ ] gRPC
+- [x] gRPC

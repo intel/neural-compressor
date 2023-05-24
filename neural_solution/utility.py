@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import json
 
 def get_db_path(workspace="./"):
     db_path = os.path.join(workspace, "db", "task.db")
@@ -26,3 +27,7 @@ def get_task_log_workspace(workspace="./"):
 
 def get_serve_log_workspace(workspace="./"):
     return os.path.join(workspace, "serve_log")
+
+def dict_to_str(d):
+    result = json.dumps(d)
+    return result

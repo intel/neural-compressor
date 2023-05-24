@@ -14,7 +14,6 @@
 
 """Server of gRPC frontend."""
 
-
 from concurrent import futures
 import logging
 import grpc
@@ -24,16 +23,27 @@ from neural_solution.frontend.gRPC.proto import (
     neural_solution_pb2,
     neural_solution_pb2_grpc)
 
-
 from neural_solution.config import config
 from neural_solution.utility import get_db_path
-from neural_solution.frontend.utility import submit_task_to_db
 from neural_solution.frontend.task_submitter import task_submitter
 
+from neural_solution.frontend.utility import (
+    submit_task_to_db,
+    check_service_status,
+    query_task_status,
+    query_task_result)
 
+from neural_solution.utility import dict_to_str
 class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
     def __init__(self) -> None:
         pass
+
+    def Ping(self, empty_msg, context):
+        print(f"Ping grpc serve.")
+        port_lst = [config.result_monitor_port]
+        result = check_service_status(port_lst, service_address=config.service_address)
+        response = neural_solution_pb2.ResponsePingMessage(**result)
+        return response
 
     def SubmitTask(self, task, context):
         # Process the task
@@ -45,6 +55,20 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         response = neural_solution_pb2.TaskResponse(**result)
         return response
 
+    def GetTaskById(self, task_id, context):
+        db_path = get_db_path(config.workspace)
+        result = query_task_status(task_id.task_id, db_path)
+        print(f"query result : result")
+        response = neural_solution_pb2.TaskStatus(**result)
+        return response
+
+    def QueryTaskResult(self, task_id, context):
+        db_path = get_db_path(config.workspace)
+        result = query_task_result(task_id.task_id, db_path, config.workspace)
+        result['tuning_information'] = dict_to_str(result["tuning_information"])
+        result['optimization_result'] = dict_to_str(result["optimization_result"])
+        response = neural_solution_pb2.ResponseTaskResult(**result)
+        return response
 
 
 def serve():

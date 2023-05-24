@@ -11,6 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -19,8 +20,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x15neural_solution.proto\x12\x0fneural_solution\"y\n\x04Task\x12\x12\n\nscript_url\x18\x01 \x01(\t\x12\x11\n\toptimized\x18\x02 \x01(\x08\x12\x11\n\targuments\x18\x03 \x03(\t\x12\x10\n\x08\x61pproach\x18\x04 \x01(\t\x12\x14\n\x0crequirements\x18\x05 \x03(\t\x12\x0f\n\x07workers\x18\x06 \x01(\x05\"<\n\x0cTaskResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x0b\n\x03msg\x18\x03 \x01(\t\"\x19\n\x06TaskId\x12\x0f\n\x07task_id\x18\x01 \x01(\t\"K\n\nTaskStatus\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x18\n\x10optimized_result\x18\x02 \x01(\t\x12\x13\n\x0bresult_path\x18\x03 \x01(\t\"\x0e\n\x0c\x45mptyRequest2\x9a\x01\n\x0bTaskService\x12\x44\n\nSubmitTask\x12\x15.neural_solution.Task\x1a\x1d.neural_solution.TaskResponse\"\x00\x12\x45\n\x0bGetTaskById\x12\x17.neural_solution.TaskId\x1a\x1b.neural_solution.TaskStatus\"\x00\x62\x06proto3'
-)
+  serialized_pb=b'\n\x15neural_solution.proto\x12\x0fneural_solution\x1a\x1bgoogle/protobuf/empty.proto\"y\n\x04Task\x12\x12\n\nscript_url\x18\x01 \x01(\t\x12\x11\n\toptimized\x18\x02 \x01(\x08\x12\x11\n\targuments\x18\x03 \x03(\t\x12\x10\n\x08\x61pproach\x18\x04 \x01(\t\x12\x14\n\x0crequirements\x18\x05 \x03(\t\x12\x0f\n\x07workers\x18\x06 \x01(\x05\"<\n\x0cTaskResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x0b\n\x03msg\x18\x03 \x01(\t\"\x19\n\x06TaskId\x12\x0f\n\x07task_id\x18\x01 \x01(\t\"K\n\nTaskStatus\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x18\n\x10optimized_result\x18\x02 \x01(\t\x12\x13\n\x0bresult_path\x18\x03 \x01(\t\"\x0e\n\x0c\x45mptyRequest\"!\n\x0eWelcomeMessage\x12\x0f\n\x07message\x18\x01 \x01(\t\"2\n\x13ResponsePingMessage\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0b\n\x03msg\x18\x02 \x01(\t\"]\n\x12ResponseTaskResult\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x1a\n\x12tuning_information\x18\x02 \x01(\t\x12\x1b\n\x13optimization_result\x18\x03 \x01(\t2\xb5\x02\n\x0bTaskService\x12\x46\n\x04Ping\x12\x16.google.protobuf.Empty\x1a$.neural_solution.ResponsePingMessage\"\x00\x12\x44\n\nSubmitTask\x12\x15.neural_solution.Task\x1a\x1d.neural_solution.TaskResponse\"\x00\x12\x45\n\x0bGetTaskById\x12\x17.neural_solution.TaskId\x1a\x1b.neural_solution.TaskStatus\"\x00\x12Q\n\x0fQueryTaskResult\x12\x17.neural_solution.TaskId\x1a#.neural_solution.ResponseTaskResult\"\x00\x62\x06proto3'
+  ,
+  dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
 
 
@@ -87,8 +89,8 @@ _TASK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=42,
-  serialized_end=163,
+  serialized_start=71,
+  serialized_end=192,
 )
 
 
@@ -133,8 +135,8 @@ _TASKRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=165,
-  serialized_end=225,
+  serialized_start=194,
+  serialized_end=254,
 )
 
 
@@ -165,8 +167,8 @@ _TASKID = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=227,
-  serialized_end=252,
+  serialized_start=256,
+  serialized_end=281,
 )
 
 
@@ -211,8 +213,8 @@ _TASKSTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=254,
-  serialized_end=329,
+  serialized_start=283,
+  serialized_end=358,
 )
 
 
@@ -236,8 +238,125 @@ _EMPTYREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=331,
-  serialized_end=345,
+  serialized_start=360,
+  serialized_end=374,
+)
+
+
+_WELCOMEMESSAGE = _descriptor.Descriptor(
+  name='WelcomeMessage',
+  full_name='neural_solution.WelcomeMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='message', full_name='neural_solution.WelcomeMessage.message', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=376,
+  serialized_end=409,
+)
+
+
+_RESPONSEPINGMESSAGE = _descriptor.Descriptor(
+  name='ResponsePingMessage',
+  full_name='neural_solution.ResponsePingMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='neural_solution.ResponsePingMessage.status', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='msg', full_name='neural_solution.ResponsePingMessage.msg', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=411,
+  serialized_end=461,
+)
+
+
+_RESPONSETASKRESULT = _descriptor.Descriptor(
+  name='ResponseTaskResult',
+  full_name='neural_solution.ResponseTaskResult',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='neural_solution.ResponseTaskResult.status', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='tuning_information', full_name='neural_solution.ResponseTaskResult.tuning_information', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='optimization_result', full_name='neural_solution.ResponseTaskResult.optimization_result', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=463,
+  serialized_end=556,
 )
 
 DESCRIPTOR.message_types_by_name['Task'] = _TASK
@@ -245,6 +364,9 @@ DESCRIPTOR.message_types_by_name['TaskResponse'] = _TASKRESPONSE
 DESCRIPTOR.message_types_by_name['TaskId'] = _TASKID
 DESCRIPTOR.message_types_by_name['TaskStatus'] = _TASKSTATUS
 DESCRIPTOR.message_types_by_name['EmptyRequest'] = _EMPTYREQUEST
+DESCRIPTOR.message_types_by_name['WelcomeMessage'] = _WELCOMEMESSAGE
+DESCRIPTOR.message_types_by_name['ResponsePingMessage'] = _RESPONSEPINGMESSAGE
+DESCRIPTOR.message_types_by_name['ResponseTaskResult'] = _RESPONSETASKRESULT
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Task = _reflection.GeneratedProtocolMessageType('Task', (_message.Message,), {
@@ -282,6 +404,27 @@ EmptyRequest = _reflection.GeneratedProtocolMessageType('EmptyRequest', (_messag
   })
 _sym_db.RegisterMessage(EmptyRequest)
 
+WelcomeMessage = _reflection.GeneratedProtocolMessageType('WelcomeMessage', (_message.Message,), {
+  'DESCRIPTOR' : _WELCOMEMESSAGE,
+  '__module__' : 'neural_solution_pb2'
+  # @@protoc_insertion_point(class_scope:neural_solution.WelcomeMessage)
+  })
+_sym_db.RegisterMessage(WelcomeMessage)
+
+ResponsePingMessage = _reflection.GeneratedProtocolMessageType('ResponsePingMessage', (_message.Message,), {
+  'DESCRIPTOR' : _RESPONSEPINGMESSAGE,
+  '__module__' : 'neural_solution_pb2'
+  # @@protoc_insertion_point(class_scope:neural_solution.ResponsePingMessage)
+  })
+_sym_db.RegisterMessage(ResponsePingMessage)
+
+ResponseTaskResult = _reflection.GeneratedProtocolMessageType('ResponseTaskResult', (_message.Message,), {
+  'DESCRIPTOR' : _RESPONSETASKRESULT,
+  '__module__' : 'neural_solution_pb2'
+  # @@protoc_insertion_point(class_scope:neural_solution.ResponseTaskResult)
+  })
+_sym_db.RegisterMessage(ResponseTaskResult)
+
 
 
 _TASKSERVICE = _descriptor.ServiceDescriptor(
@@ -291,13 +434,23 @@ _TASKSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=348,
-  serialized_end=502,
+  serialized_start=559,
+  serialized_end=868,
   methods=[
+  _descriptor.MethodDescriptor(
+    name='Ping',
+    full_name='neural_solution.TaskService.Ping',
+    index=0,
+    containing_service=None,
+    input_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    output_type=_RESPONSEPINGMESSAGE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
   _descriptor.MethodDescriptor(
     name='SubmitTask',
     full_name='neural_solution.TaskService.SubmitTask',
-    index=0,
+    index=1,
     containing_service=None,
     input_type=_TASK,
     output_type=_TASKRESPONSE,
@@ -307,10 +460,20 @@ _TASKSERVICE = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetTaskById',
     full_name='neural_solution.TaskService.GetTaskById',
-    index=1,
+    index=2,
     containing_service=None,
     input_type=_TASKID,
     output_type=_TASKSTATUS,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='QueryTaskResult',
+    full_name='neural_solution.TaskService.QueryTaskResult',
+    index=3,
+    containing_service=None,
+    input_type=_TASKID,
+    output_type=_RESPONSETASKRESULT,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
