@@ -239,7 +239,8 @@ class Model(object):
                                 conf.framework = "tensorflow_itex"
                                 model = MODELS[conf.framework](model_type, root, **kwargs)
                         else:
-                            model = MODELS['tensorflow'](model_type, root, **kwargs)
+                            model = MODELS['tensorflow']("keras" if model_type == "AutoTrackable" else model_type,
+                                                          root, **kwargs)
                 else:
                     model = MODELS[conf.framework](root, **kwargs)
                 if 'tensorflow' in conf.framework:
