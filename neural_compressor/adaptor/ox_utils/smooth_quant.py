@@ -582,5 +582,6 @@ class ORTSmoothQuant:
                 else:
                     assert False, "not support"
                 self.tensor_scales_info[key] = 1. / scale
-                self.model.set_initializer(input, new_weight)
 
+                new_tensor = numpy_helper.from_array(new_weight, input)
+                self.model.get_initializer(input).CopyFrom(new_tensor)
