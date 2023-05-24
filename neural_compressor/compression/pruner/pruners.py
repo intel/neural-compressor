@@ -24,6 +24,8 @@ from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
+import torch.nn as nn
+import transformers
 
 PRUNERS = {}
 
@@ -901,3 +903,173 @@ class ProgressivePruner(BasicPruner):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
+
+@register_pruner('sparsegpt')
+class SparseGPTPruner(BasePruner):
+    """Pruning Pruner.
+    The SparseGPT pruner_class is derived from BasePruner.
+    SparseGPT Pruner only supports one-shot pruning (same effect as fast retraining free).
+    Please refer to SparseGPT: Massive Language Models Can be Accurately Pruned in One-Shot
+        (https://arxiv.org/abs/2301.00774)
+
+    1. Defines pruning functions called at step begin/end, before/after optimize and epoch begin/end.
+    2. Defines the pruning criterion and fixed weight parameters.
+    3. Get the pruned masks of different layers.
+
+    Args:
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
+
+    Attributes:
+        pattern: A Pattern object that defines pruning weights' arrangements within space.
+        criterion: A Criterion Object that defines which weights are to be pruned.
+        scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+        reg: A Reg object that defines regulization terms.
+    """
+    def __init__(self, config, modules):
+        """Initialize."""
+        super(SparseGPTPruner, self).__init__(config, modules)
+
+    def _init(self):
+        """Initialize."""
+        self.pattern = get_pattern(self.config, self.modules)
+        self.masks = self.pattern.register_block_masks(self.modules)
+        self.rewrite_forward()
+        self.scheduler = get_scheduler(self.config)
+        self.criterion = get_criterion(self.config, self.modules)
+        self.reg = get_reg(self.config, self.modules, self.pattern)
+
+        logger.warning("SparseGPT pruner fixed the weights, please DO NOT turn on gradient update.")
+        assert "channel" in self.pattern.pattern, \
+                "SparseGPT Pruner pruner only supports patterns like 2:4."
+
+    def update_masks(self, local_step):
+        """Update the masks at a given local step."""
+        if self.global_step == self.start_step:
+            if self.config['lock_init_sparsity']:
+                self.masks = self.pattern.get_pattern_lock_masks(self.modules)
+                self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
+                self.current_sparsity_ratio = self.init_sparsity_ratio
+
+        if not self.check_is_pruned_step(self.global_step):
+            return
+
+        if self.current_sparsity_ratio > self.target_sparsity_ratio:
+            return
+
+        self.criterion.on_step_begin()
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
+                                                                             self.completed_pruned_cnt,
+                                                                             self.total_prune_cnt, self.masks,
+                                                                             self.init_sparsity_ratio)
+        logger.info(f"current target ratio is {current_target_sparsity_ratio}")
+
+        self.completed_pruned_cnt += 1
+        if self.criterion.scores == {}:
+            return
+        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
+        self.mask_weights()
+
+        self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
+        logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
+
+    def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
+        self.reg.on_before_optimizer_step()
+        self.criterion.on_before_optimizer_step()
+
+    def on_after_optimizer_step(self):
+        """Prune the model after optimization."""
+        # the order of the following three lines can't not be exchanged
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_after_optimizer_step()
+        self.mask_weights()
+
+        self.global_step += 1
+
+    def mask_weights(self):
+        """Apply block masks to corresponding modules' weights.
+
+        Weights are multipled with masks. This is the formal pruning process.
+        """
+        with torch.no_grad():
+            self.pattern.mask_block_weights(self.masks)
+
+    def update_block_masks(self, masks):
+        """Update the block mask parameters."""
+        with torch.no_grad():
+            for key in self.masks.keys():
+                module = self.modules[key]
+                module.block_mask.data = masks[key].data
+
+    def fasterprune_masks(self, masks):
+        ############1. Get Hinv（inverse Hessian Matrix）############################
+        with torch.no_grad():
+            mask = None
+            for key in self.modules.keys():
+                W = self.modules[key].weight.data
+                if isinstance(self.modules[key], nn.Conv2d):
+                    W = W.flatten(1)
+                if isinstance(self.modules[key], transformers.Conv1D):
+                    W = W.t()
+                W = W.float()
+                rows = W.shape[0] # row num: 768
+                columns = W.shape[1] # col num: 768
+            H = self.modules[key].H
+            dead = torch.diag(H) == 0
+            H[dead, dead] = 1 # 把H中对角线为0的都变成1
+            W[:, dead] = 0 # 把W中每一行对角线值0的那一行都变成0
+            Losses = torch.zeros(self.rows, device=self.dev) # 1 * 768
+            percdamp = 0.01
+            damp = percdamp * torch.mean(torch.diag(H))
+            diag = torch.arange(self.columns, device=self.dev)
+            H[diag, diag] += damp # 把H的对角线元素全部加上damp
+            # upper默认是False：u is lower triangular such that the returned tensor is
+            H = torch.linalg.cholesky(H) #Cholesky 分解是把一个对称正定的矩阵表示成一个下三角矩阵L和其转置的乘积的分解。 它要求矩阵的所有特征值必须大于零，故分解的下三角的对角元也是大于零的。 Cholesky分解法又称平方根法，是当A为实对称正定矩阵时，LU三角分解法的变形。
+            H = torch.cholesky_inverse(H) # 这一步在求逆
+            H = torch.linalg.cholesky(H, upper=True) # H−1 ← Cholesky(H−1)⊤ (Hessian inverse information)
+            Hinv = H # H−1 = (XX⊤ + λI)−1
+
+            ########################################
+            mask = None # binary pruning mask
+            blocksize=128
+            # for i = 0,B,2B,... do 分成多个block列
+            for i1 in range(0, columns, blocksize):
+                i2 = min(i1 + blocksize, columns)
+                count = i2 - i1
+                W1 = W[:, i1:i2].clone()
+                Q1 = torch.zeros_like(W1)
+                Err1 = torch.zeros_like(W1)
+                Losses1 = torch.zeros_like(W1)
+                Hinv1 = Hinv[i1:i2, i1:i2]
+
+                if mask is not None:
+                    mask1 = mask[:, i1:i2]
+                else:
+                    tmp = W1 ** 2 / (torch.diag(Hinv1).reshape((1, -1))) ** 2
+                    # 把这些params从小到大，[0]表示获取value 获取sparsity内的最大value，作为threshhold
+                    thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * self.target_sparsity_ratio)]
+                    mask1 = tmp <= thresh
+
+                # forj =i,...,i+B−1 do
+                for i in range(count):
+                    w = W1[:, i]
+                    d = Hinv1[i, i]
+                    q = w.clone()
+                    q[mask1[:, i]] = 0
+                    Q1[:, i] = q
+                    Losses1[:, i] = (w - q) ** 2 / d ** 2
+
+                    # pruning error
+                    # freeze weights
+                    err1 = (w - q) / d
+                    W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0)) # W:,j:(i+B) ← W:,j:(i+B)−E:,j−i·Hj,j:(i+B)
+                    Err1[:, i] = err1
+
+                W[:, i1:i2] = Q1
+                Losses += torch.sum(Losses1, 1) / 2
+
+                W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:]) # W:,(i+B): ← W:,(i+B): − E · Hi:(i+B),(i+B)
+            self.masks = mask
+
+                
