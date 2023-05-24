@@ -63,9 +63,9 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 </tbody>
 </table>
 
-> **Note**: Follow this step to export a post training dynamic quantizated ONNX model from PyTorch model: \
+> **Note**: Follow this step to export a post training dynamic quantized ONNX model from PyTorch model: \
         1. export FP32 PyTorch model to FP32 ONNX model.  \
-        2. use FP32 ONNX model as the input model for post training dynamic quantizatation.
+        2. use FP32 ONNX model as the input model for post training dynamic quantization.
 
 ## Examples
 

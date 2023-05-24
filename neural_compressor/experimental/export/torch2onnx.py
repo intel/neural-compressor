@@ -142,11 +142,11 @@ def torch_to_int8_onnx(
     assert not q_config is None, "'q_config' is needed when export an INT8 model."
 
     if q_config['approach'] == 'post_training_dynamic_quant': # pragma: no cover
-        assert False, "Post training dynamic quantizated PyTorch model is not supported " \
+        assert False, "Post training dynamic quantized PyTorch model is not supported " \
         "to export to ONNX directly. Please follow this step to get a post training " \
-        "dynamic quantizated ONNX model: " \
+        "dynamic quantized ONNX model: " \
         "1. export FP32 PyTorch model to FP32 ONNX model. " \
-        "2. use FP32 ONNX model as the input model for post training dynamic quantizatation."
+        "2. use FP32 ONNX model as the input model for post training dynamic quantization."
 
     input_names, example_inputs = _prepare_intputs(pt_model, input_names, example_inputs)
 
