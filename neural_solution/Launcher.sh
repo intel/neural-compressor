@@ -212,10 +212,10 @@ function serve {
          fi
          # Check completed
 
-         echo "Neural Solution START!"
-         echo "Serve log saving path is in \"$(cd $serve_log_dir; pwd)\""
-         echo "Start at: $ip_address:$restful_api_port/task/submit/"
-         echo "[Tip] bash Launcher.sh help"
+         echo "Neural Solution Service Started!"
+         echo "Service log saving path is in \"$(cd $serve_log_dir; pwd)\""
+         echo "To submit task at: $ip_address:$restful_api_port/task/submit/"
+         echo "[For information] ns help"
 
       ;;
       stop)
@@ -229,11 +229,11 @@ function serve {
       ;;
       help)
          echo
-         echo " *** usage: bash Launcher.sh {start|stop} ***"
+         echo " *** usage: ns {start|stop} ***"
          echo "     start      : start serve"
          echo "     stop       : stop serve"
          echo
-         echo "  more start parameters: [usage: bash serve.sh start {--parameter=value}] [e.g. --restful_api_port=8000]"
+         echo "  more start parameters: [usage: ns start {--parameter=value}] [e.g. --restful_api_port=8000]"
          echo '    --hostfile           : start backend serve host file which contains all available nodes'
          echo '    --restful_api_port         : start web serve with {restful_api_port}, defult 8000'
          echo '    --api_type           : start web serve with grpc/http, defult http'

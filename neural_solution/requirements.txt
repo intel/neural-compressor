@@ -1,4 +1,4 @@
-neural_compressor
+neural_compressor>=2.1
 pydantic==1.10.6
 fastapi
 uvicorn[standard]
@@ -6,5 +6,6 @@ uuid
 watchdog
 websocket
 pandas
+protobuf==3.20
 grpcio
 anyio
