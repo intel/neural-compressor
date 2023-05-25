@@ -15,5 +15,5 @@ ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Exp
 ImportError: libGL.so.1: cannot open shared object file: No such file or directory   
 **Solution:** apt install or yum install python3-opencv
 #### Issue 4:  
-Conda package *neural-compressor-full* dependency conflict will pending conda installation for a long time.
+Conda package *neural-compressor-full* (this binary is only available from v1.13 to v2.1.1) dependency conflict may pending on conda installation for a long time.   
 **Solution:** run *conda install sqlalchemy=1.4.27 alembic=1.7.7 -c conda-forge* before install *neural-compressor-full*. 
