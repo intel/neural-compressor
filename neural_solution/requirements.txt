@@ -1,10 +1,10 @@
+neural_compressor
+pydantic==1.10.6
 fastapi
 uvicorn[standard]
-gunicorn
-pydantic
-pysqlite3
 uuid
 watchdog
 websocket
 pandas
-mpi4py
+grpcio
+anyio

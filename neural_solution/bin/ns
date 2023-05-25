@@ -1,0 +1,14 @@
+#!/bin/bash
+
+
+package_name="neural_solution"
+
+# Find the path of the neural solution
+package_path=$(python -c "import os, $package_name; print(os.path.dirname($package_name.__file__))")
+
+# Change the working directory to the package path
+cd "$package_path" || exit
+
+# Print the current working directory
+echo "Current working directory: $(pwd)"
+bash Launcher.sh "$@"

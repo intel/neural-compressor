@@ -91,6 +91,7 @@ function init_params {
 
 }
 
+
 # serve runner
 function serve {
   for var in "$@"
@@ -128,6 +129,11 @@ function serve {
          else
             conda_env_name=$conda_env
          fi
+
+         # search package path
+         package_name="neural_solution"
+         package_path=$(python -c "import os, $package_name; print(os.path.dirname($package_name.__file__))")
+         echo $package_path
          # Check completed
          serve_log_dir=$workspace"/serve_log"
          mkdir -p $serve_log_dir
@@ -135,7 +141,7 @@ function serve {
          date_suffix=
          >$serve_log_dir/backend$date_suffix.log
          >$serve_log_dir/frontend$date_suffix.log
-         export PYTHONDONTWRITEBYTECODE=1 && python ./backend/Runner.py \
+         export PYTHONDONTWRITEBYTECODE=1 && python $package_path/backend/Runner.py \
          --hostfile ${hostfile} \
          --task_monitor_port $task_monitor_port \
          --result_monitor_port $result_monitor_port \
@@ -143,14 +149,14 @@ function serve {
          --conda_env_name $conda_env_name \
          --upload_path $upload_path \
           >> $serve_log_dir/backend$date_suffix.log  2>&1 &
-         export PYTHONDONTWRITEBYTECODE=1 && python ./frontend/fastapi/main_server.py \
+         export PYTHONDONTWRITEBYTECODE=1 && python $package_path/frontend/fastapi/main_server.py \
          --host "0.0.0.0"\
          --fastapi_port $restful_api_port\
          --task_monitor_port $task_monitor_port\
          --result_monitor_port $result_monitor_port\
          --workspace $workspace\
          &>>$serve_log_dir/frontend$date_suffix.log &
-         export PYTHONDONTWRITEBYTECODE=1 && python ./frontend/gRPC/server.py \
+         export PYTHONDONTWRITEBYTECODE=1 && python $package_path/frontend/gRPC/server.py \
          --grpc_api_port $restful_api_port\
          --task_monitor_port $task_monitor_port\
          --result_monitor_port $result_monitor_port\

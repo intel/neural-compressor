@@ -21,23 +21,31 @@ if "neural_insights" in sys.argv:
     neural_insights = True
     sys.argv.remove("neural_insights")
 
+neural_solution  = False
+if "neural_solution" in sys.argv:
+    neural_solution = True
+    sys.argv.remove("neural_solution")
 
 # define include packages
 include_packages = find_packages(include=['neural_compressor', 'neural_compressor.*',
                                  'neural_coder', 'neural_coder.*'])
 neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'])
+neural_solution_packages = find_packages(include=['neural_solution', 'neural_solution.*'])
 
 # define package data
 package_data = {'': ['*.yaml']}
 neural_insights_data = {'': ['*.yaml', 'web/app/*.*']}
+neural_solution_data = {'': ['Launcher.sh', 'scripts/*.*']}
 
 # define install requirements
 install_requires_list = fetch_requirements('requirements.txt')
 neural_insights_requires = fetch_requirements('neural_insights/requirements.txt')
+neural_solution_requires = fetch_requirements('neural_solution/requirements.txt')
 
 # define scripts
 scripts_list = []
 neural_insights_scripts_list = ['neural_insights/bin/neural_insights']
+neural_solution_scripts_list = ['neural_solution/bin/ns']
 
 if neural_insights:
     project_name = "neural_insights"
@@ -45,6 +53,12 @@ if neural_insights:
     install_requires_list = neural_insights_requires
     scripts_list = neural_insights_scripts_list
     include_packages = neural_insights_packages
+elif neural_solution:
+    project_name = "neural_solution"
+    package_data = neural_solution_data
+    install_requires_list = neural_solution_requires
+    scripts_list = neural_solution_scripts_list
+    include_packages = neural_solution_packages
 else:
     project_name = "neural_compressor"
 
