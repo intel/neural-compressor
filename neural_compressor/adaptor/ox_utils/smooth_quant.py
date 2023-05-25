@@ -540,7 +540,7 @@ class ORTSmoothQuant:
                 assert False, "not support"
             name = key + "_" + "smooth_scale"
             scale_tensor = helper.make_tensor(
-                name=input_name + "_" + "smooth_scale",
+                name=key + "_" + "smooth_scale",
                 data_type=onnx_proto.TensorProto.FLOAT,
                 dims=scale_factor.shape,
                 vals=scale_factor.flatten().tolist())
@@ -548,7 +548,7 @@ class ORTSmoothQuant:
             mul_output_name = key + "_smooth_output"
             mul_node = helper.make_node(
                 "Mul",
-                inputs=[input_name, input_name + "_" + "smooth_scale"],
+                inputs=[input_name, key + "_" + "smooth_scale"],
                 outputs=[mul_output_name],
                 name=key + "_smooth_mul"
             )
@@ -577,7 +577,12 @@ class ORTSmoothQuant:
                                            axis=-1)  # TODO, to support conv
                     new_weight = weight * scale
                 elif len(weight.shape) == 4:  # TODO need to check conv
-                    scale = np.reshape(scales[key], (1, -1, 1, 1))
+                    node = self.model.input_name_to_nodes[input][0]
+                    if weight.shape[1] == 1 and "group" in [i.name for i in node.attribute] and \
+                        [i for i in node.attribute if i.name == "group"][0].i > 1:
+                        scale = np.reshape(scales[key], (-1, 1, 1, 1))
+                    else:
+                        scale = np.reshape(scales[key], (1, -1, 1, 1))
                     new_weight = weight * scale
                 else:
                     assert False, "not support"
