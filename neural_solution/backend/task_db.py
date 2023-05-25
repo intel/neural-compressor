@@ -13,11 +13,11 @@
 # limitations under the License.
 
 
-from .task import Task
 import threading
-from collections import deque
 import sqlite3
-from .utils.utility import create_dir
+from collections import deque
+from neural_solution.backend.utils.utility import create_dir
+from .task import Task
 
 class TaskDB:
     """TaskDb manages all the tasks.

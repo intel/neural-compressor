@@ -9,3 +9,4 @@ pandas
 protobuf==3.20
 grpcio
 anyio
+mpi4py

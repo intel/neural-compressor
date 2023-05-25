@@ -20,7 +20,7 @@ import re
 import uuid
 import pandas as pd
 import socket
-from neural_solution.utility import get_task_log_workspace
+from neural_solution.utils.utility import get_task_log_workspace
 
 def query_task_status(task_id, db_path):
     res = None

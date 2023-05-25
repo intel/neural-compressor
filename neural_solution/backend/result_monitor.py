@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import socket
-from .utils.utility import serialize, deserialize
+from neural_solution.backend.utils.utility import serialize, deserialize
 from neural_solution.utils import logger
 from neural_solution.backend.task_db import TaskDB
 

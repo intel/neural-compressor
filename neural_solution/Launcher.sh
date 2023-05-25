@@ -225,7 +225,7 @@ function serve {
          lsof -i | grep python|awk '{print $2}' | xargs kill -9 > /dev/null 2>&1
 
          # Service End
-         echo "Neural Solution STOPPED!"
+         echo "Neural Solution Service Stopped!"
       ;;
       help)
          echo

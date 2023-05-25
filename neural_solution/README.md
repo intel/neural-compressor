@@ -26,13 +26,15 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 - Conda: >= 4.10.3
 </details>
 
-### Use conda to install neural solution:
+### Use pip to install neural solution:
 ```
-conda install <!--TODO: align it with neural insights>
+pip install neural-solution
 ```
 
 ### Build from source:
-<!--TODO: align it with neural insights>
+```
+python setup.py neural_solution install
+```
 
 
 # E2E examples

@@ -16,13 +16,13 @@
 
 #Constant for execute MPI task
 NUM_THREADS_PER_PROCESS = 5
-NUM_CORES_PER_SOCKET = 5 # TODO replace it according the node
+NUM_CORES_PER_SOCKET = 5
 NUM_SOCKETS = 2
 
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 
-#Constant for conda # TODO remove it
-INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor" # TODO detect it automatically
+
+INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor"
 
 class Config:
     workspace: str = "./ns_workspace"

@@ -10,7 +10,7 @@ from neural_solution.backend.cluster import Cluster, Node
 from neural_solution.backend.task import Task
 
 
-from neural_solution.utility import get_task_workspace, get_task_log_workspace, get_db_path
+from neural_solution.utils.utility import get_task_workspace, get_task_log_workspace, get_db_path
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 db_path = get_db_path(NEURAL_SOLUTION_WORKSPACE)

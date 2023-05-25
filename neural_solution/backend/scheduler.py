@@ -26,7 +26,7 @@ from .task import Task
 from .cluster import Cluster
 from .task_db import TaskDB
 from neural_solution.config import NUM_THREADS_PER_PROCESS, INC_ENV_PATH_TEMP
-from .utils.utility import (
+from neural_solution.backend.utils.utility import (
     serialize,
     dump_elapsed_time,
     get_task_log_path,
@@ -34,8 +34,7 @@ from .utils.utility import (
     build_workspace,
     is_remote_url
 )
-
-from neural_solution.utility import get_task_log_workspace, get_task_workspace
+from neural_solution.utils.utility import get_task_log_workspace, get_task_workspace
 from neural_solution.utils import logger
 
 cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
@@ -157,7 +156,7 @@ class Scheduler:
         return "failed"
 
     def _parse_cmd(self, task: Task, resource):
-        # TODO study mpi bind on socket
+        # TODO  mpi bind on socket
         # mpirun -np 3 -mca btl_tcp_if_include 192.168.20.0/24 -x OMP_NUM_THREADS=80
         # --host mlt-skx091,mlt-skx050,mlt-skx053 bash run_distributed_tuning.sh
         self.prepare_task(task)
@@ -166,24 +165,23 @@ class Scheduler:
         logger.info(f"[TaskScheduler] host resource: {host_str}")
 
         # Activate environment
-        # TODO enhance conda bash cmd
         conda_bash_cmd = f"source {CONDA_SOURCE_PATH}"
         conda_env_cmd = f"conda activate {conda_env}"
         if INC_ENV_PATH_TEMP:
             conda_env_cmd = f"{conda_env_cmd}\nexport PYTHONPATH=$PYTHONPATH:{INC_ENV_PATH_TEMP}"
         mpi_cmd = ["mpirun",
-                "-np",
-                "{}".format(task.workers),
-                "-host",
-                "{}".format(host_str),
-                "-map-by",
-                "socket:pe={}".format(NUM_THREADS_PER_PROCESS),
-                "-mca",
-                "btl_tcp_if_include",
-                "192.168.20.0/24", # TODO replace it according to the node
-                "-x",
-                "OMP_NUM_THREADS={}".format(NUM_THREADS_PER_PROCESS),
-                '--report-bindings'
+                   "-np",
+                   "{}".format(task.workers),
+                   "-host",
+                   "{}".format(host_str),
+                   "-map-by",
+                   "socket:pe={}".format(NUM_THREADS_PER_PROCESS),
+                   "-mca",
+                   "btl_tcp_if_include",
+                   "192.168.20.0/24", # TODO replace it according to the node
+                   "-x",
+                   "OMP_NUM_THREADS={}".format(NUM_THREADS_PER_PROCESS),
+                   '--report-bindings'
                 ]
         mpi_cmd = " ".join(mpi_cmd)
 
@@ -191,11 +189,9 @@ class Scheduler:
         task_cmd = ['python']
         task_cmd.append(self.script_name)
         task_cmd.append(self.sanitize_arguments(task.arguments))
-        # TODO add q_model_path into arguments
         self.q_model_path = self.task_path + "/" + "q_model_path"
         if not os.path.exists(self.q_model_path):
             os.makedirs(self.q_model_path)
-        # task_cmd.append("--output_path {}".format(self.q_model_path)) # TODO save q_model
         self.q_model_path = os.path.abspath(self.q_model_path)
         task_cmd = " ".join(task_cmd)
 
@@ -218,7 +214,6 @@ class Scheduler:
         """Report the result to the result monitor."""
         s = socket.socket()
         s.connect(("localhost", self.result_monitor_port))
-        # TODO parse the log file, need append more pattern
         results = {"optimization time (seconds)" : "{:.2f}".format(task_runtime)}
         for line in reversed(open(log_path).readlines()):
             res_pattern = r'Tune (\d+) result is:\s.*?\(int8\|fp32\):\s+(\d+\.\d+).*?\(int8\|fp32\):\s+(\d+\.\d+).*?'

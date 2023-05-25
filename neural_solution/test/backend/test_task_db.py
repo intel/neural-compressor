@@ -5,7 +5,7 @@ from neural_solution.backend.task_db import TaskDB, Task
 import shutil
 import os
 
-from neural_solution.utility import get_db_path
+from neural_solution.utils.utility import get_db_path
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 db_path = get_db_path(NEURAL_SOLUTION_WORKSPACE)

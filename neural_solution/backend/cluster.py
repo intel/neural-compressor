@@ -13,11 +13,9 @@
 # limitations under the License.
 
 import threading
-import os
 import sqlite3
 from typing import List
-from .task import Task
-from .utils.utility import synchronized, create_dir
+from neural_solution.backend.utils.utility import synchronized, create_dir
 from neural_solution.utils import logger
 from collections import Counter
 

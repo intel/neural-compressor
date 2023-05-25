@@ -24,9 +24,9 @@ from neural_solution.frontend.gRPC.proto import (
     neural_solution_pb2_grpc)
 
 from neural_solution.config import config
-from neural_solution.utility import get_db_path
+from neural_solution.utils import logger
+from neural_solution.utils.utility import get_db_path, dict_to_str
 from neural_solution.frontend.task_submitter import task_submitter
-from neural_solution.utils import  logger
 
 from neural_solution.frontend.utility import (
     submit_task_to_db,
@@ -34,7 +34,6 @@ from neural_solution.frontend.utility import (
     query_task_status,
     query_task_result)
 
-from neural_solution.utility import dict_to_str
 class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
     def __init__(self) -> None:
         pass

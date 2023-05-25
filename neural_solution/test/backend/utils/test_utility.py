@@ -8,7 +8,7 @@ from neural_solution.backend.utils.utility import (
     build_cluster, get_current_time,
     synchronized, build_workspace, is_remote_url, create_dir)
 
-from neural_solution.utility import get_task_workspace, get_task_log_workspace, get_db_path
+from neural_solution.utils.utility import get_task_workspace, get_task_log_workspace, get_db_path
 from neural_solution.config import config
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")

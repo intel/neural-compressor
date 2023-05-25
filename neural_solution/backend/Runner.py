@@ -18,10 +18,7 @@ import argparse
 
 from neural_solution.backend import TaskDB, Scheduler, TaskMonitor, ResultMonitor
 from neural_solution.utils import logger
-from neural_solution.backend.utils.utility import (
-    build_cluster,
-    get_db_path
-    )
+from neural_solution.backend.utils.utility import build_cluster, get_db_path
 from neural_solution.config import config
 
 def parse_args(args=None):

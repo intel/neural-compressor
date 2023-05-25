@@ -24,6 +24,7 @@ from neural_solution.frontend.utility import (
     get_baseline_during_tuning,
     check_log_exists,
     list_to_string)
+
 import sqlite3
 import os
 import uuid
@@ -34,7 +35,7 @@ import json
 import socket
 import uvicorn
 
-from neural_solution.utility import (
+from neural_solution.utils.utility import (
     get_task_log_workspace,
     get_db_path
 )

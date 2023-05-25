@@ -15,7 +15,6 @@
 
 import socket
 from .utils.utility import serialize, deserialize
-from .task import Task
 from neural_solution.utils import logger
 
 class TaskMonitor:
