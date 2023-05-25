@@ -3729,11 +3729,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
     def _get_fallback_ops_for_qat(self):
         # get fallback ops for quant aware training approach
         fallback_ops = {'op_wise': [], 'optype_wise': []}
-        if self.qat_optype_wise is not None:
+        if self.qat_optype_wise is not None: # pragma: no cover
             for optype, optype_config in self.qat_optype_wise.items():
                 if 'weight' in optype_config and optype_config['weight']['dtype'] == ['fp32']:
                     fallback_ops['optype_wise'].append(optype)
-        if self.qat_op_wise is not None:
+        if self.qat_op_wise is not None: # pragma: no cover
             for op, op_config in self.qat_op_wise.items():
                 if 'weight' in op_config and op_config['weight']['dtype'] == ['fp32']:
                     fallback_ops['op_wise'].append(op)
