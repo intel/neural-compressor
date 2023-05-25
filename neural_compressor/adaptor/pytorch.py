@@ -1355,6 +1355,7 @@ class TemplateAdaptor(Adaptor):
             def forward(self, X):
                 return self.sq_linear(X)
             
+            @property 
             def weight(self):
                 return self.sq_linear.weight
 
@@ -3044,8 +3045,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
                                             example_inputs=self.example_inputs, inplace=True)
                 if self.q_dataloader or self.example_inputs:
-                    #import pdb;pdb.set_trace();
-                    #self.q_func(tmp_model)
                     self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
                 else:
                     try:
