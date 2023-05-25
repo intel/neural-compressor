@@ -23,7 +23,6 @@ import tensorflow as tf
 import onnxruntime as ort
 from argparse import ArgumentParser
 from neural_compressor.data import LabelShift
-from neural_compressor import Metric
 from neural_compressor.utils.create_obj_from_config import create_dataloader
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -137,8 +136,9 @@ class eval_classifier_optimized_graph:
                 eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
                 conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
                                             outputs=['softmax_tensor'])
-                from neural_compressor import Metric
-                top1 = Metric(name="topk", k=1)
+                from neural_compressor import METRICS
+                metrics = METRICS('tensorflow')
+                top1 = metrics['topk']()
                 def eval(model):
                     return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
