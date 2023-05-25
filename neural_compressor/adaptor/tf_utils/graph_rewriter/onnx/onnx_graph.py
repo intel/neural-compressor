@@ -20,6 +20,7 @@
 import collections
 import logging
 import six
+import re
 import numpy as np
 
 from onnx import helper, numpy_helper, AttributeProto, TensorProto
@@ -1252,6 +1253,10 @@ class OnnxGraph:
 
         input_dequantize_node = self.get_node_by_output(conv_node.input[0])
         weight_dequantize_node = self.get_node_by_output(conv_node.input[1])
+        if re.search(r"\w+:\d+", input_dequantize_node.input[1]):
+            input_dequantize_node.input[1] = input_dequantize_node.input[1].rsplit(':', 1)[0]
+        if re.search(r"\w+:\d+", weight_dequantize_node.input[1]):
+            weight_dequantize_node.input[1] = weight_dequantize_node.input[1].rsplit(':', 1)[0]
         input_scale = self.get_node_by_name(
             input_dequantize_node.input[1]).get_tensor_value(as_list=False)
         weight_scale = self.get_node_by_name(
