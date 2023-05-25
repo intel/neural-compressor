@@ -609,6 +609,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         )
         from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
+        assert isinstance(fp32_model.fc1.weight, torch.Tensor)
         assert isinstance(fp32_model.fc1, SQLinearWrapper) # for smoothquant, inplace=True.
 
         q_model.save('saved_result')
