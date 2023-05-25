@@ -29,22 +29,32 @@ neural_insights_packages = find_packages(include=['neural_insights', 'neural_ins
 
 # define package data
 package_data = {'': ['*.yaml']}
-neural_insights_data = {'': ['*.yaml', 'web/app/*.*']}
+neural_insights_data = {'neural_insights': [
+    'bin/*'
+    '*.yaml',
+    'web/app/*.*',
+    'web/app/static/css/*',
+    'web/app/static/js/*',
+    'web/app/static/media/*',
+]}
 
 # define install requirements
 install_requires_list = fetch_requirements('requirements.txt')
 neural_insights_requires = fetch_requirements('neural_insights/requirements.txt')
 
-# define scripts
-scripts_list = []
-neural_insights_scripts_list = ['neural_insights/bin/neural_insights']
+# define entry points
+entry_points = {}
 
 if neural_insights:
     project_name = "neural_insights"
     package_data = neural_insights_data
     install_requires_list = neural_insights_requires
-    scripts_list = neural_insights_scripts_list
     include_packages = neural_insights_packages
+    entry_points = {
+        'console_scripts': [
+            'neural_insights = neural_insights.bin.neural_insights:exec'
+        ]
+    }
 else:
     project_name = "neural_compressor"
 
@@ -65,7 +75,7 @@ if __name__ == '__main__':
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires_list,
-        scripts=scripts_list,
+        entry_points=entry_points,
         python_requires='>=3.6.0',
         classifiers=[
               'Intended Audience :: Science/Research',
