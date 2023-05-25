@@ -14,7 +14,7 @@
 
 import json
 import os
-from ..utils import logger
+from neural_solution.utils import logger
 from urllib.parse import urlparse
 from neural_solution.config import NUM_CORES_PER_SOCKET, NUM_SOCKETS
 

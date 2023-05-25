@@ -12,7 +12,7 @@ from neural_solution.backend.utils.utility import dump_elapsed_time, get_task_lo
 
 import os
 
-from neural_solution.utility import get_db_path
+from neural_solution.utils.utility import get_db_path
 from neural_solution.config import config
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
@@ -27,7 +27,7 @@ class TestScheduler(unittest.TestCase):
         self.scheduler = Scheduler(self.cluster, self.task_db, self.result_monitor_port,conda_env_name="for_ns_test", config=config)
 
     def tearDown(self) -> None:
-        shutil.rmtree("ns_workspace")
+        shutil.rmtree("ns_workspace", ignore_errors=True)
 
     @classmethod
     def tearDownClass(cls) -> None:

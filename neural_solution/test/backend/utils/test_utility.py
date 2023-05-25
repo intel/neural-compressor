@@ -43,7 +43,7 @@ class TestUtils(unittest.TestCase):
         @dump_elapsed_time("test function")
         def test_function():
             return True
-        with patch('neural_solution.backend.utils.logger') as mock_logger:
+        with patch('neural_solution.utils.logger') as mock_logger:
             test_function()
 
     def test_get_task_log_path(self):
@@ -92,7 +92,7 @@ class TestUtils(unittest.TestCase):
             patch('neural_solution.backend.cluster.Cluster'), \
             patch('builtins.open'), \
             patch('os.path.exists') as mock_exists, \
-            patch('neural_solution.backend.utils.logger') as mock_logger:
+            patch('neural_solution.utils.logger') as mock_logger:
             mock_exists.return_value = False
             self.assertRaises(Exception, build_cluster, file_path)
             mock_logger.reset_mock()

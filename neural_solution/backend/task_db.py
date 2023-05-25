@@ -17,7 +17,6 @@ from .task import Task
 import threading
 from collections import deque
 import sqlite3
-from .utils import logger
 from .utils.utility import create_dir
 
 class TaskDB:

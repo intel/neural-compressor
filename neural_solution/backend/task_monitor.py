@@ -16,7 +16,7 @@
 import socket
 from .utils.utility import serialize, deserialize
 from .task import Task
-from .utils import logger
+from neural_solution.utils import logger
 
 class TaskMonitor:
     """TaskMonitor is a thread that monitors the coming tasks and appends them to the task queue.

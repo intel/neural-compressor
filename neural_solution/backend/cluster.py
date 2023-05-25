@@ -18,7 +18,7 @@ import sqlite3
 from typing import List
 from .task import Task
 from .utils.utility import synchronized, create_dir
-from .utils import logger
+from neural_solution.utils import logger
 from collections import Counter
 
 class Cluster:

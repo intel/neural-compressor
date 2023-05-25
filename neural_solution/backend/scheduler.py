@@ -36,7 +36,7 @@ from .utils.utility import (
 )
 
 from neural_solution.utility import get_task_log_workspace, get_task_workspace
-from .utils import logger
+from neural_solution.utils import logger
 
 cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
