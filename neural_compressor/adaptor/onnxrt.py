@@ -995,14 +995,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
+        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
         if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            # model is optimized and Attention is fused,
+            # index of Attention is used as split to find FFN MatMul
             first_attention_index = attention_matmul_optype.index('Attention')
             attention_matmul_optype = attention_matmul_optype[first_attention_index:]
             attention_matmul = attention_matmul[first_attention_index:]
             attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
             block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
             for idx in range(len(attention_index)):
-                # to find matmul in ffn
                 if idx != len(attention_index) - 1:
                     index = attention_index[idx + 1]
                     if index - 2 >= 0 and index - 1 >= 0:
@@ -1014,13 +1016,36 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         index + block_len - 1 < len(attention_matmul):
                         ffn_matmul.append([attention_matmul[index + block_len - 2], 
                                         attention_matmul[index + block_len - 1]])
-        block_info = []
+        else:
+            # model is not optimized or Attention isn't fused, 
+            # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
+            qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
+            if len(qkv) != 0:
+                attention_starts = [nodes[0] for nodes in qkv]
+                attention_index = [np.where(np.array([n.name for n in attention_matmul]) \
+                                            == attention_start)[0].tolist()[0] \
+                                                for attention_start in attention_starts]
+                block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+                for idx in range(len(attention_index)):
+                    if idx != len(attention_index) - 1:
+                        index = attention_index[idx + 1]
+                        if index - 2 >= 0 and index - 1 >= 0:
+                            ffn_matmul.append([attention_matmul[index - 2],
+                                            attention_matmul[index - 1]])
+                    else:
+                        index = attention_index[idx]
+                        if index + block_len - 2 < len(attention_matmul) and \
+                            index + block_len - 1 < len(attention_matmul):
+                            ffn_matmul.append([attention_matmul[index + block_len - 2],
+                                            attention_matmul[index + block_len - 1]])
+
+        block_wise = []
         for block in reversed(ffn_matmul):
             node_info = []
             for node in block:
                 node_info.append((node.name, node.op_type))
             if len(node_info) != 0:
-                block_info.append(node_info)
+                block_wise.append(node_info)
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             # for TRT EP, only insert Q/DQ to inputs of Add nodes followed by ReduceMean
@@ -1081,7 +1106,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                             op_wise.update(
                                 {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
-        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_info': block_info}
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_wise': block_wise}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
         """Filter optypes that don't support per_channel in QDQ format.
@@ -1315,6 +1340,131 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         model.save(os.path.join(path, "best_model.onnx"))
 
+    def get_output_op_names(self, qmodel):
+        """Get the ouput ops' names."""
+        outputs = qmodel.output()
+        output_op_names = []
+        for output in outputs:
+            output_op_names.append(qmodel.output_name_to_node[output].name)
+        logger.debug(f"output op names: {output_op_names}")
+        return output_op_names
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """Compute the op sensitivity.
+        
+        The sensitivity metric is the mse between the output of the last quantized op of 
+        the quantized model and the output of its corresponding op in the fp32 model.
+        
+          1. Backup the tune cfg
+          2. Fallback each int8 op and compute its mse if use fallback (with 'fallback == True'),
+            or re-quantize each fp32 op(fallen back in the previous stage) and compute its MSE if not.
+          3. Sorted op name list according to its MSE
+        
+        Args:
+          fp32_model: The fp32 model.
+          dataloader: the dataloader with full dataset.
+          tune_cfg: tuning config
+          fallback: denote fallback stage or re-quantize stage
+          requantize_cfgs: the dict of tuning configs for all re-quantizable ops
+
+        Returns:
+          A list of op names, sorted by its MSE sensitivity.
+        """
+        from copy import deepcopy
+
+        fp32_op_cfg = {'activation': {'dtype': 'fp32', 'quant_mode': 'fp32'},
+                       'weight': {'dtype': 'fp32'}}
+
+        if fallback:
+            ops_list = [op for op, config in tune_cfg['op'].items()
+                       if config['activation']['quant_mode'] in ('static', 'dynamic')]
+            replace_cfgs = {op : fp32_op_cfg for op in tune_cfg['op']}
+        else:
+            ops_list = [op for op, config in tune_cfg['op'].items() 
+                       if config['activation']['quant_mode'] == 'fp32' and op in requantize_cfgs]
+            replace_cfgs = requantize_cfgs
+
+        # Step2. compute mse
+        mse_result = self._get_mse_order(
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, 
+            output_op_names, confidence_batches)
+
+        # Step3. sort
+        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
+        logger.debug("Dump MSE order:")
+        for op in mse_order:
+            logger.debug(f"{op}: {mse_result[op]}")
+        return mse_order
+
+    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, 
+                       output_op_names, confidence_batches):
+        """Compute MSE."""
+        op_cfg = tune_cfg['op']
+        mse_result = {}
+        
+        fp32_output = self._inference_model_on_batches(
+            fp32_model, tune_cfg, dataloader, output_op_names, confidence_batches)
+
+        for op in ops_lst:
+            # backup and set replace tuning config
+            backup_cfg = op_cfg[op] 
+            op_cfg[op] = replace_cfgs[op]
+
+            # quantize and inference the model
+            q_model = self.quantize(tune_cfg, fp32_model, dataloader)
+            q_output = self._inference_model_on_batches(
+                q_model, tune_cfg, dataloader, output_op_names, confidence_batches)
+
+            mse_result[op] = self._calculate_mse(fp32_output, q_output)
+
+            # recover tune_cfg
+            op_cfg[op] = backup_cfg
+
+        return mse_result
+
+    def _calculate_mse(self, fp32_output, q_output):
+        """MSE calculation."""
+        result = []
+        for i, j in zip(fp32_output, q_output):
+            result.append(np.square(i - j).mean())
+        return np.array(result).mean()
+
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader,
+                                    output_op_name, iterations):
+        """Inference model on batches."""
+        ort_inputs = {}
+        predictions = []
+
+        session = ort.InferenceSession(self.work_space + 'eval.onnx',
+                                       providers=[self.backend]) if model.is_large_model else \
+                  ort.InferenceSession(model.model.SerializeToString(),
+                                       providers=[self.backend])
+        inputs_names = [i.name for i in session.get_inputs()]
+        len_inputs = len(session.get_inputs())
+        for idx, (inputs, _) in enumerate(dataloader):
+            if idx + 1 > iterations:
+                break
+            if len_inputs == 1:
+                ort_inputs.update(
+                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                )
+            else:
+                assert len_inputs == len(inputs), \
+                    'number of input tensors must align with graph inputs'
+
+                if isinstance(inputs, dict):  # pragma: no cover
+                    ort_inputs.update(inputs)
+                else:
+                    for i in range(len_inputs):
+                        # in case dataloader contains non-array input
+                        if not isinstance(inputs[i], np.ndarray):
+                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                        else:
+                            ort_inputs.update({inputs_names[i]: inputs[i]})
+
+            predictions.extend(session.run(None, ort_inputs))
+        return predictions
 
 @adaptor_registry
 class ONNXRT_QLinearOpsAdaptor(ONNXRUNTIMEAdaptor):

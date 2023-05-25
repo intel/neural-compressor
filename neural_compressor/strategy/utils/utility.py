@@ -16,9 +16,16 @@
 # limitations under the License.
 
 """Tuning utility."""
-
-
+import os
+import pickle
 from collections import OrderedDict
+from typing import List, Optional, Any
+
+import prettytable
+
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import print_table, dump_table, OpEntry
+
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
@@ -27,6 +34,7 @@ class OrderedDefaultDict(OrderedDict):
         """Initialize value for the missing key."""
         self[key] = value = OrderedDefaultDict()
         return value
+
 
 def extract_data_type(data_type: str) -> str:
     """Extract data type and signed from data type.
@@ -39,9 +47,11 @@ def extract_data_type(data_type: str) -> str:
     """
     return ('signed', data_type) if data_type[0] != 'u' else ('unsigned', data_type[1:])
 
+
 def reverted_data_type(signed_flag: str, data_type: str) -> str:
     """Revert the data type."""
     return data_type if signed_flag == 'signed' else 'u' + data_type
+
 
 def get_adaptor_name(adaptor):
     """Get adaptor name.
@@ -55,3 +65,25 @@ def get_adaptor_name(adaptor):
         if adaptor_name.startswith(name):
             return name
     return ""
+
+
+def build_slave_faker_model():
+    """Slave does not have a model, so construct a fake model.
+
+    Returns:
+        object:  a class object where all properties and methods are virtual.
+    """
+    from ...utils import logger
+    class FakerModel:
+
+        def __call__(self, *args, **kwargs):
+            logger.warning("Slave node has no quantized model, please handle it yourself.")
+
+        def __getitem__(self, key):
+            return self.__getattr__(str(key))
+
+        def __getattr__(self, name):
+            logger.warning("Slave node has no quantized model, please handle it yourself.")
+            return self
+
+    return FakerModel()

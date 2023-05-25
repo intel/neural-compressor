@@ -1,10 +1,13 @@
 from io import open
 from setuptools import find_packages, setup
-import os
 import re
 import sys
 
-cwd = os.path.dirname(os.path.abspath(__file__))
+
+def fetch_requirements(path):
+    with open(path, 'r') as fd:
+        return [r.strip() for r in fd.readlines()]
+
 
 try:
     filepath = './neural_compressor/version.py'
@@ -13,48 +16,37 @@ try:
 except Exception as error:
     assert False,  "Error: Could not open '%s' due %s\n" % (filepath, error)
 
-full_installation = False
-if "--full" in sys.argv:
-    full_installation = True
-    sys.argv.remove("--full")
+neural_insights = False
+if "neural_insights" in sys.argv:
+    neural_insights = True
+    sys.argv.remove("neural_insights")
+
+
+# define include packages
+include_packages = find_packages(include=['neural_compressor', 'neural_compressor.*',
+                                 'neural_coder', 'neural_coder.*'])
+neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'])
 
 # define package data
-package_data = {'': ['*.py', '*.yaml']}
-ux_package_data = {
-    'neural_compressor.ux': [
-    "web/static/*.*",
-    "web/static/assets/*.*",
-    "web/static/assets/dark/*.*",
-    "web/static/assets/fonts/*.*",
-    "components/db_manager/alembic.ini",
-    "components/db_manager/alembic/*",
-    "components/db_manager/alembic/versions/*.py",
-    "utils/configs/*.json",
-    "utils/configs/predefined_configs/**/*.yaml",
-    "utils/templates/*.txt"]
-}
+package_data = {'': ['*.yaml']}
+neural_insights_data = {'': ['*.yaml', 'web/app/*.*']}
 
 # define install requirements
-install_requires_list = [
-        'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'pandas', 'pycocotools',
-        'opencv-python', 'requests', 'psutil', 'Pillow', 'prettytable', 'deprecated']
-ux_install_requires_list = [
-        'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent','sqlalchemy==1.4.27',
-        'alembic==1.7.7', 'cryptography']
+install_requires_list = fetch_requirements('requirements.txt')
+neural_insights_requires = fetch_requirements('neural_insights/requirements.txt')
 
 # define scripts
 scripts_list = []
-ux_scripts_list = ['neural_compressor/ux/bin/inc_bench']
+neural_insights_scripts_list = ['neural_insights/bin/neural_insights']
 
-if full_installation:
-    project_name = "neural_compressor_full"
-    packages_exclude = find_packages(exclude=["test.*", "test"])
-    package_data.update(ux_package_data)
-    install_requires_list.extend(ux_install_requires_list)
-    scripts_list.extend(ux_scripts_list)
+if neural_insights:
+    project_name = "neural_insights"
+    package_data = neural_insights_data
+    install_requires_list = neural_insights_requires
+    scripts_list = neural_insights_scripts_list
+    include_packages = neural_insights_packages
 else:
     project_name = "neural_compressor"
-    packages_exclude = find_packages(exclude=["test.*", "test", "neural_compressor.ux", "neural_compressor.ux.*"])
 
 if __name__ == '__main__':
 
@@ -66,10 +58,10 @@ if __name__ == '__main__':
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding='utf-8').read(),
         long_description_content_type="text/markdown",
-        keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training, tuning strategy',
+        keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training',
         license='Apache 2.0',
         url="https://github.com/intel/neural-compressor",
-        packages=packages_exclude,
+        packages=include_packages,
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires_list,

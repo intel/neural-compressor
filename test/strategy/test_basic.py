@@ -4,6 +4,9 @@ import unittest
 import shutil
 import os
 
+from neural_compressor.config import options
+
+
 def build_fake_model():
     import tensorflow as tf
     try:
@@ -46,7 +49,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
-        self.workspace = os.path.join(os.getcwd(), 'nc_workspace')
+        self.workspace = os.path.abspath(options.workspace)
 
     @classmethod
     def tearDownClass(self):
@@ -67,7 +70,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         
         # tuning and accuracy criterion
         conf = PostTrainingQuantConfig()
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_func=fake_eval)
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
         self.assertIsNotNone(q_model)
 
 
@@ -84,8 +87,8 @@ class TestBasicTuningStrategy(unittest.TestCase):
         conf = PostTrainingQuantConfig(diagnosis=True)
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader,\
                 eval_func=lambda model: 1)
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/fp32/inspect_result.pkl')), True)
-        self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/quan/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/fp32/inspect_result.pkl')), True)
+        self.assertEqual(os.path.exists(os.path.join(self.workspace, 'inspect_saved/quan/inspect_result.pkl')), True)
 
         
 
@@ -124,6 +127,37 @@ class TestBasicTuningStrategy(unittest.TestCase):
         # fit
         q_model = fit(model=model, conf=conf, calib_dataloader=dataloader)
         self.assertIsNotNone(q_model)
+
+
+    def test_block_wise_tuining_stock_pt(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+
+        from transformers import BertTokenizer, BertModel
+        for backend in ["default"]:
+            model_name = "bert-base-uncased"
+            model = BertModel.from_pretrained(model_name)
+            model.eval()
+            # dataset and dataloader
+            class DummyNLPDataloader(object):
+                def __init__(self, model_name):
+                    self.tokenizer = BertTokenizer.from_pretrained(model_name)
+                    self.sequence_a = "intel-extension-for-transformers is based in SH"
+                    self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
+                    self.encoded_dict = self.tokenizer(self.sequence_a, self.sequence_b, return_tensors='pt')
+                    self.batch_size = 1
+
+                def __iter__(self):
+                    yield self.encoded_dict
+
+                def __next__(self):
+                    return self.encoded_dict
+
+            dataloader = DummyNLPDataloader(model_name)
+            # tuning and accuracy criterion
+            conf = PostTrainingQuantConfig(backend=backend)
+            q_model = fit(model=model, conf=conf, calib_dataloader= dataloader, eval_func=lambda model : 1)
+            assert q_model is not None
 
 if __name__ == "__main__":
     unittest.main()

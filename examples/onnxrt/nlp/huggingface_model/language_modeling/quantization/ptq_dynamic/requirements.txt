@@ -1,4 +1,5 @@
 transformers
+accelerate
 onnx
 onnxruntime
 coloredlogs

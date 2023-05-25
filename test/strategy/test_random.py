@@ -87,7 +87,7 @@ class TestRandomStrategy(unittest.TestCase):
         tune_cri = TuningCriterion(strategy='random', max_trials=3)
         acc_cri = AccuracyCriterion(tolerable_loss=0.01)
 
-        acc = [0, 1, 0.9, 0.9, 1]
+        acc = [0, 1, 0.9, 1]
         def fake_eval(model):
             acc.pop(0)
             return acc[0]

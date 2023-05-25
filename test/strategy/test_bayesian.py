@@ -237,7 +237,7 @@ class TestBayesianStrategy(unittest.TestCase):
                 },
             }
 
-        acc = [0, 1, 0.9, 0.9, 1]
+        acc = [0, 1, 0.9, 1]
         def fake_eval(model):
             acc.pop(0)
             return acc[0]

@@ -1947,8 +1947,6 @@ usr
 UTC
 util
 utils
-ux
-UX
 valminusminival
 valset
 ValueError
@@ -2600,6 +2598,7 @@ cdrdv
 NeuralCompressor
 zp
 TensorflowTopK
+mpirun
 FUNSD
 LayoutLMv
 layoutlmv
@@ -2607,3 +2606,8 @@ funsd
 layoutlmft
 nielsr
 HYPJUDY
+amerather
+efb
+netflix
+DeBERTa
+unilm

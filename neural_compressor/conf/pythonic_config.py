@@ -367,7 +367,8 @@ class _BaseQuantizationConfig:
                  excluded_precisions=[],
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False):
+                 use_distributed_tuning=False,
+                 diagnosis=False):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
@@ -390,7 +391,8 @@ class _BaseQuantizationConfig:
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
-        self.use_distributed_tuning=use_distributed_tuning
+        self.use_distributed_tuning = use_distributed_tuning
+        self.diagnosis = diagnosis
         self._example_inputs = example_inputs
 
     @property
@@ -757,7 +759,8 @@ class BenchmarkConfig:
                  cores_per_instance=None,
                  num_of_instance=None,
                  inter_num_of_threads=None,
-                 intra_num_of_threads=None):
+                 intra_num_of_threads=None,
+                 diagnosis=False):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -771,7 +774,8 @@ class BenchmarkConfig:
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
-        self._framework=None
+        self.diagnosis = diagnosis
+        self._framework = None
 
     def keys(self):
         """Returns keys of the dict."""
@@ -948,7 +952,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  use_bf16=True,
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False):
+                 diagnosis=False):
         excluded_precisions = ["bf16"] if not use_bf16 else []
         super().__init__(
             inputs=inputs,
@@ -968,7 +972,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
             excluded_precisions=excluded_precisions,
             accuracy_criterion=accuracy_criterion,
             quant_level=quant_level,
-            use_distributed_tuning=use_distributed_tuning
+            diagnosis=diagnosis
         )
         self.approach = approach
 
