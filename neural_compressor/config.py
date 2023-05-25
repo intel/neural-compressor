@@ -262,7 +262,8 @@ class BenchmarkConfig:
                  cores_per_instance=None,
                  num_of_instance=1,
                  inter_num_of_threads=None,
-                 intra_num_of_threads=None):
+                 intra_num_of_threads=None,
+                 diagnosis=False):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -275,6 +276,7 @@ class BenchmarkConfig:
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
+        self.diagnosis = diagnosis
         self._framework = None
 
     def keys(self):
@@ -401,6 +403,17 @@ class BenchmarkConfig:
             self._intra_num_of_threads = intra_num_of_threads
 
     @property
+    def diagnosis(self):
+        """Get diagnosis property."""
+        return self._diagnosis
+
+    @diagnosis.setter
+    def diagnosis(self, diagnosis):
+        """Set diagnosis property."""
+        if _check_value('diagnosis', diagnosis, bool):
+            self._diagnosis = diagnosis
+
+    @property
     def model_name(self):
         """Get model name."""
         return self._model_name
@@ -438,7 +451,7 @@ class AccuracyCriterion:
         from neural_compressor.config import AccuracyCriterion
 
         accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,  # optional. 
+            higher_is_better=True,  # optional.
             criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
             tolerable_loss=0.01,  # optional.
         )
@@ -542,11 +555,11 @@ class TuningCriterion:
         tuning_criterion=TuningCriterion(
             timeout=0,
             max_trials=100,
-            strategy="basic", 
+            strategy="basic",
             strategy_kwargs=None,
         )
     """
-    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, 
+    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0,
                  max_trials=100, objective="performance"):
         """Init a TuningCriterion object."""
         self.strategy = strategy
@@ -684,7 +697,7 @@ class _BaseQuantizationConfig:
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         accuracy_criterion: Accuracy constraint settings.
     """
@@ -705,7 +718,8 @@ class _BaseQuantizationConfig:
                  excluded_precisions=[],
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
-                 tuning_criterion=tuning_criterion):
+                 tuning_criterion=tuning_criterion,
+                 diagnosis=False):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
@@ -725,6 +739,7 @@ class _BaseQuantizationConfig:
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
         self._framework = None
+        self.diagnosis = diagnosis
         self._example_inputs = example_inputs
 
     @property
@@ -1086,7 +1101,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
                               timeout, max_trials and objective.
@@ -1127,8 +1142,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion,
-                 diagnosis=False
-    ):
+                 diagnosis=False):
         """Init a PostTrainingQuantConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -1145,7 +1159,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
-                         tuning_criterion=tuning_criterion)
+                         tuning_criterion=tuning_criterion,
+                         diagnosis=diagnosis)
         self.approach = approach
         self.diagnosis = diagnosis
 
@@ -1216,7 +1231,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
                               timeout, max_trials and objective.
@@ -1296,8 +1311,8 @@ class WeightPruningConfig:
         target_sparsity (float, optional): Sparsity ratio the model can reach after pruning.
             Supports a float between 0 and 1.
             Default to 0.90.
-        pruning_type (str, optional): A string define the criteria for pruning. 
-            Supports "magnitude", "snip", "snip_momentum", 
+        pruning_type (str, optional): A string define the criteria for pruning.
+            Supports "magnitude", "snip", "snip_momentum",
                      "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
             Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
         pattern (str, optional): Sparsity's structure (or unstructure) types.
@@ -1313,15 +1328,15 @@ class WeightPruningConfig:
         end_step: (int, optional): The step to end pruning.
             Supports an integer.
             Default to 0.
-        pruning_scope (str, optional): Determine layers' scores should be gather together to sort 
-            Supports "global" and "local". 
+        pruning_scope (str, optional): Determine layers' scores should be gather together to sort
+            Supports "global" and "local".
             Default: "global", since this leads to less accuracy loss.
         pruning_frequency: the frequency of pruning operation.
             Supports an integer.
             Default to 1.
         min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer's sparsity.
             Supports a float between 0 and 1.
-            Default to 0.0.  
+            Default to 0.0.
         max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer's sparsity.
             Supports a float between 0 and 1.
             Default to 0.98.
@@ -1402,7 +1417,7 @@ class KnowledgeDistillationLossConfig:
         loss_types (list[str], optional): loss types, should be a list of length 2.
             First item is the loss type for student model output and groundtruth label,
             second item is the loss type for student model output and teacher model output.
-            Supported tpyes for first item are "CE", "MSE". 
+            Supported tpyes for first item are "CE", "MSE".
             Supported tpyes for second item are "CE", "MSE", "KL".
             Defaults to ['CE', 'CE'].
         loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.
@@ -1446,7 +1461,7 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
             takes output of the specified layer as input, in string case, when output of the
             specified layer is a dict, this string will serve as key to get corresponding value,
             when output of the specified layer is a list or tuple, the string should be numeric and
-            will serve as the index to get corresponding value. 
+            will serve as the index to get corresponding value.
             When output process is not needed, the item in layer_mappings can be abbreviated to
             [(student_layer_name, ), (teacher_layer_name, )], if student_layer_name and teacher_layer_name
             are the same, it can be abbreviated further to [(layer_name, )].
@@ -1788,10 +1803,10 @@ class ExportConfig:
     """Common Base Config for Export.
 
     Args:
-        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"]. 
+        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"].
                                Defaults to "int8".
         opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
-        quant_format (str, optional): The quantization format of the exported int8 onnx model, 
+        quant_format (str, optional): The quantization format of the exported int8 onnx model,
                                       select from ["QDQ", "QLinear"]. Defaults to "QDQ".
         example_inputs (tensor|list|tuple|dict, optional): Example inputs used for tracing model. Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
@@ -1899,17 +1914,17 @@ class Torch2ONNXConfig(ExportConfig):
     """Config Class for Torch2ONNX.
 
     Args:
-        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"]. 
+        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"].
                                Defaults to "int8".
         opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
-        quant_format (str, optional): The quantization format of the exported int8 onnx model, 
+        quant_format (str, optional): The quantization format of the exported int8 onnx model,
                                       select from ["QDQ", "QLinear"]. Defaults to "QDQ".
         example_inputs (tensor|list|tuple|dict, required): Example inputs used for tracing model. Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
         output_names (list, optional): A list of model output names. Defaults to None.
         dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
-        recipe (str, optional): A string to select recipes used for Linear -> Matmul + Add, select from 
-                                ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"]. 
+        recipe (str, optional): A string to select recipes used for Linear -> Matmul + Add, select from
+                                ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"].
                                 Defaults to 'QDQ_OP_FP32_BIAS'.
 
     Example:
@@ -2128,8 +2143,8 @@ class _Config:
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
                  mxnet=mxnet_config,
-                 keras=keras_config
-                 ):
+                 keras=keras_config,
+                 diagnosis=None):
         """Init a config object."""
         self._quantization = quantization
         self._benchmark = benchmark
@@ -2142,6 +2157,14 @@ class _Config:
         self._pytorch = pytorch
         self._mxnet = mxnet
         self._keras = keras
+        if diagnosis is None:
+            diagnosis = False
+            if (quantization is not None and quantization.diagnosis) or \
+                    (benchmark is not None and benchmark.diagnosis):
+                diagnosis = True
+        if diagnosis:
+            tuning_criterion.max_trials = 1
+        self._diagnosis = diagnosis
 
     @property
     def distillation(self):
@@ -2198,5 +2221,10 @@ class _Config:
         """Get the onnxruntime object."""
         return self._onnxruntime
 
+
+    @property
+    def diagnosis(self):
+        """Get the diagnosis value."""
+        return self._diagnosis
 
 config = _Config()
