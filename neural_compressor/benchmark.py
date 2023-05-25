@@ -15,24 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Benchmark is used for evaluating the model performance."""
-
+import json
 import os
 import re
-import sys
-import numpy as np
-import subprocess
 import signal
-import psutil
+import subprocess
+import sys
 from threading import Thread
 
-from neural_compressor.data import check_dataloader
+import numpy as np
+import psutil
+
+from neural_compressor.profiling.parser.factory import ParserFactory
+from neural_compressor.profiling.profiler.factory import ProfilerFactory
 from .adaptor import FRAMEWORKS
-from .objective import MultiObjective
-from .config import BenchmarkConfig, options
-from .utils import alias_param, logger, OPTIONS
-from .utils.utility import GLOBAL_STATE, MODE
+from .config import BenchmarkConfig
+from .config import options
+from .data import check_dataloader
 from .model import BaseModel, Model
-from .utils import logger
+from .objective import MultiObjective
+from .profiling.parser.parser import ProfilingParser
+from .profiling.profiler.profiler import Profiler
+from .utils import alias_param, logger, OPTIONS
+from .utils.neural_insights_utils import register_neural_insights_workload, \
+    update_neural_insights_workload
+from .utils.utility import GLOBAL_STATE, MODE, print_table, dump_table
 from .utils.utility import Statistics
 
 
@@ -227,7 +234,7 @@ def generate_prefix(core_list):
             len(core_list), ','.join(core_list.astype(str)))
     elif sys.platform in ['win32']:  # pragma: no cover
         # (TODO) should we move the hw_info from ux?
-        from neural_compressor.ux.utils.hw_info import get_number_of_sockets
+        from neural_compressor.utils.utility import get_number_of_sockets
         num_of_socket = int(get_number_of_sockets())
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
         cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
@@ -351,6 +358,108 @@ def summary_benchmark():
         pass
 
 
+def profile(model, conf, b_dataloader) -> None:
+    """Execute profiling for benchmark configuration.
+
+    Args:
+        model: The model to be profiled.
+        conf: The configuration for benchmark containing accuracy goal,
+              tuning objective and preferred calibration & quantization
+              tuning space etc.
+        b_dataloader: The dataloader for frameworks.
+
+    Returns:
+        None
+    """
+    intra_num_of_threads = 1
+    inter_num_of_threads = 1
+    num_warmup = 10
+
+    intra_num_of_threads_conf = conf.intra_num_of_threads
+    if intra_num_of_threads_conf is not None:
+        intra_num_of_threads = intra_num_of_threads_conf
+    else:
+        logger.warning(
+            f"Could not find intra_num_of_threads value in config. Using: {intra_num_of_threads}",
+        )
+
+    inter_num_of_threads_conf = conf.inter_num_of_threads
+    if inter_num_of_threads_conf is not None:
+        inter_num_of_threads = inter_num_of_threads_conf
+    else:
+        logger.warning(
+            f"Could not find inter_num_of_threads value in config. Using: {inter_num_of_threads}",
+        )
+
+    num_warmup_conf = conf.warmup
+    if num_warmup_conf is not None:
+        num_warmup = num_warmup_conf
+    else:
+        logger.warning(
+            f"Could not get find num_warmup value in config. Using: {num_warmup}",
+        )
+
+    profiling_log = os.path.abspath(
+        os.path.join(
+            options.workspace,
+            "diagnosis.log",
+        ),
+    )
+    profiler: Profiler = ProfilerFactory.get_profiler(
+        model=model,
+        dataloader=b_dataloader,
+        log_file=profiling_log,
+    )
+    profiler.profile_model(
+        intra_num_of_threads=intra_num_of_threads,
+        inter_num_of_threads=inter_num_of_threads,
+        num_warmup=num_warmup,
+    )
+    parser: ProfilingParser = ParserFactory.get_parser(
+        model=model,
+        logs=[profiling_log],
+    )
+    parsed_results = parser.process()
+    print_table(
+        title="Profiling",
+        column_mapping={
+            "Node name": "node_name",
+            "Total execution time [us]": "total_execution_time",
+            "Accelerator execution time [us]": "accelerator_execution_time",
+            "CPU execution time [us]": "cpu_execution_time",
+            "OP run": "op_run",
+            "OP defined": "op_defined",
+        },
+        table_entries=parsed_results,
+    )
+
+    profiling_table_file = os.path.join(
+        options.workspace,
+        "profiling_table.csv",
+    )
+
+    dump_table(
+        filepath=profiling_table_file,
+        column_mapping={
+            "Node name": "node_name",
+            "Total execution time [us]": "total_execution_time",
+            "Accelerator execution time [us]": "accelerator_execution_time",
+            "CPU execution time [us]": "cpu_execution_time",
+            "OP run": "op_run",
+            "OP defined": "op_defined",
+        },
+        table_entries=parsed_results,
+        file_type="csv",
+    )
+
+    profiling_data_file = os.path.join(
+        options.workspace,
+        "profiling_data.json",
+    )
+    with open(profiling_data_file, "w") as profiling_json:
+        json.dump(parsed_results, profiling_json, indent=4)
+
+
 def benchmark_with_raw_cmd(raw_cmd, conf=None):
     """Benchmark the model performance with the raw commend.
 
@@ -409,10 +518,24 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         check_dataloader(b_dataloader)
 
     assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
-    # disable multi-instance for running bechmark on GPU device
+    # disable multi-instance for running benchmark on GPU device
     set_all_env_var(conf)
     if conf.device == 'gpu':
         set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
+
+    if conf.diagnosis and os.environ.get('NC_ENV_CONF', None) in [None, 'False']:
+        logger.info("Start to run Profiling")
+        ni_workload_id = register_neural_insights_workload(
+            workload_location=os.path.abspath(os.path.abspath(options.workspace)),
+            model=model,
+            workload_mode="benchmark",
+        )
+        try:
+            update_neural_insights_workload(ni_workload_id, "wip")
+            profile(wrapped_model, conf, b_dataloader)
+            update_neural_insights_workload(ni_workload_id, "success")
+        except Exception as e:
+            update_neural_insights_workload(ni_workload_id, "failure")
 
     logger.info("Start to run Benchmark.")
     if os.environ.get('NC_ENV_CONF') == 'True':

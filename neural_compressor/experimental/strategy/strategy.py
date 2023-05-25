@@ -31,6 +31,7 @@ import numpy as np
 from typing import OrderedDict as T_OrderedDict
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
+from neural_compressor.config import options
 from ...objective import MultiObjective
 from ...adaptor import FRAMEWORKS
 from ...utils.utility import Statistics, dump_data_to_local
@@ -405,7 +406,7 @@ class TuneStrategy(object):
                     continue
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
-                if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
+                if self.cfg.tuning.diagnosis:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
@@ -1259,15 +1260,15 @@ class TuneStrategy(object):
     def _diagnosis(self):
         import logging
         logger = logging.getLogger("neural_compressor")
-        iteration_list = self.cfg.tuning.diagnosis.iteration_list
-        inspect_type = self.cfg.tuning.diagnosis.inspect_type
-        save_to_disk = self.cfg.tuning.diagnosis.save_to_disk
-        save_path = self.cfg.tuning.diagnosis.save_path
+        iteration_list = [1]
+        inspect_type = 'all'
+        save_to_disk = True
+        save_path = os.path.join(options.workspace, 'inspect_saved')
         inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(self._fp32_model,
                                                                       self.last_qmodel,
                                                                       self.tune_cfg,
                                                                       save_path = save_path)
-        op_list = self.cfg.tuning.diagnosis.op_list
+        op_list = []
         if not op_list:
             op_list = list(inspect_node_lst)
         else:

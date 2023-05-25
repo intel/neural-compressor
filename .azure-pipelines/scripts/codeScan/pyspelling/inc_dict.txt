@@ -1947,8 +1947,6 @@ usr
 UTC
 util
 utils
-ux
-UX
 valminusminival
 valset
 ValueError
