@@ -1,6 +1,6 @@
 # What's Neural Solution?
 <!-- TODO what is ns -->
-Neural Solution is a flexible and easy to use tool that brings the capabilities of INC as a service. Users can effortlessly submit optimization tasks through the HTTP/gRPC API. Neural Solution automatically dispatches these tasks to one or multiple nodes, streamlining the entire process.
+Neural Solution is a flexible and easy to use tool that brings the capabilities of INC as a service. Users can effortlessly submit optimization tasks through the HTTP/gRPC APIs. Neural Solution automatically dispatches these tasks to one or multiple nodes, streamlining the entire process.
 
 # Why Neural Solution?
 <!-- TODO what does the ns provide -->
@@ -12,7 +12,6 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 <!-- TODO Added Architecture diagram -->
 
 # Get Started
-<!-- TODO how to install it -->
 ## Installation
 <details>
   <summary>Prerequisites</summary>

@@ -46,7 +46,7 @@ from neural_solution.config import config
 # Get config from Launcher.sh
 task_monitor_port = None
 result_monitor_port = None
-DB_PATH = None
+db_path = None
 
 app = FastAPI()
 
@@ -101,13 +101,13 @@ def ping():
 
 @app.get("/cluster")
 def get_cluster():
-    DB_PATH = get_db_path(config.workspace)
-    return get_cluster_info(db_path=DB_PATH)
+    db_path = get_db_path(config.workspace)
+    return get_cluster_info(db_path=db_path)
 
 @app.get("/clusters")
-def get_cluster():
-    DB_PATH = get_db_path(config.workspace)
-    return HTMLResponse(content=get_cluster_table(db_path=DB_PATH))
+def get_clusters():
+    db_path = get_db_path(config.workspace)
+    return HTMLResponse(content=get_cluster_table(db_path=db_path))
 
 @app.get("/description")
 async def get_description():
@@ -115,17 +115,14 @@ async def get_description():
         data = json.load(f)
     return data
 
-def list_to_string(lst: list):
-    return " ".join(str(i) for i in lst)
-
 @app.post("/task/submit/")
 async def submit_task(task: Task):
     msg = "Task submitted successfully"
     status = "successfully"
     # search the current
-    DB_PATH = get_db_path(config.workspace)
-    if os.path.isfile(DB_PATH):
-        conn = sqlite3.connect(DB_PATH)
+    db_path = get_db_path(config.workspace)
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         task_id = str(uuid.uuid4()).replace('-','')
         sql = r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)" +\
@@ -150,9 +147,9 @@ async def submit_task(task: Task):
 @app.get("/task/{task_id}")
 def get_task_by_id(task_id: str):
     res = None
-    DB_PATH = get_db_path(config.workspace)
-    if os.path.isfile(DB_PATH):
-        conn = sqlite3.connect(DB_PATH)
+    db_path = get_db_path(config.workspace)
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id,))
         res = cursor.fetchone()
@@ -163,9 +160,9 @@ def get_task_by_id(task_id: str):
 @app.get("/task/")
 def get_all_tasks():
     res = None
-    DB_PATH = get_db_path(config.workspace)
-    if os.path.isfile(DB_PATH):
-        conn = sqlite3.connect(DB_PATH)
+    db_path = get_db_path(config.workspace)
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute(r"select * from task")
         res = cursor.fetchall()
@@ -181,9 +178,9 @@ def get_task_status_by_id(task_id: str):
     optimization_result = {}
 
     res = None
-    DB_PATH = get_db_path(config.workspace)
-    if os.path.isfile(DB_PATH):
-        conn = sqlite3.connect(DB_PATH)
+    db_path = get_db_path(config.workspace)
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
         res = cursor.fetchone()
@@ -301,7 +298,7 @@ if __name__ == "__main__":
     # parse the args and modified the config accordingly
     args = parse_arguments()
     config.workspace = args.workspace
-    DB_PATH = get_db_path(config.workspace)
+    db_path = get_db_path(config.workspace)
     config.task_monitor_port = args.task_monitor_port
     config.result_monitor_port = args.result_monitor_port
     # initialize the task submitter
