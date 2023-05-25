@@ -68,7 +68,9 @@ class SQLinearWrapper(torch.nn.Module):
         self.scale, self.zero_point = self._calculate_qparams(input_scale, input_minmax, dtype)
         self.add_module('sq_linear', module)
         self.ipex = False  # a flag used for ipex inference
-        self.weight = self.sq_linear.weight
+
+    def weight(self):
+        return self.sq_linear.weight
 
     def forward(self, X):
         if self.ipex:
