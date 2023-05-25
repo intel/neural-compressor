@@ -5,9 +5,9 @@ YOLOv5 pruned example is developed based on Version 6.2 [YOLOv5](https://github.
 ## Examples
 Several pruning examples are provided, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
 
-There are [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/yolo_v5/pruning/eager/scripts/) for YOLOv5s sparse model. The sparse model with different patterns ("4x1", "1x1", etc) can be obtained by modifying "target_sparsity" and "pruning_pattern" parameters.
+There are [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/yolo_v5/pruning/eager/scripts/) for YOLOv5s sparse models. The sparse models with different patterns ("4x1", "1x1", etc) can be obtained by modifying "target_sparsity" and "pruning_pattern" parameters.
 
-Dense model can also be fine-tuned on COCO datasets (by setting --do_prune to False) [YOLOv5s6-COCO](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/yolo_v5/pruning/eager/scripts/yolov5s6_dense_finetune.sh)
+Dense models can also be fine-tuned on COCO datasets (by setting --do_prune to False) [YOLOv5s6-COCO](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/yolo_v5/pruning/eager/scripts/yolov5s6_dense_finetune.sh)
 
 
 #### YOLOv5
