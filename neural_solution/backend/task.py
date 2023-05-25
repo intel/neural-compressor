@@ -13,7 +13,7 @@
 # limitations under the License.
 
 class Task:
-    """A Task is an abstraction of a user tuning request that is handled in inc-serve.
+    """A Task is an abstraction of a user tuning request that is handled in neural solution service.
 
     Attributes:
         task_id: The task id
