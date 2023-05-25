@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.utils.utility &mdash; Intel® Neural Compressor 2.1 documentation</title>
+  <title>neural_compressor.utils.utility &mdash; Intel® Neural Compressor 2.2 documentation</title>
       <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
@@ -13,6 +13,8 @@
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
         <script src="../../../../_static/doctools.js"></script>
         <script src="../../../../_static/sphinx_highlight.js"></script>
@@ -114,6 +116,9 @@ options.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.DotDict" title="neural_compressor.utils.utility.DotDict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DotDict</span></code></a></p></td>
 <td><p>access yaml using attributes instead of using the dictionary notation.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.OpEntry" title="neural_compressor.utils.utility.OpEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OpEntry</span></code></a></p></td>
+<td><p>OP entry class.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -210,6 +215,36 @@ options.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.alias_param" title="neural_compressor.utils.utility.alias_param"><code class="xref py py-obj docutils literal notranslate"><span class="pre">alias_param</span></code></a>(param_name, param_alias)</p></td>
 <td><p>Decorator for aliasing a param in a function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.print_table" title="neural_compressor.utils.utility.print_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_table</span></code></a>(→ None)</p></td>
+<td><p>Print table with prettytable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.get_tensors_info" title="neural_compressor.utils.utility.get_tensors_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tensors_info</span></code></a>(→ dict)</p></td>
+<td><p>Get information about tensors.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.get_weights_details" title="neural_compressor.utils.utility.get_weights_details"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weights_details</span></code></a>(→ list)</p></td>
+<td><p>Get weights details for model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.dump_table" title="neural_compressor.utils.utility.dump_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_table</span></code></a>(→ None)</p></td>
+<td><p>Dump table data to file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.dump_table_to_csv" title="neural_compressor.utils.utility.dump_table_to_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_table_to_csv</span></code></a>(filepath, column_mapping, table_entries)</p></td>
+<td><p>Dump table data to csv file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.get_number_of_sockets" title="neural_compressor.utils.utility.get_number_of_sockets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_number_of_sockets</span></code></a>(→ int)</p></td>
+<td><p>Get number of sockets in platform.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.print_op_list" title="neural_compressor.utils.utility.print_op_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_op_list</span></code></a>(workload_location)</p></td>
+<td><p>Print OP table and dump it to CSV.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.get_op_list" title="neural_compressor.utils.utility.get_op_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_op_list</span></code></a>(→ List[OpEntry])</p></td>
+<td><p>Get OP list for model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.calculate_mse" title="neural_compressor.utils.utility.calculate_mse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_mse</span></code></a>(→ Optional[float])</p></td>
+<td><p>Calculate MSE for specified OP.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.mse_metric_gap" title="neural_compressor.utils.utility.mse_metric_gap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mse_metric_gap</span></code></a>(→ float)</p></td>
+<td><p>Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.</p></td>
 </tr>
 </tbody>
 </table>
@@ -513,6 +548,183 @@ options.</p>
 <li><p><strong>param_name</strong> – Name of param in function to alias.</p></li>
 <li><p><strong>param_alias</strong> – Alias that can be used for this param.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.print_table">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">print_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">column_mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">logger.info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">insert_newlines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.print_table" title="Permalink to this definition"></a></dt>
+<dd><p>Print table with prettytable.</p>
+<p>:param :
+:param column_mapping: Dictionary where key is a column header and value corresponds</p>
+<blockquote>
+<div><p>to object’s attribute.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_entries</strong> (<em>list</em>) – List of objects to be included in the table.</p></li>
+<li><p><strong>output_handler</strong> (<em>func</em><em>, </em><em>optional</em>) – Output handler function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.get_tensors_info">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_tensors_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workload_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'optimized'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.get_tensors_info" title="Permalink to this definition"></a></dt>
+<dd><p>Get information about tensors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>workload_location</strong> – path to workload directory</p></li>
+<li><p><strong>model_type</strong> – type of model. Supported model types: “input”, “optimized”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dictionary with tensors info</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.get_weights_details">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_weights_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workload_location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.get_weights_details" title="Permalink to this definition"></a></dt>
+<dd><p>Get weights details for model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>workload_location</strong> – path to workload directory</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of WeightDetails objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.dump_table">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'csv'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.dump_table" title="Permalink to this definition"></a></dt>
+<dd><p>Dump table data to file.</p>
+<p>:param :
+:param filepath: The path of the file to which the data is to be dumped.
+:type filepath: str
+:param column_mapping: Dictionary where key is a column header and value corresponds</p>
+<blockquote>
+<div><p>to object’s attribute.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_entries</strong> (<em>list</em>) – List of objects to be included in the table.</p></li>
+<li><p><strong>file_type</strong> (<em>str</em>) – name of the file extension. Currently only csv is supported.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.dump_table_to_csv">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_table_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.dump_table_to_csv" title="Permalink to this definition"></a></dt>
+<dd><p>Dump table data to csv file.</p>
+<p>:param :
+:param filepath: The path of the file to which the data is to be dumped.
+:type filepath: str
+:param column_mapping: Dictionary where key is a column header and value corresponds</p>
+<blockquote>
+<div><p>to object’s attribute.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_entries</strong> (<em>list</em>) – List of objects to be included in the table.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.get_number_of_sockets">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_number_of_sockets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.get_number_of_sockets" title="Permalink to this definition"></a></dt>
+<dd><p>Get number of sockets in platform.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.OpEntry">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">OpEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.OpEntry" title="Permalink to this definition"></a></dt>
+<dd><p>OP entry class.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.print_op_list">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">print_op_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workload_location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.print_op_list" title="Permalink to this definition"></a></dt>
+<dd><p>Print OP table and dump it to CSV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>workload_location</strong> – path to workload directory</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.get_op_list">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_op_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minmax_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_model_tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimized_model_tensors</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neural_compressor.utils.utility.OpEntry" title="neural_compressor.utils.utility.OpEntry"><span class="pre">OpEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.get_op_list" title="Permalink to this definition"></a></dt>
+<dd><p>Get OP list for model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>minmax_file_path</strong> – path to dequan_min_max.pkl</p></li>
+<li><p><strong>input_model_tensors</strong> – dict with input tensors details</p></li>
+<li><p><strong>optimized_model_tensors</strong> – dict with optimized tensors details</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of OpEntry elements</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.calculate_mse">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">calculate_mse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_model_tensors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimized_model_tensors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.calculate_mse" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate MSE for specified OP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_name</strong> – name of the OP</p></li>
+<li><p><strong>input_model_tensors</strong> – dict with input tensors details</p></li>
+<li><p><strong>optimized_model_tensors</strong> – dict with optimized tensors details</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MSE value for specified op_name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.mse_metric_gap">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">mse_metric_gap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dequantize_tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.mse_metric_gap" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fp32_tensor</strong> (<em>tensor</em>) – The FP32 tensor.</p></li>
+<li><p><strong>dequantize_tensor</strong> (<em>tensor</em>) – The INT8 dequantize tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MSE value</p>
 </dd>
 </dl>
 </dd></dl>

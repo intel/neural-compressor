@@ -91,7 +91,7 @@ Classes
        )
 
 
-.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model=None, model_name='', cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None)
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model=None, model_name='', cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None, diagnosis=False)
 
    Config Class for Benchmark.
 
@@ -128,7 +128,7 @@ Classes
        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
 
 
-.. py:class:: QuantizationConfig(inputs=[], outputs=[], backend='default', device='cpu', approach='post_training_static_quant', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, strategy='basic', strategy_kwargs=None, objective='performance', timeout=0, max_trials=100, performance_only=False, reduce_range=None, use_bf16=True, quant_level='auto', accuracy_criterion=accuracy_criterion)
+.. py:class:: QuantizationConfig(inputs=[], outputs=[], backend='default', device='cpu', approach='post_training_static_quant', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, strategy='basic', strategy_kwargs=None, objective='performance', timeout=0, max_trials=100, performance_only=False, reduce_range=None, use_bf16=True, quant_level='auto', accuracy_criterion=accuracy_criterion, diagnosis=False)
 
 
 

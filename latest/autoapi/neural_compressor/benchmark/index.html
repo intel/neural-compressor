@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.benchmark &mdash; Intel® Neural Compressor 2.1 documentation</title>
+  <title>neural_compressor.benchmark &mdash; Intel® Neural Compressor 2.2 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
@@ -13,6 +13,8 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
@@ -128,10 +130,13 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.summary_benchmark" title="neural_compressor.benchmark.summary_benchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary_benchmark</span></code></a>()</p></td>
 <td><p>Get the summary of the benchmark.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.benchmark_with_raw_cmd" title="neural_compressor.benchmark.benchmark_with_raw_cmd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">benchmark_with_raw_cmd</span></code></a>(raw_cmd[, conf])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.profile" title="neural_compressor.benchmark.profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">profile</span></code></a>(→ None)</p></td>
+<td><p>Execute profiling for benchmark configuration.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.benchmark_with_raw_cmd" title="neural_compressor.benchmark.benchmark_with_raw_cmd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">benchmark_with_raw_cmd</span></code></a>(raw_cmd[, conf])</p></td>
 <td><p>Benchmark the model performance with the raw commend.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.fit" title="neural_compressor.benchmark.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model, conf[, b_dataloader, b_func])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.fit" title="neural_compressor.benchmark.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model, conf[, b_dataloader, b_func])</p></td>
 <td><p>Benchmark the model performance with the configure.</p></td>
 </tr>
 </tbody>
@@ -239,6 +244,26 @@ then b_func is not needed.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.benchmark.summary_benchmark">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">summary_benchmark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.summary_benchmark" title="Permalink to this definition"></a></dt>
 <dd><p>Get the summary of the benchmark.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.profile">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_dataloader</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.profile" title="Permalink to this definition"></a></dt>
+<dd><p>Execute profiling for benchmark configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The model to be profiled.</p></li>
+<li><p><strong>conf</strong> – The configuration for benchmark containing accuracy goal,
+tuning objective and preferred calibration &amp; quantization
+tuning space etc.</p></li>
+<li><p><strong>b_dataloader</strong> – The dataloader for frameworks.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">

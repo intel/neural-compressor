@@ -21,9 +21,9 @@ Subpackages
    experimental/index.rst
    metric/index.rst
    model/index.rst
+   profiling/index.rst
    strategy/index.rst
    utils/index.rst
-   ux/index.rst
 
 
 Submodules

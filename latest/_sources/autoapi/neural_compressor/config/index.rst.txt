@@ -93,7 +93,7 @@ Classes
 
 
 
-.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None)
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None, diagnosis=False)
 
    Config Class for Benchmark.
 

@@ -21,9 +21,11 @@ Submodules
    kl_divergence/index.rst
    load_huggingface/index.rst
    logger/index.rst
+   neural_insights_utils/index.rst
    options/index.rst
    pytorch/index.rst
    utility/index.rst
+   weights_details/index.rst
 
 
 Package Contents

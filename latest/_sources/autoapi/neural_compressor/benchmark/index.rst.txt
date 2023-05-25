@@ -31,6 +31,7 @@ Functions
    neural_compressor.benchmark.call_one
    neural_compressor.benchmark.config_instance
    neural_compressor.benchmark.summary_benchmark
+   neural_compressor.benchmark.profile
    neural_compressor.benchmark.benchmark_with_raw_cmd
    neural_compressor.benchmark.fit
 
@@ -119,6 +120,19 @@ Functions
 .. py:function:: summary_benchmark()
 
    Get the summary of the benchmark.
+
+
+.. py:function:: profile(model, conf, b_dataloader) -> None
+
+   Execute profiling for benchmark configuration.
+
+   :param model: The model to be profiled.
+   :param conf: The configuration for benchmark containing accuracy goal,
+                tuning objective and preferred calibration & quantization
+                tuning space etc.
+   :param b_dataloader: The dataloader for frameworks.
+
+   :returns: None
 
 
 .. py:function:: benchmark_with_raw_cmd(raw_cmd, conf=None)

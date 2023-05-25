@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; Intel® Neural Compressor 2.1 documentation</title>
+  <title>Installation &mdash; Intel® Neural Compressor 2.2 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
@@ -13,6 +13,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
@@ -138,7 +140,6 @@
 <blockquote>
 <div><p>Notes:</p>
 <ul class="simple">
-<li><p>Please choose one of the basic or full installation mode for your environment, <strong>DO NOT</strong> install both. If you want to re-install with the other mode, please uninstall the current package at first.</p></li>
 <li><p>If you get some build issues, please check <a class="reference internal" href="faq.html"><span class="doc">frequently asked questions</span></a> at first.</p></li>
 </ul>
 </div></blockquote>
@@ -147,8 +148,6 @@
 <h3>Install from Binary<a class="headerlink" href="#install-from-binary" title="Permalink to this heading"></a></h3>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable basic version from pypi</span>
 pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
-<span class="c1"># or install stable full version from pypi (including GUI)</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-full
 </pre></div>
 </div>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install nightly version</span>
@@ -157,15 +156,10 @@ git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 <span class="c1"># install nightly basic version from pypi</span>
 pip<span class="w"> </span>install<span class="w"> </span>-i<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span>neural-compressor
-<span class="c1"># or install nightly full version from pypi (including GUI)</span>
-pip<span class="w"> </span>install<span class="w"> </span>-i<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span>neural-compressor-full
 </pre></div>
 </div>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable basic version from from conda</span>
 conda<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>intel
-<span class="c1"># or install stable full version from from conda (including GUI)</span>
-conda<span class="w"> </span>install<span class="w"> </span><span class="nv">sqlalchemy</span><span class="o">=</span><span class="m">1</span>.4.27<span class="w"> </span><span class="nv">alembic</span><span class="o">=</span><span class="m">1</span>.7.7<span class="w"> </span>-c<span class="w"> </span>conda-forge
-conda<span class="w"> </span>install<span class="w"> </span>neural-compressor-full<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>intel
 </pre></div>
 </div>
 </section>
@@ -176,8 +170,6 @@ conda<span class="w"> </span>install<span class="w"> </span>neural-compressor-fu
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 <span class="c1"># build with basic functionality</span>
 python<span class="w"> </span>setup.py<span class="w"> </span>install
-<span class="c1"># build with full functionality (including GUI)</span>
-python<span class="w"> </span>setup.py<span class="w"> </span>--full<span class="w"> </span>install
 </pre></div>
 </div>
 </section>
@@ -213,17 +205,11 @@ python<span class="w"> </span>setup.py<span class="w"> </span>--full<span class=
 <h3>Install from Binary<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable basic version from pypi</span>
 pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
-<span class="c1"># or install stable full version from pypi (including GUI)</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-full
 </pre></div>
 </div>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable basic version from from conda</span>
 conda<span class="w"> </span>install<span class="w"> </span>pycocotools<span class="w"> </span>-c<span class="w"> </span>esri
 conda<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>intel
-<span class="c1"># or install stable full version from from conda (including GUI)</span>
-conda<span class="w"> </span>install<span class="w"> </span>pycocotools<span class="w"> </span>-c<span class="w"> </span>esri
-conda<span class="w"> </span>install<span class="w"> </span><span class="nv">sqlalchemy</span><span class="o">=</span><span class="m">1</span>.4.27<span class="w"> </span><span class="nv">alembic</span><span class="o">=</span><span class="m">1</span>.7.7<span class="w"> </span>-c<span class="w"> </span>conda-forge
-conda<span class="w"> </span>install<span class="w"> </span>neural-compressor-full<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>intel
 </pre></div>
 </div>
 </section>
@@ -234,8 +220,6 @@ conda<span class="w"> </span>install<span class="w"> </span>neural-compressor-fu
 <span class="w">  </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 <span class="w">  </span><span class="c1"># build with basic functionality</span>
 <span class="w">  </span>python<span class="w"> </span>setup.py<span class="w"> </span>install
-<span class="w">  </span><span class="c1"># build with full functionality (including GUI)</span>
-<span class="w">  </span>python<span class="w"> </span>setup.py<span class="w"> </span>--full<span class="w"> </span>install
 </pre></div>
 </div>
 </section>

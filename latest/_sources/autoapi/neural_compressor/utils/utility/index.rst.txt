@@ -29,6 +29,7 @@ Classes
    neural_compressor.utils.utility.MODE
    neural_compressor.utils.utility.GLOBAL_STATE
    neural_compressor.utils.utility.DotDict
+   neural_compressor.utils.utility.OpEntry
 
 
 
@@ -67,6 +68,16 @@ Functions
    neural_compressor.utils.utility.dump_class_attrs
    neural_compressor.utils.utility.compare_objects
    neural_compressor.utils.utility.alias_param
+   neural_compressor.utils.utility.print_table
+   neural_compressor.utils.utility.get_tensors_info
+   neural_compressor.utils.utility.get_weights_details
+   neural_compressor.utils.utility.dump_table
+   neural_compressor.utils.utility.dump_table_to_csv
+   neural_compressor.utils.utility.get_number_of_sockets
+   neural_compressor.utils.utility.print_op_list
+   neural_compressor.utils.utility.get_op_list
+   neural_compressor.utils.utility.calculate_mse
+   neural_compressor.utils.utility.mse_metric_gap
 
 
 
@@ -304,5 +315,127 @@ Functions
 
    :param param_name: Name of param in function to alias.
    :param param_alias: Alias that can be used for this param.
+
+
+.. py:function:: print_table(column_mapping: Dict[str, str], table_entries: List[Any], output_handler=logger.info, title: Optional[str] = None, insert_newlines=False) -> None
+
+   Print table with prettytable.
+
+   :param :
+   :param column_mapping: Dictionary where key is a column header and value corresponds
+                          to object's attribute.
+   :type column_mapping: dict
+   :param table_entries: List of objects to be included in the table.
+   :type table_entries: list
+   :param output_handler: Output handler function.
+   :type output_handler: func, optional
+
+   :returns: None
+
+
+.. py:function:: get_tensors_info(workload_location, model_type: str = 'optimized') -> dict
+
+   Get information about tensors.
+
+   :param workload_location: path to workload directory
+   :param model_type: type of model. Supported model types: "input", "optimized"
+
+   :returns: dictionary with tensors info
+
+
+.. py:function:: get_weights_details(workload_location: str) -> list
+
+   Get weights details for model.
+
+   :param workload_location: path to workload directory
+
+   :returns: list of WeightDetails objects
+
+
+.. py:function:: dump_table(filepath: str, column_mapping: Dict[str, str], table_entries: List[Any], file_type: str = 'csv') -> None
+
+   Dump table data to file.
+
+   :param :
+   :param filepath: The path of the file to which the data is to be dumped.
+   :type filepath: str
+   :param column_mapping: Dictionary where key is a column header and value corresponds
+                          to object's attribute.
+   :type column_mapping: dict
+   :param table_entries: List of objects to be included in the table.
+   :type table_entries: list
+   :param file_type: name of the file extension. Currently only csv is supported.
+   :type file_type: str
+
+   :returns: None
+
+
+.. py:function:: dump_table_to_csv(filepath: str, column_mapping: Dict[str, str], table_entries: List[Any])
+
+   Dump table data to csv file.
+
+   :param :
+   :param filepath: The path of the file to which the data is to be dumped.
+   :type filepath: str
+   :param column_mapping: Dictionary where key is a column header and value corresponds
+                          to object's attribute.
+   :type column_mapping: dict
+   :param table_entries: List of objects to be included in the table.
+   :type table_entries: list
+
+   :returns: None
+
+
+.. py:function:: get_number_of_sockets() -> int
+
+   Get number of sockets in platform.
+
+
+.. py:class:: OpEntry(op_name: str, mse: float, activation_min: float, activation_max: float)
+
+   OP entry class.
+
+
+.. py:function:: print_op_list(workload_location: str)
+
+   Print OP table and dump it to CSV.
+
+   :param workload_location: path to workload directory
+
+   :returns: None
+
+
+.. py:function:: get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) -> List[OpEntry]
+
+   Get OP list for model.
+
+   :param minmax_file_path: path to dequan_min_max.pkl
+   :param input_model_tensors: dict with input tensors details
+   :param optimized_model_tensors: dict with optimized tensors details
+
+   :returns: list of OpEntry elements
+
+
+.. py:function:: calculate_mse(op_name: str, input_model_tensors: dict, optimized_model_tensors: dict) -> Optional[float]
+
+   Calculate MSE for specified OP.
+
+   :param op_name: name of the OP
+   :param input_model_tensors: dict with input tensors details
+   :param optimized_model_tensors: dict with optimized tensors details
+
+   :returns: MSE value for specified op_name
+
+
+.. py:function:: mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float
+
+   Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+
+   :param fp32_tensor: The FP32 tensor.
+   :type fp32_tensor: tensor
+   :param dequantize_tensor: The INT8 dequantize tensor.
+   :type dequantize_tensor: tensor
+
+   :returns: MSE value
 
 
