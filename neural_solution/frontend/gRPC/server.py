@@ -26,6 +26,7 @@ from neural_solution.frontend.gRPC.proto import (
 from neural_solution.config import config
 from neural_solution.utility import get_db_path
 from neural_solution.frontend.task_submitter import task_submitter
+from neural_solution.utils import  logger
 
 from neural_solution.frontend.utility import (
     submit_task_to_db,
@@ -99,6 +100,7 @@ def parse_arguments():
 
 
 if __name__ == '__main__':
+    logger.info(f"Try to start gRPC server.")
     logging.basicConfig()
     args = parse_arguments()
     print(args.workspace)
