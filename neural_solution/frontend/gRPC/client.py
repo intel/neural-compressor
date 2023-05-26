@@ -55,7 +55,7 @@ def run():
     print(response.msg)
 
 
-def run_query_task_result(task_id="38e459ef31bc41ddbb4228004d7b2979"):
+def run_query_task_result(task_id):
     # Create a gRPC channel
     port = str(config.grpc_api_port)
     channel = grpc.insecure_channel('localhost:' + port)
@@ -87,4 +87,4 @@ def run_query_task_status(task_id):
 
 
 if __name__ == '__main__':
-    run_query_task_result()
+    run()
