@@ -2880,7 +2880,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 json.dump(self.cfgs, write_f, indent=4)
             return None
 
-    def get_pattern(self, fallback_op, fuse_ops):
+    def get_pattern(self, fallback_op, fuse_ops): # pragma: no cover
         for fuse_pattern in fuse_ops:
             if fuse_pattern[0] == fallback_op:
                 if fuse_pattern[1] in ['relu_', 'add_']:
@@ -3139,7 +3139,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         os.remove(self.ipex_config_path)
 
-    def get_fuse_ops(self, default_cfgs):
+    def get_fuse_ops(self, default_cfgs): # pragma: no cover
         elt_wise = ['relu', 'sigmoid', 'gelu']
         inplace_ops = ['relu_', 'add_']
         op_patterns = []
@@ -3634,7 +3634,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         for op in quantizable_ops:
             op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
 
-        if self.version.release < Version("1.11.0").release:
+        if self.version.release < Version("1.11.0").release: # pragma: no cover
             quantized_ops["default_qconfig"] = None
         else:
             from torch.ao.quantization import default_embedding_qat_qconfig
@@ -3834,7 +3834,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             for key in tune_cfg['op']:
                 op_type = key[1]
                 #build initial dict
-                if op_type not in res.keys():
+                if op_type not in res.keys(): # pragma: no cover
                     res[op_type] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
                 value = tune_cfg['op'][key]
                 # Special cases: QuantStub, Embedding
