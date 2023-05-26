@@ -40,7 +40,7 @@ def main() -> None:
 
     change_log_level(configuration.log_level)
 
-    log.info("Intel(r) Neural Insights Server started.\n")
+    log.info("Intel Neural Insights Server started.\n")
 
     if configuration.allow_insecure_connections:
         log.warning(
