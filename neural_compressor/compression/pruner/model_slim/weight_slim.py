@@ -331,20 +331,20 @@ class MHACompression(object):
         return list(common_indice)
 
     def mask_mha_weights(self, head_mask = None):
-        # 111
-        head_size = getattr(self.mha[0], self,attributes_for_this_mha['head_size'])
-        head_nums = getattr(self.mha[0], self,attributes_for_this_mha['head_nums'])
+        head_size = getattr(self.mha[0], self.attributes_for_this_mha['head_size'])
+        head_nums = getattr(self.mha[0], self.attributes_for_this_mha['head_nums'])
         assert head_mask.numel() == head_nums, f"Hooked module {self.mha_name}'s head num and head mask does not match." # check
         # extend the masks
+        # import pdb;pdb.set_trace()
         ffn_mask = torch.repeat_interleave(head_mask, head_size, dim = -1)
         qkv_mask = ffn_mask.permute(1, 0)
         # mask the weight data
         for qkv_linear in self.qkv:
             # 3 linears: q, k, v
-            qkv_linear.weight.data = qkv_linear.weight.data * qkv_mask
+            qkv_linear.weight.data = qkv_linear.weight.data * qkv_mask.to(self.device)
         for ffn_linear in self.ffn:
             # 1 linears
-            ffn_linear.weight.data = ffn_linear.weight.data * ffn_mask
+            ffn_linear.weight.data = ffn_linear.weight.data * ffn_mask.to(self.device)
     
     def __call__(self, head_mask = None):
         """

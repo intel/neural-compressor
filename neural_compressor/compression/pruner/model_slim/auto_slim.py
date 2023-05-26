@@ -93,22 +93,35 @@ def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
 
 def generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs):
     """Get multi-head attention layers pruning configs."""
-    searcher = SelfMHASearcher(model, dataloader)
-    qkv_pattern, ffn_pattern = searcher.get_head_pattern()
-    qkv_layers, ffn_layers = searcher.search()
+    # method 1: apply real mha pruning
     mha_pruning_config = [
         {
-            "op_names": qkv_layers,
-            "pattern": qkv_pattern,
-            "target_sparsity": mha_sparsity,
-        },
-        {
-            "op_names": ffn_layers,
-            "pattern": ffn_pattern,
-            "target_sparsity": mha_sparsity,
+            "pattern": "mha",
+            "target_sparsity": mha_sparsity
         }
     ]
     # append kwargs to generated config
     for item in mha_pruning_config:
         item.update(kwargs)
     return mha_pruning_config
+
+    # method 2: apply experimental mha pruning
+    # searcher = SelfMHASearcher(model, dataloader)
+    # qkv_pattern, ffn_pattern = searcher.get_head_pattern()
+    # qkv_layers, ffn_layers = searcher.search()
+    # mha_pruning_config = [
+    #     {
+    #         "op_names": qkv_layers,
+    #         "pattern": qkv_pattern,
+    #         "target_sparsity": mha_sparsity,
+    #     },
+    #     {
+    #         "op_names": ffn_layers,
+    #         "pattern": ffn_pattern,
+    #         "target_sparsity": mha_sparsity,
+    #     }
+    # ]
+    # # append kwargs to generated config
+    # for item in mha_pruning_config:
+    #     item.update(kwargs)
+    # return mha_pruning_config

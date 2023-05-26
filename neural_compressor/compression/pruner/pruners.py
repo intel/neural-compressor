@@ -998,10 +998,6 @@ class MultiheadAttentionPruner(BasePruner):
                 self.linear_layers[mha_module['qkv_name'][idx]] = mha_module['qkv_module'][idx]
             for idx in range(mha_module['ffn_name'].__len__()):
                 self.linear_layers[mha_module['ffn_name'][idx]] = mha_module['ffn_module'][idx]
-
-    def mask_mha_weights(self, mha_module, head_mask):
-        for mha_name in self.mha_compressions.keys():
-            self.mha_compressions[mha_name].mask_mha_weights(self.head_masks[mha_name])
     
     def reduce_mha_scores(self, score, dim = 0):
         # an 2D tensor, return its compiled scores
@@ -1013,24 +1009,29 @@ class MultiheadAttentionPruner(BasePruner):
             return torch.max(score, dim)
         else:
             raise NotImplementedError
+    
+    def print_mha_masks(self):
+        for k, v in self.head_masks.items():
+            logger.info(f"Head mask of module {k} is {v}.")
 
     def update_mha_scores(self):
         for mha_name, mha_comp in self.mha_compressions.items():
+            device = mha_comp.device
             # step 0: obtain hooked attributes in mha modules
-            head_size = getattr(mha_comp, mha_comp.attributes_for_this_mha['head_size'])
-            head_nums = getattr(mha_comp, mha_comp.attributes_for_this_mha['head_nums'])
+            head_size = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha['head_size'])
+            head_nums = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha['head_nums'])
             # step 1: gather qkv and ffn which belong to same mha together
             qkv_scores_for_this_mha = {}
             ffn_scores_for_this_mha = {}
             for layer_name, layer_score in self.criterion.scores.items():
-                if k in mha_comp.qkv_name:
+                if layer_name in mha_comp.qkv_name:
                     qkv_scores_for_this_mha[layer_name] = layer_score
-                elif k in mha_comp.ffn_name:
+                elif layer_name in mha_comp.ffn_name:
                     ffn_scores_for_this_mha[layer_name] = layer_score
                 else:
                     continue
             # step 2: get qkv and ffn reduce_dim scores (commonly use: mean)
-            qkv_gather_scores = torch.zeros(head_nums, 1)
+            qkv_gather_scores = torch.zeros(head_nums, 1).to(device)
             qkv_shape = mha_comp.qkv[0].weight.shape
             qkv_block_size = [head_size, qkv_shape[1]]
             qkv_new_shape = [qkv_shape[0] // qkv_block_size[0], qkv_block_size[0], qkv_shape[1] // qkv_block_size[1], qkv_block_size[1]]
@@ -1039,7 +1040,7 @@ class MultiheadAttentionPruner(BasePruner):
                 qkv_score_new = self.reduce_mha_scores(self.reduce_mha_scores(qkv_score_new, -1), 1)
                 # qkv_scores_for_this_mha[qkv_name] = qkv_score_new # [head_nums, 1]
                 qkv_gather_scores += qkv_score_new
-            ffn_gather_scores = torch.zeros(1, head_nums)
+            ffn_gather_scores = torch.zeros(1, head_nums).to(device)
             ffn_shape = mha_comp.ffn[0].weight.shape
             ffn_block_size = [ffn_shape[0], head_size]
             ffn_new_shape = [ffn_shape[0] // ffn_block_size[0], ffn_block_size[0], ffn_shape[1] // ffn_block_size[1], ffn_block_size[1]]
@@ -1082,14 +1083,15 @@ class MultiheadAttentionPruner(BasePruner):
         # self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         # self.mask_weights()
         self.update_mha_scores() # update self.mha_scores
-        self.head_masks = self.pattern.get_masks(self.mha_scores, current_target_sparsity_ratio, self.self.head_mask_luts)
+        self.head_masks = self.pattern.get_masks(self.mha_scores, current_target_sparsity_ratio, self.head_masks)
+        self.print_mha_masks()
         self.mask_weights()
 
-        self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
+        self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.head_masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
     
     def mask_weights(self):
-        for mha_name, mha_compression in self.mha_compressions:
+        for mha_name, mha_compression in self.mha_compressions.items():
             mha_compression.mask_mha_weights(self.head_masks[mha_name])
 
     # main api functions

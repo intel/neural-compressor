@@ -1347,12 +1347,18 @@ class PatternMHA(BasePattern):
         
     def get_masks_global(self, scores, target_sparsity_ratio, pre_masks):
         # gather all score items into one tensor
+        # import pdb;pdb.set_trace()
+        if target_sparsity_ratio <= .0: 
+            return pre_masks
         flatten_score = torch.cat(list(scores.values())).flatten()
-        k = int(target_sparsity_ratio * scores_all.numel())
+        k = int(target_sparsity_ratio * flatten_score.numel())
+        if k <= 0:
+            return pre_masks
+        # import pdb;pdb.set_trace()
         threshold, _ = torch.kthvalue(flatten_score, k)
         head_masks = {}
         zero = torch.tensor([0.]).to(threshold.device)
         one = torch.tensor([1.]).to(threshold.device)
         for mha_name, mha_score in scores.items():
-            head_masks[mha_name] = torch.where(mha_score < threshold, zero, one)
+            head_masks[mha_name] = torch.where(mha_score <= threshold, zero, one).permute(1, 0)
         return head_masks
