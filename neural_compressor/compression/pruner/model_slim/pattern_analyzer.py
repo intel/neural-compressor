@@ -712,7 +712,8 @@ class SelfMHASearcher(JitBasicSearcher):
             # obtain pytorch module
             layer_obj['qkv_module'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['qkv']]
             layer_obj['ffn_module'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['ffn']]
-            layer_obj['mha_module'] = mha_search_layer['mha_module'][:] # we can directly copy since we have already obtai this module before
+            # we can directly copy since we have already obtained this module before
+            layer_obj['mha_module'] = mha_search_layer['mha_module'][:] 
             layer_objs.append(layer_obj)
         return layer_objs
     

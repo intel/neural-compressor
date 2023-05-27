@@ -333,7 +333,8 @@ class MHACompression(object):
     def mask_mha_weights(self, head_mask = None):
         head_size = getattr(self.mha[0], self.attributes_for_this_mha['head_size'])
         head_nums = getattr(self.mha[0], self.attributes_for_this_mha['head_nums'])
-        assert head_mask.numel() == head_nums, f"Hooked module {self.mha_name}'s head num and head mask does not match." # check
+        # check
+        assert head_mask.numel() == head_nums, f"Module {self.mha_name}'s head num and head mask does not match."
         # extend the masks
         # import pdb;pdb.set_trace()
         ffn_mask = torch.repeat_interleave(head_mask, head_size, dim = -1)

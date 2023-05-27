@@ -965,16 +965,20 @@ class MultiheadAttentionPruner(BasePruner):
         #---------------------------------------Custom attributes for MHA Pruner
         # main initialize process.
         # define some attributes. 
-        self.mha_compressions = {} # {key: mha_name, value: mha_compression object}
-        self.linear_layers = {} # {key: layer_name, value: corresponding linear object}
-        self.head_masks = {} # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num can be traced in corresponding mha_compression obejct
+        # {key: mha_name, value: mha_compression object}
+        self.mha_compressions = {}
+        # {key: layer_name, value: corresponding linear object}
+        self.linear_layers = {}
+        # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num traced in corresponding mha_compression object
+        self.head_masks = {} 
         # general pruning components (head pruning does not need a pattern component)
         self.mha_scores = {} # {}
         # main initialization process
         # initialize custom attributes
         self._init_mha_attrs()
-        # initialize custom attributes: criterion for example. user can still determine whether to use snip-momnetum, snip, magnitude, etc.
-        self.pattern = get_pattern(self.config, modules = None) # we have hook modules in mha_compressions therefore do not pass them to patterns
+        # initialize custom attributes: criterion (snip-momnetum, snip, magnitude, etc.)
+        # we have hook modules in mha_compressions therefore do not pass them to patterns
+        self.pattern = get_pattern(self.config, modules = None) 
         self.criterion = get_criterion(self.config, self.linear_layers) # criterion hooks on linear themselves.
         self.scheduler = get_scheduler(self.config)
         #-----------------------------------------------------------------------------------------------
@@ -1034,7 +1038,12 @@ class MultiheadAttentionPruner(BasePruner):
             qkv_gather_scores = torch.zeros(head_nums, 1).to(device)
             qkv_shape = mha_comp.qkv[0].weight.shape
             qkv_block_size = [head_size, qkv_shape[1]]
-            qkv_new_shape = [qkv_shape[0] // qkv_block_size[0], qkv_block_size[0], qkv_shape[1] // qkv_block_size[1], qkv_block_size[1]]
+            qkv_new_shape = [
+                qkv_shape[0] // qkv_block_size[0], 
+                qkv_block_size[0], 
+                qkv_shape[1] // qkv_block_size[1], 
+                qkv_block_size[1]
+            ]
             for qkv_name, qkv_score in qkv_scores_for_this_mha.items():
                 qkv_score_new = qkv_score.reshape(qkv_new_shape)
                 qkv_score_new = self.reduce_mha_scores(self.reduce_mha_scores(qkv_score_new, -1), 1)
@@ -1043,7 +1052,12 @@ class MultiheadAttentionPruner(BasePruner):
             ffn_gather_scores = torch.zeros(1, head_nums).to(device)
             ffn_shape = mha_comp.ffn[0].weight.shape
             ffn_block_size = [ffn_shape[0], head_size]
-            ffn_new_shape = [ffn_shape[0] // ffn_block_size[0], ffn_block_size[0], ffn_shape[1] // ffn_block_size[1], ffn_block_size[1]]
+            ffn_new_shape = [
+                ffn_shape[0] // ffn_block_size[0], 
+                ffn_block_size[0], 
+                ffn_shape[1] // ffn_block_size[1], 
+                ffn_block_size[1]
+            ]
             for ffn_name, ffn_score in ffn_scores_for_this_mha.items():
                 ffn_score_new = ffn_score.reshape(ffn_new_shape)
                 ffn_score_new = self.reduce_mha_scores(self.reduce_mha_scores(ffn_score_new, -1), 1)
