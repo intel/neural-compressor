@@ -414,20 +414,21 @@ def build_matmul_model():
 def build_matmul_model2():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
     B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
-    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
-    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
     H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
-     
+
+    C1_init = helper.make_tensor('C1', TensorProto.FLOAT, [1, 1, 5, 5], np.random.random(25).tolist())
     matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    matmul_node2 = onnx.helper.make_node('MatMul', ['C1', 'C'], ['C2'], name='Matmul2')
+    matmul_node3 = onnx.helper.make_node('MatMul', ['A', 'C2'], ['C3'], name='Matmul3')
     e_value = np.random.randint(2, size=(5)).astype(np.float32)
     E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
-    add = onnx.helper.make_node('Add', ['C', 'E'], ['D'], name='add')
+    add = onnx.helper.make_node('Add', ['C3', 'E'], ['D'], name='add')
      
     f_value = np.random.randint(2, size=(5)).astype(np.float32)
     F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
     add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
      
-    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
+    graph = helper.make_graph([matmul_node, matmul_node2, matmul_node3, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init, C1_init])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return  model
@@ -1114,6 +1115,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         def eval(model):
             return sub_eval(model, result)
+
+        dataset = Datasets("onnxrt_qdq")["dummy"]([(1,1,5,5), (1,1,5,1)])
+        dataloader = DATALOADERS["onnxrt_qdq"](dataset)
+        config = PostTrainingQuantConfig(approach='static')
+        q_model = quantization.fit(self.matmul_model2, config,
+            calib_dataloader=dataloader, eval_func=eval)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'QLinearMatMul']), 2)
+ 
         config = PostTrainingQuantConfig(approach='static', quant_format='QDQ')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
