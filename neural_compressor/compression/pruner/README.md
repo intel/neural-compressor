@@ -106,7 +106,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - Multi-head Attention Pruning
 
-  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We have currently support it in both pruning and auto slim, which means pruning a set of head first and removing these sprase weights**. Please refer to [multi-head attention pruning and auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
+  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We have currently support it in both pruning and auto slim, which means pruning a set of head first and removing these sparse weights**. Please refer to [multi-head attention pruning and auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
 
 
 ### Pruning Criteria
