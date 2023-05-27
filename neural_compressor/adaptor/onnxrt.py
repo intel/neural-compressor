@@ -623,51 +623,48 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         from neural_compressor.adaptor.ox_utils.util import \
             remove_init_from_model_input, split_shared_bias
         remove_init_from_model_input(model)
-        try:
-            sess_options = ort.SessionOptions()
-            optimization_levels = {
-                'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
-                'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
-                'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
-                'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
-            if not isinstance(self.query_handler.get_graph_optimization(), list):
-                level = self.query_handler.get_graph_optimization()
-            elif options.onnxrt.graph_optimization.level is not None:
-                level = options.onnxrt.graph_optimization.level
-            elif self.recipes.get('graph_optimization_level', None) is not None:
-                level = self.recipes['graph_optimization_level']
-            else:
-                if self.domain == "auto" and self._detect_domain(model):
-                    self.domain = 'nlp' 
-                level = 'ENABLE_EXTENDED' if self.domain == 'nlp' else 'ENABLE_BASIC'
-                logger.warning("Graph optimization level is automatically set to {}. "
-                    "You can use 'recipe' argument in 'PostTrainingQuantConfig'" 
-                    "to overwrite it".format(level))
-            sess_options.graph_optimization_level = optimization_levels[level]
-            sess_options.optimized_model_filepath = os.path.join(self.work_space, \
-                "Optimized_model.onnx")
-            if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
-                from onnxruntime_extensions import get_library_path
-                sess_options.register_custom_ops_library(get_library_path())
-            if not model.is_large_model:
-                ort.InferenceSession(model.model.SerializeToString(),
-                                    sess_options,
-                                    providers=[self.backend])
-            elif model.model_path is not None: # pragma: no cover
-                ort.InferenceSession(model.model_path,
-                                    sess_options,
-                                    providers=[self.backend])
-            else: # pragma: no cover 
-                logger.warning('Please use model path instead of onnx model object to quantize')
+        sess_options = ort.SessionOptions()
+        optimization_levels = {
+            'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+            'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+            'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+            'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
+        if not isinstance(self.query_handler.get_graph_optimization(), list):
+            level = self.query_handler.get_graph_optimization()
+        elif options.onnxrt.graph_optimization.level is not None:
+            level = options.onnxrt.graph_optimization.level
+        elif self.recipes.get('graph_optimization_level', None) is not None:
+            level = self.recipes['graph_optimization_level']
+        else:
+            if self.domain == "auto" and self._detect_domain(model):
+                self.domain = 'nlp' 
+            level = 'ENABLE_EXTENDED' if self.domain == 'nlp' else 'ENABLE_BASIC'
+            logger.warning("Graph optimization level is automatically set to {}. "
+                "You can use 'recipe' argument in 'PostTrainingQuantConfig'" 
+                "to overwrite it".format(level))
+        sess_options.graph_optimization_level = optimization_levels[level]
+        sess_options.optimized_model_filepath = os.path.join(self.work_space, \
+            "Optimized_model.onnx")
+        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            sess_options.register_custom_ops_library(get_library_path())
+        if not model.is_large_model:
+            ort.InferenceSession(model.model.SerializeToString(),
+                                sess_options,
+                                providers=['CPUExecutionProvider'])
+        elif model.model_path is not None: # pragma: no cover
+            ort.InferenceSession(model.model_path,
+                                sess_options,
+                                providers=['CPUExecutionProvider'])
+        else: # pragma: no cover 
+            logger.warning('Please use model path instead of onnx model object to quantize')
 
-            tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
+        tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
 
-            if model.is_large_model: # pragma: no cover
-                from onnx.external_data_helper import load_external_data_for_model
-                load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
-            model.model_path = sess_options.optimized_model_filepath
-        except:
-            tmp_model = model
+        if model.is_large_model: # pragma: no cover
+            from onnx.external_data_helper import load_external_data_for_model
+            load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
+        model.model_path = sess_options.optimized_model_filepath
         model.model = self._replace_gemm_with_matmul(tmp_model).model if \
             options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get('gemm_to_matmul', True) else \
             tmp_model
