@@ -495,6 +495,7 @@ dnf
 dnn
 dnnl
 DNNL
+DnnlExecutionProvider
 Dockerfile
 doclist
 docstrings

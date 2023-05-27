@@ -1250,10 +1250,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 framework_specific_info['backend'] == 'onnxrt_trt_ep':
                 framework_specific_info.update({'format': 'QDQ'})
                 framework = 'onnxrt_qdq'
-            if framework_specific_info['backend'] == 'onnxrt_cuda_ep' and self.cfg.device =='gpu':
+            if framework_specific_info['backend'] == 'onnxrt_cuda_ep' and self.config.device =='gpu':
                 framework_specific_info['use_fp16'] = True
                 framework_specific_info['use_bf16'] = True
-            if framework_specific_info['backend'] == 'onnxrt_dnnl_ep' and self.cfg.device == 'cpu':
+            if framework_specific_info['backend'] == 'onnxrt_dnnl_ep' and self.config.device == 'cpu':
                 framework_specific_info['use_bf16'] = True
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.config.backend == 'ipex':

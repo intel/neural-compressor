@@ -52,7 +52,7 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 # Run
 
-If the hardware doesn't support bf16 instruction, please set flag as below to force bf16 conversion (this way will be deperecated):
+If the hardware doesn't support bf16 instruction, please set flag as below to force bf16 conversion (this way will be deprecated):
 
 ```shell
 export FORCE_BF16=1
