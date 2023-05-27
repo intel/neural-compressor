@@ -134,3 +134,11 @@ class QBinaryOperator(QOperator):
             outputs, node.name + '_convert', **kwargs)
         add_nodes.append(binary_node)
         return True, add_nodes, inits
+
+@op_registry(op_types="Sum, Sub, Div, Pow, Equal, Greater, GreaterOrEqual, Less, LessOrEqual")
+class Float16BinaryOperator(Operator):
+    """Float16 Binary operator."""
+
+    def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
+        super(Float16BinaryOperator, self).__init__(onnx_quantizer, onnx_node)
