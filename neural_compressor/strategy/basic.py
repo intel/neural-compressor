@@ -209,9 +209,10 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
 
-    def requant_to_lower_bits(self, initial_op_tuning_cfg, calib_sampling_size):
-        from .utils.constant import QUNAT_BIT_LIST
-        for quant_bit in QUNAT_BIT_LIST:
+    def quant_to_lower_bits(self, initial_op_tuning_cfg, calib_sampling_size):
+        from .utils.constant import LOWER_BIT_LIST
+        for quant_bit in LOWER_BIT_LIST:
+            logger.info(f"Start to quantize ops into {quant_bit}")
             ops = self.tuning_space.collect_op_by_quant_bits(quant_bit)
             op_item_dtype_dict = {op.name: quant_bit for op in ops}
             lower_bits_sampler = LowerBitsSampler(deepcopy(self.tuning_space), [],
@@ -256,6 +257,11 @@ class BasicTuneStrategy(TuneStrategy):
                 if not self.cur_best_tuning_cfg:
                     self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                # try to quantizing ops into lower bits, such as int4,
+                # if accuracy meets the requirements after first trial and max_trials > 1
+                if index == 1 and self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result)):
+                    for op_tuning_cfg in self.quant_to_lower_bits(self.cur_best_tuning_cfg, calib_sampling_size):
+                        yield op_tuning_cfg
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:
                     logger.info("Apply all recipes.")
@@ -267,6 +273,7 @@ class BasicTuneStrategy(TuneStrategy):
                     break
                 yield op_tuning_cfg
 
+            # TODO Add the lower bits quantization here
             # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
             if stage1_cnt == 1 and not self.applied_all_recipes_flag:
                 logger.info("Apply all recipes.")

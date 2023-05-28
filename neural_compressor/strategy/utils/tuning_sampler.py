@@ -375,6 +375,7 @@ class OpWiseTuningSampler(TuningSampler):
                 op_wise_configs[op_name_type].append(op_tuning_config)
         return op_wise_configs
 
+
 class FallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
@@ -472,16 +473,37 @@ class LowerBitsSampler(TuningSampler):
             self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
             config_args = {}
             self._set_dtype(op_name_type, config_args)
-            quant_mode = full_path['weight'][0]
-            new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1],
-                                           quant_mode, self.tuning_space,
-                                           kwargs=config_args)
+            new_op_config = _helper(op_name_type, self.tuning_space, full_path)
             new_tune_cfg.update({op_name_type: new_op_config})
             if self.accumulate and skip_first:  # skip the first one
                 skip_first = False
                 continue
             logger.debug(f"Quantize {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
+
+def _helper(op_name_type, tuning_space, full_path):
+    """Get default config according to path."""
+    from .constant import TUNING_ITEMS_LST
+    has_weight = op_name_type in tuning_space.ops_attr['weight']
+    config_args = {}
+    att_lst = ['activation', 'weight'] if has_weight else ['activation']
+    for att in att_lst:
+        att_full_path = tuning_space.get_default_full_path(op_name_type, full_path[att])
+        config_args[att + '_dtype'] =  tuning_space.ops_data_type[op_name_type].get(att_full_path, None)
+        mode_item = tuning_space.get_item_by_path((op_name_type, *att_full_path))
+        if mode_item:
+            method_args = {method_item.name: method_item.options[0] for method_item in mode_item.options \
+                if method_item.name in TUNING_ITEMS_LST}
+            config_args.update(method_args)
+    quant_mode = full_path['weight'][0]
+    # set the first option as the default for each tuning item
+    op_tuning_config = OpTuningConfig(op_name_type[0],
+                                      op_name_type[1],
+                                      quant_mode,
+                                      tuning_space,
+                                      kwargs=config_args)
+    return op_tuning_config
+
 
 class BlockFallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
