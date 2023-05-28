@@ -65,7 +65,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.recipes = framework_specific_info.get("recipes", {})
         self.backend = PROVIDERS[framework_specific_info["backend"]]
         self.performance_only = framework_specific_info.get("performance_only", False)
-        self.use_bf16 = framework_specific_info.get("use_bf16", False)
+        self.use_bf16 = framework_specific_info.get("use_bf16", False) and \
+            self.backend in ort.get_available_providers()
         self.use_fp16 = framework_specific_info.get("use_fp16", False)
 
         if self.backend not in ort.get_all_providers():
@@ -863,8 +864,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision == 'fp16' and \
-                    (not self.use_fp16 or 'CUDAExecutionProvider' not in ort.get_available_providers()):
+                if precision == 'fp16' and not self.use_fp16:
                     continue
                 if precision == 'bf16' and \
                     (not self.use_bf16 or (not CpuInfo().bf16 and os.getenv('FORCE_BF16') != '1')):
