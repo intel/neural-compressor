@@ -1131,7 +1131,7 @@ class TestCastONNXRT(unittest.TestCase):
             inps = [['input1', TensorProto.FLOAT, (1,2)]]
             outs = [['output', TensorProto.FLOAT, (1,2)]]
             weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
-                        ['input3', TensorProto.FLOAT, [], np.random.random((1))]]
+                        ['input3', TensorProto.FLOAT, (1,2), np.random.random((2))]]
             node_infos = [['test', ['input1', 'input2', 'input3'], ['output'], optype]]
             model = self.build_model(inps, outs, weights, node_infos)
             input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
