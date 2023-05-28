@@ -15,23 +15,23 @@ In this example, we show how to quantize a Hugging Face model with Neural Soluti
 conda activate ENV
 
 # Start neural solution service with default configuration, log will be saved in the "serve_log" folder.
-ns start
+neural_solution start
 
 # Start neural solution service with custom configuration
-ns start --task_monitor_port=22222 --result_monitor_port=33333 --restful_api_port=8001
+neural_solution start --task_monitor_port=22222 --result_monitor_port=33333 --restful_api_port=8001
 
 # Stop neural solution service with default configuration
-ns stop
+neural_solution stop
 
 # Help Manual
-ns help
+neural_solution help
 # Help output
 
- *** usage: ns {start|stop} ***
+ *** usage: neural_solution {start|stop} ***
      start      : start serve
      stop       : stop serve
 
-  more start parameters: [usage: ns start {--parameter=value}] [e.g. --restful_api_port=8000]
+  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]
     --hostfile           : start backend serve host file which contains all available nodes
     --restful_api_port         : start web serve with {restful_api_port}, defult 8000
     --api_type           : start web serve with grpc/http, defult http
@@ -99,5 +99,5 @@ ns help
 ```
 ### Stop the serve
 ```shell
-ns stop
+neural_solution stop
 ```

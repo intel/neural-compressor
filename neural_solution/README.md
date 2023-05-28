@@ -1,9 +1,9 @@
 # What's Neural Solution?
-<!-- TODO what is ns -->
+<!-- TODO what is neural_solution -->
 Neural Solution is a flexible and easy to use tool that brings the capabilities of INC as a service. Users can effortlessly submit optimization tasks through the HTTP/gRPC APIs. Neural Solution automatically dispatches these tasks to one or multiple nodes, streamlining the entire process.
 
 # Why Neural Solution?
-<!-- TODO what does the ns provide -->
+<!-- TODO what does the neural_solution provide -->
 - Efficiency: Neural Solution accelerates the optimization process by seamlessly parallelizing the tuning across multiple nodes.
 - APIs: REST and gRPC are supported for submitting optimization tasks.
 - Code Less: When working with Hugging Face models, Neural Solution drives the optimization process without requiring any code modifications by integrating the Neural Coder's functionality.

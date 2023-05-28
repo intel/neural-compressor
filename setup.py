@@ -45,7 +45,7 @@ neural_solution_requires = fetch_requirements('neural_solution/requirements.txt'
 # define scripts
 scripts_list = []
 neural_insights_scripts_list = ['neural_insights/bin/neural_insights']
-neural_solution_scripts_list = ['neural_solution/bin/ns']
+neural_solution_scripts_list = ['neural_solution/bin/neural_solution']
 
 if neural_insights:
     project_name = "neural_insights"
