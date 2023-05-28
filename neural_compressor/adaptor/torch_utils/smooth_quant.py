@@ -222,9 +222,6 @@ class TorchSmoothQuant:
         """
 
         def save_input_hook(module, inputs, outputs):
-            if name not in self.input_maxes.keys():
-                self.input_maxes[name] = []
-                self.input_mins[name] = []
             input = inputs[0]
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not supported now, need better way
@@ -232,10 +229,12 @@ class TorchSmoothQuant:
             input = input.reshape(-1, input.shape[-1])
             max_tensor = torch.max(input, dim=0)[0]
             min_tensor = torch.min(input, dim=0)[0]
-            self.input_maxes[name].append(max_tensor)
-            self.input_mins[name].append(min_tensor)
-            # self.input_values[name] = input
-            # self.output_values[name] = outputs
+            if name not in self.input_maxes.keys():
+                self.input_maxes[name] = max_tensor
+                self.input_mins[name] = min_tensor
+            else:
+                self.input_maxes[name] = torch.max(max_tensor, self.input_maxes[name])
+                self.input_mins[name] = torch.min(min_tensor, self.input_mins[name])
 
         return save_input_hook
 
@@ -267,7 +266,9 @@ class TorchSmoothQuant:
             hook_func = self._save_input_pc_hook(key)
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
-        if input_output_modules:
+        if self.alpha == 'auto' and input_output_modules:
+            logger.warning("Auto alpha for Smoothquant records input & output"
+                            + ", please avoid out of memory.")
             for key in input_output_modules.keys():
                 hook_func = self._save_input_output_hook(key)
                 hook_handle = input_output_modules[key].register_forward_hook(hook_func)
@@ -332,12 +333,6 @@ class TorchSmoothQuant:
             model_forward(self.model, self.dataloader, calib_iter, self.device)
         ##stack
         for key in self.input_maxes.keys():
-            max_val = self.input_maxes[key]
-            max_val = torch.stack(max_val, dim=0)
-            min_val = self.input_mins[key]
-            min_val = torch.stack(min_val, dim=0)
-            self.input_maxes[key] = torch.max(max_val, dim=0)[0]
-            self.input_mins[key] = torch.min(min_val, dim=0)[0]
             abs_max_val = torch.max(torch.abs(self.input_mins[key]), torch.abs(self.input_maxes[key]))
             self.input_abs_maxes[key] = abs_max_val
         for key in self.input_values.keys():
@@ -667,6 +662,7 @@ class TorchSmoothQuant:
                 alpha = 1.0
                 logger.warning("reset alpha to 1.0 ")
 
+        self.alpha = alpha
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model

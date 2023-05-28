@@ -667,14 +667,29 @@ class TestSqLinearOpFuse(unittest.TestCase):
             backend="ipex",
             calibration_sampling_size=8,
             excluded_precisions=['bf16'],
-            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}}
+            example_inputs=(input_ids,),
+            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto'}}
+        )
+        def calib_func(model):
+            model(input_ids)
+
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_func=calib_func,
+        )
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            calibration_sampling_size=8,
+            excluded_precisions=['bf16'],
+            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5, 'folding': True}}
         )
         class CalibDataloader:
             def __init__(self):
                 self.batch_size = 1
             def __iter__(self):
                 yield input_ids
-
         q_model = quantization.fit(
             fp32_model,
             conf,

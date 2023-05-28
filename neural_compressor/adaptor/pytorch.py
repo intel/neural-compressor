@@ -2973,7 +2973,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             if self.performance_only:
                 if self.recipes and self.recipes.get('smooth_quant', False) \
                     and self.version.release >= Version("2.1").release:  # pragma: no cover
-                    logger.warning("Right now, Smoothquant for ipex requires a deepcopy of model")
+                    logger.warning("Smoothquant for ipex requires a deepcopy of model"
+                                    + ", please avoid out of memory.")
                     try:
                         tmp_model = copy.deepcopy(model)
                     except Exception as e:  # pragma: no cover
