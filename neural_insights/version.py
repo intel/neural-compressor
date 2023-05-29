@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Intel Neural Insights."""
+"""Neural Insights."""
 
 from neural_compressor.version import __version__
 

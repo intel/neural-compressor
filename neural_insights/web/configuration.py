@@ -83,7 +83,7 @@ class Configuration:
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
         parser = argparse.ArgumentParser(
-            description="Run Intel Neural Insights server.",
+            description="Run Neural Insights server.",
         )
         parser.add_argument(
             "-p",

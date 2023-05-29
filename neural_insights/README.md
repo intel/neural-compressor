@@ -1,6 +1,6 @@
 <div align="center">
   
-Intel Neural Insights
+Neural Insights
 ===========================
 
 <h3>Neural Insights is a web application for easier use of Intel® Neural Compressor diagnosis.</h3>
@@ -11,7 +11,7 @@ Intel Neural Insights
 
 ## Installation
 
-Installation of Intel Neural Insights is possible in one of following ways:
+Installation of Neural Insights is possible in one of following ways:
 
 ### Install from pypi
 ```Shell
@@ -35,9 +35,9 @@ pip install neural-insights
 
 ## Getting Started
 
-### Start the Intel Neural Insights
+### Start the Neural Insights
 
-To start the Intel Neural Insights server execute `neural_insights` command:
+To start the Neural Insights server execute `neural_insights` command:
 
 ```shell
 neural_insights
@@ -45,7 +45,7 @@ neural_insights
 The server generates a self-signed TLS certificate and prints instruction how to access the Web UI.
 
 ```text
-Intel Neural Insights Server started.
+Neural Insights Server started.
 
 Open address https://10.11.12.13:5000/?token=338174d13706855fc6924cec7b3a8ae8
 
@@ -55,7 +55,7 @@ Server generated certificate is not trusted by your web browser, you will need t
 
 
 You might also use additional parameters and settings:
-* Intel Neural Insights listens on port 5000.
+* Neural Insights listens on port 5000.
 Make sure that port 5000 is accessible to your browser (you might need to open it in your firewall),
 or specify different port that is already opened, for example 8080:
     ```shell
@@ -63,13 +63,13 @@ or specify different port that is already opened, for example 8080:
     ```
 
 
-* To start the Intel Neural Insights server with your own TLS certificate add `--cert` and `--key` parameters:
+* To start the Neural Insights server with your own TLS certificate add `--cert` and `--key` parameters:
 
     ```shell
     neural_insights --cert path_to_cert.crt --key path_to_private_key.key
     ```
 
-* To start the Intel Neural Insights server without TLS encryption use `--allow-insecure-connections` parameter:
+* To start the Neural Insights server without TLS encryption use `--allow-insecure-connections` parameter:
 
     ```shell
     neural_insights --allow-insecure-connections
@@ -106,5 +106,5 @@ q_model = fit(
 
 ## Research Collaborations
 
-Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Intel Neural Insights!
+Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Neural Insights!
 
