@@ -3,9 +3,6 @@ import os
 import random
 import shutil
 import time
-import warnings
-import sys
-
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -202,7 +199,7 @@ def main():
         int8_onnx_config = Torch2ONNXConfig(
             dtype="int8",
             opset_version=14,
-            quant_format="QDQ",
+            quant_format=args.quant_format,
             example_inputs=torch.randn(1, 3, 224, 224),
             input_names=['input'],
             output_names=['output'],

@@ -829,6 +829,12 @@ class TemplateAdaptor(Adaptor):
                 if not self.benchmark:
                     assert False, "Unsupport approach: {}".format(self.approach)
 
+        # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+        # for quant_aware_training can be handled in strategy
+        if self.approach == 'quant_aware_training':
+            self.qat_optype_wise = framework_specific_info.get('qat_optype_wise', None)
+            self.qat_op_wise = framework_specific_info.get('qat_op_wise', None)
+        
         self.fp32_results = []
         self.fp32_preds_as_label = False
 
@@ -2874,7 +2880,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 json.dump(self.cfgs, write_f, indent=4)
             return None
 
-    def get_pattern(self, fallback_op, fuse_ops):
+    def get_pattern(self, fallback_op, fuse_ops): # pragma: no cover
         for fuse_pattern in fuse_ops:
             if fuse_pattern[0] == fallback_op:
                 if fuse_pattern[1] in ['relu_', 'add_']:
@@ -3134,7 +3140,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         os.remove(self.ipex_config_path)
 
-    def get_fuse_ops(self, default_cfgs):
+    def get_fuse_ops(self, default_cfgs): # pragma: no cover
         elt_wise = ['relu', 'sigmoid', 'gelu']
         inplace_ops = ['relu_', 'add_']
         op_patterns = []
@@ -3609,6 +3615,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
+        self._remove_fallback_ops_for_qat(quantizable_ops)
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
@@ -3628,7 +3635,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         for op in quantizable_ops:
             op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
 
-        if self.version.release < Version("1.11.0").release:
+        if self.version.release < Version("1.11.0").release: # pragma: no cover
             quantized_ops["default_qconfig"] = None
         else:
             from torch.ao.quantization import default_embedding_qat_qconfig
@@ -3720,6 +3727,29 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self._dump_model_op_stats(self.model._model, self.model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(self.model._model)
 
+    def _get_fallback_ops_for_qat(self):
+        # get fallback ops for quant aware training approach
+        fallback_ops = {'op_wise': [], 'optype_wise': []}
+        if self.qat_optype_wise is not None: # pragma: no cover
+            for optype, optype_config in self.qat_optype_wise.items():
+                if 'weight' in optype_config and optype_config['weight']['dtype'] == ['fp32']:
+                    fallback_ops['optype_wise'].append(optype)
+        if self.qat_op_wise is not None: # pragma: no cover
+            for op, op_config in self.qat_op_wise.items():
+                if 'weight' in op_config and op_config['weight']['dtype'] == ['fp32']:
+                    fallback_ops['op_wise'].append(op)
+        return fallback_ops
+    
+    def _remove_fallback_ops_for_qat(self, quantizable_ops):
+        # remove fallback ops from quantizable_ops for quant aware training approach
+        fallback_ops = self._get_fallback_ops_for_qat()
+        remove_ops = []
+        for (op_name, op_type) in quantizable_ops:
+            if op_name in fallback_ops['op_wise'] or op_type in fallback_ops['optype_wise']:
+                remove_ops.append((op_name, op_type))
+        for (op_name, op_type) in remove_ops:
+            quantizable_ops.remove((op_name, op_type))
+
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
 
@@ -3805,7 +3835,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             for key in tune_cfg['op']:
                 op_type = key[1]
                 #build initial dict
-                if op_type not in res.keys():
+                if op_type not in res.keys(): # pragma: no cover
                     res[op_type] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
                 value = tune_cfg['op'][key]
                 # Special cases: QuantStub, Embedding
