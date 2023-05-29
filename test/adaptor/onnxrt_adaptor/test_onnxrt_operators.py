@@ -496,10 +496,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     def test_matmul(self):
         A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
-        B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
+        B_init = helper.make_tensor('B', TensorProto.FLOAT, [1, 1, 5, 1], np.random.random((1, 1, 5, 1)).reshape(5).tolist())
         C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
         matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
-        graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
+        graph = helper.make_graph([matmul_node], 'test_graph_1', [A], [C], [B_init])
         model = helper.make_model(graph)
         q_config = {"Matmul": self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
