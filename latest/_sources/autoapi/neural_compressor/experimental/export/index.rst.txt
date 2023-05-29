@@ -18,6 +18,5 @@ Submodules
    qlinear2qdq/index.rst
    tf2onnx/index.rst
    torch2onnx/index.rst
-   utils/index.rst
 
 

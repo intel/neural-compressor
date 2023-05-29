@@ -650,7 +650,7 @@ Classes
    Config Class for ONNXQlinear2QDQ.
 
 
-.. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, recipe='QDQ_OP_FP32_BIAS', **kwargs)
+.. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, **kwargs)
 
 
 

@@ -90,53 +90,68 @@
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 <li><p><a class="reference external" href="#appendix">Appendix</a></p></li>
 </ol>
-</section>
 <section id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h1>
-<p>Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. However, for Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.</p>
-<p>Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, the INT8 ONNX model is not directly exported from the INT8 PyTorch model, but quantized after obtaining the FP32 ONNX model using the mature torch.onnx.export API. To ensure the majority of the quantization process of ONNX is consistent with PyTorch, we reuse three key pieces of information from the Neural Compressor model to perform ONNX quantization.</p>
-<ul class="simple">
-<li><p>Quantized operations: Only operations quantized in PyTorch will be quantized in the quantization process of ONNX.</p></li>
-<li><p>Scale info: Scale information is collected from the quantization process of PyTorch.</p></li>
-<li><p>Weights of quantization aware training(QAT): For quantization aware training, the updated weights are passed to the ONNX model.</p></li>
-</ul>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. For Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.</p>
+<p>Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 <a target="_blank" href="./imgs/export.png" text-align:center>
-    <center> 
-        <img src="./imgs/export.png" alt="Architecture" width=650 height=200> 
-    </center>
-</a></section>
+<center>
+<img src="./imgs/export.png" alt="Architecture" width=700 height=200>
+</center>
+</a></p>
+</section>
 <section id="supported-framework-model-matrix">
-<h1>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h1>
-<table border="1" class="docutils">
+<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h2>
+<table>
 <thead>
-<tr>
-<th style="text-align: center;">Export</th>
-<th style="text-align: center;">PyTorch</th>
-<th style="text-align: center;">TensorFlow</th>
-</tr>
+  <tr>
+    <th>Framework</th>
+    <th>model type</th>
+    <th>exported ONNX model type</th>
+  </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: center;">FP32 Model -&gt; FP32 ONNX Model</td>
-<td style="text-align: center;">&#10004;</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
-<tr>
-<td style="text-align: center;">INT8 Model -&gt; INT8 QDQ ONNX Model</td>
-<td style="text-align: center;">&#10004;</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
-<tr>
-<td style="text-align: center;">INT8 Model -&gt; INT8 QLinear ONNX Model</td>
-<td style="text-align: center;">&#10004;</td>
-<td style="text-align: center;">:x:</td>
-</tr>
+  <tr>
+    <td rowspan="4">PyTorch</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QLinear/QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Post-Training Dynamic Quantized INT8</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QLinear/QDQ INT8</td>
+  </tr>
+  <tr>
+    <td rowspan="3">TensorFlow</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
 </tbody>
-</table></section>
+</table><blockquote>
+<div><p><strong>Note</strong>: Follow this step to export a post training dynamic quantized ONNX model from PyTorch model: <br />1. export FP32 PyTorch model to FP32 ONNX model.  <br />2. use FP32 ONNX model as the input model for post training dynamic quantization.</p>
+</div></blockquote>
+</section>
 <section id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h1>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<section id="pytorch-model">
+<h3>PyTorch Model<a class="headerlink" href="#pytorch-model" title="Permalink to this heading"></a></h3>
 <section id="fp32-model-export">
-<h2>FP32 Model Export<a class="headerlink" href="#fp32-model-export" title="Permalink to this heading"></a></h2>
+<h4>FP32 Model Export<a class="headerlink" href="#fp32-model-export" title="Permalink to this heading"></a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental.common</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">Torch2ONNXConfig</span>
 <span class="n">inc_model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -153,13 +168,13 @@
 </div>
 </section>
 <section id="int8-model-export">
-<h2>INT8 Model Export<a class="headerlink" href="#int8-model-export" title="Permalink to this heading"></a></h2>
+<h4>INT8 Model Export<a class="headerlink" href="#int8-model-export" title="Permalink to this heading"></a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># q_model is a Neural Compressor model after performing quantization.</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">Torch2ONNXConfig</span>
 <span class="n">int8_onnx_config</span> <span class="o">=</span> <span class="n">Torch2ONNXConfig</span><span class="p">(</span>
     <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span>
     <span class="n">opset_version</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
-    <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QDQ&quot;</span><span class="p">,</span> <span class="c1"># or QLinear</span>
+    <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QLinear&quot;</span><span class="p">,</span> <span class="c1"># or QDQ</span>
     <span class="n">example_inputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">),</span>
     <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">],</span>
     <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">],</span>
@@ -178,120 +193,115 @@
 </ul>
 </section>
 </section>
-<section id="appendix">
-<h1>Appendix<a class="headerlink" href="#appendix" title="Permalink to this heading"></a></h1>
-<p>Since there is a known quantization gap between PyTorch ‘nn.Linear’ module and ONNX ‘MatMul + Add’ subgraph, we provide three recipes.</p>
-<p>For different recipes and ONNX INT8 model formats, ‘nn.quantized.Linear’ will be exported to the following subgraph:</p>
-<table class="docutils">
- <thead>
-   <tr>
-     <th align="center">Recipe</th>
-     <th align="center">QDQ</th>
-     <th align="center">QLinear</th>
-   </tr>
- </thead>
- <tbody>
-   <tr>
-     <td align="center">QDQ_OP_FP32_BIAS</td>
-     <td>
-<pre>
-     QuantizeLinear
-           |
-    DequantizeLinear
-           |             
-         MatMul
-           |
-          Add
-</pre>
-     </td>
-     <td>
-<pre>
-   QuantizeLinear
-         |
-MatMulIntegerToFloat
-         |
-        Add 
-</pre>
-     </td>
-   </tr>
-   <tr>
-     <td align="center">QDQ_OP_INT32_BIAS</td>
-     <td>
-<pre>
-     QuantizeLinear
-           |
-     MatMulInteger
-           |
-          Add
-           |
-          Cast
-           |
-          Mul
-</pre>
-     </td>
-     <td>
-<pre>
-   QuantizeLinear
-         |
-    MatMulInteger
-         |
-        Add
-         |
-        Cast
-         |
-        Mul
-</pre>
-     </td>
-   </tr>
-   <tr>
-     <td align="center">QDQ_OP_FP32_BIAS_QDQ</td>
-     <td>
-<pre>
-     QuantizeLinear
-           |
-    DequantizeLinear   
-           |
-         MatMul
-           |
-          Add
-           |
-     QuantizeLinear
-           |
-    DequantizeLinear
-</pre>
-     </td>
-     <td>
-<pre>
-   QuantizeLinear
-         |
-MatMulIntegerToFloat
-         |
-        Add
-         |
-   QuantizeLinear
-         |
-  DequantizeLinear
-</pre>
-     </td>
-   </tr>
- </tbody>
-</table><p>The default recipe is <code class="docutils literal notranslate"><span class="pre">QDQ_OP_FP32_BIAS</span></code>. If the accuracy of the exported ONNX INT8 model cannot meet your criterion, we recommend you try recipe <code class="docutils literal notranslate"><span class="pre">QDQ_OP_INT32_BIAS</span></code> and <code class="docutils literal notranslate"><span class="pre">QDQ_OP_FP32_BIAS_QDQ</span></code> as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># q_model is a Neural Compressor model after performing quantization.</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">Torch2ONNXConfig</span>
-<span class="n">int8_onnx_config</span> <span class="o">=</span> <span class="n">Torch2ONNXConfig</span><span class="p">(</span>
-    <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span>
-    <span class="n">opset_version</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
-    <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QDQ&quot;</span><span class="p">,</span> <span class="c1"># or QLinear</span>
-    <span class="n">example_inputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">),</span>
-    <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">],</span>
-    <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">],</span>
-    <span class="n">dynamic_axes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">},</span>
-                    <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">}},</span>
-    <span class="n">recipe</span><span class="o">=</span><span class="s1">&#39;QDQ_OP_INT32_BIAS&#39;</span><span class="p">,</span> <span class="c1"># or QDQ_OP_FP32_BIAS_QDQ</span>
-<span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s1">&#39;int8-model.onnx&#39;</span><span class="p">,</span> <span class="n">int8_onnx_config</span><span class="p">)</span>
+<section id="tensorflow-model">
+<h3>Tensorflow Model<a class="headerlink" href="#tensorflow-model" title="Permalink to this heading"></a></h3>
+<section id="id1">
+<h4>FP32 Model Export<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental.common</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TF2ONNXConfig</span>
+<span class="n">inc_model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">TF2ONNXConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;fp32&#39;</span><span class="p">)</span>
+<span class="n">inc_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s1">&#39;fp32-model.onnx&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+</section>
+<section id="id2">
+<h3>INT8 Model Export<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># q_model is a Neural Compressor model after performing quantization.</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TF2ONNXConfig</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">TF2ONNXConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int8&#39;</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s1">&#39;int8-model.onnx&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: Some export examples of computer vision task exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export">resnet50_v1_5</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/export">resnet50_v1</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/vgg16/export">vgg16</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export">ssd_mobilenet_v1</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export">mobilenet_v2</a></p></li>
+<li><p><a class="reference external" href="examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export">faster_rcnn_resnet50</a></p></li>
+</ul>
+</section>
+</section>
+<section id="appendix">
+<h2>Appendix<a class="headerlink" href="#appendix" title="Permalink to this heading"></a></h2>
+<section id="supported-quantized-ops">
+<h3>Supported quantized ops<a class="headerlink" href="#supported-quantized-ops" title="Permalink to this heading"></a></h3>
+<p>This table lists the TorchScript operators that are supported by ONNX export with torch v2.0. Refer to this <a class="reference external" href="https://pytorch.org/docs/stable/onnx_supported_aten_ops.html">link</a> for more supported/unsupported ops.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Operator</th>
+<th>opset_version(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quantized::add</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::add_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::cat</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::conv1d_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::conv2d</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::conv2d_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::group_norm</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::hardswish</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::instance_norm</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::layer_norm</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::leaky_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::linear</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::mul</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::sigmoid</code></td>
+<td>Since opset 10</td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p><strong>Note</strong>: The export function may fail due to unsupported operations. Please fallback unsupported quantized ops by setting ‘op_type_dict’ or ‘op_name_dict’ in ‘QuantizationAwareTrainingConfig’ or ‘PostTrainingQuantConfig’ config. Fallback examples please refer to <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/">Text classification</a></p>
+</div></blockquote>
+</section>
+</section>
 </section>
 
 
