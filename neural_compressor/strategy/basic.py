@@ -28,7 +28,7 @@ from .utils.tuning_sampler import (
     LowerBitsSampler)
 
 from .utils.tuning_structs import OpTuningConfig
-from .utils.constant import TUNING_ITEMS_LST, PRECISION_LIST
+from .utils.constant import TUNING_ITEMS_LST, PRECISION_LIST, LOWER_BIT_LIST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
@@ -210,7 +210,15 @@ class BasicTuneStrategy(TuneStrategy):
                 yield op_tuning_cfg
 
     def quant_to_lower_bits(self, initial_op_tuning_cfg, calib_sampling_size):
-        from .utils.constant import LOWER_BIT_LIST
+        """Quantize ops into lower bits, such as int4.
+
+        Args:
+            initial_op_tuning_cfg: the initial tuning config
+            calib_sampling_size: _description_
+
+        Yields:
+            tuning config
+        """
         for quant_bit in LOWER_BIT_LIST:
             logger.info(f"Start to quantize ops into {quant_bit}")
             ops = self.tuning_space.collect_op_by_quant_bits(quant_bit)
