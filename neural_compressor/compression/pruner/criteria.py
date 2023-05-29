@@ -274,4 +274,3 @@ class RetrainFreeCriterion(PruningCriterion):
                 mask_grad = self.modules[key].block_mask.grad.clone()
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
-    

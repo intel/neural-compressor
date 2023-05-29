@@ -1,11 +1,12 @@
 #!/bin/bash
 
 set -x
-CUDA_VISIBLE_DEVICES=4 python \
+CUDA_VISIBLE_DEVICES=0 python \
     examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_no_trainer_sparsegpt.py \
-    --model_name_or_path facebook/opt-1.3b \
-    --calibration_dataset_name wikitext2 \
-    --evaluation_dataset_name wikitext2 \
+    --model_name_or_path facebook/opt-125m \
+    --calibration_dataset_name wikitext \
+    --dataset_config_name wikitext-2-raw-v1 \
+    --evaluation_dataset_name wikitext \
     --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 16 \
     --max_pruning_steps 3002 \

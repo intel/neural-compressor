@@ -348,7 +348,7 @@ def parse_args():
         help="Whether or not to prune the model"
     )
     parser.add_argument(
-        "--max_pruning_steps",
+        "--max_pruning_steps", # 501
         type=int,
         default=None,
         help="Total number of pruning steps to perform. If provided",
@@ -364,7 +364,7 @@ def parse_args():
         help="Target sparsity of the model."
     )
     parser.add_argument(
-        "--pruning_frequency",
+        "--pruning_frequency", # 500
         type=int, default=-1,
         help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
     )

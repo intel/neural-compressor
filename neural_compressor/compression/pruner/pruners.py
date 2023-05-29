@@ -16,7 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 import copy
+import math
 from .utils import torch, F
 from functools import partial
 from .patterns import get_pattern
@@ -47,7 +49,6 @@ def register_pruner(name):
     def register(pruner):
         PRUNERS[name] = pruner
         return pruner
-
     return register
 
 
@@ -936,140 +937,218 @@ class SparseGPTPruner(BasePruner):
         self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
-        self.reg = get_reg(self.config, self.modules, self.pattern)
+
+        # self.model = model
+        # self.criterion = get_criterion(self.config, self.modules)
+        # self.reg = get_reg(self.config, self.modules, self.pattern)
 
         logger.warning("SparseGPT pruner fixed the weights, please DO NOT turn on gradient update.")
         assert "channel" in self.pattern.pattern, \
                 "SparseGPT Pruner pruner only supports patterns like 2:4."
 
-    def update_masks(self, local_step):
-        """Update the masks at a given local step."""
-        if self.global_step == self.start_step:
-            if self.config['lock_init_sparsity']:
-                self.masks = self.pattern.get_pattern_lock_masks(self.modules)
-                self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
-                self.current_sparsity_ratio = self.init_sparsity_ratio
 
-        if not self.check_is_pruned_step(self.global_step):
-            return
+    def on_step_begin(self, local_step):
+        """Update the masks at a given local_step.
 
-        if self.current_sparsity_ratio > self.target_sparsity_ratio:
-            return
-
-        self.criterion.on_step_begin()
-        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
-                                                                             self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt, self.masks,
-                                                                             self.init_sparsity_ratio)
-        logger.info(f"current target ratio is {current_target_sparsity_ratio}")
-
-        self.completed_pruned_cnt += 1
-        if self.criterion.scores == {}:
-            return
-        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
-        self.mask_weights()
-
-        self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
-        logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
-
-    def on_before_optimizer_step(self):
-        """Implement before optimizer.step()."""
-        self.reg.on_before_optimizer_step()
-        self.criterion.on_before_optimizer_step()
-
-    def on_after_optimizer_step(self):
-        """Prune the model after optimization."""
-        # the order of the following three lines can't not be exchanged
-        if self.global_step >= self.start_step and self.global_step <= self.end_step:
-            self.reg.on_after_optimizer_step()
-        self.mask_weights()
-
-        self.global_step += 1
-
-    def mask_weights(self):
-        """Apply block masks to corresponding modules' weights.
-
-        Weights are multipled with masks. This is the formal pruning process.
+        Implement at the start of each step.
         """
-        with torch.no_grad():
-            self.pattern.mask_block_weights(self.masks)
+        if self.handled_global_step == self.global_step:
+            return
+        self.fasterprune_masks()
 
-    def update_block_masks(self, masks):
-        """Update the block mask parameters."""
-        with torch.no_grad():
-            for key in self.masks.keys():
-                module = self.modules[key]
-                module.block_mask.data = masks[key].data
+    def _get_ordered_layers(modules):
+        pass
 
-    def fasterprune_masks(self, masks):
-        ############1. Get Hinv（inverse Hessian Matrix）############################
-        with torch.no_grad():
-            mask = None
-            for key in self.modules.keys():
-                W = self.modules[key].weight.data
-                if isinstance(self.modules[key], nn.Conv2d):
-                    W = W.flatten(1)
-                if isinstance(self.modules[key], transformers.Conv1D):
-                    W = W.t()
-                W = W.float()
-                rows = W.shape[0] # row num: 768
-                columns = W.shape[1] # col num: 768
-            H = self.modules[key].H
-            dead = torch.diag(H) == 0
-            H[dead, dead] = 1 # 把H中对角线为0的都变成1
-            W[:, dead] = 0 # 把W中每一行对角线值0的那一行都变成0
-            Losses = torch.zeros(self.rows, device=self.dev) # 1 * 768
-            percdamp = 0.01
-            damp = percdamp * torch.mean(torch.diag(H))
-            diag = torch.arange(self.columns, device=self.dev)
-            H[diag, diag] += damp # 把H的对角线元素全部加上damp
-            # upper默认是False：u is lower triangular such that the returned tensor is
-            H = torch.linalg.cholesky(H) #Cholesky 分解是把一个对称正定的矩阵表示成一个下三角矩阵L和其转置的乘积的分解。 它要求矩阵的所有特征值必须大于零，故分解的下三角的对角元也是大于零的。 Cholesky分解法又称平方根法，是当A为实对称正定矩阵时，LU三角分解法的变形。
-            H = torch.cholesky_inverse(H) # 这一步在求逆
-            H = torch.linalg.cholesky(H, upper=True) # H−1 ← Cholesky(H−1)⊤ (Hessian inverse information)
-            Hinv = H # H−1 = (XX⊤ + λI)−1
+    def fasterprune_masks(self):
+        '''
 
-            ########################################
-            mask = None # binary pruning mask
-            blocksize=128
-            # for i = 0,B,2B,... do 分成多个block列
-            for i1 in range(0, columns, blocksize):
-                i2 = min(i1 + blocksize, columns)
-                count = i2 - i1
-                W1 = W[:, i1:i2].clone()
-                Q1 = torch.zeros_like(W1)
-                Err1 = torch.zeros_like(W1)
-                Losses1 = torch.zeros_like(W1)
-                Hinv1 = Hinv[i1:i2, i1:i2]
+        layers: [
+         {
+            'name1': LinearObject,
+            'name2': ConvObject,
+            
+         },
+         {
+            ...
+         }
+        ]
+        
+        '''
+        ################## preparing for pruning ##################
+        layers = self._get_ordered_layers(self.modules)
+        inputs = torch.zeros(
+        (self.config['nsamples'], self.config['seqlen'], self.config['hidden_size']))
+        outs = torch.zeros_like(inputs)
+        cache = {'i': 0, 'attention_mask': None}
+        class Catcher(nn.Module):
+            def __init__(self, module):
+                super().__init__()
+                self.module = module
+            def forward(self, inp, **kwargs):
+                inputs[cache['i']] = inp
+                cache['i'] += 1
+                cache['attention_mask'] = kwargs['attention_mask']
+                raise ValueError
+        layers[0] = Catcher(layers[0])
+        # TODO get the attention mask for each layer's forwarding 
+        attention_mask = cache['attention_mask'] # using cache?
 
+        for i in range(len(layers)):
+            layer = layers[i]
+            layer_pruners = {}
+            for name in layer:
+                layer_pruners[name] = SparseGPTLayerPruner(layer[name])
+
+            def add_batch(name):
+                def tmp(_, inp, out):
+                    layer_pruners[name].add_batch(inp[0].data, out.data)            
+                return tmp
+            handles = []
+            for name in layer_pruners:
+                handles.append(layer[name].register_forward_hook(add_batch(name)))
+            # TODO add a config param to represent the total sample number
+            for j in range(self.config['nsamples']):
+                outs[j] = layer(inputs[j].unsqueeze(0), attention_mask=attention_mask)[0]
+            for h in handles:
+                h.remove()
+            
+            ################## pruning for each layer's parts ##################
+            for name in layer_pruners:
+                logger.info('Pruning {} for layer {}...'.format(name, i))
+                layer_pruners[name].fasterprune(
+                    self.current_sparsity_ratio, prunen=self.config['prunen'], prunem=self.config['prunem'], percdamp=self.config['percdamp'], blocksize=self.config['blocksize']
+                )
+                layer_pruners[name].free()
+
+            for j in range(self.config['nsamples']):
+                outs[j] = layer(inputs[j].unsqueeze(0), attention_mask=attention_mask)[0]
+            
+            del layer
+            torch.cuda.empty_cache()
+
+            inputs, outs = outs, inputs
+
+
+class SparseGPTLayerPruner(object):
+
+    def __init__(self, layer):
+        self.layer = layer
+        self.dev = self.layer.weight.device
+        W = layer.weight.data.clone()
+        if isinstance(self.layer, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(self.layer, transformers.Conv1D):
+            W = W.t()
+        self.rows = W.shape[0] # row num: 768
+        self.columns = W.shape[1] # col num: 768
+        self.H = torch.zeros((self.columns, self.columns), device=self.dev) # 768 * 768
+        self.nsamples = 0
+
+    def add_batch(self, inp, out, blocksize=1024):
+        if len(inp.shape) == 2:
+            inp = inp.unsqueeze(0)
+        tmp = inp.shape[0]
+        if isinstance(self.layer, nn.Linear) or isinstance(self.layer, transformers.Conv1D):
+            if len(inp.shape) == 3:
+                inp = inp.reshape((-1, inp.shape[-1]))
+            inp = inp.t()
+        self.H *= self.nsamples / (self.nsamples + tmp)
+        self.nsamples += tmp
+        inp = math.sqrt(2 / self.nsamples) * inp.float()
+        self.H += inp.matmul(inp.t()) # XX⊤的计算
+
+    def fasterprune(
+        self, sparsity, prunen=0, prunem=0, blocksize=128, percdamp=.01
+    ):
+        ############1. 获得Hinv（inverse Hessian Matrix）############################
+        W = self.layer.weight.data.clone()
+        if isinstance(self.layer, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(self.layer, transformers.Conv1D):
+            W = W.t()
+        W = W.float()
+
+        tick = time.time()
+
+        H = self.H
+        del self.H
+        dead = torch.diag(H) == 0
+        H[dead, dead] = 1 # 把H中对角线为0的都变成1
+        W[:, dead] = 0 # 把W中每一行对角线值0的那一行都变成0
+
+        Losses = torch.zeros(self.rows, device=self.dev) # 1 * 768
+
+        damp = percdamp * torch.mean(torch.diag(H))
+        diag = torch.arange(self.columns, device=self.dev)
+        H[diag, diag] += damp # 把H的对角线元素全部加上damp
+        # upper默认是False：u is lower triangular such that the returned tensor is
+        H = torch.linalg.cholesky(H) #Cholesky 分解是把一个对称正定的矩阵表示成一个下三角矩阵L和其转置的乘积的分解。 它要求矩阵的所有特征值必须大于零，故分解的下三角的对角元也是大于零的。 Cholesky分解法又称平方根法，是当A为实对称正定矩阵时，LU三角分解法的变形。
+        H = torch.cholesky_inverse(H) # 这一步在求逆
+        H = torch.linalg.cholesky(H, upper=True) # H−1 ← Cholesky(H−1)⊤ (Hessian inverse information)
+        Hinv = H # H−1 = (XX⊤ + λI)−1
+        ########################################
+
+        mask = None # binary pruning mask
+
+        # for i = 0,B,2B,... do 分成多个block列
+        for i1 in range(0, self.columns, blocksize):
+            i2 = min(i1 + blocksize, self.columns)
+            count = i2 - i1
+
+            W1 = W[:, i1:i2].clone()
+            Q1 = torch.zeros_like(W1)
+            Err1 = torch.zeros_like(W1)
+            Losses1 = torch.zeros_like(W1)
+            Hinv1 = Hinv[i1:i2, i1:i2]
+
+            if prunen == 0: 
                 if mask is not None:
                     mask1 = mask[:, i1:i2]
                 else:
                     tmp = W1 ** 2 / (torch.diag(Hinv1).reshape((1, -1))) ** 2
                     # 把这些params从小到大，[0]表示获取value 获取sparsity内的最大value，作为threshhold
-                    thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * self.target_sparsity_ratio)]
+                    thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * sparsity)]
                     mask1 = tmp <= thresh
+            else:
+                mask1 = torch.zeros_like(W1) == 1
 
-                # forj =i,...,i+B−1 do
-                for i in range(count):
-                    w = W1[:, i]
-                    d = Hinv1[i, i]
-                    q = w.clone()
-                    q[mask1[:, i]] = 0
-                    Q1[:, i] = q
-                    Losses1[:, i] = (w - q) ** 2 / d ** 2
+            # forj =i,...,i+B−1 do
+            for i in range(count):
+                w = W1[:, i]
+                d = Hinv1[i, i]
 
-                    # pruning error
-                    # freeze weights
-                    err1 = (w - q) / d
-                    W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0)) # W:,j:(i+B) ← W:,j:(i+B)−E:,j−i·Hj,j:(i+B)
-                    Err1[:, i] = err1
+                # if j mod B_s = 0 then:
+                if prunen != 0 and i % prunem == 0:
+                    tmp = W1[:, i:(i + prunem)] ** 2 / (torch.diag(Hinv1)[i:(i + prunem)].reshape((1, -1))) ** 2
+                    mask1.scatter_(1, i + torch.topk(tmp, prunen, dim=1, largest=False)[1], True)
 
-                W[:, i1:i2] = Q1
-                Losses += torch.sum(Losses1, 1) / 2
+                q = w.clone()
+                q[mask1[:, i]] = 0
 
-                W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:]) # W:,(i+B): ← W:,(i+B): − E · Hi:(i+B),(i+B)
-            self.masks = mask
+                Q1[:, i] = q
+                Losses1[:, i] = (w - q) ** 2 / d ** 2
 
-                
+                # pruning error
+                # freeze weights
+                err1 = (w - q) / d
+                W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0)) # W:,j:(i+B) ← W:,j:(i+B)−E:,j−i·Hj,j:(i+B)
+                Err1[:, i] = err1
+
+            W[:, i1:i2] = Q1
+            Losses += torch.sum(Losses1, 1) / 2
+
+            # 这一行为啥是和Hinv[i1:i2, i2:]相乘呢？
+            W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:]) # W:,(i+B): ← W:,(i+B): − E · Hi:(i+B),(i+B)
+
+        torch.cuda.synchronize()
+        # print('time %.2f' % (time.time() - tick))
+        # print('error', torch.sum(Losses).item())
+
+        if isinstance(self.layer, transformers.Conv1D):
+            W = W.t()
+        # 完成这一层W的prune，weight赋值
+        self.layer.weight.data = W.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
+
+    def free(self):
+        self.H = None
+        torch.cuda.empty_cache()

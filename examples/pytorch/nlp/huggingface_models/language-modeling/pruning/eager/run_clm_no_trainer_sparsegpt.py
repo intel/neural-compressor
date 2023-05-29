@@ -758,11 +758,11 @@ def main():
             {
                 "pruning_type": "sparsegpt",
                 "pruning_scope": "global",
-                "op_names": ["wo"], #for t5
-                "excluded_op_names": [".attn"],
+                # "op_names": ["wo"], #for t5
+                # "excluded_op_names": [".attn"],
                 "sparsity_decay_type": "exp",
                 # "pattern": "channelx1",
-                "pruning_op_types": ["Linear"],
+                # "pruning_op_types": ["Linear"],
                 "max_sparsity_ratio_per_op": 0.98,
             }
         ]
@@ -781,7 +781,7 @@ def main():
     configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
-        # pattern=args.pruning_pattern,
+        pattern=args.pruning_pattern,
         pruning_frequency=frequency,
         start_step=pruning_start,
         end_step=pruning_end,
