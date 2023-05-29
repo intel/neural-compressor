@@ -473,7 +473,7 @@ class LowerBitsSampler(TuningSampler):
             self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
             config_args = {}
             self._set_dtype(op_name_type, config_args)
-            new_op_config = _helper(op_name_type, self.tuning_space, full_path)
+            new_op_config = _get_default_config_by_path(op_name_type, self.tuning_space, full_path)
             new_tune_cfg.update({op_name_type: new_op_config})
             if self.accumulate and skip_first:  # skip the first one
                 skip_first = False
@@ -481,7 +481,7 @@ class LowerBitsSampler(TuningSampler):
             logger.debug(f"Quantize {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
-def _helper(op_name_type, tuning_space, full_path):
+def _get_default_config_by_path(op_name_type, tuning_space, full_path):
     """Get default config according to path."""
     from .constant import TUNING_ITEMS_LST
     has_weight = op_name_type in tuning_space.ops_attr['weight']
