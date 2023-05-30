@@ -1,5 +1,6 @@
 import random
 
+
 class BaseSearchSpace(object):
     def __init__(
             self,
@@ -9,11 +10,11 @@ class BaseSearchSpace(object):
             type=None
             ):
         if bound:
-            if not isinstance(bound, (list, tuple)):
+            if not isinstance(bound, (list, tuple)):  # pragma: no cover
                 raise TypeError("bound sould be list or tuple, not {}".format(type(bound)))
-            if len(bound) != 2:
+            if len(bound) != 2:  # pragma: no cover
                 raise ValueError("bound sould only contain two elements, [start, end)")
-            if bound[1] <= bound[0]:
+            if bound[1] <= bound[0]:  # pragma: no cover
                 raise ValueError("empty range for [{}, {})".format(bound[0], bound[1]))
         assert value or bound, "must set value or bound to initialize the search space"
 
@@ -29,7 +30,7 @@ class BaseSearchSpace(object):
         else:
             self.total_num = float("inf")
 
-    def get_value():
+    def get_value(self):
         pass
 
 

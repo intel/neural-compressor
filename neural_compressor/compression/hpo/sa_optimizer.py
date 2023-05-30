@@ -71,7 +71,8 @@ class SimulatedAnnealingOptimizer(object):
                 if self._metrospolis(scores[i], s):
                     points[i] = new_points[i]
                     scores[i] = s
-                if (not self.higher_is_better and scores[i] < self.best[0]) or (self.higher_is_better and scores[i] > self.best[0]):
+                if (not self.higher_is_better and scores[i] < self.best[0]) \
+                   or (self.higher_is_better and scores[i] > self.best[0]):
                     last_modify = count
                     self.best = (scores[i], [float(v) for v in points[i]])
             
@@ -91,7 +92,9 @@ class SimulatedAnnealingOptimizer(object):
 
             if self.log_interval and count % self.log_interval == 0:
                 elapse = time.time() - st
-                logger.debug(f'SA iter: {count}\tlast_update: {last_modify}\tmax score: {self.best[0]}\tpoint: {self.best[1]}\ttemp: {self.T}\telasped: {elapse}')
+                logger.debug(f'SA iter: {count}\tlast_update: {last_modify}\t \
+                             max score: {self.best[0]}\tpoint: {self.best[1]}\t \
+                             temp: {self.T}\telasped: {elapse}')
 
             if count - last_modify > self.early_stop:
                 break

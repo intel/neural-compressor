@@ -42,7 +42,8 @@ class Searcher(object):
         self.best = None
         for k in self.search_space_keys:
             assert isinstance(self.search_space[k], (list, tuple, BaseSearchSpace)), \
-                "Value of key \'{}\' must be a list, tuple, CountinuousSearchSpace or DiscreteSearchSpace to specify choices".format(k)
+                "Value of key \'{}\' must be a list, tuple,\
+                      CountinuousSearchSpace or DiscreteSearchSpace to specify choices".format(k)
 
     def _create_search_space_pool(self):
         """Build the search space pool."""
@@ -260,7 +261,7 @@ class XgbSearcher(Searcher):
                                        reg_lambda=1.00,
                                        reg_alpha=0,
                                        objective='rank:pairwise')
-        else:
+        else:  # pragma: no cover
             raise RuntimeError(
                 "Invalid loss type: {}, only surport reg and rank".format(
                     loss_type))
@@ -273,7 +274,7 @@ class XgbSearcher(Searcher):
 
     def _generate_new_points(self, points):
         new_points = []
-        for points in points:
+        for _ in range(len(points)):
             new_points.append([s.get_value() for s in self.search_space_pool])
         return new_points
 
@@ -283,12 +284,10 @@ class XgbSearcher(Searcher):
         Returns:
             The model hyperparameter.
         """
-        # TODO: new search space pool
         if len(self._y) < self.min_train_samples:
             params = [s.get_value() for s in self.search_space_pool]
         else:
             x_train, y_train = np.array(self._x), np.array(self._y)
-            # y_train = y_train / max(np.max(y_train), 1e-8)
 
             self.model.fit(x_train, y_train)
             params = self.optimizer.gen_next_params(self.model.predict,
