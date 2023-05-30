@@ -1,7 +1,6 @@
 import random
 
 class BaseSearchSpace(object):
-    """Base class for search space."""
     def __init__(
             self,
             bound=None,
@@ -9,7 +8,6 @@ class BaseSearchSpace(object):
             value=None,
             type=None
             ):
-        """Initialize the attributes."""
         if bound:
             if not isinstance(bound, (list, tuple)):
                 raise TypeError("bound sould be list or tuple, not {}".format(type(bound)))

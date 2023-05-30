@@ -1,3 +1,4 @@
+"""Hyper-parameter Optimization."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -15,5 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-"""Hyper-parameter Optimization."""
+from .search_space import *
+from .sa_optimizer import *
+from .search_algorithms import *

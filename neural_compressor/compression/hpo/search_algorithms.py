@@ -57,7 +57,8 @@ class Searcher(object):
 
     def suggest(self):
         """Suggest the model hyperparameter."""
-        raise NotImplementedError('Depends on specific search algorithm.')  # pragma: no cover
+        raise NotImplementedError(
+            'Depends on specific search algorithm.')  # pragma: no cover
 
     def get_feedback(self, metric):
         """Get metric feedback for the search algorithm."""
@@ -90,10 +91,12 @@ class GridSearcher(Searcher):
 
         for space in self.search_space_pool:
             if space.type == 'continuous':
-                raise TypeError("GridSearcher not support continuous datatype, please use other algorithm.")
-        
+                raise TypeError(
+                    "GridSearcher not support continuous datatype, please use other algorithm."
+                )
+
         self.idx = [0] * len(self.search_space_pool)
-    
+
     def _add_idx(self, idx=0):
         def _add():
             if self.idx[idx] + 1 >= self.search_space_pool[idx].total_num:
@@ -104,11 +107,11 @@ class GridSearcher(Searcher):
 
         if idx + 1 == len(self.idx):
             return _add()
-        if self._add_idx(idx+1):
+        if self._add_idx(idx + 1):
             return True
         else:
             return _add()
-    
+
     def suggest(self):
         """Suggest the model hyperparameter.
 
@@ -154,7 +157,6 @@ class BayesianOptimizationSearcher(Searcher):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
-
     def __init__(self, search_space, seed=42):
         """Initialize the attributes."""
         super().__init__(search_space)
@@ -163,9 +165,10 @@ class BayesianOptimizationSearcher(Searcher):
             if isinstance(space, ContinuousSearchSpace):
                 idx_search_space[key] = tuple(space.bound)
             else:
-                idx_search_space[key] = (0, space.total_num-1)
-        self.bo_agent = BayesianOptimization(idx_search_space, random_seed=seed)
-    
+                idx_search_space[key] = (0, space.total_num - 1)
+        self.bo_agent = BayesianOptimization(idx_search_space,
+                                             random_seed=seed)
+
     def suggest(self):
         """Suggest the model hyperparameter.
 
@@ -174,7 +177,8 @@ class BayesianOptimizationSearcher(Searcher):
         """
         param_indices = self.bo_agent.gen_next_params()
         self.last_param_indices = param_indices
-        return self.params_vec2params_dict(self.indices2params_vec(param_indices))
+        return self.params_vec2params_dict(
+            self.indices2params_vec(param_indices))
 
     def get_feedback(self, metric):
         """Get metric feedback and register this metric."""
@@ -186,7 +190,8 @@ class BayesianOptimizationSearcher(Searcher):
             logger.debug("Find registered params, skip it.")
             pass
         if self.best is None or self.best[1] < metric:
-            param = self.params_vec2params_dict(self.indices2params_vec(self.last_param_indices))
+            param = self.params_vec2params_dict(
+                self.indices2params_vec(self.last_param_indices))
             self.best = (param, metric)
         self.last_param_indices = None
 
@@ -204,7 +209,7 @@ class BayesianOptimizationSearcher(Searcher):
             if isinstance(space, ContinuousSearchSpace):
                 res.append(ind)
             else:
-                ind = int(min(max(round(ind), 0), space.total_num-1))
+                ind = int(min(max(round(ind), 0), space.total_num - 1))
                 res.append(space.get_value(ind))
         return res
 
@@ -217,7 +222,12 @@ class XgbSearcher(Searcher):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
-    def __init__(self, search_space, seed=42, higher_is_better=True, loss_type='reg', min_train_samples=10) -> None:
+    def __init__(self,
+                 search_space,
+                 seed=42,
+                 higher_is_better=True,
+                 loss_type='reg',
+                 min_train_samples=10) -> None:
         """Initialize the attributes."""
         super().__init__(search_space)
 
@@ -251,12 +261,15 @@ class XgbSearcher(Searcher):
                                        reg_alpha=0,
                                        objective='rank:pairwise')
         else:
-            raise RuntimeError("Invalid loss type: {}, only surport reg and rank".format(loss_type))
-        self.optimizer = SimulatedAnnealingOptimizer(generate_func=self._generate_new_points,
-                                                     T0=100,
-                                                     Tf=0.01,
-                                                     alpha=0.9,
-                                                     higher_is_better=self.higher_is_better)
+            raise RuntimeError(
+                "Invalid loss type: {}, only surport reg and rank".format(
+                    loss_type))
+        self.optimizer = SimulatedAnnealingOptimizer(
+            generate_func=self._generate_new_points,
+            T0=100,
+            Tf=0,
+            alpha=0.9,
+            higher_is_better=self.higher_is_better)
 
     def _generate_new_points(self, points):
         new_points = []
@@ -276,9 +289,10 @@ class XgbSearcher(Searcher):
         else:
             x_train, y_train = np.array(self._x), np.array(self._y)
             # y_train = y_train / max(np.max(y_train), 1e-8)
-            
+
             self.model.fit(x_train, y_train)
-            params = self.optimizer.gen_next_params(self.model.predict, self._x)
+            params = self.optimizer.gen_next_params(self.model.predict,
+                                                    self._x)
 
         self.last_params = params
         return self.params_vec2params_dict(params)
@@ -294,7 +308,7 @@ class XgbSearcher(Searcher):
         params_key = '_'.join([str(x) for x in self.last_params])
         self.log[params_key] = metric
         self.last_params = None
-    
+
     def feedback(self, param, metric):
         param_list = []
         for k in self.search_space_keys:
@@ -303,5 +317,5 @@ class XgbSearcher(Searcher):
             self.best = (param, metric)
         self._x.append(param_list)
         self._y.append(metric)
-        params_key = '_'.join([str(x) for x in self.last_params])
+        params_key = '_'.join([str(x) for x in param])
         self.log[params_key] = metric
