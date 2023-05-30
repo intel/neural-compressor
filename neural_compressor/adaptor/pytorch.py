@@ -1360,6 +1360,10 @@ class TemplateAdaptor(Adaptor):
 
             def forward(self, X):
                 return self.sq_linear(X)
+            
+            @property 
+            def weight(self):
+                return self.sq_linear.weight
 
         from .torch_utils.smooth_quant import get_module, set_module
         if recover:
@@ -3055,6 +3059,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     except Exception as e:
                         logger.error("Calibration with IPEX failed due to:{}".format(e))
                         assert False, "Please pass in example_inputs or calib_dataloader to bypass."
+
                 tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
