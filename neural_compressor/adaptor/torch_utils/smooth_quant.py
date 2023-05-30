@@ -399,8 +399,8 @@ class TorchSmoothQuant:
         :return:
         """
         layer = get_module(self.model, layer_name)
-        from .model_wrapper import SQLinearWrapper
-        if isinstance(layer, SQLinearWrapper):
+        if layer.__class__.__name__ == "SQLinearWrapper":
+            from .model_wrapper import SQLinearWrapper
             layer = layer.sq_linear
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
@@ -431,7 +431,8 @@ class TorchSmoothQuant:
                     isinstance(layer, torch.nn.InstanceNorm2d):
                 if layer.affine:
                     layer.weight *= scale
-                    layer.bias *= scale
+                    if layer.bias != None:
+                        layer.bias *= scale
                 else:
                     layer.affine = True
                     weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
@@ -440,10 +441,11 @@ class TorchSmoothQuant:
                     bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
                     layer.bias = torch.nn.Parameter(bias, requires_grad=False
                                                     )
-            elif isinstance(layer, torch.nn.LayerNorm)  or layer.__class__.__name__ == "LPLayerNorm":
+            elif isinstance(layer, torch.nn.LayerNorm) or layer.__class__.__name__ == "LPLayerNorm":
                 if layer.elementwise_affine:
                     layer.weight *= scale
-                    layer.bias *= scale
+                    if layer.bias != None:
+                        layer.bias *= scale
                 else:
                     layer.elementwise_affine = True
                     weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
@@ -578,7 +580,6 @@ class TorchSmoothQuant:
         """
         logger.info("auto tuning alpha")
         import copy
-        from .model_wrapper import SQLinearWrapper
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
@@ -608,7 +609,8 @@ class TorchSmoothQuant:
                                                                 self.absorb_scales_info[absorb_key])
                     input_of_op_q = quant_dequant_x(input_of_op * input_scale)
                     layer = get_module(self.model, layer_key)
-                    if isinstance(layer, SQLinearWrapper):
+
+                    if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
@@ -879,7 +881,7 @@ class GraphTrace:
             node = nodes[index]
             layer_name = '.'.join(node.scopeName().split('/')[-1].split('.')[1:])
             absorb_name = '.'.join(absorb.scopeName().split('/')[-1].split('.')[1:])
-            if layer_name=="" or absorb_name=="":
+            if layer_name == "" or absorb_name == "":
                 continue
             if absorb_name in absorb_to_layer.keys():
                 absorb_to_layer[absorb_name].append(layer_name)
