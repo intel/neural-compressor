@@ -1323,6 +1323,12 @@ class PatternNInM(BasePattern):
             pattern_lock_masks[key] = mask
         return pattern_lock_masks
 
+    def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+        assert progressive_configs['progressive_type'] == "scores", f"N:M progressive pruning only supports 'scores'."
+        # we only have to handle global score or local score
+        return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores, \
+                progressive_step, progressive_configs)
+
 @register_pattern('MHA')
 class PatternMHA(BasePattern):
     """Pruning Pattern.
