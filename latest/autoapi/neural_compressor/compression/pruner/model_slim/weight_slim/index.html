@@ -100,9 +100,6 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.weight_slim.LinearCompressionIterator" title="neural_compressor.compression.pruner.model_slim.weight_slim.LinearCompressionIterator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LinearCompressionIterator</span></code></a></p></td>
 <td><p>Pruner of a sequence of consecutive linear patterns.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.weight_slim.MHACompression" title="neural_compressor.compression.pruner.model_slim.weight_slim.MHACompression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MHACompression</span></code></a></p></td>
-<td><p>use huggingface build-in head mask to compress weights,</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -175,14 +172,6 @@ x = layer_2(x)</p>
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.weight_slim.MHACompression">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.weight_slim.</span></span><span class="sig-name descname"><span class="pre">MHACompression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_nums</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/weight_slim.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.weight_slim.MHACompression" title="Permalink to this definition"></a></dt>
-<dd><p>use huggingface build-in head mask to compress weights,
-(one mha module only have one head mask), tested on training-free progress
-different layers have different masks, but heads number to mask is the same</p>
 </dd></dl>
 
 </section>

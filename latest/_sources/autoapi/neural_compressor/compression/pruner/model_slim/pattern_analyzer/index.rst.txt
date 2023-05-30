@@ -31,6 +31,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables
 
 
@@ -46,6 +47,12 @@ Functions
 
    :returns: The target attribute of the module.
    :rtype: attr
+
+
+.. py:function:: get_common_module(layer1: str, layer2: str)
+
+   Get the module which contains layer1 and layer2 (nearest father nodes)
+
 
 
 .. py:function:: print_iterables(data_iters)

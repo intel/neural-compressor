@@ -20,7 +20,6 @@ Classes
    neural_compressor.compression.pruner.model_slim.weight_slim.PostCompressionUtils
    neural_compressor.compression.pruner.model_slim.weight_slim.LinearCompression
    neural_compressor.compression.pruner.model_slim.weight_slim.LinearCompressionIterator
-   neural_compressor.compression.pruner.model_slim.weight_slim.MHACompression
 
 
 
@@ -79,14 +78,5 @@ Classes
       a iterable object of consecutive linear patterns.
 
       :type: dict/list
-
-
-.. py:class:: MHACompression(mha, head_nums, head_size)
-
-
-
-   use huggingface build-in head mask to compress weights,
-   (one mha module only have one head mask), tested on training-free progress
-   different layers have different masks, but heads number to mask is the same
 
 

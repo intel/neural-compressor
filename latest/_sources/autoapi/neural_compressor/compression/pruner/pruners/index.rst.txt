@@ -23,6 +23,7 @@ Classes
    neural_compressor.compression.pruner.pruners.BlockMaskPruner
    neural_compressor.compression.pruner.pruners.RetrainFreePruner
    neural_compressor.compression.pruner.pruners.ProgressivePruner
+   neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner
 
 
 
@@ -256,11 +257,40 @@ Functions
 
    Pruning Pruner.
 
-   A Pruner class derived from BasePruner. In this pruner, mask interpolation will be applied.
+   A Pruner class derived from BasicPruner. In this pruner, mask interpolation will be applied.
    Mask interpolation is a fine-grained improvement for NxM structured pruning by adding interval
        masks between masks of two pruning steps.
 
    :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: Inherit from parent class Pruner.
+
+      
+
+
+.. py:class:: MultiheadAttentionPruner(config, mha_modules)
+
+
+
+   Pruning Pruner.
+
+   In this pruner, We apply pruning for multi-head attentions.
+   multi-head attention pruning means remove partial QKV layers and their corresponding feedward layers simultaneously.
+
+   :param mha_modules: A List
+   :param [:
+             {
+                 'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                 'ffn_name': ['attention_ffn_name'],
+                 'mha_name': ['mha_name'] (keep not change),
+                 'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+                 'ffn_module': [torch.nn.Linear],
+                 'mha_module': [torch.nn.Module] (keep not change),
+             }
+             ...
+   :param ]:
+   :param that stores the pruning mha modules.:
    :param config: A config dict object that contains the pruner information.
 
    .. attribute:: Inherit from parent class Pruner.

@@ -100,6 +100,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.patterns.PatternNInM" title="neural_compressor.compression.pruner.patterns.PatternNInM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PatternNInM</span></code></a></p></td>
 <td><p>Pruning Pattern.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.patterns.PatternMHA" title="neural_compressor.compression.pruner.patterns.PatternMHA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PatternMHA</span></code></a></p></td>
+<td><p>Pruning Pattern.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -275,6 +278,32 @@ For more info of this pattern, please refer to :
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.patterns.PatternNInM.M">
 <span class="sig-name descname"><span class="pre">M</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/patterns.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.patterns.PatternNInM.M" title="Permalink to this definition"></a></dt>
+<dd><p>The size of the weight sequence.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.patterns.PatternMHA">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">PatternMHA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/patterns.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.patterns.PatternMHA" title="Permalink to this definition"></a></dt>
+<dd><p>Pruning Pattern.</p>
+<p>A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+For more info of this pattern, please refer to :
+<a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md">https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> – A config dict object that contains the pattern information.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.patterns.PatternMHA.N">
+<span class="sig-name descname"><span class="pre">N</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/patterns.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.patterns.PatternMHA.N" title="Permalink to this definition"></a></dt>
+<dd><p>The number of elements to be pruned in a weight sequence.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.patterns.PatternMHA.M">
+<span class="sig-name descname"><span class="pre">M</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/patterns.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.patterns.PatternMHA.M" title="Permalink to this definition"></a></dt>
 <dd><p>The size of the weight sequence.</p>
 </dd></dl>
 

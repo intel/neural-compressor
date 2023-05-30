@@ -20,6 +20,7 @@ Classes
    neural_compressor.compression.pruner.patterns.BasePattern
    neural_compressor.compression.pruner.patterns.PatternNxM
    neural_compressor.compression.pruner.patterns.PatternNInM
+   neural_compressor.compression.pruner.patterns.PatternMHA
 
 
 
@@ -130,6 +131,27 @@ Functions
 
 
 .. py:class:: PatternNInM(config, modules)
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+   For more info of this pattern, please refer to :
+   https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: N
+
+      The number of elements to be pruned in a weight sequence.
+
+   .. attribute:: M
+
+      The size of the weight sequence.
+
+
+.. py:class:: PatternMHA(config, modules=None)
 
 
 

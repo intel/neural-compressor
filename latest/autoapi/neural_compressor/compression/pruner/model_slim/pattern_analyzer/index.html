@@ -116,7 +116,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_attributes</span></code></a>(module, attrs)</p></td>
 <td><p>Get a multi-level descent module of module.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_iterables</span></code></a>(data_iters)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_common_module</span></code></a>(layer1, layer2)</p></td>
+<td><p>Get the module which contains layer1 and layer2 (nearest father nodes)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_iterables</span></code></a>(data_iters)</p></td>
 <td><p>Print the auto slim logs.</p></td>
 </tr>
 </tbody>
@@ -139,6 +142,12 @@
 <dd class="field-odd"><p>attr</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">get_common_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module" title="Permalink to this definition"></a></dt>
+<dd><p>Get the module which contains layer1 and layer2 (nearest father nodes)</p>
 </dd></dl>
 
 <dl class="py function">
