@@ -92,6 +92,15 @@ def get_sparsity_ratio(pruners, model):
     if hasattr(model, 'model'):
         model = model.model
     for pruner in pruners:
+        if "MultiheadAttentionPruner" in type(pruner).__name__:
+            logger.info("Calculate multihead-attention sparsity")
+            mha_total = .0
+            mha_sparse = .0
+            for k, v in pruner.head_masks.items():
+                mha_total += v.numel()
+                mha_sparse += v.numel() - torch.count_nonzero(v)
+            logger.info(f"MHA sparsity: {mha_sparse / mha_total}")
+            continue
         modules = pruner.modules
         sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
         cnt = 0
