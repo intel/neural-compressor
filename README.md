@@ -153,5 +153,5 @@ q_model = fit(
 
 ## Research Collaborations
 
-Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Intel Neural Compressor!
+Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us ([inc.maintainers@intel.com](mailto:inc.maintainers@intel.com)). Look forward to our collaborations on Intel Neural Compressor!
 
