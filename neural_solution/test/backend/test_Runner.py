@@ -26,7 +26,7 @@ class TestMain(unittest.TestCase):
         """Test blocking flag in abort_job method."""
         path = "test.txt"
         with open(path, "w") as f:
-            f.write("hostname1\nhostname2")
+            f.write("hostname1 2 20\nhostname2 2 20")
         adding_abort = threading.Thread(
             target=main,
             kwargs={'args': ['-H', 'test.txt', '-TMP', '2222', '-RMP', '3333', '-CEN', 'inc_conda_env']},

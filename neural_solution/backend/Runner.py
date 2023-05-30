@@ -55,7 +55,7 @@ def main(args=None):
     db_path = get_db_path(args.workspace)
 
     # Initialize cluster from the host file. If there is no host file, build one local cluster.
-    cluster = build_cluster(args.hostfile, db_path)
+    cluster, num_threads_per_process = build_cluster(args.hostfile, db_path)
 
     # initialize the task db
     task_db = TaskDB(db_path)
@@ -66,7 +66,8 @@ def main(args=None):
     config.workspace = args.workspace
 
     ts = Scheduler(cluster, task_db, args.result_monitor_port, \
-        conda_env_name=args.conda_env_name, upload_path=args.upload_path, config=config)
+        conda_env_name=args.conda_env_name, upload_path=args.upload_path, config=config, \
+        num_threads_per_process=num_threads_per_process)
     t_ts = threading.Thread(target=ts.schedule_tasks)
 
     tm = TaskMonitor(args.task_monitor_port, task_db)

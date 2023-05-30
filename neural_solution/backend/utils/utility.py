@@ -16,7 +16,6 @@ import json
 import os
 from neural_solution.utils import logger
 from urllib.parse import urlparse
-from neural_solution.config import NUM_CORES_PER_SOCKET, NUM_SOCKETS
 
 
 def serialize(request: dict) -> bytes:
@@ -79,7 +78,7 @@ def build_local_cluster(db_path):
 
     node_lst = [node1, node2, node3]
     cluster = Cluster(node_lst=node_lst, db_path=db_path)
-    return cluster
+    return cluster, 5
 
 def build_cluster(file_path, db_path):
     """Build cluster according to the host file.
@@ -99,13 +98,16 @@ def build_cluster(file_path, db_path):
         raise Exception(f"Please check the path of host file: {file_path}.")
 
     node_lst = []
+    num_threads_per_process = 5
     with open(file_path, 'r') as f:
         for line in f:
-            hostname = line.strip()
-            node = Node(name=hostname, num_sockets=NUM_SOCKETS, num_cores_per_socket=NUM_CORES_PER_SOCKET)
+            hostname, num_sockets, num_cores_per_socket = line.strip().split(" ")
+            num_sockets, num_cores_per_socket = int(num_sockets), int(num_cores_per_socket)
+            node = Node(name=hostname, num_sockets=num_sockets, num_cores_per_socket=num_cores_per_socket)
             node_lst.append(node)
+            num_threads_per_process = num_cores_per_socket
     cluster = Cluster(node_lst=node_lst, db_path=db_path)
-    return cluster
+    return cluster, num_threads_per_process
 
 def get_current_time():
     from datetime import datetime

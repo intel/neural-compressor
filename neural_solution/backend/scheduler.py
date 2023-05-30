@@ -25,7 +25,7 @@ import shutil
 from .task import Task
 from .cluster import Cluster
 from .task_db import TaskDB
-from neural_solution.config import NUM_THREADS_PER_PROCESS, INC_ENV_PATH_TEMP
+from neural_solution.config import INC_ENV_PATH_TEMP
 from neural_solution.backend.utils.utility import (
     serialize,
     dump_elapsed_time,
@@ -43,7 +43,7 @@ CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
 class Scheduler:
     def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, \
-        conda_env_name=None, upload_path="./examples", config=None):
+        conda_env_name=None, upload_path="./examples", config=None, num_threads_per_process=5):
         """Scheduler dispatches the task with the available resources, calls the mpi command and report results.
 
         Attributes:
@@ -59,6 +59,7 @@ class Scheduler:
         self.conda_env_name = conda_env_name
         self.upload_path = upload_path
         self.config = config
+        self.num_threads_per_process = num_threads_per_process
 
     def prepare_env(self, task:Task):
         """Check and create a conda environment.
@@ -176,12 +177,12 @@ class Scheduler:
                    "-host",
                    "{}".format(host_str),
                    "-map-by",
-                   "socket:pe={}".format(NUM_THREADS_PER_PROCESS),
+                   "socket:pe={}".format(self.num_threads_per_process),
                    "-mca",
                    "btl_tcp_if_include",
                    "192.168.20.0/24", # TODO replace it according to the node
                    "-x",
-                   "OMP_NUM_THREADS={}".format(NUM_THREADS_PER_PROCESS),
+                   "OMP_NUM_THREADS={}".format(self.num_threads_per_process),
                    '--report-bindings'
                 ]
         mpi_cmd = " ".join(mpi_cmd)
