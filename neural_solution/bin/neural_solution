@@ -34,7 +34,7 @@ check_port() {
 function init_params {
 
    hostfile=None
-   api_type=http # http, grpc, all
+   api_type=all # restful, grpc, all
    restful_api_port=8000
    grpc_api_port=8001
    task_monitor_port=2222
@@ -100,7 +100,7 @@ function serve {
       start)
          # Check ports
          ports_flag=0
-         for port in $restful_api_port $task_monitor_port $result_monitor_port;
+         for port in $restful_api_port $grpc_api_port $task_monitor_port $result_monitor_port;
          do
             # Check if the port is occupied
             if lsof -i ":$port"  > /dev/null 2>&1; then
@@ -146,6 +146,9 @@ function serve {
          --conda_env_name $conda_env_name \
          --upload_path $upload_path \
           >> $serve_log_dir/backend$date_suffix.log  2>&1 &
+
+         if [ "$api_type" = "all" ] || [ "$api_type" = "restful" ]; then
+         echo "Start the RESTful APIs..."
          export PYTHONDONTWRITEBYTECODE=1 && python -m neural_solution.frontend.fastapi.main_server \
          --host "0.0.0.0"\
          --fastapi_port $restful_api_port\
@@ -153,12 +156,17 @@ function serve {
          --result_monitor_port $result_monitor_port\
          --workspace $workspace\
          &>>$serve_log_dir/frontend$date_suffix.log &
+         fi
+
+         if [ "$api_type" = "all" ] || [ "$api_type" = "grpc" ]; then
+         echo "Start the gRPC APIs..."
          export PYTHONDONTWRITEBYTECODE=1 && python -m neural_solution.frontend.gRPC.server \
-         --grpc_api_port $restful_api_port\
+         --grpc_api_port $grpc_api_port\
          --task_monitor_port $task_monitor_port\
          --result_monitor_port $result_monitor_port\
          --workspace $workspace\
          &>>$serve_log_dir/frontend_grpc.log &
+         fi
          ip_address=$(hostname -I | awk '{print $1}')
 
          # Check if the service is started
@@ -236,7 +244,7 @@ function serve {
          echo "  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]"
          echo '    --hostfile           : start backend serve host file which contains all available nodes'
          echo '    --restful_api_port         : start web serve with {restful_api_port}, default 8000'
-         echo '    --api_type           : start web serve with grpc/http, default http'
+         echo '    --api_type           : start web serve with all/grpc/restful, default all'
          echo '    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, default 2222'
          echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, default 3333'
          echo '    --workspace          : neural solution workspace, default "./"'
