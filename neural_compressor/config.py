@@ -14,11 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Configs for Neural Compressor."""
+"""Configs for Neural Compressor 2.x."""
 import datetime
 import logging
 from schema import Schema, And, Optional
-from .conf.dotdict import DotDict
+from .utils import alias_param
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -58,7 +58,7 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
-            lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
+            lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s))}})
 
 
 def _check_value(name, src, supported_type, supported_value=[]):
@@ -91,6 +91,52 @@ def _check_value(name, src, supported_type, supported_value=[]):
     return True
 
 
+class DotDict(dict):
+    """access yaml using attributes instead of using the dictionary notation.
+
+    Args:
+        value (dict): The dict object to access.
+
+    """
+
+    def __init__(self, value=None):
+        """Init a DotDict object."""
+        if value is None:
+            pass
+        elif isinstance(value, dict):
+            for key in value:
+                self.__setitem__(key, value[key])
+        else:
+            raise TypeError('expected dict')
+
+    def __getitem__(self, key):
+        """Get the key."""
+        value = self.get(key, None)
+        return value
+
+    def __setitem__(self, key, value):
+        """Set the value to the key."""
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            value = DotDict(value)
+        if isinstance(value, list) and len(value) == 1 and isinstance(
+                value[0], dict):
+            value = DotDict(value[0])
+        if isinstance(value, list) and len(value) > 1 and all(isinstance(
+                v, dict) for v in value):
+            value = DotDict({k: v for d in value for k, v in d.items()})
+        super(DotDict, self).__setitem__(key, value)
+
+    def __getstate__(self):
+        """Get the dict."""
+        return self.__dict__
+
+    def __setstate__(self, d):
+        """Set the dict."""
+        self.__dict__.update(d)
+
+    __setattr__, __getattr__ = __setitem__, __getitem__
+
+
 class Options:
     """Option Class for configs.
 
@@ -117,11 +163,12 @@ class Options:
 
     Example::
 
-        from neural_compressor.utils.utility import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
         set_tensorboard(True)
+
     """
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
@@ -176,9 +223,6 @@ class Options:
             self._tensorboard = tensorboard
 
 
-options = Options()
-
-
 class BenchmarkConfig:
     """Config Class for Benchmark.
 
@@ -190,9 +234,10 @@ class BenchmarkConfig:
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
                                 Default value is 5.
         iteration (int, optional): The number of iterations to run performance tests. Default is -1.
+        model_name (str, optional): The name of the model. Default value is empty.
         cores_per_instance (int, optional): The number of CPU cores to use per instance. Default value is None.
         num_of_instance (int, optional): The number of instances to use for performance testing.
-                                         Default value is None.
+                                         Default value is 1.
         inter_num_of_threads (int, optional): The number of threads to use for inter-thread operations.
                                               Default value is None.
         intra_num_of_threads (int, optional): The number of threads to use for intra-thread operations.
@@ -201,31 +246,48 @@ class BenchmarkConfig:
     Example::
 
         # Run benchmark according to config
-
         from neural_compressor.benchmark import fit
+
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+        fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
     """
     def __init__(self,
                  inputs=[],
                  outputs=[],
                  backend='default',
+                 device='cpu',
                  warmup=5,
                  iteration=-1,
+                 model_name="",
                  cores_per_instance=None,
-                 num_of_instance=None,
+                 num_of_instance=1,
                  inter_num_of_threads=None,
-                 intra_num_of_threads=None):
+                 intra_num_of_threads=None,
+                 diagnosis=False):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
+        self.device=device
         self.warmup = warmup
         self.iteration = iteration
+        self.model_name = model_name
         self.cores_per_instance = cores_per_instance
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
+        self.diagnosis = diagnosis
+        self._framework = None
+
+    def keys(self):
+        """Returns keys of the dict."""
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', \
+                'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
+                'inter_num_of_threads','intra_num_of_threads')
+
+    def __getitem__(self, item):
+        """Get the dict."""
+        return getattr(self, item)
 
     @property
     def backend(self):
@@ -238,6 +300,16 @@ class BenchmarkConfig:
         if _check_value('backend', backend, str, [
                 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
+
+    @property
+    def device(self):
+        """Get device name."""
+        return self._device
+
+    @device.setter
+    def device(self, device):
+        if _check_value('device', device, str, ['cpu', 'gpu']):
+            self._device = device
 
     @property
     def outputs(self):
@@ -292,7 +364,7 @@ class BenchmarkConfig:
     def cores_per_instance(self, cores_per_instance):
         """Set cores_per_instance."""
         if cores_per_instance is None or _check_value('cores_per_instance', cores_per_instance,
-                                                     int):
+                                                      int):
             self._cores_per_instance = cores_per_instance
 
     @property
@@ -303,7 +375,7 @@ class BenchmarkConfig:
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
         """Set num_of_instance."""
-        if num_of_instance is None or _check_value('num_of_instance', num_of_instance, int):
+        if _check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
@@ -327,8 +399,40 @@ class BenchmarkConfig:
     def intra_num_of_threads(self, intra_num_of_threads):
         """Get intra_num_of_threads."""
         if intra_num_of_threads is None or _check_value('intra_num_of_threads',
-                                                       intra_num_of_threads, int):
+                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def diagnosis(self):
+        """Get diagnosis property."""
+        return self._diagnosis
+
+    @diagnosis.setter
+    def diagnosis(self, diagnosis):
+        """Set diagnosis property."""
+        if _check_value('diagnosis', diagnosis, bool):
+            self._diagnosis = diagnosis
+
+    @property
+    def model_name(self):
+        """Get model name."""
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, model_name):
+        """Set model name."""
+        if _check_value("model_name", model_name, str):
+            self._model_name = model_name
+
+    @property
+    def framework(self):
+        """Set framework."""
+        return self._framework
+
+    @framework.setter
+    def framework(self, framework):
+        """Get framework."""
+        self._framework = framework
 
 
 class AccuracyCriterion:
@@ -347,7 +451,7 @@ class AccuracyCriterion:
         from neural_compressor.config import AccuracyCriterion
 
         accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,  # optional. 
+            higher_is_better=True,  # optional.
             criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
             tolerable_loss=0.01,  # optional.
         )
@@ -421,8 +525,116 @@ class AccuracyCriterion:
         """Get criterion."""
         return self.criterion
 
+    def keys(self):
+        """Returns keys of the dict."""
+        return ('higher_is_better', 'criterion', 'tolerable_loss')
+
+    def __getitem__(self, item):
+        """Get the dict."""
+        return getattr(self, item)
+
 
 accuracy_criterion = AccuracyCriterion()
+
+
+class TuningCriterion:
+    """Class for Tuning Criterion.
+
+    Args:
+        strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
+        strategy_kwargs: Parameters for strategy. Please refer to docs/source/tuning_strategies.md.
+        objective: String or dict. Objective with accuracy constraint guaranteed. String value supports
+                  'performance', 'modelsize', 'footprint'. Default value is 'performance'.
+                   Please refer to docs/source/objective.md.
+        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+        max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
+
+    Example::
+        from neural_compressor.config import TuningCriterion
+
+        tuning_criterion=TuningCriterion(
+            timeout=0,
+            max_trials=100,
+            strategy="basic",
+            strategy_kwargs=None,
+        )
+    """
+    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0,
+                 max_trials=100, objective="performance"):
+        """Init a TuningCriterion object."""
+        self.strategy = strategy
+        self.timeout = timeout
+        self.max_trials = max_trials
+        self.objective = objective
+        self.strategy_kwargs = strategy_kwargs
+
+    @property
+    def max_trials(self):
+        """Get max_trials."""
+        return self._max_trials
+
+    @max_trials.setter
+    def max_trials(self, max_trials):
+        """Set max_trials."""
+        if _check_value('max_trials', max_trials, int):
+            self._max_trials = max_trials
+
+    @property
+    def timeout(self):
+        """Get timeout."""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, timeout):
+        """Set timeout."""
+        if _check_value('timeout', timeout, int):
+            self._timeout = timeout
+
+    @property
+    def objective(self):
+        """Get objective."""
+        return self._objective
+
+    @objective.setter
+    def objective(self, objective):
+        if _check_value('objective', objective, str,
+            ['performance', 'accuracy', 'modelsize', 'footprint']):
+            self._objective = objective
+            return
+
+        if _check_value('objective', objective, dict):
+            if 'weight' in objective.keys() and isinstance(objective['weight'], list):
+                assert len(objective['objective']) == len(objective['weight'])
+            for k, v in objective.items():
+                _check_value('objective', k, str, ['objective', 'weight', 'higher_is_better'])
+                if k == 'objective':
+                    _check_value('objective', v, str, ['performance', 'accuracy', 'modelsize', 'footprint'])
+            self._objective = objective
+
+    @property
+    def strategy(self):
+        """Get strategy."""
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, strategy):
+        """Set strategy."""
+        if _check_value('strategy', strategy, str,
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
+            self._strategy = strategy
+
+    @property
+    def strategy_kwargs(self):
+        """Get strategy_kwargs."""
+        return self._strategy_kwargs
+
+    @strategy_kwargs.setter
+    def strategy_kwargs(self, strategy_kwargs):
+        """Set strategy_kwargs."""
+        self._strategy_kwargs = strategy_kwargs
+
+
+tuning_criterion = TuningCriterion()
 
 
 class _BaseQuantizationConfig:
@@ -436,6 +648,7 @@ class _BaseQuantizationConfig:
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
                 If users set domain as auto, automatic detection for domain will be executed.
+        model_name: The name of the model. Default value is empty.
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
@@ -479,70 +692,54 @@ class _BaseQuantizationConfig:
                               }
                           },
                       }
-        strategy: Strategy name used in tuning, Please refer to docs/source/tuning_strategies.md.
-        strategy_kwargs: Parameters for strategy, Please refer to docs/source/tuning_strategies.md.
-        objective: Objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'.
-                   Please refer to docs/source/objective.md.
-                   Default value is 'performance'.
-        timeout: Tuning timeout (seconds). default value is 0 which means early stop
-        max_trials: Max tune times. default value is 100. Combine with timeout field to decide when to exit
-        performance_only: Whether do evaluation
         reduce_range: Whether use 7 bit to quantization.
         example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         accuracy_criterion: Accuracy constraint settings.
-        use_distributed_tuning: Whether use distributed tuning or not.
     """
     def __init__(self,
                  inputs=[],
                  outputs=[],
                  backend="default",
                  domain="auto",
+                 model_name="",
                  recipes={},
                  quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
+                 example_inputs=None,
                  op_type_dict=None,
                  op_name_dict=None,
-                 strategy="basic",
-                 strategy_kwargs=None,
-                 objective="performance",
-                 timeout=0,
-                 max_trials=100,
-                 performance_only=False,
                  reduce_range=None,
-                 example_inputs=None,
                  excluded_precisions=[],
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False):
+                 tuning_criterion=tuning_criterion,
+                 diagnosis=False):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
         self.domain = domain
+        self.model_name = model_name
         self.recipes = recipes
         self.quant_format = quant_format
         self.device = device
         self.op_type_dict = op_type_dict
         self.op_name_dict = op_name_dict
-        self.strategy = strategy
-        self.strategy_kwargs = strategy_kwargs
-        self.objective = objective
-        self.timeout = timeout
-        self.max_trials = max_trials
-        self.performance_only = performance_only
         self.reduce_range = reduce_range
         self.excluded_precisions = excluded_precisions
         self.use_bf16 = "bf16" not in self.excluded_precisions
         self.accuracy_criterion = accuracy_criterion
+        self.tuning_criterion = tuning_criterion
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
-        self.use_distributed_tuning=use_distributed_tuning
+        self._framework = None
+        self.diagnosis = diagnosis
         self._example_inputs = example_inputs
 
     @property
@@ -556,6 +753,17 @@ class _BaseQuantizationConfig:
         if _check_value("domain", domain, str,
             ["auto", "cv", "object_detection", "nlp", "recommendation_system"]):
             self._domain = domain
+
+    @property
+    def model_name(self):
+        """Get model name."""
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, model_name):
+        """Set model name."""
+        if _check_value("model_name", model_name, str):
+            self._model_name = model_name
 
     @property
     def recipes(self):
@@ -679,6 +887,17 @@ class _BaseQuantizationConfig:
             self._accuracy_criterion = accuracy_criterion
 
     @property
+    def tuning_criterion(self):
+        """Get tuning_criterion."""
+        return self._tuning_criterion
+
+    @tuning_criterion.setter
+    def tuning_criterion(self, tuning_criterion):
+        """Set tuning_criterion."""
+        if _check_value("tuning_criterion", tuning_criterion, TuningCriterion):
+            self._tuning_criterion = tuning_criterion
+
+    @property
     def excluded_precisions(self):
         return self._excluded_precisions
 
@@ -697,15 +916,6 @@ class _BaseQuantizationConfig:
         self._quant_level = quant_level
 
     @property
-    def use_distributed_tuning(self):
-        return self._use_distributed_tuning
-
-    @use_distributed_tuning.setter
-    def use_distributed_tuning(self, use_distributed_tuning):
-        if _check_value('use_distributed_tuning', use_distributed_tuning, bool):
-            self._use_distributed_tuning = use_distributed_tuning
-
-    @property
     def reduce_range(self):
         return self._reduce_range
 
@@ -713,61 +923,6 @@ class _BaseQuantizationConfig:
     def reduce_range(self, reduce_range):
         if reduce_range is None or _check_value('reduce_range', reduce_range, bool):
             self._reduce_range = reduce_range
-
-    @property
-    def performance_only(self):
-        return self._performance_only
-
-    @performance_only.setter
-    def performance_only(self, performance_only):
-        if _check_value('performance_only', performance_only, bool):
-            self._performance_only = performance_only
-
-    @property
-    def max_trials(self):
-        return self._max_trials
-
-    @max_trials.setter
-    def max_trials(self, max_trials):
-        if _check_value('max_trials', max_trials, int):
-            self._max_trials = max_trials
-
-    @property
-    def timeout(self):
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, timeout):
-        if _check_value('timeout', timeout, int):
-            self._timeout = timeout
-
-    @property
-    def objective(self):
-        return self._objective
-
-    @objective.setter
-    def objective(self, objective):
-        if _check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
-            self._objective = objective
-
-    @property
-    def strategy(self):
-        return self._strategy
-
-    @strategy.setter
-    def strategy(self, strategy):
-        if _check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
-            self._strategy = strategy
-
-    @property
-    def strategy_kwargs(self):
-        return self._strategy_kwargs
-
-    @strategy_kwargs.setter
-    def strategy_kwargs(self, strategy_kwargs):
-        self._strategy_kwargs = strategy_kwargs
 
     @property
     def op_name_dict(self):
@@ -860,6 +1015,14 @@ class _BaseQuantizationConfig:
             self._inputs = inputs
 
     @property
+    def framework(self):
+        return self._framework
+
+    @framework.setter
+    def framework(self, framework):
+        self._framework = framework
+
+    @property
     def example_inputs(self):
         """Get strategy_kwargs."""
         return self._example_inputs
@@ -868,102 +1031,6 @@ class _BaseQuantizationConfig:
     def example_inputs(self, example_inputs):
         """Set example_inputs."""
         self._example_inputs = example_inputs
-
-
-class TuningCriterion:
-    """Class for Tuning Criterion.
-
-    Args:
-        strategy(str, optional): Name of the tuning strategy. Please refer to docs/source/tuning_strategies.md.
-                                 Default is 'basic'.
-        strategy_kwargs(dict, optional): The strategy setting dictionary.
-                                         Please refer to docs/source/tuning_strategies.md.
-                                         Default value is None.
-        timeout(int, optional): Tuning timeout(seconds). When set to 0, early stopping is enabled.
-                                Default value is 0.
-        max_trials(int, optional): Max tuning times. Combined with the `timeout` field to decide when to exit tuning.
-                                   Default is 100.
-        objective(str, optinal): Objective with accuracy constraint guaranteed,
-                                     support 'performance', 'modelsize', 'footprint'.
-                                 Please refer to docs/source/objective.md.
-                                 Default value is 'performance'.
-
-    Example::
-
-        from neural_compressor.config import TuningCriterion
-
-        tuning_criterion=TuningCriterion(
-            strategy="basic",
-            strategy_kwargs=None,
-            timeout=0,
-            max_trials=100,
-        )
-    """
-    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
-        """Init a TuningCriterion object."""
-        self.strategy = strategy
-        self.timeout = timeout
-        self.max_trials = max_trials
-        self.objective = objective
-        self.strategy_kwargs = strategy_kwargs
-
-    @property
-    def max_trials(self):
-        """Get max_trials."""
-        return self._max_trials
-
-    @max_trials.setter
-    def max_trials(self, max_trials):
-        """Set max_trials."""
-        if _check_value('max_trials', max_trials, int):
-            self._max_trials = max_trials
-
-    @property
-    def timeout(self):
-        """Get timeout."""
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, timeout):
-        """Set timeout."""
-        if _check_value('timeout', timeout, int):
-            self._timeout = timeout
-
-    @property
-    def objective(self):
-        """Get objective."""
-        return self._objective
-
-    @objective.setter
-    def objective(self, objective):
-        """Set objective."""
-        if _check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
-            self._objective = objective
-
-    @property
-    def strategy(self):
-        """Get strategy."""
-        return self._strategy
-
-    @strategy.setter
-    def strategy(self, strategy):
-        """Set strategy."""
-        if _check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
-            self._strategy = strategy
-
-    @property
-    def strategy_kwargs(self):
-        """Get strategy_kwargs."""
-        return self._strategy_kwargs
-
-    @strategy_kwargs.setter
-    def strategy_kwargs(self, strategy_kwargs):
-        """Set strategy_kwargs."""
-        self._strategy_kwargs = strategy_kwargs
-
-tuning_criterion = TuningCriterion()
 
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
@@ -1034,7 +1101,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
                               timeout, max_trials and objective.
@@ -1042,7 +1109,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         accuracy_criterion: Instance of AccuracyCriterion class. In this class you can set higher_is_better,
                                 criterion and tolerable_loss.
                             Please refer to docstring of AccuracyCriterion class.
-        use_distributed_tuning: Whether use distributed tuning or not.
+        diagnosis(bool): This flag indicates whether to do diagnosis.
+                           Default value is False.
 
     Example::
 
@@ -1069,14 +1137,13 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_type_dict=None,
                  op_name_dict=None,
                  reduce_range=None,
+                 example_inputs=None,
                  excluded_precisions=[],
                  quant_level="auto",
-                 tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-                 use_distributed_tuning=False,
-    ):
+                 tuning_criterion=tuning_criterion,
+                 diagnosis=False):
         """Init a PostTrainingQuantConfig object."""
-        self.tuning_criterion = tuning_criterion
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -1087,17 +1154,15 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_dict=op_type_dict,
                          op_name_dict=op_name_dict,
-                         strategy=tuning_criterion.strategy,
-                         strategy_kwargs=tuning_criterion.strategy_kwargs,
-                         objective=tuning_criterion.objective,
-                         timeout=tuning_criterion.timeout,
-                         max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
+                         example_inputs=example_inputs,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
-                         use_distributed_tuning=use_distributed_tuning)
+                         tuning_criterion=tuning_criterion,
+                         diagnosis=diagnosis)
         self.approach = approach
+        self.diagnosis = diagnosis
 
     @property
     def approach(self):
@@ -1107,19 +1172,24 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     @approach.setter
     def approach(self, approach):
         """Set approach."""
-        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
+        if 'static' in approach:
+            approach = 'static'
+        if 'dynamic' in approach:
+            approach = 'dynamic'
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto",\
+                                                     "post_training_static_quant"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
-    def tuning_criterion(self):
-        """Get tuning_criterion."""
-        return self._tuning_criterion
+    def diagnosis(self):
+        """Get diagnosis."""
+        return self._diagnosis
 
-    @tuning_criterion.setter
-    def tuning_criterion(self, tuning_criterion):
-        """Set tuning_criterion."""
-        if _check_value("tuning_criterion", tuning_criterion, TuningCriterion):
-            self._tuning_criterion = tuning_criterion
+    @diagnosis.setter
+    def diagnosis(self, diagnosis):
+        """Set diagnosis."""
+        if _check_value('diagnosis', diagnosis, bool):
+            self._diagnosis = diagnosis
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
@@ -1157,10 +1227,11 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                           },
                       }
         reduce_range: Whether use 7 bit to quantization.
+        model_name: The name of the model. Default value is empty.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
                               timeout, max_trials and objective.
@@ -1190,10 +1261,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_dict=None,
                  op_name_dict=None,
                  reduce_range=None,
+                 model_name="",
+                 quant_format="default",
                  excluded_precisions=[],
                  quant_level="auto",
-                 tuning_criterion=tuning_criterion,
-                 accuracy_criterion=accuracy_criterion):
+                 accuracy_criterion=accuracy_criterion,
+                 tuning_criterion=tuning_criterion):
         """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -1201,26 +1274,35 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          backend=backend,
                          op_type_dict=op_type_dict,
                          op_name_dict=op_name_dict,
-                         strategy=tuning_criterion.strategy,
-                         strategy_kwargs=tuning_criterion.strategy_kwargs,
-                         objective=tuning_criterion.objective,
-                         timeout=tuning_criterion.timeout,
-                         max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
+                         model_name=model_name,
+                         quant_format=quant_format,
                          excluded_precisions=excluded_precisions,
+                         quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
-                         quant_level=quant_level)
+                         tuning_criterion=tuning_criterion)
         self._approach = 'quant_aware_training'
+        self._framework = None
 
     @property
     def approach(self):
         """Get approach."""
         return self._approach
 
+    @property
+    def framework(self):
+        """Get framework."""
+        return self._framework
+
+    @framework.setter
+    def framework(self, framework):
+        """Set framework."""
+        self._framework = framework
+
 
 class WeightPruningConfig:
     """Config Class for Pruning. Define a single or a sequence of pruning configs.
-    
+
     Args:
         pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
             Parameters defined out of pruning_configs are valid for all layers.
@@ -1229,8 +1311,8 @@ class WeightPruningConfig:
         target_sparsity (float, optional): Sparsity ratio the model can reach after pruning.
             Supports a float between 0 and 1.
             Default to 0.90.
-        pruning_type (str, optional): A string define the criteria for pruning. 
-            Supports "magnitude", "snip", "snip_momentum", 
+        pruning_type (str, optional): A string define the criteria for pruning.
+            Supports "magnitude", "snip", "snip_momentum",
                      "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
             Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
         pattern (str, optional): Sparsity's structure (or unstructure) types.
@@ -1246,15 +1328,15 @@ class WeightPruningConfig:
         end_step: (int, optional): The step to end pruning.
             Supports an integer.
             Default to 0.
-        pruning_scope (str, optional): Determine layers' scores should be gather together to sort 
-            Supports "global" and "local". 
+        pruning_scope (str, optional): Determine layers' scores should be gather together to sort
+            Supports "global" and "local".
             Default: "global", since this leads to less accuracy loss.
         pruning_frequency: the frequency of pruning operation.
             Supports an integer.
             Default to 1.
         min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer's sparsity.
             Supports a float between 0 and 1.
-            Default to 0.0.  
+            Default to 0.0.
         max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer's sparsity.
             Supports a float between 0 and 1.
             Default to 0.98.
@@ -1265,8 +1347,7 @@ class WeightPruningConfig:
             Supports ['Conv', 'Linear'].
             Default to ['Conv', 'Linear'].
 
-    Example::
-
+    Example:
         from neural_compressor.config import WeightPruningConfig
         local_configs = [
             {
@@ -1336,7 +1417,7 @@ class KnowledgeDistillationLossConfig:
         loss_types (list[str], optional): loss types, should be a list of length 2.
             First item is the loss type for student model output and groundtruth label,
             second item is the loss type for student model output and teacher model output.
-            Supported tpyes for first item are "CE", "MSE". 
+            Supported tpyes for first item are "CE", "MSE".
             Supported tpyes for second item are "CE", "MSE", "KL".
             Defaults to ['CE', 'CE'].
         loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.
@@ -1380,7 +1461,7 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
             takes output of the specified layer as input, in string case, when output of the
             specified layer is a dict, this string will serve as key to get corresponding value,
             when output of the specified layer is a list or tuple, the string should be numeric and
-            will serve as the index to get corresponding value. 
+            will serve as the index to get corresponding value.
             When output process is not needed, the item in layer_mappings can be abbreviated to
             [(student_layer_name, ), (teacher_layer_name, )], if student_layer_name and teacher_layer_name
             are the same, it can be abbreviated further to [(layer_name, )].
@@ -1486,7 +1567,6 @@ class SelfKnowledgeDistillationLossConfig:
 
 criterion = KnowledgeDistillationLossConfig()
 
-
 class DistillationConfig:
     """Config of distillation.
 
@@ -1500,9 +1580,9 @@ class DistillationConfig:
     Example::
 
         from neural_compressor.training import prepare_compression
-        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 
-        distil_loss = SelfKnowledgeDistillationLossConfig()
+        distil_loss = KnowledgeDistillationLossConfig()
         conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -1516,7 +1596,7 @@ class DistillationConfig:
                      'learning_rate': 0.0001
                  }}):
         """Init a DistillationConfig object."""
-        self.criterion = criterion.config
+        self.criterion = criterion
         self.optimizer = optimizer
         self.teacher_model = teacher_model
 
@@ -1551,17 +1631,18 @@ class DistillationConfig:
         self._teacher_model = teacher_model
 
 
-class MixedPrecisionConfig(PostTrainingQuantConfig):
+class MixedPrecisionConfig(object):
     """Config Class for MixedPrecision.
-    
+
     Args:
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
                                  default is 'default'.
-        precision (str, optional): Target precision for mix precision conversion.
+        precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
+        model_name (str, optional): The name of the model. Default value is empty.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
         tuning_criterion (TuningCriterion object, optional): Accuracy tuning settings,
@@ -1570,60 +1651,164 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                                                                  it won't work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
 
-    Example::
-
+    Example:
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
 
         conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+        converted_model = mix_precision.fit(model, conf=conf)
     """
+    @alias_param("precisions", param_alias="precision")
     def __init__(self,
                  device="cpu",
                  backend="default",
-                 precision="bf16",
+                 precisions="bf16",
+                 model_name="",
                  inputs=[],
                  outputs=[],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[]):
         """Init a MixedPrecisionConfig object."""
-        super().__init__(inputs=inputs,
-                         outputs=outputs,
-                         device=device,
-                         backend=backend,
-                         tuning_criterion=tuning_criterion,
-                         accuracy_criterion=accuracy_criterion,
-                         excluded_precisions=excluded_precisions,
-        )
-        self.precision = precision
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.device = device
+        self.excluded_precisions = excluded_precisions
+        self.accuracy_criterion = accuracy_criterion
+        self.tuning_criterion = tuning_criterion
+        self.precisions = precisions
+        self.use_bf16 = "bf16" in self.precisions
+        self.model_name = model_name
+        self._framework = None
 
     @property
-    def precision(self):
+    def precisions(self):
         """Get precision."""
-        return self._precision
+        return self._precisions
 
-    @precision.setter
-    def precision(self, precision):
+    @precisions.setter
+    def precisions(self, precision):
         """Set precision."""
         if isinstance(precision, str):
             assert precision in ["fp16", "bf16"], "Only support 'fp16' and 'bf16' for mix precision."
-            self._precision = [precision]
+            self._precisions = [precision]
         elif isinstance(precision, list):
             assert all([i in ["fp16", "bf16"] for i in precision]), "Only " \
                 "support 'fp16' and 'bf16' for mix precision."
-            self._precision = precision
+            self._precisions = precision
+
+    @property
+    def model_name(self):
+        """Get model name."""
+        return self._model_name
+
+    @model_name.setter
+    def model_name(self, model_name):
+        """Set model name."""
+        if _check_value("model_name", model_name, str):
+            self._model_name = model_name
+
+    @property
+    def accuracy_criterion(self):
+        """Get the accuracy criterion."""
+        return self._accuracy_criterion
+
+    @accuracy_criterion.setter
+    def accuracy_criterion(self, accuracy_criterion):
+        """Set the accuracy criterion."""
+        if _check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
+            self._accuracy_criterion = accuracy_criterion
+
+    @property
+    def tuning_criterion(self):
+        """Get tuning_criterion."""
+        return self._tuning_criterion
+
+    @tuning_criterion.setter
+    def tuning_criterion(self, tuning_criterion):
+        """Set tuning_criterion."""
+        if _check_value("tuning_criterion", tuning_criterion, TuningCriterion):
+            self._tuning_criterion = tuning_criterion
+
+    @property
+    def device(self):
+        """Get device."""
+        return self._device
+
+    @device.setter
+    def device(self, device):
+        """Set device."""
+        if _check_value('device', device, str, ['cpu', 'gpu']):
+            self._device = device
+
+    @property
+    def backend(self):
+        """Get backend."""
+        return self._backend
+
+    @backend.setter
+    def backend(self, backend):
+        """Set backend."""
+        if _check_value('backend', backend, str, [
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            self._backend = backend
+
+    @property
+    def outputs(self):
+        """Get outputs."""
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, outputs):
+        """Set outputs."""
+        if _check_value('outputs', outputs, str):
+            self._outputs = outputs
+
+    @property
+    def inputs(self):
+        """Get inputs."""
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, inputs):
+        """Set inputs."""
+        if _check_value('inputs', inputs, str):
+            self._inputs = inputs
+
+    @property
+    def framework(self):
+        """Get framework."""
+        return self._framework
+
+    @framework.setter
+    def framework(self, framework):
+        """Set framework."""
+        self._framework = framework
+
+    @property
+    def excluded_precisions(self):
+        """Get excluded precisions."""
+        return self._excluded_precisions
+
+    @excluded_precisions.setter
+    def excluded_precisions(self, excluded_precisions):
+        """Set excluded precisions."""
+        if _check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
+            self._excluded_precisions = excluded_precisions
+            self._use_bf16 = "bf16" not in excluded_precisions
+
 
 class ExportConfig:
     """Common Base Config for Export.
 
     Args:
-        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"]. 
+        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"].
                                Defaults to "int8".
         opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
-        quant_format (str, optional): The quantization format of the exported int8 onnx model, 
+        quant_format (str, optional): The quantization format of the exported int8 onnx model,
                                       select from ["QDQ", "QLinear"]. Defaults to "QDQ".
-        example_inputs (optional): Example inputs used for tracing model. Defaults to None.
+        example_inputs (tensor|list|tuple|dict, optional): Example inputs used for tracing model. Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
         output_names (list, optional): A list of model output names. Defaults to None.
         dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
@@ -1717,37 +1902,29 @@ class ExportConfig:
         """Set dynamic_axes."""
         self._dynamic_axes = dynamic_axes
 
-class ONNXQlinear2QDQConfig:
-    """Config Class for ONNXQlinear2QDQ.
-    
-    Example::
 
-        from neural_compressor.config import ONNXQlinear2QDQConfig
-        from neural_compressor.model import Model
-        
-        conf = ONNXQlinear2QDQConfig()
-        model = Model(model)
-        model.export('new_model.onnx', conf)
-    """
+class ONNXQlinear2QDQConfig:
+    """Config Class for ONNXQlinear2QDQ."""
     def __init__(self):
         """Init an ONNXQlinear2QDQConfig object."""
         pass
+
 
 class Torch2ONNXConfig(ExportConfig):
     """Config Class for Torch2ONNX.
 
     Args:
-        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"]. 
+        dtype (str, optional): The data type of the exported model, select from ["fp32", "int8"].
                                Defaults to "int8".
         opset_version (int, optional): The ONNX opset version used for export. Defaults to 14.
-        quant_format (str, optional): The quantization format of the exported int8 onnx model, 
+        quant_format (str, optional): The quantization format of the exported int8 onnx model,
                                       select from ["QDQ", "QLinear"]. Defaults to "QDQ".
-        example_inputs (required): Example inputs used for tracing model. Defaults to None.
+        example_inputs (tensor|list|tuple|dict, required): Example inputs used for tracing model. Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
         output_names (list, optional): A list of model output names. Defaults to None.
         dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
-        recipe (str, optional): A string to select recipes used for Linear -> Matmul + Add, select from 
-                                ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"]. 
+        recipe (str, optional): A string to select recipes used for Linear -> Matmul + Add, select from
+                                ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"].
                                 Defaults to 'QDQ_OP_FP32_BIAS'.
 
     Example:
@@ -1774,7 +1951,6 @@ class Torch2ONNXConfig(ExportConfig):
        input_names=None,
        output_names=None,
        dynamic_axes=None,
-       recipe='QDQ_OP_FP32_BIAS',
        **kwargs,
     ):
         """Init a Torch2ONNXConfig object."""
@@ -1787,7 +1963,6 @@ class Torch2ONNXConfig(ExportConfig):
             output_names=output_names,
             dynamic_axes=dynamic_axes,
         )
-        self.recipe = recipe
         self.kwargs = kwargs
 
 
@@ -1836,3 +2011,218 @@ class TF2ONNXConfig(ExportConfig):
             dynamic_axes=dynamic_axes,
         )
         self.kwargs = kwargs
+
+
+class NASConfig:
+    """Config class for NAS approaches."""
+    def __init__(self, approach=None, search_space=None, search_algorithm=None,
+                 metrics=[], higher_is_better=[], max_trials=3, seed=42, dynas=None):
+        """Init a NASConfig object."""
+        self._approach = approach
+        self._search = DotDict({
+            'search_space': search_space,
+            'search_algorithm': search_algorithm,
+            'metrics': metrics,
+            'higher_is_better': higher_is_better,
+            'max_trials': max_trials,
+            'seed': seed
+        })
+        self.dynas = None
+        if approach == 'dynas' and dynas:
+            self.dynas = dynas.config
+
+    @property
+    def approach(self):
+        """Get approach."""
+        return self._approach
+
+    @approach.setter
+    def approach(self, approach):
+        """Set approach."""
+        self._approach = approach
+
+    @property
+    def search(self):
+        """Get the setting dict for search."""
+        return self._search
+
+    @search.setter
+    def search(self, search):
+        """Set the setting dict for search."""
+        self._search = search
+
+
+class MXNet:
+    """Base config class for MXNet."""
+    def __init__(self, precisions=None):
+        """Init an MXNet object."""
+        self._precisions = precisions
+
+    @property
+    def precisions(self):
+        """Get precision."""
+        return self._precisions
+
+    @precisions.setter
+    def precisions(self, precisions):
+        """Set precision."""
+        if not isinstance(precisions, list):
+            precisions = [precisions]
+        for pr in precisions:
+            _check_value('precisions', pr, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16'])
+        self._precisions = precisions
+
+
+class ONNX(MXNet):
+    """Config class for ONNX."""
+    def __init__(self, graph_optimization_level=None, precisions=None):
+        """Init an ONNX object."""
+        super().__init__(precisions)
+        self._graph_optimization_level = graph_optimization_level
+
+    @property
+    def graph_optimization_level(self):
+        """Get graph optimization level."""
+        return self._graph_optimization_level
+
+    @graph_optimization_level.setter
+    def graph_optimization_level(self, graph_optimization_level):
+        """Set graph optimization level."""
+        if _check_value('graph_optimization_level', graph_optimization_level, str,
+            ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']):
+            self._graph_optimization_level = graph_optimization_level
+
+
+class TensorFlow(MXNet):
+    """Config class for TensorFlow."""
+    def __init__(self, precisions=None):
+        """Init a TensorFlow object."""
+        super().__init__(precisions)
+
+
+class Keras(MXNet):
+    """Config class for Keras."""
+    def __init__(self, precisions=None):
+        """Init a Keras object."""
+        super().__init__(precisions)
+
+
+class PyTorch(MXNet):
+    """Config class for PyTorch."""
+    def __init__(self, precisions=None):
+        """Init a PyTorch object."""
+        super().__init__(precisions)
+
+
+quantization = PostTrainingQuantConfig()
+benchmark = BenchmarkConfig()
+options = Options()
+mixed_precision = MixedPrecisionConfig()
+pruning = WeightPruningConfig()
+distillation = DistillationConfig(teacher_model=None)
+nas = NASConfig()
+onnxruntime_config = ONNX()
+tensorflow_config = TensorFlow()
+keras_config = Keras()
+pytorch_config = PyTorch()
+mxnet_config = MXNet()
+
+
+class _Config:
+    """Main config class."""
+    def __init__(self,
+                 quantization=quantization,
+                 benchmark=benchmark,
+                 mixed_precision=mixed_precision,
+                 pruning=pruning,
+                 distillation=distillation,
+                 nas=nas,
+                 onnxruntime=onnxruntime_config,
+                 tensorflow=tensorflow_config,
+                 pytorch=pytorch_config,
+                 mxnet=mxnet_config,
+                 keras=keras_config,
+                 diagnosis=None):
+        """Init a config object."""
+        self._quantization = quantization
+        self._benchmark = benchmark
+        self._mixed_precision = mixed_precision
+        self._onnxruntime = onnxruntime
+        self._pruning = pruning
+        self._distillation = distillation
+        self._nas = nas
+        self._tensorflow = tensorflow
+        self._pytorch = pytorch
+        self._mxnet = mxnet
+        self._keras = keras
+        if diagnosis is None:
+            diagnosis = False
+            if (quantization is not None and quantization.diagnosis) or \
+                    (benchmark is not None and benchmark.diagnosis):
+                diagnosis = True
+        if diagnosis:
+            tuning_criterion.max_trials = 1
+        self._diagnosis = diagnosis
+
+    @property
+    def distillation(self):
+        """Get the distillation object."""
+        return self._distillation
+
+    @property
+    def nas(self):
+        """Get the nas object."""
+        return self._nas
+
+    @property
+    def tensorflow(self):
+        """Get the tensorflow object."""
+        return self._tensorflow
+
+    @property
+    def keras(self):
+        """Get the keras object."""
+        return self._keras
+
+    @property
+    def pytorch(self):
+        """Get the pytorch object."""
+        return self._pytorch
+
+    @property
+    def mxnet(self):
+        """Get the mxnet object."""
+        return self._mxnet
+
+    @property
+    def pruning(self):
+        """Get the pruning object."""
+        return self._pruning
+
+    @property
+    def quantization(self):
+        """Get the quantization object."""
+        return self._quantization
+
+    @property
+    def benchmark(self):
+        """Get the benchmark object."""
+        return self._benchmark
+
+    @property
+    def mixed_precision(self):
+        """Get the mixed_precision object."""
+        return self._mixed_precision
+
+    @property
+    def onnxruntime(self):
+        """Get the onnxruntime object."""
+        return self._onnxruntime
+
+
+    @property
+    def diagnosis(self):
+        """Get the diagnosis value."""
+        return self._diagnosis
+
+config = _Config()

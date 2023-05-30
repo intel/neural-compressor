@@ -17,15 +17,11 @@ transformation:
     - insert_below_model_definition_line
   content:
     - |-
-      [+] from neural_compressor.experimental import Quantization, common
-      [+] from neural_compressor import options, conf
-      [+] conf.model.framework = 'onnxrt_qdqops'
-      [+] conf.quantization.approach = 'post_training_static_quant'
-      [+] quantizer = Quantization(conf)
-      [+] quantizer.model = common.Model(MODEL_NAME)
-      [+] quantizer.calib_dataloader = DATALOADER_NAME
-      [+] quantizer.eval_func = EVAL_FUNCTION_NAME
-      [+] MODEL_NAME = quantizer()
+      [+] from neural_compressor.quantization import fit
+      [+] from neural_compressor.config import PostTrainingQuantConfig
+      [+] config = PostTrainingQuantConfig(quant_format='QDQ', quant_level=1)
+      [+] MODEL_NAME = fit(MODEL_NAME, conf=config, calib_dataloader=DATALOADER_NAME, eval_func=EVAL_FUNCTION_NAME)
+      [+] MODEL_NAME.save("./quantized_model.onnx")
   order:
     - below:
       above:

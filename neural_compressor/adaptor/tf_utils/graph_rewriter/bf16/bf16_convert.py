@@ -34,6 +34,8 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from ..generic.graph_cse_optimizer import GraphCseOptimizer
 from ..generic.dequantize_cast_optimizer import DequantizeCastOptimizer
+import tensorflow as tf
+from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 
 DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -179,7 +181,8 @@ class BF16Convert(GraphRewriterBase):
                     tensor=tensor_util.make_tensor_proto(
                         fp32_value, dtypes.bfloat16, fp32_value.shape)))
             elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1 \
-                                                        and input_node.attr['mode'].s != b'MIN_FIRST':
+                                and input_node.attr['mode'].s != b'MIN_FIRST' \
+                                and tf.version.VERSION in TF_SPR_BASE_VERSIONS:
                 # Dequantize with mode MIN_FIRST does not support bf16 in both eigen and mkl
                 _, outputs_dt_input_node = self._dtype(input_node)
                 allowed_input_node_dt_val = self._allowed_dtype_val(input_node)

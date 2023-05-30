@@ -72,7 +72,7 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 ```python
 from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
 from neural_compressor import quantization
-accuracy_criterion = AccuracyCriterion(tolerable_loss=0.05)
+accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=0.5)
 conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
 q_model = quantization.fit(model,
                            conf,

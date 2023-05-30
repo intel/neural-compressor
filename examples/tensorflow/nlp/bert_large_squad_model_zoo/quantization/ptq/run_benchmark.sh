@@ -41,8 +41,8 @@ function run_benchmark {
     python tune_squad.py \
       --input_model=${input_model} \
       --mode=${mode} \
-      --dataset_location ${dataset_location} \
-      --batch_size ${batch_size} \
+      --dataset_location=${dataset_location} \
+      --batch_size=${batch_size} \
       --benchmark \
 
 }

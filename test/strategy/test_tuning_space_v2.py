@@ -166,6 +166,49 @@ op_cap = {
                 }
         },
     ],
+
+    # op5, weight only
+    ('op_name5', 'op_type5'): [
+        {
+            'activation':
+                {
+                    'dtype': ['fp32'],
+                    'quant_mode': 'static',
+                },
+            'weight':
+                {
+                    'dtype': ['int4'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'static',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': 'fp32'
+                },
+            'weight':
+                {
+                    'dtype': 'fp32'
+                }
+        },
+    ],
 }
 
 class TestTuningSpaceV2(unittest.TestCase):
@@ -174,7 +217,7 @@ class TestTuningSpaceV2(unittest.TestCase):
             'calib': {'calib_sampling_size': [1, 10, 50]},
             'op': deepcopy(op_cap)
         }
-        
+
         self.op_wise_user_cfg_for_fallback = {
             'op_name1': {
                 'activation': {
@@ -185,11 +228,11 @@ class TestTuningSpaceV2(unittest.TestCase):
                 }
             },
         }
-        
-        
+
+
     def test_tuning_sampler_int4(self):
         # op-wise
-        conf = {'usr_cfg': { } }
+        conf = {}
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -208,14 +251,14 @@ class TestTuningSpaceV2(unittest.TestCase):
             if dtype_item.name == 'int4':
                 found_int4_weight = True
         self.assertTrue(found_int4_weight)
-        
+
     def test_sampler_int4(self):
         # test sampler
         from collections import OrderedDict
         from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
-        from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler
+        from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler, LowerBitsSampler
         # op-wise
-        conf = {'usr_cfg': { } }
+        conf = {}
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
@@ -241,7 +284,7 @@ class TestTuningSpaceV2(unittest.TestCase):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-        
+
         op_wise_tuning_sampler = OpWiseTuningSampler(deepcopy(tuning_space), [], [],
                                                      op_item_dtype_dict, initial_op_tuning_cfg)
         op3 = ('op_name3', 'op_type3')
@@ -250,16 +293,25 @@ class TestTuningSpaceV2(unittest.TestCase):
             act_dtype = op_cfg['activation']['dtype']
             weight_dtype = op_cfg['weight']['dtype']
             self.assertTrue(act_dtype == weight_dtype == 'int4')
-        
+
+
+        int4_ops = tuning_space.collect_op_by_quant_bits('int4')
+        for op in int4_ops:
+            op_item_dtype_dict[op.name] = 'int4'
+        lower_bits_sampler = LowerBitsSampler(deepcopy(tuning_space), [], initial_op_tuning_cfg, op_item_dtype_dict,
+                                              accumulate=False, skip_first=True)
+        op3 = ('op_name5', 'op_type5')
+        for tune_cfg in lower_bits_sampler:
+            op_cfg = tune_cfg[op3].get_state()
+            act_dtype = op_cfg['activation']['dtype']
+            weight_dtype = op_cfg['weight']['dtype']
+            logger.debug(op_cfg)
+            self.assertTrue((weight_dtype == 'int4' and act_dtype == 'fp32') or (act_dtype == weight_dtype == 'fp32'))
 
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {
-            'usr_cfg': {
-                'quantization': {
-                    'op_wise': self.op_wise_user_cfg_for_fallback,
-                }
-            }
+                    'op_name_dict': self.op_wise_user_cfg_for_fallback,
 
         }
         conf = DotDict(conf)

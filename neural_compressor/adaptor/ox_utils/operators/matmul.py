@@ -29,6 +29,16 @@ class MatMulOperator(Operator):
         """Initialization."""
         super(MatMulOperator, self).__init__(onnx_quantizer, onnx_node)
 
+    def quantize_check(self):
+        """Check if quantizaion can be done."""
+        node = self.node
+        if not all([self.quantizer.model.get_initializer(i) is None for i in node.input]):
+            return True
+        elif all([i not in self.quantizer.quantized_value_map for i in node.input]):
+            return False
+        else:
+            return True
+
     def quantize(self):
         """Do quantizaion."""
         node = self.node
@@ -39,7 +49,7 @@ class MatMulOperator(Operator):
         else:
             self.quantizer.quantize_inputs(node, [1])
 
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+        if not self.disable_qdq_for_node_output:
             self.quantizer.quantize_outputs(node)
         node.name = node.name + "_quant"
 
@@ -48,6 +58,8 @@ class MatMulOperator(Operator):
         node = self.node
         assert convert_format in ['dynamic', 'static'], \
             "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
+        if not node.name.endswith('_quant'):
+            return False
         return True
 
     def convert(self, convert_format):
@@ -112,22 +124,29 @@ class MatMulOperator(Operator):
             if len(self.quantizer.model.get_children(node)) == 0 or \
                 not node.name.endswith('_quant'): # pragma: no cover
                 return
-            child = self.quantizer.model.get_children(node)[0]
-
-            qlinear_matmul_output = child.output[0]
 
             qlinear_matmul_inputs = []
-            for parent in parents:
-                qlinear_matmul_inputs.extend(parent.input)
-            qlinear_matmul_inputs.extend(child.input[1:])
-
-            qlinear_matmul_node = onnx.helper.make_node("QLinearMatMul", 
-                                                        qlinear_matmul_inputs, 
-                                                        [qlinear_matmul_output],
-                                                        node.name)
+            if self.disable_qdq_for_node_output:
+                for i in range(len(parents[0].input)):
+                    qlinear_matmul_inputs.extend([parent.input[i] for parent in parents])
+                qlinear_matmul_node = onnx.helper.make_node("MatMulIntegerToFloat",
+                                                            qlinear_matmul_inputs,
+                                                            node.output,
+                                                            node.name,
+                                                            domain='com.microsoft')
+            else:
+                child = self.quantizer.model.get_children(node)[0]
+                qlinear_matmul_output = child.output[0]
+                for parent in parents:
+                    qlinear_matmul_inputs.extend(parent.input)
+                qlinear_matmul_inputs.extend(child.input[1:])
+                qlinear_matmul_node = onnx.helper.make_node("QLinearMatMul",
+                                                            qlinear_matmul_inputs,
+                                                            [qlinear_matmul_output],
+                                                            node.name)
+                self.quantizer.remove_nodes.append(child)
             self.quantizer.new_nodes.append(qlinear_matmul_node)
             self.quantizer.remove_nodes.extend(parents)
-            self.quantizer.remove_nodes.append(child)
             self.quantizer.remove_nodes.append(node)
             
 @qop_registry(op_types="QLinearMatMul")

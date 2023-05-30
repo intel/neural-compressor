@@ -41,11 +41,13 @@ class SmoothQuant(Algorithm):
             alpha:Alpha value to balance the quantization difficulty of activation and weight,
                 please refer to the paper for more details
         """
-        # percentile:Percentile of calibration to remove outliers,float(0->100)
+        # folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
+        # percentile: Percentile of calibration to remove outliers,float(0->100)
         # op_types: The op types whose input tensor will be dumped,['Conv', 'Linear']
         # scales_per_op: True, each op will have an individual scale, mainly for accuracy
         #                False, ops with the same input will share a scale, mainly for performance
         self.alpha = alpha
+        self.folding = False
         self.percentile = None
         self.op_types = None
         self.scales_per_op = None
@@ -69,13 +71,20 @@ class SmoothQuant(Algorithm):
         Returns:
             model: A modified onnx model
         """
-        args = {}  ##different backends may have different default values
+        kwargs = {}  ##different backends may have different default values
         if self.op_types != None:
-            args["op_types"] = self.op_types
+            kwargs["op_types"] = self.op_types
         if self.percentile != None:
-            args['percentile'] = self.percentile
+            kwargs['percentile'] = self.percentile
         if self.scales_per_op != None:
-            args['scales_per_op'] = self.scales_per_op
-        q_model = adaptor.smooth_quant(origin_model, dataloader, calib_iter, self.tune_cfg, self.alpha,
-                                       **args)
+            kwargs['scales_per_op'] = self.scales_per_op
+        kwargs['folding'] = self.folding
+        q_model = adaptor.smooth_quant(
+            origin_model,
+            dataloader,
+            calib_iter,
+            self.tune_cfg,
+            alpha=self.alpha,
+            **kwargs,
+        )
         return q_model

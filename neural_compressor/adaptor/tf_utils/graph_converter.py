@@ -126,7 +126,12 @@ class GraphConverter:
         self._check_tf_version()
         self._check_args()
 
-        self._fp32_model = Model(self.model._model, **self.model.kwargs)
+        if "backend" in self.model.kwargs:
+            self._fp32_model = Model(self.model._model, **self.model.kwargs)
+        else:
+            self._fp32_model = Model(self.model._model,
+                                     **self.model.kwargs,
+                                     backend="itex" if itex_mode else "default")
         self._fp32_model.graph_def = self.model.graph_def
         self._fp32_model.output_tensor_names = self.output_tensor_names
         self._fp32_model.input_tensor_names = self.input_tensor_names
@@ -145,7 +150,12 @@ class GraphConverter:
         self.scale_info.update({'bf16_ops': self.bf16_ops})
         self.scale_info.update({'fp32_ops': self.fp32_ops})
 
-        self._sampling_model = Model(self.model._model, **self.model.kwargs)
+        if "backend" in self.model.kwargs:
+            self._sampling_model = Model(self.model._model, **self.model.kwargs)
+        else:
+            self._sampling_model = Model(self.model._model,
+                                         **self.model.kwargs,
+                                         backend="itex" if itex_mode else "default")
         self._sampling_model.output_tensor_names = self.output_tensor_names
         self._sampling_model.input_tensor_names = self.input_tensor_names
 
@@ -154,7 +164,7 @@ class GraphConverter:
             self._tmp_graph_def = self.model.graph_def
         else:
             self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
-        self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
+        self.new_api = new_api  # bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
         self.use_bf16 = use_bf16
         self.exclude_node_names = []
 
@@ -231,7 +241,7 @@ class GraphConverter:
                     disorder_tensors = []
                     disorder_inputs = []
                     for idx, sort_tensor in enumerate(input_tensor):
-                        sort_input = inputs[idx] 
+                        sort_input = inputs[idx]
                         if check_shape(sort_tensor, sort_input):
                             feed_dict.update({sort_tensor: sort_input})
                         else:
@@ -326,7 +336,12 @@ class GraphConverter:
             self._tmp_model = self._fp32_model
         else:
             # to keep temp model
-            self._tmp_model = Model(self.model._model, **self.model.kwargs)
+            if "backend" in self.model.kwargs:
+                self._tmp_model = Model(self.model._model, **self.model.kwargs)
+            else:
+                self._tmp_model = Model(self.model._model,
+                                        **self.model.kwargs,
+                                        backend="itex" if self.itex_mode else "default")
             self._tmp_model.graph_def = self.model.graph_def
             self._tmp_model.output_tensor_names = self.output_tensor_names
             self._tmp_model.input_tensor_names = self.input_tensor_names
@@ -483,7 +498,7 @@ class GraphConverter:
             self._quantize_graph()
             self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
 
-            if self.fake_quant: # pragma: no cover
+            if self.fake_quant:  # pragma: no cover
                 self._fuse_requantize_with_fused_quantized_node()
             else:
                 if self._enable_kl_op_names:
@@ -495,7 +510,7 @@ class GraphConverter:
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
 
-                # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
+                # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph
                 # after enabling pad+conv2d in new API.
                 non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
                 sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
@@ -602,7 +617,10 @@ class GraphConverter:
 
         logger.debug("Generate calibration data and save to {}.".format(tmp_dump_file))
 
-        model = Model(tmp_path, **self._tmp_model.kwargs)
+        if "backend" in self._tmp_model.kwargs:
+            model = Model(tmp_path, **self._tmp_model.kwargs)
+        else:
+            model = Model(tmp_path, **self._tmp_model.kwargs, backend="itex" if self.itex_mode else "default")
         model.output_tensor_names = self.output_tensor_names
         model.input_tensor_names = self.input_tensor_names
 
@@ -668,7 +686,7 @@ class GraphConverter:
             if self.qdq_enabled:
                 self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
                     self._tmp_graph_def).do_transformation()
-            
+
                 self._tmp_graph_def = FuseMatMulRequantizeDequantizeNewAPITransformer(
                     self._tmp_graph_def).do_transformation()
             else:
@@ -677,7 +695,7 @@ class GraphConverter:
 
                 self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
                             self._tmp_graph_def).do_transformation()
-        
+
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
@@ -751,7 +769,7 @@ class GraphConverter:
 
     def _insert_qdq_pairs(self):
         """Insert QDQ pairs before Conv/MatMul/Pooling Ops."""
-        # Fuse Pad into Conv2D, Conv3D, DepthwiseConv2dNative 
+        # Fuse Pad into Conv2D, Conv3D, DepthwiseConv2dNative
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
         self._tmp_graph_def = FusePadWithConv2DOptimizer(
                     self._tmp_graph_def,
@@ -828,7 +846,7 @@ class GraphConverter:
         # Insert QDQ pattern
         self._tmp_graph_def = GenerateGraphWithQDQPattern(
               self._tmp_graph_def, self._calibration_data, self.op_wise_config,
-              self.fake_quant, self.fp32_ops, self.bf16_ops, self.quantized_node_info, 
+              self.fake_quant, self.fp32_ops, self.bf16_ops, self.quantized_node_info,
               self.device, self.performance_only, self.itex_mode).do_transformation()
 
     def _convert_qdq(self):

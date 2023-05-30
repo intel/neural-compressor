@@ -96,10 +96,10 @@ best_acc1 = 0
 def main():
     args = parser.parse_args()
     
-    if 'efficient' in args.arch:
-        import torchvision.models as models
-    else:
+    if 'mobilenet' in args.arch:
         import torchvision.models.quantization as models
+    else:
+        import torchvision.models as models
 
     if args.seed is not None:
         random.seed(args.seed)

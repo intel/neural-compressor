@@ -962,6 +962,10 @@ class GraphRewriterHelper():
                 iterations += 1
 
         step = int(len(valid_data) / iterations)
+        if step % 2 == 1:
+            step -= 1
+            iterations = int(len(valid_data) / step) + int(len(valid_data) % step > 0)
+
         final_res = []
 
         for i in range(iterations):

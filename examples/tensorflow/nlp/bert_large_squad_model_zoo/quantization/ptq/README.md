@@ -24,20 +24,22 @@ pip install intel-tensorflow
 
 ### Install Intel Extension for Tensorflow
 
-#### Quantizing the model on Intel GPU
+#### Quantizing the model on Intel GPU(Mandatory to install ITEX)
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
 
-#### Quantizing the model on Intel CPU(Experimental)
+#### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ## 2. Prepare Pretrained model
 ```shell
@@ -45,6 +47,8 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp3
 ```
 
 ## 3. Prepare Dataset
+Please choose one way to prepare the dataset from the manual approach and the automatic approach.
+### Manual approach
 ```shell
 wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip
 ```
@@ -59,15 +63,16 @@ wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -P wwm_unc
 wwm_uncased_L-24_H-1024_A-16 folder will be located on your data path.
 
 #### Automatic dataset download
-Run the `prepare_dataset.sh` script located in `examples/tensorflow/nlp/bert_large_squad/quantization/ptq`.
+Run the `prepare_dataset.sh` script located in `examples/tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq`.
 
 Usage:
 ```shell
-cd examples/tensorflow/nlp/bert_large_squad/quantization/ptq
+cd examples/tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq
 bash prepare_dataset.sh --output_dir=./data
 ```
 
-Then create the tf_record file and you need to config the tf_record path in yaml file.
+### Convert the dataset to TF Record format
+After the dataset is downloaded by either of ways above, the dataset should be converted to files of TF Record format.
 ```shell
 python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
 ```

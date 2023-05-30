@@ -64,6 +64,7 @@ class GatherOperator(Operator):
         children = self.quantizer.model.get_children(node)
 
         if any([i.op_type == 'DequantizeLinear' for i in parents]):
+            from onnx import numpy_helper
             inputs = []
             inputs.append(parents[0].input[0])
             inputs.append(node.input[1])
@@ -80,7 +81,7 @@ class GatherOperator(Operator):
                                                 node.name,
                                                 **kwargs)
             self.quantizer.new_nodes.append(gather_node)
-            if any([i.op_type  != 'QuantizeLinear' for i in children]): # pragma: no cover
+            if any([i.op_type != 'QuantizeLinear' for i in children]): # pragma: no cover
                 dq_inputs = []
                 dq_inputs.append(gather_new_output)
                 dq_inputs.extend(parents[0].input[1:])
@@ -90,12 +91,22 @@ class GatherOperator(Operator):
                                                 node.name + '_DequantizeLinear')
                 self.quantizer.new_nodes.append(dq_node)
                 
+            out_scale = 1.
+            out_zp = 0
             for child in children:
                 if child.op_type == 'QuantizeLinear':
+                    out_scale = numpy_helper.to_array(self.quantizer.model.get_initializer(child.input[1]))
+                    out_zp = numpy_helper.to_array(self.quantizer.model.get_initializer(child.input[2]))
                     self.quantizer.remove_nodes.append(child)
                     for n in self.quantizer.model.get_children(child):
                         self.quantizer.model.replace_node_input(n, 
                                         child.output[0], gather_new_output)
+            if any([child.op_type == 'QuantizeLinear' for child in children]):
+                int8_tensor = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[0]))
+                in_scale = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[1]))
+                in_zp = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[2]))
+                new_int8_tensor = (((int8_tensor.astype('float32') - in_zp) * in_scale) / out_scale).round() + out_zp
+                self.quantizer.model.set_initializer(parents[0].input[0], new_int8_tensor.astype(int8_tensor.dtype))
             self.quantizer.remove_nodes.extend([node, parents[0]])
             
 @qop_registry(op_types="Gather")

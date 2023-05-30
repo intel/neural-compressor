@@ -13,7 +13,6 @@ cd /neural-compressor/test || exit 1
 find . -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
 sed -i '/ adaptor\//d' run.sh
 sed -i '/ tfnewapi\//d' run.sh
-sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
 sed -i '/ ipex\//d' run.sh
 sed -i '/ itex\//d' run.sh
@@ -36,7 +35,7 @@ bash run.sh 2>&1 | tee -a ${ut_log_name}
 cp .coverage ${LOG_DIR}/.coverage.others
 echo "------UT end -------"
 
-if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
+if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "core dumped" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
     echo "Find errors in UT test, please check the output..."
     exit 1
 fi

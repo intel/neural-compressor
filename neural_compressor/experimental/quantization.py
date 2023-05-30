@@ -23,7 +23,7 @@ import random
 import numpy as np
 from .component import Component
 from ..conf.dotdict import deep_get, deep_set, DotDict
-from ..strategy import STRATEGIES
+from .strategy import EXP_STRATEGIES
 from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
@@ -144,7 +144,7 @@ class Quantization(Component):
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support {self.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
-        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
+        assert strategy in EXP_STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
@@ -157,7 +157,7 @@ class Quantization(Component):
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
-        self.strategy = STRATEGIES[strategy](
+        self.strategy = EXP_STRATEGIES[strategy](
             self._model,
             self.conf,
             self._calib_dataloader,
@@ -171,11 +171,7 @@ class Quantization(Component):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
-        """Quantization execute routinue based on strategy design."""
-        # check here the distributed flag
-        logger.info("..............use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
-        if self.conf.usr_cfg.tuning.use_distributed_tuning:
-            return self.distributed_execute()
+        """Quantization execute routine based on strategy design."""
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 logger.debug("Dump user yaml configuration:")
@@ -200,34 +196,6 @@ class Quantization(Component):
 
             return self.strategy.best_qmodel
 
-    def distributed_execute(self):
-        """Quantization distributed execute routinue based on strategy design."""
-        from ..utils.utility import LazyImport
-        MPI = LazyImport("mpi4py.MPI")
-        comm = MPI.COMM_WORLD
-        try:
-            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
-                self.strategy.traverse()
-        except KeyboardInterrupt:
-            pass
-        except Exception as e:
-            logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
-            import traceback
-            traceback.print_exc()
-        finally:
-            if self.strategy.best_qmodel:
-                logger.info(
-                    "Specified timeout or max trials is reached! "
-                    "Found a quantized model which meet accuracy goal. Exit.")
-                self.strategy.deploy_config()
-            else:
-                if comm.Get_rank() != 0:    # slaves have no q model
-                    return None
-                logger.error(
-                    "Specified timeout or max trials is reached! "
-                    "Not found any quantized model which meet accuracy goal. Exit.")
-
-            return self.strategy.best_qmodel
 
     def __call__(self):
         """Automatic quantization tuning main entry point.

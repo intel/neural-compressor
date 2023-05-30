@@ -33,7 +33,7 @@ from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 
 tensorflow = LazyImport('tensorflow')
-spr_base_verions = ('2.11.0202242', '2.11.0202250')
+spr_base_verions = ('2.11.0202242', '2.11.0202250', '2.11.0202317')
 
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
@@ -534,6 +534,9 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        assert self.approach != "post_training_dynamic_quant", \
+            "Dynamic quantization is not supported on TensorFlow framework now!"
+
         if self.approach == "quant_aware_training": # pragma: no cover
             assert q_func is not None, "quantization aware training mode \
                 is not configured correctly"
@@ -722,6 +725,7 @@ class TensorFlowAdaptor(Adaptor):
         fp32_common_config = {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}
         uint8_type = self.query_handler.get_op_types_by_precision(precision='uint8')
         int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
+        bf16_type = self.query_handler.get_op_types_by_precision(precision='bf16')
         tf_quantizable_op_type = list(set(uint8_type).union(set(int8_type)))
 
         valid_precision = self.query_handler.get_mixed_precision_combination()
@@ -792,7 +796,8 @@ class TensorFlowAdaptor(Adaptor):
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
                     )] = [copy.deepcopy(other_config), fp32_common_config]
-                if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
+                if node_op in bf16_type and (('bf16' in valid_precision and CpuInfo().bf16) \
+                         or os.getenv('FORCE_BF16') == '1'):
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
                     )].insert(1, bf16_common_config)
@@ -1847,7 +1852,7 @@ class TensorflowQuery(QueryBackendCapability):
             if self.version in sub_data['version']['name']:
                 return sub_data
             else:
-                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250']:
+                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250', '2.11.0202317']:
                     continue
                 sorted_list = copy.deepcopy(sub_data['version']['name'])
                 sorted_list.remove('default') if 'default' in sorted_list else None
@@ -2228,7 +2233,7 @@ class TensorflowQuery(QueryBackendCapability):
                 return self.cur_config[precision]
             if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
                version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
-                return ['Conv2D']
+                return self.cur_config[precision]
             return []
 
     def get_mixed_precision_combination(self):

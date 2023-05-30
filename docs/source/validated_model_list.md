@@ -1102,7 +1102,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center"> 
   <tr>
-    <td>AlexNet</td>
+    <td>AlexNet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>54.73%</td>
     <td>54.79%</td>
@@ -1112,7 +1112,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.05x</td>
   </tr>
   <tr>
-    <td>AlexNet</td>
+    <td>AlexNet (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>54.71%</td>
     <td>54.79%</td>
@@ -1122,7 +1122,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.01x</td>
   </tr>
   <tr>
-    <td>ArcFace</td>
+    <td>ArcFace (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>99.80%</td>
     <td>99.80%</td>
@@ -1152,7 +1152,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.45x</td>
   </tr>
   <tr>
-    <td>BERT SQuAD model zoo DYNAMIC</td>
+    <td>BERT SQuAD model zoo DYNAMIC (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>80.44 </td>
     <td>80.67 </td>
@@ -1162,7 +1162,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td>Caffenet</td>
+    <td>Caffenet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>56.21%</td>
     <td>56.30%</td>
@@ -1172,7 +1172,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.65x</td>
   </tr>
   <tr>
-    <td>Caffenet</td>
+    <td>Caffenet (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>56.25%</td>
     <td>56.30%</td>
@@ -1182,7 +1182,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.70x</td>
   </tr>
   <tr>
-    <td>Densenet</td>
+    <td>Densenet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>60.53%</td>
     <td>60.96%</td>
@@ -1212,7 +1212,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.10x</td>
   </tr>
   <tr>
-    <td>DUC</td>
+    <td>DUC (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>81.62%</td>
     <td>81.92%</td>
@@ -1222,7 +1222,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.01x</td>
   </tr>
   <tr>
-    <td>EfficientNet</td>
+    <td>EfficientNet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>77.57%</td>
     <td>77.70%</td>
@@ -1232,7 +1232,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.60x</td>
   </tr>
   <tr>
-    <td>EfficientNet</td>
+    <td>EfficientNet (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>77.61%</td>
     <td>77.70%</td>
@@ -1242,7 +1242,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.12x</td>
   </tr>
   <tr>
-    <td>Emotion Ferplus</td>
+    <td>Emotion Ferplus (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>8.00%</td>
     <td>8.00%</td>
@@ -1252,7 +1252,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>Faster R-CNN</td>
+    <td>Faster R-CNN (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>34.09%</td>
     <td>34.37%</td>
@@ -1262,7 +1262,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.35x</td>
   </tr>
   <tr>
-    <td>Faster R-CNN</td>
+    <td>Faster R-CNN (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>33.90%</td>
     <td>34.37%</td>
@@ -1272,7 +1272,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.57x</td>
   </tr>
   <tr>
-    <td>FCN</td>
+    <td>FCN (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>64.54%</td>
     <td>64.98%</td>
@@ -1282,7 +1282,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.40x</td>
   </tr>
   <tr>
-    <td>FCN</td>
+    <td>FCN (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>64.40%</td>
     <td>64.98%</td>
@@ -1292,7 +1292,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.25x</td>
   </tr>
   <tr>
-    <td>GoogleNet-12</td>
+    <td>GoogleNet-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>67.71%</td>
     <td>67.79%</td>
@@ -1302,7 +1302,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.35x</td>
   </tr>
   <tr>
-    <td>GoogleNet-12</td>
+    <td>GoogleNet-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>67.73%</td>
     <td>67.79%</td>
@@ -1412,7 +1412,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.22x</td>
   </tr>
   <tr>
-    <td>Inception V1</td>
+    <td>Inception V1 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>67.21%</td>
     <td>67.24%</td>
@@ -1422,7 +1422,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>Inception v1</td>
+    <td>Inception v1 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>67.21%</td>
     <td>67.24%</td>
@@ -1432,7 +1432,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.32x</td>
   </tr>
   <tr>
-    <td>Mask R-CNN</td>
+    <td>Mask R-CNN (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>33.13%</td>
     <td>33.72%</td>
@@ -1442,7 +1442,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.08x</td>
   </tr>
   <tr>
-    <td>Mask R-CNN</td>
+    <td>Mask R-CNN (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>33.28%</td>
     <td>33.72%</td>
@@ -1602,7 +1602,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.54x</td>
   </tr>
   <tr>
-    <td>ShuffleNet V2-12</td>
+    <td>ShuffleNet V2-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>66.13%</td>
     <td>66.36%</td>
@@ -1612,7 +1612,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.61x</td>
   </tr>
   <tr>
-    <td>ShuffleNet V2-12</td>
+    <td>ShuffleNet V2-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>66.12%</td>
     <td>66.36%</td>
@@ -1622,7 +1622,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.35x</td>
   </tr>
   <tr>
-    <td>SqueezeNet</td>
+    <td>SqueezeNet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>56.54%</td>
     <td>56.87%</td>
@@ -1632,7 +1632,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.30x</td>
   </tr>
   <tr>
-    <td>SqueezeNet</td>
+    <td>SqueezeNet (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>56.39%</td>
     <td>56.87%</td>
@@ -1692,7 +1692,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>SSD-12</td>
+    <td>SSD-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>18.92%</td>
     <td>18.98%</td>
@@ -1702,7 +1702,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.56x</td>
   </tr>
   <tr>
-    <td>SSD-12</td>
+    <td>SSD-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>18.63%</td>
     <td>18.98%</td>
@@ -1712,7 +1712,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.68x</td>
   </tr>
   <tr>
-    <td>Tiny YOLO V3</td>
+    <td>Tiny YOLO V3 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>11.82%</td>
     <td>12.42%</td>
@@ -1722,7 +1722,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.26x</td>
   </tr>
   <tr>
-    <td>Ultraface</td>
+    <td>Ultraface (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>83.34%</td>
     <td>83.65%</td>
@@ -1772,7 +1772,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.21x</td>
   </tr>
   <tr>
-    <td>YOLO V3</td>
+    <td>YOLO V3 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>26.92%</td>
     <td>28.73%</td>
@@ -1782,7 +1782,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.24x</td>
   </tr>
   <tr>
-    <td>YOLO V4</td>
+    <td>YOLO V4 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>32.33%</td>
     <td>33.71%</td>
@@ -1792,7 +1792,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.50x</td>
   </tr>
   <tr>
-    <td>ZFNet</td>
+    <td>ZFNet (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>55.84%</td>
     <td>55.96%</td>
@@ -1802,7 +1802,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.72x</td>
   </tr>
   <tr>
-    <td>ZFNet</td>
+    <td>ZFNet (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>55.86%</td>
     <td>55.96%</td>

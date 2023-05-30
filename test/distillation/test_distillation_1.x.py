@@ -171,7 +171,7 @@ class TestDistillation(unittest.TestCase):
         distiller = Distillation(conf)
         distiller = Distillation()
 
-        from neural_compressor import conf
+        from neural_compressor.conf.config import conf
         conf.model.framework = 'pytorch'
         conf.distillation.train.end_epoch = 3
         conf.distillation.train.iteration = 10
