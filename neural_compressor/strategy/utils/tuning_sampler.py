@@ -428,7 +428,7 @@ class FallbackTuningSampler(TuningSampler):
             if self.accumulate and skip_first:  # skip the first one
                 skip_first = False
                 continue
-            logger.debug(f"fallback {op_name_type} to {target_dtype}")
+            logger.info(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
 class LowerBitsSampler(TuningSampler):

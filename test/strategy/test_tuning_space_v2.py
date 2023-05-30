@@ -166,6 +166,51 @@ op_cap = {
                 }
         },
     ],
+    # op4 have tuple name as IPEX
+    (('op_name4', 0), 'op_type4'): [
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'static',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'dynamic',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': 'fp32'
+                },
+            'weight':
+                {
+                    'dtype': 'fp32'
+                }
+        },
+    ],
 
     # op5, weight only
     ('op_name5', 'op_type5'): [
@@ -220,6 +265,14 @@ class TestTuningSpaceV2(unittest.TestCase):
 
         self.op_wise_user_cfg_for_fallback = {
             'op_name1': {
+                'activation': {
+                    'dtype': ['fp32']
+                },
+                'weight': {
+                    'dtype': ['fp32']
+                }
+            },
+            ('op_name4', 0): {
                 'activation': {
                     'dtype': ['fp32']
                 },
@@ -311,19 +364,22 @@ class TestTuningSpaceV2(unittest.TestCase):
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {
-                    'op_name_dict': self.op_wise_user_cfg_for_fallback,
-
+            'op_name_dict': self.op_wise_user_cfg_for_fallback,
         }
         conf = DotDict(conf)
         # test fallback
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
         logger.debug(tuning_space2.root_item.get_details())
         op_name1_only_fp32 = True
+        op_name4_only_fp32 = True
         for quant_mode in ['static', 'dynamic']:
             for item in tuning_space2.query_items_by_quant_mode(quant_mode):
                 if item.name[0] == 'op_name1':
                     op_name1_only_fp32 = False
+                if item.name[0] == ('op_name4', 0):
+                    op_name4_only_fp32 = False
         self.assertTrue(op_name1_only_fp32)
+        self.assertTrue(op_name4_only_fp32)
 
 
 
