@@ -27,6 +27,7 @@ Submodules
    calibration/index.rst
    calibrator/index.rst
    quantizer/index.rst
+   smooth_quant/index.rst
    util/index.rst
 
 
