@@ -235,11 +235,11 @@ function serve {
          echo
          echo "  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]"
          echo '    --hostfile           : start backend serve host file which contains all available nodes'
-         echo '    --restful_api_port         : start web serve with {restful_api_port}, defult 8000'
-         echo '    --api_type           : start web serve with grpc/http, defult http'
-         echo '    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222'
-         echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, defult 3333'
-         echo '    --workspace          : neural solution workspace, defult "./"'
+         echo '    --restful_api_port         : start web serve with {restful_api_port}, default 8000'
+         echo '    --api_type           : start web serve with grpc/http, default http'
+         echo '    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, default 2222'
+         echo '    --result_monitor_port: start serve for result monitor at {result_monitor_port}, default 3333'
+         echo '    --workspace          : neural solution workspace, default "./"'
          echo '    --conda_env          : specify the running environment for the task'
          echo '    --upload_path        : specify the file path for the tasks'
 
