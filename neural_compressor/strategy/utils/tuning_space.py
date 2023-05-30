@@ -268,9 +268,14 @@ class TuningSpace:
     def _merge_op_wise_cfg(self, cap: Dict, op_wise_usr_cfg: Dict, fw_cap: Dict):
         op_name_types = {key[0]: key for key in cap['op'].keys()}
         for op_name_pattern, op_user_cfg in op_wise_usr_cfg.items():
-            op_name_pattern = re.compile(op_name_pattern)
+            if isinstance(op_name_pattern, str):
+                op_name_pattern = re.compile(op_name_pattern)
+                str_flag=True
+            else:
+                str_flag=False
             for op_name in op_name_types:
-                if op_name_pattern.fullmatch(op_name):
+                if str_flag and op_name_pattern.fullmatch(str(op_name)) \
+                  or op_name_pattern == op_name:
                     op_name_type = op_name_types[op_name]
                     cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type],
                                                                  op_user_cfg,
