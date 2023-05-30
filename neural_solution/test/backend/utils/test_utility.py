@@ -20,8 +20,6 @@ SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
 config.workspace = NEURAL_SOLUTION_WORKSPACE
 db_path = get_db_path(config.workspace)
-NUM_SOCKETS=2
-NUM_CORES_PER_SOCKET=5
 
 class TestUtils(unittest.TestCase):
 
@@ -68,8 +66,8 @@ class TestUtils(unittest.TestCase):
         # Test 2 hostname
         path = "test.txt"
         with open(path, "w") as f:
-            f.write("hostname1\nhostname2")
-        cluster = build_cluster(path, db_path=db_path)
+            f.write("hostname1 2 20\nhostname2 2 20")
+        cluster, _ = build_cluster(path, db_path=db_path)
         self.assertIsNotNone(cluster)
 
         os.remove("test.txt")
@@ -81,7 +79,7 @@ class TestUtils(unittest.TestCase):
             patch('os.path.exists') as mock_exists:
 
             # Test None
-            cluster = build_cluster(file_path=None, db_path=db_path)
+            cluster, _ = build_cluster(file_path=None, db_path=db_path)
             mock_cluster.assert_called()
 
             mock_exists.return_value = True

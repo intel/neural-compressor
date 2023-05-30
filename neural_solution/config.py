@@ -14,14 +14,7 @@
 
 """Config for both frontend and backend."""
 
-#Constant for execute MPI task
-NUM_THREADS_PER_PROCESS = 5
-NUM_CORES_PER_SOCKET = 5
-NUM_SOCKETS = 2
-
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
-
-
 INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor"
 
 class Config:
