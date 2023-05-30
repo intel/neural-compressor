@@ -44,6 +44,10 @@ class QDQLinear(torch.nn.Module):
         self.add_module('dequant', nnq.DeQuantize())
         self.add_module('module', module)
         self.qdq_weight()
+     
+    @property
+    def weight(self):
+        return self.module.weight
 
     def forward(self, X):
         X = self.quant(X)
@@ -68,6 +72,10 @@ class SQLinearWrapper(torch.nn.Module):
         self.scale, self.zero_point = self._calculate_qparams(input_scale, input_minmax, dtype)
         self.add_module('sq_linear', module)
         self.ipex = False  # a flag used for ipex inference
+    
+    @property
+    def weight(self):
+        return self.sq_linear.weight
 
     def forward(self, X):
         if self.ipex:
