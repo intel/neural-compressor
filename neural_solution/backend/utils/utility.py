@@ -157,8 +157,8 @@ def get_q_model_path(log_path):
     """
     import re
     for line in reversed(open(log_path).readlines()):
-        match = re.search(r'Save quantized model to (.+?)\.', line)
+        match = re.search(r'(Save quantized model to|Save config file and weights of quantized model to) (.+?)\.', line)
         if match:
-            q_model_path = match.group(1)
+            q_model_path = match.group(2)
             return q_model_path
     return "quantized model path not found"
