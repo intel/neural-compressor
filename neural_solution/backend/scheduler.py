@@ -32,7 +32,8 @@ from neural_solution.backend.utils.utility import (
     get_task_log_path,
     get_current_time,
     build_workspace,
-    is_remote_url
+    is_remote_url,
+    get_q_model_path
 )
 from neural_solution.utils.utility import get_task_log_workspace, get_task_workspace
 from neural_solution.utils import logger
@@ -189,10 +190,6 @@ class Scheduler:
         task_cmd = ['python']
         task_cmd.append(self.script_name)
         task_cmd.append(self.sanitize_arguments(task.arguments))
-        self.q_model_path = self.task_path + "/" + "q_model_path"
-        if not os.path.exists(self.q_model_path):
-            os.makedirs(self.q_model_path)
-        self.q_model_path = os.path.abspath(self.q_model_path)
         task_cmd = " ".join(task_cmd)
 
         # use optimized code by Neural Coder
@@ -249,6 +246,7 @@ class Scheduler:
         logger.info(f"[TaskScheduler] Finished task {task.task_id}, and free resource {resource}, dump log into {log_path}")
         task_status = self.check_task_status(log_path)
         self.task_db.update_task_status(task.task_id, task_status)
+        self.q_model_path = get_q_model_path(log_path=log_path) if task_status == "done" else None
         self.report_result(task.task_id, log_path, task_runtime)
 
     def dispatch_task(self, task, resource):

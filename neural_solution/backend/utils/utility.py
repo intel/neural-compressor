@@ -145,3 +145,20 @@ def create_dir(path):
     """Create the (nested) path if not exist."""
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
+
+def get_q_model_path(log_path):
+    """Get the quantized model path from task log.
+
+    Args:
+        log_path (str): log path for task
+
+    Returns:
+        _type_: quantized model path
+    """
+    import re
+    for line in reversed(open(log_path).readlines()):
+        match = re.search(r'Save quantized model to (.+?)\.', line)
+        if match:
+            q_model_path = match.group(1)
+            return q_model_path
+    return "quantized model path not found"

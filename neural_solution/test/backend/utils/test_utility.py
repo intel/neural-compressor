@@ -1,12 +1,13 @@
 import unittest
 import os
 import shutil
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 from neural_solution.backend.utils.utility import (
     serialize, deserialize,
     dump_elapsed_time, get_task_log_path, build_local_cluster,
     build_cluster, get_current_time,
-    synchronized, build_workspace, is_remote_url, create_dir)
+    synchronized, build_workspace, is_remote_url, create_dir,
+    get_q_model_path)
 
 from neural_solution.utils.utility import get_task_workspace, get_task_log_workspace, get_db_path
 from neural_solution.config import config
@@ -126,6 +127,17 @@ class TestUtils(unittest.TestCase):
         create_dir(path)
         self.assertTrue(os.path.exists(os.path.dirname(path)))
 
+    @patch('builtins.open', mock_open(read_data='Save quantized model to /path/to/model.'))
+    def test_get_q_model_path_success(self):
+        log_path = 'fake_log_path'
+        q_model_path = get_q_model_path(log_path)
+        self.assertEqual(q_model_path, '/path/to/model')
+
+    @patch('builtins.open', mock_open(read_data='No quantized model saved.'))
+    def test_get_q_model_path_failure(self):
+        log_path = 'fake_log_path'
+        q_model_path = get_q_model_path(log_path)
+        self.assertEqual(q_model_path, 'quantized model path not found')
 
 if __name__ == "__main__":
     unittest.main()

@@ -222,16 +222,12 @@ class TestParseCmd(unittest.TestCase):
         with patch('neural_solution.backend.scheduler.Scheduler.prepare_task') as mock_prepare_task, \
             patch('neural_solution.backend.scheduler.Scheduler.prepare_env') as mock_prepare_env, \
             patch('neural_solution.backend.scheduler.logger.info') as mock_logger_info, \
-            patch('neural_solution.backend.scheduler.os.path.exists') as mock_os_path_exists, \
-            patch('neural_solution.backend.scheduler.os.makedirs') as mock_os_makedirs, \
             patch('builtins.open', create=True) as mock_open, \
             patch('neural_solution.backend.scheduler.os.path.join') as mock_os_path_join:
 
             mock_prepare_task.return_value = None
             mock_prepare_env.return_value = 'test_env'
             mock_logger_info.return_value = None
-            mock_os_path_exists.return_value = False
-            mock_os_makedirs.return_value = None
             mock_open.return_value.__enter__ = lambda x: x
             mock_open.return_value.__exit__ = MagicMock()
             mock_os_path_join.return_value = '/path/to/task/distributed_run.sh'
@@ -242,8 +238,6 @@ class TestParseCmd(unittest.TestCase):
             mock_prepare_task.assert_called_once_with(self.task)
             mock_prepare_env.assert_called_once_with(self.task)
             mock_logger_info.assert_called_once_with('[TaskScheduler] host resource: node1,node2,node3')
-            mock_os_path_exists.assert_called_once_with('/path/to/task/q_model_path')
-            mock_os_makedirs.assert_called_once_with('/path/to/task/q_model_path')
             mock_open.assert_called_once_with('/path/to/task/distributed_run.sh', 'w', encoding='utf-8')
             mock_os_path_join.assert_called_once_with('/path/to/task', 'distributed_run.sh')
 
