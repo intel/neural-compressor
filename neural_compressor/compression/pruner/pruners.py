@@ -934,51 +934,42 @@ class SparseGPTPruner(BasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
-        self.masks = self.pattern.register_block_masks(self.modules)
-        self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
-
-        # self.model = model
-        # self.criterion = get_criterion(self.config, self.modules)
-        # self.reg = get_reg(self.config, self.modules, self.pattern)
-
         logger.warning("SparseGPT pruner fixed the weights, please DO NOT turn on gradient update.")
-        assert "channel" in self.pattern.pattern, \
-                "SparseGPT Pruner pruner only supports patterns like 2:4."
+
+    def on_train_begin(self, dataloader=None, model=None):
+        """Implement at the beginning of training phase."""
+        self.fasterprune_masks(dataloader, model)
+    
+    def _get_target_layer(self, module, layers=[nn.Conv2d, nn.Linear], name=''):
+        if type(module) in layers:
+            return {name: module}
+        res = {}
+        for name1, child in module.named_children():
+            res.update(self._get_target_layer(
+                child, layers=layers, name=name + '.' + name1 if name != '' else name1
+            ))
+        return res
 
 
-    def on_step_begin(self, local_step):
-        """Update the masks at a given local_step.
-
-        Implement at the start of each step.
-        """
-        if self.handled_global_step == self.global_step:
-            return
-        self.fasterprune_masks()
-
-    def _get_ordered_layers(modules):
-        pass
-
-    def fasterprune_masks(self):
-        '''
-
-        layers: [
-         {
-            'name1': LinearObject,
-            'name2': ConvObject,
-            
-         },
-         {
-            ...
-         }
-        ]
-        
-        '''
+    def fasterprune_masks(self, dataloader, model):
         ################## preparing for pruning ##################
-        layers = self._get_ordered_layers(self.modules)
+        # get device
+        dev = model.device
+        
+        # get layers
+        layers = model.model.decoder.layers
+
+        model.seqlen = model.config.max_position_embeddings
+        
+        # get sample inputs
         inputs = torch.zeros(
-        (self.config['nsamples'], self.config['seqlen'], self.config['hidden_size']))
+        (self.config['nsamples'], model.seqlen, model.config.hidden_size), device=dev)
+
+        # get sample outputs
         outs = torch.zeros_like(inputs)
+
+        # get cache for attention mask input 
         cache = {'i': 0, 'attention_mask': None}
         class Catcher(nn.Module):
             def __init__(self, module):
@@ -988,25 +979,41 @@ class SparseGPTPruner(BasePruner):
                 inputs[cache['i']] = inp
                 cache['i'] += 1
                 cache['attention_mask'] = kwargs['attention_mask']
-                raise ValueError
         layers[0] = Catcher(layers[0])
-        # TODO get the attention mask for each layer's forwarding 
-        attention_mask = cache['attention_mask'] # using cache?
 
+        # forward
+        for step, batch in enumerate(dataloader):
+            try:
+                if step == self.config['nsamples']:
+                    print('!')
+                    break
+                model(batch['input_ids'])
+              
+            except TypeError:
+                pass
+      
+        layers[0] = layers[0].module
+        layers[0] = layers[0].cpu()
+
+        # get attention mask
+        attention_mask = cache['attention_mask']
+
+        ################## start pruning ##################
         for i in range(len(layers)):
-            layer = layers[i]
+            layer = layers[i].to(dev)
+            layer_dict = self._get_target_layer(layers[i])
             layer_pruners = {}
-            for name in layer:
-                layer_pruners[name] = SparseGPTLayerPruner(layer[name])
+            for name in layer_dict:
+                layer_pruners[name] = SparseGPTLayerPruner(layer_dict[name])
 
             def add_batch(name):
                 def tmp(_, inp, out):
                     layer_pruners[name].add_batch(inp[0].data, out.data)            
                 return tmp
+            ################## add batch for every layer ##################
             handles = []
             for name in layer_pruners:
-                handles.append(layer[name].register_forward_hook(add_batch(name)))
-            # TODO add a config param to represent the total sample number
+                handles.append(layer_dict[name].register_forward_hook(add_batch(name)))
             for j in range(self.config['nsamples']):
                 outs[j] = layer(inputs[j].unsqueeze(0), attention_mask=attention_mask)[0]
             for h in handles:
@@ -1023,6 +1030,7 @@ class SparseGPTPruner(BasePruner):
             for j in range(self.config['nsamples']):
                 outs[j] = layer(inputs[j].unsqueeze(0), attention_mask=attention_mask)[0]
             
+            layers[i] = layer.cpu()
             del layer
             torch.cuda.empty_cache()
 
@@ -1055,12 +1063,12 @@ class SparseGPTLayerPruner(object):
         self.H *= self.nsamples / (self.nsamples + tmp)
         self.nsamples += tmp
         inp = math.sqrt(2 / self.nsamples) * inp.float()
-        self.H += inp.matmul(inp.t()) # XX⊤的计算
+        self.H += inp.matmul(inp.t()) # XX⊤
 
     def fasterprune(
         self, sparsity, prunen=0, prunem=0, blocksize=128, percdamp=.01
     ):
-        ############1. 获得Hinv（inverse Hessian Matrix）############################
+        ############Get Hinv（inverse Hessian Matrix）############################
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -1073,24 +1081,23 @@ class SparseGPTLayerPruner(object):
         H = self.H
         del self.H
         dead = torch.diag(H) == 0
-        H[dead, dead] = 1 # 把H中对角线为0的都变成1
-        W[:, dead] = 0 # 把W中每一行对角线值0的那一行都变成0
+        H[dead, dead] = 1
+        W[:, dead] = 0
 
         Losses = torch.zeros(self.rows, device=self.dev) # 1 * 768
 
         damp = percdamp * torch.mean(torch.diag(H))
         diag = torch.arange(self.columns, device=self.dev)
-        H[diag, diag] += damp # 把H的对角线元素全部加上damp
-        # upper默认是False：u is lower triangular such that the returned tensor is
-        H = torch.linalg.cholesky(H) #Cholesky 分解是把一个对称正定的矩阵表示成一个下三角矩阵L和其转置的乘积的分解。 它要求矩阵的所有特征值必须大于零，故分解的下三角的对角元也是大于零的。 Cholesky分解法又称平方根法，是当A为实对称正定矩阵时，LU三角分解法的变形。
-        H = torch.cholesky_inverse(H) # 这一步在求逆
+        H[diag, diag] += damp
+        H = torch.linalg.cholesky(H)
+        H = torch.cholesky_inverse(H)
         H = torch.linalg.cholesky(H, upper=True) # H−1 ← Cholesky(H−1)⊤ (Hessian inverse information)
         Hinv = H # H−1 = (XX⊤ + λI)−1
         ########################################
 
         mask = None # binary pruning mask
 
-        # for i = 0,B,2B,... do 分成多个block列
+        # for i = 0,B,2B,... do
         for i1 in range(0, self.columns, blocksize):
             i2 = min(i1 + blocksize, self.columns)
             count = i2 - i1
@@ -1106,13 +1113,12 @@ class SparseGPTLayerPruner(object):
                     mask1 = mask[:, i1:i2]
                 else:
                     tmp = W1 ** 2 / (torch.diag(Hinv1).reshape((1, -1))) ** 2
-                    # 把这些params从小到大，[0]表示获取value 获取sparsity内的最大value，作为threshhold
                     thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * sparsity)]
                     mask1 = tmp <= thresh
             else:
                 mask1 = torch.zeros_like(W1) == 1
 
-            # forj =i,...,i+B−1 do
+            # for j = i,...,i+B−1 do
             for i in range(count):
                 w = W1[:, i]
                 d = Hinv1[i, i]
@@ -1137,7 +1143,6 @@ class SparseGPTLayerPruner(object):
             W[:, i1:i2] = Q1
             Losses += torch.sum(Losses1, 1) / 2
 
-            # 这一行为啥是和Hinv[i1:i2, i2:]相乘呢？
             W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:]) # W:,(i+B): ← W:,(i+B): − E · Hi:(i+B),(i+B)
 
         torch.cuda.synchronize()
@@ -1146,7 +1151,6 @@ class SparseGPTLayerPruner(object):
 
         if isinstance(self.layer, transformers.Conv1D):
             W = W.t()
-        # 完成这一层W的prune，weight赋值
         self.layer.weight.data = W.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
 
     def free(self):

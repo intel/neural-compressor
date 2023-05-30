@@ -758,12 +758,11 @@ def main():
             {
                 "pruning_type": "sparsegpt",
                 "pruning_scope": "global",
-                # "op_names": ["wo"], #for t5
-                # "excluded_op_names": [".attn"],
+                "op_names": [".attn", ".fc"],
                 "sparsity_decay_type": "exp",
                 # "pattern": "channelx1",
-                # "pruning_op_types": ["Linear"],
                 "max_sparsity_ratio_per_op": 0.98,
+                "nsamples": 128
             }
         ]
     else:
@@ -787,8 +786,8 @@ def main():
         end_step=pruning_end,
     )
     compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()
     model = compression_manager.model.model
+    compression_manager.callbacks.on_train_begin(dataloader=train_dataloader, model=model)
     
     for epoch in range(starting_epoch, args.num_train_epochs):
         # model.train()
