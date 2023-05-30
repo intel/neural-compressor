@@ -1,6 +1,6 @@
 # What's Neural Solution?
 <!-- TODO what is neural_solution -->
-Neural Solution is a flexible and easy to use tool that brings the capabilities of INC as a service. Users can effortlessly submit optimization tasks through the HTTP/gRPC APIs. Neural Solution automatically dispatches these tasks to one or multiple nodes, streamlining the entire process.
+Neural Solution is a flexible and easy to use tool that brings the capabilities of Intel® Neural Compressor as a service. Users can effortlessly submit optimization tasks through the RESTful/gRPC APIs. Neural Solution automatically dispatches these tasks to one or multiple nodes, streamlining the entire process.
 
 # Why Neural Solution?
 <!-- TODO what does the neural_solution provide -->
@@ -9,7 +9,7 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 - Code Less: When working with Hugging Face models, Neural Solution drives the optimization process without requiring any code modifications by integrating the Neural Coder's functionality.
 
 # How does Nueral Solution Work?
-<!-- TODO Added Architecture diagram -->
+![NS-OaaS-Intro](./docs/imgs/NS-OaaS-Intro.png)
 
 # Get Started
 ## Installation
@@ -44,7 +44,7 @@ python setup.py neural_solution install
 <!-- TODO more docs(Install details, API and so on...) -->
 
 - The Architecture documents
-- API Reference
+- [APIs Reference](./docs/description_api.md)
 
 # Contact
 
