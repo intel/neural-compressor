@@ -139,6 +139,10 @@ class Node:
                  num_gpus: int = 0) -> None:
         """Init node.
 
+        hostfile template:
+        host1 2 20 # host1 has 2 sockets, each socket has 20 cores
+        host2 2 20 # host2 has 2 sockets, each socket has 20 cores
+
         Args:
             name: node name
             ip: ip address. Defaults to "unknown_ip".
