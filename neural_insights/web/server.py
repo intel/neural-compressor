@@ -50,7 +50,7 @@ app = Flask(
     static_url_path="/",
     template_folder=templates_dir,
 )
-app_blueprint = Blueprint("INC Bench", __name__)
+app_blueprint = Blueprint("Neural Insights", __name__)
 socketio = SocketIO()
 
 router = Router()

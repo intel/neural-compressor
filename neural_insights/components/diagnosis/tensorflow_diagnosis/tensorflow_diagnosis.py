@@ -36,7 +36,7 @@ class TensorflowDiagnosis(Diagnosis):
         return self._model  # type: ignore
 
     def _ensure_model(self) -> None:
-        """Create INC Bench Model instance if needed."""
+        """Create Neural Insights Model instance if needed."""
         if self._model is not None:
             return
         model_repository = ModelRepository()

@@ -83,7 +83,7 @@ class Configuration:
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
         parser = argparse.ArgumentParser(
-            description="Run Intel(r) Neural Compressor Bench server.",
+            description="Run Neural Insights server.",
         )
         parser.add_argument(
             "-p",
@@ -102,7 +102,7 @@ class Configuration:
             "--url-prefix",
             type=str,
             default="",
-            help="URL prefix for INC Bench instance.",
+            help="URL prefix for Neural Insights instance.",
         )
         parser.add_argument(
             "--allow-insecure-connections",
