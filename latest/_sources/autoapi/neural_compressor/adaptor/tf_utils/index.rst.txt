@@ -30,6 +30,8 @@ Submodules
    graph_converter_without_calib/index.rst
    graph_util/index.rst
    quantize_graph_common/index.rst
+   smooth_quant_calibration/index.rst
+   smooth_quant_scaler/index.rst
    tf2onnx_converter/index.rst
    util/index.rst
 

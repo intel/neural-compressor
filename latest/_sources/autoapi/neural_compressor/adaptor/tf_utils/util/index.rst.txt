@@ -42,6 +42,7 @@ Functions
    neural_compressor.adaptor.tf_utils.util.int8_node_name_reverse
    neural_compressor.adaptor.tf_utils.util.tf_diagnosis_helper
    neural_compressor.adaptor.tf_utils.util.generate_feed_dict
+   neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor
 
 
 
@@ -223,5 +224,20 @@ Functions
 .. py:function:: generate_feed_dict(input_tensor, inputs)
 
    Generate feed dict helper function.
+
+
+.. py:function:: get_weight_from_input_tensor(model, input_tensor_names, op_types)
+
+   Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
+
+   :param model: A TensorFlow model containing a `graph_def` attribute.
+   :param input_tensor_names: A list of input tensor names to search for weight tensors.
+   :param op_types: A list of operation types to search for when looking for weight tensors.
+
+   :returns:
+
+             - sq_weight_tensors: A dictionary mapping each input tensor name to a list of its associated weight tensors.
+             - sq_weights_nodes: A dictionary mapping each input tensor name to a list of its associated weight nodes.
+   :rtype: A tuple of two dictionaries
 
 
