@@ -22,7 +22,7 @@ from neural_solution.backend.utils.utility import build_cluster, get_db_path
 from neural_solution.config import config
 
 def parse_args(args=None):
-    parser = argparse.ArgumentParser(description="Incserve runner automatically schedules multiple inc tasks and\
+    parser = argparse.ArgumentParser(description="Neural Solution runner automatically schedules multiple inc tasks and\
         executes multi-node distributed tuning.")
 
     parser.add_argument("-H", "--hostfile", type=str, default=None, \

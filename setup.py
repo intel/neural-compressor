@@ -70,7 +70,7 @@ elif neural_solution:
     project_name = "neural_solution"
     package_data = neural_solution_data
     install_requires_list = neural_solution_requires
-    scripts_list = neural_solution_scripts_list
+    scripts_list = neural_solution_scripts_list # TODO replace it with entry point
     include_packages = neural_solution_packages
 else:
     project_name = "neural_compressor"
