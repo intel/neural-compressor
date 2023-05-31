@@ -13,8 +13,6 @@
 # limitations under the License.
 
 """Neural Solution backend."""
-
-
 from neural_solution.backend.result_monitor import ResultMonitor
 from neural_solution.backend.scheduler import Scheduler
 from neural_solution.backend.task_monitor import TaskMonitor

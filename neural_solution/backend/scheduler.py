@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Neural Solution scheduler."""
-
 import time
 import threading
 import subprocess
@@ -38,6 +37,7 @@ from neural_solution.backend.utils.utility import (
 from neural_solution.utils.utility import get_task_log_workspace, get_task_workspace
 from neural_solution.utils import logger
 
+#TODO update it according to the platform
 cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
@@ -158,7 +158,6 @@ class Scheduler:
         return "failed"
 
     def _parse_cmd(self, task: Task, resource):
-        # TODO  mpi bind on socket
         # mpirun -np 3 -mca btl_tcp_if_include 192.168.20.0/24 -x OMP_NUM_THREADS=80
         # --host mlt-skx091,mlt-skx050,mlt-skx053 bash run_distributed_tuning.sh
         self.prepare_task(task)

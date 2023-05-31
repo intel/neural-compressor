@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Main backend runner."""
-
 import threading
 import argparse
 
@@ -42,9 +41,8 @@ def parse_args(args=None):
     return parser.parse_args(args=args)
 
 def main(args=None):
-    """_summary_
+    """The main entry of backend.
 
-    The main entry of backend:
         create the task db
         start the result monitor
         start the task scheduler
