@@ -18,8 +18,6 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 
 <!--TODO: Precise OS versions-->
 
-- Operating systems
-  - Linux
 - A working MPI implementation
 - Python: >= 3.8
 - Conda: >= 4.10.3
@@ -37,9 +35,8 @@ python setup.py neural_solution install
 
 
 # E2E examples
-<!-- TODO highlights E2E examples -->
-- Quantizing a Hugging Face model
-- Quantizing a custom model
+- [Quantizing a Hugging Face model](./examples/hf_models/README.md)
+- [Quantizing a custom model](./examples/custom_models_optimized/tf_example1/README.md)
 # Learn More
 <!-- TODO more docs(Install details, API and so on...) -->
 
