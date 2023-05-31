@@ -26,7 +26,6 @@ import shutil
 from neural_solution.backend.task import Task
 from neural_solution.backend.cluster import Cluster
 from neural_solution.backend.task_db import TaskDB
-from neural_solution.config import INC_ENV_PATH_TEMP
 from neural_solution.backend.utils.utility import (
     serialize,
     dump_elapsed_time,
@@ -170,8 +169,6 @@ class Scheduler:
         # Activate environment
         conda_bash_cmd = f"source {CONDA_SOURCE_PATH}"
         conda_env_cmd = f"conda activate {conda_env}"
-        if INC_ENV_PATH_TEMP:
-            conda_env_cmd = f"{conda_env_cmd}\nexport PYTHONPATH=$PYTHONPATH:{INC_ENV_PATH_TEMP}"
         mpi_cmd = ["mpirun",
                    "-np",
                    "{}".format(task.workers),

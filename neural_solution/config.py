@@ -15,7 +15,6 @@
 """Config for both frontend and backend."""
 
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
-INC_ENV_PATH_TEMP = "YOURPATH/neural-compressor"
 
 class Config:
     workspace: str = "./ns_workspace"
