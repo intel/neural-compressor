@@ -785,53 +785,13 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end,
     )
-    compression_manager = prepare_compression(model=model, confs=configs)
-    model = compression_manager.model.model
-    compression_manager.callbacks.on_train_begin(dataloader=train_dataloader, model=model)
     
-    for epoch in range(starting_epoch, args.num_train_epochs):
-        # model.train()
-        model.eval()
-        if args.with_tracking:
-            total_loss = 0
-        for step, batch in enumerate(train_dataloader):
-            # We need to skip steps until we reach the resumed step
-            if args.resume_from_checkpoint and epoch == starting_epoch:
-                if resume_step is not None and step < resume_step:
-                    if step % args.gradient_accumulation_steps == 0:
-                        progress_bar.update(1)
-                        completed_steps += 1
-                    continue
-            compression_manager.callbacks.on_step_begin(step)
-            with accelerator.accumulate(model):
-                outputs = model(return_dict=True, **batch)
-                # outputs = model(**batch)
-                loss = outputs.loss
-                # We keep track of the loss at each epoch
-                if args.with_tracking:
-                    total_loss += loss.detach().float()
-                accelerator.backward(loss)
-                compression_manager.callbacks.on_before_optimizer_step()
-                # optimizer.step()
-                compression_manager.callbacks.on_after_optimizer_step()
-                # lr_scheduler.step()
-                optimizer.zero_grad()
+    if args.do_prune:
+        compression_manager = prepare_compression(model=model, confs=configs)
+        model = compression_manager.model.model
+        compression_manager.callbacks.on_train_begin(dataloader=train_dataloader, model=model)
+        compression_manager.callbacks.on_train_end()
 
-            # Checks if the accelerator has performed an optimization step behind the scenes
-            if accelerator.sync_gradients:
-                progress_bar.update(1)
-                completed_steps += 1
-
-            if isinstance(checkpointing_steps, int):
-                if completed_steps % checkpointing_steps == 0:
-                    output_dir = f"step_{completed_steps}"
-                    if args.output_dir is not None:
-                        output_dir = os.path.join(args.output_dir, output_dir)
-                    accelerator.save_state(output_dir)
-            if completed_steps >= args.max_pruning_steps:
-                break
-    compression_manager.callbacks.on_train_end()
-    
     model.eval()
     if args.evaluation_dataset_name != None:
         dataset_eval = load_dataset( # for example:use the_pile's validation set for retraining-free pruning, and lambada dataset for eval

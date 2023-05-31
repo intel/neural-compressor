@@ -963,8 +963,11 @@ class SparseGPTPruner(BasePruner):
         model.seqlen = model.config.max_position_embeddings
         
         # get sample inputs
+        print(self.config['nsamples'])
+        print(model.seqlen)
+        print(model.config.hidden_size)
         inputs = torch.zeros(
-        (self.config['nsamples'], model.seqlen, model.config.hidden_size), device=dev)
+        (self.config['nsamples'], 128, model.config.hidden_size), device=dev)
 
         # get sample outputs
         outs = torch.zeros_like(inputs)
@@ -1022,8 +1025,14 @@ class SparseGPTPruner(BasePruner):
             ################## pruning for each layer's parts ##################
             for name in layer_pruners:
                 logger.info('Pruning {} for layer {}...'.format(name, i))
+                pattern_name = self.config.pattern.split('_')[-1]
+                if ':' in pattern_name:
+                    split_index = pattern_name.index(':')
+                    n, m = int(pattern_name[:split_index]), int(pattern_name[split_index+1:])
+                else:
+                    n, m = 0, 0
                 layer_pruners[name].fasterprune(
-                    self.current_sparsity_ratio, prunen=self.config['prunen'], prunem=self.config['prunem'], percdamp=self.config['percdamp'], blocksize=self.config['blocksize']
+                    self.current_sparsity_ratio, prunen=n, prunem=m, percdamp=0.01, blocksize=128
                 )
                 layer_pruners[name].free()
 
@@ -1146,8 +1155,8 @@ class SparseGPTLayerPruner(object):
             W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:]) # W:,(i+B): ← W:,(i+B): − E · Hi:(i+B),(i+B)
 
         torch.cuda.synchronize()
-        # print('time %.2f' % (time.time() - tick))
-        # print('error', torch.sum(Losses).item())
+        print('time %.2f' % (time.time() - tick))
+        print('error', torch.sum(Losses).item())
 
         if isinstance(self.layer, transformers.Conv1D):
             W = W.t()
