@@ -21,18 +21,12 @@ from collections import Counter
 
 class Cluster:
     def __init__(self, node_lst=[], db_path=None):
-        """Cluster manages all the server resources.
+        """Init Cluster.
 
-        TaskDb provides atomic operations on managing the resource dict.
-
-        Attributes:
-            resource_dict: a mapping from "<ip>-<socket index>" to 0/1 (idle/occupied)
-                e.g "localhost-1":0 means socket 1 of localhost is idle
-                and "192.168.x.x-0":1 means socket 0 of 192.168.x.x is in use
-            lock: the lock on the data structures to provide atomic operations
+        Args:
+            node_lst: node list. Defaults to [].
+            db_path: cluster db path. Defaults to None.
         """
-        # TODO Replace resource_dict with node_lst
-        # self.resource_dict = resource_dict  # {"localhost-0":0, "localhost-1":1, "192.168.x.x-0":1}
         self.lock = threading.Lock()
         self.node_lst = node_lst
         self.socket_queue = []
