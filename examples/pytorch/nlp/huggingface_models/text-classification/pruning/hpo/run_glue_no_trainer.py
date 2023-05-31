@@ -640,14 +640,6 @@ if __name__ == "__main__":
     from neural_compressor.compression.hpo import XgbSearcher, DiscreteSearchSpace, ContinuousSearchSpace
 
     args = parse_args()
-    args.model_name_or_path = './mrpcbaseline/bert-mini'
-    args.pruning_config = './examples/hpo/bert_mini_mrpc.yaml'
-    args.task_name = 'mrpc'
-    args.max_length = 128
-    args.do_prune = True
-    args.lr_scheduler_type = 'constant'
-    args.distill_loss_weight = 5
-    args.seed = 42
 
     search_space = {
         'learning_rate': ContinuousSearchSpace((0.0001, 0.001)),
