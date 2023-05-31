@@ -71,7 +71,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
       }
       {workloadsList.length === 0 &&
         <div className="data-panel">
-          <h3>Intel Neural Insights</h3>
+          <h3>Neural Insights</h3>
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
         </div>
       }

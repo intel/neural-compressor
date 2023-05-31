@@ -381,7 +381,6 @@ def parse_args():
             "Only applicable when `--with_tracking` is passed."
         ),
     )
-
     parser.add_argument(
         "--cooldown_epochs",
         type=int, default=0,
@@ -984,21 +983,32 @@ def main():
     if not args.do_prune:
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
-
-    pruning_configs=[]
-
-    # auto slim config
-    from neural_compressor.compression.pruner.model_slim import parse_auto_slim_config
+    
+    # add auto slim pruning config
+    from neural_compressor.compression.pruner.model_slim.auto_slim import parse_auto_slim_config
     auto_slim_configs = parse_auto_slim_config(
         model, 
         ffn2_sparsity = args.prune_ffn2_sparsity, 
         mha_sparsity = args.prune_mha_sparsity,
         pruning_scope="local",
     )
+    # pruning_configs=[
+    #     {
+    #         "pruning_type": "snip_momentum",
+    #         "pruning_scope": "global",
+    #         "sparsity_decay_type": "exp",
+    #         "excluded_op_names": ["pooler"],
+    #         "pruning_op_types": ["Linear"],
+    #         "max_sparsity_ratio_per_op": 0.98
+    #     }
+    # ]
+    pruning_configs = []
     pruning_configs += auto_slim_configs
-        
+
     configs = WeightPruningConfig(
         pruning_configs,
+        target_sparsity=args.target_sparsity,
+        pattern=args.pruning_pattern,
         pruning_frequency=frequency,
         start_step=pruning_start,
         end_step=pruning_end
@@ -1206,9 +1216,10 @@ def main():
         return True
 
     #-----------------------------start auto slim----------------------------------#
+    import pdb;pdb.set_trace()
     if args.auto_slim:
         from timers import CPUTimer, GPUTimer
-        from neural_compressor.compression.pruner.model_slim import model_slim
+        from neural_compressor.compression.pruner.model_slim.auto_slim import model_slim
 
         logger.info(f"***** Running Evaluation before post-training compression*****")
         eval_acc_and_latency(model, eval_dataloader)

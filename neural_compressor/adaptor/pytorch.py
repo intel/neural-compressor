@@ -2875,9 +2875,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             else:
                 return torch.per_tensor_symmetric
         else:
+            op_infos = copy.deepcopy(self.op_infos_from_cfgs)
             self.cfgs = torch_utils.util.check_cfg_and_qconfig(tune_cfg['op'],
                                               self.cfgs,
-                                              self.op_infos_from_cfgs,
+                                              op_infos,
                                               self.output_tensor_id_op_name)
 
             with open(self.ipex_config_path, "w") as write_f:
