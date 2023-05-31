@@ -697,7 +697,7 @@ class TorchSmoothQuant:
                         logger.warning("could not find any layer to be absorbed")
                     else:
                         to_absorb_cnt = 0
-                        for key, item in self.absorb_to_layer.item():
+                        for key, item in self.absorb_to_layer.items():
                             to_absorb_cnt += len(item)
 
                         logger.info(
