@@ -102,7 +102,7 @@ def serve(args):
         date_suffix = ""
         with open(f"{serve_log_dir}/backend{date_suffix}.log", "w") as f:
             subprocess.Popen([
-                "python", "-m", "neural_solution.backend.Runner",
+                "python", "-m", "neural_solution.backend.runner",
                 "--hostfile", str(hostfile),
                 "--task_monitor_port", str(task_monitor_port),
                 "--result_monitor_port", str(result_monitor_port),
@@ -183,7 +183,7 @@ def serve(args):
         # Service End
         print("Neural Solution Service Stopped!")
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description="Neural Solution")
     parser.add_argument('action', choices=['start', 'stop', 'help'], help='Action to perform')
     parser.add_argument("--hostfile", default=None, help="start backend serve host file which contains all available nodes")
@@ -211,3 +211,7 @@ if __name__ == '__main__':
         print('    --workspace          : start web serve with grpc/http, default http')
         print('    --conda_env          : start web serve with grpc/http, default http')
         print('    --upload_path        : start web serve with grpc/http, default http')
+
+
+if __name__ == '__main__':
+    main()

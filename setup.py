@@ -42,16 +42,12 @@ neural_insights_data = {'neural_insights': [
     'web/app/static/js/*',
     'web/app/static/media/*',
 ]}
-neural_solution_data = {'': ['Launcher.sh', 'scripts/*.*']}
+neural_solution_data = {'': ['scripts/*.*']}
 
 # define install requirements
 install_requires_list = fetch_requirements('requirements.txt')
 neural_insights_requires = fetch_requirements('neural_insights/requirements.txt')
 neural_solution_requires = fetch_requirements('neural_solution/requirements.txt')
-
-# define scripts
-scripts_list = []
-neural_solution_scripts_list = ['neural_solution/bin/neural_solution']
 
 # define entry points
 entry_points = {}
@@ -70,8 +66,12 @@ elif neural_solution:
     project_name = "neural_solution"
     package_data = neural_solution_data
     install_requires_list = neural_solution_requires
-    scripts_list = neural_solution_scripts_list # TODO replace it with entry point
     include_packages = neural_solution_packages
+    entry_points = {
+        'console_scripts': [
+            'neural_solution = neural_solution.bin.neural_solution:exec'
+        ]
+    }
 else:
     project_name = "neural_compressor"
 
