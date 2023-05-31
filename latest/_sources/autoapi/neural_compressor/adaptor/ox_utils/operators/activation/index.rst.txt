@@ -20,6 +20,7 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.activation.ActivationOperator
    neural_compressor.adaptor.ox_utils.operators.activation.RemovableActivationOperator
    neural_compressor.adaptor.ox_utils.operators.activation.QActivationOperator
+   neural_compressor.adaptor.ox_utils.operators.activation.Float16ActivationOperator
 
 
 
@@ -43,5 +44,12 @@ Classes
 
 
    INT8 activation operator in QOperator format.
+
+
+.. py:class:: Float16ActivationOperator(onnx_quantizer, onnx_node)
+
+
+
+   Float16 Activation operator.
 
 

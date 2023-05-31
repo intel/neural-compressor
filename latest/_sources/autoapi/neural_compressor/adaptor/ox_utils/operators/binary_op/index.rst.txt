@@ -19,6 +19,7 @@ Classes
 
    neural_compressor.adaptor.ox_utils.operators.binary_op.BinaryOperator
    neural_compressor.adaptor.ox_utils.operators.binary_op.QBinaryOperator
+   neural_compressor.adaptor.ox_utils.operators.binary_op.Float16BinaryOperator
 
 
 
@@ -35,5 +36,12 @@ Classes
 
 
    QBinary Operator.
+
+
+.. py:class:: Float16BinaryOperator(onnx_quantizer, onnx_node)
+
+
+
+   Float16 Binary operator.
 
 

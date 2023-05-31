@@ -29,11 +29,14 @@ Submodules
    lstm/index.rst
    matmul/index.rst
    maxpool/index.rst
+   norm/index.rst
    ops/index.rst
    pad/index.rst
    pooling/index.rst
+   reduce/index.rst
    resize/index.rst
    split/index.rst
+   unary_op/index.rst
 
 
 Package Contents

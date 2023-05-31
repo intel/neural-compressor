@@ -19,6 +19,7 @@ Classes
 
    neural_compressor.adaptor.ox_utils.operators.matmul.MatMulOperator
    neural_compressor.adaptor.ox_utils.operators.matmul.QMatMulOperator
+   neural_compressor.adaptor.ox_utils.operators.matmul.FusedMatMulOperator
 
 
 
@@ -35,5 +36,12 @@ Classes
 
 
    QLinearMatMul Operator.
+
+
+.. py:class:: FusedMatMulOperator(onnx_quantizer, onnx_node)
+
+
+
+   FusedMatMul Operator.
 
 
