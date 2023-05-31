@@ -693,8 +693,15 @@ class TorchSmoothQuant:
                                        "you could set torchscript to True "
                                        "when loading the model or set the return_dict to False")
                         return self.model
-                    if self.absorb_to_layer == {}:
+                    elif self.absorb_to_layer == {}:
                         logger.warning("could not find any layer to be absorbed")
+                    else:
+                        to_absorb_cnt = 0
+                        for key, item in self.absorb_to_layer.item():
+                            to_absorb_cnt += len(item)
+
+                        logger.info(
+                            f"find {to_absorb_cnt} could be absorbed in {to_absorb_cnt + len(no_absorb_layers)}")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
