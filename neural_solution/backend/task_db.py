@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Solution task database."""
 
 import threading
 import sqlite3
 from collections import deque
 from neural_solution.backend.utils.utility import create_dir
-from .task import Task
+from neural_solution.backend.task import Task
 
 class TaskDB:
     """TaskDb manages all the tasks.

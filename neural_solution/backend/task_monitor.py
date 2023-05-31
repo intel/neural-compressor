@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Solution task monitor."""
 
 import socket
-from .utils.utility import serialize, deserialize
+from neural_solution.backend.utils.utility import serialize, deserialize
 from neural_solution.utils import logger
 
 class TaskMonitor:

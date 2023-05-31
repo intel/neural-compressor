@@ -13,4 +13,3 @@
 # limitations under the License.
 
 """gRPC frontend."""
-#TODO import components

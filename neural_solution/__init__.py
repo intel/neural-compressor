@@ -13,4 +13,4 @@
 # limitations under the License.
 
 """Neural Solution."""
-from .utils import logger
+from neural_solution.utils import logger

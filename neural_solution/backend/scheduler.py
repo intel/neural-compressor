@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Solution scheduler."""
 
 import time
 import threading
@@ -22,9 +23,9 @@ import re
 import json
 import glob
 import shutil
-from .task import Task
-from .cluster import Cluster
-from .task_db import TaskDB
+from neural_solution.backend.task import Task
+from neural_solution.backend.cluster import Cluster
+from neural_solution.backend.task_db import TaskDB
 from neural_solution.config import INC_ENV_PATH_TEMP
 from neural_solution.backend.utils.utility import (
     serialize,

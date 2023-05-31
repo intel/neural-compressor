@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Solution task."""
 class Task:
     """A Task is an abstraction of a user tuning request that is handled in neural solution service.
 
