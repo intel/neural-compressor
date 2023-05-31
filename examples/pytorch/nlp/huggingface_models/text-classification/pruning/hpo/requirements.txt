@@ -8,4 +8,5 @@ torch
 evaluate
 transformers
 tqdm
+xgboost
 
