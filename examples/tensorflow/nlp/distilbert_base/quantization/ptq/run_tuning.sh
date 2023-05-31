@@ -21,6 +21,7 @@ function init_params {
   num_inter=2
   num_intra=28
   tune=True
+  sq=False
 
   for var in "$@"
   do
@@ -52,6 +53,9 @@ function init_params {
       --tune=*)
          tune=$(echo ${var} |cut -f2 -d=)
       ;;
+      --sq=*)
+         sq=$(echo ${var} |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -65,6 +69,7 @@ function run_tuning {
             --data-location=${dataset_location} \
             --output-graph=${output_model} \
             --tune=${tune} \
+            --sq=${sq} \
             --warmup-steps=${warmup_steps} \
             --batch-size=${batch_size} \
             --max-seq-length=${max_seq_length} \
