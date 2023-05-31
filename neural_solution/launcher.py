@@ -133,7 +133,8 @@ def serve(args):
         start_time = time.time()
         while True:
             # Check if the ports are in use
-            if check_port_free(args.task_monitor_port) and check_port_free(args.result_monitor_port):
+            if check_port_free(args.task_monitor_port) and check_port_free(args.result_monitor_port) \
+                and check_port_free(args.restful_api_port):
                 # If the ports are not in use, wait for a second and check again
                 time.sleep(0.5)
                 # Check if timed out
