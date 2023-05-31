@@ -170,11 +170,13 @@ class TestTensorflowModel(unittest.TestCase):
             os.system("mkdir -p ckpt && tar xvf {0} -C {1}".format(dst_path, model_path))
         model = Model(model_path)
         model.output_tensor_names = ['MobilenetV1/Predictions/Reshape_1']
-        
+
+        self.assertEqual(model_path, model.model_path)
         self.assertGreaterEqual(len(model.input_tensor_names), 1)
         self.assertEqual(len(model.output_tensor_names), 1)
         graph_def = model.graph_def
         self.assertEqual(True, isinstance(graph_def, tf.compat.v1.GraphDef))
+
         model.graph_def = graph_def
         os.system('rm -rf ckpt')
 
@@ -201,6 +203,7 @@ class TestTensorflowModel(unittest.TestCase):
         graph_def = model.graph_def
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
+        self.assertEqual(model.model_path, './slim_ckpt/inception_v1.ckpt')
         # test net factory
         from neural_compressor.model.nets_factory import TFSlimNetsFactory
         factory = TFSlimNetsFactory()
@@ -221,6 +224,8 @@ class TestTensorflowModel(unittest.TestCase):
         keras_model.save('./simple_model.h5')
         #load from path
         model = Model('./simple_model.h5')
+
+        self.assertEqual(model.model_path, './simple_model.h5')
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
         os.makedirs('./keras_model', exist_ok=True)
@@ -236,11 +241,13 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
 
         model = Model(keras_model)
+        self.assertEqual(model.model_path, None)
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
         keras_model.save('./simple_model')
         # load from path
         model = Model('./simple_model')
+        self.assertEqual(model.model_path, './simple_model')
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
 
@@ -258,10 +265,12 @@ class TestTensorflowModel(unittest.TestCase):
         from neural_compressor.model.tensorflow_model import TensorflowQATModel
         model = TensorflowQATModel(keras_model)
         assert isinstance(model.model, tf.keras.Model)
+        self.assertEqual(model.model_path, None)
         keras_model.save('./simple_model')
         # load from path
         model = TensorflowQATModel('./simple_model')
         assert isinstance(model.model, tf.keras.Model)
+        self.assertEqual(model.model_path, './simple_model')
 
         model.save('./keras_model')
         loaded_model = tf.keras.models.load_model('./keras_model')

@@ -667,6 +667,17 @@ class TensorflowBaseModel(BaseModel):
         self._iter_op = None
         self._workspace_path = ''
         self._q_config = None
+        self._model_path = None if not isinstance(model, str) else model
+
+    @property
+    def model_path(self):
+        """Return model path."""
+        return self._model_path
+
+    @model_path.setter
+    def model_path(self, path):
+        """Set model path."""
+        self._model_path = path
 
     def framework(self):
         """Return framework."""
