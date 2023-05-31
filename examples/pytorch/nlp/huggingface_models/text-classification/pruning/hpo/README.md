@@ -20,16 +20,12 @@ See more about loading [huggingface dataset](https://huggingface.co/docs/dataset
 To get tuned model and its accuracy: 
 ```shell
 python run_glue_no_trainer.py \
-        --model_name_or_path ${input_model} \
-        --pruning_config ${pruning_config} \
-        --task_name ${task_name} \
-        --do_train \
-        --do_eval \
-        --max_seq_length 128 \
-        --per_device_eval_batch_size ${batch_size} \
-        --per_device_train_batch_size ${batch_size} \
+        --model_name_or_path M-FAC/bert-mini-finetuned-mrpc \
+        --pruning_config bert_mini_mrpc.yaml \
+        --task_name mrpc \
+        --per_device_eval_batch_size 18 \
+        --per_device_train_batch_size 18 \
         --learning_rate 2e-5 \
-        --output_dir ${output_model} --overwrite_output_dir \
-        --tune
+        --do_prune
 
 ```
