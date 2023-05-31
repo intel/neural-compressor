@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Neural Solution task database."""
-
 import threading
 import sqlite3
 from collections import deque

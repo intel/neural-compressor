@@ -13,12 +13,10 @@
 # limitations under the License.
 
 """Neural Solution backend utils."""
-
 import json
 import os
 from neural_solution.utils import logger
 from urllib.parse import urlparse
-
 
 def serialize(request: dict) -> bytes:
     """Serialize a dict object to bytes for inter-process communication."""

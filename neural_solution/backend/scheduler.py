@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Neural Solution scheduler."""
-
 import time
 import threading
 import subprocess
@@ -26,7 +25,6 @@ import shutil
 from neural_solution.backend.task import Task
 from neural_solution.backend.cluster import Cluster
 from neural_solution.backend.task_db import TaskDB
-from neural_solution.config import INC_ENV_PATH_TEMP
 from neural_solution.backend.utils.utility import (
     serialize,
     dump_elapsed_time,
@@ -39,6 +37,7 @@ from neural_solution.backend.utils.utility import (
 from neural_solution.utils.utility import get_task_log_workspace, get_task_workspace
 from neural_solution.utils import logger
 
+#TODO update it according to the platform
 cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
@@ -159,7 +158,6 @@ class Scheduler:
         return "failed"
 
     def _parse_cmd(self, task: Task, resource):
-        # TODO  mpi bind on socket
         # mpirun -np 3 -mca btl_tcp_if_include 192.168.20.0/24 -x OMP_NUM_THREADS=80
         # --host mlt-skx091,mlt-skx050,mlt-skx053 bash run_distributed_tuning.sh
         self.prepare_task(task)
@@ -170,8 +168,6 @@ class Scheduler:
         # Activate environment
         conda_bash_cmd = f"source {CONDA_SOURCE_PATH}"
         conda_env_cmd = f"conda activate {conda_env}"
-        if INC_ENV_PATH_TEMP:
-            conda_env_cmd = f"{conda_env_cmd}\nexport PYTHONPATH=$PYTHONPATH:{INC_ENV_PATH_TEMP}"
         mpi_cmd = ["mpirun",
                    "-np",
                    "{}".format(task.workers),

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Neural Solution cluster."""
-
 import threading
 import sqlite3
 from typing import List
