@@ -29,7 +29,7 @@ Functions
    Register workload to Neural Insights.
 
    :param workload_location: path to workload directory
-   :param model: model to be registered
+   :param model: Neural Compressor's model instance to be registered
    :param workload_mode: workload mode
 
    :returns: String with Neural Insight workload UUID if registered else None
