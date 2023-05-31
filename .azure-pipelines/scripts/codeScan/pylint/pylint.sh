@@ -22,7 +22,8 @@ pip install torch==1.12.0 \
             onnxruntime_extensions \
             tf_slim \
             transformers \
-            flask==2.1.3
+            flask==2.1.3 \
+            xgboost
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
 --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/neural_compressor \
