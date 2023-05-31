@@ -9,14 +9,14 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 - Code Less: When working with Hugging Face models, Neural Solution drives the optimization process without requiring any code modifications by integrating the Neural Coder's functionality.
 
 # How does Nueral Solution Work?
-![NS-OaaS-Intro](./docs/imgs/NS-OaaS-Intro.png)
+![NS-OaaS-Intro](./docs/source/imgs/NS-OaaS-Intro.png)
 
 # Get Started
 ## Installation
 <details>
   <summary>Prerequisites</summary>
 
-
+<!-- TODO updated it by following  https://pytorch.org/get-started/locally/#windows-prerequisites-2 -->
 - A working MPI implementation
 - Python: >= 3.8
 - Conda: >= 4.10.3
@@ -40,7 +40,7 @@ python setup.py neural_solution install
 <!-- TODO more docs(Install details, API and so on...) -->
 
 - The Architecture documents
-- [APIs Reference](./docs/description_api.md)
+- [APIs Reference](./docs/source/description_api.md)
 
 # Contact
 

@@ -1,4 +1,4 @@
-neural_compressor>=2.1
+neural_compressor>=2.2
 pydantic==1.10.6 #TODO release the version requirement
 fastapi
 uvicorn[standard]
