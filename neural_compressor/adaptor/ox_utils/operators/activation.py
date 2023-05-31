@@ -139,3 +139,11 @@ class QActivationOperator(QOperator):
             outputs, node.name + '_convert', **kwargs)
         add_nodes.append(activation_node)
         return True, add_nodes, inits
+
+@op_registry(op_types="Softmax, BiasGelu, Elu, Exp, FastGelu, Gelu, Softplus, Tanh")
+class Float16ActivationOperator(Operator):
+    """Float16 Activation operator."""
+
+    def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
+        super(Float16ActivationOperator, self).__init__(onnx_quantizer, onnx_node)

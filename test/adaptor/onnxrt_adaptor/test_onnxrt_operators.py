@@ -968,5 +968,212 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
 
+class TestCastONNXRT(unittest.TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree("./nc_workspace", ignore_errors=True)
+
+    def build_model(self, inps, outs, weights, node_infos):
+        inputs = []
+        for name, type, shape in inps:
+            inputs.append(helper.make_tensor_value_info(name, type, shape))
+        outputs = []
+        for name, type, shape in outs:
+            outputs.append(helper.make_tensor_value_info(name, type, shape))
+        inits = []
+        if len(weights) > 0:
+            for name, type, shape, data in weights:
+                inits.append(helper.make_tensor(name, type, shape, data.tolist()))
+        nodes = []
+        if len(node_infos) > 0 and len(node_infos[0]) == 4:
+            for name, in_name, out_name, type in node_infos:
+                nodes.append(onnx.helper.make_node(type, in_name, out_name, name=name))
+        if len(node_infos) > 0 and len(node_infos[0]) == 5:
+            for name, in_name, out_name, type, domain in node_infos:
+                nodes.append(onnx.helper.make_node(type, in_name, out_name, name=name, domain=domain))
+
+        graph = helper.make_graph(nodes, 'test', inputs, outputs, inits)
+        model = helper.make_model(graph)
+        model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 15)]})
+        return model
+
+    def build_test_data(self, names, shapes, dtypes):
+        ort_input = {}
+        for name, shape, dtype in zip(names, shapes, dtypes):
+            ort_input[name] = np.random.random(shape).astype(dtype)
+        return ort_input
+
+    def get_fp16_mixed_precision_model(self, model):
+        from neural_compressor import MixedPrecisionConfig
+        from neural_compressor.mix_precision import fit
+        config = MixedPrecisionConfig(backend='onnxrt_cuda_ep', device='gpu', precision='fp16')
+        converted_model = fit(model, config)
+        return converted_model
+
+    @unittest.skipIf('CUDAExecutionProvider' not in ort.get_all_providers(),
+        "skip since CUDAExecutionProvider is not supported")
+    def test_fp16(self):
+        optypes = ['Sum', 'Sub', 'Div', 'Pow', 'Add']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (1,2), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Equal', 'Greater', 'GreaterOrEqual', 'Less', 'LessOrEqual']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.BOOL, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (1,2), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Abs', 'Exp', 'Log', 'Round', 'Sqrt', 'Softmax', 'Exp', 'Tanh', 'Sigmoid', 'LeakyRelu', 'Round']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            node_infos = [['test', ['input1'], ['output'], optype]]
+            model = self.build_model(inps, outs, [], node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['ReduceMean', 'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceProd', \
+                   'ReduceSum', 'ReduceSumSquare']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
+            node_infos = [['test', ['input1'], ['output'], optype]]
+            model = self.build_model(inps, outs, [], node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Gelu']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            node_infos = [['test', ['input1'], ['output'], optype, 'com.microsoft']]
+            model = self.build_model(inps, outs, [], node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['BiasGelu', 'FastGelu']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, [2]]]
+            outs = [['output', TensorProto.FLOAT, [2]]]
+            weights = [['input2', TensorProto.FLOAT, [2], np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype, 'com.microsoft']]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+
+        optypes = ['MatMul']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['FusedMatMul']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype, 'com.microsoft']]
+            model = self.build_model(inps, outs, weights, node_infos)
+            ort.InferenceSession(model.SerializeToString())
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Gemm']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
+                        ['input3', TensorProto.FLOAT, (1,2), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2', 'input3'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['LayerNormalization']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output1', TensorProto.FLOAT, (1,2)], ['output2', TensorProto.FLOAT, (1,2)], ['output3', TensorProto.FLOAT, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
+                        ['input3', TensorProto.FLOAT, (2,1), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2', 'input3'], ['output1', 'output2', 'output3'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['BatchNormalization']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, [1, 2]]]
+            outs = [['output1', TensorProto.FLOAT, [1, 2]]]
+            weights = [['input2', TensorProto.FLOAT, [2], np.random.random((2))],
+                        ['input3', TensorProto.FLOAT, [2], np.random.random((2))],
+                        ['input4', TensorProto.FLOAT, [2], np.random.random((2))],
+                        ['input5', TensorProto.FLOAT, [2], np.random.random((2))],]
+            node_infos = [['test', ['input1', 'input2', 'input3', 'input4', 'input5'], ['output1'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            ort.InferenceSession(model.SerializeToString())
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_fp16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+
 if __name__ == "__main__":
     unittest.main()

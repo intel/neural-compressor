@@ -79,7 +79,8 @@ class Direct8BitOperator(Operator):
         node = self.node
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
-        self.quantizer.dtype_cast(self.node, self.dtype)
+        self.quantizer.cast_inputs(self.node, self.dtype, [0])
+        self.quantizer.cast_outputs(self.node, self.dtype)
 
 @qop_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
 class QDirectOperator(QOperator):

@@ -195,3 +195,11 @@ class QMatMulOperator(QOperator):
             outputs, node.name + '_convert', **kwargs)
         add_nodes.append(matmul_node)
         return True, add_nodes, inits
+
+@op_registry(op_types="FusedMatMul")
+class FusedMatMulOperator(Operator):
+    """FusedMatMul Operator."""
+
+    def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
+        super(FusedMatMulOperator, self).__init__(onnx_quantizer, onnx_node)
