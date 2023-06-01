@@ -27,18 +27,20 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   let socket = io('/');
   socket.on('Config update', data => {
-    getWorkloads();
+    getWorkloads(false);
   });
 
   useEffect(() => {
-    getWorkloads();
+    getWorkloads(true);
   }, []);
 
-  let getWorkloads = () => {
-    api.get('api/workloads?token=asd')
+  let getWorkloads = (changeSelectedWorkload) => {
+    api.get('api/workloads?token=' + localStorage.getItem('token'))
       .then(
         response => {
-          setSelectedWorkload(response.data.workloads[0]);
+          if (changeSelectedWorkload) {
+            setSelectedWorkload(response.data.workloads[0]);
+          }
           setWorkloads(response.data.workloads);
           setSpinner(false);
         }

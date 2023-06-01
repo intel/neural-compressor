@@ -22,6 +22,7 @@ export const api = axios.create({
 
 function App() {
   document.body.style = 'background: #ececec;';
+  localStorage.setItem('token', window.location.search.replace('?token=', ''));
   return (
     <div className="App">
       <Diagnosis />
