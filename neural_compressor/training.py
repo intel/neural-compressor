@@ -138,7 +138,7 @@ class CompressionManager:
                 callbacks_list.append(QuantizationAwareTrainingCallbacks(confs, adaptor=self.adaptor))
                 self.conf = _Config(quantization=confs, benchmark=None, pruning=None, distillation=None, nas=None)
             elif isinstance(confs, WeightPruningConfig):
-                self.model = Model(model)
+                self.model = Model(model, conf=confs)
                 callbacks_list.append(PruningCallbacks(confs, model=self.model))
                 self.conf = _Config(quantization=None, benchmark=None, pruning=confs, distillation=None, nas=None)
             elif isinstance(confs, DistillationConfig):

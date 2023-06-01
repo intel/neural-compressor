@@ -27,9 +27,11 @@ from ..utils.utility import LazyImport
 from ..model import BaseModel, Model
 from ..model.model import MODELS
 from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
+from .pruner.utils import parse_to_prune_tf
 from .pruner.pruners import get_pruner, PRUNERS
 LazyImport('torch.nn')
 torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
 
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
@@ -221,8 +223,10 @@ class PruningCallbacks(BaseCallbacks):
         """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
-        if isinstance(self.model.model, torch.nn.Module):
+        if conf.framework == 'pytorch' and isinstance(self.model.model, torch.nn.Module):
             get_sparsity_ratio(self.pruners, self.model)
+        elif conf.framework == 'tensorflow' and isinstance(self.model.model, tf.keras.model):
+            get_sparsity_ratio_tf(self.pruners, self.model)
 
     def __repr__(self):
         """Return the class's string representation."""
@@ -237,13 +241,23 @@ class PruningCallbacks(BaseCallbacks):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        if isinstance(self.model.model, torch.nn.Module):
+        if conf.framework == 'pytorch' and isinstance(self.model.model, torch.nn.Module):
             for info in self.pruners_info:
                 modules = parse_to_prune(info, self.model.model)
                 if modules == {}:
                     logger.warning("one pruner hooks no layers, please have a check")
 
                 self.pruners.append(get_pruner(info, modules))
+                info['modules'] = [key for key in modules.keys()]
+                info['len_of_modules'] = len(info['modules'])
+                logger.info(info)
+        elif conf.framework == 'tensorflow' and isinstance(self.model.model, tf.keras.model):
+            for info in self.pruners_info:
+                modules = parse_to_prune_tf(info, self.model.model)
+                if modules == {}:
+                    logger.warning("one pruner hooks no layers, please have a check")
+
+                self.pruners.append(get_pruner(info, modules, 'tensorflow'))
                 info['modules'] = [key for key in modules.keys()]
                 info['len_of_modules'] = len(info['modules'])
                 logger.info(info)

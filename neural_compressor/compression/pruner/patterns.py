@@ -16,8 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import torch, logger
+import numpy as np
+from .utils import logger
 from collections import namedtuple
+from ...utils.utility import LazyImport
+torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
 
 PATTERNS = {}
 
@@ -42,7 +46,7 @@ def register_pattern(name):
     return register
 
 
-def get_pattern(config, modules):
+def get_pattern(config, modules, framework='pytorch'):
     """Get registered pattern class.
 
     Get a Pattern object from PATTERNS.
@@ -60,9 +64,9 @@ def get_pattern(config, modules):
     name = config.pattern
     name = name.split('_')[-1]
     if "x" in name:
-        return PATTERNS["NxM"](config, modules)
+        return PATTERNS["NxM"](config, modules, framework)
     if ":" in name:
-        return PATTERNS["N:M"](config, modules)
+        return PATTERNS["N:M"](config, modules, framework)
     assert False, f"currently only support {PATTERNS.keys()}"
 
 
@@ -316,7 +320,7 @@ class BasePattern:
         target_sparsity: A float representing the sparsity ratio of the modules after pruning.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize the basic pruning unit of a pattern."""
         self.pattern = config.pattern
         self.is_global = config.pruning_scope == "global"
@@ -324,12 +328,14 @@ class BasePattern:
         self.invalid_layers = []
         self.modules = modules
         self.config = config
+        self.framework = framework
         self.max_sparsity_ratio_per_op = self.config['max_sparsity_ratio_per_op']
         self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
         self.block = bool('block' in self.config['pruning_type'] or 'free' in self.config['pruning_type'])
         # Not using deterministic_algorithms for all examples
-        torch.use_deterministic_algorithms(False)
+        if self.framework == 'pytorch':
+            torch.use_deterministic_algorithms(False)
 
     def reduce_tensor(self, data, dim):
         """Reduce the data along the given dimension.
@@ -343,11 +349,20 @@ class BasePattern:
         """
         name = self.config['criterion_reduce_type']
         if name == "mean":
-            return torch.mean(data, dim=dim)
+            if self.framework == 'pytorch':
+                return torch.mean(data, dim=dim)
+            elif self.framework == 'tensorflow':
+                return tf.math.reduce_mean(data, dim)
         elif name == "sum":
-            return torch.sum(data, dim=dim)
+            if self.framework == 'pytorch':
+                return torch.sum(data, dim=dim)
+            elif self.framework == 'tensorflow':
+                return tf.math.reduce_sum(data, dim)
         elif name == "max":
-            return torch.max(data, dim=dim)[0]
+            if self.framework == 'pytorch':
+                return torch.max(data, dim=dim)[0]
+            elif self.framework == 'tensorflow':
+                return tf.math.reduce_max(data, dim)
         else:
             assert False, "currently only support mean, sum and max reduce type"
 
@@ -407,12 +422,21 @@ class BasePattern:
         flattern_score = torch.flatten(score)
         k = int(exact_sparsity_ratio * flattern_score.numel())
         threshold, _ = torch.kthvalue(flattern_score, k)
-        if not k < 1:
-            zero = torch.tensor([0.]).to(score.device)
-            one = torch.tensor([1.]).to(score.device)
-            mask = torch.where(score <= threshold, zero, one)
-        else:
-            mask = torch.ones(score.shape, device=score.device)
+        if self.framework == 'pytorch':
+            if not k < 1:
+                zero = torch.tensor([0.]).to(score.device)
+                one = torch.tensor([1.]).to(score.device)
+                mask = torch.where(score <= threshold, zero, one)
+            else:
+                mask = torch.ones(score.shape, device=score.device)
+        elif self.framework == 'tensorflow':
+            if not k < 1:
+                zero = tf.convert_to_tensor([0.])
+                one = tf.convert_to_tensor([1.])
+                mask = tf.where(score <= threshold, zero, one)
+            else:
+                mask = tf.ones_like(score.shape)
+
         return mask
 
     def get_block_size_dict(self, data):
@@ -440,10 +464,16 @@ class BasePattern:
         """
         zero_cnt = 0 # This function might need to refactor in subclass.
         total_cnt = 0
-        for key in pre_masks.keys():
-            pre_mask = pre_masks[key]
-            zero_cnt += torch.sum(pre_mask == 0.0).data.item()
-            total_cnt += pre_mask.numel()  ##FIXME
+        if self.framework == 'pytorch':
+            for key in pre_masks.keys():
+                pre_mask = pre_masks[key]
+                zero_cnt += torch.sum(pre_mask == 0.0).data.item()
+                total_cnt += pre_mask.numel()  ##FIXME
+        elif self.framework == 'tensorflow':
+            for key in pre_masks.keys():
+                pre_mask = pre_masks[key]
+                zero_cnt += pre_mask.count(0.0)
+                total_cnt += pre_mask.size()  ##FIXME
         if return_dict:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
@@ -461,12 +491,20 @@ class BasePattern:
         """
         zero_cnt = 0
         total_cnt = 0
-        for key in pre_masks.keys():
-            if key in self.invalid_layers:
-                continue
-            # progressive masks are unstructured, therefore directly find zeros
-            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
-            total_cnt += float(pre_masks[key].numel())
+        if self.framework == 'pytorch':
+            for key in pre_masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                # progressive masks are unstructured, therefore directly find zeros
+                zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
+                total_cnt += float(pre_masks[key].numel())
+        elif self.framework == 'tensorflow':
+            for key in pre_masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                # progressive masks are unstructured, therefore directly find zeros
+                zero_cnt += float(pre_masks[key].count(0))
+                total_cnt += float(pre_masks[key].size())
         return (zero_cnt / total_cnt)
         
     def get_pattern_lock_masks(self, modules):
@@ -479,12 +517,21 @@ class BasePattern:
             A dict with the identical size as modules, containing pattern lock masks.
         """
         pattern_lock_masks = {}
-        for key in modules.keys():
-            weight = modules[key].weight
-            shape = weight.shape
-            mask = torch.ones(shape)
-            mask[weight == 0] = 0.0
-            pattern_lock_masks[key] = mask.to(weight.device)
+
+        if self.framework == 'pytorch':
+            for key in modules.keys():
+                weight = modules[key].weight
+                shape = weight.shape
+                mask = torch.ones(shape)
+                mask[weight == 0] = 0.0
+                pattern_lock_masks[key] = mask.to(weight.device)
+        elif self.framework == 'tensorflow':
+            for key in modules.keys():
+                weight = modules[key].get_weights()
+                shape = weight.shape
+                mask = tf.ones_like(shape)
+                mask[weight == 0] = 0.0
+                pattern_lock_masks[key] = mask
         return pattern_lock_masks
 
     def check_layer_validity(self):
@@ -527,17 +574,32 @@ class BasePattern:
         infos = {}
         zero_cnts = 0
         total_cnts = 0
-        for key in masks.keys():
-            if key in self.invalid_layers:
-                continue
-            reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
-            zero_cnt = (int(torch.sum(reduced_mask == 0.0).data.item()))
-            total_cnt = int(reduced_mask.numel())
-            sparsity_ratio = float(zero_cnt) / total_cnt
-            val = SparsityInfo(zero_cnt, total_cnt, sparsity_ratio)
-            infos[key] = val
-            zero_cnts += zero_cnt
-            total_cnts += total_cnt
+
+        if self.framework == 'pytorch':
+            for key in masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
+                zero_cnt = (int(torch.sum(reduced_mask == 0.0).data.item()))
+                total_cnt = int(reduced_mask.numel())
+                sparsity_ratio = float(zero_cnt) / total_cnt
+                val = SparsityInfo(zero_cnt, total_cnt, sparsity_ratio)
+                infos[key] = val
+                zero_cnts += zero_cnt
+                total_cnts += total_cnt
+        elif self.framework == 'tensorflow':
+            for key in masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
+                zero_cnt = int(reduced_mask.count(0.0))
+                total_cnt = int(reduced_mask.size())
+                sparsity_ratio = float(zero_cnt) / total_cnt
+                val = SparsityInfo(zero_cnt, total_cnt, sparsity_ratio)
+                infos[key] = val
+                zero_cnts += zero_cnt
+                total_cnts += total_cnt
+
         sparsity_ratio = float(zero_cnts) / total_cnts
         return infos, SparsityInfo(zero_cnts, total_cnts, sparsity_ratio)
 
@@ -627,9 +689,9 @@ class PatternNxM(BasePattern):
                 because PyTorch's tensor matmul has a hidden transpose operation.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize the basic pruning unit of NXM pattern."""
-        super(PatternNxM, self).__init__(config, modules)
+        super(PatternNxM, self).__init__(config, modules, framework)
         pattern = self.pattern.split('_')[-1]
         self.N = pattern.split('x')[0]
         self.M = pattern.split('x')[1]
@@ -660,7 +722,7 @@ class PatternNxM(BasePattern):
             block_sizes_dict[key] = self.block_size
             if not (self.N == "channel" or self.M == "channel"):
                 continue
-            if isinstance(datas[key], torch.nn.Module):
+            if self.framework == 'pytorch' and isinstance(datas[key], torch.nn.Module):
                 shape = datas[key].weight.shape
             else:
                 shape = datas[key].shape
@@ -675,14 +737,24 @@ class PatternNxM(BasePattern):
         """Check if a layer is valid for this block_size."""
         block_sizes = self.block_size
         datas = self.modules
-        for key in datas.keys():
-            data = datas[key].weight
-            data = self._reshape_orig_to_2dims(data)
-            shape = data.shape
-            block_size = block_sizes[key]
-            if shape[0] % block_size[0] != 0 or shape[1] % block_size[1] != 0:  ## only consider input channel
-                self.invalid_layers.append(key)
-                logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
+        if self.framework == 'pytorch':
+            for key in datas.keys():
+                data = datas[key].weight
+                data = self._reshape_orig_to_2dims(data)
+                shape = data.shape
+                block_size = block_sizes[key]
+                if shape[0] % block_size[0] != 0 or shape[1] % block_size[1] != 0:  ## only consider input channel
+                    self.invalid_layers.append(key)
+                    logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
+        elif self.framework == 'tensorflow':
+            for key in datas.keys():
+                data = datas[key].get_weights()
+                data = self._reshape_orig_to_2dims(data)
+                shape = data.shape
+                block_size = block_sizes[key]
+                if shape[0] % block_size[0] != 0 or shape[1] % block_size[1] != 0:  ## only consider input channel
+                    self.invalid_layers.append(key)
+                    logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
 
     def get_reduced_masks_from_data(self, data, key):
         """Obtain the unpruned weights and reshape according to the block_size.
@@ -716,12 +788,20 @@ class PatternNxM(BasePattern):
         """
         zero_cnt = 0
         total_cnt = 0
-        for key in pre_masks.keys():
-            if key in self.invalid_layers:
-                continue
-            reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
-            zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
-            total_cnt += int(reduced_mask.numel())
+        if self.framework == 'pytorch':
+            for key in pre_masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
+                zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
+                total_cnt += int(reduced_mask.numel())
+        elif self.framework == 'tensorflow':
+            for key in pre_masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
+                zero_cnt += int(reduced_mask.count(0.0))
+                total_cnt += int(reduced_mask.size())
         if total_cnt == 0:
             sparsity_ratio = 0.0
         else:
@@ -821,14 +901,45 @@ class PatternNxM(BasePattern):
 
     def get_mask_per_threshold(self, score, threshold, block_size):
         """Get the mask per threshold."""
-        zero = torch.tensor([0.]).to(score.device)
-        one = torch.tensor([1.]).to(score.device)
-        mask = torch.where(score <= threshold, zero, one)
-        if not self.block:
-            mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+        if self.framework == 'pytorch':
+            zero = torch.tensor([0.]).to(score.device)
+            one = torch.tensor([1.]).to(score.device)
+            mask = torch.where(score <= threshold, zero, one)
+            if not self.block:
+                mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+        elif self.framework == 'tensorflow':
+            zero = tf.convert_to_tensor([0.])
+            one = tf.convert_to_tensortensor([1.])
+            mask = tf.where(score <= threshold, zero, one)
+            if not self.block:
+                mask = tf.repeat(mask, repeats=block_size[0], axis=0)
+                mask = tf.repeat(mask, repeats=block_size[1], axis=-1)
         return mask
 
     def get_masks_global(self, scores, cur_target_sparsity_ratio, pre_masks,
+                         keep_exact_sparsity_ratio=True):
+        """Generate masks for layers.
+
+        Gather all layer's scores together and calculate a common threshold.
+        This threshold will be applied to all layers.
+        
+        Args:
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            cur_target_sparsity_ratio: A float representing the model's sparsity after pruning.
+            pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at the last pruning step.
+            max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
+            keep_pre_masks: A bool representing if the masks should remain unchanged.
+            
+        Returns:
+            A dict with the identical size as pre_masks and its 0/1 values are updated.
+                1 means unpruned and 0 means pruned.
+        """
+        if self.framework == 'pytorch':
+            return self.get_masks_global_pytorch(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio)
+        elif self.framework == 'tensorflow':
+            return self.get_masks_global_tf(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio)
+
+    def get_masks_global_pytorch(self, scores, cur_target_sparsity_ratio, pre_masks,
                          keep_exact_sparsity_ratio=True):
         """Generate masks for layers.
 
@@ -905,6 +1016,83 @@ class PatternNxM(BasePattern):
             logger.info(f'{key} sparsity is {layer_ratio}')
         return masks
 
+    def get_masks_global_tf(self, scores, cur_target_sparsity_ratio, pre_masks,
+                         keep_exact_sparsity_ratio=True):
+        """Generate masks for layers.
+
+        Gather all layer's scores together and calculate a common threshold.
+        This threshold will be applied to all layers.
+        
+        Args:
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            cur_target_sparsity_ratio: A float representing the model's sparsity after pruning.
+            pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at the last pruning step.
+            max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
+            keep_pre_masks: A bool representing if the masks should remain unchanged.
+            
+        Returns:
+            A dict with the identical size as pre_masks and its 0/1 values are updated.
+                1 means unpruned and 0 means pruned.
+        """
+        ##keep the masks if the layer exceed max sparsity ratio
+
+        masks = pre_masks
+        k_blockwise = self.update_residual_cnt(masks, cur_target_sparsity_ratio)
+        if k_blockwise <= 0:
+            return masks
+        new_scores = scores if self.block else self.reduce_scores(scores)
+        not_exceed_layers = []
+        residual_k = k_blockwise
+        if self.min_sparsity_ratio_per_op > 0:
+            sparsity_infos_perlayer, _ = self.get_sparsity_ratio_each_layer(masks)
+
+        while True:
+            new_not_exceed_layers = [key for key in new_scores.keys() if not self.keep_mask_layers.get(key, False)]
+            if not_exceed_layers == new_not_exceed_layers or len(new_not_exceed_layers) == 0:
+                break
+            not_exceed_layers = new_not_exceed_layers
+            global_scores = np.concatenate([new_scores[key].flatten for key in not_exceed_layers])
+            threshold, _ = np.partition(global_scores, kth=residual_k)
+            
+            for key in not_exceed_layers:
+                block_size = self.block_size[key]
+                score = new_scores[key]
+                mask = self.get_mask_per_threshold(score, threshold, block_size)
+                info = self.get_sparsity_ratio({key: mask}, return_dict=True)
+                zero_cnt = info["zero_cnt"]
+                total_cnt = info["total_cnt"]
+                current_sparsity_ratio = float(zero_cnt) / total_cnt
+                key_new_sparsity = SparsityInfo(zero_cnt, total_cnt, current_sparsity_ratio)
+                need_adjust, adjust_ratio = self.adjust_ratio(masks, key, key_new_sparsity,
+                                                              self.max_sparsity_ratio_per_op,
+                                                              self.min_sparsity_ratio_per_op,
+                                                              self.target_sparsity_ratio)
+                if need_adjust:
+                    # uptade status
+                    self.keep_mask_layers[key] = True
+                    masks[key] = self.get_single_mask_per_target_ratio(new_scores[key], adjust_ratio)
+                    if not self.block:
+                        masks[key] = masks[key].repeat_interleave(block_size[0], 0).repeat_interleave(block_size[1], -1)
+                    if keep_exact_sparsity_ratio:
+                        zero_cnt = self.get_sparsity_ratio({key: masks[key]}, return_dict=True)["zero_cnt"]
+                        residual_k -= zero_cnt
+                else:
+                    masks[key] = mask
+            if not keep_exact_sparsity_ratio:
+                break
+
+        for key in masks.keys():
+            if key in self.invalid_layers:
+                continue
+            if len(scores[key].shape) == 4:  ## need to permute
+                mask = masks[key]
+                orig_shape = scores[key].shape
+                mask = self._reshape_2dims_to_orig(mask, orig_shape)
+                masks[key] = mask
+            layer_ratio = masks[key].count(0.0) / masks[key].size()
+            logger.info(f'{key} sparsity is {layer_ratio}')
+        return masks
+
     def get_pattern_lock_masks(self, modules):
         """Obtain masks from original weight map by masking the zero-valued weights.
         
@@ -915,16 +1103,28 @@ class PatternNxM(BasePattern):
             A dict with the identical size as modules, containing pattern lock masks.
         """
         pattern_lock_masks = {}
-        for key in modules.keys():
-            weight = modules[key].weight
-            ori_shape = weight.shape
-            if key in self.invalid_layers:
-                mask = torch.ones(weight.shape, device=weight.device)
+        if self.framework == 'pytorch':
+            for key in modules.keys():
+                weight = modules[key].weight
+                ori_shape = weight.shape
+                if key in self.invalid_layers:
+                    mask = torch.ones(weight.shape, device=weight.device)
+                    pattern_lock_masks[key] = mask
+                    continue
+                reduced_mask = self.get_reduced_masks_from_data(weight, key)
+                mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
                 pattern_lock_masks[key] = mask
-                continue
-            reduced_mask = self.get_reduced_masks_from_data(weight, key)
-            mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
-            pattern_lock_masks[key] = mask
+        elif self.framework == 'tensorflow':
+            for key in modules.keys():
+                weight = modules[key].get_weights()
+                ori_shape = weight.shape
+                if key in self.invalid_layers:
+                    mask = np.ones(weight.shape)
+                    pattern_lock_masks[key] = mask
+                    continue
+                reduced_mask = self.get_reduced_masks_from_data(weight, key)
+                mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
+                pattern_lock_masks[key] = mask
         return pattern_lock_masks
     
     def register_block_masks(self, modules):
@@ -937,18 +1137,32 @@ class PatternNxM(BasePattern):
             A dict containing block masks.
         """
         masks = {}
-        for key in modules.keys():
-            if key in self.invalid_layers:
-                continue # No corresponding block mask, skip.
-            module = modules[key]
-            weight = module.weight
-            if type(module).__name__ not in ["Linear"]:
-                logger.warning(f"Currently only support Linear block mask pruning," \
-                                f"{type(module).__name__} won't be pruned.")
-                continue
-            block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
-            module.register_parameter("block_mask", block_mask)
-            masks[key] = modules[key].block_mask.data
+        if self.framework == 'pytorch':
+            for key in modules.keys():
+                if key in self.invalid_layers:
+                    continue # No corresponding block mask, skip.
+                module = modules[key]
+                weight = module.weight
+                if type(module).__name__ not in ["Linear"]:
+                    logger.warning(f"Currently only support Linear block mask pruning," \
+                                    f"{type(module).__name__} won't be pruned.")
+                    continue
+                block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
+                module.register_parameter("block_mask", block_mask)
+                masks[key] = modules[key].block_mask.data
+        elif self.framework == 'tensorflow':
+            # TODO need to use PrunedDense to replace the original Dense layer and set the block_mask
+            for key in modules.keys():
+                if key in self.invalid_layers:
+                    continue # No corresponding block mask, skip.
+                module = modules[key]
+                weight = module.get_weights()
+                if module.__class__.__name__ not in ["Dense"]:
+                    logger.warning(f"Currently only support Dense block mask pruning," \
+                                    f"{module.__class__.__name__} won't be pruned.")
+                    continue
+                block_mask = np.array(self.get_reduced_masks_from_data(weight, key), dtype=weight.dtype)
+                masks[key] = block_mask
         return masks
     
     def remove_block_masks(self):
@@ -959,16 +1173,29 @@ class PatternNxM(BasePattern):
     
     def mask_block_weights(self, masks):
         """Achieve weight pruning by multiplying the reshaped weights and block masks."""
-        for key in masks.keys():
-            if key in self.invalid_layers:
-                continue
-            module = self.modules[key]
-            block_size = self.block_size[key]
-            org_shape = module.weight.shape
-            mask = masks[key].data.repeat_interleave(\
-                    block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
-            reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
-            module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
+        if self.framework == 'pytorch':
+            for key in masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                module = self.modules[key]
+                block_size = self.block_size[key]
+                org_shape = module.weight.shape
+                mask = masks[key].data.repeat_interleave(\
+                        block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
+                reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
+                module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
+        elif self.framework == 'tensorflow':
+            for key in masks.keys():
+                if key in self.invalid_layers:
+                    continue
+                module = self.modules[key]
+                block_size = self.block_size[key]
+                org_shape = module.get_weights().shape
+                mask = tf.repeat(masks[key], repeats=block_size[0], axis=0)
+                mask = tf.repeat(mask, repeats=block_size[1], axis=-1)
+            
+                reshaped_weight = self._reshape_orig_to_2dims(module.get_weights()) * mask
+                module.set_weights(self._reshape_2dims_to_orig(reshaped_weight, org_shape))
 
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         """Generate the progressive masks.
@@ -1009,9 +1236,9 @@ class PatternNInM(BasePattern):
         M: The size of the weight sequence.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize the basic pruning unit of N:M pattern."""
-        super(PatternNInM, self).__init__(config, modules)
+        super(PatternNInM, self).__init__(config, modules, framework)
         pattern = self.pattern.split('_')[-1]
         self.N = int(pattern.split(':')[0])
         self.M = int(pattern.split(':')[1])  ##m is bigger

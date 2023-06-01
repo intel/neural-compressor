@@ -29,6 +29,7 @@ try:
     from neural_compressor.conf.config import Pruner
     LazyImport('torch.nn')
     torch = LazyImport('torch')
+    tf = LazyImport('tensorflow')
     F = LazyImport('torch.nn.functional')
 except:
     import torch
@@ -415,6 +416,19 @@ def parse_last_linear(model):
     layer = searcher.search(return_name=True)
     return layer
 
+def parse_last_linear_tf(model):
+    """Locate the last linear layers of the model.
+    While pruning, the final linear often acts like classifier head, which might cause
+    accuracy drop.
+
+    Args:
+        model(tf.keras.Model): The model to be pruned.
+    """
+    from .model_slim.pattern_analyzer import ClassifierHeadSearcherTF
+    searcher = ClassifierHeadSearcherTF(model)
+    layer = searcher.search(return_name=True)
+    return layer
+
 def parse_to_prune(config, model):
     """Keep target pruned layers.
 
@@ -453,6 +467,39 @@ def parse_to_prune(config, model):
         new_modules[name] = modules[name]
     return new_modules
 
+def parse_to_prune_tf(config, model):
+    """Keep target pruned layers.
+
+    Args:
+        config(string): A string representing the path to the configuration file.
+        model(tf.keras.Model): The model to be pruned.
+    """
+    modules = {}
+    # additional function: exclude last layer (often a classifier head and not suitable to be pruned)
+    classifier_head_name = parse_last_linear_tf(model)
+    if classifier_head_name != None:
+        config["excluded_op_names"].append(classifier_head_name)
+    # locate target layers
+    if config["op_names"] == None or config["op_names"] == []:
+        config["op_names"] = [".*"]
+
+    for layer in model.layers:
+        if layer.__class__.__name__ in config["pruning_op_types"] and hasattr(module, "weight"):
+            modules[name] = module
+
+    ##remove not to prune layers
+    """Drop non-pruned layers."""
+    exclude_names = config["excluded_op_names"]
+    patterns = [re.compile(s) for s in exclude_names]
+    if len(patterns) <= 0:
+        return modules
+    new_modules = {}
+    for name in modules.keys():
+        if any([p.search(name) for p in patterns]):
+            continue
+        new_modules[name] = modules[name]
+    return new_modules
+
 def generate_pruner_config(info):
     """Generate pruner config object from prune information.
 
@@ -469,3 +516,57 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
+
+class PrunedDense(tf.keras.layers.Dense):
+    def __init__(self,
+                 units,
+                 activation=None,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 activity_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 min_value=-10000,
+                 max_value=10000,
+                 **kwargs):
+      super(PrunedDense, self).__init__(
+                          units=units,
+                          activation=activation,
+                          use_bias=use_bias,
+                          kernel_initializer=kernel_initializer,
+                          bias_initializer=bias_initializer,
+                          kernel_regularizer=kernel_regularizer,
+                          bias_regularizer=bias_regularizer,
+                          activity_regularizer=activity_regularizer,
+                          kernel_constraint=kernel_constraint,
+                          bias_constraint=bias_constraint,
+                          **kwargs)
+    
+    def build(self, input_shape):
+        # Register the custom parameter block_mask
+        self.block_mask = self.add_weight(
+            name="block_mask",
+            shape=(self.units, self.custom_param_units),
+            initializer="random_normal",
+            trainable=True
+        )
+        super(PrunedDense, self).build(input_shape)
+
+    def call(self, inputs):
+        block_size = [self.kernel.shape[0]//self.block_mask.shape[0], \
+                        self.kernel.shape[1]//self.block_mask.shape[1]]
+
+        mask = tf.repeat(self.block_mask, repeats=block_size[0], axis=0)
+        mask = tf.repeat(self.block_mask, repeats=block_size[1], axis=-1)
+
+        self.kernel = tf.keras.backend.dot(self.kernel, mask)
+        outputs = tf.keras.backend.dot(inputs, self.kernel)
+
+        if self.use_bias:
+            outputs = tf.keras.backend.bias_add(outputs, self.bias)
+        if self.activation is not None:
+            outputs = self.activation(outputs)
+        return outputs

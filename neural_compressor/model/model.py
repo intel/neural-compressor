@@ -167,10 +167,10 @@ class Model(object):
         if isinstance(root, BaseModel):
             if conf != "NA" and conf.framework is None:
                 conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(root))]
-                if conf.backend == "ipex":
+                if hasattr(conf, 'backend') and conf.backend == "ipex":
                     assert conf.framework == "pytorch_ipex",\
                           "Please wrap the model with correct Model class!"
-                if conf.backend == "itex":
+                if hasattr(conf, 'backend') and conf.backend == "itex":
                     if get_model_type(root.model) == 'keras':
                         assert conf.framework == "keras",\
                               "Please wrap the model with KerasModel class!"
@@ -211,10 +211,10 @@ class Model(object):
                 return MODELS[framework](root, **kwargs)
             else:
                 conf.framework = framework
-                if conf.backend == "default":
+                if hasattr(conf, 'backend') and conf.backend == "default":
                     if framework == "pytorch":
                         conf.framework = "pytorch_fx"
-                elif conf.backend == "ipex":
+                elif hasattr(conf, 'backend') and conf.backend == "ipex":
                     conf.framework = "pytorch_ipex"
 
                 if 'tensorflow' in conf.framework:
@@ -225,7 +225,7 @@ class Model(object):
                             model_type = kwargs['modelType']
                         else:
                             model_type = get_model_type(root)
-                        if conf.backend == "itex":
+                        if hasattr(conf, 'backend') and conf.backend == "itex":
                             if model_type == 'keras':
                                 conf.framework = "keras"
                                 model = MODELS[conf.framework](root, **kwargs)
