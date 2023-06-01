@@ -465,6 +465,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
                 elif host_op_type in ('Conv2D', 'Conv2DBackpropInput'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
+                elif host_op_type in ('MatMul'):
+                    if 'transpose_b' in weight_node.attr and weight_node.attr["transpose_b"].b:
+                        ranges = np.abs(float_tensor).max(axis=(1))
+                    else:
+                        ranges = np.abs(float_tensor).max(axis=(0))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1))
 
