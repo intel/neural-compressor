@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The entry of Neural Solution."""
 import sys
 import subprocess
 import os
@@ -21,17 +22,41 @@ import psutil
 import time
 from datetime import datetime
 
+def check_ports(args):
+    """Check parameters ending in '_port'.
+
+    Args:
+        args (argparse.Namespace): parameters.
+    """
+    for arg in vars(args):
+        if '_port' in arg:
+            check_port(getattr(args, arg))
+
 def check_port(port):
+    """Check if the given port is standardized.
+
+    Args:
+        port (int): port number.
+    """
     if not str(port).isdigit() or int(port) < 0 or int(port) > 65535:
         print(f"Error: Invalid port number: {port}")
         sys.exit(1)
 
 def get_local_service_ip(port):
+    """Get the local IP address of the machine running the service.
+
+    Args:
+        port (int): The port number of the service.
+
+    Returns:
+        str: The IP address of the machine running the service.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.connect(('8.8.8.8', 80))
+        s.connect(('8.8.8.8', port))
         return s.getsockname()[0]
 
 def stop_service():
+    """Stop service."""
     # Get all running processes
     for proc in psutil.process_iter():
         try:
@@ -50,8 +75,18 @@ def stop_service():
                 process.kill()
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
+    # Service End
+    print("Neural Solution Service Stopped!")
 
 def check_port_free(port):
+    """Check if the port is free.
+
+    Args:
+        port (int): port number.
+
+    Returns:
+        bool : the free state of the port.
+    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = False
     try:
@@ -63,124 +98,137 @@ def check_port_free(port):
     sock.close()
     return result
 
-def serve(args):
+def start_service(args):
+    """Start service.
 
-    if args.action == "start":
-        # Check ports
-        ports_flag = 0
-        for port in [args.restful_api_port, args.task_monitor_port, args.result_monitor_port]:
-            # Check if the port is occupied
-            if not check_port_free(port):
-                print(f"Port {port} is in use!")
-                ports_flag += 1
-        if ports_flag > 0:
-            print("Please replace the occupied port!")
-            sys.exit(1)
-        # Check completed
-
-        # Check conda environment
-        if not args.conda_env:
-            conda_env = os.environ.get("CONDA_DEFAULT_ENV")
-            if not conda_env:
-                print("No environment specified or conda environment activated !!!")
-                sys.exit(1)
-            else:
-                print(f"No environment specified, use environment activated:" + \
-                    f" ({conda_env}) as the task runtime environment.")
-                conda_env_name = conda_env
-        else:
-            conda_env_name = args.conda_env
-        # Check completed
-
-        serve_log_dir = f"{args.workspace}/serve_log"
-        os.makedirs(serve_log_dir, exist_ok=True)
-        date_time = datetime.now()
-        date_suffix = "_" + date_time.strftime("%Y%m%d-%H%M%S")
-        date_suffix = ""
-        with open(f"{serve_log_dir}/backend{date_suffix}.log", "w") as f:
-            subprocess.Popen([
-                "python", "-m", "neural_solution.backend.runner",
-                "--hostfile", str(args.hostfile),
-                "--task_monitor_port", str(args.task_monitor_port),
-                "--result_monitor_port", str(args.result_monitor_port),
-                "--workspace", str(args.workspace),
-                "--conda_env_name", str(conda_env_name),
-                "--upload_path", str(args.upload_path)
-            ], stdout=f, stderr=subprocess.STDOUT)
-        with open(f"{serve_log_dir}/frontend{date_suffix}.log", "w") as f:
-            subprocess.Popen([
-                "python", "-m", "neural_solution.frontend.fastapi.main_server",
-                "--host", "0.0.0.0",
-                "--fastapi_port", str(args.restful_api_port),
-                "--task_monitor_port", str(args.task_monitor_port),
-                "--result_monitor_port", str(args.result_monitor_port),
-                "--workspace", str(args.workspace)
-            ], stdout=f, stderr=subprocess.STDOUT)
-        with open(f"{serve_log_dir}/frontend_grpc.log", "w") as f:
-            subprocess.Popen([
-                "python", "-m", "neural_solution.frontend.gRPC.server",
-                "--grpc_api_port", str(args.grpc_api_port),
-                "--task_monitor_port", str(args.task_monitor_port),
-                "--result_monitor_port", str(args.result_monitor_port),
-                "--workspace", str(args.workspace)
-            ], stdout=f, stderr=subprocess.STDOUT)
-        ip_address = get_local_service_ip(80)
-
-        # Check if the service is started
-        # Set the maximum waiting time to 3 senconds
-        timeout = 3
-        # Start time
-        start_time = time.time()
-        while True:
-            # Check if the ports are in use
-            if check_port_free(args.task_monitor_port) and check_port_free(args.result_monitor_port) \
-                and check_port_free(args.restful_api_port):
-                # If the ports are not in use, wait for a second and check again
-                time.sleep(0.5)
-                # Check if timed out
-                current_time = time.time()
-                elapsed_time = current_time - start_time
-                if elapsed_time >= timeout:
-                    # If timed out, break the loop
-                    print("Timeout!")
-                    break
-
-                # Continue to wait for the ports to be in use
-                continue
-
-            break
-        ports_flag = 0
-        fail_msg = "Neural Solution START FAIL!"
-        for port in [args.task_monitor_port, args.result_monitor_port]:
-            if not check_port_free(port):
-                ports_flag += 1
-
-        # Check if the serve port is occupied
-        if check_port_free(args.restful_api_port):
+    Args:
+        args (argparse.Namespace): parameters.
+    """
+    # Check ports
+    ports_flag = 0
+    for port in [args.restful_api_port, args.task_monitor_port, args.result_monitor_port]:
+        # Check if the port is occupied
+        if not check_port_free(port):
+            print(f"Port {port} is in use!")
             ports_flag += 1
-        else:
-            fail_msg = f"{fail_msg}\nPlease check frontend serve log!"
+    if ports_flag > 0:
+        print("Please replace the occupied port!")
+        sys.exit(1)
+    # Check completed
 
-        if ports_flag < 2:
-            fail_msg = f"{fail_msg}\nPlease check backend serve log!"
-
-        if ports_flag < 3:
-            print(fail_msg)
+    # Check conda environment
+    if not args.conda_env:
+        conda_env = os.environ.get("CONDA_DEFAULT_ENV")
+        if not conda_env:
+            print("No environment specified or conda environment activated !!!")
             sys.exit(1)
-        # Check completed
+        else:
+            print(f"No environment specified, use environment activated:" + \
+                f" ({conda_env}) as the task runtime environment.")
+            conda_env_name = conda_env
+    else:
+        conda_env_name = args.conda_env
+    # Check completed
 
-        print("Neural Solution Service Started!")
-        print(f"Service log saving path is in \"{os.path.abspath(serve_log_dir)}\"")
-        print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
-        print("[For information] neural_solution help")
+    serve_log_dir = f"{args.workspace}/serve_log"
+    os.makedirs(serve_log_dir, exist_ok=True)
+    date_time = datetime.now()
+    date_suffix = "_" + date_time.strftime("%Y%m%d-%H%M%S")
+    date_suffix = ""
+    with open(f"{serve_log_dir}/backend{date_suffix}.log", "w") as f:
+        subprocess.Popen([
+            "python", "-m", "neural_solution.backend.runner",
+            "--hostfile", str(args.hostfile),
+            "--task_monitor_port", str(args.task_monitor_port),
+            "--result_monitor_port", str(args.result_monitor_port),
+            "--workspace", str(args.workspace),
+            "--conda_env_name", str(conda_env_name),
+            "--upload_path", str(args.upload_path)
+        ], stdout=f, stderr=subprocess.STDOUT)
+    with open(f"{serve_log_dir}/frontend{date_suffix}.log", "w") as f:
+        subprocess.Popen([
+            "python", "-m", "neural_solution.frontend.fastapi.main_server",
+            "--host", "0.0.0.0",
+            "--fastapi_port", str(args.restful_api_port),
+            "--task_monitor_port", str(args.task_monitor_port),
+            "--result_monitor_port", str(args.result_monitor_port),
+            "--workspace", str(args.workspace)
+        ], stdout=f, stderr=subprocess.STDOUT)
+    with open(f"{serve_log_dir}/frontend_grpc.log", "w") as f:
+        subprocess.Popen([
+            "python", "-m", "neural_solution.frontend.gRPC.server",
+            "--grpc_api_port", str(args.grpc_api_port),
+            "--task_monitor_port", str(args.task_monitor_port),
+            "--result_monitor_port", str(args.result_monitor_port),
+            "--workspace", str(args.workspace)
+        ], stdout=f, stderr=subprocess.STDOUT)
+    ip_address = get_local_service_ip(80)
 
-    elif args.action == "stop":
-        # kill the remaining processes
-        stop_service()
-        # Service End
-        print("Neural Solution Service Stopped!")
+    # Check if the service is started
+    # Set the maximum waiting time to 3 senconds
+    timeout = 3
+    # Start time
+    start_time = time.time()
+    while True:
+        # Check if the ports are in use
+        if check_port_free(args.task_monitor_port) and check_port_free(args.result_monitor_port) \
+            and check_port_free(args.restful_api_port):
+            # If the ports are not in use, wait for a second and check again
+            time.sleep(0.5)
+            # Check if timed out
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+            if elapsed_time >= timeout:
+                # If timed out, break the loop
+                print("Timeout!")
+                break
+
+            # Continue to wait for the ports to be in use
+            continue
+
+        break
+    ports_flag = 0
+    fail_msg = "Neural Solution START FAIL!"
+    for port in [args.task_monitor_port, args.result_monitor_port]:
+        if not check_port_free(port):
+            ports_flag += 1
+
+    # Check if the serve port is occupied
+    if check_port_free(args.restful_api_port):
+        ports_flag += 1
+    else:
+        fail_msg = f"{fail_msg}\nPlease check frontend serve log!"
+
+    if ports_flag < 2:
+        fail_msg = f"{fail_msg}\nPlease check backend serve log!"
+
+    if ports_flag < 3:
+        print(fail_msg)
+        sys.exit(1)
+    # Check completed
+
+    print("Neural Solution Service Started!")
+    print(f"Service log saving path is in \"{os.path.abspath(serve_log_dir)}\"")
+    print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
+    print("[For information] neural_solution help")
+
+def help_service():
+    """Help Service."""
+    print("\n *** usage: neural_solution {start|stop} ***")
+    print("     start      : start serve")
+    print("     stop       : stop serve\n")
+    print("  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]")
+    print('    --hostfile           : start backend serve host file which contains all available nodes')
+    print('    --restful_api_port   : start web serve with {restful_api_port}, default 8000')
+    print('    --grpc_api_port   : start web serve with {grpc_api_port}, default 8001')
+    print('    --api_type           : start web serve with all/grpc/restful, default all')
+    print('    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, default 2222')
+    print('    --workspace          : neural solution workspace, default "./ns_workspace"')
+    print('    --conda_env          : specify the running environment for the task"')
+    print('    --upload_path        : specify the file path for the tasks')
 
 def main():
+    """main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
     parser.add_argument('action', choices=['start', 'stop', 'help'], help='Action to perform')
     parser.add_argument("--hostfile", default=None,
@@ -201,25 +249,15 @@ def main():
     parser.add_argument("--upload_path", default="examples", help="specify the file path for the tasks")
     args = parser.parse_args()
 
-    check_port(args.restful_api_port)
-    check_port(args.grpc_api_port)
-    check_port(args.result_monitor_port)
-    check_port(args.task_monitor_port)
+    # Check parameters ending in '_port'
+    check_ports(args)
 
-    if args.action == 'start' or args.action == 'stop' :
-        serve(args=args)
+    if args.action == 'start':
+        start_service(args)
+    elif args.action == 'stop':
+        stop_service()
     elif args.action == 'help':
-        print("\n *** usage: neural_solution {start|stop} ***")
-        print("     start      : start serve")
-        print("     stop       : stop serve\n")
-        print("  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]")
-        print('    --hostfile           : start backend serve host file which contains all available nodes')
-        print('    --restful_api_port   : start web serve with {restful_api_port}, default 8000')
-        print('    --api_type           : start web serve with all/grpc/restful, default all')
-        print('    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, default 2222')
-        print('    --workspace          : neural solution workspace, default "./ns_workspace"')
-        print('    --conda_env          : specify the running environment for the task"')
-        print('    --upload_path        : specify the file path for the tasks')
+        help_service()
         
 if __name__ == '__main__':
     main()
