@@ -1,15 +1,110 @@
-# Distributed version of the tf_example1
 
-## Requirements
-1. dataset/
-2. model/
-3. run.py
+## An end-to-end example: quantize a custom model with Neural Solution
 
-## Reference
-(https://github.com/intel/neural-compressor/tree/master/examples/helloworld/tf_example1)
-## Run
-### Run Command
+In this example, we show how to distributed quantize a custom model with Neural Solution. Unlike normal quantization, it is necessary to set workers greater than 1 when submitting a request. Reference [source code](https://github.com/intel/neural-compressor/tree/master/examples/helloworld/tf_example1).
+### Objective
+- Demonstrate how to prepare requirements.
+- Demonstrate how to start the Neural Solution Service.
+- Demonstrate how to prepare an optimization task request and submit it to Neural Solution Service.
+- Demonstrate how to query the status of the task and fetch the optimization result.
+
+### Requirements
+Customizing the model requires preparing the following folders and files.
+1. dataset/, place dataset
+2. model/, place model weights and configuration files
+3. run.py, running python scripts
+
+
+### Start the Neural Solution Service
 
 ```shell
-mpirun -np 3 -host localhost,localhost,localhost -map-by socket:pe=5 -mca btl_tcp_if_include 192.168.20.0/24 \
--x OMP_NUM_THREADS=5 --report-bindings python test.py --dataset_location=dataset --model_path=model
+# Activate your environment
+conda activate ENV
+
+# Start neural solution service with default configuration, log will be saved in the "serve_log" folder.
+neural_solution start
+
+# Start neural solution service with custom configuration
+neural_solution start --task_monitor_port=22222 --result_monitor_port=33333 --restful_api_port=8001
+
+# Stop neural solution service with default configuration
+neural_solution stop
+
+# Help Manual
+neural_solution help
+# Help output
+
+ *** usage: neural_solution {start|stop} ***
+     start      : start serve
+     stop       : stop serve
+
+  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]
+    --hostfile           : start backend serve host file which contains all available nodes
+    --restful_api_port   : start web serve with {restful_api_port}, default 8000
+    --api_type           : start web serve with all/grpc/restful, default all
+    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, default 2222
+    --workspace          : neural solution workspace, default "./ns_workspace"
+    --conda_env          : specify the running environment for the task"
+    --upload_path        : specify the file path for the tasks
+```
+
+
+### Submit optimization task
+
+- Step 1: Prepare the json file includes request content. In this example, we have created request that quantize a [Text classification model](https://github.com/huggingface/transformers/tree/v4.21-release/examples/pytorch/text-classification) from Hugging Face.
+
+```shell
+[user@server tf_example1_dis]$ cd path/to/neural_solution/neural_solution/examples/custom_models_optimized/tf_example1_dis
+[user@server tf_example1_dis]$ cat task_request.json
+{
+    "script_url": "tf_example1_dis",
+    "optimized": "True",
+    "arguments": [
+        "--dataset_location=dataset --model_path=model"
+    ],
+    "approach": "static",
+    "requirements": [
+    ],
+    "workers": 3
+}
+```
+
+
+- Step 2: Submit the task request to service, and it will return the submit status and task id for future use.
+
+```shell
+[user@server tf_example1_dis]$ curl -H "Content-Type: application/json" --data @./task.json  http://localhost:8000/task/submit/
+
+# response if submit successfully
+{
+    "status": "successfully",
+    "task_id": "7602cd63d4c849e7a686a8165a77f69d",
+    "msg": "Task submitted successfully"
+}
+```
+
+
+
+### Query optimization result
+
+- Query the task status and result according to the `task_id`.
+
+``` shell
+[user@server tf_example1_dis]$ curl  -X GET  http://localhost:8000/task/status/{task_id}
+# return the task status
+{
+    "status": "done",
+    "tuning_info": {},
+    "optimization_result": {
+        "optimization time (seconds)": "151.16",
+        "Accuracy": "0.8617",
+        "Duration (seconds)": "17.8213",
+        "result_path": "/path/to/projects/neural_solution/ns_workspace/task_workspace/7602cd63d4c849e7a686a8165a77f69d/q_model_path"
+    }
+}
+
+```
+### Stop the serve
+```shell
+neural_solution stop
+```
