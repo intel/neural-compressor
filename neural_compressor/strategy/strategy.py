@@ -417,6 +417,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             self.model = self.algo_scheduler('pre_quantization') # pylint: disable=E1102
             # quantize
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            # start diagnosis if needed
+            if self.config.diagnosis:
+                self._diagnosis(tune_cfg)
             assert self.adaptor.pre_optimized_model
             # set the parameter for post quantization algos and run
             self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg,\
@@ -872,10 +875,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             algo_scheduler.append_algorithm('post_quantization', w_algo)
             logger.debug(f"Add weight correction as the post quantization algo.")
 
-            # evaluate the baseline for diagnosis
-            if self.config.diagnosis:
-                logger.debug(f'*** Start to do diagnosis.')
-                self._diagnosis()
     def _remove_redundant_qmodel(self):
         """Remove the redundant quantized model to reduce memory use.
 
@@ -1704,7 +1703,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 ops_lst.append(op_info)
         return ops_lst
 
-    def _diagnosis(self):
+    def _diagnosis(self, tune_cfg):
         """Dump diagnosis information."""
         import logging
         logger = logging.getLogger("neural_compressor")
@@ -1717,9 +1716,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         save_to_disk = True
         save_path = os.path.join(options.workspace, 'inspect_saved')
         inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(
-            self._fp32_model,
+            self.model,
             self.last_qmodel,
-            self.tune_cfg,
+            tune_cfg,
             save_path=save_path,
         )
         op_list = []
@@ -1729,7 +1728,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             op_list = list(set(op_list).intersection(inspect_node_lst))
 
         logger.debug(f'*** Start to inspect tensor :{op_list} in  fp32 model.')
-        self.adaptor.inspect_tensor(self._fp32_model,
+        self.adaptor.inspect_tensor(self.model,
                                     dataloader=self.calib_dataloader,
                                     op_list=op_list,
                                     iteration_list=iteration_list,
