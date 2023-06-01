@@ -72,4 +72,4 @@ model = model_slim(model)
 
 ## Run Examples
 
-We have provided BERT-Base examples for both and feed forward networks and multi-head attention modules to explicit our slim potential and obtain best accelration performance. Please follow this(../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/). More examples related to popular large language models will be included right away.
+We have provided BERT-Base examples for both and feed forward networks and multi-head attention modules to explicit our slim potential and obtain best acceleration performance. Please follow this(../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/). More examples related to popular large language models will be included right away.
