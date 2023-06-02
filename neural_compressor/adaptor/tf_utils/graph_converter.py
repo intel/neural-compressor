@@ -390,6 +390,7 @@ class GraphConverter:
         post_hostconst_graph_def = PostHostConstConverter(post_cse_graph_def).do_transformation()
         post_hostconst_graph_def.library.CopyFrom(self.model.graph_def.library)
         model.graph_def = post_hostconst_graph_def
+
         if debug:
             model.save(self.output_graph)
             logger.info("Save converted graph file to {}.".format(self.output_graph))

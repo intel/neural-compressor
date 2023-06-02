@@ -22,6 +22,13 @@ def build_fake_yaml():
           accuracy:
             metric:
               topk: 1
+        quantization:
+          model_wise:
+            weight:
+                granularity: per_tensor
+                scheme: sym
+                dtype: int8
+                algorithm: minmax
         tuning:
             strategy:
               name: basic
