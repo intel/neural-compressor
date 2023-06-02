@@ -6,7 +6,7 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 
 - Efficiency: Neural Solution accelerates the optimization process by seamlessly parallelizing the tuning across multiple nodes.
 - APIs Support: Neural Solution supports both RESTful and gRPC APIs, enabling users to conveniently submit optimization tasks.
-- Code Less: When working with Hugging Face models, Neural Solution seamlessly integrates the functionality of the [Neural Coder](), eliminating the need for any code modifications during the optimization process.
+- Code Less: When working with Hugging Face models, Neural Solution seamlessly integrates the functionality of the [Neural Coder](https://github.com/intel/neural-compressor/tree/master/neural_coder), eliminating the need for any code modifications during the optimization process.
 
 # How does Nueral Solution Work?
 ![NS-OaaS-Intro](./docs/source/imgs/NS-OaaS-Intro.png)
@@ -31,12 +31,16 @@ pip install neural-solution
 ```shell
 # get source code
 git clone https://github.com/intel/neural-compressor
-# install dependencies
-pip install -r neural_solution/requirements.txt
+cd neural-compressor
+
+# install neural compressor
+pip install -r requirements.txt
+python setup.py install
+
 # install neural solution
+pip install -r neural_solution/requirements.txt
 python setup.py neural_solution install
 ```
-
 
 ## End-to-end examples
 - [Quantizing a Hugging Face model](./examples/hf_models/README.md)
