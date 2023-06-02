@@ -270,13 +270,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>OPT</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">pb</a></td>
+    <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">pb (smooth quant)</a></td>
   </tr>
   <tr>
     <td>GPT2</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">pb</a></td>
+    <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">pb (smooth quant)</a></td>
   </tr>
 </tbody>
 </table>
