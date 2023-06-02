@@ -133,6 +133,62 @@ def get_sparsity_ratio(pruners, model):
 
     return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
+def get_sparsity_ratio_tf(pruners, model):
+    """Calculate sparsity ratio of a module/layer.
+
+    Returns:
+        Three floats.
+        elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+        elementwise_over_all refers to zero elements' ratio in all layers in the model.
+        blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+    """
+    pattern_sparsity_cnt = 0
+    element_sparsity_cnt = 0
+    if hasattr(model, 'model'):
+        model = model.model
+    for pruner in pruners:
+        modules = pruner.modules
+        sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+        cnt = 0
+        for key in modules.keys():
+            cnt += np.array(modules[key].get_weights).size
+        pattern_sparsity_cnt += int(cnt * sparsity_ratio)
+        for key in pruner.masks.keys():
+            block_num = 1 
+            if pruner.pattern.block:
+                block_size = pruner.pattern.block_size[key]
+                block_num = block_size[0] * block_size[1]
+            element_sparsity_cnt += pruner.masks[key].count(0) * block_num
+
+    linear_conv_cnt = 0
+    param_cnt = 0
+    for layer in model.layers:
+        if layer.__class.__name__ in ["Dense"] or re.search(r'Conv.d', layer.__class.__name__) != None:
+            linear_conv_cnt += np.array(layer.get_weights).size
+
+    for layer in model.layers:
+        if bool(layer.weights):
+            weights = np.array(layer.get_weights())   
+            param_cnt += weights.size
+    if linear_conv_cnt == 0:
+        blockwise_over_matmul_gemm_conv = 0
+        elementwise_over_matmul_gemm_conv = 0
+    else:
+        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+    if param_cnt == 0:
+        elementwise_over_all = 0
+    else:
+        elementwise_over_all = float(
+            element_sparsity_cnt) / param_cnt
+
+    logger.info(
+        f"elementwise_over_matmul_gemm_conv:{elementwise_over_matmul_gemm_conv},"
+        f" elementwise_over_all:{elementwise_over_all},"
+        f"blockwise_over_matmul_gemm_conv:{blockwise_over_matmul_gemm_conv}")
+
+    return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
+
 def check_config(prune_config):
     """Check if the configuration dict is valid for running Pruning object.
 
@@ -484,8 +540,8 @@ def parse_to_prune_tf(config, model):
         config["op_names"] = [".*"]
 
     for layer in model.layers:
-        if layer.__class__.__name__ in config["pruning_op_types"] and hasattr(module, "weight"):
-            modules[name] = module
+        if layer.__class__.__name__ in config["pruning_op_types"] and bool(layer.weights):
+            modules[name] = layer
 
     ##remove not to prune layers
     """Drop non-pruned layers."""
@@ -516,57 +572,3 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
-
-class PrunedDense(tf.keras.layers.Dense):
-    def __init__(self,
-                 units,
-                 activation=None,
-                 use_bias=True,
-                 kernel_initializer='glorot_uniform',
-                 bias_initializer='zeros',
-                 kernel_regularizer=None,
-                 bias_regularizer=None,
-                 activity_regularizer=None,
-                 kernel_constraint=None,
-                 bias_constraint=None,
-                 min_value=-10000,
-                 max_value=10000,
-                 **kwargs):
-      super(PrunedDense, self).__init__(
-                          units=units,
-                          activation=activation,
-                          use_bias=use_bias,
-                          kernel_initializer=kernel_initializer,
-                          bias_initializer=bias_initializer,
-                          kernel_regularizer=kernel_regularizer,
-                          bias_regularizer=bias_regularizer,
-                          activity_regularizer=activity_regularizer,
-                          kernel_constraint=kernel_constraint,
-                          bias_constraint=bias_constraint,
-                          **kwargs)
-    
-    def build(self, input_shape):
-        # Register the custom parameter block_mask
-        self.block_mask = self.add_weight(
-            name="block_mask",
-            shape=(self.units, self.custom_param_units),
-            initializer="random_normal",
-            trainable=True
-        )
-        super(PrunedDense, self).build(input_shape)
-
-    def call(self, inputs):
-        block_size = [self.kernel.shape[0]//self.block_mask.shape[0], \
-                        self.kernel.shape[1]//self.block_mask.shape[1]]
-
-        mask = tf.repeat(self.block_mask, repeats=block_size[0], axis=0)
-        mask = tf.repeat(self.block_mask, repeats=block_size[1], axis=-1)
-
-        self.kernel = tf.keras.backend.dot(self.kernel, mask)
-        outputs = tf.keras.backend.dot(inputs, self.kernel)
-
-        if self.use_bias:
-            outputs = tf.keras.backend.bias_add(outputs, self.bias)
-        if self.activation is not None:
-            outputs = self.activation(outputs)
-        return outputs

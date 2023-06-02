@@ -236,7 +236,7 @@ class Model(object):
                             model = MODELS['tensorflow'](model_type, root, **kwargs)
                 else:
                     model = MODELS[conf.framework](root, **kwargs)
-                if 'tensorflow' in conf.framework:
+                if 'tensorflow' in conf.framework and hasattr(conf, 'model_name'):
                     model.name = conf.model_name
                     model.output_tensor_names = conf.outputs
                     model.input_tensor_names = conf.inputs

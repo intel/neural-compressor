@@ -152,7 +152,7 @@ class BasePruner:
             for key in self.modules.keys():
                 module = self.modules[key]
                 self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)  ##TODO support bias or others
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
                 self.masks[key] = np.ones(module.get_weights().shape)
@@ -179,7 +179,7 @@ class BasePruner:
                 for key in self.modules.keys():
                     module = self.modules[key]
                     module.weight.data = module.weight.data * self.masks[key]
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
                 module.set_weights(np.array(module.get_weights()) * self.masks[key])
@@ -193,11 +193,11 @@ class BasePruner:
             input_masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
         """
         if self.framework == 'pytorch':
-        with torch.no_grad():
-            for key in self.modules.keys():
-                module = self.modules[key]
-                module.weight.data = module.weight.data * input_masks[key]
-        elif self.framework == 'tensorflow':
+            with torch.no_grad():
+                for key in self.modules.keys():
+                    module = self.modules[key]
+                    module.weight.data = module.weight.data * input_masks[key]
+        elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
                 module.set_weights(np.array(module.get_weights()) * input_masks[key])
@@ -266,7 +266,7 @@ class BasePruner:
 
     def rewrite_forward(self):
         """Rewrite forward to implement block mask operation"""
-        assert self.framework != 'tensorflow', "This pruning method is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning method is not supported by Keras now."
         def forward(self, input):
             block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
                     self.weight.shape[1]//self.block_mask.shape[1]]
@@ -282,7 +282,7 @@ class BasePruner:
 
     def recover_forward(self):
         """Restore the forward format at the end of pruning"""
-        assert self.framework != 'tensorflow', "This pruning method is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning method is not supported by Keras now."
         with torch.no_grad():
             for key in self.modules.keys():
                 if not hasattr(self.modules[key], 'block_mask'):

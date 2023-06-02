@@ -389,8 +389,8 @@ def train(model, adaptor, compression_manager, train_dataloader):
                             train_dataloader, \
                             adaptor, \
                             train_cfg, \
-                            hooks=compression_manager.callbacks.callbacks.hooks, \
-                            callbacks=compression_manager.callbacks.callbacks.callbacks)
+                            hooks=compression_manager.callbacks.callbacks_list[0].hooks, \
+                            callbacks=compression_manager.callbacks.callbacks_list[0])
     train_func(model)
 
 
@@ -425,6 +425,7 @@ if __name__ == '__main__':
         adaptor = FRAMEWORKS['tensorflow'](framework_specific_info)
 
         configs = WeightPruningConfig(
+            backend='itex',
             pruning_type='magnitude',
             target_sparsity=0.25,
             start_step=FLAGS.start_epoch,

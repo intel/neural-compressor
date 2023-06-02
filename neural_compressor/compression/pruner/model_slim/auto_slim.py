@@ -16,8 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # model slim related
-from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASearcher
-from .weight_slim import LinearCompressionIterator, MHACompression
+
 from ..utils import logger
 
 def model_slim(model, dataloader=None, round_multiplier=32):
@@ -39,6 +38,8 @@ def model_slim_ffn2(model, dataloader = None, round_multiplier=32):
         model: a sprase model.
         round_multiplier(int): the channel number after slimming should be multiple of this number.
     """
+    from .pattern_analyzer import Linear2LinearSearcher
+    from .weight_slim import LinearCompressionIterator
     logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
     pa_obj = Linear2LinearSearcher(model, dataloader)
     layers = pa_obj.search()
@@ -53,6 +54,8 @@ def model_slim_mha(model, dataloader = None):
     Args:
         model: a sprase model.
     """
+    from .weight_slim import MHACompression
+    from .pattern_analyzer import RecipeSearcher
     logger.warning(f"You are using model slim methods, some attention heads will be removed permanently.")
     recipe = {'BertLayer': ["attention"]}
     searcher = RecipeSearcher(model, recipe)
@@ -99,6 +102,7 @@ def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
 
 def generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs):
     """Get multi-head attention layers pruning configs."""
+    from .pattern_analyzer import SelfMHASearcher
     searcher = SelfMHASearcher(model, dataloader)
     qkv_pattern, ffn_pattern = searcher.get_head_pattern()
     qkv_layers, ffn_layers = searcher.search()

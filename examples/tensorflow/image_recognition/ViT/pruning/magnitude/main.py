@@ -83,7 +83,7 @@ def train(model, adaptor, compression_manager, train_dataloader):
         'epoch': 15,
         'start_epoch': 0,
         'execution_mode': 'eager', 
-        'criterion': {'CrossEntropyLoss:': {'reduction': 'sum_over_batch_size', 'from_logits': True}}, 
+        'criterion': {'CrossEntropyLoss': {'reduction': 'sum_over_batch_size', 'from_logits': True}}, 
         'optimizer': {'AdamW': {'learning_rate': 1e-03, 'weight_decay': 1e-04}}, 
     }
     train_cfg = DotDict(train_cfg)
@@ -91,8 +91,8 @@ def train(model, adaptor, compression_manager, train_dataloader):
                             train_dataloader, \
                             adaptor, \
                             train_cfg, \
-                            hooks=compression_manager.callbacks.callbacks.hooks, \
-                            callbacks=compression_manager.callbacks.callbacks.callbacks)
+                            hooks=compression_manager.callbacks.callbacks_list[0].hooks, \
+                            callbacks=compression_manager.callbacks.callbacks_list[0])
     train_func(model)
 
 def evaluate(model, adaptor, eval_dataloader):
@@ -125,6 +125,7 @@ if __name__ == '__main__':
     adaptor = FRAMEWORKS['tensorflow'](framework_specific_info)
 
     configs = WeightPruningConfig(
+        backend='itex',
         pruning_type='magnitude',
         target_sparsity=0.7,
         start_step=FLAGS.start_epoch,

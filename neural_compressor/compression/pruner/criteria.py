@@ -100,7 +100,7 @@ class MagnitudeCriterion(PruningCriterion):
                 for key in self.modules.keys():
                     p = self.modules[key].weight.data
                     self.scores[key] = torch.abs(p)
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in self.modules.keys():
                 p = self.modules[key].get_weights()
                 self.scores[key] = np.abs(p)
@@ -127,7 +127,7 @@ class GradientCriterion(PruningCriterion):
 
     def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on gradient criterion."""
-        assert self.framework != 'tensorflow', "This pruning criterion is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning criterion is not supported by Keras now."
         with torch.no_grad():
             for key in self.modules.keys():
                 p = self.modules[key].weight
@@ -159,7 +159,7 @@ class SnipCriterion(PruningCriterion):
     def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip criterion."""
         ##self.mask_weights()
-        assert self.framework != 'tensorflow', "This pruning criterion is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning criterion is not supported by Keras now."
         with torch.no_grad():
             for key in self.modules.keys():
                 p = self.modules[key].weight
@@ -187,7 +187,7 @@ class SnipMomentumCriterion(PruningCriterion):
     def __init__(self, modules, config, framework='pytorch'):
         """Initiliaze a snip_momentum pruning criterion."""
         super(SnipMomentumCriterion, self).__init__(modules, config, framework)
-        assert self.framework != 'tensorflow', "This pruning criterion is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning criterion is not supported by Keras now."
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in modules.keys():
             p = modules[key].weight
@@ -225,7 +225,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
     def __init__(self, modules, config, framework='pytorch'):
         """Initiliaze a block_mask pruning criterion."""
         super(SnipMomentumBlockCriterion, self).__init__(modules, config, framework)
-        assert self.framework != 'tensorflow', "This pruning criterion is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning criterion is not supported by Keras now."
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in self.modules.keys():
             if not hasattr(self.modules[key], 'block_mask'):
@@ -265,7 +265,7 @@ class RetrainFreeCriterion(PruningCriterion):
     def __init__(self, modules, config, framework='pytorch'):
         """Initiliaze a block_mask pruning criterion."""
         super(RetrainFreeCriterion, self).__init__(modules, config, framework)
-        assert self.framework != 'tensorflow', "This pruning criterion is not supported by TensorFlow now."
+        assert self.framework != 'keras', "This pruning criterion is not supported by Keras now."
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         self.collected_grads = {}
         for key in self.modules.keys():

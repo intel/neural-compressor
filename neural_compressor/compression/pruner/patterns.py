@@ -351,17 +351,17 @@ class BasePattern:
         if name == "mean":
             if self.framework == 'pytorch':
                 return torch.mean(data, dim=dim)
-            elif self.framework == 'tensorflow':
+            elif self.framework == 'keras':
                 return tf.math.reduce_mean(data, dim)
         elif name == "sum":
             if self.framework == 'pytorch':
                 return torch.sum(data, dim=dim)
-            elif self.framework == 'tensorflow':
+            elif self.framework == 'keras':
                 return tf.math.reduce_sum(data, dim)
         elif name == "max":
             if self.framework == 'pytorch':
                 return torch.max(data, dim=dim)[0]
-            elif self.framework == 'tensorflow':
+            elif self.framework == 'keras':
                 return tf.math.reduce_max(data, dim)
         else:
             assert False, "currently only support mean, sum and max reduce type"
@@ -429,7 +429,7 @@ class BasePattern:
                 mask = torch.where(score <= threshold, zero, one)
             else:
                 mask = torch.ones(score.shape, device=score.device)
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             if not k < 1:
                 zero = tf.convert_to_tensor([0.])
                 one = tf.convert_to_tensor([1.])
@@ -469,11 +469,11 @@ class BasePattern:
                 pre_mask = pre_masks[key]
                 zero_cnt += torch.sum(pre_mask == 0.0).data.item()
                 total_cnt += pre_mask.numel()  ##FIXME
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in pre_masks.keys():
                 pre_mask = pre_masks[key]
                 zero_cnt += pre_mask.count(0.0)
-                total_cnt += pre_mask.size()  ##FIXME
+                total_cnt += pre_mask.size  ##FIXME
         if return_dict:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
@@ -498,13 +498,13 @@ class BasePattern:
                 # progressive masks are unstructured, therefore directly find zeros
                 zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
                 total_cnt += float(pre_masks[key].numel())
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in pre_masks.keys():
                 if key in self.invalid_layers:
                     continue
                 # progressive masks are unstructured, therefore directly find zeros
                 zero_cnt += float(pre_masks[key].count(0))
-                total_cnt += float(pre_masks[key].size())
+                total_cnt += float(pre_masks[key].size)
         return (zero_cnt / total_cnt)
         
     def get_pattern_lock_masks(self, modules):
@@ -525,7 +525,7 @@ class BasePattern:
                 mask = torch.ones(shape)
                 mask[weight == 0] = 0.0
                 pattern_lock_masks[key] = mask.to(weight.device)
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in modules.keys():
                 weight = modules[key].get_weights()
                 shape = weight.shape
@@ -587,13 +587,13 @@ class BasePattern:
                 infos[key] = val
                 zero_cnts += zero_cnt
                 total_cnts += total_cnt
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in masks.keys():
                 if key in self.invalid_layers:
                     continue
                 reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
                 zero_cnt = int(reduced_mask.count(0.0))
-                total_cnt = int(reduced_mask.size())
+                total_cnt = int(reduced_mask.size)
                 sparsity_ratio = float(zero_cnt) / total_cnt
                 val = SparsityInfo(zero_cnt, total_cnt, sparsity_ratio)
                 infos[key] = val
@@ -746,7 +746,7 @@ class PatternNxM(BasePattern):
                 if shape[0] % block_size[0] != 0 or shape[1] % block_size[1] != 0:  ## only consider input channel
                     self.invalid_layers.append(key)
                     logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in datas.keys():
                 data = datas[key].get_weights()
                 data = self._reshape_orig_to_2dims(data)
@@ -795,13 +795,13 @@ class PatternNxM(BasePattern):
                 reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
                 zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
                 total_cnt += int(reduced_mask.numel())
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in pre_masks.keys():
                 if key in self.invalid_layers:
                     continue
                 reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
                 zero_cnt += int(reduced_mask.count(0.0))
-                total_cnt += int(reduced_mask.size())
+                total_cnt += int(reduced_mask.size)
         if total_cnt == 0:
             sparsity_ratio = 0.0
         else:
@@ -907,7 +907,7 @@ class PatternNxM(BasePattern):
             mask = torch.where(score <= threshold, zero, one)
             if not self.block:
                 mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             zero = tf.convert_to_tensor([0.])
             one = tf.convert_to_tensortensor([1.])
             mask = tf.where(score <= threshold, zero, one)
@@ -936,7 +936,7 @@ class PatternNxM(BasePattern):
         """
         if self.framework == 'pytorch':
             return self.get_masks_global_pytorch(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio)
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             return self.get_masks_global_tf(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio)
 
     def get_masks_global_pytorch(self, scores, cur_target_sparsity_ratio, pre_masks,
@@ -1089,7 +1089,7 @@ class PatternNxM(BasePattern):
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
-            layer_ratio = masks[key].count(0.0) / masks[key].size()
+            layer_ratio = masks[key].count(0.0) / masks[key].size
             logger.info(f'{key} sparsity is {layer_ratio}')
         return masks
 
@@ -1114,7 +1114,7 @@ class PatternNxM(BasePattern):
                 reduced_mask = self.get_reduced_masks_from_data(weight, key)
                 mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
                 pattern_lock_masks[key] = mask
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in modules.keys():
                 weight = modules[key].get_weights()
                 ori_shape = weight.shape
@@ -1150,7 +1150,7 @@ class PatternNxM(BasePattern):
                 block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
                 module.register_parameter("block_mask", block_mask)
                 masks[key] = modules[key].block_mask.data
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             # TODO need to use PrunedDense to replace the original Dense layer and set the block_mask
             for key in modules.keys():
                 if key in self.invalid_layers:
@@ -1184,7 +1184,7 @@ class PatternNxM(BasePattern):
                         block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
                 reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
                 module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
-        elif self.framework == 'tensorflow':
+        elif self.framework == 'keras':
             for key in masks.keys():
                 if key in self.invalid_layers:
                     continue
