@@ -15,16 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The basic tuning strategy."""
-import copy
-import numpy as np
+
+from copy import deepcopy
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
-from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .utils.tuning_sampler import BlockFallbackTuningSampler
+from .utils.tuning_sampler import (
+    OpTypeWiseTuningSampler,
+    FallbackTuningSampler,
+    BlockFallbackTuningSampler,
+    LowerBitsSampler)
+
 from .utils.tuning_structs import OpTuningConfig
-from .utils.constant import TUNING_ITEMS_LST
+from .utils.constant import TUNING_ITEMS_LST, PRECISION_LIST, LOWER_BIT_LIST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
@@ -205,6 +209,28 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
 
+    def quant_to_lower_bits(self, initial_op_tuning_cfg, calib_sampling_size):
+        """Quantize ops into lower bits, such as int4.
+
+        Args:
+            initial_op_tuning_cfg: the initial tuning config
+            calib_sampling_size: _description_
+
+        Yields:
+            tuning config
+        """
+        for quant_bit in LOWER_BIT_LIST:
+            logger.info(f"Start to quantize ops into {quant_bit}")
+            ops = self.tuning_space.collect_op_by_quant_bits(quant_bit)
+            op_item_dtype_dict = {op.name: quant_bit for op in ops}
+            lower_bits_sampler = LowerBitsSampler(deepcopy(self.tuning_space), [],
+                                                  initial_op_tuning_cfg, op_item_dtype_dict,
+                                                  accumulate=False, skip_first=True)
+            for tune_cfg in lower_bits_sampler:
+                tune_cfg['calib_sampling_size'] = calib_sampling_size
+                yield tune_cfg
+
+
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
 
@@ -239,6 +265,11 @@ class BasicTuneStrategy(TuneStrategy):
                 if not self.cur_best_tuning_cfg:
                     self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                # try to quantizing ops into lower bits, such as int4,
+                # if accuracy meets the requirements after first trial and max_trials > 1
+                if index == 1 and self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result)):
+                    for op_tuning_cfg in self.quant_to_lower_bits(self.cur_best_tuning_cfg, calib_sampling_size):
+                        yield op_tuning_cfg
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:
                     logger.info("Apply all recipes.")
@@ -250,6 +281,7 @@ class BasicTuneStrategy(TuneStrategy):
                     break
                 yield op_tuning_cfg
 
+            # TODO Add the lower bits quantization here
             # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
             if stage1_cnt == 1 and not self.applied_all_recipes_flag:
                 logger.info("Apply all recipes.")
@@ -279,7 +311,7 @@ class BasicTuneStrategy(TuneStrategy):
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
             # Fallback
-            for target_dtype in ['bf16', 'fp32']:
+            for target_dtype in PRECISION_LIST:
                 target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
                 fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
 

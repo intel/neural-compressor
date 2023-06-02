@@ -102,6 +102,12 @@ class CompressionManager:
                         framework_specific_info.update(
                             {"inputs": conf.inputs,
                              "outputs": conf.outputs})
+                    
+                    # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+                    # for quant_aware_training can be handled in strategy
+                    framework_specific_info['qat_optype_wise'] = conf.op_type_dict
+                    framework_specific_info['qat_op_wise'] = conf.op_name_dict
+
                     self.adaptor = FRAMEWORKS[conf.framework](framework_specific_info)
                     self.adaptor.model = self.model
                     callbacks_list.append(QuantizationAwareTrainingCallbacks(conf, adaptor=self.adaptor))
@@ -133,6 +139,12 @@ class CompressionManager:
                     framework_specific_info.update(
                         {"inputs": confs.inputs,
                          "outputs": confs.outputs})
+                
+                # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+                # for quant_aware_training can be handled in strategy
+                framework_specific_info['qat_optype_wise'] = confs.op_type_dict
+                framework_specific_info['qat_op_wise'] = confs.op_name_dict
+
                 self.adaptor = FRAMEWORKS[confs.framework](framework_specific_info)
                 self.adaptor.model = self.model
                 callbacks_list.append(QuantizationAwareTrainingCallbacks(confs, adaptor=self.adaptor))

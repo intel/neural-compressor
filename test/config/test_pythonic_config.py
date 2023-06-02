@@ -28,7 +28,7 @@ from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
 
 def build_matmul_model():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
-    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [1, 1, 5, 1], np.random.random([1, 1, 5, 1]).reshape(5).tolist())
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
     D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
     H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
@@ -40,7 +40,7 @@ def build_matmul_model():
     f_value = np.random.randint(2, size=(5)).astype(np.float32)
     F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
     add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
-    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
+    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A], [H], [E_init, F_init, B_init])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return  model

@@ -207,7 +207,7 @@ def fit(model,
             if conf.diagnosis:
                 ni_workload_id = register_neural_insights_workload(
                     workload_location=os.path.abspath(options.workspace),
-                    model=_raw_model,
+                    model=wrapped_model,
                     workload_mode="quantization",
                 )
                 if ni_workload_id:

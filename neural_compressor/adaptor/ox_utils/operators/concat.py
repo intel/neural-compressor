@@ -101,9 +101,11 @@ class ConcatOperator(Operator):
     def cast(self): # pragma: no cover
         """Cast node."""
         node = self.node
-        if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
+        cast_tensor = [i.tensor_name for i in self.quantizer.new_value_info.values()]
+        if not all([i in cast_tensor for i in node.input]):
             return
-        self.quantizer.dtype_cast(self.node, self.dtype)
+        self.quantizer.cast_inputs(self.node, self.dtype)
+        self.quantizer.cast_outputs(self.node, self.dtype)
 
 @qop_registry(op_types="QLinearConcat")
 class QConcatOperator(QOperator):

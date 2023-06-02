@@ -527,7 +527,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         logger.info("Start to run Profiling")
         ni_workload_id = register_neural_insights_workload(
             workload_location=os.path.abspath(os.path.abspath(options.workspace)),
-            model=model,
+            model=wrapped_model,
             workload_mode="benchmark",
         )
         try:

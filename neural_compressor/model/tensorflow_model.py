@@ -24,6 +24,7 @@ import importlib
 from abc import abstractmethod
 import tempfile
 import sys
+import json
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
@@ -61,7 +62,12 @@ def get_model_type(model):
             except:
                 pass
     if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
-        return 'keras'
+        if json.loads(model.to_json())["class_name"] in ["Sequential","Functional"]:
+            # Keras adaptor only support Sequential or Functional model
+            return 'keras'
+        else:
+            # otherwise, the backend will fallback to tensorflow_itex
+            return 'AutoTrackable'
     if isinstance(model, tf.Graph):
         return 'graph'
     elif isinstance(model, tf.compat.v1.GraphDef):
@@ -661,6 +667,17 @@ class TensorflowBaseModel(BaseModel):
         self._iter_op = None
         self._workspace_path = ''
         self._q_config = None
+        self._model_path = None if not isinstance(model, str) else model
+
+    @property
+    def model_path(self):
+        """Return model path."""
+        return self._model_path
+
+    @model_path.setter
+    def model_path(self, path):
+        """Set model path."""
+        self._model_path = path
 
     def framework(self):
         """Return framework."""

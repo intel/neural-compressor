@@ -24,7 +24,7 @@ function Histogram({ selectedWorkload, selectedOp, histogramType, setWarningText
   useEffect(() => {
     if (selectedOp.length && histogramType.length) {
       setHistogramData(null);
-      api.post('api/diagnosis/histogram?token=asd', { workload_id: selectedWorkload.uuid, op_name: selectedOp, type: histogramType })
+      api.post('api/diagnosis/histogram?token=' + localStorage.getItem('token'), { workload_id: selectedWorkload.uuid, op_name: selectedOp, type: histogramType })
         .then(
           response => {
             setHistogramData(response.data);

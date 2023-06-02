@@ -99,7 +99,12 @@
   }
   fp16: &common_fp16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
     'EmbedLayerNormalization', 'Attention', 'Split', 'Sigmoid', 'Relu', 'Mul', 'Pad', 'MaxPool',
-    'MatMul', 'LeakyRelu',  'GlobalAveragePool', 'Gemm', 'Conv', 'AveragePool', 'Add', 'Clip']
+    'MatMul', 'LeakyRelu',  'GlobalAveragePool', 'Gemm', 'Conv', 'AveragePool', 'Add', 'Clip',
+    'BatchNormalization', 'Softmax', 'Sum', 'Abs', 'BiasGelu', 'Exp', 'FastGelu',
+    'Gelu', 'Log', 'Round', 'Sigmoid', 'Sqrt', 'Tanh', 'Sub', 'Mul', 'Div', 'Pow',
+    'ReduceMean', 'Equal', 'FusedMatMul', 'Greater', 'GreaterOrEqual', 'Less', 'LessOrEqual',
+    'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceProd',
+    'ReduceSum', 'ReduceSumSquare', 'LayerNormalization', 'Concat']
   bf16: &common_bf16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
     'Split', 'Sigmoid', 'Relu', 'Mul', 'MatMul', 'Gemm', 'Add']
   recipes: &default_optimization

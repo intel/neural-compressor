@@ -18,13 +18,14 @@
 import argparse
 import logging
 import os
+import secrets
 import socket
 import sys
 from typing import Dict
 
+from neural_compressor.utils.utility import singleton
 from numpy.random import randint
 
-from neural_compressor.utils.utility import singleton
 from neural_insights.utils.consts import WORKDIR_LOCATION
 from neural_insights.utils.exceptions import NotFoundException
 from neural_insights.utils.logger import log
@@ -65,7 +66,7 @@ class Configuration:
         self.url_prefix = self.determine_url_prefix(args)
         self.gui_port = self.determine_gui_port(args)
         self.log_level = self.determine_log_level(args)
-        self.token = "asd"  # secrets.token_hex(16)
+        self.token = secrets.token_hex(16)
         self.allow_insecure_connections = args.get("allow_insecure_connections", False)
         self.tls_certificate = args.get("cert", "")
         self.tls_key = args.get("key", "")
@@ -83,7 +84,7 @@ class Configuration:
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
         parser = argparse.ArgumentParser(
-            description="Run Intel(r) Neural Compressor Bench server.",
+            description="Run Neural Insights server.",
         )
         parser.add_argument(
             "-p",
@@ -102,7 +103,7 @@ class Configuration:
             "--url-prefix",
             type=str,
             default="",
-            help="URL prefix for INC Bench instance.",
+            help="URL prefix for Neural Insights instance.",
         )
         parser.add_argument(
             "--allow-insecure-connections",

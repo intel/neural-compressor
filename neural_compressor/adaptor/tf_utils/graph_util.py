@@ -657,7 +657,7 @@ class GraphAnalyzer():
                 self.node_name_details[node_name] = each_node
 
         for node_name, node_details in self.node_name_details.items():
-            # update the upper node's output infomation.
+            # update the upper node's output information.
             for each_input in node_details.node.input:
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(
                     each_input)].outputs.append(node_name)

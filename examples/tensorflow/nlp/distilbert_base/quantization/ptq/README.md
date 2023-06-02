@@ -111,6 +111,23 @@ Where (Default values are shown in the square brackets):
    * $INTRA_THREADS [28]-- The number of intra op parallelism thread to use, which can be set to the number of physical core per socket
 
 
+### Run Smooth Quant to improve int8 accuracy
+
+#### Tuning
+```shell
+bash run_tuning.sh \
+    --input_model=$INPUT_MODEL \
+    --dataset_location=$DATASET_DIR \
+    --output_model=$OUTPUT_MODEL \
+    --batch_size=$BATCH_SIZE \
+    --max_seq_length=$MAX_SEQ \
+    --warmup_steps=$WARMUPS \
+    --num_inter=$INTER_THREADS \
+    --num_intra=$INTRA_THREADS \
+    --sq=True
+```
+
+
 Details of enabling Intel® Neural Compressor on DistilBERT base for TensorFlow
 =========================
 

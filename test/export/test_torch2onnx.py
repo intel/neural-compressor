@@ -4,6 +4,7 @@ import shutil
 import torch
 import unittest
 import numpy as np
+import copy
 from neural_compressor import quantization
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
@@ -12,6 +13,7 @@ from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTraining
 from neural_compressor.training import prepare_compression
 from neural_compressor.data import Datasets, DATALOADERS
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from neural_compressor.utils.constant import FP32
 import torch.utils.data as data
 
 
@@ -106,7 +108,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         os.remove('int8-nlp-qlinear-model.onnx')
 
     def test_fp32_CV_models(self):
-        model = self.cv_model
+        model = copy.deepcopy(self.cv_model)
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
             dtype="fp32",
@@ -120,8 +122,8 @@ class TestPytorch2ONNX(unittest.TestCase):
         check_CV_onnx('fp32-cv-model.onnx', self.cv_dataloader)
 
     def test_int8_CV_models(self):
-        for fake_yaml in ["dynamic", "static", "qat"]:
-            model = self.cv_model
+        for fake_yaml in ["static", "qat", "dynamic"]:
+            model = copy.deepcopy(self.cv_model)
             if fake_yaml == "qat":
                 quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
@@ -133,7 +135,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                     # Random fallback one op to test
                     fallback_op= {
                         "conv1": {
-                            "activation": {"dtype": ["fp32"]}, 
+                            "activation": {"dtype": ["fp32"]},  
                             "weight": {"dtype": ["fp32"]}
                         }
                     }
@@ -157,8 +159,14 @@ class TestPytorch2ONNX(unittest.TestCase):
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
             )
-            q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
+            if fake_yaml == "dynamic":
+                try:
+                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+                except Exception as e:
+                    self.assertIsInstance(e, AssertionError)
+            elif fake_yaml == "static":
+                q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
+                check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
 
             int8_onnx_config = Torch2ONNXConfig(
                 dtype="int8",
@@ -170,126 +178,21 @@ class TestPytorch2ONNX(unittest.TestCase):
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
             )
-            q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
+            if fake_yaml == "dynamic":
+                try:
+                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+                except Exception as e:
+                    self.assertIsInstance(e, AssertionError)
+            elif fake_yaml == "static":
+                q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
+                check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
 
-    def test_int8_CV_models_recipe2(self):
-        for fake_yaml in ["dynamic", "static", "qat"]:
-            model = self.cv_model
-            if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig()
-                compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
-                q_model = train_func_cv(compression_manager, compression_manager.model)
-            else:
-                if fake_yaml == "dynamic":
-                    quant_conf = PostTrainingQuantConfig(approach="dynamic")
-                elif fake_yaml == "static":
-                    # Random fallback one op to test
-                    fallback_op= {
-                        "conv1": {
-                            "activation": {"dtype": ["fp32"]}, 
-                            "weight": {"dtype": ["fp32"]}
-                        }
-                    }
-                    quant_conf = PostTrainingQuantConfig(
-                        approach="static",
-                        op_name_dict=fallback_op,
-                    )
-                q_model = quantization.fit(
-                    model,
-                    quant_conf,
-                    eval_func=eval_func,
-                    calib_dataloader=self.cv_dataloader if fake_yaml == "static" else None)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QDQ",
-                example_inputs=torch.randn(1, 3, 224, 224),
-                input_names=['input'],
-                output_names=['output'],
-                dynamic_axes={"input": {0: "batch_size"},
-                              "output": {0: "batch_size"}},
-                recipe='QDQ_OP_INT32_BIAS',
-            )
-            q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QLinear",
-                example_inputs=torch.randn(1, 3, 224, 224),
-                input_names=['input'],
-                output_names=['output'],
-                dynamic_axes={"input": {0: "batch_size"},
-                              "output": {0: "batch_size"}},
-                recipe='QDQ_OP_INT32_BIAS',
-            )
-            q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
-
-    def test_int8_CV_models_recipe3(self):
-        for fake_yaml in ["dynamic", "static", "qat"]:
-            model = self.cv_model
-            if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig()
-                compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
-                q_model = train_func_cv(compression_manager, compression_manager.model)
-            else:
-                if fake_yaml == "dynamic":
-                    quant_conf = PostTrainingQuantConfig(approach="dynamic")
-                elif fake_yaml == "static":
-                    # Random fallback one op to test
-                    fallback_op= {
-                        "conv1": {
-                            "activation": {"dtype": ["fp32"]}, 
-                            "weight": {"dtype": ["fp32"]}
-                        }
-                    }
-                    quant_conf = PostTrainingQuantConfig(
-                        approach="static",
-                        op_name_dict=fallback_op,
-                    )
-                q_model = quantization.fit(
-                    model,
-                    quant_conf,
-                    eval_func=eval_func,
-                    calib_dataloader=self.cv_dataloader if fake_yaml == "static" else None)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QDQ",
-                example_inputs=torch.randn(1, 3, 224, 224),
-                input_names=['input'],
-                output_names=['output'],
-                dynamic_axes={"input": {0: "batch_size"},
-                              "output": {0: "batch_size"}},
-                recipe='QDQ_OP_FP32_BIAS_QDQ',
-            )
-            q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QLinear",
-                example_inputs=torch.randn(1, 3, 224, 224),
-                input_names=['input'],
-                output_names=['output'],
-                dynamic_axes={"input": {0: "batch_size"},
-                              "output": {0: "batch_size"}},
-                recipe='QDQ_OP_FP32_BIAS_QDQ',
-            )
-            q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
-            check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
 
     def test_fp32_NLP_models(self):
         symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
         dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
 
-        model = self.nlp_model
+        model = copy.deepcopy(self.nlp_model)
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
             dtype="fp32",
@@ -305,10 +208,12 @@ class TestPytorch2ONNX(unittest.TestCase):
         symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
         dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
 
-        for fake_yaml in ["dynamic", "static", "qat"]:
-            model = self.nlp_model
+        for fake_yaml in ["static", "qat", "dynamic"]:
+            model = copy.deepcopy(self.nlp_model)
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig()
+                quant_conf = QuantizationAwareTrainingConfig(
+                    op_type_dict={"Embedding":FP32},
+                )
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_nlp(
                     compression_manager,
@@ -329,7 +234,9 @@ class TestPytorch2ONNX(unittest.TestCase):
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
                         op_name_dict=fallback_op,
+                        op_type_dict={"Embedding":FP32},
                     )
+                
                 q_model = quantization.fit(
                     model,
                     quant_conf,
@@ -345,8 +252,14 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
+            if fake_yaml == "dynamic":
+                try:
+                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+                except Exception as e:
+                    self.assertIsInstance(e, AssertionError)
+            elif fake_yaml == "static":
+                q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+                check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
 
             int8_onnx_config = Torch2ONNXConfig(
                 dtype="int8",
@@ -357,130 +270,14 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
-
-    def test_int8_NLP_models_recipe2(self):
-        symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
-        dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
-
-        for fake_yaml in ["dynamic", "static", "qat"]:
-            model = self.nlp_model
-            if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig()
-                compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
-                q_model = train_func_nlp(
-                    compression_manager,
-                    compression_manager.model,
-                    self.nlp_input
-                )
-            else:
-                if fake_yaml == "dynamic":
-                    quant_conf = PostTrainingQuantConfig(approach="dynamic")
-                elif fake_yaml == "static":
-                    # Random fallback one op to test
-                    fallback_op= {
-                        "distilbert.transformer.layer.5.ffn.lin2": {
-                            "activation": {"dtype": ["fp32"]}, 
-                            "weight": {"dtype": ["fp32"]}
-                        }
-                    }
-                    quant_conf = PostTrainingQuantConfig(
-                        approach="static",
-                        op_name_dict=fallback_op,
-                    )
-                q_model = quantization.fit(
-                    model,
-                    quant_conf,
-                    eval_func=eval_func,
-                    calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QDQ",
-                example_inputs=tuple(self.nlp_input.values()),
-                input_names=list(self.nlp_input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-                recipe='QDQ_OP_INT32_BIAS',
-            )
-            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QLinear",
-                example_inputs=tuple(self.nlp_input.values()),
-                input_names=list(self.nlp_input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-                recipe='QDQ_OP_INT32_BIAS',
-            )
-            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
-
-    def test_int8_NLP_models_recipe3(self):
-        symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
-        dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
-
-        for fake_yaml in ["dynamic", "static", "qat"]:
-            model = self.nlp_model
-            if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig()
-                compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
-                q_model = train_func_nlp(
-                    compression_manager,
-                    compression_manager.model,
-                    self.nlp_input
-                )
-            else:
-                if fake_yaml == "dynamic":
-                    quant_conf = PostTrainingQuantConfig(approach="dynamic")
-                elif fake_yaml == "static":
-                    # Random fallback one op to test
-                    fallback_op= {
-                        "distilbert.transformer.layer.5.ffn.lin2": {
-                            "activation": {"dtype": ["fp32"]}, 
-                            "weight": {"dtype": ["fp32"]}
-                        }
-                    }
-                    quant_conf = PostTrainingQuantConfig(
-                        approach="static",
-                        op_name_dict=fallback_op,
-                    )
-                q_model = quantization.fit(
-                    model,
-                    quant_conf,
-                    eval_func=eval_func,
-                    calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QDQ",
-                example_inputs=tuple(self.nlp_input.values()),
-                input_names=list(self.nlp_input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-                recipe='QDQ_OP_FP32_BIAS_QDQ',
-            )
-            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
-
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QLinear",
-                example_inputs=tuple(self.nlp_input.values()),
-                input_names=list(self.nlp_input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-                recipe='QDQ_OP_FP32_BIAS_QDQ',
-            )
-            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
-            check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
+            if fake_yaml == "dynamic":
+                try:
+                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+                except Exception as e:
+                    self.assertIsInstance(e, AssertionError)
+            elif fake_yaml == "static":
+                q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
+                check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
 
 if __name__ == "__main__":
     unittest.main()

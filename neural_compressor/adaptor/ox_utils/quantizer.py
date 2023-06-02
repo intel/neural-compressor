@@ -372,9 +372,11 @@ class Quantizer:
             self.model.replace_node_input(node, old_input_name, new_input_name)
         self.model.update()
 
-    def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
-        """Cast node dtype."""
+    def cast_inputs(self, node, cfg, indices=None):
+        """Cast node input dtype."""
         for idx, tensor_name in enumerate(node.input):
+            if indices and idx not in indices:
+                continue
             initializer = find_by_name(tensor_name, self.model.initializer())
             if initializer is not None:
                 if initializer.data_type != onnx_proto.TensorProto.FLOAT: 
@@ -394,10 +396,12 @@ class Quantizer:
                 node.input[idx] = name
                 self.new_value_info[name] = ValueInfo(tensor_name,
                                                              TensorProto.FLOAT, dtype_mapping[cfg])
-        if all([i not in self.new_value_info for i in node.input]):
-            return
 
+    def cast_outputs(self, node, cfg, indices=None):
+        """Cast node output dtype."""
         for idx, tensor_name in enumerate(node.output):
+            if indices and idx not in indices:
+                continue
             if tensor_name in self.value_infos and \
                 self.value_infos[tensor_name].type.HasField('tensor_type') and \
                 self.value_infos[tensor_name].type.tensor_type.elem_type != TensorProto.FLOAT:

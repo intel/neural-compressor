@@ -16,6 +16,7 @@
 """Neural Insights utils functions."""
 from typing import Optional, Any
 
+from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils import logger
 
 
@@ -28,7 +29,7 @@ def register_neural_insights_workload(
 
     Args:
         workload_location: path to workload directory
-        model: model to be registered
+        model: Neural Compressor's model instance to be registered
         workload_mode: workload mode
 
     Returns:
@@ -45,14 +46,13 @@ def register_neural_insights_workload(
             raise Exception(f"Workload mode '{workload_mode}' is not supported.")
 
         model_path = None
-        if isinstance(model, str):
-            model_path: str = os.path.abspath(model)
-        else:
+        if isinstance(model.model_path, str):
+            model_path: str = os.path.abspath(model.model_path)
+        elif isinstance(model, ONNXModel):
             import onnx
-            if isinstance(model, onnx.ModelProto):
-                model_path: str = os.path.join(workload_location, "input_model.onnx")
-                os.makedirs(workload_location, exist_ok=True)
-                onnx.save(model, model_path)
+            model_path: str = os.path.join(workload_location, "input_model.onnx")
+            os.makedirs(workload_location, exist_ok=True)
+            onnx.save(model.model, model_path)
         assert isinstance(model_path, str), 'Model path not detected'
 
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)

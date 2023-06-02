@@ -84,6 +84,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.bf16_ops = []
         self.fp32_ops = []
+        self.smooth_quant_mul_ops = []
         self.dump_times = 0   # for tensorboard
 
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
@@ -107,6 +108,7 @@ class TensorFlowAdaptor(Adaptor):
         self.optype_statistics = None
 
         self._last_dequantize_ops = None
+        self.smooth_quant_model = None
 
     def _log_histogram(self, writer, tag, values, step=0, bins=1000):
         """Writes a histogram for later analysis."""
@@ -549,6 +551,7 @@ class TensorFlowAdaptor(Adaptor):
         assert q_func is None, \
             "post-training quantization mode is not support calibration function for Tensorflow!"
         self._tuning_cfg_to_fw(tune_cfg)
+        self.bf16_ops.extend(self.smooth_quant_mul_ops)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
@@ -1690,12 +1693,60 @@ class TensorFlowAdaptor(Adaptor):
 
         return predictions
 
+    def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
+                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
+        """Convert the model by smooth quant.
+
+        Args:
+            model: original model
+            dataloader: the calibration dataloader
+            calib_iter: how many steps of iterations on the dataloader to move forward
+            tune_cfg: quantization config
+            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
+            percentile: percentile of calibration to remove outliers
+            op_types: The op types whose input tensor will be dumped
+            scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                           False, ops with the same input will share a scale, mainly for performance
+
+        Returns:
+            model: A smoothed Tensorflow model
+        """
+        logger.info("Start Smoothing process for Smooth Quantization.")
+        if self.smooth_quant_model is not None:
+            return self.smooth_quant_model
+
+        # Get the nodes list which can't be quantized from tune_cfg
+        black_nodes = []
+        if tune_cfg is not None:
+            self._tuning_cfg_to_fw(tune_cfg)
+            black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == 'fp32']
+
+        # Run calibration to get max values per channel
+        from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
+        calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile, black_nodes)
+        max_vals_per_channel, sq_weight_node_names = calibration()
+
+        # Get weight tensors and weight nodes based on the input tensor
+        from neural_compressor.adaptor.tf_utils.util import get_weight_from_input_tensor
+        sq_weight_tensors, sq_weights_nodes = get_weight_from_input_tensor(
+            model, max_vals_per_channel.keys(), op_types)
+
+        # Calculate the smooth quant scaler and insert Mul op into the graph
+        from .tf_utils.smooth_quant_scaler import SmoothQuantScaler
+        scaler = SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
+        model, mul_list = scaler.transform(max_vals_per_channel, sq_weight_tensors,
+                                           sq_weights_nodes, sq_weight_node_names)
+        self.smooth_quant_mul_ops.extend(mul_list)
+        self.smooth_quant_model = model
+        return self.smooth_quant_model
+
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     """Tensorflow ITEX Adaptor Class."""
 
     def __init__(self, framework_specific_info):
-        """Initilization.
+        """Initialization.
 
         Args:
             framework_specific_info: framework specific information.
@@ -1799,7 +1850,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
 class TensorflowQuery(QueryBackendCapability):
     """Tensorflow Query Capability Class."""
     def __init__(self, local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static'):
-        """Initilization.
+        """Initialization.
 
         Args:
             local_config_file: local configuration file name.
