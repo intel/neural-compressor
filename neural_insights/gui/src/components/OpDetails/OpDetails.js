@@ -35,7 +35,7 @@ export default function OpDetails({ selectedWorkload, selectedOp, setHistogramTy
 
   useEffect(() => {
     if (selectedOp?.length) {
-      api.post('api/diagnosis/op_details?token=asd', { workload_id: selectedWorkload.uuid, op_name: selectedOp })
+      api.post('api/diagnosis/op_details?token=' + localStorage.getItem('token'), { workload_id: selectedWorkload.uuid, op_name: selectedOp })
         .then(
           response => {
             setOpDetails(response.data);

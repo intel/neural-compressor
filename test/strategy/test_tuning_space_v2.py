@@ -166,6 +166,94 @@ op_cap = {
                 }
         },
     ],
+    # op4 have tuple name as IPEX
+    (('op_name4', 0), 'op_type4'): [
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'static',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'dynamic',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': 'fp32'
+                },
+            'weight':
+                {
+                    'dtype': 'fp32'
+                }
+        },
+    ],
+
+    # op5, weight only
+    ('op_name5', 'op_type5'): [
+        {
+            'activation':
+                {
+                    'dtype': ['fp32'],
+                    'quant_mode': 'static',
+                },
+            'weight':
+                {
+                    'dtype': ['int4'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'static',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': 'fp32'
+                },
+            'weight':
+                {
+                    'dtype': 'fp32'
+                }
+        },
+    ],
 }
 
 class TestTuningSpaceV2(unittest.TestCase):
@@ -177,6 +265,14 @@ class TestTuningSpaceV2(unittest.TestCase):
 
         self.op_wise_user_cfg_for_fallback = {
             'op_name1': {
+                'activation': {
+                    'dtype': ['fp32']
+                },
+                'weight': {
+                    'dtype': ['fp32']
+                }
+            },
+            ('op_name4', 0): {
                 'activation': {
                     'dtype': ['fp32']
                 },
@@ -213,7 +309,7 @@ class TestTuningSpaceV2(unittest.TestCase):
         # test sampler
         from collections import OrderedDict
         from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
-        from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler
+        from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler, LowerBitsSampler
         # op-wise
         conf = {}
         conf = DotDict(conf)
@@ -252,22 +348,38 @@ class TestTuningSpaceV2(unittest.TestCase):
             self.assertTrue(act_dtype == weight_dtype == 'int4')
 
 
+        int4_ops = tuning_space.collect_op_by_quant_bits('int4')
+        for op in int4_ops:
+            op_item_dtype_dict[op.name] = 'int4'
+        lower_bits_sampler = LowerBitsSampler(deepcopy(tuning_space), [], initial_op_tuning_cfg, op_item_dtype_dict,
+                                              accumulate=False, skip_first=True)
+        op3 = ('op_name5', 'op_type5')
+        for tune_cfg in lower_bits_sampler:
+            op_cfg = tune_cfg[op3].get_state()
+            act_dtype = op_cfg['activation']['dtype']
+            weight_dtype = op_cfg['weight']['dtype']
+            logger.debug(op_cfg)
+            self.assertTrue((weight_dtype == 'int4' and act_dtype == 'fp32') or (act_dtype == weight_dtype == 'fp32'))
+
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {
-                    'op_name_dict': self.op_wise_user_cfg_for_fallback,
-
+            'op_name_dict': self.op_wise_user_cfg_for_fallback,
         }
         conf = DotDict(conf)
         # test fallback
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
         logger.debug(tuning_space2.root_item.get_details())
         op_name1_only_fp32 = True
+        op_name4_only_fp32 = True
         for quant_mode in ['static', 'dynamic']:
             for item in tuning_space2.query_items_by_quant_mode(quant_mode):
                 if item.name[0] == 'op_name1':
                     op_name1_only_fp32 = False
+                if item.name[0] == ('op_name4', 0):
+                    op_name4_only_fp32 = False
         self.assertTrue(op_name1_only_fp32)
+        self.assertTrue(op_name4_only_fp32)
 
 
 

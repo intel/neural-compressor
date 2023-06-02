@@ -19,8 +19,9 @@ transformation:
     - |-
       [+] from neural_compressor.quantization import fit
       [+] from neural_compressor.config import PostTrainingQuantConfig
-      [+] config = PostTrainingQuantConfig(quant_format='QDQ')
+      [+] config = PostTrainingQuantConfig(quant_format='QDQ', quant_level=1)
       [+] MODEL_NAME = fit(MODEL_NAME, conf=config, calib_dataloader=DATALOADER_NAME, eval_func=EVAL_FUNCTION_NAME)
+      [+] MODEL_NAME.save("./quantized_model.onnx")
   order:
     - below:
       above:

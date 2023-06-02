@@ -6,11 +6,6 @@ schema
 py-cpuinfo
 contextlib2
 requests
-Flask
-Flask-Cors
-Flask-SocketIO
-gevent
-gevent-websocket
 psutil
 Pillow
 pycocotools-windows; sys_platform != 'linux'

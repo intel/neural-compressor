@@ -37,7 +37,7 @@ BLOCK_PATTERNS = [
 
 class TransformerBasedModelBlockPatternDetector:
     """Detect the attention block and FFN block in transformer-based model."""
-    
+
     def __init__(self, model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS) -> None:
         """Init the block detector.
 
@@ -48,13 +48,13 @@ class TransformerBasedModelBlockPatternDetector:
         self.model = model
         self.pattern_lst = pattern_lst
         self.pos_info = None
-        
+
     def detect_block(self) -> Dict[str, List[List[str]]]:
         """
         Traverse the model definition and return the attention blocks and ffn blocks.
-        
+
         Returns:
-        
+
             blocks: A dict include the detected attention blocks and ffn blocks.
         """
         # Step 1: Traverse model definition and record the op position
@@ -71,10 +71,10 @@ class TransformerBasedModelBlockPatternDetector:
         # Step 3: Get the attention blocks and ffn blocks
         blocks = {"attention_blocks": None, "ffn_blocks": None}
         blocks["attention_blocks"], blocks["ffn_blocks"] = self._group_block(detect_result)
-        logger.info(f'FFN BLOCKS: {blocks["ffn_blocks"]}')
-        logger.info(f'Attention BLOCKS: {blocks["attention_blocks"]}')
+        logger.debug(f'FFN BLOCKS: {blocks["ffn_blocks"]}')
+        logger.debug(f'Attention BLOCKS: {blocks["attention_blocks"]}')
         return blocks
-    
+
     @staticmethod
     def traverse_model(model, prefix="", depth=1, result=None, key = 0):
         """Traverse the pytorch model according to its hierarchical structure.
@@ -102,7 +102,7 @@ class TransformerBasedModelBlockPatternDetector:
                 result[key][sub_key] = dict()
             TransformerBasedModelBlockPatternDetector.traverse_model(sub_module, prefix=new_name, \
                 depth=depth+1, result=result[key], key = sub_key)
-            
+
     @staticmethod
     def _search_pattern(pos_info: Dict, pattern: List[List[Union[str, int]]]) -> List[List[str]]:
         """Search all blocks that matched the pattern.
@@ -138,14 +138,14 @@ class TransformerBasedModelBlockPatternDetector:
                         block_result.append(ops_name)
                 if block_pattern == pattern:
                     matched_cnt += 1
-                    logger.info(f"[DEPTH] {depth} [BLOCK] {i},  Found block match pattern {pattern}!!")
-                    logger.info(f"[Block keys] {block.keys()}")
-                    logger.info(f"[Block Ops] { [pair[0] for pair in ops_lst if pair[2] in target_op_types]}")
+                    logger.debug(f"[DEPTH] {depth} [BLOCK] {i},  Found block match pattern {pattern}!!")
+                    logger.debug(f"[Block keys] {block.keys()}")
+                    logger.debug(f"[Block Ops] { [pair[0] for pair in ops_lst if pair[2] in target_op_types]}")
                     result.append(block_result)
         if matched_cnt > 0:
             logger.info(f" Found {matched_cnt} blocks")
         return matched_cnt, result
-    
+
     @staticmethod
     def _group_block(detect_result):
         """Collect attention and ffn blocks from detect result."""

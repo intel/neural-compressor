@@ -72,6 +72,7 @@ arg_parser.add_argument("--tune", type=boolean_string,
                         dest="tune",
                         default=False
                         )
+arg_parser.add_argument('--sq', type=boolean_string, dest='sq', help='smooth quantization', default=False)
 arg_parser.add_argument("--benchmark", type=boolean_string,
                         help="whether to do benchmark",
                         dest="benchmark",
@@ -201,7 +202,7 @@ class Distilbert_base(object):
             logger.warning("Warmup steps greater than max possible value of 22." + \
                            " Setting to max value of ", MAX_WARMUP_STEPS)
             ARGS.warmup_steps = MAX_WARMUP_STEPS
-        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+        if ARGS.tune or ARGS.sq or (ARGS.benchmark and ARGS.mode == "accuracy"):
             ARGS.steps = MAX_STEPS
         elif ARGS.benchmark:
             if ARGS.steps > (MAX_STEPS - MAX_WARMUP_STEPS):
@@ -271,7 +272,7 @@ class Distilbert_base(object):
                 else:
                     pred = sess.run(output, feed_dict=feed_dict)
                 run_time = time.time() - start_time
-                if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+                if ARGS.tune or ARGS.sq or (ARGS.benchmark and ARGS.mode == "accuracy"):
                     total_correct_predictions += self.get_correct_predictions(pred, labels)
                 total_time += run_time
                 # save profiling file
@@ -287,7 +288,7 @@ class Distilbert_base(object):
                         with open(profiling_file, 'w') as trace_file:
                             trace_file.write(trace.generate_chrome_trace_format(show_memory=False))
         time_per_batch = total_time / float(ARGS.steps / ARGS.batch_size)
-        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+        if ARGS.tune or ARGS.sq or (ARGS.benchmark and ARGS.mode == "accuracy"):
             accuracy = total_correct_predictions / ARGS.steps
             logger.info("Accuracy: {:.4f}".format(accuracy))
         if self.dataloader.batch_size == 1:
@@ -297,12 +298,17 @@ class Distilbert_base(object):
 
     def run(self):
         graph = self.load_graph()
-        if ARGS.tune:
+        if ARGS.tune or ARGS.sq:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
-            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
-            config = PostTrainingQuantConfig(calibration_sampling_size=[500],
-                                             accuracy_criterion=accuracy_criterion)
+            if ARGS.sq:
+                config = PostTrainingQuantConfig(calibration_sampling_size=[500],
+                                                quant_level=1,
+                                                recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.6}})
+            else:
+                accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
+                config = PostTrainingQuantConfig(calibration_sampling_size=[500],
+                                                 accuracy_criterion=accuracy_criterion)
             q_model = quantization.fit(model=graph, conf=config, calib_dataloader=self.dataloader,
                             eval_func=self.eval_func)
             try:

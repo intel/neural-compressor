@@ -535,6 +535,7 @@ def main():
     if model_args.export_dtype == 'int8':
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.utils.constant import FP32
         tuning_criterion = TuningCriterion(
             strategy="mse_v2",
             strategy_kwargs={"confidence_batches": 1},
@@ -544,6 +545,7 @@ def main():
             approach="static", 
             quant_level=1,
             tuning_criterion=tuning_criterion,
+            op_type_dict={"Embedding":FP32},
             calibration_sampling_size=[300],
         )
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)

@@ -19,8 +19,9 @@
 
 from collections import defaultdict, OrderedDict
 import re
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from copy import deepcopy
+import itertools
 from ...utils import logger
 from .utility import OrderedDefaultDict
 from .tuning_structs import OpTuningConfig
@@ -267,9 +268,14 @@ class TuningSpace:
     def _merge_op_wise_cfg(self, cap: Dict, op_wise_usr_cfg: Dict, fw_cap: Dict):
         op_name_types = {key[0]: key for key in cap['op'].keys()}
         for op_name_pattern, op_user_cfg in op_wise_usr_cfg.items():
-            op_name_pattern = re.compile(op_name_pattern)
+            if isinstance(op_name_pattern, str):
+                op_name_pattern = re.compile(op_name_pattern)
+                str_flag=True
+            else:
+                str_flag=False
             for op_name in op_name_types:
-                if op_name_pattern.fullmatch(op_name):
+                if str_flag and op_name_pattern.fullmatch(str(op_name)) \
+                  or op_name_pattern == op_name:
                     op_name_type = op_name_types[op_name]
                     cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type],
                                                                  op_user_cfg,
@@ -552,11 +558,11 @@ class TuningSpace:
         item = self.root_item
         for val in path:
             if item is None:
-                logger.warning(f"Did not found the item according to the path {path}")
+                logger.debug(f"Did not found the item according to the path {path}")
                 return default
             item = item.get_option_by_name(val)
         if item is None:
-            logger.warning(f"Did not found the item according to the path {path}")
+            logger.debug(f"Did not found the item according to the path {path}")
         return item
 
     def get_default_full_path(self, op_name_type, path):
@@ -633,6 +639,48 @@ class TuningSpace:
         for att in att_lst:
             result[att] = self.get_default_full_path(op_name_type, full_path[att])
         return result
+
+    def get_op_default_path_by_quant_bits(self, op_name_type, quant_bits):
+        """Get the full path according to the target bits.
+
+        Args:
+            op_name_type: (op name, op type)
+            quant_bits: quantization bits, like int4, int8
+
+        Returns:
+            A dict includes the full path.
+        """
+        quant_modes = ['static', 'dynamic']
+        attribute_options = ['activation', 'weight']
+        quant_bits = [quant_bits]
+        support_attributes = {'activation': ('precision', 'activation', 'fp32'),\
+            'weight': ('precision', 'weight', 'fp32')}
+        for path in itertools.product(quant_modes, attribute_options, quant_bits):
+            if self.query_quant_mode_item_by_full_path(op_name_type, path):
+                support_attributes[path[1]] = path
+        full_path = {}
+        for att in support_attributes:
+            full_path[att] = self.get_default_full_path(op_name_type, support_attributes[att])
+        return full_path
+
+    def collect_op_by_quant_bits(self, quant_bits: str) -> List[TuningItem]:
+        """Collect all OP items that either activation or weight supporting the target bits.
+
+        Args:
+            quant_bits: the target quantization bits, like int4, int8.
+        """
+        quant_modes = ['static', 'dynamic']
+        attribute_options = ['activation', 'weight']
+        quant_bits = [quant_bits]
+
+        quant_op_items = set(self.query_items_by_quant_mode('static')).union(self.query_items_by_quant_mode('dynamic'))
+        op_items = []
+        for op in quant_op_items:
+            for path in itertools.product(quant_modes, attribute_options, quant_bits):
+                if self.query_quant_mode_item_by_full_path(op.name, path):
+                    op_items.append(op)
+                    break
+        return op_items
 
 def pattern_to_internal(pattern, default_dtype='int8'):
     """Convert pattern to internal format.

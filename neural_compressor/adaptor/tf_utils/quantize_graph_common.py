@@ -59,8 +59,8 @@ class QuantizeGraphHelper():
     def get_sorted_graph(self, input_graph, input_node_names, output_node_names):
         """Return a sorted graphdef object.
 
-        Sometimes the input graphdef was composed of the randome nodedef objects,
-        we reorder the graph to make the parsing more easier.
+        Sometimes the input graphdef was composed of the random nodedef objects,
+        we reorder the graph to make the parsing easier.
 
         Args:
             input_graph (graphdef]): the input graphdef object

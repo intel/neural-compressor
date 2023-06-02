@@ -199,6 +199,13 @@ class ONNXModel(BaseModel):
                 return tensor
         return None
 
+    def get_node(self, name):
+        """Get a node by name."""
+        for node in self._model.graph.node:
+            if node.name == name:
+                return node
+        return None
+
     def remove_initializer(self, tensor):
         """Remove an initializer from model."""
         if tensor in self._model.graph.initializer:

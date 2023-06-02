@@ -27,18 +27,20 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   let socket = io('/');
   socket.on('Config update', data => {
-    getWorkloads();
+    getWorkloads(false);
   });
 
   useEffect(() => {
-    getWorkloads();
+    getWorkloads(true);
   }, []);
 
-  let getWorkloads = () => {
-    api.get('api/workloads?token=asd')
+  let getWorkloads = (changeSelectedWorkload) => {
+    api.get('api/workloads?token=' + localStorage.getItem('token'))
       .then(
         response => {
-          setSelectedWorkload(response.data.workloads[0]);
+          if (changeSelectedWorkload) {
+            setSelectedWorkload(response.data.workloads[0]);
+          }
           setWorkloads(response.data.workloads);
           setSpinner(false);
         }
@@ -71,7 +73,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
       }
       {workloadsList.length === 0 &&
         <div className="data-panel">
-          <h3>Intel Neural Insights</h3>
+          <h3>Neural Insights</h3>
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
         </div>
       }

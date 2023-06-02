@@ -94,6 +94,9 @@ class TuneStrategyMeta(type):
             new_strategy.framework = pre_strategy.framework
             new_strategy.baseline = deepcopy(pre_strategy.baseline)
             new_strategy.trials_count = pre_strategy.trials_count
+            # The first evaluation result is empty if the tuning configuration is skipped.
+            # Assign the last evaluation result from previous strategy to the current strategy to solve it
+            new_strategy.objectives.val = pre_strategy.objectives.val
             new_strategy.objectives.baseline = deepcopy(pre_strategy.baseline)
             new_strategy.capability = pre_strategy.capability
             new_strategy.tuning_space = pre_strategy.tuning_space
@@ -390,7 +393,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 logger.info("Use distributed tuning on {} nodes, will be fallback to normal tuning."\
                     .format(MPI.COMM_WORLD.Get_size()))
         except (ImportError, AttributeError) as e:
-            logger.warning(f"[Strategy] <mpi4py> needs to be installed correctly for distributed tuning. {e}")
+            logger.warning("[Strategy] Please install `mpi4py` correctly if using distributed tuning;" + \
+                " otherwise, ignore this warning.")
 
         self._prepare_tuning()
         traverse_start_time = time()
@@ -484,7 +488,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         adaptor_name = get_adaptor_name(self.adaptor)
         adaptor_recipes = fwk_recipes['common']
         # TODO WA due to smooth quant only supported by ort/pt currently.
-        if not adaptor_name not in ['onnx', 'pytorch']:
+        if not adaptor_name not in ['onnx', 'pytorch', 'tensorflow']:
             adaptor_recipes.pop('smooth_quant', None)
         for adaptor_name_key, adaptor_recipes_val in fwk_recipes.items():
             if adaptor_name_key.startswith(adaptor_name):
@@ -830,7 +834,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             sq_algo = ALGORITHMS()['smooth_quant']
             sq_algo.alpha = smooth_quant_args['alpha']
             if 'folding' not in smooth_quant_args:
-                smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx'] \
+                smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx', 'onnxruntime'] \
                   else False
                 logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
                 if self.framework == 'pytorch_ipex':

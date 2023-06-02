@@ -25,8 +25,9 @@ transformation:
       [+]     from torch.backends.quantized import engine; engine = 'onednn'
       [+] from neural_compressor.config import PostTrainingQuantConfig
       [+] from neural_compressor.quantization import fit
-      [+] conf = PostTrainingQuantConfig()
+      [+] conf = PostTrainingQuantConfig(quant_level=1)
       [+] MODEL_NAME = fit(model=MODEL_NAME, conf=conf, calib_dataloader=DATALOADER_NAME, eval_func=eval_func)
+      [+] MODEL_NAME.save("./quantized_model")
       [+] MODEL_NAME.eval()
       [+] try:
       [+]     with torch.no_grad():
