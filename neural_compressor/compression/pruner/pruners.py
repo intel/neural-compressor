@@ -16,18 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import re
-from .utils import torch, F
+import copy
+import numpy as np
 from functools import partial
 from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
-# auto slim related: head pruning objects
-from .model_slim.pattern_analyzer import SelfMHASearcher
-from .model_slim.weight_slim import MHACompression
+
+from ...utils.utility import LazyImport
+torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
+F = LazyImport('torch.nn.functional')
 
 PRUNERS = {}
 
@@ -154,7 +156,8 @@ class BasePruner:
         if self.framework == 'pytorch':
             for key in self.modules.keys():
                 module = self.modules[key]
-                self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)  ##TODO support bias or others
+                ##TODO support bias or others
+                self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
@@ -1004,7 +1007,9 @@ class MultiheadAttentionPruner(BasePruner):
         # initialize self.mha_compressions, self.linear_layers, self.head_masks
         # similar to original mha slim process, but only hook mha modules and their attributes, 
         # do not call slim main functions.
-        # import pdb;pdb.set_trace()
+        
+        # auto slim related: head pruning objects
+        from .model_slim.weight_slim import MHACompression
         for mha_module in self.mha_modules:
             # initialize self.mha_compressions
             mha_comp = MHACompression(mha_module)

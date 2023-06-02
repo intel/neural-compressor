@@ -422,7 +422,7 @@ if __name__ == '__main__':
             'q_dataloader': None, 'format': 'default', 
             'backend': 'default', 'inputs': [], 'outputs': []
         }
-        adaptor = FRAMEWORKS['tensorflow'](framework_specific_info)
+        adaptor = FRAMEWORKS['keras'](framework_specific_info)
 
         configs = WeightPruningConfig(
             backend='itex',

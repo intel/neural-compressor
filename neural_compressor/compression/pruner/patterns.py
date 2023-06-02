@@ -937,7 +937,8 @@ class PatternNxM(BasePattern):
                 1 means unpruned and 0 means pruned.
         """
         if self.framework == 'pytorch':
-            return self.get_masks_global_pytorch(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio)
+            return self.get_masks_global_pytorch(scores, cur_target_sparsity_ratio, pre_masks, \
+                                                                        keep_exact_sparsity_ratio)
         elif self.framework == 'keras':
             return self.get_masks_global_tf(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio)
 

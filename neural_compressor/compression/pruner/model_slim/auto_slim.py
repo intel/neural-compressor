@@ -55,7 +55,7 @@ def model_slim_mha(model, dataloader = None):
         model: a sprase model.
     """
     from .weight_slim import MHACompression
-    from .pattern_analyzer import RecipeSearcher
+    from .pattern_analyzer import SelfMHASearcher
     logger.warning(f"You are using model slim methods, some attention heads will be removed permanently.")
     pa_obj = SelfMHASearcher(model, dataloader)
     layers, _ = pa_obj.search(split_qkv_ffn = False)
@@ -78,6 +78,7 @@ def parse_auto_slim_config(model, dataloader = None, ffn2_sparsity = .0, mha_spa
 
 def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
     """Get consecutive linear layers pruning configs."""
+    from .pattern_analyzer import Linear2LinearSearcher
     searcher = Linear2LinearSearcher(model, dataloader)
     layers = searcher.search()
     # extract the second linear layer

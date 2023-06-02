@@ -164,6 +164,7 @@ class TensorFlowAdaptor(Adaptor):
             input_model = model._model
         else:
             input_model = tf.keras.models.load_model(model._model)
+            hooks = callbacks['tf_pruning'](model, input_model, hooks)
         hooks['on_train_begin']()                 # on_train_begin hook
         train_loss_results = []
         if distributed:
@@ -186,8 +187,7 @@ class TensorFlowAdaptor(Adaptor):
                 tape.watch(input_model.trainable_variables)
                 y_ = input_model(x, training=True)
                 loss_value = criterion(y, y_)
-                if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
-                    loss_value = hooks['on_after_compute_loss'](x, y_, loss_value)
+                loss_value = hooks['on_after_compute_loss'](x, y_, loss_value)
             tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
             # Get gradient
             grads = tape.gradient(loss_value, input_model.trainable_variables) # pylint: disable=no-member
