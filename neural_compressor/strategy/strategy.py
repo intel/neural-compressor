@@ -102,6 +102,7 @@ class TuneStrategyMeta(type):
             new_strategy.tuning_space = pre_strategy.tuning_space
             new_strategy.algo_scheduler = pre_strategy.algo_scheduler
             new_strategy.tuning_history = pre_strategy.tuning_history
+            new_strategy.diagnosis_done = pre_strategy.diagnosis_done
         return new_strategy
 
 @strategy_registry
@@ -196,7 +197,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
         # for diagnosis
-        self._diagnosis_done = False
+        self.diagnosis_done = False
 
         self._resume = resume
         if self._resume is not None: self.setup_resume(resume)
@@ -417,15 +418,15 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             self.model = self.algo_scheduler('pre_quantization') # pylint: disable=E1102
             # quantize
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            # start diagnosis if needed
-            if self.config.diagnosis:
-                self._diagnosis(tune_cfg)
             assert self.adaptor.pre_optimized_model
             # set the parameter for post quantization algos and run
             self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg,\
                 self.adaptor.pre_optimized_model, q_model)
             self.last_qmodel = self.algo_scheduler('post_quantization') # pylint: disable=E1102
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
+            # start diagnose, if needed
+            if self._need_do_diagnosis():
+                self._diagnosis(tune_cfg)
             # remove the reference to model
             self.algo_scheduler.reset_exec_algorithms()
             assert self.last_qmodel
@@ -464,9 +465,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     continue
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
-                if self.config.diagnosis:
+                if self._need_do_diagnosis():
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-                    self._diagnosis()
+                    self._diagnosis(tune_cfg)
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
                     self.best_tune_result is not None: # pragma: no cover
                     best_trail, best_result = self.objectives.best_result(self.tune_result_record,
@@ -890,8 +891,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             logger.info("Do not evaluate the baseline and quantize the model with default configuration.")
             return
         else:
+            # If needed, push off the baseline evaluation until the diagnosis is finished.
+            if self._need_do_diagnosis():
+                logger.info("Push off the baseline evaluation until the diagnosis is finished.")
+                return
             # get fp32 model baseline
-            if self.baseline is None:
+            elif self.baseline is None:
                 logger.info("Get FP32 model baseline.")
                 self._fp32_model = self.model
                 self.baseline = self._evaluate(self.model)
@@ -1703,14 +1708,18 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 ops_lst.append(op_info)
         return ops_lst
 
+    def _need_do_diagnosis(self):
+        """Check if need to do diagnosis or not."""
+        # if user specifies to do it and does not do it.
+        if self.config.diagnosis and not self.diagnosis_done:
+            return True
+        return False
+
     def _diagnosis(self, tune_cfg):
         """Dump diagnosis information."""
         import logging
         logger = logging.getLogger("neural_compressor")
-        if self.config.diagnosis and not self._diagnosis_done:
-            logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-        else:
-            return
+        logger.debug("[Strategy] Start to do diagnosis (inspect tensor).")
         iteration_list = [1]
         inspect_type = 'all'
         save_to_disk = True
@@ -1727,7 +1736,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         else:
             op_list = list(set(op_list).intersection(inspect_node_lst))
 
-        logger.debug(f'*** Start to inspect tensor :{op_list} in  fp32 model.')
+        # step1. inspect tensor
+        logger.debug(f'[Strategy] Start to inspect tensor :{op_list} in  fp32 model.')
         self.adaptor.inspect_tensor(self.model,
                                     dataloader=self.calib_dataloader,
                                     op_list=op_list,
@@ -1737,7 +1747,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                                     save_path=os.path.join(save_path, 'fp32'),
                                     quantization_cfg=updated_cfg)
 
-        logger.debug(f'*** Start to inspect tensor :{op_list} in  quantized model.')
+        logger.debug(f'[Strategy] Start to inspect tensor :{op_list} in  quantized model.')
         self.adaptor.inspect_tensor(self.last_qmodel,
                                     dataloader=self.calib_dataloader,
                                     op_list=op_list,
@@ -1746,8 +1756,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                                     save_to_disk=save_to_disk,
                                     save_path=os.path.join(save_path, 'quan'),
                                     quantization_cfg=updated_cfg)
-        self._diagnosis_done = True
-        self._eval_baseline()
+
         print_op_list(workload_location=options.workspace)
         weights_details = get_weights_details(workload_location=options.workspace)
 
@@ -1797,3 +1806,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         )
 
         logger.info(f"Weights data has been saved to {weights_table_file}")
+
+        # step2.mask the diagnosis has been done and evaluate baseline (fp32 model)
+        self.diagnosis_done = True
+        self._eval_baseline()
