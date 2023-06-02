@@ -1,7 +1,7 @@
 
 ## An end-to-end example: quantize a custom model with Neural Solution
 
-In this example, we show how to quantize a custom model with Neural Solution. Reference [source code](https://github.com/intel/neural-compressor/tree/master/examples/helloworld/tf_example1).
+In this example, we show how to quantize a [custom model](https://github.com/intel/neural-compressor/tree/master/examples/helloworld/tf_example1) with Neural Solution.
 
 ### Objective
 - Demonstrate how to prepare requirements.
@@ -14,6 +14,18 @@ Customizing the model requires preparing the following folders and files.
 1. dataset/, place dataset
 2. model/, place model weight and configuration files
 3. run.py, the running python script
+
+The folder structure is as follows:
+```shell
+├── dataset
+│   └── train-00173-of-01024
+├── model
+│   └── mobilenet_v1_1.0_224_frozen.pb
+├── README.md
+├── task_request_distributed.json
+├── task_request.json
+└── test.py
+```
 
 ### Start the Neural Solution Service
 
@@ -66,10 +78,10 @@ optional arguments:
 
 ### Submit optimization task
 
-- Step 1: Prepare the json file includes request content. In this example, we have created request that quantize a [Text classification model](https://github.com/huggingface/transformers/tree/v4.21-release/examples/pytorch/text-classification) from Hugging Face.
+- Step 1: Prepare the json file includes request content. In this example, we have created request that quantize a [custom model](https://github.com/intel/neural-compressor/tree/master/examples/helloworld/tf_example1).
 
 ```shell
-[user@server tf_example1]$ cd cd path/to/neural_solution/neural_solution/examples/custom_models_optimized/tf_example1
+[user@server tf_example1]$ cd path/to/neural_solution/neural_solution/examples/custom_models_optimized/tf_example1
 [user@server tf_example1]$ cat task_request.json
 {
     "script_url": "tf_example1",
@@ -81,6 +93,21 @@ optional arguments:
     "requirements": [
     ],
     "workers": 1
+}
+```
+When using distributed quantization, the `workers` needs to be set to greater than 1 when submitting a request.
+```shell
+[user@server tf_example1]$ cat task_request_distributed.json
+{
+    "script_url": "tf_example1",
+    "optimized": "True",
+    "arguments": [
+        "--dataset_location=dataset --model_path=model"
+    ],
+    "approach": "static",
+    "requirements": [
+    ],
+    "workers": 3
 }
 ```
 
@@ -119,7 +146,7 @@ optional arguments:
 }
 
 ```
-### Stop the serve
+### Stop the service
 ```shell
 neural_solution stop
 ```
