@@ -212,25 +212,10 @@ def start_service(args):
     print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
     print("[For information] neural_solution help")
 
-def help_service():
-    """Help Service."""
-    print("\n *** usage: neural_solution {start|stop} ***")
-    print("     start      : start serve")
-    print("     stop       : stop serve\n")
-    print("  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]")
-    print('    --hostfile           : start backend serve host file which contains all available nodes')
-    print('    --restful_api_port   : start web serve with {restful_api_port}, default 8000')
-    print('    --grpc_api_port   : start web serve with {grpc_api_port}, default 8001')
-    print('    --api_type           : start web serve with all/grpc/restful, default all')
-    print('    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, default 2222')
-    print('    --workspace          : neural solution workspace, default "./ns_workspace"')
-    print('    --conda_env          : specify the running environment for the task"')
-    print('    --upload_path        : specify the file path for the tasks')
-
 def main():
     """main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
-    parser.add_argument('action', choices=['start', 'stop', 'help'], help='Action to perform')
+    parser.add_argument('action', choices=['start', 'stop'], help='start/stop service')
     parser.add_argument("--hostfile", default=None,
                         help="start backend serve host file which contains all available nodes")
     parser.add_argument("--restful_api_port", type=int, default=8000,
@@ -256,8 +241,6 @@ def main():
         start_service(args)
     elif args.action == 'stop':
         stop_service()
-    elif args.action == 'help':
-        help_service()
         
 if __name__ == '__main__':
     main()
