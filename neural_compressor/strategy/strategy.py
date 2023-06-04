@@ -1711,7 +1711,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def _need_do_diagnosis(self):
         """Check if need to do diagnosis or not."""
         # if user specifies to do it and does not do it.
-        if self.config.diagnosis and not self.diagnosis_done:
+        if getattr(self.config, 'diagnosis', None) is True and not self.diagnosis_done:
             return True
         return False
 
