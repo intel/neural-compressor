@@ -1780,6 +1780,13 @@
       "main_script": "main.py",
       "batch_size": 16
     },
+    "gpt2_medium": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/gpt2-medium",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
     "opt_125m_sq": {
       "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
       "dataset_location": "",
@@ -1787,6 +1794,13 @@
       "main_script": "main.py",
       "batch_size": 16
     },
+    "opt_125m": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/facebook-opt-125m",
+      "main_script": "main.py",
+      "batch_size": 16
+    }
   }
 }
 
