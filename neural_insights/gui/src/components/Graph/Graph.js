@@ -36,7 +36,7 @@ export default function Graph({ setSelectedNode, selectedWorkload, selectedOp, s
         path: [selectedWorkload.model_path],
         ...((groupNode.length || groupNodeOpList.length) && { group: [...groupNode, ...groupNodeOpList] })
       };
-      api.post('api/model/graph?token=asd', payload)
+      api.post('api/model/graph?token=' + localStorage.getItem('token'), payload)
         .then(
           response => {
             setGraph(response.data);
@@ -49,7 +49,7 @@ export default function Graph({ setSelectedNode, selectedWorkload, selectedOp, s
 
   useEffect(() => {
     if (selectedOp) {
-      api.post('api/model/graph/highlight_pattern?token=asd', {
+      api.post('api/model/graph/highlight_pattern?token=' + localStorage.getItem('token'), {
         workload_id: selectedWorkload.uuid,
         path: [selectedWorkload.model_path],
         op_name: selectedOp,

@@ -35,7 +35,7 @@ neural_solution_packages = find_packages(include=['neural_solution', 'neural_sol
 # define package data
 package_data = {'': ['*.yaml']}
 neural_insights_data = {'neural_insights': [
-    'bin/*'
+    'bin/*',
     '*.yaml',
     'web/app/*.*',
     'web/app/static/css/*',

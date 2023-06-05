@@ -37,7 +37,7 @@ function ProfilingTable({ selectedWorkload, profilingTable, setProfilingTable, s
 
   useEffect(() => {
     if (selectedWorkload) {
-      api.post('api/profiling?token=asd', { workload_id: selectedWorkload.uuid })
+      api.post('api/profiling?token=' + localStorage.getItem('token'), { workload_id: selectedWorkload.uuid })
         .then(
           response => {
             setProfilingTable(response.data);
