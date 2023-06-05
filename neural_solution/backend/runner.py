@@ -22,6 +22,14 @@ from neural_solution.backend.utils.utility import build_cluster, get_db_path
 from neural_solution.config import config
 
 def parse_args(args=None):
+    """Parse the command line options.
+
+    Args:
+        args (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: arguments.
+    """
     parser = argparse.ArgumentParser(description="Neural Solution runner automatically schedules multiple inc tasks and\
         executes multi-node distributed tuning.")
 
@@ -41,12 +49,12 @@ def parse_args(args=None):
     return parser.parse_args(args=args)
 
 def main(args=None):
-    """The main entry of backend.
+    """Implement the main entry of backend.
 
-        create the task db
-        start the result monitor
-        start the task scheduler
-        start the task monitor
+    create the task db.
+    start the result monitor.
+    start the task scheduler.
+    start the task monitor.
     """
     args = parse_args(args)
 

@@ -23,8 +23,22 @@ class Task:
         status: The status of the task: pending/running/done
         result: The result of the task, which is only value-assigned when the task is done
     """
+
     def __init__(self, task_id, arguments, workers, status,  script_url, \
         optimized, approach, requirement, result="", q_model_path=""):
+        """Init task.
+
+        Args:
+            task_id (_type_): the id of task
+            arguments (_type_): the running arguments for task.
+            workers (_type_): the resources.
+            status (_type_): "pending", "running", "done", "failed"
+            script_url (_type_): the python script address
+            approach (_type_): the quantization method
+            requirement (_type_): python packages
+            result (str, optional): the result of task. Defaults to "".
+            q_model_path (str, optional): the quantized model path. Defaults to "".
+        """
         self.task_id = task_id
         self.arguments = arguments
         self.workers = workers

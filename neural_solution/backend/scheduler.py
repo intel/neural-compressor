@@ -42,6 +42,8 @@ cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
 class Scheduler:
+    """Scheduler dispatches the task with the available resources, calls the mpi command and report results."""
+
     def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, \
         conda_env_name=None, upload_path="./examples", config=None, num_threads_per_process=5):
         """Scheduler dispatches the task with the available resources, calls the mpi command and report results.
@@ -63,6 +65,7 @@ class Scheduler:
 
     def prepare_env(self, task:Task):
         """Check and create a conda environment.
+        
         If the required packages are not installed in the conda environment,
         create a new conda environment and install the required packages.
 
@@ -110,7 +113,7 @@ class Scheduler:
         return conda_env
 
     def prepare_task(self, task:Task):
-        """prepare workspace and download run_task.py for task
+        """Prepare workspace and download run_task.py for task.
 
         Args:
             task (Task): _description_
@@ -150,6 +153,14 @@ class Scheduler:
             logger.info("[Neural Coder] Generating optimized code end.")
 
     def check_task_status(self, log_path):
+        """Check status for the task from log path.
+
+        Args:
+            log_path (_type_): the log path for task.
+
+        Returns:
+            _type_: status "done" or failed
+        """
         for line in reversed(open(log_path).readlines()):
             res_pattern = r'[INFO] Save deploy yaml to'
             # res_matches = re.findall(res_pattern, line)
@@ -272,4 +283,5 @@ class Scheduler:
                 logger.info("[TaskScheduler] no requests in the deque!")
 
     def sanitize_arguments(self, arguments: str):
+        """Replace space encoding with space."""
         return arguments.replace(u'\xa0', u' ')

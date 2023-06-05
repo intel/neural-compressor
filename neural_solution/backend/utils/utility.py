@@ -23,7 +23,7 @@ def serialize(request: dict) -> bytes:
     return json.dumps(request).encode()
 
 def deserialize(request: bytes) -> dict:
-    """Deserialize the recived bytes to a dict object"""
+    """Deserialize the recived bytes to a dict object."""
     return json.loads(request)
 
 def dump_elapsed_time(customized_msg=""):
@@ -57,19 +57,59 @@ def get_task_log_path(log_path, task_id):
 
 
 def get_db_path(workspace="./"):
+    """Get the database path.
+
+    Args:
+        workspace (str, optional): _description_. Defaults to "./".
+
+    Returns:
+        _type_: _description_
+    """
     return os.path.join(workspace, "db", "task.db")
 
 def get_task_workspace(workspace="./"):
+    """Get the workspace of task.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        _type_: _description_
+    """
     return os.path.join(workspace, "task_workspace")
 
 def get_task_log_workspace(workspace="./"):
+    """Get the log workspace for task.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        _type_: _description_
+    """
     return os.path.join(workspace, "task_log")
 
 def get_serve_log_workspace(workspace="./"):
+    """Get log workspace for service.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        _type_: _description_
+    """
     return os.path.join(workspace, "serve_log")
 
 
 def build_local_cluster(db_path):
+    """Build a local cluster.
+
+    Args:
+        db_path (_type_): database path
+
+    Returns:
+        _type_: cluster and num threads per process
+    """
     from neural_solution.backend.cluster import Node, Cluster
     hostname = 'localhost'
     node1 = Node(name=hostname,num_sockets=2, num_cores_per_socket=5)
@@ -110,10 +150,20 @@ def build_cluster(file_path, db_path):
     return cluster, num_threads_per_process
 
 def get_current_time():
+    """Get current time.
+
+    Returns:
+        _type_: the current time in hours, minutes, and seconds.
+    """
     from datetime import datetime
     return datetime.now().strftime('%H:%M:%S')
 
 def synchronized(func):
+    """Locking for synchronization.
+
+    Args:
+        func (_type_): _description_
+    """
     def wrapper(self, *args, **kwargs):
         with self.lock:
             return func(self, *args, **kwargs)
@@ -132,7 +182,7 @@ def build_workspace(path, task_id=""):
     return os.path.abspath(task_path)
 
 def is_remote_url(url_or_filename):
-    """Check if input is a URL
+    """Check if input is a URL.
 
     Args:
         url_or_filename (str): url_or_filename
