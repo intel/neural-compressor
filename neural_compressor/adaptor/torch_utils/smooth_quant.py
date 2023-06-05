@@ -15,10 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from neural_compressor.utils.utility import LazyImport
 
-torch = LazyImport('torch')
-from ...utils import logger
+try:
+    from neural_compressor.utils.utility import LazyImport
+
+    torch = LazyImport('torch')
+    from ...utils import logger
+except:
+    import torch
+    import logging
+
+    logger = logging.getLogger()
 from collections import UserDict
 
 
@@ -36,8 +43,8 @@ def forward_wrapper(model, input, device='cpu'):
             output = model(*input)
         else:  # pragma: no cover
             input = [inp.to(device) \
-                    if isinstance(inp, torch.Tensor) else inp
-                    for inp in input] # pylint: disable=E1133
+                         if isinstance(inp, torch.Tensor) else inp
+                     for inp in input]  # pylint: disable=E1133
             output = model(*input)
     else:
         if device == 'cpu' or not isinstance(input, torch.Tensor):
@@ -268,7 +275,7 @@ class TorchSmoothQuant:
             self.hook_handles.append(hook_handle)
         if self.alpha == 'auto' and input_output_modules:
             logger.warning("Auto alpha for Smoothquant records input & output"
-                            + ", please avoid out of memory.")
+                           + ", please avoid out of memory.")
             for key in input_output_modules.keys():
                 hook_func = self._save_input_output_hook(key)
                 hook_handle = input_output_modules[key].register_forward_hook(hook_func)
@@ -392,8 +399,8 @@ class TorchSmoothQuant:
         :return:
         """
         layer = get_module(self.model, layer_name)
-        from .model_wrapper import SQLinearWrapper
-        if isinstance(layer, SQLinearWrapper):
+        if layer.__class__.__name__ == "SQLinearWrapper":
+            from .model_wrapper import SQLinearWrapper
             layer = layer.sq_linear
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
@@ -407,9 +414,10 @@ class TorchSmoothQuant:
         :param alpha_key: The alpha passed to SQLinearWrapper
         :return:
         """
-        from .model_wrapper import SQLinearWrapper
-        layer = get_module(self.model, layer_name)
+
         if self.insert_mul:
+            from .model_wrapper import SQLinearWrapper
+            layer = get_module(self.model, layer_name)
             if isinstance(layer, SQLinearWrapper):
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
@@ -418,11 +426,13 @@ class TorchSmoothQuant:
                 set_module(self.model, layer_name, new_module)
 
         elif self.allow_absorb:
+            layer = get_module(self.model, layer_name)
             if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
                     isinstance(layer, torch.nn.InstanceNorm2d):
                 if layer.affine:
                     layer.weight *= scale
-                    layer.bias *= scale
+                    if layer.bias != None:
+                        layer.bias *= scale
                 else:
                     layer.affine = True
                     weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
@@ -431,10 +441,11 @@ class TorchSmoothQuant:
                     bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
                     layer.bias = torch.nn.Parameter(bias, requires_grad=False
                                                     )
-            elif isinstance(layer, torch.nn.LayerNorm):
+            elif isinstance(layer, torch.nn.LayerNorm) or layer.__class__.__name__ == "LPLayerNorm":
                 if layer.elementwise_affine:
                     layer.weight *= scale
-                    layer.bias *= scale
+                    if layer.bias != None:
+                        layer.bias *= scale
                 else:
                     layer.elementwise_affine = True
                     weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
@@ -458,12 +469,12 @@ class TorchSmoothQuant:
                 layer.weight *= scale
 
             elif layer.__class__.__name__ == "LlamaRMSNorm" \
-              or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+                    or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
                 layer.weight *= scale
 
             else:
                 logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to "
-                  f"weight and bias directly, this may introduce accuracy issue, please have a check ")
+                               f"weight and bias directly, this may introduce accuracy issue, please have a check ")
                 if hasattr(layer, "weight") and layer.weight != None:
                     layer.weight *= scale
                 if hasattr(layer, "bias") and layer.bias != None:
@@ -569,7 +580,6 @@ class TorchSmoothQuant:
         """
         logger.info("auto tuning alpha")
         import copy
-        from .model_wrapper import SQLinearWrapper
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
@@ -599,7 +609,8 @@ class TorchSmoothQuant:
                                                                 self.absorb_scales_info[absorb_key])
                     input_of_op_q = quant_dequant_x(input_of_op * input_scale)
                     layer = get_module(self.model, layer_key)
-                    if isinstance(layer, SQLinearWrapper):
+
+                    if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
@@ -672,16 +683,25 @@ class TorchSmoothQuant:
             input_maxes = self.input_maxes
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
-                    self.self_absorb_layers = self._get_all_layer_names()   # TODO: only support linear now.
+                    self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
                         logger.warning("sorry, could not trace the model, smooth quant is ignored")
                         logger.warning("if you are using huggingface model,"
-                                    "you could set torchscript to True "
-                                    "when loading the model or set the return_dict to False")
+                                       "you could set torchscript to True "
+                                       "when loading the model or set the return_dict to False")
                         return self.model
+                    elif self.absorb_to_layer == {}:
+                        logger.warning("could not find any layer to be absorbed")
+                    else:
+                        to_absorb_cnt = 0
+                        for key, item in self.absorb_to_layer.items():
+                            to_absorb_cnt += len(item)
+
+                        logger.info(
+                            f"find {to_absorb_cnt} could be absorbed in {to_absorb_cnt + len(no_absorb_layers)}")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
@@ -725,7 +745,7 @@ class TorchSmoothQuant:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
- 
+
     def _get_all_layer_names(self, op_types=['Linear']):
         """
         Try the model to find the layers which can be smooth quantized.
@@ -779,6 +799,7 @@ class GraphTrace:
             "InstanceNorm2d": "aten::instance_norm",
             "LlamaRMSNorm": "aten::mul",
             "T5LayerNorm": "aten::mul",
+            "LPLayerNorm": "aten::layer_norm"  ##mpt_chat
         }
         ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to",
@@ -867,6 +888,8 @@ class GraphTrace:
             node = nodes[index]
             layer_name = '.'.join(node.scopeName().split('/')[-1].split('.')[1:])
             absorb_name = '.'.join(absorb.scopeName().split('/')[-1].split('.')[1:])
+            if layer_name == "" or absorb_name == "":
+                continue
             if absorb_name in absorb_to_layer.keys():
                 absorb_to_layer[absorb_name].append(layer_name)
             else:

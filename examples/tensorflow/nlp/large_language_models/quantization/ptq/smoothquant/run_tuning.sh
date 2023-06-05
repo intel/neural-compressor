@@ -16,6 +16,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
+      --sq=*)
+          sq=$(echo ${var} |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -23,9 +26,14 @@ function init_params {
 
 # run_tuning
 function run_tuning {
+
+    ext_cmd=""
+    if [[ ${sq} == "True" ]]; then
+        ext_cmd="--sq"
+    fi
     python main.py \
         --model_name_or_path ${input_model} \
-        --sq
+        ${ext_cmd}
 }
 
 main "$@"
