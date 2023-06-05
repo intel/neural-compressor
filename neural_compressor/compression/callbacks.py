@@ -261,10 +261,10 @@ class PruningCallbacks(BaseCallbacks):
                     if modules == {}:
                         logger.warning("one pruner hooks no layers, please have a check")
 
-                self.pruners.append(get_pruner(info, modules))
-                info['modules'] = [key for key in modules.keys()]
-                info['len_of_modules'] = len(info['modules'])
-                logger.info(info)
+                    self.pruners.append(get_pruner(info, modules))
+                    info['modules'] = [key for key in modules.keys()]
+                    info['len_of_modules'] = len(info['modules'])
+                    logger.info(info)
         elif self.conf.framework == 'keras' and isinstance(self.model.model, tf.keras.Model):
             for info in self.pruners_info:
                 # original pruning types, e.g NxM or N:M

@@ -1573,7 +1573,8 @@ class PatternMHA(BasePattern):
         M: The size of the weight sequence.
     """
 
-    def __init__(self, config, modules = None):
+    def __init__(self, config, modules = None, framework='pytorch'):
+        self.framework = framework
         self.is_global = config.pruning_scope == "global"
         # 111
     
