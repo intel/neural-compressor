@@ -213,7 +213,7 @@ def start_service(args):
     print("[For information] neural_solution help")
 
 def main():
-    """main function."""
+    """Implement the main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
     parser.add_argument('action', choices=['start', 'stop'], help='start/stop service')
     parser.add_argument("--hostfile", default=None,
