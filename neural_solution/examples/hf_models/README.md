@@ -111,7 +111,7 @@ optional arguments:
 }
 
 ```
-### Stop the serve
+### Stop the service
 ```shell
 neural_solution stop
 ```

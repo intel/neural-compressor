@@ -8,7 +8,7 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 - APIs Support: Neural Solution supports both RESTful and gRPC APIs, enabling users to conveniently submit optimization tasks.
 - Code Less: When working with Hugging Face models, Neural Solution seamlessly integrates the functionality of the [Neural Coder](https://github.com/intel/neural-compressor/tree/master/neural_coder), eliminating the need for any code modifications during the optimization process.
 
-# How does Nueral Solution Work?
+# How does Neural Solution Work?
 ![NS-OaaS-Intro](./docs/source/imgs/NS-OaaS-Intro.png)
 
 # Get Started
