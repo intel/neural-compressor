@@ -5,6 +5,7 @@
 3. [SmoothQuant and Our Enhancement](#SmoothQuant-and-Our-Enhancement)
 4. [Validated Models](#Validated-Models)
 5. [Example](#Example)
+6. [Supported Framework Matrix](#Supported-Framework-Matrix)
 
 
 
@@ -362,6 +363,8 @@ smooth_quant_args description:
 | PyTorch   | [0-1] / 'auto' | False      |
 | IPEX      | [0-1] / 'auto' | True / False(Version>2.1) |
 | ONNX      | [0-1]        | True       |
+| Tensorflow| [0-1]        | False      |
+| ITEX      | [0-1]        | False      |
 
 ## Reference
 
