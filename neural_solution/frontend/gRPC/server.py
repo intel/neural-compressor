@@ -35,10 +35,26 @@ from neural_solution.frontend.utility import (
     query_task_result)
 
 class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
+    """Deliver services.
+
+    Args:
+        neural_solution_pb2_grpc (_type_): _description_
+    """
+
     def __init__(self) -> None:
+        """Init."""
         pass
 
     def Ping(self, empty_msg, context):
+        """Check service status.
+
+        Args:
+            empty_msg (_type_): _description_
+            context (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         print(f"Ping grpc serve.")
         port_lst = [config.result_monitor_port]
         result = check_service_status(port_lst, service_address=config.service_address)
@@ -46,6 +62,20 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         return response
 
     def SubmitTask(self, task, context):
+        """Submit task.
+
+        Args:
+            task (Task): _description_
+            Fields:
+                task_id: The task id
+                arguments: The task command
+                workers: The requested resource unit number
+                status: The status of the task: pending/running/done
+                result: The result of the task, which is only value-assigned when the task is done
+
+        Returns:
+            _type_: status , id of task and messages.
+        """
         # Process the task
         print(f"Submit task to task db")
         db_path = get_db_path(config.workspace)
@@ -56,6 +86,14 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         return response
 
     def GetTaskById(self, task_id, context):
+        """Get task status, result, quantized model path according to id.
+
+        Args:
+            task_id (str): the id of task.
+
+        Returns:
+            _type_: task status, result, quantized model path
+        """
         db_path = get_db_path(config.workspace)
         result = query_task_status(task_id.task_id, db_path)
         print(f"query result : result")
@@ -63,6 +101,14 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         return response
 
     def QueryTaskResult(self, task_id, context):
+        """Get task status and information according to id.
+
+        Args:
+            task_id (str): the id of task.
+
+        Returns:
+            json: task status and information
+        """
         db_path = get_db_path(config.workspace)
         result = query_task_result(task_id.task_id, db_path, config.workspace)
         result['tuning_information'] = dict_to_str(result["tuning_information"])
@@ -72,6 +118,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
 
 
 def serve():
+    """Service entrance."""
     port = str(config.grpc_api_port)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     neural_solution_pb2_grpc.add_TaskServiceServicer_to_server(
@@ -83,6 +130,7 @@ def serve():
 
 
 def parse_arguments():
+    """Parse the command line options."""
     parser = argparse.ArgumentParser(description="Frontend with RESTful API")
     parser.add_argument("-H", "--host", type=str, default="0.0.0.0", \
         help="The address to submit task.")

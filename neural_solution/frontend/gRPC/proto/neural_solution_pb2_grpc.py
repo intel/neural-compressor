@@ -7,11 +7,10 @@ import neural_solution.frontend.gRPC.proto.neural_solution_pb2 as neural__soluti
 
 
 class TaskServiceStub(object):
-    """Interface exported by the server
-    """
+    """Interface exported by the server."""
 
     def __init__(self, channel):
-        """Constructor.
+        """Init constructor.
 
         Args:
             channel: A grpc.Channel.
@@ -39,8 +38,7 @@ class TaskServiceStub(object):
 
 
 class TaskServiceServicer(object):
-    """Interface exported by the server
-    """
+    """Interface exported by the server."""
 
     def Ping(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -68,6 +66,12 @@ class TaskServiceServicer(object):
 
 
 def add_TaskServiceServicer_to_server(servicer, server):
+    """Add the TaskServiceServicer to gRpc server.
+
+    Args:
+        servicer (_type_): _description_
+        server (_type_): _description_
+    """
     rpc_method_handlers = {
             'Ping': grpc.unary_unary_rpc_method_handler(
                     servicer.Ping,
@@ -97,8 +101,7 @@ def add_TaskServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class TaskService(object):
-    """Interface exported by the server
-    """
+    """Interface exported by the server."""
 
     @staticmethod
     def Ping(request,
@@ -111,6 +114,23 @@ class TaskService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Tets server status.
+
+        Args:
+        request (_type_): _description_
+        target (_type_): _description_
+        options (tuple, optional): _description_. Defaults to ().
+        channel_credentials (_type_, optional): _description_. Defaults to None.
+        call_credentials (_type_, optional): _description_. Defaults to None.
+        insecure (bool, optional): _description_. Defaults to False.
+        compression (_type_, optional): _description_. Defaults to None.
+        wait_for_ready (_type_, optional): _description_. Defaults to None.
+        timeout (_type_, optional): _description_. Defaults to None.
+        metadata (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+        _type_: _description_
+        """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/Ping',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             neural__solution__pb2.ResponsePingMessage.FromString,
@@ -128,6 +148,23 @@ class TaskService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Submit task.
+
+        Args:
+        request (_type_): _description_
+        target (_type_): _description_
+        options (tuple, optional): _description_. Defaults to ().
+        channel_credentials (_type_, optional): _description_. Defaults to None.
+        call_credentials (_type_, optional): _description_. Defaults to None.
+        insecure (bool, optional): _description_. Defaults to False.
+        compression (_type_, optional): _description_. Defaults to None.
+        wait_for_ready (_type_, optional): _description_. Defaults to None.
+        timeout (_type_, optional): _description_. Defaults to None.
+        metadata (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+        _type_: _description_
+        """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/SubmitTask',
             neural__solution__pb2.Task.SerializeToString,
             neural__solution__pb2.TaskResponse.FromString,
@@ -145,6 +182,23 @@ class TaskService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Get task status according to id.
+
+        Args:
+        request (_type_): _description_
+        target (_type_): _description_
+        options (tuple, optional): _description_. Defaults to ().
+        channel_credentials (_type_, optional): _description_. Defaults to None.
+        call_credentials (_type_, optional): _description_. Defaults to None.
+        insecure (bool, optional): _description_. Defaults to False.
+        compression (_type_, optional): _description_. Defaults to None.
+        wait_for_ready (_type_, optional): _description_. Defaults to None.
+        timeout (_type_, optional): _description_. Defaults to None.
+        metadata (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+        _type_: _description_
+        """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/GetTaskById',
             neural__solution__pb2.TaskId.SerializeToString,
             neural__solution__pb2.TaskStatus.FromString,
@@ -162,6 +216,23 @@ class TaskService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Get task result according to id.
+
+        Args:
+        request (_type_): _description_
+        target (_type_): _description_
+        options (tuple, optional): _description_. Defaults to ().
+        channel_credentials (_type_, optional): _description_. Defaults to None.
+        call_credentials (_type_, optional): _description_. Defaults to None.
+        insecure (bool, optional): _description_. Defaults to False.
+        compression (_type_, optional): _description_. Defaults to None.
+        wait_for_ready (_type_, optional): _description_. Defaults to None.
+        timeout (_type_, optional): _description_. Defaults to None.
+        metadata (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+        _type_: _description_
+        """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/QueryTaskResult',
             neural__solution__pb2.TaskId.SerializeToString,
             neural__solution__pb2.ResponseTaskResult.FromString,

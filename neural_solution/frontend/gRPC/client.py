@@ -23,6 +23,7 @@ from neural_solution.frontend.gRPC.proto import (
 from neural_solution.config import config
 
 def run():
+    """Implement main entry point for the client of gRPC frontend."""
     # Create a gRPC channel
     port = str(config.grpc_api_port)
     channel = grpc.insecure_channel('localhost:' + port)
@@ -56,6 +57,11 @@ def run():
 
 
 def run_query_task_result(task_id):
+    """Query task result according to id.
+
+    Args:
+        task_id (_type_): the id of task
+    """
     # Create a gRPC channel
     port = str(config.grpc_api_port)
     channel = grpc.insecure_channel('localhost:' + port)
@@ -70,6 +76,11 @@ def run_query_task_result(task_id):
     print(response.optimization_result)
 
 def run_query_task_status(task_id):
+    """Query task status according to id.
+
+    Args:
+        task_id (_type_): the id of task
+    """
     # Create a gRPC channel
     port = str(config.grpc_api_port)
     channel = grpc.insecure_channel('localhost:' + port)
