@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Fast api server."""
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 from neural_solution.frontend.task_submitter import Task, task_submitter
@@ -56,6 +58,7 @@ import argparse
 args = None
 
 def parse_arguments():
+    """Parse the command line options."""
     parser = argparse.ArgumentParser(description="Frontend with RESTful API")
     parser.add_argument("-H", "--host", type=str, default="0.0.0.0", \
         help="The address to submit task.")
@@ -73,10 +76,16 @@ def parse_arguments():
 
 @app.get("/")
 def read_root():
+    """Root route."""
     return {"message": "Welcome to Neural Solution!"}
 
 @app.get("/ping")
 def ping():
+    """Test status of services.
+
+    Returns:
+        _type_: _description_
+    """
     count = 0
     msg = "Neural Solution is running."
     for port in [config.task_monitor_port, config.result_monitor_port]:
@@ -101,16 +110,31 @@ def ping():
 
 @app.get("/cluster")
 def get_cluster():
+    """Get the cluster info.
+
+    Returns:
+        _type_: the cluster info.
+    """
     db_path = get_db_path(config.workspace)
     return get_cluster_info(db_path=db_path)
 
 @app.get("/clusters")
 def get_clusters():
+    """Get the cluster info.
+
+    Returns:
+        _type_: html table of the cluster info
+    """
     db_path = get_db_path(config.workspace)
     return HTMLResponse(content=get_cluster_table(db_path=db_path))
 
 @app.get("/description")
 async def get_description():
+    """Get user oriented API descriptions.
+
+    Returns:
+        json: API descriptions
+    """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(current_dir, "..", "user_facing_api.json")) as f:
         data = json.load(f)
@@ -118,6 +142,20 @@ async def get_description():
 
 @app.post("/task/submit/")
 async def submit_task(task: Task):
+    """Submit task.
+
+    Args:
+        task (Task): _description_
+        Fields:
+            task_id: The task id
+            arguments: The task command
+            workers: The requested resource unit number
+            status: The status of the task: pending/running/done
+            result: The result of the task, which is only value-assigned when the task is done
+
+    Returns:
+        _type_: status , id of task and messages.
+    """
     msg = "Task submitted successfully"
     status = "successfully"
     # search the current
@@ -147,6 +185,14 @@ async def submit_task(task: Task):
 
 @app.get("/task/{task_id}")
 def get_task_by_id(task_id: str):
+    """Get task status, result, quantized model path according to id.
+
+    Args:
+        task_id (str): the id of task.
+
+    Returns:
+        _type_: task status, result, quantized model path
+    """
     res = None
     db_path = get_db_path(config.workspace)
     if os.path.isfile(db_path):
@@ -160,6 +206,11 @@ def get_task_by_id(task_id: str):
 
 @app.get("/task/")
 def get_all_tasks():
+    """Get task table.
+
+    Returns:
+        _type_: task table
+    """
     res = None
     db_path = get_db_path(config.workspace)
     if os.path.isfile(db_path):
@@ -173,7 +224,14 @@ def get_all_tasks():
 
 @app.get("/task/status/{task_id}")
 def get_task_status_by_id(task_id: str):
+    """Get task status and information according to id.
 
+    Args:
+        task_id (str): the id of task.
+
+    Returns:
+        json: task status and information
+    """
     status = "unknown"
     tuning_info = {}
     optimization_result = {}
@@ -207,6 +265,17 @@ def get_task_status_by_id(task_id: str):
 
 @app.get("/task/log/{task_id}")
 async def read_logs(task_id: str):
+    """Get the log of task according to id.
+
+    Args:
+        task_id (str): the id of task.
+
+    Returns:
+        _type_: _description_
+
+    Yields:
+        _type_: log lines
+    """
     log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
     if not os.path.exists(log_path):
         return {"error": "Logfile not found."}
@@ -221,7 +290,20 @@ async def read_logs(task_id: str):
 
 # Real time output log
 class LogEventHandler(FileSystemEventHandler):
+    """Responsible for monitoring log changes and sending logs to clients.
+
+    Args:
+        FileSystemEventHandler (_type_): _description_
+    """
+
     def __init__(self, websocket: WebSocket, task_id, last_position):
+        """Init.
+
+        Args:
+            websocket (WebSocket): _description_
+            task_id (_type_): the id of task
+            last_position (_type_): The last line position of the existing log.
+        """
         super().__init__()
         self.websocket = websocket
         self.task_id = task_id
@@ -232,6 +314,7 @@ class LogEventHandler(FileSystemEventHandler):
 
 
     async def send_messages(self):
+        """Send messages to the client."""
         while True:
             try:
                 messages = []
@@ -245,6 +328,7 @@ class LogEventHandler(FileSystemEventHandler):
                 await self.websocket.send_text("\n".join(messages))
 
     def on_modified(self, event):
+        """File modification event."""
         log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), self.task_id)
         with open(log_path, "r") as f:
             # Move the file pointer to the last position
@@ -258,6 +342,16 @@ class LogEventHandler(FileSystemEventHandler):
 
 # start log watcher
 def start_log_watcher(websocket, task_id, last_position):
+    """Start log watcher.
+
+    Args:
+        websocket (_type_): _description_
+        task_id (_type_): the id of task.
+        last_position (_type_): The last line position of the existing log.
+
+    Returns:
+        _type_: _description_
+    """
     observer = Observer()
     # watch log/task_{}.txt
     log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
@@ -268,6 +362,15 @@ def start_log_watcher(websocket, task_id, last_position):
 
 @app.websocket("/task/screen/{task_id}")
 async def websocket_endpoint(websocket: WebSocket, task_id: str):
+    """Real time log output.
+
+    Args:
+        websocket (WebSocket): _description_
+        task_id (str): the id of task.
+
+    Raises:
+        HTTPException: _description_
+    """
     if not check_log_exists(task_id=task_id, task_log_path=get_task_log_workspace(config.workspace)):
         raise HTTPException(status_code=404, detail="Task not found")
     await websocket.accept()
