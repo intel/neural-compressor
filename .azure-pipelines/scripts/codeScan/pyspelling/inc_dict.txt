@@ -564,6 +564,7 @@ enum
 env
 environ
 ep
+eps
 eq
 erf
 Erf
