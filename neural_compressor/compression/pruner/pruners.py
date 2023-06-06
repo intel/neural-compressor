@@ -161,7 +161,7 @@ class BasePruner:
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
-                self.masks[key] = np.ones(module.get_weights().shape)
+                self.masks[key] = np.ones(module.get_weights()[0].shape)
         self.target_sparsity_ratio = self.config['target_sparsity']
         self.current_sparsity_ratio = 0.0
         self.init_sparsity_ratio = 0.0
@@ -188,7 +188,7 @@ class BasePruner:
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
-                module.set_weights(np.array(module.get_weights()) * self.masks[key])
+                module.set_weights([module.get_weights()[0] * self.masks[key]] + module.get_weights()[1:])
 
     def mask_weights_general(self, input_masks):
         """Apply input masks to corresponding modules' weights.
@@ -206,7 +206,7 @@ class BasePruner:
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
-                module.set_weights(np.array(module.get_weights()) * input_masks[key])
+                module.set_weights([module.get_weights()[0] * input_masks[key]] + module.get_weights()[1:])
 
     def on_step_begin(self, local_step):
         """Implement at the start of each step."""

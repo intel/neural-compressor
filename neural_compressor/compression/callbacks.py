@@ -226,7 +226,7 @@ class PruningCallbacks(BaseCallbacks):
             on_train_end_hook()
         if self.conf.framework == 'pytorch' and isinstance(self.model.model, torch.nn.Module):
             get_sparsity_ratio(self.pruners, self.model)
-        elif self.conf.framework == 'keras' and isinstance(self.model.model, tf.keras.model):
+        elif self.conf.framework == 'keras' and isinstance(self.model.model, tf.keras.Model):
             get_sparsity_ratio_tf(self.pruners, self.model)
 
     def __repr__(self):
@@ -266,6 +266,8 @@ class PruningCallbacks(BaseCallbacks):
                     info['len_of_modules'] = len(info['modules'])
                     logger.info(info)
         elif self.conf.framework == 'keras' and isinstance(self.model.model, tf.keras.Model):
+            from tensorflow.python.ops.numpy_ops import np_config
+            np_config.enable_numpy_behavior()
             for info in self.pruners_info:
                 # original pruning types, e.g NxM or N:M
                 modules = parse_to_prune_tf(info, self.model.model)

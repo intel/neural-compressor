@@ -824,10 +824,10 @@ class KerasAdaptor(Adaptor):
         training_step = training_step if execution_mode=='eager' else tf.function(training_step)
         if start_epochs is not None and end_epochs is not None:
             epochs = end_epochs - start_epochs
+        
         for epoch in range(epochs):
             cnt = 0
             epoch_loss_avg = tf.keras.metrics.Mean()
-            hooks['on_epoch_begin'](epoch)         # on_epoch_begin hook
             # Training loop
             for iter, data in enumerate(dataloader):
                 x, y = postprocess(data) if postprocess is not None else data
@@ -836,11 +836,11 @@ class KerasAdaptor(Adaptor):
                 loss_value = training_step(x, y, iter==0)
                 # Track progress
                 epoch_loss_avg.update_state(loss_value)  # Add current batch loss
-                hooks['on_step_end']()            # on_step_end hook
+                hooks['on_before_optimizer_step']()  
+                hooks['on_after_optimizer_step']() 
                 if iters is not None and cnt >= iters:
                     break
             model._sess = None
-            hooks['on_epoch_end']()                # on_epoch_end hook
             # End epoch
             train_loss_results.append(epoch_loss_avg.result())
             if distributed:

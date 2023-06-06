@@ -161,25 +161,25 @@ def get_sparsity_ratio_tf(pruners, model):
         sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
         cnt = 0
         for key in modules.keys():
-            cnt += np.sum([weight.size for weight in modules[key].get_weights()])
+            cnt += modules[key].get_weights()[0].size
         pattern_sparsity_cnt += int(cnt * sparsity_ratio)
         for key in pruner.masks.keys():
             block_num = 1 
             if pruner.pattern.block:
                 block_size = pruner.pattern.block_size[key]
                 block_num = block_size[0] * block_size[1]
-            element_sparsity_cnt += pruner.masks[key].count(0) * block_num
+            element_sparsity_cnt += np.sum(pruner.masks[key] == 0) * block_num
 
     linear_conv_cnt = 0
     param_cnt = 0
     for layer in model.layers:
         if layer.__class__.__name__ in ["Dense"] or re.search(r'Conv.d', layer.__class__.__name__) != None:
-            linear_conv_cnt += np.sum([weight.size for weight in layer.get_weights()])
+            linear_conv_cnt += layer.get_weights()[0].size
 
     for layer in model.layers:
         if bool(layer.weights):
-            weights = layer.get_weights()   
-            param_cnt += np.sum([weight.size for weight in weights])
+            weights = layer.get_weights()[0]   
+            param_cnt += weights.size
     if linear_conv_cnt == 0:
         blockwise_over_matmul_gemm_conv = 0
         elementwise_over_matmul_gemm_conv = 0
@@ -550,8 +550,9 @@ def parse_to_prune_tf(config, model):
         config["op_names"] = [".*"]
 
     for layer in model.layers:
-        if layer.__class__.__name__ in config["pruning_op_types"] and bool(layer.weights):
-            modules[layer.name] = layer
+        for layer_type in config["pruning_op_types"]:
+            if layer_type in layer.__class__.__name__ and bool(layer.weights):
+                modules[layer.name] = layer
 
     ##remove not to prune layers
     """Drop non-pruned layers."""

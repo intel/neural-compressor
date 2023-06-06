@@ -421,10 +421,10 @@ class BasePattern:
         Returns:
             A Tensor with the identical size as score. a new mask.
         """
-        flattern_score = torch.flatten(score)
-        k = int(exact_sparsity_ratio * flattern_score.numel())
-        threshold, _ = torch.kthvalue(flattern_score, k)
         if self.framework == 'pytorch':
+            flattern_score = torch.flatten(score)
+            k = int(exact_sparsity_ratio * flattern_score.numel())
+            threshold, _ = torch.kthvalue(flattern_score, k)
             if not k < 1:
                 zero = torch.tensor([0.]).to(score.device)
                 one = torch.tensor([1.]).to(score.device)
@@ -432,6 +432,9 @@ class BasePattern:
             else:
                 mask = torch.ones(score.shape, device=score.device)
         elif self.framework == 'keras':
+            flattern_score = tf.reshape(score, [-1]).numpy()
+            k = int(exact_sparsity_ratio * flattern_score.size)
+            threshold = np.partition(flattern_score, kth=k)[k]
             if not k < 1:
                 zero = tf.convert_to_tensor([0.])
                 one = tf.convert_to_tensor([1.])
@@ -474,7 +477,7 @@ class BasePattern:
         elif self.framework == 'keras':
             for key in pre_masks.keys():
                 pre_mask = pre_masks[key]
-                zero_cnt += pre_mask.count(0.0)
+                zero_cnt += np.sum(pre_mask == 0.0)
                 total_cnt += pre_mask.size  ##FIXME
         if return_dict:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
@@ -505,7 +508,7 @@ class BasePattern:
                 if key in self.invalid_layers:
                     continue
                 # progressive masks are unstructured, therefore directly find zeros
-                zero_cnt += float(pre_masks[key].count(0))
+                zero_cnt += float(np.sum(pre_masks[key] == 0))
                 total_cnt += float(pre_masks[key].size)
         return (zero_cnt / total_cnt)
         
@@ -529,7 +532,7 @@ class BasePattern:
                 pattern_lock_masks[key] = mask.to(weight.device)
         elif self.framework == 'keras':
             for key in modules.keys():
-                weight = modules[key].get_weights()
+                weight = modules[key].get_weights()[0]
                 shape = weight.shape
                 mask = tf.ones_like(shape)
                 mask[weight == 0] = 0.0
@@ -594,7 +597,7 @@ class BasePattern:
                 if key in self.invalid_layers:
                     continue
                 reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
-                zero_cnt = int(reduced_mask.count(0.0))
+                zero_cnt = int(np.sum(reduced_mask == 0.0))
                 total_cnt = int(reduced_mask.size)
                 sparsity_ratio = float(zero_cnt) / total_cnt
                 val = SparsityInfo(zero_cnt, total_cnt, sparsity_ratio)
@@ -750,7 +753,7 @@ class PatternNxM(BasePattern):
                     logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
         elif self.framework == 'keras':
             for key in datas.keys():
-                data = datas[key].get_weights()
+                data = datas[key].get_weights()[0]
                 data = self._reshape_orig_to_2dims(data)
                 shape = data.shape
                 block_size = block_sizes[key]
@@ -802,7 +805,7 @@ class PatternNxM(BasePattern):
                 if key in self.invalid_layers:
                     continue
                 reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
-                zero_cnt += int(reduced_mask.count(0.0))
+                zero_cnt += int(np.sum(reduced_mask == 0.0))
                 total_cnt += int(reduced_mask.size)
         if total_cnt == 0:
             sparsity_ratio = 0.0
@@ -911,11 +914,12 @@ class PatternNxM(BasePattern):
                 mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
         elif self.framework == 'keras':
             zero = tf.convert_to_tensor([0.])
-            one = tf.convert_to_tensortensor([1.])
+            one = tf.convert_to_tensor([1.])
             mask = tf.where(score <= threshold, zero, one)
             if not self.block:
                 mask = tf.repeat(mask, repeats=block_size[0], axis=0)
                 mask = tf.repeat(mask, repeats=block_size[1], axis=-1)
+            mask = mask.numpy()
         return mask
 
     def get_masks_global(self, scores, cur_target_sparsity_ratio, pre_masks,
@@ -1054,8 +1058,8 @@ class PatternNxM(BasePattern):
             if not_exceed_layers == new_not_exceed_layers or len(new_not_exceed_layers) == 0:
                 break
             not_exceed_layers = new_not_exceed_layers
-            global_scores = np.concatenate([new_scores[key].flatten for key in not_exceed_layers])
-            threshold, _ = np.partition(global_scores, kth=residual_k)
+            global_scores = np.concatenate([tf.reshape(new_scores[key], [-1]).numpy() for key in not_exceed_layers])
+            threshold = np.partition(global_scores, kth=residual_k)[residual_k]
             
             for key in not_exceed_layers:
                 block_size = self.block_size[key]
@@ -1075,7 +1079,8 @@ class PatternNxM(BasePattern):
                     self.keep_mask_layers[key] = True
                     masks[key] = self.get_single_mask_per_target_ratio(new_scores[key], adjust_ratio)
                     if not self.block:
-                        masks[key] = masks[key].repeat_interleave(block_size[0], 0).repeat_interleave(block_size[1], -1)
+                        masks[key] = tf.repeat(masks[key], repeats=block_size[0], axis=0)
+                        masks[key] = tf.repeat(masks[key], repeats=block_size[1], axis=-1)
                     if keep_exact_sparsity_ratio:
                         zero_cnt = self.get_sparsity_ratio({key: masks[key]}, return_dict=True)["zero_cnt"]
                         residual_k -= zero_cnt
@@ -1092,7 +1097,7 @@ class PatternNxM(BasePattern):
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
-            layer_ratio = masks[key].count(0.0) / masks[key].size
+            layer_ratio = np.sum(masks[key] == 0.0) / masks[key].size
             logger.info(f'{key} sparsity is {layer_ratio}')
         return masks
 
@@ -1119,7 +1124,7 @@ class PatternNxM(BasePattern):
                 pattern_lock_masks[key] = mask
         elif self.framework == 'keras':
             for key in modules.keys():
-                weight = modules[key].get_weights()
+                weight = modules[key].get_weights()[0]
                 ori_shape = weight.shape
                 if key in self.invalid_layers:
                     mask = np.ones(weight.shape)
@@ -1159,7 +1164,7 @@ class PatternNxM(BasePattern):
                 if key in self.invalid_layers:
                     continue # No corresponding block mask, skip.
                 module = modules[key]
-                weight = module.get_weights()
+                weight = module.get_weights()[0]
                 if module.__class__.__name__ not in ["Dense"]:
                     logger.warning(f"Currently only support Dense block mask pruning," \
                                     f"{module.__class__.__name__} won't be pruned.")
@@ -1193,11 +1198,11 @@ class PatternNxM(BasePattern):
                     continue
                 module = self.modules[key]
                 block_size = self.block_size[key]
-                org_shape = module.get_weights().shape
+                org_shape = module.get_weights()[0].shape
                 mask = tf.repeat(masks[key], repeats=block_size[0], axis=0)
                 mask = tf.repeat(mask, repeats=block_size[1], axis=-1)
             
-                reshaped_weight = self._reshape_orig_to_2dims(module.get_weights()) * mask
+                reshaped_weight = self._reshape_orig_to_2dims(module.get_weights()[0]) * mask
                 module.set_weights(self._reshape_2dims_to_orig(reshaped_weight, org_shape))
 
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):

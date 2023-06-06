@@ -102,7 +102,7 @@ class MagnitudeCriterion(PruningCriterion):
                     self.scores[key] = torch.abs(p)
         elif self.framework == 'keras':
             for key in self.modules.keys():
-                p = self.modules[key].get_weights()
+                p = self.modules[key].get_weights()[0]
                 self.scores[key] = np.abs(p)
 
 @register_criterion('gradient')

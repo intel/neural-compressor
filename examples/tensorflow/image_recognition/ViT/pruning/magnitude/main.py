@@ -129,7 +129,8 @@ if __name__ == '__main__':
         pruning_type='magnitude',
         target_sparsity=0.7,
         start_step=FLAGS.start_epoch,
-        end_step=FLAGS.end_epoch
+        end_step=FLAGS.end_epoch,
+        pruning_op_types=['Conv', 'Dense']
     )
     compression_manager = prepare_compression(model='./ViT_Model', confs=configs)
     compression_manager.callbacks.on_train_begin()
