@@ -452,7 +452,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">cpu</td>
         </tr>
         <tr>
-            <td rowspan="3" align="left">ONNX Runtime</td>
+            <td rowspan="4" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
