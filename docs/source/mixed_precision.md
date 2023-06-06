@@ -17,6 +17,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 </p>
 
 ## Mixed Precision Support Matrix
+
 <table class="center">
     <thead>
         <tr>
@@ -48,7 +49,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">:x:</td>
         </tr>
         <tr>
-            <td rowspan="3" align="left">ONNX Runtime</td>
+            <td rowspan="4" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -71,6 +72,14 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">gpu</td>
             <td align="left">&#10004;</td>
             <td align="left">&#10004;</td>
+        </tr>
+        <tr>
+            <td align="left">DnnlExecutionProvider</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"onnxrt_dnnl_ep"</td>
+            <td align="left">cpu</td>
+            <td align="left">&#10004;</td>
+            <td align="left">:x:</td>
         </tr>
         <tr>
             <td rowspan="2" align="left">Tensorflow</td>
