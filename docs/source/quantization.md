@@ -471,6 +471,12 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">gpu</td>
         </tr>
         <tr>
+            <td align="left">DnnlExecutionProvider</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"onnxrt_dnnl_ep"</td>
+            <td align="left">cpu</td>
+        </tr>
+        <tr>
             <td rowspan="2" align="left">Tensorflow</td>
             <td align="left">Tensorflow</td>
             <td align="left">OneDNN</td>
