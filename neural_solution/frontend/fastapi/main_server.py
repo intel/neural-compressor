@@ -84,7 +84,7 @@ def ping():
     """Test status of services.
 
     Returns:
-        _type_: _description_
+        json: the status of services and message
     """
     count = 0
     msg = "Neural Solution is running."
@@ -113,7 +113,7 @@ def get_cluster():
     """Get the cluster info.
 
     Returns:
-        _type_: the cluster info.
+        json: the cluster info.
     """
     db_path = get_db_path(config.workspace)
     return get_cluster_info(db_path=db_path)
@@ -123,7 +123,7 @@ def get_clusters():
     """Get the cluster info.
 
     Returns:
-        _type_: html table of the cluster info
+        HTMLResponse: html table of the cluster info
     """
     db_path = get_db_path(config.workspace)
     return HTMLResponse(content=get_cluster_table(db_path=db_path))
@@ -154,7 +154,7 @@ async def submit_task(task: Task):
             result: The result of the task, which is only value-assigned when the task is done
 
     Returns:
-        _type_: status , id of task and messages.
+        json: status , id of task and messages.
     """
     msg = "Task submitted successfully"
     status = "successfully"
@@ -191,7 +191,7 @@ def get_task_by_id(task_id: str):
         task_id (str): the id of task.
 
     Returns:
-        _type_: task status, result, quantized model path
+        json: task status, result, quantized model path
     """
     res = None
     db_path = get_db_path(config.workspace)
@@ -209,7 +209,7 @@ def get_all_tasks():
     """Get task table.
 
     Returns:
-        _type_: task table
+        json: task table
     """
     res = None
     db_path = get_db_path(config.workspace)
@@ -271,10 +271,10 @@ async def read_logs(task_id: str):
         task_id (str): the id of task.
 
     Returns:
-        _type_: _description_
+        StreamingResponse: text stream
 
     Yields:
-        _type_: log lines
+        str: log lines
     """
     log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
     if not os.path.exists(log_path):
@@ -293,16 +293,16 @@ class LogEventHandler(FileSystemEventHandler):
     """Responsible for monitoring log changes and sending logs to clients.
 
     Args:
-        FileSystemEventHandler (_type_): _description_
+        FileSystemEventHandler (FileSystemEventHandler): Base file system event handler that you can override methods from.
     """
 
     def __init__(self, websocket: WebSocket, task_id, last_position):
         """Init.
 
         Args:
-            websocket (WebSocket): _description_
-            task_id (_type_): the id of task
-            last_position (_type_): The last line position of the existing log.
+            websocket (WebSocket): websocket connection
+            task_id (str): the id of task
+            last_position (int): The last line position of the existing log.
         """
         super().__init__()
         self.websocket = websocket
@@ -345,12 +345,12 @@ def start_log_watcher(websocket, task_id, last_position):
     """Start log watcher.
 
     Args:
-        websocket (_type_): _description_
-        task_id (_type_): the id of task.
-        last_position (_type_): The last line position of the existing log.
+        websocket (WebSocket): websocket connection
+        task_id (str): the id of task.
+        last_position (int): The last line position of the existing log.
 
     Returns:
-        _type_: _description_
+       Observer : monitor log file changes
     """
     observer = Observer()
     # watch log/task_{}.txt
@@ -365,11 +365,11 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     """Real time log output.
 
     Args:
-        websocket (WebSocket): _description_
+        websocket (WebSocket): websocket connection
         task_id (str): the id of task.
 
     Raises:
-        HTTPException: _description_
+        HTTPException: exception
     """
     if not check_log_exists(task_id=task_id, task_log_path=get_task_log_workspace(config.workspace)):
         raise HTTPException(status_code=404, detail="Task not found")

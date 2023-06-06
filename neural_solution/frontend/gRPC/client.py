@@ -60,7 +60,7 @@ def run_query_task_result(task_id):
     """Query task result according to id.
 
     Args:
-        task_id (_type_): the id of task
+        task_id (str): the id of task
     """
     # Create a gRPC channel
     port = str(config.grpc_api_port)
@@ -79,7 +79,7 @@ def run_query_task_status(task_id):
     """Query task status according to id.
 
     Args:
-        task_id (_type_): the id of task
+        task_id (str): the id of task
     """
     # Create a gRPC channel
     port = str(config.grpc_api_port)

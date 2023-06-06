@@ -24,7 +24,7 @@ class Task(BaseModel):
     """Task definition for submitting requests.
 
     Args:
-        BaseModel (_type_): _description_
+        BaseModel (ModelMetaclass): meta class
     """
 
     script_url: str
@@ -58,7 +58,7 @@ class TaskSubmitter:
         """Submit task by sending id.
 
         Args:
-            tid (_type_): the id of task
+            tid (str): the id of task
         """
         s = socket.socket()
         s.connect((self.service_address, self.task_monitor_port))

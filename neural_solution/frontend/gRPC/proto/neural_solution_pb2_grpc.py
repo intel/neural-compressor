@@ -69,8 +69,8 @@ def add_TaskServiceServicer_to_server(servicer, server):
     """Add the TaskServiceServicer to gRpc server.
 
     Args:
-        servicer (_type_): _description_
-        server (_type_): _description_
+        servicer (TaskSubmitterServicer): task servicer
+        server (grpc._server._Server): server
     """
     rpc_method_handlers = {
             'Ping': grpc.unary_unary_rpc_method_handler(
@@ -117,19 +117,41 @@ class TaskService(object):
         """Tets server status.
 
         Args:
-        request (_type_): _description_
-        target (_type_): _description_
-        options (tuple, optional): _description_. Defaults to ().
-        channel_credentials (_type_, optional): _description_. Defaults to None.
-        call_credentials (_type_, optional): _description_. Defaults to None.
-        insecure (bool, optional): _description_. Defaults to False.
-        compression (_type_, optional): _description_. Defaults to None.
-        wait_for_ready (_type_, optional): _description_. Defaults to None.
-        timeout (_type_, optional): _description_. Defaults to None.
-        metadata (_type_, optional): _description_. Defaults to None.
+        request: An iterator that yields request values for the RPC.
+        target: The server address.
+        method: The name of the RPC method.
+        request_serializer: Optional :term:`serializer` for serializing the request
+                message. Request goes unserialized in case None is passed.
+        response_deserializer: Optional :term:`deserializer` for deserializing the response
+                message. Response goes undeserialized in case None is passed.
+        options: An optional list of key-value pairs (:term:`channel_arguments` in gRPC Core
+                runtime) to configure the channel.
+        channel_credentials: A credential applied to the whole channel, e.g. the
+                return value of grpc.ssl_channel_credentials() or
+                grpc.insecure_channel_credentials().
+        insecure: If True, specifies channel_credentials as
+                :term:`grpc.insecure_channel_credentials()`. This option is mutually
+                exclusive with the `channel_credentials` option.
+        call_credentials: A call credential applied to each call individually,
+                e.g. the output of grpc.metadata_call_credentials() or
+                grpc.access_token_call_credentials().
+        compression: An optional value indicating the compression method to be
+                used over the lifetime of the channel, e.g. grpc.Compression.Gzip.
+        wait_for_ready: An optional flag indicating whether the RPC should fail
+                immediately if the connection is not ready at the time the RPC is
+                invoked, or if it should wait until the connection to the server
+                becomes ready. When using this option, the user will likely also want
+                to set a timeout. Defaults to True.
+        timeout: An optional duration of time in seconds to allow for the RPC,
+                after which an exception will be raised. If timeout is unspecified,
+                defaults to a timeout controlled by the
+                GRPC_PYTHON_DEFAULT_TIMEOUT_SECONDS environment variable. If that is
+                unset, defaults to 60 seconds. Supply a value of None to indicate that
+                no timeout should be enforced.
+        metadata: Optional metadata to send to the server.
 
         Returns:
-        _type_: _description_
+        The response to the RPC.
         """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/Ping',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
@@ -151,19 +173,41 @@ class TaskService(object):
         """Submit task.
 
         Args:
-        request (_type_): _description_
-        target (_type_): _description_
-        options (tuple, optional): _description_. Defaults to ().
-        channel_credentials (_type_, optional): _description_. Defaults to None.
-        call_credentials (_type_, optional): _description_. Defaults to None.
-        insecure (bool, optional): _description_. Defaults to False.
-        compression (_type_, optional): _description_. Defaults to None.
-        wait_for_ready (_type_, optional): _description_. Defaults to None.
-        timeout (_type_, optional): _description_. Defaults to None.
-        metadata (_type_, optional): _description_. Defaults to None.
+        request: An iterator that yields request values for the RPC.
+        target: The server address.
+        method: The name of the RPC method.
+        request_serializer: Optional :term:`serializer` for serializing the request
+                message. Request goes unserialized in case None is passed.
+        response_deserializer: Optional :term:`deserializer` for deserializing the response
+                message. Response goes undeserialized in case None is passed.
+        options: An optional list of key-value pairs (:term:`channel_arguments` in gRPC Core
+                runtime) to configure the channel.
+        channel_credentials: A credential applied to the whole channel, e.g. the
+                return value of grpc.ssl_channel_credentials() or
+                grpc.insecure_channel_credentials().
+        insecure: If True, specifies channel_credentials as
+                :term:`grpc.insecure_channel_credentials()`. This option is mutually
+                exclusive with the `channel_credentials` option.
+        call_credentials: A call credential applied to each call individually,
+                e.g. the output of grpc.metadata_call_credentials() or
+                grpc.access_token_call_credentials().
+        compression: An optional value indicating the compression method to be
+                used over the lifetime of the channel, e.g. grpc.Compression.Gzip.
+        wait_for_ready: An optional flag indicating whether the RPC should fail
+                immediately if the connection is not ready at the time the RPC is
+                invoked, or if it should wait until the connection to the server
+                becomes ready. When using this option, the user will likely also want
+                to set a timeout. Defaults to True.
+        timeout: An optional duration of time in seconds to allow for the RPC,
+                after which an exception will be raised. If timeout is unspecified,
+                defaults to a timeout controlled by the
+                GRPC_PYTHON_DEFAULT_TIMEOUT_SECONDS environment variable. If that is
+                unset, defaults to 60 seconds. Supply a value of None to indicate that
+                no timeout should be enforced.
+        metadata: Optional metadata to send to the server.
 
         Returns:
-        _type_: _description_
+        The response to the RPC.
         """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/SubmitTask',
             neural__solution__pb2.Task.SerializeToString,
@@ -185,19 +229,41 @@ class TaskService(object):
         """Get task status according to id.
 
         Args:
-        request (_type_): _description_
-        target (_type_): _description_
-        options (tuple, optional): _description_. Defaults to ().
-        channel_credentials (_type_, optional): _description_. Defaults to None.
-        call_credentials (_type_, optional): _description_. Defaults to None.
-        insecure (bool, optional): _description_. Defaults to False.
-        compression (_type_, optional): _description_. Defaults to None.
-        wait_for_ready (_type_, optional): _description_. Defaults to None.
-        timeout (_type_, optional): _description_. Defaults to None.
-        metadata (_type_, optional): _description_. Defaults to None.
+        request: An iterator that yields request values for the RPC.
+        target: The server address.
+        method: The name of the RPC method.
+        request_serializer: Optional :term:`serializer` for serializing the request
+                message. Request goes unserialized in case None is passed.
+        response_deserializer: Optional :term:`deserializer` for deserializing the response
+                message. Response goes undeserialized in case None is passed.
+        options: An optional list of key-value pairs (:term:`channel_arguments` in gRPC Core
+                runtime) to configure the channel.
+        channel_credentials: A credential applied to the whole channel, e.g. the
+                return value of grpc.ssl_channel_credentials() or
+                grpc.insecure_channel_credentials().
+        insecure: If True, specifies channel_credentials as
+                :term:`grpc.insecure_channel_credentials()`. This option is mutually
+                exclusive with the `channel_credentials` option.
+        call_credentials: A call credential applied to each call individually,
+                e.g. the output of grpc.metadata_call_credentials() or
+                grpc.access_token_call_credentials().
+        compression: An optional value indicating the compression method to be
+                used over the lifetime of the channel, e.g. grpc.Compression.Gzip.
+        wait_for_ready: An optional flag indicating whether the RPC should fail
+                immediately if the connection is not ready at the time the RPC is
+                invoked, or if it should wait until the connection to the server
+                becomes ready. When using this option, the user will likely also want
+                to set a timeout. Defaults to True.
+        timeout: An optional duration of time in seconds to allow for the RPC,
+                after which an exception will be raised. If timeout is unspecified,
+                defaults to a timeout controlled by the
+                GRPC_PYTHON_DEFAULT_TIMEOUT_SECONDS environment variable. If that is
+                unset, defaults to 60 seconds. Supply a value of None to indicate that
+                no timeout should be enforced.
+        metadata: Optional metadata to send to the server.
 
         Returns:
-        _type_: _description_
+        The response to the RPC.
         """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/GetTaskById',
             neural__solution__pb2.TaskId.SerializeToString,
@@ -219,19 +285,41 @@ class TaskService(object):
         """Get task result according to id.
 
         Args:
-        request (_type_): _description_
-        target (_type_): _description_
-        options (tuple, optional): _description_. Defaults to ().
-        channel_credentials (_type_, optional): _description_. Defaults to None.
-        call_credentials (_type_, optional): _description_. Defaults to None.
-        insecure (bool, optional): _description_. Defaults to False.
-        compression (_type_, optional): _description_. Defaults to None.
-        wait_for_ready (_type_, optional): _description_. Defaults to None.
-        timeout (_type_, optional): _description_. Defaults to None.
-        metadata (_type_, optional): _description_. Defaults to None.
+        request: An iterator that yields request values for the RPC.
+        target: The server address.
+        method: The name of the RPC method.
+        request_serializer: Optional :term:`serializer` for serializing the request
+                message. Request goes unserialized in case None is passed.
+        response_deserializer: Optional :term:`deserializer` for deserializing the response
+                message. Response goes undeserialized in case None is passed.
+        options: An optional list of key-value pairs (:term:`channel_arguments` in gRPC Core
+                runtime) to configure the channel.
+        channel_credentials: A credential applied to the whole channel, e.g. the
+                return value of grpc.ssl_channel_credentials() or
+                grpc.insecure_channel_credentials().
+        insecure: If True, specifies channel_credentials as
+                :term:`grpc.insecure_channel_credentials()`. This option is mutually
+                exclusive with the `channel_credentials` option.
+        call_credentials: A call credential applied to each call individually,
+                e.g. the output of grpc.metadata_call_credentials() or
+                grpc.access_token_call_credentials().
+        compression: An optional value indicating the compression method to be
+                used over the lifetime of the channel, e.g. grpc.Compression.Gzip.
+        wait_for_ready: An optional flag indicating whether the RPC should fail
+                immediately if the connection is not ready at the time the RPC is
+                invoked, or if it should wait until the connection to the server
+                becomes ready. When using this option, the user will likely also want
+                to set a timeout. Defaults to True.
+        timeout: An optional duration of time in seconds to allow for the RPC,
+                after which an exception will be raised. If timeout is unspecified,
+                defaults to a timeout controlled by the
+                GRPC_PYTHON_DEFAULT_TIMEOUT_SECONDS environment variable. If that is
+                unset, defaults to 60 seconds. Supply a value of None to indicate that
+                no timeout should be enforced.
+        metadata: Optional metadata to send to the server.
 
         Returns:
-        _type_: _description_
+        The response to the RPC.
         """
         return grpc.experimental.unary_unary(request, target, '/neural_solution.TaskService/QueryTaskResult',
             neural__solution__pb2.TaskId.SerializeToString,

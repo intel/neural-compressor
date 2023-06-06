@@ -21,10 +21,10 @@ def get_db_path(workspace="./"):
     """Get the database path.
 
     Args:
-        workspace (str, optional): _description_. Defaults to "./".
+        workspace (str, optional): . Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the path of database
     """
     db_path = os.path.join(workspace, "db", "task.db")
     return os.path.abspath(db_path)
@@ -36,7 +36,7 @@ def get_task_workspace(workspace="./"):
         workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the workspace of task
     """
     return os.path.join(workspace, "task_workspace")
 
@@ -47,7 +47,7 @@ def get_task_log_workspace(workspace="./"):
         workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the workspace of task.
     """
     return os.path.join(workspace, "task_log")
 
@@ -58,7 +58,7 @@ def get_serve_log_workspace(workspace="./"):
         workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the log workspace for service
     """
     return os.path.join(workspace, "serve_log")
 
@@ -66,10 +66,10 @@ def dict_to_str(d):
     """Covert a dict object to a string object.
 
     Args:
-        d (_type_): a dict object
+        d (dict): a dict object
 
     Returns:
-        _type_: string
+        str: string
     """
     result = json.dumps(d)
     return result

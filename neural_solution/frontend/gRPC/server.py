@@ -38,7 +38,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
     """Deliver services.
 
     Args:
-        neural_solution_pb2_grpc (_type_): _description_
+        neural_solution_pb2_grpc (): task servicer
     """
 
     def __init__(self) -> None:
@@ -49,11 +49,11 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         """Check service status.
 
         Args:
-            empty_msg (_type_): _description_
-            context (_type_): _description_
+            empty_msg (str): empty message
+            context (str): context
 
         Returns:
-            _type_: _description_
+            Response: service status
         """
         print(f"Ping grpc serve.")
         port_lst = [config.result_monitor_port]
@@ -65,7 +65,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         """Submit task.
 
         Args:
-            task (Task): _description_
+            task (Task): task object
             Fields:
                 task_id: The task id
                 arguments: The task command
@@ -74,7 +74,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
                 result: The result of the task, which is only value-assigned when the task is done
 
         Returns:
-            _type_: status , id of task and messages.
+            json: status , id of task and messages.
         """
         # Process the task
         print(f"Submit task to task db")
@@ -92,7 +92,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
             task_id (str): the id of task.
 
         Returns:
-            _type_: task status, result, quantized model path
+            json: task status, result, quantized model path
         """
         db_path = get_db_path(config.workspace)
         result = query_task_status(task_id.task_id, db_path)

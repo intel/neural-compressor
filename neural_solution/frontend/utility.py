@@ -27,11 +27,11 @@ def query_task_status(task_id, db_path):
     """Query task status according to id.
 
     Args:
-        task_id (_type_): the id of task
-        db_path (_type_): the path of database
+        task_id (str): the id of task
+        db_path (str): the path of database
 
     Returns:
-        _type_: the task status and information.
+        dict: the task status and information.
     """
     res = None
     if os.path.isfile(db_path):
@@ -47,12 +47,12 @@ def query_task_result(task_id, db_path, workspace):
     """Query the task result according id.
 
     Args:
-        task_id (_type_): the id of task
-        db_path (_type_): the path of database
-        workspace (_type_): the workspace for Neural Solution
+        task_id (str): the id of task
+        db_path (str): the path of database
+        workspace (str): the workspace for Neural Solution
 
     Returns:
-        _type_: task result
+        dict: task result
     """
     status = "unknown"
     tuning_info = {}
@@ -87,11 +87,11 @@ def check_service_status(port_lst, service_address):
     """Check server status.
 
     Args:
-        port_lst (_type_): ports list
-        service_address (_type_): service ip
+        port_lst (List): ports list
+        service_address (str): service ip
 
     Returns:
-        _type_: _description_
+        dict: server status and messages
     """
     count = 0
     msg = "Neural Solution is running."
@@ -122,10 +122,10 @@ def submit_task_to_db(task, task_submitter, db_path):
     Args:
         task (Task): the object of Task
         task_submitter (TaskSubmitter): the object of TaskSubmitter
-        db_path (_type_): the path of database
+        db_path (str): the path of database
 
     Returns:
-        _type_: task id and information
+        str: task id and information
     """
     msg = "Task submitted failed"
     status = "failed"
@@ -270,6 +270,6 @@ def list_to_string(lst: list):
         lst (list): strings
 
     Returns:
-        _type_: string
+        str: string
     """
     return " ".join(str(i) for i in lst)
