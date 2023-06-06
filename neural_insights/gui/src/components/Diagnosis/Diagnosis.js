@@ -155,7 +155,7 @@ function AccuracyResults({ selectedWorkload }) {
               <div className="accuracy-subtitle">INT8</div>
             </td>
             <td>
-              <div className="accuracy-number">{Math.round(selectedWorkload.accuracy_data.ratio * 100) / 100}</div>
+              <div className="accuracy-number">{(selectedWorkload.accuracy_data.ratio * 100).toPrecision(2)}%</div>
               <div className="accuracy-subtitle">Ratio</div>
             </td>
           </tr>

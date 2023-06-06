@@ -61,7 +61,7 @@ if neural_insights:
     include_packages = neural_insights_packages
     entry_points = {
         'console_scripts': [
-            'neural_insights = neural_insights.bin.neural_insights:exec'
+            'neural_insights = neural_insights.bin.neural_insights:execute'
         ]
     }
 elif neural_solution:

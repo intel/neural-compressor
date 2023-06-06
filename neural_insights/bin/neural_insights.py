@@ -20,9 +20,10 @@ import gevent.monkey
 gevent.monkey.patch_all()
 
 
-def exec():
+def execute():
     from neural_insights.main import main
     main()
 
-if __name__ == '__main__':
-    exec()
+
+if __name__ == "__main__":
+    execute()

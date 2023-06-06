@@ -93,7 +93,7 @@ const getHistogramData = (histogramData) => {
 }
 
 const layout = {
-  height: 356,
+  height: 450,
   responsive: true,
   yaxis: {
     autorange: 'reversed',
@@ -104,13 +104,13 @@ const layout = {
   },
   violinmode: 'overlay',
   opacity: 1,
-  // margin: {
-  //   l: 150,
-  //   r: 50,
-  //   b: 100,
-  //   t: 50,
-  //   pad: 40
-  // }
+  margin: {
+    l: 150,
+    r: 50,
+    b: 20,
+    t: 30,
+    pad: 0
+  }
 };
 
 const generateColor = (num) => {
