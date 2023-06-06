@@ -42,7 +42,9 @@ neural_insights_data = {'neural_insights': [
     'web/app/static/js/*',
     'web/app/static/media/*',
 ]}
-neural_solution_data = {'': ['scripts/*.*']}
+neural_solution_data = {'neural_solution': [
+    'scripts/*.*'
+    ]}
 
 # define install requirements
 install_requires_list = fetch_requirements('requirements.txt')

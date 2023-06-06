@@ -111,7 +111,8 @@ def get_clusters():
 
 @app.get("/description")
 async def get_description():
-    with open("../../doc/user_facing_api.json") as f:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(current_dir, "..", "user_facing_api.json")) as f:
         data = json.load(f)
     return data
 
