@@ -249,7 +249,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if each_input_name[0] == '^':
                 continue
 
-            if self.node_name_mapping[original_node.name].node.op == "MatMul":
+            if self.itex_mode and self.node_name_mapping[each_input_name].node.op == "MaxPool":
+                maxpool_node = self.graph_info[each_input_name].node
+                dtype = dtypes.DType(self.graph_info[maxpool_node.input[0]].node.attr["T"].type)
+            elif self.node_name_mapping[original_node.name].node.op == "MatMul":
                 dtype = dtypes.quint8
             elif self.node_name_mapping[original_node.name].node.op == "BatchMatMulV2" \
                 or self.node_name_mapping[original_node.name].node.op == "BatchMatMul":
