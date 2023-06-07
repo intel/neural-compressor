@@ -7,4 +7,4 @@ Keras-Preprocessing
 transformers>=4.16.0
 accelerate
 torch>=1.9.0
-intel_extension_for_transformers
+intel_extension_for_pytorch
