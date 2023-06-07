@@ -691,10 +691,10 @@ class TensorFlowAdaptor(Adaptor):
                         res[i.op]['FP32'] += 1
                 else:
                     res[i.op]['FP32'] += 1
-        
+
         field_names = ["Op Type", "Total", "INT8", "BF16", "FP32"]
         output_data = [[
-            op_type, sum(res[op_type].values()), 
+            op_type, sum(res[op_type].values()),
             res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']]
         for op_type in fp32_op_list]
 
@@ -1071,22 +1071,6 @@ class TensorFlowAdaptor(Adaptor):
                     max_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, max_filter_node)
                 DequantizeWeight(weight_node_val, min_filter_val, max_filter_val)
             weights_result[node_name] = {weight_node_name: weight_node_val}
-            
-            # get bias from quantized model directly
-            if 'Quantized' in node.op:
-                if 'Bias' in node.op:
-                    bias_node_name = node.input[2]
-                    bias_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
-                    weights_result[node_name][bias_node_name] = bias_val.astype('float32')
-            # get bias from fp32 model
-            else:
-                bias_add_node = None
-                if graph_info[node.name].outputs:
-                    bias_add_node = graph_info[graph_info[node.name].outputs[0]].node
-                if bias_add_node and bias_add_node.op == 'BiasAdd':
-                    bias_node_name = bias_add_node.input[1]
-                    bias_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
-                    weights_result[node_name][bias_node_name] = bias_node_val
         return weights_result
 
     def fused_node_mapping(self, node_list, pattern_mapping, graph_info, graph_node_name_mapping):
@@ -1169,7 +1153,7 @@ class TensorFlowAdaptor(Adaptor):
                 inspect_node_dict['qreq_node'].append(node.name)
             else:
                 inspect_node_dict['f_node'].append(node_name)
-        pattern_mapping = {}  
+        pattern_mapping = {}
         node_dict = quantization_cfg['op']
         for node_name_and_type in node_dict.keys():
             node_name, _ = node_name_and_type
@@ -1178,7 +1162,7 @@ class TensorFlowAdaptor(Adaptor):
             else:
                 pattern_mapping[node_name] = {'sequence': node_name}
         if inspect_node_dict['f_node']:
-            fuse_map, fuse_map_reverse = self.fused_node_mapping(inspect_node_dict['f_node'], pattern_mapping, 
+            fuse_map, fuse_map_reverse = self.fused_node_mapping(inspect_node_dict['f_node'], pattern_mapping,
                                                                  graph_info, graph_node_name_mapping)
             inspect_node_dict['f_node'] = [fuse_map[n] for n in inspect_node_dict['f_node']]
         # build model and do inference
@@ -1269,13 +1253,13 @@ class TensorFlowAdaptor(Adaptor):
         g.graph = model
         graph_info = g.parse_graph()
         inspect_result = {}
-        
+
         # inspect weight
         if inspect_type == 'weight' or inspect_type == 'all':
             logger.info('Start to inspect weight and bias.')
             weights_result = self.inspect_weight_and_bias(node_list, model, graph_info, graph_node_name_mapping)
             inspect_result['weight'] = weights_result
-            
+
         # inspect activation
         if inspect_type == 'activation' or inspect_type == 'all':
             logger.info('Start to inspect activation.')
@@ -1564,18 +1548,18 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug(f"output op names: {output_op_names}")
         return output_op_names
 
-    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names,
                                  confidence_batches, fallback=True, requantize_cfgs=None):
         """Compute the op sensitivity.
-        
-        The sensitivity metric is the mse between the output of the last quantized op of 
+
+        The sensitivity metric is the mse between the output of the last quantized op of
         the quantized model and the output of its corresponding op in the fp32 model.
-        
+
           1. Backup the tune cfg
           2. Fallback each int8 op and compute its mse if use fallback (with 'fallback == True'),
             or re-quantize each fp32 op(fallen back in the previous stage) and compute its MSE if not.
           3. Sorted op name list according to its MSE
-        
+
         Args:
           fp32_model: The fp32 model.
           dataloader: the dataloader with full dataset.
@@ -1596,13 +1580,13 @@ class TensorFlowAdaptor(Adaptor):
                        if config['activation']['quant_mode'] in ('static', 'dynamic')]
             replace_cfgs = {op : fp32_op_cfg for op in tune_cfg['op']}
         else:
-            ops_list = [op for op, config in tune_cfg['op'].items() 
+            ops_list = [op for op, config in tune_cfg['op'].items()
                        if config['activation']['quant_mode'] == 'fp32' and op in requantize_cfgs]
             replace_cfgs = requantize_cfgs
 
         # Step2. compute mse
         mse_result = self._get_mse_order(
-            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, 
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader,
             output_op_names, confidence_batches)
 
         # Step3. sort
@@ -1612,19 +1596,19 @@ class TensorFlowAdaptor(Adaptor):
             logger.debug(f"{op}: {mse_result[op]}")
         return mse_order
 
-    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, 
+    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader,
                        output_op_names, confidence_batches):
         """Compute MSE."""
         op_cfg = tune_cfg['op']
         mse_result = {}
         partial_dataloader = self._partial_dataloader(dataloader, confidence_batches)
-        
+
         fp32_output = self._inference_model_on_batches(
             fp32_model, tune_cfg, partial_dataloader, output_op_names)
 
         for op in ops_lst:
             # backup and set replace tuning config
-            backup_cfg = op_cfg[op] 
+            backup_cfg = op_cfg[op]
             op_cfg[op] = replace_cfgs[op]
 
             # quantize and inference the model
@@ -1686,7 +1670,7 @@ class TensorFlowAdaptor(Adaptor):
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
             feed_dict = generate_feed_dict(input_tensors, inputs)
-            
+
             pred = model.sess.run(output_tensors, feed_dict)
             for item in pred:
                 predictions.append(item)
@@ -2301,7 +2285,7 @@ class TensorflowQuery(QueryBackendCapability):
 
     def get_bf16_patterns(self):
         """Get BF16 pattern list.
-        
+
         Returns:
             [List]: bf16 pattern list.
         """
