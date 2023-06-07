@@ -21,8 +21,8 @@ steps:
       containerName: ${{ parameters.codeScanContainerName }}
 
   - script: |
-      docker exec ${{ parameters.codeScanContainerName }} bash -c "/neural-compressor/.azure-pipelines/scripts/codeScan/${{ parameters.codeScanFileName }}/${{ parameters.codeScanFileName }}.sh \
-      --scan_module=${{ parameters.scanModule }}"
+      docker exec ${{ parameters.codeScanContainerName }} bash -c /neural-compressor/.azure-pipelines/scripts/codeScan/${{ parameters.codeScanFileName }}/${{ parameters.codeScanFileName }}.sh \
+      --scan_module=${{ parameters.scanModule }}
     displayName: "${{ parameters.codeScanFileName }} Check"
 
   - task: PublishPipelineArtifact@1
