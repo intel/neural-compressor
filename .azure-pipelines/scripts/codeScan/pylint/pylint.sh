@@ -34,16 +34,11 @@ pip install torch==1.12.0 \
             flask==2.1.3
 
 if [ "${scan_module}" = "neural_solution" ]; then
-    echo "Install Open MPI ..."
-    wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.5.tar.gz
-    gunzip -c openmpi-4.1.5.tar.gz | tar xf -
-    cd openmpi-4.1.5
-    ./configure --prefix=/usr/local
-    make all install
-
     cd /neural-compressor
     python setup.py install
-    pip install -r /neural-compressor/neural_solution/requirements.txt
+
+    echo "Install Neural Solution ... "
+    bash /neural-compressor/.azure-pipelines/scripts/install_neural_solution.sh
 fi
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
