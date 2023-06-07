@@ -4,11 +4,12 @@ import shutil
 import torch
 import torch.utils.data as data
 import unittest
+from neural_compressor import set_workspace
 from neural_compressor.experimental import common
-from packaging.version import Version
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.conf.pythonic_config import config
 from neural_compressor.utils.pytorch import load
+from packaging.version import Version
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -88,6 +89,7 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
         config.quantization.backend = 'ipex'
         config.quantization.approach = 'post_training_static_quant'
         config.quantization.use_bf16 = False
+        set_workspace("./saved")
 
     @classmethod
     def tearDownClass(self):
@@ -123,6 +125,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         config.quantization.accuracy_criterion.higher_is_better = False
         config.quantization.approach = 'post_training_static_quant'
         config.quantization.use_bf16 = False
+        set_workspace("./saved")
 
     @classmethod
     def tearDownClass(self):
