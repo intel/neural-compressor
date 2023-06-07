@@ -3121,7 +3121,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         folding = smooth_quant_args.get('folding', False)
                         if not folding:
                             x_observer = torch.ao.quantization.MinMaxObserver()
-                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=x_observer)
+                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, \
+                                                                                  act_observer=x_observer)
                             if not hasattr(tmp_model, '_smoothquant_optimized') \
                               or not tmp_model._smoothquant_optimized:
                                 # to make sure ipex_config.json is based on pre-optimized model
