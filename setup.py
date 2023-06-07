@@ -21,7 +21,7 @@ if "neural_insights" in sys.argv:
     neural_insights = True
     sys.argv.remove("neural_insights")
 
-neural_solution  = False
+neural_solution = False
 if "neural_solution" in sys.argv:
     neural_solution = True
     sys.argv.remove("neural_solution")
