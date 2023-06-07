@@ -23,7 +23,7 @@ requirements:
     - fastapi
     - uvicorn[standard]
     - watchdog
-    - protobuf==3.20
+    - protobuf
     - grpcio
     - mpi4py
 test:
