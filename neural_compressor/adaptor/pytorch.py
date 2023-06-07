@@ -3043,7 +3043,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get('smooth_quant_args', {})
                         folding = smooth_quant_args.get('folding', False)
                         if not folding:
-                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+                            x_observer = torch.ao.quantization.MinMaxObserver()
+                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=x_observer)
                             if not hasattr(tmp_model, '_smoothquant_optimized') \
                               or not tmp_model._smoothquant_optimized:
                                 # to make sure ipex_config.json is based on pre-optimized model
@@ -3216,7 +3217,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 module._recover_sq_linear()
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
-        static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+        x_observer = torch.ao.quantization.MinMaxObserver()
+        static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=x_observer)
         q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                 example_inputs=self.example_inputs, inplace=True)
 
