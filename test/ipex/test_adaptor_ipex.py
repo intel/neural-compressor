@@ -2,17 +2,27 @@ import neural_compressor.adaptor.pytorch as nc_torch
 import os
 import shutil
 import torch
+import torch.utils.data as data
 import unittest
 from neural_compressor.experimental import common
 from packaging.version import Version
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.conf.pythonic_config import config
 from neural_compressor.utils.pytorch import load
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+)
 torch_utils = LazyImport("neural_compressor.adaptor.torch_utils")
+
+os.environ["WANDB_DISABLED"] = "true"
+os.environ["DISABLE_MLFLOW_INTEGRATION"] = "true"
+MODEL_NAME = "distilbert-base-uncased-finetuned-sst-2-english"
 
 try:
     import intel_extension_for_pytorch as ipex
     TEST_IPEX = True
+    IPEX_VERSION = Version(ipex.__version__)
 except:
     TEST_IPEX = False
 
@@ -20,6 +30,26 @@ torch.manual_seed(9527)
 assert TEST_IPEX, "Please install intel extension for pytorch"
 # get torch and IPEX version
 PT_VERSION = nc_torch.get_torch_version().release
+
+class DummyDataloader(data.DataLoader):
+    def __init__(self):
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        self.sequence_a = "intel-extension-for-transformers is based in SH"
+        self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
+        self.encoded_dict = self.tokenizer(self.sequence_a, self.sequence_b, return_tensors="pt")
+        self.batch_size = 1
+
+    def __len__(self):
+        return 10
+
+    def __getitem__(self, index):
+        """Returns one data pair (source and target)."""
+        if index < 10:
+            return self.encoded_dict
+        
+    def __iter__(self):
+        for _ in range(10):
+            yield self.encoded_dict
 
 class M(torch.nn.Module):
     def __init__(self):
@@ -82,7 +112,6 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
         evaluator.model = q_model
         evaluator.b_dataloader = dataloader
         evaluator.fit('accuracy')
-
 
 @unittest.skipIf(PT_VERSION < Version("1.12.0").release,
                  "Please use Intel extension for Pytorch version higher or equal to 1.12")
@@ -243,6 +272,25 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             conf,
             calib_dataloader=calib_dataloader,
         )
+
+    @unittest.skipIf(IPEX_VERSION.release <= Version("2.0.100").release,
+                 "Please use Intel extension for Pytorch version higher or equal to 2.1.0")
+    def test_dict_inputs_for_model(self):
+        model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_NAME
+        )
+        dummy_dataloader = DummyDataloader()
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_dataloader=dummy_dataloader,
+        )
+        q_model.save('./saved')
 
 
 if __name__ == "__main__":

@@ -137,15 +137,13 @@ def get_example_inputs(model, dataloader):
         for idx, (input, label) in enumerate(dataloader):
             output = pytorch_forward_wrapper(model,
                                              input)
-            if isinstance(input, dict) or isinstance(input, UserDict): # pragma: no cover
-                assert version.release >= Version("1.12.0").release, \
+            if isinstance(input, (dict, UserDict)): # pragma: no cover
+                assert version.release >= Version("2.0.1").release, \
                 "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                named_input = namedtuple("input", input.keys())
-                input = named_input._make(input.values())
-                return input
-            if isinstance(input, list) or isinstance(input, tuple):
+                return dict(input)
+            if isinstance(input, (list, tuple)):
                 return tuple(input)
             if isinstance(input, torch.Tensor):
                 return input
@@ -159,9 +157,7 @@ def get_example_inputs(model, dataloader):
                 "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                named_input = namedtuple("input", input.keys())
-                input = named_input._make(input.values())
-                return input
+                return dict(input)
             if isinstance(input, list) or isinstance(input, tuple):
                 return tuple(input)
             if isinstance(input, torch.Tensor):
@@ -789,6 +785,10 @@ class TemplateAdaptor(Adaptor):
         self.default_qconfig = framework_specific_info.get('default_qconfig', None)
         self.performance_only = framework_specific_info.get("performance_only", False)
         self.example_inputs = framework_specific_info.get("example_inputs", None)
+        if isinstance(self.example_inputs, (list, tuple)):
+            self.example_inputs = tuple(self.example_inputs)
+        elif isinstance(self.example_inputs, (dict, UserDict)):
+            self.example_inputs = dict(self.example_inputs)
         if 'recipes' in framework_specific_info:
             self.recipes = framework_specific_info['recipes']
         else:
@@ -1278,8 +1278,8 @@ class TemplateAdaptor(Adaptor):
 
         if not hasattr(self, 'sq') or force_re_smooth:
             from .torch_utils.smooth_quant import TorchSmoothQuant
-            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader, \
-                                          example_inputs=self.example_inputs, q_func=self.q_func)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader,
+                                       example_inputs=self.example_inputs, q_func=self.q_func)
         kwargs = {}  ##different backends may have different default values
         if op_types != None:
             kwargs["op_types"] = op_types
@@ -2534,19 +2534,33 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         with torch.cpu.amp.autocast():
                             q_model = ipex.quantization.convert(q_model, inplace=True)
                             try:
-                                q_model = torch.jit.trace(q_model, self.example_inputs)
+                                if isinstance(self.example_inputs, dict):
+                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                                else:
+                                    q_model = torch.jit.trace(q_model, self.example_inputs)
                                 q_model = torch.jit.freeze(q_model.eval())
                             except:
-                                q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                                if isinstance(self.example_inputs, dict):
+                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
+                                                              strict=False)
+                                else:
+                                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                                 q_model = torch.jit.freeze(q_model.eval())
                 else:
                     q_model = ipex.quantization.convert(q_model, inplace=True)
                     with torch.no_grad():
                         try:
-                            q_model = torch.jit.trace(q_model, self.example_inputs)
+                            if isinstance(self.example_inputs, dict):
+                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                            else:
+                                q_model = torch.jit.trace(q_model, self.example_inputs)
                             q_model = torch.jit.freeze(q_model.eval())
                         except:
-                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                            if isinstance(self.example_inputs, dict):
+                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
+                                                          strict=False)
+                            else:
+                                q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                             q_model = torch.jit.freeze(q_model.eval())
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
@@ -2578,8 +2592,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                             qscheme=torch.per_channel_symmetric))
 
-                        q_model = ipex.quantization.prepare(model._model, static_qconfig, \
-                                                example_inputs=self.example_inputs, inplace=True)
+                        if isinstance(self.example_inputs, dict):
+                            q_model = ipex.quantization.prepare(model._model, static_qconfig, \
+                                                                example_kwarg_inputs=self.example_inputs, inplace=True)
+                        else:
+                            q_model = ipex.quantization.prepare(model._model, static_qconfig, \
+                                                                example_inputs=self.example_inputs, inplace=True)
+
                         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
                         if q_func is not None:
                             q_func(q_model)
@@ -2593,19 +2612,35 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 with torch.cpu.amp.autocast():
                                     q_model = ipex.quantization.convert(q_model, inplace=True)
                                     try:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs)
+                                        if isinstance(self.example_inputs, dict):
+                                            q_model = torch.jit.trace(q_model,
+                                                                      example_kwarg_inputs=self.example_inputs)
+                                        else:
+                                            q_model = torch.jit.trace(q_model, self.example_inputs)
                                         q_model = torch.jit.freeze(q_model.eval())
                                     except:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                                        if isinstance(self.example_inputs, dict):
+                                            q_model = torch.jit.trace(q_model,
+                                                                      example_kwarg_inputs=self.example_inputs,
+                                                                      strict=False)
+                                        else:
+                                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                                         q_model = torch.jit.freeze(q_model.eval())
                         else:
                             q_model = ipex.quantization.convert(q_model, inplace=True)
                             with torch.no_grad():
                                 try:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs)
+                                    if isinstance(self.example_inputs, dict):
+                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                                    else:
+                                        q_model = torch.jit.trace(q_model, self.example_inputs)
                                     q_model = torch.jit.freeze(q_model.eval())
                                 except:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                                    if isinstance(self.example_inputs, dict):
+                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
+                                                                  strict=False)
+                                    else:
+                                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                                     q_model = torch.jit.freeze(q_model.eval())
                         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                         # At the 2nd run, the llga pass will be triggered and the model is turned into
@@ -2648,19 +2683,33 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         with torch.cpu.amp.autocast():
                             q_model = ipex.quantization.convert(q_model, inplace=False)
                             try:
-                                q_model = torch.jit.trace(q_model, self.example_inputs)
+                                if isinstance(self.example_inputs, dict):
+                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                                else:
+                                    q_model = torch.jit.trace(q_model, self.example_inputs)
                                 q_model = torch.jit.freeze(q_model.eval())
                             except:
-                                q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                                if isinstance(self.example_inputs, dict):
+                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
+                                                              strict=False)
+                                else:
+                                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                                 q_model = torch.jit.freeze(q_model.eval())
                 else:
                     q_model = ipex.quantization.convert(q_model, inplace=False)
                     with torch.no_grad():
                         try:
-                            q_model = torch.jit.trace(q_model, self.example_inputs)
+                            if isinstance(self.example_inputs, dict):
+                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                            else:
+                                q_model = torch.jit.trace(q_model, self.example_inputs)
                             q_model = torch.jit.freeze(q_model.eval())
                         except:
-                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                            if isinstance(self.example_inputs, dict):
+                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
+                                                          strict=False)
+                            else:
+                                q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                             q_model = torch.jit.freeze(q_model.eval())
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
@@ -2701,8 +2750,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                                 weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                             qscheme=torch.per_channel_symmetric))
-                        q_model = ipex.quantization.prepare(model._model, static_qconfig, \
-                                                example_inputs=self.example_inputs, inplace=False)
+                        if isinstance(self.example_inputs, dict):
+                            q_model = ipex.quantization.prepare(model._model, static_qconfig,
+                                                                example_kwarg_inputs=self.example_inputs,
+                                                                inplace=False)
+                        else:
+                            q_model = ipex.quantization.prepare(model._model, static_qconfig,
+                                                                example_inputs=self.example_inputs, inplace=False)
                         q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
                         if q_func is not None:
                             q_func(q_model)
@@ -2716,19 +2770,35 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 with torch.cpu.amp.autocast():
                                     q_model = ipex.quantization.convert(q_model, inplace=True)
                                     try:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs)
+                                        if isinstance(self.example_inputs, dict):
+                                            q_model = torch.jit.trace(q_model,
+                                                                      example_kwarg_inputs=self.example_inputs)
+                                        else:
+                                            q_model = torch.jit.trace(q_model, self.example_inputs)
                                         q_model = torch.jit.freeze(q_model.eval())
                                     except:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                                        if isinstance(self.example_inputs, dict):
+                                            q_model = torch.jit.trace(q_model,
+                                                                      example_kwarg_inputs=self.example_inputs,
+                                                                      strict=False)
+                                        else:
+                                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                                         q_model = torch.jit.freeze(q_model.eval())
                         else:
                             q_model = ipex.quantization.convert(q_model, inplace=True)
                             with torch.no_grad():
                                 try:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs)
+                                    if isinstance(self.example_inputs, dict):
+                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                                    else:
+                                        q_model = torch.jit.trace(q_model, self.example_inputs)
                                     q_model = torch.jit.freeze(q_model.eval())
                                 except:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                                    if isinstance(self.example_inputs, dict):
+                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
+                                                                  strict=False)
+                                    else:
+                                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                                     q_model = torch.jit.freeze(q_model.eval())
                         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                         # At the 2nd run, the llga pass will be triggered and the model is turned into
@@ -3050,8 +3120,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 tmp_model = self._wrapper_sq_linear(tmp_model)
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
-                    tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
-                                            example_inputs=self.example_inputs, inplace=True)
+                    if isinstance(self.example_inputs, dict):
+                        tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig,
+                                                              example_kwarg_inputs=self.example_inputs, inplace=True)
+                    else:
+                        tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig,
+                                                              example_inputs=self.example_inputs, inplace=True)
+
                 if self.q_dataloader or self.example_inputs:
                     self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
                 else:
@@ -3217,8 +3292,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
         static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-        q_model = ipex.quantization.prepare(q_model, static_qconfig, \
-                                example_inputs=self.example_inputs, inplace=True)
+        if isinstance(self.example_inputs, dict):
+            q_model = ipex.quantization.prepare(q_model, static_qconfig,
+                                                example_kwarg_inputs=self.example_inputs, inplace=True)
+        else:
+            q_model = ipex.quantization.prepare(q_model, static_qconfig,
+                                                example_inputs=self.example_inputs, inplace=True)
 
         # enable fallback
         self._simple_inference(q_model, dataloader, iterations=1)   # fake calibration for save qconf
@@ -3258,10 +3337,16 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     # inference once after convert for SmoothQuant
                     self._simple_inference(q_model, dataloader, iterations=1)
                     try:
-                        q_model = torch.jit.trace(q_model, self.example_inputs)
+                        if isinstance(self.example_inputs, dict):
+                            q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                        else:
+                            q_model = torch.jit.trace(q_model, self.example_inputs)
                         q_model = torch.jit.freeze(q_model.eval())
                     except:
-                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                        if isinstance(self.example_inputs, dict):
+                            q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs, strict=False)
+                        else:
+                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                         q_model = torch.jit.freeze(q_model.eval())
         else:
             q_model = ipex.quantization.convert(q_model, inplace=True)
@@ -3269,10 +3354,16 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             self._simple_inference(q_model, dataloader, iterations=1)
             with torch.no_grad():
                 try:
-                    q_model = torch.jit.trace(q_model, self.example_inputs)
+                    if isinstance(self.example_inputs, dict):
+                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
+                    else:
+                        q_model = torch.jit.trace(q_model, self.example_inputs)
                     q_model = torch.jit.freeze(q_model.eval())
                 except:
-                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
+                    if isinstance(self.example_inputs, dict):
+                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs, strict=False)
+                    else:
+                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
                     q_model = torch.jit.freeze(q_model.eval())
         # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
         # At the 2nd run, the llga pass will be triggered and the model is turned into
@@ -3311,9 +3402,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
     def _simple_inference(self, q_model, dataloader, iterations=1):
         """The function is used for ipex warm-up inference."""
-        if self.example_inputs is not None and isinstance(self.example_inputs, (list, tuple)):
+        if self.example_inputs is not None:
             for _ in range(iterations):
-                q_model(*self.example_inputs)
+                if isinstance(self.example_inputs, tuple):
+                    q_model(*self.example_inputs)
+                elif isinstance(self.example_inputs, dict):
+                    q_model(**self.example_inputs)
+                else:
+                    q_model(self.example_inputs)
         else:
             self.calib_func(q_model, dataloader, iterations)
 
