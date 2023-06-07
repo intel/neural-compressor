@@ -462,6 +462,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
   </tr>
   <tr>
+    <td>distilbert-base-uncased-finetuned-sst-2-english</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/ipex">ipex</a></td>
+  </tr>
+  <tr>
     <td>yoshitomo-matsubara/bert-large-uncased-rte</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
