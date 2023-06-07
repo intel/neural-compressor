@@ -249,6 +249,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if each_input_name[0] == '^':
                 continue
 
+            # the qdq in pattern dq+maxpool+q should be the same type in itex mode
             if self.itex_mode and self.node_name_mapping[each_input_name].node.op == "MaxPool":
                 maxpool_node = self.graph_info[each_input_name].node
                 dtype = dtypes.DType(self.graph_info[maxpool_node.input[0]].node.attr["T"].type)
@@ -256,6 +257,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 dtype = dtypes.quint8
             elif self.node_name_mapping[original_node.name].node.op == "BatchMatMulV2" \
                 or self.node_name_mapping[original_node.name].node.op == "BatchMatMul":
+                dtype = dtypes.qint8
+            # the qdq in pattern dq+bn+relu+q should be s8 in itex mode
+            elif self.node_name_mapping[original_node.name].node.op == "FusedBatchNormV3" \
+                and self.node_name_mapping[self.g.node_name_details[original_node.name].outputs[0]].node.op == 'Relu':
                 dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
