@@ -138,11 +138,15 @@ def get_example_inputs(model, dataloader):
             output = pytorch_forward_wrapper(model,
                                              input)
             if isinstance(input, (dict, UserDict)): # pragma: no cover
-                assert version.release >= Version("2.0.1").release, \
-                "INC support IPEX version >= 1.12.0"
+                assert version.release <= Version("1.12.0").release, \
+                "INC support dictionary inputs for IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                return dict(input)
+                if version.release <= Version("2.0.1").release:
+                    return tuple(input.values())
+                else:
+                    return dict(input)
+
             if isinstance(input, (list, tuple)):
                 return tuple(input)
             if isinstance(input, torch.Tensor):
@@ -152,12 +156,15 @@ def get_example_inputs(model, dataloader):
         for idx, input in enumerate(dataloader):
             output = pytorch_forward_wrapper(model,
                                      input)
-            if isinstance(input, dict) or isinstance(input, UserDict): # pragma: no cover
+            if isinstance(input, (dict, UserDict)): # pragma: no cover
                 assert version.release >= Version("1.12.0").release, \
                 "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                return dict(input)
+                if version.release <= Version("2.0.1").release:
+                    return tuple(input.values())
+                else:
+                    return dict(input)
             if isinstance(input, list) or isinstance(input, tuple):
                 return tuple(input)
             if isinstance(input, torch.Tensor):

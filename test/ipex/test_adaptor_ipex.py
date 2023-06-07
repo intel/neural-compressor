@@ -273,7 +273,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_dataloader=calib_dataloader,
         )
 
-    @unittest.skipIf(IPEX_VERSION.release <= Version("2.0.100").release,
+    @unittest.skipIf(IPEX_VERSION.release < Version("2.1.0").release,
                  "Please use Intel extension for Pytorch version higher or equal to 2.1.0")
     def test_dict_inputs_for_model(self):
         model = AutoModelForSequenceClassification.from_pretrained(
@@ -291,6 +291,30 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_dataloader=dummy_dataloader,
         )
         q_model.save('./saved')
+
+    @unittest.skipIf(IPEX_VERSION.release < Version("2.1.0").release,
+                 "Please use Intel extension for Pytorch version higher or equal to 2.1.0")
+    def test_dict_inputs_for_model(self):
+        model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_NAME
+        )
+        example_inputs = DummyDataloader()[0]
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        def calib_func(p_model):
+            p_model(**example_inputs)
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            example_inputs=example_inputs
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_func=calib_func,
+        )
+        q_model.save('./saved')
+    
 
 
 if __name__ == "__main__":
