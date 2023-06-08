@@ -33,10 +33,10 @@ sequenceDiagram
     and Schedule task
         loop 
             Scheduler ->> Scheduler: P2-1. Pop task from task DB
-            Scheduler ->> Cluster: P2-2. Apply for resouces
+            Scheduler ->> Cluster: P2-2. Apply for resources
             Note over Scheduler, Cluster: the number of Nodes
             Cluster ->> Cluster: P2-3. Check the status of nodes in cluster
-            Cluster ->> Scheduler: P2-4. Resouces info 
+            Cluster ->> Scheduler: P2-4. Resources info
             Note over Scheduler, Cluster: host:socket list
             Scheduler ->> TaskLauncher: P2-5. Dispatch task
         end
@@ -48,7 +48,7 @@ sequenceDiagram
     TaskLauncher ->> ResultMonitor: P3-4. Report the Acc and Perf
     ResultMonitor ->> Studio: P3-5. Post result to Studio
     and Query task status
-    Studio ->> ResultMonitor: P4-1. Query the status of the submmited task 
+    Studio ->> ResultMonitor: P4-1. Query the status of the submitted task
     ResultMonitor ->> Studio: P4-2. Post the status of queried task
     End
 
