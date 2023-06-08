@@ -45,11 +45,16 @@ def dump_elapsed_time(customized_msg=""):
     return f
 
 def get_task_log_path(log_path, task_id):
-    """Get the task log file path.
+    """Get the path of task log according id.
 
     Args:
-        task_id: _description_
+        log_path (str): the log path of task
+        task_id (str): the task id
+
+    Returns:
+        str: the path of task log file
     """
+
     if not os.path.exists(log_path):
         os.makedirs(log_path)
     log_file_path =  "{}/task_{}.txt".format(log_path,task_id)
@@ -60,10 +65,10 @@ def get_db_path(workspace="./"):
     """Get the database path.
 
     Args:
-        workspace (str, optional): _description_. Defaults to "./".
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the path of database
     """
     return os.path.join(workspace, "db", "task.db")
 
@@ -74,7 +79,7 @@ def get_task_workspace(workspace="./"):
         workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the workspace of task
     """
     return os.path.join(workspace, "task_workspace")
 
@@ -85,7 +90,7 @@ def get_task_log_workspace(workspace="./"):
         workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: the log workspace for task
     """
     return os.path.join(workspace, "task_log")
 
@@ -96,7 +101,7 @@ def get_serve_log_workspace(workspace="./"):
         workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
 
     Returns:
-        _type_: _description_
+        str: log workspace for service
     """
     return os.path.join(workspace, "serve_log")
 
@@ -105,10 +110,10 @@ def build_local_cluster(db_path):
     """Build a local cluster.
 
     Args:
-        db_path (_type_): database path
+        db_path (str): database path
 
     Returns:
-        _type_: cluster and num threads per process
+        (Cluster, int): cluster and num threads per process
     """
     from neural_solution.backend.cluster import Node, Cluster
     hostname = 'localhost'
@@ -153,7 +158,7 @@ def get_current_time():
     """Get current time.
 
     Returns:
-        _type_: the current time in hours, minutes, and seconds.
+        str: the current time in hours, minutes, and seconds.
     """
     from datetime import datetime
     return datetime.now().strftime('%H:%M:%S')
@@ -162,7 +167,7 @@ def synchronized(func):
     """Locking for synchronization.
 
     Args:
-        func (_type_): _description_
+        func (function): decorative function
     """
     def wrapper(self, *args, **kwargs):
         with self.lock:
@@ -174,7 +179,7 @@ def build_workspace(path, task_id=""):
 
     Args:
         path: master work directory for all tasks.
-        task_id: _description_
+        task_id: the id of task
     """
     task_path = "{}/{}".format(path, task_id)
     if not os.path.exists(task_path):
@@ -205,7 +210,7 @@ def get_q_model_path(log_path):
         log_path (str): log path for task
 
     Returns:
-        _type_: quantized model path
+        str: quantized model path
     """
     import re
     for line in reversed(open(log_path).readlines()):
