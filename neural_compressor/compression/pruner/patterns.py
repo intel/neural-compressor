@@ -596,6 +596,8 @@ class BasePattern:
             for key in masks.keys():
                 if key in self.invalid_layers:
                     continue
+                if not isinstance(masks[key], np.ndarray):
+                    masks[key] = masks[key].numpy()
                 reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
                 zero_cnt = int(np.sum(reduced_mask == 0.0))
                 total_cnt = int(reduced_mask.size)
@@ -804,6 +806,8 @@ class PatternNxM(BasePattern):
             for key in pre_masks.keys():
                 if key in self.invalid_layers:
                     continue
+                if not isinstance(pre_masks[key], np.ndarray):
+                    pre_masks[key] = pre_masks[key].numpy()
                 reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
                 zero_cnt += int(np.sum(reduced_mask == 0.0))
                 total_cnt += int(reduced_mask.size)
