@@ -101,7 +101,8 @@ class GatherOperator(Operator):
                     for n in self.quantizer.model.get_children(child):
                         self.quantizer.model.replace_node_input(n, 
                                         child.output[0], gather_new_output)
-            if any([child.op_type == 'QuantizeLinear' for child in children]):
+            if any([child.op_type == 'QuantizeLinear' for child in children]) and \
+                    self.quantizer.model.get_initializer(parents[0].input[0]) is not None:
                 int8_tensor = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[0]))
                 in_scale = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[1]))
                 in_zp = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[2]))
