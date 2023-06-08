@@ -29,13 +29,14 @@ class Task:
         """Init task.
 
         Args:
-            task_id (_type_): the id of task
-            arguments (_type_): the running arguments for task.
-            workers (_type_): the resources.
-            status (_type_): "pending", "running", "done", "failed"
-            script_url (_type_): the python script address
-            approach (_type_): the quantization method
-            requirement (_type_): python packages
+            task_id (str): the id of task.
+            arguments (str): the running arguments for task.
+            workers (int): the resources.
+            status (str): "pending", "running", "done", "failed"
+            script_url (str): the python script address
+            optimized (bool): the running script has been optimized
+            approach (str): the quantization method
+            requirement (str): python packages
             result (str, optional): the result of task. Defaults to "".
             q_model_path (str, optional): the quantized model path. Defaults to "".
         """

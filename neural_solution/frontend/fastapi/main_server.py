@@ -293,7 +293,7 @@ class LogEventHandler(FileSystemEventHandler):
     """Responsible for monitoring log changes and sending logs to clients.
 
     Args:
-        FileSystemEventHandler (FileSystemEventHandler): Base file system event handler that you can override methods from.
+        FileSystemEventHandler (FileSystemEventHandler): Base file system event handler that overriding methods from.
     """
 
     def __init__(self, websocket: WebSocket, task_id, last_position):
