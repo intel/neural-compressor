@@ -7,6 +7,7 @@ cd openmpi-4.1.5
 ./configure --prefix=/usr/local
 make all install
 
+echo "Install Neural Solution ... "
 cd /neural-compressor
 python -m pip install --no-cache-dir -r neural_solution/requirements.txt
 python setup.py neural_solution sdist bdist_wheel

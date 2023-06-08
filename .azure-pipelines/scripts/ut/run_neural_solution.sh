@@ -4,6 +4,9 @@ echo "run neural solution ut..."
 
 echo "no FWKs need to be installed..."
 
+# Install Neural Solution
+bash /neural-compressor/.azure-pipelines/scripts/install_neural_solution.sh
+
 cd /neural-compressor/neural_solution || exit 1
 find ./test -name "test*.py" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
 
