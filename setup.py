@@ -28,8 +28,10 @@ if "neural_solution" in sys.argv:
 
 # define include packages
 include_packages = find_packages(include=['neural_compressor', 'neural_compressor.*',
-                                 'neural_coder', 'neural_coder.*'])
-neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'])
+                                 'neural_coder', 'neural_coder.*'],
+                                 exclude=["neural_compressor.template"])
+neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'],
+                                         exclude=["test.*", "test"])
 neural_solution_packages = find_packages(include=['neural_solution', 'neural_solution.*'])
 
 # define package data
