@@ -465,8 +465,6 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
                         max_filter_node.attr['value'].tensor)
                     min_filter_tensor = tensor_util.MakeNdarray( # get tensor
                         min_filter_node.attr['value'].tensor)
-                    max_filter_value = max(max_filter_tensor)
-                    min_filter_value = min(min_filter_tensor)
                 else:
                     max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
                     min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
@@ -482,10 +480,18 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
 
                 if -self.eps <= max_input_value - min_input_value <= self.eps:
                     max_input_value += self.eps
-                int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
-                                                        input_range, max_input_value,
-                                                        min_input_value,
-                                                        max_filter_value, min_filter_value)
+                if requantize_node.op.find('PerChannel') != -1: # pragma: no cover
+                    int32_bias = Helper.generate_int32_bias_for_matmul_per_channel(bias_tensor, max_input_value,
+                                                                                   min_input_value,
+                                                                                   max_filter_tensor,
+                                                                                   min_filter_tensor)
+                else:
+                    int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                                       input_range,
+                                                                       max_input_value,
+                                                                       min_input_value,
+                                                                       max_filter_value,
+                                                                       min_filter_value)
 
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(
@@ -666,8 +672,6 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                         max_filter_node.attr['value'].tensor)
                     min_filter_tensor = tensor_util.MakeNdarray( # get tensor
                         min_filter_node.attr['value'].tensor)
-                    max_filter_value = max(max_filter_tensor)
-                    min_filter_value = min(min_filter_tensor)
                 else:
                     max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
                     min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
@@ -682,12 +686,18 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
 
                 if -self.eps <= max_input_value - min_input_value <= self.eps:
                     max_input_value += self.eps
-                int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
-                                                                   input_range,
-                                                                   max_input_value,
-                                                                   min_input_value,
-                                                                   max_filter_value,
-                                                                   min_filter_value)
+                if requantize_node.op.find('PerChannel') != -1: # pragma: no cover
+                    int32_bias = Helper.generate_int32_bias_for_matmul_per_channel(bias_tensor, max_input_value,
+                                                                                   min_input_value,
+                                                                                   max_filter_tensor,
+                                                                                   min_filter_tensor)
+                else:
+                    int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                                       input_range,
+                                                                       max_input_value,
+                                                                       min_input_value,
+                                                                       max_filter_value,
+                                                                       min_filter_value)
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(
                         type=float32_type if self.device == 'gpu' else qint32_type))
