@@ -728,10 +728,31 @@ class TorchSmoothQuant:
             if alpha == 'auto':
                 alpha = self.alpha_per_layer
 
+            out_pre_sq = forward_wrapper(self.model, self.example_inputs, self.device)
+
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
+            
+            #Check mathematical equivelancy
+            out_post_sq = forward_wrapper(self.model, self.example_inputs, self.device)
+            logger.info("Total number of ops with smoothquant optimizations: " + str(len(self.absorb_to_layer)))
+
+            if not self.output_is_equal(out_post_sq, out_pre_sq):
+                logger.warning("Mathematical equivelancy of Smoothquant is not preserved. Check model graph for possible skip connections")
+            else:
+                logger.info("Mathematical equivelancy of Smoothquant is preserved.")
+
             self.input_values, self.output_values = {}, {}
             return self.model
+        
+    def output_is_equal(self, out1, out2, atol = 1e-05):
+        if isinstance(out1, tuple):
+            return all(torch.all(torch.isclose(out1[i], out2[i], atol = atol)) for i in range(len(out1)))
+        elif isinstance(out1, dict):
+            return all(torch.all(torch.isclose(out1[k], out2[k], atol = atol)) for k in out1.keys())
+        elif isinstance(out1, torch.Tensor):
+            return torch.all(torch.isclose(out1, out2, atol = atol))
+        return False
 
     def recover(self):
         """
