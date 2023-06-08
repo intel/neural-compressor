@@ -104,7 +104,8 @@ class Cluster:
         Args:
             node_lst (List): the node list.
         """
-        self.conn = sqlite3.connect(f'{self.db_path}', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        # sqlite should set this check_same_thread to False
+        self.conn = sqlite3.connect(f'{self.db_path}', check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute('drop table if exists cluster ')
         self.cursor.execute(r'create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,' +

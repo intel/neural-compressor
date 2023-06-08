@@ -70,7 +70,7 @@ class Scheduler:
         create a new conda environment and install the required packages.
 
         Args:
-            task (Task): _description_
+            task (Task): task
         """
         # Define the prefix of the conda environment name
         env_prefix = self.conda_env_name
@@ -92,7 +92,8 @@ class Scheduler:
                 output = subprocess.getoutput(cmd)
                 # Parse the output to get a list of installed package names
                 installed_packages = [line.split()[0] for line in output.splitlines()[2:]]
-                installed_packages_version = [line.split()[0] + "=" + line.split()[1] for line in output.splitlines()[2:]]
+                installed_packages_version = \
+                    [line.split()[0] + "=" + line.split()[1] for line in output.splitlines()[2:]]
                 missing_packages = set(requirement) - set(installed_packages) - set(installed_packages_version)
                 if not missing_packages:
                     conda_env = env_name
@@ -116,7 +117,7 @@ class Scheduler:
         """Prepare workspace and download run_task.py for task.
 
         Args:
-            task (Task): _description_
+            task (Task): task
         """
         self.task_path = build_workspace(path=get_task_workspace(self.config.workspace), task_id=task.task_id)
         logger.info(f"****TASK PATH: {self.task_path}")
@@ -156,10 +157,10 @@ class Scheduler:
         """Check status for the task from log path.
 
         Args:
-            log_path (_type_): the log path for task.
+            log_path (str): the log path for task.
 
         Returns:
-            _type_: status "done" or failed
+            str: status "done" or "failed"
         """
         for line in reversed(open(log_path).readlines()):
             res_pattern = r'[INFO] Save deploy yaml to'
@@ -252,7 +253,8 @@ class Scheduler:
         p.wait()
         self.cluster.free_resource(resource)
         task_runtime = time.time() - start_time
-        logger.info(f"[TaskScheduler] Finished task {task.task_id}, and free resource {resource}, dump log into {log_path}")
+        logger.info(\
+            f"[TaskScheduler] Finished task {task.task_id}, and free resource {resource}, dump log into {log_path}")
         task_status = self.check_task_status(log_path)
         self.task_db.update_task_status(task.task_id, task_status)
         self.q_model_path = get_q_model_path(log_path=log_path) if task_status == "done" else None
@@ -269,7 +271,8 @@ class Scheduler:
             time.sleep(5)
             logger.info(f"[TaskScheduler {get_current_time()}] try to dispatch a task...")
             if self.task_db.get_pending_task_num() > 0:
-                logger.info(f"[TaskScheduler {get_current_time()}], there are {self.task_db.get_pending_task_num()} task pending.")
+                logger.info(f"[TaskScheduler {get_current_time()}], " + \
+                    f"there are {self.task_db.get_pending_task_num()} task pending.")
                 task_id = self.task_db.task_queue[0]
                 task = self.task_db.get_task_by_id(task_id)
                 resource = self.cluster.reserve_resource(task)

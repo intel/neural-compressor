@@ -25,10 +25,10 @@ def parse_args(args=None):
     """Parse the command line options.
 
     Args:
-        args (_type_, optional): _description_. Defaults to None.
+        args (Any, optional): the command line options. Defaults to None.
 
     Returns:
-        _type_: arguments.
+        argparse.Namespace: arguments.
     """
     parser = argparse.ArgumentParser(description="Neural Solution runner automatically schedules multiple inc tasks and\
         executes multi-node distributed tuning.")

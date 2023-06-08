@@ -34,11 +34,12 @@ class TaskDB:
         """Init TaskDB.
 
         Args:
-            db_path (_type_): the database path.
+            db_path (str): the database path.
         """
         self.task_queue = deque()
         create_dir(db_path)
-        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        # sqlite should set this check_same_thread to False
+        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute(
             'create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), ' +
