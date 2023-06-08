@@ -6,6 +6,8 @@ gunzip -c openmpi-4.1.5.tar.gz | tar xf -
 cd openmpi-4.1.5
 ./configure --prefix=/usr/local
 make all install
+MPI_DIR=/usr/local/lib/openmpi
+export LD_LIBRARY_PATH=$MPI_DIR/lib:$LD_LIBRARY_PATH
 
 echo "Install Neural Solution ... "
 cd /neural-compressor
