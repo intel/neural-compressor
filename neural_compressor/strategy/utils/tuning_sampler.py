@@ -20,7 +20,7 @@
 from itertools import product
 import copy
 from collections import deque, OrderedDict, defaultdict
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union, Tuple
 from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
 from ...utils import logger
@@ -382,8 +382,8 @@ class FallbackTuningSampler(TuningSampler):
     def __init__(self,
                  tuning_space: TuningSpace,
                  tuning_order_lst: List[TuningOrder],
-                 initial_op_tuning_cfg: Dict[tuple, Any],
-                 op_dtypes: Dict[str, str],
+                 initial_op_tuning_cfg: Dict[Tuple, Any],
+                 op_dtypes: Dict[Union[Tuple, Tuple[Tuple]], str],
                  accumulate: bool,
                  skip_first: bool = True
                  ):
@@ -414,21 +414,22 @@ class FallbackTuningSampler(TuningSampler):
             # Only support fallback to lower precision.
             if not self.accumulate:
                 new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
-            full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, target_dtype)
-            self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
-            config_args = {}
-            self._set_dtype(op_name_type, config_args)
-            internal_pattern = pattern_to_internal(target_dtype)
-            quant_mode = quant_mode_from_pattern(internal_pattern)
-            new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1],
-                                           quant_mode, self.tuning_space,
-                                           kwargs=config_args)
+            op_name_type_lst = [op_name_type] if isinstance(op_name_type[1], str) else op_name_type
+            for op_name_type in op_name_type_lst:
+                full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, target_dtype)
+                self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
+                config_args = {}
+                self._set_dtype(op_name_type, config_args)
+                internal_pattern = pattern_to_internal(target_dtype)
+                quant_mode = quant_mode_from_pattern(internal_pattern)
+                new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1], quant_mode, \
+                    self.tuning_space, kwargs=config_args)
 
-            new_tune_cfg.update({op_name_type: new_op_config})
+                new_tune_cfg.update({op_name_type: new_op_config})
             if self.accumulate and skip_first:  # skip the first one
                 skip_first = False
                 continue
-            logger.info(f"fallback {op_name_type} to {target_dtype}")
+            logger.info(f"fallback {op_name_type_lst} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
 class LowerBitsSampler(TuningSampler):

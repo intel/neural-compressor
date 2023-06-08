@@ -371,6 +371,83 @@ class TestMixedPrecision(unittest.TestCase):
         output_model = fit(self.tf_model, conf, eval)
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
 
+
+    def test_mixed_precision_with_quant_level_1(self):
+
+        result = [0., 0.1, 0.102]
+        def eval_func(model):
+            del result[0]
+            return result[0]
+
+        conf = MixedPrecisionConfig(inputs="input", outputs="final", quant_level="auto")
+
+        output_model = mix_precision.fit(self.tf_model, conf, eval_func=eval_func)
+        self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
+        self.assertEqual(conf.inputs, 'input')
+        self.assertEqual(conf.outputs, 'final')
+
+    def test_mixed_precision_with_quant_level_2(self):
+
+        result = [0., 1, 0.9, 1.1]
+        # meet acc if fallback all conv
+        def eval_func(model):
+            del result[0]
+            return result[0]
+
+        conf = MixedPrecisionConfig(inputs="input", outputs="final", quant_level="auto")
+
+        output_model = mix_precision.fit(self.tf_model, conf, eval_func=eval_func)
+        # no cast in output model
+        self.assertFalse(any([i.op == 'Cast' for i in output_model.graph_def.node]))
+
+    def test_mixed_precision_with_quant_level_3(self):
+
+        result = [0., 1, 0.9, 0.9, 1.1]
+        # meet acc if fallback 1 conv
+        def eval_func(model):
+            del result[0]
+            return result[0]
+
+        conf = MixedPrecisionConfig(inputs="input", outputs="final", quant_level="auto")
+
+        output_model = mix_precision.fit(self.tf_model, conf, eval_func=eval_func)
+        # no cast in output model
+        count_cast = 0
+        for node in output_model.graph_def.node:
+            if node.op == "Cast":
+                count_cast += 1
+        self.assertEqual(count_cast, 4)
+
+    def test_mixed_precision_with_quant_level_4(self):
+
+        result = [0., 1, 0.9, 0.9, 1.1]
+        # meet acc if fallback the second conv
+        def eval_func(model):
+            del result[0]
+            return result[0]
+
+        conf = MixedPrecisionConfig(inputs="input", outputs="final", quant_level=1)
+
+        output_model = mix_precision.fit(self.tf_model, conf, eval_func=eval_func)
+        # no cast in output model
+        count_cast = 0
+        for node in output_model.graph_def.node:
+            if node.op == "Cast":
+                count_cast += 1
+        self.assertEqual(count_cast, 4)
+
+    def test_mixed_precision_with_quant_level_5(self):
+        result = [0., 1, 0.9, 0.9, 0.9]
+        # meet not meet
+        def eval_func(model):
+            del result[0]
+            return result[0]
+
+        conf = MixedPrecisionConfig(inputs="input", outputs="final", quant_level=0)
+
+        output_model = mix_precision.fit(self.tf_model, conf, eval_func=eval_func)
+        self.assertIsNone(output_model)
+
     @unittest.skipIf(PT_VERSION.release < Version("1.11.0").release,
       "Please use PyTroch 1.11 or higher version for mixed precision.")
     def test_mixed_precision_with_eval_func_pt(self):
