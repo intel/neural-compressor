@@ -8,8 +8,12 @@ cd openmpi-4.1.5
 make all install
 MPI_DIR=/usr/local/lib/openmpi
 export PATH=$MPI_DIR/bin:$PATH
+export LD_LIBRARY_PATH=$MPI_DIR/lib:$LD_LIBRARY_PATH
 echo "Current Path ... "
 echo $PATH
+
+echo "Current LD_LIBRARY_PATH ... "
+echo $LD_LIBRARY_PATH
 
 echo "check mpicc ..."
 which mpicc
