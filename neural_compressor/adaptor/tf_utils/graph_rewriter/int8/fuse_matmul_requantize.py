@@ -481,7 +481,8 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
                 if -self.eps <= max_input_value - min_input_value <= self.eps:
                     max_input_value += self.eps
                 if requantize_node.op.find('PerChannel') != -1: # pragma: no cover
-                    int32_bias = Helper.generate_int32_bias_for_matmul_per_channel(bias_tensor, weights_tensor, max_input_value,
+                    int32_bias = Helper.generate_int32_bias_for_matmul_per_channel(bias_tensor, weights_tensor,
+                                                                                   max_input_value,
                                                                                    min_input_value,
                                                                                    max_filter_tensor,
                                                                                    min_filter_tensor)
@@ -687,7 +688,8 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                 if -self.eps <= max_input_value - min_input_value <= self.eps:
                     max_input_value += self.eps
                 if requantize_node.op.find('PerChannel') != -1: # pragma: no cover
-                    int32_bias = Helper.generate_int32_bias_for_matmul_per_channel(bias_tensor, weights_tensor, max_input_value,
+                    int32_bias = Helper.generate_int32_bias_for_matmul_per_channel(bias_tensor, weights_tensor,
+                                                                                   max_input_value,
                                                                                    min_input_value,
                                                                                    max_filter_tensor,
                                                                                    min_filter_tensor)
