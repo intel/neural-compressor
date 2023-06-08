@@ -258,7 +258,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             elif self.node_name_mapping[original_node.name].node.op == "BatchMatMulV2" \
                 or self.node_name_mapping[original_node.name].node.op == "BatchMatMul":
                 dtype = dtypes.qint8
-            # the qdq in pattern dq+bn+relu+q should be s8 in itex mode
+            # the qdq in pattern dq+bn+relu+q and dq+bn+q should be s8 in itex mode
             elif self.node_name_mapping[original_node.name].node.op == "FusedBatchNormV3":
                 dtype = dtypes.qint8
             else:
