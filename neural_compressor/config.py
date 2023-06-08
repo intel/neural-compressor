@@ -1645,6 +1645,8 @@ class MixedPrecisionConfig(object):
         model_name (str, optional): The name of the model. Default value is empty.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
+        quant_level: Support auto, 0 and 1, 0 is conservative(fallback in op type wise),
+                    1(fallback in op wise), auto (default) is the combination of 0 and 1.
         tuning_criterion (TuningCriterion object, optional): Accuracy tuning settings,
                                                              it won't work if there is no accuracy tuning process.
         accuracy_criterion (AccuracyCriterion object, optional): Accuracy constraint settings,
@@ -1666,6 +1668,7 @@ class MixedPrecisionConfig(object):
                  model_name="",
                  inputs=[],
                  outputs=[],
+                 quant_level="auto",
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[]):
@@ -1674,6 +1677,7 @@ class MixedPrecisionConfig(object):
         self.outputs = outputs
         self.backend = backend
         self.device = device
+        self.quant_level = quant_level
         self.excluded_precisions = excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.tuning_criterion = tuning_criterion
@@ -1708,6 +1712,14 @@ class MixedPrecisionConfig(object):
         """Set model name."""
         if _check_value("model_name", model_name, str):
             self._model_name = model_name
+
+    @property
+    def quant_level(self):
+        return self._quant_level
+
+    @quant_level.setter
+    def quant_level(self, quant_level):
+        self._quant_level = quant_level
 
     @property
     def accuracy_criterion(self):

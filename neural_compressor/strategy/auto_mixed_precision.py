@@ -18,11 +18,11 @@
 """The auto-mixed precision strategy."""
 
 import copy
-import numpy as np
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
+from itertools import groupby
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
-from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_sampler import FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 
@@ -49,7 +49,48 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         config.domain = getattr(config, 'domain', None)
         config.reduce_range = getattr(config, 'reduce_range', None)
         config.example_inputs = getattr(config, 'example_inputs', None)
+        config.quant_level = getattr(config, "quant_level", "auto")
         return config
+
+    def fallback_in_op_type_wise(self, tuning_space, fallback_items_name_lst, initial_op_tuning_cfg, target_dtype):
+        op_type_groups = self._group_ops_based_on_type(fallback_items_name_lst)
+        fallback_items_name_lst.sort(key=lambda x: x[1])
+        op_type_groups = groupby(fallback_items_name_lst, key=lambda x: [1])
+        ops_dtypes = OrderedDict()
+        for op_type, op_lst in op_type_groups:
+            ops_dtypes[tuple(op_lst)] = target_dtype
+        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[], \
+            initial_op_tuning_cfg=initial_op_tuning_cfg, op_dtypes=ops_dtypes, accumulate=False)
+        op_fallback_acc_impact = OrderedDict()
+        for op_index, op_tuning_cfg in enumerate(fallback_sampler):
+            op_tuning_cfg['calib_sampling_size'] = -1
+            yield op_tuning_cfg
+            acc, _ = self.last_tune_result
+            op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
+
+    def fallback_in_op_wise(self, tuning_space, fallback_items_name_lst, initial_op_tuning_cfg, target_dtype):
+        op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
+        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[], \
+            initial_op_tuning_cfg=initial_op_tuning_cfg, op_dtypes=op_dtypes, accumulate=False)
+        op_fallback_acc_impact = OrderedDict()
+        for op_index, op_tuning_cfg in enumerate(fallback_sampler):
+            op_tuning_cfg['calib_sampling_size'] = -1
+            yield op_tuning_cfg
+            acc, _ = self.last_tune_result
+            op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
+
+        # do accumulated fallback according to the order in the previous stage
+        if len(op_fallback_acc_impact) > 0:
+            ordered_ops = sorted(op_fallback_acc_impact.keys(), key=lambda key: op_fallback_acc_impact[key],
+                                reverse=self.higher_is_better)
+            op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
+            logger.info("Start to accumulate fallback to {target_dtype}.")
+            initial_op_tuning_cfg = copy.deepcopy(op_tuning_cfg)
+            fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],\
+                initial_op_tuning_cfg=initial_op_tuning_cfg, op_dtypes=op_dtypes, accumulate=True)
+            for op_tuning_cfg in fallback_sampler:
+                op_tuning_cfg['calib_sampling_size'] = -1
+                yield op_tuning_cfg
 
     def next_tune_cfg(self):
         """Generate the next tuning config.
@@ -79,6 +120,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             target_dtypes = ['bf16']
         # step1. target_dtype AMAP, collect the ops that support target_dtype
         bf16_items_name = []
+        import pdb
+        pdb.set_trace()
         op_tuning_cfg = {}
         for idx, target_dtype in enumerate(target_dtypes):
             bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
@@ -94,36 +137,27 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
             yield op_tuning_cfg
 
-        # step2. fallback
-        target_dtype = 'fp32'
+        # step 2, fallback op into fp32
+        # quant_level:
+        #   auto: op-type-wise -> op-wise
+        #   0: op-type wise
+        #   1: op-wise
+        # if quant level is auto or 0, do op type wise fallback
         fallback_items_name_lst = bf16_items_name[::-1]
         if fallback_items_name_lst:
-            logger.info(f"Start to fallback op to {target_dtype} one by one.")
-            self._fallback_started()
-        op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
+            logger.info("[Strategy] start to fallback op to fp32 one by one.")
         initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
-        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                op_dtypes=op_dtypes, accumulate=False)
-        op_fallback_acc_impact = OrderedDict()
-        for op_index, op_tuning_cfg in enumerate(fallback_sampler):
-            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-            yield op_tuning_cfg
-            acc, _ = self.last_tune_result
-            op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
-
-        # do accumulated fallback according to the order in the previous stage
-        if len(op_fallback_acc_impact) > 0:
-            ordered_ops = sorted(op_fallback_acc_impact.keys(), key=lambda key: op_fallback_acc_impact[key],
-                                reverse=self.higher_is_better)
-            op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
-            logger.info("Start to accumulate fallback to {target_dtype}.")
-            initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
-            fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                    initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                    op_dtypes=op_dtypes, accumulate=True)
-            for op_tuning_cfg in fallback_sampler:
-                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        if self.config.quant_level in ["auto", 0]:
+            logger.info(f"[Strategy] fallback op into fp32 in op type wise, \
+                as quant level is {self.config.quant_level}")
+            for op_tuning_cfg in self.fallback_in_op_type_wise():
+                yield op_tuning_cfg
+        # if quant level is auto or 1, do op instance fallback
+        if self.config.quant_level in ["auto", 1]:
+            logger.info(f"[Strategy] fallback op into fp32 in op wise, \
+                as quant level is {self.config.quant_level}")
+            for op_tuning_cfg in self.fallback_in_op_wise(tuning_space, \
+                fallback_items_name_lst, initial_op_tuning_cfg):
                 yield op_tuning_cfg
 
     def traverse(self):
