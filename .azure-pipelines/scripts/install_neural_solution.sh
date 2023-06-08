@@ -7,7 +7,13 @@ cd openmpi-4.1.5
 ./configure --prefix=/usr/local
 make all install
 MPI_DIR=/usr/local/lib/openmpi
-export LD_LIBRARY_PATH=$MPI_DIR/lib:$LD_LIBRARY_PATH
+export PATH=$MPI_DIR/bin:$PATH
+echo "Current Path ... "
+echo $PATH
+
+echo "check mpicc ..."
+which mpicc
+which mpirun
 
 echo "Install Neural Solution ... "
 cd /neural-compressor
