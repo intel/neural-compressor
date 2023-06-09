@@ -26,7 +26,7 @@ except:
     import logging
 
     logger = logging.getLogger()
-from collections import UserDict
+from collections import UserDict, defaultdict
 
 
 def forward_wrapper(model, input, device='cpu'):
@@ -846,7 +846,7 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes):
+    def get_prev_absorb_layer(self, nodes, dict_inp):
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
@@ -855,7 +855,13 @@ class GraphTrace:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
-                    prev_absorb_layer.append(parent)
+                    # Check if parent has multiple children of unsupported layers
+                    set_inp_type = set(dict_inp[parent])
+                    set_inp_type.discard('aten::size')
+                    if (set_inp_type.intersection(self.could_absorb_layers) == set_inp_type) or (set_inp_type.intersection(self.skip_ops_to_find_absorb) == set_inp_type):
+                        prev_absorb_layer.append(parent)
+                    else:
+                        prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
@@ -875,10 +881,17 @@ class GraphTrace:
         traced_model = self.trace(model, example_input)
         if traced_model == None:
             return None, None
+        
+        dict_inp = defaultdict(list)
+        for node in traced_model.graph.nodes():
+            inp_list = list(node.inputs())
+            for n in inp_list:
+                dict_inp[n.node()].append(node.kind())
+
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes)
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, dict_inp)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
