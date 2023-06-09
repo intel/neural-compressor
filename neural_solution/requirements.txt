@@ -3,7 +3,6 @@ pydantic
 fastapi
 uvicorn[standard]
 watchdog
-pandas
 protobuf
 grpcio
 mpi4py
