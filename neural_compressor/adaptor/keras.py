@@ -857,12 +857,18 @@ class KerasAdaptor(Adaptor):
         if distributed:
             if self.hvd.rank() == 0:
                 # Update the input model with pruned weights manually due to keras API limitation.
-                input_model.save(model._model)
+                if isinstance(model._model, tf.keras.Model):
+                    model._model = input_model
+                else:
+                    input_model.save(model._model)
             rank_list = self.hvd.allgather_object(self.hvd.rank())
             logger.info(f"rank 0 has saved the pruned model to '{model._model}',"
                         f"all ranks {rank_list} ready.")
         else:
-            input_model.save(model._model)
+            if isinstance(model._model, tf.keras.Model):
+                model._model = input_model
+            else:
+                input_model.save(model._model)
 
 
 class KerasQuery(QueryBackendCapability):
