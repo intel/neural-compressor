@@ -1034,7 +1034,7 @@ class TensorFlowAdaptor(Adaptor):
 
     def inspect_weight_and_bias(self, node_list, graph_def, graph_info, graph_node_name_mapping):
         """Inspect the weights and biases."""
-        from neural_compressor.utils.utility import DequantizeWeight
+        from neural_compressor.utils.utility import dequantize_weight
         from neural_compressor.adaptor.tf_utils.util import get_tensor_val_from_graph_node
         from .tf_utils.util import int8_node_name_reverse
         import tensorflow as tf
@@ -1069,7 +1069,7 @@ class TensorFlowAdaptor(Adaptor):
                 else:
                     min_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, min_filter_node)
                     max_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, max_filter_node)
-                DequantizeWeight(weight_node_val, min_filter_val, max_filter_val)
+                weight_node_val = dequantize_weight(weight_node_val, min_filter_val, max_filter_val)
             weights_result[node_name] = {weight_node_name: weight_node_val}
         return weights_result
 
