@@ -786,7 +786,10 @@ class KerasAdaptor(Adaptor):
         execution_mode = kwargs['kwargs'].get('execution_mode', None)
         distributed = getattr(dataloader, 'distributed', False)
 
-        input_model = tf.keras.models.load_model(model._model)
+        if isinstance(model._model, tf.keras.Model):
+            input_model = model._model
+        else:
+            input_model = tf.keras.models.load_model(model._model)
             # hooks = callbacks['tf_pruning'](model, input_model, hooks)
         hooks['on_train_begin']()                 # on_train_begin hook
         train_loss_results = []
