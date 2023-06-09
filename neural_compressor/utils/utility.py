@@ -936,7 +936,7 @@ def print_op_list(workload_location: str):
     Returns:
         None
     """
-    minmax_file_path = os.path.join(workload_location, "inspect_saved", "dequan_min_max.pkl")
+    minmax_file_path = os.path.join(workload_location, "inspect_saved", "activation_min_max.pkl")
     input_model_tensors = get_tensors_info(
         workload_location,
         model_type="input",
@@ -981,7 +981,7 @@ def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) 
     """Get OP list for model.
 
     Args:
-        minmax_file_path: path to dequan_min_max.pkl
+        minmax_file_path: path to activation_min_max.pkl
         input_model_tensors: dict with input tensors details
         optimized_model_tensors: dict with optimized tensors details
 
