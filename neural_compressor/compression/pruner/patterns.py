@@ -831,7 +831,10 @@ class PatternNxM(BasePattern):
         """
         ##TODO need to verify whether it's ok for transposed conv
         if len(data.shape) == 4:
-            data = data.permute(0, 2, 3, 1)  ##cout,k,k,cin
+            if isinstance(data, np.ndarray):
+                data = np.transpose(data, (0, 2, 3, 1))
+            else:
+                data = data.permute(0, 2, 3, 1)  ##cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
         return data
 
@@ -848,7 +851,10 @@ class PatternNxM(BasePattern):
         if len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3],
                                 orig_shape[1])
-            data = data.permute(0, 3, 1, 2)
+            if isinstance(data, np.ndarray):
+                data = np.transpose(data, (0, 3, 1, 2))
+            else:
+                data = data.permute(0, 3, 1, 2)
         return data
 
     def reshape_orig_to_pattern(self, data, key):

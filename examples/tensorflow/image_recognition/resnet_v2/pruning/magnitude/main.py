@@ -55,10 +55,10 @@ flags.DEFINE_string(
     'output_model', None, 'The output pruned model.')
 
 flags.DEFINE_integer(
-    'start_epoch', 0, 'The start epoch of training process.')
+    'start_step', 0, 'The start step of pruning process.')
 
 flags.DEFINE_integer(
-    'end_epoch', 7, 'The end epoch of training process.')
+    'end_step', 7, 'The end step of pruning process.')
 
 flags.DEFINE_integer(
     'iters', 100, 'The iteration of evaluating the performance.')
@@ -427,9 +427,10 @@ if __name__ == '__main__':
         configs = WeightPruningConfig(
             backend='itex',
             pruning_type='magnitude',
+            pattern='3x1',
             target_sparsity=0.25,
-            start_step=FLAGS.start_epoch,
-            end_step=FLAGS.end_epoch,
+            start_step=FLAGS.start_step,
+            end_step=FLAGS.end_step,
             pruning_op_types=['Conv', 'Dense']
         )
         compression_manager = prepare_compression(model='./baseline_model', confs=configs)

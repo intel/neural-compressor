@@ -35,10 +35,10 @@ flags.DEFINE_string(
     'output_model', None, 'The output pruned model.')
 
 flags.DEFINE_integer(
-    'start_epoch', 0, 'The start epoch of training process.')
+    'start_step', 0, 'The start step of pruning process.')
 
 flags.DEFINE_integer(
-    'end_epoch', 9, 'The end epoch of training process.')
+    'end_step', 9, 'The end step of pruning process.')
 
 flags.DEFINE_bool(
     'train_distributed', False, 'Whether to perform distributed training.')
@@ -128,8 +128,8 @@ if __name__ == '__main__':
         backend='itex',
         pruning_type='magnitude',
         target_sparsity=0.7,
-        start_step=FLAGS.start_epoch,
-        end_step=FLAGS.end_epoch,
+        start_step=FLAGS.start_step,
+        end_step=FLAGS.end_step,
         pruning_op_types=['Conv', 'Dense']
     )
     compression_manager = prepare_compression(model='./ViT_Model', confs=configs)
