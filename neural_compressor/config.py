@@ -1650,6 +1650,32 @@ class MixedPrecisionConfig(object):
         accuracy_criterion (AccuracyCriterion object, optional): Accuracy constraint settings,
                                                                  it won't work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
+        op_type_dict (dict, optional): Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                      User can specify the quantization config by op type:
+                      example:
+                      {
+                          'Conv': {
+                              'weight': {
+                                  'dtype': ['fp32']
+                              },
+                              'activation': {
+                                  'dtype': ['fp32']
+                              }
+                          }
+                      }
+        op_name_dict (dict, optional): Tuning constraints on op-wise for advance user to reduce tuning space.
+                      User can specify the quantization config by op name:
+                      example:
+                      {
+                          "layer1.0.conv1": {
+                              "activation": {
+                                  "dtype": ["fp32"]
+                              },
+                              "weight": {
+                                  "dtype": ["fp32"]
+                              }
+                          },
+                      }
 
     Example:
         from neural_compressor import mix_precision
@@ -1804,10 +1830,12 @@ class MixedPrecisionConfig(object):
 
     @property
     def op_name_dict(self):
+        """Get op name dict."""
         return self._op_name_dict
 
     @op_name_dict.setter
     def op_name_dict(self, op_name_dict):
+        """Set op name dict."""
         if op_name_dict is None:
             self._op_name_dict = op_name_dict
         elif isinstance(op_name_dict, dict):
@@ -1820,10 +1848,12 @@ class MixedPrecisionConfig(object):
 
     @property
     def op_type_dict(self):
+        """Get op type dict."""
         return self._op_type_dict
 
     @op_type_dict.setter
     def op_type_dict(self, op_type_dict):
+        """Set op type dict."""
         if op_type_dict is None:
             self._op_type_dict = op_type_dict
         elif isinstance(op_type_dict, dict):
