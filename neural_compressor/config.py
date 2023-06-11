@@ -1638,7 +1638,7 @@ class MixedPrecisionConfig(object):
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
-                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
+                                 Support 'default', 'itex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
                                  default is 'default'.
         precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
@@ -1668,7 +1668,9 @@ class MixedPrecisionConfig(object):
                  outputs=[],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-                 excluded_precisions=[]):
+                 excluded_precisions=[],
+                 op_name_dict={},
+                 op_type_dict={}):
         """Init a MixedPrecisionConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -1681,6 +1683,8 @@ class MixedPrecisionConfig(object):
         self.use_bf16 = "bf16" in self.precisions
         self.model_name = model_name
         self._framework = None
+        self.op_name_dict = op_name_dict
+        self.op_type_dict = op_type_dict
 
     @property
     def precisions(self):
@@ -1798,6 +1802,37 @@ class MixedPrecisionConfig(object):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions
 
+    @property
+    def op_name_dict(self):
+        return self._op_name_dict
+
+    @op_name_dict.setter
+    def op_name_dict(self, op_name_dict):
+        if op_name_dict is None:
+            self._op_name_dict = op_name_dict
+        elif isinstance(op_name_dict, dict):
+            for k, v in op_name_dict.items():
+                ops_schema.validate(v)
+            self._op_name_dict = op_name_dict
+        else:
+            assert False, ("Type of op_name_dict should be dict but not {}, ".format(
+                type(op_name_dict)))
+
+    @property
+    def op_type_dict(self):
+        return self._op_type_dict
+
+    @op_type_dict.setter
+    def op_type_dict(self, op_type_dict):
+        if op_type_dict is None:
+            self._op_type_dict = op_type_dict
+        elif isinstance(op_type_dict, dict):
+            for k, v in op_type_dict.items():
+                ops_schema.validate(v)
+            self._op_type_dict = op_type_dict
+        else:
+            assert False, ("Type of op_type_dict should be dict but not {}".format(
+                type(op_type_dict)))
 
 class ExportConfig:
     """Common Base Config for Export.
