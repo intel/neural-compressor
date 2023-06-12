@@ -70,16 +70,6 @@ def make_sub_graph(node, inits, input_data, output_data, reduce_range, opset, ir
     from onnx import helper, TensorProto, numpy_helper
     input = helper.make_tensor_value_info(node.input[0], dtype_map[input_data.dtype], input_data.shape)
     output = helper.make_tensor_value_info(node.output[0], dtype_map[output_data.dtype], output_data.shape)
-
-    q_dq_val = quant_dequant_data(numpy_helper.to_array(inits[0]), reduce_range)
-    new_tensor = helper.make_tensor(
-                        name=inits[0].name,
-                        data_type=dtype_map[numpy_helper.to_array(inits[0]).dtype],
-                        dims=numpy_helper.to_array(inits[0]).shape if \
-                            len(numpy_helper.to_array(inits[0]).shape) != 0 else [],
-                        vals=q_dq_val if \
-                            len(numpy_helper.to_array(inits[0])) != 0 else [numpy_helper.to_array(inits[0])])
-    inits[0].CopyFrom(new_tensor)
     graph = helper.make_graph([node], 'sub_graph', [input], [output], inits)
     model = helper.make_model(graph, opset_imports=opset)
     model.ir_version = ir_version
@@ -200,9 +190,15 @@ class ORTSmoothQuant:
         for node, old_input_name, new_input_name in self.replace_input:
             self.model.replace_node_input(node, new_input_name, old_input_name)
 
+        for value_info in self.new_added_value_info:
+            self.model.model.graph.value_info.remove(value_info)
+
         self.model.remove_nodes(self.new_added_mul_nodes)
         self.model.remove_initializers(self.new_init_tensors)
         self.tensor_scales_info = {}
+        self.new_added_mul_nodes = []
+        self.new_init_tensors = []
+        self.new_added_value_info = []
 
     def _check_need_calibration(self, alpha, percentile, op_types, scales_per_op, calib_iter):
         """Check need calibration or not.
