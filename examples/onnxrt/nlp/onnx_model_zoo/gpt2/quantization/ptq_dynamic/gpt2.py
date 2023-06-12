@@ -249,7 +249,7 @@ def main():
             evaluate(args, model, tokenizer)
         
     if args.tune:
-        if ort.__version__ <= '1.13.1':
+        try:
             from onnxruntime.transformers import optimizer
             from onnxruntime.transformers.fusion_options import FusionOptions
             opt_options = FusionOptions('gpt2')
@@ -262,7 +262,9 @@ def main():
                 hidden_size=768,
                 optimization_options=opt_options)
             model = model_optimizer.model
-        else:
+        except Exception as e:
+            logger.warning("Model optimizer will be skipped due to error {}. " \
+                        "Try to upgrade onnxruntime to avoid this error".format(e))
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization

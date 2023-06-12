@@ -563,6 +563,10 @@ class ONNXModel(BaseModel):
                     self.match_parent_path(
                         start_node,
                         ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [0, None, 0, 0, 0, 0]),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
                         [1, None, 0, 0, 0, 0]),
                     ]
 

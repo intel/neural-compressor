@@ -394,7 +394,7 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        if onnxruntime.__version__ <= '1.13.1':
+        try:
             from onnxruntime.transformers import optimizer
             from onnxruntime.transformers.fusion_options import FusionOptions
             opt_options = FusionOptions("bert")
@@ -407,7 +407,9 @@ if __name__ == "__main__":
                 hidden_size=512,
                 optimization_options=opt_options)
             model = model_optimizer.model
-        else:
+        except Exception as e:
+            logger.warning("Model optimizer will be skipped due to error {}. " \
+                        "Try to upgrade onnxruntime to avoid this error".format(e))
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
