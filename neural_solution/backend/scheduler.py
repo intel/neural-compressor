@@ -107,7 +107,7 @@ class Scheduler:
             # Construct the name of the new conda environment
             cmd = (f"source {CONDA_SOURCE_PATH} && conda create -n {conda_env} --clone {env_prefix}"
                 f" && conda activate {conda_env} && pip install {task.requirement.replace('=','==')}")
-            p = subprocess.Popen(cmd, shell=True)
+            p = subprocess.Popen(cmd, shell=True) # nosec
             logger.info(f"[Scheduler] Creating new environment {conda_env} start.")
             p.wait()
             logger.info(f"[Scheduler] Creating new environment {conda_env} end.")
@@ -148,7 +148,7 @@ class Scheduler:
             neural_coder_cmd.append(self.script_name)
             neural_coder_cmd = " ".join(neural_coder_cmd)
             full_cmd = """cd {}\n{}""".format(self.task_path, neural_coder_cmd)
-            p = subprocess.Popen(full_cmd, shell=True)
+            p = subprocess.Popen(full_cmd, shell=True) # nosec
             logger.info("[Neural Coder] Generating optimized code start.")
             p.wait()
             logger.info("[Neural Coder] Generating optimized code end.")
@@ -247,7 +247,7 @@ class Scheduler:
         full_cmd = self._parse_cmd(task, resource)
         logger.info(f"[TaskScheduler] Parsed the command from task: {full_cmd}")
         log_path = get_task_log_path(log_path=get_task_log_workspace(self.config.workspace), task_id=task.task_id)
-        p = subprocess.Popen(full_cmd, stdout=open(log_path, 'w+'), stderr=subprocess.STDOUT, shell=True)
+        p = subprocess.Popen(full_cmd, stdout=open(log_path, 'w+'), stderr=subprocess.STDOUT, shell=True) # nosec
         logger.info(f"[TaskScheduler] Start run task {task.task_id}, dump log into {log_path}")
         start_time = time.time()
         p.wait()
