@@ -469,16 +469,11 @@ class BasePattern:
         """
         zero_cnt = 0 # This function might need to refactor in subclass.
         total_cnt = 0
-        if self.framework == 'pytorch':
-            for key in pre_masks.keys():
-                pre_mask = pre_masks[key]
-                zero_cnt += torch.sum(pre_mask == 0.0).data.item()
-                total_cnt += pre_mask.numel()  ##FIXME
-        elif self.framework == 'keras':
-            for key in pre_masks.keys():
-                pre_mask = pre_masks[key]
-                zero_cnt += np.sum(pre_mask == 0.0)
-                total_cnt += pre_mask.size  ##FIXME
+        for key in pre_masks.keys():
+            pre_mask = pre_masks[key]
+            zero_cnt += torch.sum(pre_mask == 0.0).data.item()
+            total_cnt += pre_mask.numel()  ##FIXME
+
         if return_dict:
             return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
         else:
@@ -496,20 +491,13 @@ class BasePattern:
         """
         zero_cnt = 0
         total_cnt = 0
-        if self.framework == 'pytorch':
-            for key in pre_masks.keys():
-                if key in self.invalid_layers:
-                    continue
-                # progressive masks are unstructured, therefore directly find zeros
-                zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
-                total_cnt += float(pre_masks[key].numel())
-        elif self.framework == 'keras':
-            for key in pre_masks.keys():
-                if key in self.invalid_layers:
-                    continue
-                # progressive masks are unstructured, therefore directly find zeros
-                zero_cnt += float(np.sum(pre_masks[key] == 0))
-                total_cnt += float(pre_masks[key].size)
+        for key in pre_masks.keys():
+            if key in self.invalid_layers:
+                continue
+            # progressive masks are unstructured, therefore directly find zeros
+            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
+            total_cnt += float(pre_masks[key].numel())
+
         return (zero_cnt / total_cnt)
         
     def get_pattern_lock_masks(self, modules):
@@ -522,21 +510,13 @@ class BasePattern:
             A dict with the identical size as modules, containing pattern lock masks.
         """
         pattern_lock_masks = {}
+        for key in modules.keys():
+            weight = modules[key].weight
+            shape = weight.shape
+            mask = torch.ones(shape)
+            mask[weight == 0] = 0.0
+            pattern_lock_masks[key] = mask.to(weight.device)
 
-        if self.framework == 'pytorch':
-            for key in modules.keys():
-                weight = modules[key].weight
-                shape = weight.shape
-                mask = torch.ones(shape)
-                mask[weight == 0] = 0.0
-                pattern_lock_masks[key] = mask.to(weight.device)
-        elif self.framework == 'keras':
-            for key in modules.keys():
-                weight = modules[key].get_weights()[0]
-                shape = weight.shape
-                mask = tf.ones_like(shape)
-                mask[weight == 0] = 0.0
-                pattern_lock_masks[key] = mask
         return pattern_lock_masks
 
     def check_layer_validity(self):
@@ -1121,28 +1101,17 @@ class PatternNxM(BasePattern):
             A dict with the identical size as modules, containing pattern lock masks.
         """
         pattern_lock_masks = {}
-        if self.framework == 'pytorch':
-            for key in modules.keys():
-                weight = modules[key].weight
-                ori_shape = weight.shape
-                if key in self.invalid_layers:
-                    mask = torch.ones(weight.shape, device=weight.device)
-                    pattern_lock_masks[key] = mask
-                    continue
-                reduced_mask = self.get_reduced_masks_from_data(weight, key)
-                mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
+        for key in modules.keys():
+            weight = modules[key].weight
+            ori_shape = weight.shape
+            if key in self.invalid_layers:
+                mask = torch.ones(weight.shape, device=weight.device)
                 pattern_lock_masks[key] = mask
-        elif self.framework == 'keras':
-            for key in modules.keys():
-                weight = modules[key].get_weights()[0]
-                ori_shape = weight.shape
-                if key in self.invalid_layers:
-                    mask = np.ones(weight.shape)
-                    pattern_lock_masks[key] = mask
-                    continue
-                reduced_mask = self.get_reduced_masks_from_data(weight, key)
-                mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
-                pattern_lock_masks[key] = mask
+                continue
+            reduced_mask = self.get_reduced_masks_from_data(weight, key)
+            mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
+            pattern_lock_masks[key] = mask
+
         return pattern_lock_masks
     
     def register_block_masks(self, modules):
@@ -1155,32 +1124,19 @@ class PatternNxM(BasePattern):
             A dict containing block masks.
         """
         masks = {}
-        if self.framework == 'pytorch':
-            for key in modules.keys():
-                if key in self.invalid_layers:
-                    continue # No corresponding block mask, skip.
-                module = modules[key]
-                weight = module.weight
-                if type(module).__name__ not in ["Linear"]:
-                    logger.warning(f"Currently only support Linear block mask pruning," \
-                                    f"{type(module).__name__} won't be pruned.")
-                    continue
-                block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
-                module.register_parameter("block_mask", block_mask)
-                masks[key] = modules[key].block_mask.data
-        elif self.framework == 'keras':
-            # TODO need to use PrunedDense to replace the original Dense layer and set the block_mask
-            for key in modules.keys():
-                if key in self.invalid_layers:
-                    continue # No corresponding block mask, skip.
-                module = modules[key]
-                weight = module.get_weights()[0]
-                if module.__class__.__name__ not in ["Dense"]:
-                    logger.warning(f"Currently only support Dense block mask pruning," \
-                                    f"{module.__class__.__name__} won't be pruned.")
-                    continue
-                block_mask = np.array(self.get_reduced_masks_from_data(weight, key), dtype=weight.dtype)
-                masks[key] = block_mask
+        for key in modules.keys():
+            if key in self.invalid_layers:
+                continue # No corresponding block mask, skip.
+            module = modules[key]
+            weight = module.weight
+            if type(module).__name__ not in ["Linear"]:
+                logger.warning(f"Currently only support Linear block mask pruning," \
+                                f"{type(module).__name__} won't be pruned.")
+                continue
+            block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
+            module.register_parameter("block_mask", block_mask)
+            masks[key] = modules[key].block_mask.data
+
         return masks
     
     def remove_block_masks(self):
@@ -1191,29 +1147,16 @@ class PatternNxM(BasePattern):
     
     def mask_block_weights(self, masks):
         """Achieve weight pruning by multiplying the reshaped weights and block masks."""
-        if self.framework == 'pytorch':
-            for key in masks.keys():
-                if key in self.invalid_layers:
-                    continue
-                module = self.modules[key]
-                block_size = self.block_size[key]
-                org_shape = module.weight.shape
-                mask = masks[key].data.repeat_interleave(\
-                        block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
-                reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
-                module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
-        elif self.framework == 'keras':
-            for key in masks.keys():
-                if key in self.invalid_layers:
-                    continue
-                module = self.modules[key]
-                block_size = self.block_size[key]
-                org_shape = module.get_weights()[0].shape
-                mask = tf.repeat(masks[key], repeats=block_size[0], axis=0)
-                mask = tf.repeat(mask, repeats=block_size[1], axis=-1)
-            
-                reshaped_weight = self._reshape_orig_to_2dims(module.get_weights()[0]) * mask
-                module.set_weights(self._reshape_2dims_to_orig(reshaped_weight, org_shape))
+        for key in masks.keys():
+            if key in self.invalid_layers:
+                continue
+            module = self.modules[key]
+            block_size = self.block_size[key]
+            org_shape = module.weight.shape
+            mask = masks[key].data.repeat_interleave(\
+                    block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
+            reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
+            module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
 
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         """Generate the progressive masks.
