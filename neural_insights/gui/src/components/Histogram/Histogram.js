@@ -84,7 +84,8 @@ const getHistogramData = (histogramData) => {
             width: 1,
             color: series.data.length === 1 ? colorPalette[index] : '#fff',
           },
-          points: false
+          points: false,
+          spanmode: 'hard'
         }
       );
     });

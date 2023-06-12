@@ -24,6 +24,7 @@ import Warning from './../Warning/Warning';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/esm/Button';
+import Spinner from 'react-bootstrap/Spinner';
 
 function Diagnosis() {
   const [selectedNode, setSelectedNode] = useState(null);
@@ -142,25 +143,34 @@ class NodeSearch extends React.Component {
 function AccuracyResults({ selectedWorkload }) {
   return (
     <div className='data-panel'>
-      <table className='accuracy-table'>
-        <tbody>
-          <tr>
-            <td className="accuracy-title">Accuracy <br /> results</td>
-            <td>
-              <div className="accuracy-number">{selectedWorkload.accuracy_data.baseline_accuracy * 100}%</div>
-              <div className="accuracy-subtitle">FP32</div>
-            </td>
-            <td>
-              <div className="accuracy-number">{selectedWorkload.accuracy_data.optimized_accuracy * 100}%</div>
-              <div className="accuracy-subtitle">INT8</div>
-            </td>
-            <td>
-              <div className="accuracy-number">{(selectedWorkload.accuracy_data.ratio * 100).toPrecision(2)}%</div>
-              <div className="accuracy-subtitle">Ratio</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      {selectedWorkload.status === 'wip' &&
+        <p> Quantization is in progress.
+          <div className="spinner-container">
+            <Spinner className="spinner" animation="border" />
+          </div>
+        </p>
+      }
+      {selectedWorkload.status !== 'wip' &&
+        <table className='accuracy-table'>
+          <tbody>
+            <tr>
+              <td className="accuracy-title">Accuracy <br /> results</td>
+              <td>
+                <div className="accuracy-number">{selectedWorkload.accuracy_data.baseline_accuracy * 100}%</div>
+                <div className="accuracy-subtitle">FP32</div>
+              </td>
+              <td>
+                <div className="accuracy-number">{selectedWorkload.accuracy_data.optimized_accuracy * 100}%</div>
+                <div className="accuracy-subtitle">INT8</div>
+              </td>
+              <td>
+                <div className="accuracy-number">{(selectedWorkload.accuracy_data.ratio * 100).toPrecision(2)}%</div>
+                <div className="accuracy-subtitle">Ratio</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      }
     </div>
   )
 }
