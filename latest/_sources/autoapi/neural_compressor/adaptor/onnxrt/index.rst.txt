@@ -26,6 +26,7 @@ Classes
 
 
 
+
    The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
    :param framework_specific_info: framework specific configuration for quantization.
@@ -33,6 +34,7 @@ Classes
 
 
 .. py:class:: ONNXRT_QLinearOpsAdaptor(framework_specific_info)
+
 
 
 
@@ -46,6 +48,7 @@ Classes
 
 
 
+
    The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
    :param framework_specific_info: framework specific configuration for quantization.
@@ -53,6 +56,7 @@ Classes
 
 
 .. py:class:: ONNXRT_QDQAdaptor(framework_specific_info)
+
 
 
 

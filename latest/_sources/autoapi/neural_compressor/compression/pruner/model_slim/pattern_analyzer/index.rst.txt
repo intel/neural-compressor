@@ -64,6 +64,7 @@ Functions
 
 
 
+
    Searcher class which searches patterns with a pre-defined recipe.
 
    A Recipe is a dict type data which contains the root module's name and
@@ -98,6 +99,7 @@ Functions
 
 
 .. py:class:: JitBasicSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+
 
 
 
@@ -137,6 +139,7 @@ Functions
 
 
 .. py:class:: Linear2LinearSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+
 
 
 
@@ -185,6 +188,7 @@ Functions
 
 
 
+
    Static graph searcher for multi-head attention modules.
 
    Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
@@ -211,6 +215,7 @@ Functions
 
 
 .. py:class:: ClassifierHeadSearcher(model: neural_compressor.compression.pruner.utils.torch.nn.Module)
+
 
 
 

@@ -32,6 +32,7 @@ Functions
 
 .. py:class:: OptimizedModel(*args, **kwargs)
 
+
    The class provides a method from_pretrained to access Huggingface models.
 
 

@@ -26,6 +26,7 @@ Classes
 
 
 
+
    The tuning strategy using SigOpt HPO search in tuning space.
 
    :param model: The FP32 model specified for low precision tuning.

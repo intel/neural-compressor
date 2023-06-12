@@ -27,10 +27,12 @@ Classes
 
 
 
+
    Resize Operator.
 
 
 .. py:class:: QResizeOperator(onnx_node, children, initializers)
+
 
 
 

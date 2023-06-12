@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: ModelConversion(conf_fname_or_obj=None)
 
+
    ModelConversion class is used to convert one model format to another.
 
       Currently Neural Compressor only supports Quantization-aware training TensorFlow model to Default

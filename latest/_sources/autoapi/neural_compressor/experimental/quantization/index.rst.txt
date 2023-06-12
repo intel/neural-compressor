@@ -26,6 +26,7 @@ Classes
 
 
 
+
    This class provides easy use API for quantization.
 
       It automatically searches for optimal quantization recipes for low precision model inference,

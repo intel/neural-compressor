@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs={})
 
+
    Op tuning config.
 
 

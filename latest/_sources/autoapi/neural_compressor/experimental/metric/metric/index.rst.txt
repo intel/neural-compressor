@@ -60,6 +60,7 @@ Functions
 
 
 
+
    Tensorflow metrics collection.
 
    .. attribute:: metrics
@@ -68,6 +69,7 @@ Functions
 
 
 .. py:class:: PyTorchMetrics
+
 
 
 
@@ -82,6 +84,7 @@ Functions
 
 
 
+
    MXNet metrics collection.
 
    .. attribute:: metrics
@@ -90,6 +93,7 @@ Functions
 
 
 .. py:class:: ONNXRTQLMetrics
+
 
 
 
@@ -104,6 +108,7 @@ Functions
 
 
 
+
    ONNXRT Integer metrics collection.
 
    .. attribute:: metrics
@@ -112,6 +117,7 @@ Functions
 
 
 .. py:class:: METRICS(framework: str)
+
 
 
 
@@ -140,10 +146,12 @@ Functions
 
 
 
+
    The base class of Metric.
 
 
 .. py:class:: WrapPyTorchMetric(metric, single_output=False, hvd=None)
+
 
 
 
@@ -154,6 +162,7 @@ Functions
 
 
 
+
    The wrapper of Metric class for MXNet.
 
 
@@ -161,10 +170,12 @@ Functions
 
 
 
+
    The wrapper of Metric class for ONNXRT.
 
 
 .. py:class:: F1
+
 
 
 
@@ -176,6 +187,7 @@ Functions
 
 
 .. py:class:: Accuracy
+
 
 
 
@@ -199,12 +211,14 @@ Functions
 
 .. py:class:: PyTorchLoss
 
+
    A dummy PyTorch Metric.
 
    A dummy metric that computes the average of predictions and prints it directly.
 
 
 .. py:class:: Loss
+
 
 
 
@@ -222,6 +236,7 @@ Functions
 
 
 .. py:class:: MAE(compare_label=True)
+
 
 
 
@@ -250,6 +265,7 @@ Functions
 
 
 
+
    Computes Root Mean Squared Error (RMSE) loss.
 
    .. attribute:: mse
@@ -258,6 +274,7 @@ Functions
 
 
 .. py:class:: MSE(compare_label=True)
+
 
 
 
@@ -287,6 +304,7 @@ Functions
 
 
 
+
    Compute Top-k Accuracy classification score for Tensorflow model.
 
    This metric computes the number of times where the correct label is among
@@ -308,6 +326,7 @@ Functions
 
 
 .. py:class:: GeneralTopK(k=1)
+
 
 
 
@@ -335,10 +354,12 @@ Functions
 
 
 
+
    Compute mean average precision of the detection task.
 
 
 .. py:class:: TensorflowMAP(anno_path=None, iou_thrs=0.5, map_points=0, map_key='DetectionBoxes_Precision/mAP')
+
 
 
 
@@ -349,10 +370,12 @@ Functions
 
 
 
+
    Computes mean average precision using algorithm in COCO.
 
 
 .. py:class:: TensorflowVOCMAP(anno_path=None, iou_thrs=None, map_points=None, map_key='DetectionBoxes_Precision/mAP')
+
 
 
 
@@ -363,10 +386,12 @@ Functions
 
 
 
+
    Evaluate for v1.1 of the SQuAD dataset.
 
 
 .. py:class:: mIOU(num_classes=21)
+
 
 
 
@@ -377,10 +402,12 @@ Functions
 
 
 
+
    Compute the GLUE score.
 
 
 .. py:class:: ROC(task='dlrm')
+
 
 
 

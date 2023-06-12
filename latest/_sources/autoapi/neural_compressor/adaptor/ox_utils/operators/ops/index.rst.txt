@@ -46,10 +46,12 @@ Functions
 
 
 
+
    Base Operator.
 
 
 .. py:class:: QOperator(onnx_node, children, initializers)
+
 
 
 

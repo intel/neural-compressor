@@ -36,10 +36,12 @@ Functions
 
 .. py:class:: TuningItem(name, options=[], item_type=None)
 
+
    Not displayed in API Docs.
 
 
 .. py:class:: TuningSpace(capability, conf, framework=None)
+
 
    Not displayed in API Docs.
 

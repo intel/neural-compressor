@@ -132,6 +132,7 @@ Functions
 
 .. py:class:: SeqType(tensor_dtype)
 
+
    Wrap around TensorProto.* to signify a tensor sequence of a given type.
 
 

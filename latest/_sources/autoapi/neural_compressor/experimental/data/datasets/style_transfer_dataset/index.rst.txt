@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Dataset used for style transfer task on tensorflow/inteltensorflow/tensorflow_itex backend.
 
    This Dataset is to construct a dataset from two specific image holders representing

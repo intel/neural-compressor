@@ -63,6 +63,7 @@ Functions
 
 .. py:class:: Pattern(config)
 
+
    Pruning Pattern.
 
    Every Pruner object will contain a Pattern object.
@@ -85,6 +86,7 @@ Functions
 
 
 
+
    Pruning Pattern.
 
    A Pattern class derived from Pattern. In this pattern, the weights in a NxM block will be pruned or kept
@@ -100,6 +102,7 @@ Functions
 
 
 .. py:class:: PatternNInM(config)
+
 
 
 

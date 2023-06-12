@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Quantize FusedBatchNormV3 to int8 op _QuantizedFusedBatchNorm.
 
 

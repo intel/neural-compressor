@@ -28,10 +28,12 @@ Classes
 
 
 
+
    Operations library related to weight compression.
 
 
 .. py:class:: LinearCompression(root_linear, target_linears)
+
 
 
 
@@ -68,6 +70,7 @@ Classes
 
 
 .. py:class:: LinearCompressionIterator(linear_patterns)
+
 
 
 

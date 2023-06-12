@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Merge duplicated QDQ patterns.
 
 

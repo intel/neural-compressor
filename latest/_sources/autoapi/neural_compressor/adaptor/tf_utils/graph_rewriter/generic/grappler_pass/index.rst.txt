@@ -26,6 +26,7 @@ Classes
 
 
 
+
    A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph.
 
 

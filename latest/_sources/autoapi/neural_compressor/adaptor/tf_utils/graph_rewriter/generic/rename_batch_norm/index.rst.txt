@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Rename FusedBatchNorm op to FusedBatchNormV2.
 
 

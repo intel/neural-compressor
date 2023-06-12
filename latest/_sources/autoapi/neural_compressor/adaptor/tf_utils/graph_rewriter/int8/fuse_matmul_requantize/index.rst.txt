@@ -29,10 +29,12 @@ Classes
 
 
 
+
    Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
 
 
 .. py:class:: FuseMatMulRequantizeTransformer(model, device='cpu')
+
 
 
 
@@ -43,10 +45,12 @@ Classes
 
 
 
+
    Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
 
 
 .. py:class:: FuseMatMulRequantizeNewAPITransformer(model, device='cpu')
+
 
 
 

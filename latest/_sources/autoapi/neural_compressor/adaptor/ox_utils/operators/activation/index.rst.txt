@@ -29,10 +29,12 @@ Classes
 
 
 
+
    Activation operator.
 
 
 .. py:class:: RemovableActivationOperator(onnx_quantizer, onnx_node)
+
 
 
 
@@ -43,10 +45,12 @@ Classes
 
 
 
+
    INT8 activation operator in QOperator format.
 
 
 .. py:class:: Float16ActivationOperator(onnx_quantizer, onnx_node)
+
 
 
 

@@ -27,10 +27,12 @@ Classes
 
 
 
+
    Concat Operator.
 
 
 .. py:class:: QConcatOperator(onnx_node, children, initializers)
+
 
 
 

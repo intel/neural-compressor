@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: QuantizeConfig
 
+
    Class for building custom quantize config.
 
    There should be only one QuantizeConfig instance for global setting.

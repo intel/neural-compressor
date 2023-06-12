@@ -32,15 +32,18 @@ Classes
 
 .. py:class:: TuningSamplerRegistry
 
+
    Class decorator used to register all TuningSampler subclasses.
 
 
 .. py:class:: TuningOrder
 
+
    Not displayed in API Docs.
 
 
 .. py:class:: TuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
+
 
    Not displayed in API Docs.
 
@@ -51,10 +54,12 @@ Classes
 
 
 
+
    Not displayed in API Docs.
 
 
 .. py:class:: OpTypeWiseTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict[tuple, neural_compressor.strategy.utils.tuning_structs.OpTuningConfig])
+
 
 
 
@@ -65,10 +70,12 @@ Classes
 
 
 
+
    Not displayed in API Docs.
 
 
 .. py:class:: FallbackTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict[tuple, Any], op_dtypes: Dict[str, str], accumulate: bool, skip_first: bool = True)
+
 
 
 
@@ -79,10 +86,12 @@ Classes
 
 
 
+
    Not displayed in API Docs.
 
 
 .. py:class:: BlockFallbackTuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict[tuple, Any], op_block_lst: List[List[tuple]], accumulate: bool, target_dtype: str)
+
 
 
 

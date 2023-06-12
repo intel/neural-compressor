@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Quantize Conv2D/Conv3D/DepthwiseConv2dNative to int8 op.
 
 

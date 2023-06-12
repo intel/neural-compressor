@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16.
 
 

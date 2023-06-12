@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: OnnxGraph(nodes, output_shapes=None, dtypes=None, target=None, opset=None, extra_opset=None, input_names=None, output_names=None, is_subgraph=False, graph_name=None)
 
+
    Class that provides graph manipulation and matching.
 
 

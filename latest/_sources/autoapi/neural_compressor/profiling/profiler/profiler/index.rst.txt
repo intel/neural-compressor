@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: Profiler(input_graph: str)
 
+
    Profiler class.
 
 

@@ -27,10 +27,12 @@ Classes
 
 
 
+
    AveragePool Operator.
 
 
 .. py:class:: QPoolOperator(onnx_node, children, initializers)
+
 
 
 

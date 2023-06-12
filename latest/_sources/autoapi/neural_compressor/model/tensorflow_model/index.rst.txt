@@ -238,10 +238,12 @@ Functions
 
 
 
+
    Build Tensorflow Base Model.
 
 
 .. py:class:: TensorflowSavedModelModel(model, **kwargs)
+
 
 
 
@@ -252,6 +254,7 @@ Functions
 
 
 
+
    Build Tensorflow QAT model.
 
 
@@ -259,10 +262,12 @@ Functions
 
 
 
+
    Build Tensorflow checkpoint model.
 
 
 .. py:class:: TensorflowModel
+
 
 
 

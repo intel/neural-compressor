@@ -28,6 +28,7 @@ Classes
 
 
 
+
    MatMul Operator.
 
 
@@ -35,10 +36,12 @@ Classes
 
 
 
+
    QLinearMatMul Operator.
 
 
 .. py:class:: FusedMatMulOperator(onnx_quantizer, onnx_node)
+
 
 
 

@@ -64,6 +64,7 @@ Functions
 
 
 
+
    access yaml using attributes instead of using the dictionary notation.
 
    :param value: The dict object to access.

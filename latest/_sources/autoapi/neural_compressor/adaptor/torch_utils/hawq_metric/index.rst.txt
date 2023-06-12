@@ -34,10 +34,12 @@ Functions
 
 .. py:class:: Node_collector(m)
 
+
    Define Collector based on hook, which is used to record the intermediate result.
 
 
 .. py:class:: HessianTrace(model, dataloader, q_model, criterion=None)
+
 
    HessianTrace Class.
 

@@ -69,6 +69,7 @@ Functions
 
 
 
+
    The base class for precise benchmark supported by neural_compressor.
 
    With built-in objectives, users can compress models with different objectives easily.
@@ -81,6 +82,7 @@ Functions
 
 
 
+
    Configuration Accuracy class. Evaluate the accuracy.
 
 
@@ -88,10 +90,12 @@ Functions
 
 
 
+
    Configuration Performance class. Evaluate the inference time.
 
 
 .. py:class:: Footprint
+
 
 
 
@@ -104,10 +108,12 @@ Functions
 
 
 
+
    Configuration ModelSize class. Evaluate the model size.
 
 
 .. py:class:: MultiObjective(objectives, accuracy_criterion, metric_criterion=[True], metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False)
+
 
    The base class for multiple benchmarks supported by neural_compressor.
 

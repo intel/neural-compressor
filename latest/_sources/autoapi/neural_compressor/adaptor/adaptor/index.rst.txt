@@ -39,6 +39,7 @@ Functions
 
 
 
+
    The base class of framework adaptor layer.
 
 

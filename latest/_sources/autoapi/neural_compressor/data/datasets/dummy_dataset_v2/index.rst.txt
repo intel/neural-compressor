@@ -27,6 +27,7 @@ Classes
 
 
 
+
    Dataset used for dummy_v2 data generation.
 
    This Dataset is to construct a dataset from a input shape and label shape.
@@ -34,6 +35,7 @@ Classes
 
 
 .. py:class:: SparseDummyDataset(dense_shape, label_shape=None, sparse_ratio=0.5, low=-128.0, high=127.0, dtype='float32', transform=None, filter=None)
+
 
 
 

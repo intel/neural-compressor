@@ -26,6 +26,7 @@ Classes
 
 
 
+
    This class implements the bias correction graph transform.
 
    Will correct the weight and scale for *Conv2D* op

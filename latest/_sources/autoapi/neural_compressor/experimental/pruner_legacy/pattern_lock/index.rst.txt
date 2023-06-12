@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Pattern lock pruner class.
 
    :param model: The original model (currently PyTorchModel instance).

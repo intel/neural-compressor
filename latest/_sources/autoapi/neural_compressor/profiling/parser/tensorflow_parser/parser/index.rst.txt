@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Parser class is responsible for parsing profiling log files.
 
 

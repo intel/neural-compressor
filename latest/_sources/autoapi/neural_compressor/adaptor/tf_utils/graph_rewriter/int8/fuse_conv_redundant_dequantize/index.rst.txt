@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
 
 

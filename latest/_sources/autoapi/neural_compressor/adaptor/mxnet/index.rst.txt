@@ -23,6 +23,7 @@ Classes
 
 
 
+
    The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.
 
    :param framework_specific_info: framework specific configuration for quantization.

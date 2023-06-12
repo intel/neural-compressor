@@ -27,10 +27,12 @@ Classes
 
 
 
+
    EmbedLayerNormalization Operator.
 
 
 .. py:class:: QEmbedLayerNormalizationOperator(onnx_node, children, initializers)
+
 
 
 

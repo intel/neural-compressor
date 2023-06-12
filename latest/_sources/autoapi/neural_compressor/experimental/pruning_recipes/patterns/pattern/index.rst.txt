@@ -48,6 +48,7 @@ Functions
 
 
 
+
    Class that contain all registered pattern types.
 
    .. attribute:: patterns
@@ -56,6 +57,7 @@ Functions
 
 
 .. py:class:: PatternBase(mask_shape, is_contiguous=True)
+
 
    Base class of pruning pattern.
 

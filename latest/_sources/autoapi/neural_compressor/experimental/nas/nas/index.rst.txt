@@ -30,6 +30,7 @@ Classes
 
 
 
+
    Create object of different NAS approaches.
 
    :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
@@ -39,6 +40,7 @@ Classes
 
 
 .. py:class:: NASBase(search_space=None, model_builder=None)
+
 
 
 

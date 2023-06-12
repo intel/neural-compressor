@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Move Squeeze op after Relu op for match fusion pattern.
 
 

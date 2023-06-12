@@ -27,12 +27,14 @@ Classes
 
 .. py:class:: ParseDecodeCoco
 
+
    Helper function for TensorflowModelZooBertDataset.
 
    Parse the features from sample.
 
 
 .. py:class:: COCORecordDataset
+
 
 
 
@@ -49,6 +51,7 @@ Classes
 
 
 .. py:class:: COCORaw(root, img_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=filter)
+
 
 
 
@@ -71,6 +74,7 @@ Classes
 
 
 .. py:class:: COCONpy(root, npy_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=None)
+
 
 
 

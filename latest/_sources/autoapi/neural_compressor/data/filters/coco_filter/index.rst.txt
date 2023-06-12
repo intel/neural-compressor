@@ -27,10 +27,12 @@ Classes
 
 
 
+
    The label balance filter for COCO Record.
 
 
 .. py:class:: LabelBalanceCOCORawFilter(size=1)
+
 
 
 

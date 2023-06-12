@@ -84,6 +84,7 @@ Functions
 
 .. py:class:: ORTSmoothQuant(model, dataloader, reduce_range=False, backend='CPUExecutionProvider')
 
+
    Fake input channel quantization.
 
    For more details please refer to:

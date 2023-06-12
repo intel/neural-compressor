@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
 
+
    A class for scaling model weights using Smooth Quantization method.
 
    :param model: Tensorflow model to be scaled

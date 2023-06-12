@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Scheduler for neural_compressor component pipeline execution.
 
    Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.

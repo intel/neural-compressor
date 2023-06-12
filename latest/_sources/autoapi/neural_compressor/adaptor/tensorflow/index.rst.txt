@@ -28,6 +28,7 @@ Classes
 
 
 
+
    Adaptor Layer for stock tensorflow and spr-base.
 
 
@@ -35,10 +36,12 @@ Classes
 
 
 
+
    Tensorflow ITEX Adaptor Class.
 
 
 .. py:class:: TensorflowQuery(local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static')
+
 
 
 

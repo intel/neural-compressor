@@ -29,6 +29,7 @@ Classes
 
 
 
+
    Base class for all Samplers.
 
    __iter__ is needed no matter whether you use IterableSampler
@@ -42,6 +43,7 @@ Classes
 
 
 
+
    Interally samples elements.
 
    Used for datasets retrieved element by interator. Yield None to act as a placeholder for each iteration.
@@ -51,10 +53,12 @@ Classes
 
 
 
+
    Sequentially samples elements, used for datasets retrieved element by index.
 
 
 .. py:class:: BatchSampler(sampler, batch_size, drop_last=True)
+
 
 
 

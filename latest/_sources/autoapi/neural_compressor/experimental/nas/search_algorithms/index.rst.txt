@@ -29,6 +29,7 @@ Classes
 
 
 
+
    Base class for defining the common methods of different search algorithms.
 
    :param search_space: A dictionary for defining the search space.
@@ -36,6 +37,7 @@ Classes
 
 
 .. py:class:: GridSearcher(search_space)
+
 
 
 
@@ -51,6 +53,7 @@ Classes
 
 
 
+
    Random search.
 
    Search the whole search space randomly.
@@ -60,6 +63,7 @@ Classes
 
 
 .. py:class:: BayesianOptimizationSearcher(search_space, seed=42)
+
 
 
 

@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: Graph_Optimization(conf_fname_or_obj=None)
 
+
    Graph_Optimization class.
 
    automatically searches for optimal quantization recipes for low

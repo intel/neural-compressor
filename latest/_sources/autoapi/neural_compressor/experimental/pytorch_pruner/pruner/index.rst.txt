@@ -66,6 +66,7 @@ Functions
 
 .. py:class:: Pruner(modules, config)
 
+
    Pruning Pruner.
 
    The class which executes pruning process.
@@ -134,6 +135,7 @@ Functions
 
 
 
+
    Pruning Pruner.
 
    A Pruner class derived from Pruner. In this pruner, the scores are calculated based on weights.
@@ -147,6 +149,7 @@ Functions
 
 
 .. py:class:: SnipPruner(modules, config)
+
 
 
 
@@ -168,6 +171,7 @@ Functions
 
 
 
+
    Pruning Pruner.
 
    A Pruner class derived from Pruner. In this pruner, the scores are calculated based on SNIP.
@@ -182,6 +186,7 @@ Functions
 
 
 .. py:class:: PatternLockPruner(modules, config)
+
 
 
 

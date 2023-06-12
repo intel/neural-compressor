@@ -28,6 +28,7 @@ Classes
 
 
 
+
    Base class for different fetchers.
 
 
@@ -35,10 +36,12 @@ Classes
 
 
 
+
    Iterate to get next batch-size samples as a batch.
 
 
 .. py:class:: IndexFetcher(dataset, collate_fn, drop_last, distributed)
+
 
 
 

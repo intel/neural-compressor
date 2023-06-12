@@ -63,6 +63,7 @@ Functions
 
 .. py:class:: BasePattern(config, modules)
 
+
    Pruning Pattern.
 
    It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4.
@@ -114,6 +115,7 @@ Functions
 
 
 
+
    Pruning Pattern.
 
    A Pattern class derived from BasePattern. In this pattern, the weights in a NxM block will be pruned or kept
@@ -131,6 +133,7 @@ Functions
 
 
 .. py:class:: PatternNInM(config, modules)
+
 
 
 
@@ -152,6 +155,7 @@ Functions
 
 
 .. py:class:: PatternMHA(config, modules=None)
+
 
 
 

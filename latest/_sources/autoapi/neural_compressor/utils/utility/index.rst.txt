@@ -110,6 +110,7 @@ Functions
 
 
 
+
    Lazy import python module till use.
 
 
@@ -150,6 +151,7 @@ Functions
 
 
 .. py:class:: CpuInfo
+
 
 
 
@@ -214,12 +216,14 @@ Functions
 
 
 
+
    Not displayed in API Docs.
 
    Capture the output to file.
 
 
 .. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
+
 
    The statistics printer.
 
@@ -228,10 +232,12 @@ Functions
 
 
 
+
    Mode: Quantization, Benchmark or Pruning.
 
 
 .. py:class:: GLOBAL_STATE
+
 
    Access the global model.
 
@@ -289,6 +295,7 @@ Functions
 
 
 .. py:class:: DotDict(value=None)
+
 
 
 
@@ -392,6 +399,7 @@ Functions
 
 
 .. py:class:: OpEntry(op_name: str, mse: float, activation_min: float, activation_max: float)
+
 
    OP entry class.
 

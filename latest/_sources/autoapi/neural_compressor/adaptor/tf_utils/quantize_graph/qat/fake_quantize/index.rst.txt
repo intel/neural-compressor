@@ -27,10 +27,12 @@ Classes
 
 
 
+
    ABC interface class for applying fake quantization by insert qdq.
 
 
 .. py:class:: FakeQuantize(per_channel=False, num_bits=8, channel_axis=-1, symmetric=True, narrow_range=True)
+
 
 
 

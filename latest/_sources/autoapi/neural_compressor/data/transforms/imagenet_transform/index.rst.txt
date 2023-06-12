@@ -34,6 +34,7 @@ Classes
 
 
 
+
    Convert the dtype of input to quantize it.
 
    :param dtype: desired image dtype, support 'uint8', 'int8'
@@ -48,6 +49,7 @@ Classes
 
 
 
+
    Convert label to label - label_shift.
 
    :param label_shift: number of label shift
@@ -58,6 +60,7 @@ Classes
 
 .. py:class:: ParseDecodeImagenet
 
+
    Parse features in Example proto.
 
    :returns: tuple of parsed image and label
@@ -67,12 +70,14 @@ Classes
 
 
 
+
    Imagenet decoding will be performed automatically from Neural Compressor v1.4.
 
    :returns: sample
 
 
 .. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
+
 
 
 
@@ -100,6 +105,7 @@ Classes
 
 
 
+
    Combination of a series of transforms which is applicable to images in Imagenet.
 
    :param height: Height of the result
@@ -115,6 +121,7 @@ Classes
 
 
 .. py:class:: OnnxBilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
+
 
 
 
@@ -136,6 +143,7 @@ Classes
 
 
 
+
    Combination of a series of transforms which is applicable to images in Imagenet.
 
    :param height: Height of the result
@@ -151,6 +159,7 @@ Classes
 
 
 .. py:class:: ResizeWithAspectRatio(height, width, scale=87.5, inter_pol=cv2.INTER_AREA)
+
 
 
 

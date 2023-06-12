@@ -32,6 +32,7 @@ Classes
 
 
 
+
    This is base class of Neural Compressor Callbacks.
 
    This class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
@@ -41,6 +42,7 @@ Classes
 
 
 .. py:class:: QuantizationAwareTrainingCallbacks(conf=None, model=None, adaptor=None)
+
 
 
 
@@ -54,12 +56,14 @@ Classes
 
 
 
+
    This is the class for callbacks of pruning object.
 
    In this class will apply all hooks for Pruning.
 
 
 .. py:class:: DistillationCallbacks(conf=None, model=None)
+
 
 
 

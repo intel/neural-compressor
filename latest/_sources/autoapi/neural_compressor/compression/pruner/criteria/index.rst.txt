@@ -49,6 +49,7 @@ Functions
 
 .. py:class:: PruningCriterion(modules, config)
 
+
    Pruning base criterion.
 
    :param config: A config dict object that includes information about pruner and pruning criterion.
@@ -60,6 +61,7 @@ Functions
 
 
 .. py:class:: MagnitudeCriterion(modules, config)
+
 
 
 
@@ -80,6 +82,7 @@ Functions
 
 
 
+
    Pruning criterion.
 
    The gradient criterion_class is derived from PruningCriterion.
@@ -94,6 +97,7 @@ Functions
 
 
 .. py:class:: SnipCriterion(modules, config)
+
 
 
 
@@ -116,6 +120,7 @@ Functions
 
 
 
+
    Pruning criterion.
 
    The snip_momentum criterion_class is derived from PruningCriterion.
@@ -135,6 +140,7 @@ Functions
 
 
 
+
    Pruning criterion.
 
    The snip_momentum_block criterion_class is derived from PruningCriterion.
@@ -151,6 +157,7 @@ Functions
 
 
 .. py:class:: RetrainFreeCriterion(modules, config)
+
 
 
 

@@ -27,10 +27,12 @@ Classes
 
 
 
+
    Pad Operator.
 
 
 .. py:class:: QPadOperator(onnx_node, children, initializers)
+
 
 
 

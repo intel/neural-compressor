@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Support HostConst as default for all devices, not just for GPU.
 
 

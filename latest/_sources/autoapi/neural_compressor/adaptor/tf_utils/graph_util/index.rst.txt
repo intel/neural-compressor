@@ -25,6 +25,7 @@ Classes
 
 .. py:class:: GraphAnalyzer(extend_engine=None)
 
+
    Tensorflow Graph Analyzer class which implemented under singleton mode.
 
    This class provides the following API:
@@ -33,6 +34,7 @@ Classes
 
 
 .. py:class:: GraphRewriterHelper
+
 
    Encapsulates the graph operation into one class.
 

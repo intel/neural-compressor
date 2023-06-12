@@ -42,6 +42,7 @@ Functions
 
 .. py:class:: CalibratorBase
 
+
    Base calibrator class.
 
 
@@ -49,10 +50,12 @@ Functions
 
 
 
+
    MinMax calibrator class.
 
 
 .. py:class:: PercentileCalibrator(num_bins=2048, percentile=99.999)
+
 
 
 
@@ -69,6 +72,7 @@ Functions
 
 
 
+
    KL calibrator class.
 
    :param num_bins: number of bins to create a new histogram
@@ -79,6 +83,7 @@ Functions
 
 
 .. py:class:: HistogramCollector(num_bins=2048)
+
 
    Histogram collctor class.
 

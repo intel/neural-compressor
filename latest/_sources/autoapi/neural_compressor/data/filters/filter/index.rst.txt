@@ -40,10 +40,12 @@ Functions
 
 
 
+
    The base filter class for Tensorflow framework.
 
 
 .. py:class:: ONNXRTQLFilters
+
 
 
 
@@ -54,10 +56,12 @@ Functions
 
 
 
+
    The base filter class for ONNXRT framework IT mode.
 
 
 .. py:class:: PyTorchFilters
+
 
 
 
@@ -68,10 +72,12 @@ Functions
 
 
 
+
    The base filter class for MXNet framework.
 
 
 .. py:class:: FILTERS(framework)
+
 
 
 
@@ -100,6 +106,7 @@ Functions
 
 
 .. py:class:: Filter
+
 
 
 

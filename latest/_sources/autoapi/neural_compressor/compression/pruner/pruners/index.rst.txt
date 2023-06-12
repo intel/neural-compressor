@@ -74,6 +74,7 @@ Functions
 
 .. py:class:: BasePruner(config, modules)
 
+
    Pruning Pruner.
 
    The class which executes pruning process.
@@ -140,6 +141,7 @@ Functions
 
 
 
+
    Pruning Pruner.
 
    The class which executes pruning process.
@@ -170,6 +172,7 @@ Functions
 
 
 
+
    Pruning Pruner.
 
    A Pruner class derived from BasePruner.
@@ -185,6 +188,7 @@ Functions
 
 
 .. py:class:: BlockMaskPruner(config, modules)
+
 
 
 
@@ -216,6 +220,7 @@ Functions
 
 
 .. py:class:: RetrainFreePruner(config, modules)
+
 
 
 
@@ -255,6 +260,7 @@ Functions
 
 
 
+
    Pruning Pruner.
 
    A Pruner class derived from BasicPruner. In this pruner, mask interpolation will be applied.
@@ -270,6 +276,7 @@ Functions
 
 
 .. py:class:: MultiheadAttentionPruner(config, mha_modules)
+
 
 
 

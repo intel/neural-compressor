@@ -59,6 +59,7 @@ Functions
 
 
 
+
    Run end-to-end tokenziation.
 
 
@@ -66,10 +67,12 @@ Functions
 
 
 
+
    Run basic tokenization (punctuation splitting, lower casing, etc.).
 
 
 .. py:class:: WordpieceTokenizer(vocab, unk_token='[UNK]', max_input_chars_per_word=200)
+
 
 
 

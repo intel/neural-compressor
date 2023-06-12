@@ -51,6 +51,7 @@ Functions
 
 
 
+
    Build a dict for registered algorithms.
 
 
@@ -58,10 +59,12 @@ Functions
 
 
 
+
    control the Algorithm in different phase.
 
 
 .. py:class:: Algorithm
+
 
 
 

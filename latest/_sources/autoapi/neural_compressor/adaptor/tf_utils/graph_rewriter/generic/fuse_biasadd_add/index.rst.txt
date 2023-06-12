@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Fuse Biasadd + Add into BiasAdd when the second input of Add is const node.
 
 

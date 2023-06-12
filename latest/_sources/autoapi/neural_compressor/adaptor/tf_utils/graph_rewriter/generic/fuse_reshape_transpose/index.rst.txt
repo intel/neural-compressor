@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Fuse Transpose + Reshape + MatMul/Conv ==> MatMul/Conv.
 
 

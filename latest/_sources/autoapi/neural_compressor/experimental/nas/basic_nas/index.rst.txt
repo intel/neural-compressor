@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Basic NAS approach.
 
    Defining the pipeline for basic NAS approach.

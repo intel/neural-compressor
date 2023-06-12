@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Class used for generating low precision model.
 
    MixedPrecision class automatically generates low precision model across various DL

@@ -29,10 +29,12 @@ Classes
 
 
 
+
    Build PyTorch base model.
 
 
 .. py:class:: PyTorchModel(model, **kwargs)
+
 
 
 
@@ -43,10 +45,12 @@ Classes
 
 
 
+
    Build PyTorchFXModel object.
 
 
 .. py:class:: IPEXModel(model, **kwargs)
+
 
 
 

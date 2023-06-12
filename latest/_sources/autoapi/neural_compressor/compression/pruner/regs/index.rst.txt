@@ -61,6 +61,7 @@ Functions
 
 .. py:class:: BaseReg(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern)
 
+
    Regularizer.
 
    The class that performs regularization.
@@ -71,6 +72,7 @@ Functions
 
 
 .. py:class:: GroupLasso(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern, coeff)
+
 
 
 

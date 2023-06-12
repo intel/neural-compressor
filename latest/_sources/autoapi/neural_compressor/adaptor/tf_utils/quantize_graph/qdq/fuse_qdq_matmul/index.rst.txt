@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Quantize MatMul/BatchMatMul/BatchMatMulV2 and apply the fusion.
 
 

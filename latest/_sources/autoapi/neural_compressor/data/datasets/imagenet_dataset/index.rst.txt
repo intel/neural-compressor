@@ -31,6 +31,7 @@ Classes
 
 
 
+
    Configuration for ImageNet raw dataset.
 
    Please arrange data in this way:
@@ -46,10 +47,12 @@ Classes
 
 
 
+
    Dataset for ImageNet data generation on pytorch backend.
 
 
 .. py:class:: MXNetImagenetRaw(data_path, image_list, transform=None, filter=None)
+
 
 
 
@@ -60,6 +63,7 @@ Classes
 
 
 
+
    Dataset for ImageNet data generation on tensorflow/inteltensorflow/tensorflow_itex backend.
 
 
@@ -67,10 +71,12 @@ Classes
 
 
 
+
    Configuration for Imagenet dataset.
 
 
 .. py:class:: ONNXRTImagenetDataset(root, subset='val', num_cores=28, transform=None, filter=None)
+
 
 
 

@@ -61,6 +61,7 @@ Functions
 
 .. py:class:: Scheduler(config)
 
+
    Pruning Scheduler.
 
    The class which defines a sparsity changing process during pruning.
@@ -79,6 +80,7 @@ Functions
 
 
 
+
    Pruning Scheduler.
 
    A Scheduler class derived from Scheduler.
@@ -92,6 +94,7 @@ Functions
 
 
 .. py:class:: IterativeScheduler(config)
+
 
 
 

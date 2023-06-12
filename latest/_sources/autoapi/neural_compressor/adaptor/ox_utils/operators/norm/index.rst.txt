@@ -27,10 +27,12 @@ Classes
 
 
 
+
    BatchNormalization Operator.
 
 
 .. py:class:: NormalizationOperator(onnx_quantizer, onnx_node)
+
 
 
 

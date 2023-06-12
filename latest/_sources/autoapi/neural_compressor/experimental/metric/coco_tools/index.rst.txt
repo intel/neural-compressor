@@ -61,6 +61,7 @@ Functions
 
 
 
+
    Wrapper for the pycocotools COCO class.
 
    .. attribute:: dataset
@@ -74,6 +75,7 @@ Functions
 
 
 .. py:class:: COCOEvalWrapper(groundtruth: pycocotools.coco.COCO = None, detections: pycocotools.coco.COCO = None, agnostic_mode=False, iou_type: str = 'bbox', iou_thrs: Union[str, float] = None, map_points=None)
+
 
 
 

@@ -46,10 +46,12 @@ Functions
 
 
 
+
    Tuning strategy metaclass.
 
 
 .. py:class:: TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
+
 
    Basic class for tuning strategy.
 

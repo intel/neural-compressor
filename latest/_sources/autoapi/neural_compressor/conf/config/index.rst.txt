@@ -30,10 +30,12 @@ Classes
 
 .. py:class:: PrunerV2(target_sparsity=None, pruning_type=None, pattern=None, op_names=None, excluded_op_names=None, start_step=None, end_step=None, pruning_scope=None, pruning_frequency=None, min_sparsity_ratio_per_op=None, max_sparsity_ratio_per_op=None, sparsity_decay_type=None, pruning_op_types=None, reg_type=None, criterion_reduce_type=None, parameters=None, resume_from_pruned_checkpoint=None)
 
+
    similiar to torch optimizer's interface
 
 
 .. py:class:: Conf(cfg_fname)
+
 
 
 
@@ -47,12 +49,14 @@ Classes
 
 
 
+
    config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
 
 .. py:class:: Pruning_Conf(cfg=None)
+
 
 
 
@@ -65,12 +69,14 @@ Classes
 
 
 
+
    config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
 
 .. py:class:: MixedPrecision_Conf(cfg=None)
+
 
 
 
@@ -83,12 +89,14 @@ Classes
 
 
 
+
    config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
 
 .. py:class:: Distillation_Conf(cfg=None)
+
 
 
 
@@ -101,6 +109,7 @@ Classes
 
 
 
+
    config parser.
 
    :param approach: The approach of the NAS.
@@ -108,6 +117,7 @@ Classes
 
 
 .. py:class:: DefaultConf(value=None)
+
 
 
 

@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: TransformerBasedModelBlockPatternDetector(model: torch, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS)
 
+
    Detect the attention block and FFN block in transformer-based model.
 
 

@@ -87,6 +87,7 @@ Functions
 
 
 
+
    Benchmark class is used to evaluate the model performance with the objective settings.
 
    Users can use the data that they configured in YAML

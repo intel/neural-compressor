@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Fuse _QuantizedMatMul with the successor Dequantize Op.
 
 

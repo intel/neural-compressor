@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Group Lasso pruner class.
 
    :param model: The original model (currently PyTorchModel instance).

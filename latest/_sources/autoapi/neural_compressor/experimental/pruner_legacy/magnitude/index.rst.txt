@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Magnitude pruner class.
 
    :param model: The original model (currently PyTorchModel instance).

@@ -34,6 +34,7 @@ Functions
 
 .. py:class:: CompressionManager(model: Callable, confs: Union[Callable, List], **kwargs)
 
+
    CompressionManager is uesd in train loop for what user want to deal with additional.
 
    :param model: A model to be compressed.
@@ -180,6 +181,7 @@ Functions
 
 
 .. py:class:: CallBacks(callbacks_list)
+
 
    Define the basic command for the training loop.
 

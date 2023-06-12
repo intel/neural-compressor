@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: OnnxNode(node, graph, skip_conversion=False)
 
+
    A ONNX Node Wrapper used for graph manipulations.
 
 

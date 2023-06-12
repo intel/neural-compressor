@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion.
 
 

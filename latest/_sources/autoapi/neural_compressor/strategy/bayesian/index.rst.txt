@@ -36,6 +36,7 @@ Functions
 
 
 
+
    The Bayesian tuning strategy.
 
 
@@ -59,12 +60,14 @@ Functions
 
 
 
+
    Holds the param-space coordinates (X) and target values (Y).
 
    Allows for constant-time appends while ensuring no duplicates are added.
 
 
 .. py:class:: BayesianOptimization(pbounds, random_seed=9527, verbose=2)
+
 
    The class for bayesian optimization.
 

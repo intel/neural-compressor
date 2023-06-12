@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Fuse Sqrt + RealDiv + Erf + AddV2 + Mul + Mul into Gelu op.
 
 

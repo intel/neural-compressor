@@ -26,6 +26,7 @@ Classes
 
 
 
+
    The collector of the histogram by layer.
 
    Saves layer histogram in a dict with layer names as keys and lists of NDArrays as

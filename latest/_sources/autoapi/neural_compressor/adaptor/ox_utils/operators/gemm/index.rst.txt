@@ -27,10 +27,12 @@ Classes
 
 
 
+
    Gemm Operator.
 
 
 .. py:class:: QGemmOperator(onnx_node, children, initializers)
+
 
 
 

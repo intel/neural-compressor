@@ -27,10 +27,12 @@ Classes
 
 
 
+
    MaxPool Operator.
 
 
 .. py:class:: QMaxPoolOperator(onnx_node, children, initializers)
+
 
 
 

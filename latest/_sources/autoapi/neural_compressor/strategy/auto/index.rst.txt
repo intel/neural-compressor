@@ -26,6 +26,7 @@ Classes
 
 
 
+
    The auto tuning strategy.
 
    There are three stages executed by auto strategy sequentially,

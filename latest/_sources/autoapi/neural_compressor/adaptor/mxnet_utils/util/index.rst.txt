@@ -62,6 +62,7 @@ Functions
 
 
 
+
    Enum op types.
 
 
@@ -346,20 +347,24 @@ Functions
 
 .. py:class:: DataLoaderWrap(dataloader, input_desc)
 
+
    DataLoader Wrap.
 
 
 .. py:class:: DataIterLoader(data_iter)
+
 
    DataIterLoader.
 
 
 .. py:class:: CollectorBase
 
+
    Collector Base class.
 
 
 .. py:class:: CalibCollector(include_tensors_kl, include_tensors_minmax, num_bins=8001)
+
 
 
 
@@ -370,6 +375,7 @@ Functions
 
 
 
+
    Tensors collector. Builds up qtensor_to_tensor mapping.
 
 
@@ -377,10 +383,12 @@ Functions
 
 
 
+
    Name collector.
 
 
 .. py:class:: CalibData(cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[])
+
 
    Calibration data class.
 

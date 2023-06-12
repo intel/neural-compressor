@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: GraphConverterWithoutCalib(model, data_loader=None, recover_config=None, new_api=False, performance_only=False, use_bf16=False)
 
+
    Graph Converter without calibration Class is used to generate the quantization graph without calibration.
 
 

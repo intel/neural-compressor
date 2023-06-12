@@ -28,6 +28,7 @@ Classes
 
 
 
+
    Binary operator.
 
 
@@ -35,10 +36,12 @@ Classes
 
 
 
+
    QBinary Operator.
 
 
 .. py:class:: Float16BinaryOperator(onnx_quantizer, onnx_node)
+
 
 
 

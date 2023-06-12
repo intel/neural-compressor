@@ -27,6 +27,7 @@ Classes
 
 
 
+
    This is base class of pruning object.
 
       Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
@@ -49,6 +50,7 @@ Classes
 
 
 .. py:class:: TfPruningCallback(nc_model, input_model, hooks)
+
 
 
 

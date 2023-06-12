@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Folding BatchNorm nodes into Conv.
 
 

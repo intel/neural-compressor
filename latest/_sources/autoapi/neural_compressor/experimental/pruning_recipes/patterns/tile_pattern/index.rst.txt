@@ -31,10 +31,12 @@ Classes
 
 
 
+
    Parent class for all NxM tile patterns.
 
 
 .. py:class:: TilePattern_1x1
+
 
 
 
@@ -45,10 +47,12 @@ Classes
 
 
 
+
    2x2 tile pattern (unstructured).
 
 
 .. py:class:: TilePattern_1x16
+
 
 
 
@@ -59,10 +63,12 @@ Classes
 
 
 
+
    4x1 tile pattern (unstructured).
 
 
 .. py:class:: TilePattern_1x2
+
 
 
 

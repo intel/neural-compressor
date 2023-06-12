@@ -26,6 +26,7 @@ Classes
 
 
 
+
    The HAWQ V2 tuning strategy.
 
    HAWQ_V2 implements the "Hawq-v2: Hessian aware trace-weighted quantization of neural networks".

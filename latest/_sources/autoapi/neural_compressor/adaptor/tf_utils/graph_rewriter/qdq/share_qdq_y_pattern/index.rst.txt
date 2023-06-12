@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.
 
    Only 1 Q/DQ before Add op need to be inserted. Insert 2 Q/DQ breaks the ITEX fusion pattern.

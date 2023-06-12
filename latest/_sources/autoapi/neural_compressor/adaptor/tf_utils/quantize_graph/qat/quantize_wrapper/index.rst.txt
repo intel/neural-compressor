@@ -27,10 +27,12 @@ Classes
 
 
 
+
    Base class for quantize wrapper.
 
 
 .. py:class:: QuantizeWrapper(layer, **kwargs)
+
 
 
 

@@ -57,6 +57,7 @@ Functions
 
 
 
+
    Record criterions in TensorflowCriterions class.
 
 
@@ -64,10 +65,12 @@ Functions
 
 
 
+
    Record criterions in PyTorchCriterions class.
 
 
 .. py:class:: Criterions(framework)
+
 
 
 
@@ -91,10 +94,12 @@ Functions
 
 
 
+
    TensorFlow CrossEntropyLoss criterion.
 
 
 .. py:class:: TensorFlowSparseCategoricalCrossentropy(param_dict)
+
 
 
 
@@ -105,10 +110,12 @@ Functions
 
 
 
+
    PyTorch CrossEntropyLoss criterion.
 
 
 .. py:class:: KnowledgeDistillationFramework(student_model=None, teacher_model=None)
+
 
 
 
@@ -119,10 +126,12 @@ Functions
 
 
 
+
    Initialize the KnowledgeDistillationLoss class.
 
 
 .. py:class:: PyTorchKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
 
 
 
@@ -133,10 +142,12 @@ Functions
 
 
 
+
    PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss.
 
 
 .. py:class:: TensorflowKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
 
 
 
@@ -147,10 +158,12 @@ Functions
 
 
 
+
    TensorflowKnowledgeDistillationLossWrapper wraps TensorflowKnowledgeDistillationLoss.
 
 
 .. py:class:: TensorflowKnowledgeDistillationLossExternal(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
 
 
 
@@ -161,10 +174,12 @@ Functions
 
 
 
+
    The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
 
 
 .. py:class:: PyTorchIntermediateLayersKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, add_origin_loss=False, student_model=None, teacher_model=None)
+
 
 
 
@@ -175,10 +190,12 @@ Functions
 
 
 
+
    PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper.
 
 
 .. py:class:: SelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
+
 
 
 
@@ -189,10 +206,12 @@ Functions
 
 
 
+
    PyTorch SelfKnowledge Distillation Loss.
 
 
 .. py:class:: PyTorchSelfKnowledgeDistillationLossWrapper(param_dict)
+
 
 
 

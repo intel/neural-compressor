@@ -25,10 +25,12 @@ Classes
 
 .. py:class:: WeightsDetails(op_name: str, input_tensor_data, optimized_tensor_data)
 
+
    Weights details class.
 
 
 .. py:class:: WeightsStatistics(tensor_data)
+
 
    Weights statistics class.
 

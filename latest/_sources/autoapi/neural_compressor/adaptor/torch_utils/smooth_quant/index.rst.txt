@@ -53,6 +53,7 @@ Functions
 
 .. py:class:: TorchSmoothQuant(model, dataloader, example_inputs=None, q_func=None, traced_model=None)
 
+
    Fake input channel quantization, for more details please refer to
    [1] SmoothQuant: Accurate and Efficient
    Post-Training Quantization for Large Language Models
@@ -63,6 +64,7 @@ Functions
 
 
 .. py:class:: GraphTrace
+
 
    
 

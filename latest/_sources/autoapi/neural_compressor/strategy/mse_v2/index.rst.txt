@@ -26,6 +26,7 @@ Classes
 
 
 
+
    The `mse_v2` tuning strategy.
 
    MSE_v2 is a strategy with a two stages fallback and revert fallback.

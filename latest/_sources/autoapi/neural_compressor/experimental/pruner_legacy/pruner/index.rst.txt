@@ -43,6 +43,7 @@ Functions
 
 .. py:class:: Pruner(model, local_config, global_config)
 
+
    The base clase of Pruner.
 
    :param model: The original model (currently PyTorchModel instance).

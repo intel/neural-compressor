@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Apply the fusion DQ + OP + Q pattern.
 
 

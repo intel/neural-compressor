@@ -40,6 +40,7 @@ Functions
 
 
 
+
    Class to get all registered TensorFlow Optimizers once only.
 
 
@@ -47,10 +48,12 @@ Functions
 
 
 
+
    Class to get all registered PyTorch Optimizers once only.
 
 
 .. py:class:: Optimizers(framework)
+
 
 
 
@@ -76,6 +79,7 @@ Functions
 
 
 
+
    TensorFlow keras SGD optimizer.
 
    :param param_dict: The dict of parameters setting by user for SGD optimizer
@@ -83,6 +87,7 @@ Functions
 
 
 .. py:class:: TensorFlowAdamW(param_dict)
+
 
 
 
@@ -96,6 +101,7 @@ Functions
 
 
 
+
    tensorflow Adam optimizer.
 
    :param param_dict: The dict of parameters setting by user for Adam optimizer
@@ -103,6 +109,7 @@ Functions
 
 
 .. py:class:: PyTorchSGD(param_dict)
+
 
 
 

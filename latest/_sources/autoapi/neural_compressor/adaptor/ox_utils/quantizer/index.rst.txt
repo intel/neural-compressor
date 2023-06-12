@@ -24,6 +24,7 @@ Classes
 
 .. py:class:: Quantizer(model, q_config, mode, static, quantization_params, op_types_to_quantize, fallback_list=['fp32'], reduce_range=None, add_qdq_pair_to_weight=False, optypes_to_exclude_output_quant=[], dedicated_qdq_pair=False, backend='CPUExecutionProvider')
 
+
    Quantizer class.
 
 

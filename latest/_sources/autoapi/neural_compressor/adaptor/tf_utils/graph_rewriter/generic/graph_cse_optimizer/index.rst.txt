@@ -26,6 +26,7 @@ Classes
 
 
 
+
    We introduce the CSE optimizer to optimize the nodes that contains identical op type.
 
    Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs

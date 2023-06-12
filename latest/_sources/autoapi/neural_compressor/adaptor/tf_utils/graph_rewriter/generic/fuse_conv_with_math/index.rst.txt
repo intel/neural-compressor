@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Convert below subgraph to Conv2D + BiasAdd by eliminating math ops.
 
    Conv2D            Conv2D

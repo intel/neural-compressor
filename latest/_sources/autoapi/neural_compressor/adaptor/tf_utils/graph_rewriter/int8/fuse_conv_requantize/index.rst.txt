@@ -26,6 +26,7 @@ Classes
 
 
 
+
    Fuse Quantized Conv Op with the successor Requantize Op.
 
 

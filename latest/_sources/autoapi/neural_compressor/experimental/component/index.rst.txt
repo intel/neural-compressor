@@ -28,6 +28,7 @@ Classes
 
 
 
+
    This is base class of Neural Compressor Component.
 
    This class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.

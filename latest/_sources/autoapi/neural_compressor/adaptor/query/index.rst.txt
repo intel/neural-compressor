@@ -21,6 +21,7 @@ Classes
 
 .. py:class:: QueryBackendCapability
 
+
    Base class that defines Query Interface.
    Each adaption layer should implement the inherited class for specific backend on their own.
 
