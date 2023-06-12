@@ -87,7 +87,7 @@ class RecipeSearcher(object):
 
     def __init__(self, model, recipe: dict):
         """Initialize the attributes."""
-        assert isinstance(module, torch.nn.Module)
+        assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
@@ -135,7 +135,7 @@ class JitBasicSearcher(object):
 
     def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
-        assert isinstance(module, torch.nn.Module)
+        assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
@@ -402,7 +402,7 @@ class Linear2LinearSearcher(JitBasicSearcher):
 
     def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
-        assert isinstance(module, torch.nn.Module)
+        assert isinstance(model, torch.nn.Module)
         super(Linear2LinearSearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
         self.target_op_lut = {}
         self.current_pattern = []
@@ -528,7 +528,7 @@ class SelfMHASearcher(JitBasicSearcher):
 
     def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
-        assert isinstance(module, torch.nn.Module)
+        assert isinstance(model, torch.nn.Module)
         super(SelfMHASearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
 
     def get_head_pattern(self):
@@ -773,7 +773,7 @@ class ClassifierHeadSearcher(object):
 
     def __init__(self, model):
         """Initialize."""
-        assert isinstance(module, torch.nn.Module)
+        assert isinstance(model, torch.nn.Module)
         super(ClassifierHeadSearcher, self).__init__()
         self.model = model
         self.pruning_ops = ["Linear", "Conv2d"]
