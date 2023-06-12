@@ -54,7 +54,6 @@ def get_task_log_path(log_path, task_id):
     Returns:
         str: the path of task log file
     """
-
     if not os.path.exists(log_path):
         os.makedirs(log_path)
     log_file_path =  "{}/task_{}.txt".format(log_path,task_id)
