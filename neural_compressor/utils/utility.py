@@ -800,14 +800,14 @@ def get_weights_details(workload_location: str) -> list:
 
         if isinstance(input_model_op_tensors, dict):
             tensors_data = zip(input_model_op_tensors.items(), optimized_model_op_tensors.items())
-            for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in tensors_data:
-                if input_op_values.shape != optimized_op_values.shape:
+            for (_, input_op_tensor_values), (_, optimized_op_tensor_values) in tensors_data:
+                if input_op_tensor_values.shape != optimized_op_tensor_values.shape:
                     continue
 
                 weights_entry = WeightsDetails(
-                    input_op_name,
-                    input_op_values,
-                    optimized_op_values,
+                    op_name,
+                    input_op_tensor_values,
+                    optimized_op_tensor_values,
                 )
                 weights_details.append(weights_entry)
     return weights_details
