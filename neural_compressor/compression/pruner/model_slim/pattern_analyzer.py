@@ -23,7 +23,7 @@ JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
-def get_attributes(module: torch.nn.Module, attrs: str):
+def get_attributes(module, attrs: str):
     """Get a multi-level descent module of module.
 
     Args:
@@ -33,6 +33,7 @@ def get_attributes(module: torch.nn.Module, attrs: str):
     Returns:
         attr: The target attribute of the module.
     """
+    assert isinstance(module, torch.nn.Module)
     attrs_list = attrs.split('.')
     sub_module = module
     while attrs_list:
@@ -84,8 +85,9 @@ class RecipeSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model: torch.nn.Module, recipe: dict):
+    def __init__(self, model, recipe: dict):
         """Initialize the attributes."""
+        assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
@@ -131,8 +133,9 @@ class JitBasicSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
+        assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
@@ -208,7 +211,6 @@ class JitBasicSearcher(object):
         """Generate static graph from a external dataloader."""
         # dummy_input = self.dataloader[0]
         logger.info(f"Generating static graph from original model using external data: start.")
-        # import pdb;pdb.set_trace()
         for dummy_input in self.dataloader:
             if isinstance(dummy_input, dict):
                 try:
@@ -398,8 +400,9 @@ class Linear2LinearSearcher(JitBasicSearcher):
         current_pattern: a searching path to store searching status.
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
+        assert isinstance(model, torch.nn.Module)
         super(Linear2LinearSearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
         self.target_op_lut = {}
         self.current_pattern = []
@@ -475,7 +478,6 @@ class Linear2LinearSearcher(JitBasicSearcher):
             search_res = self.search_from_root_linear(linear_code)
             if search_res['target_frontier_linears'].__len__() > 0:
                 all_linear_structure_results.append(search_res)
-        #import pdb;pdb.set_trace()
         # Summary
         print_iterables(all_linear_structure_results)
         logger.info(f"Found {all_linear_structure_results.__len__()} linear2linear structures")
@@ -524,8 +526,9 @@ class SelfMHASearcher(JitBasicSearcher):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
+        assert isinstance(model, torch.nn.Module)
         super(SelfMHASearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
 
     def get_head_pattern(self):
@@ -552,7 +555,6 @@ class SelfMHASearcher(JitBasicSearcher):
                 else:
                     # op which is not linear, skip
                     continue
-        # import pdb;pdb.set_trace()
         input_counts_filtered = {}
         # in our strategy, when three linear layers share the same input, they should be query, key, and value
         for k, v in input_counts.items():
@@ -769,8 +771,9 @@ class ClassifierHeadSearcher(object):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model: torch.nn.Module):
+    def __init__(self, model):
         """Initialize."""
+        assert isinstance(model, torch.nn.Module)
         super(ClassifierHeadSearcher, self).__init__()
         self.model = model
         self.pruning_ops = ["Linear", "Conv2d"]

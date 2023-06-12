@@ -136,7 +136,9 @@ def singleton(cls):
 def time_limit(seconds):
     """Limit the time for context execution."""
     if seconds == 0:
-        seconds = threading.TIMEOUT_MAX
+        #seconds = threading.TIMEOUT_MAX
+        # TODO WA for fixed the crash for py 3.11.3
+        seconds = 3600 * 24 * 365
     timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
     timer.start()
     try:
@@ -411,15 +413,16 @@ def str2array(s):
     return np.array(ast.literal_eval(s))
 
 
-def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
+def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
     """Dequantize the weight with min-max filter tensors."""
     weight_channel = weight_tensor.shape[-1]
     if len(min_filter_tensor) == 1:
-        return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
-    # TODO to calculate the de-quantized result in a parallel way
-    for i in range(weight_channel):
-        weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
-
+         weight_tensor = weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+    else:
+        # TODO to calculate the de-quantized result in a parallel way
+        for i in range(weight_channel):
+            weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+    return weight_tensor
 
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
@@ -936,7 +939,7 @@ def print_op_list(workload_location: str):
     Returns:
         None
     """
-    minmax_file_path = os.path.join(workload_location, "inspect_saved", "dequan_min_max.pkl")
+    minmax_file_path = os.path.join(workload_location, "inspect_saved", "activation_min_max.pkl")
     input_model_tensors = get_tensors_info(
         workload_location,
         model_type="input",
@@ -981,7 +984,7 @@ def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) 
     """Get OP list for model.
 
     Args:
-        minmax_file_path: path to dequan_min_max.pkl
+        minmax_file_path: path to activation_min_max.pkl
         input_model_tensors: dict with input tensors details
         optimized_model_tensors: dict with optimized tensors details
 
