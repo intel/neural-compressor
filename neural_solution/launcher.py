@@ -194,7 +194,7 @@ def start_service(args):
             ports_flag += 1
 
     # Check if the serve port is occupied
-    if check_port_free(args.restful_api_port):
+    if not check_port_free(args.restful_api_port):
         ports_flag += 1
     else:
         fail_msg = f"{fail_msg}\nPlease check frontend serve log!"
@@ -221,7 +221,7 @@ def main():
     parser.add_argument("--restful_api_port", type=int, default=8000,
                         help="start restful serve with {restful_api_port}, default 8000")
     parser.add_argument("--grpc_api_port", type=int, default=8001,
-                        help="start gRPC with {restful_api_port}, default 8000")
+                        help="start gRPC with {restful_api_port}, default 8001")
     parser.add_argument("--result_monitor_port", type=int, default=3333,
                         help="start serve for result monitor at {result_monitor_port}, default 3333")
     parser.add_argument("--task_monitor_port", type=int, default=2222,
