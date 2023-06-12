@@ -479,9 +479,34 @@ multi-head attention pruning means remove partial QKV layers and their correspon
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">Inherit</span> <span class="pre">from</span> <span class="pre">parent</span> <span class="pre">class</span> <span class="pre">Pruner.</span></span></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.mha_compressions">
+<span class="sig-name descname"><span class="pre">mha_compressions</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.mha_compressions" title="Permalink to this definition"></a></dt>
+<dd><p>a Dict. (key: MHA module name; value: MHACompression object in .model_slim.weight_slim)
+Main object to hook critical attributes for mha pruning and modify these attributes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.linear_layers">
+<span class="sig-name descname"><span class="pre">linear_layers</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.linear_layers" title="Permalink to this definition"></a></dt>
+<dd><p>a Dict. {key: linear layer name; value: torch.nn.Linear object.}
+Store independent linear layer look-up table, which used by criterion object.
+linear_layers length should be 4x of mha_compression because one mha_compression hooks 4 linear layers:
+query, key, value and subsequent ffn layer.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.head_masks">
+<span class="sig-name descname"><span class="pre">head_masks</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.head_masks" title="Permalink to this definition"></a></dt>
+<dd><p>A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+Similar to Huggingface build-in head_mask attribute.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.mha_scores">
+<span class="sig-name descname"><span class="pre">mha_scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/pruners.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.pruners.MultiheadAttentionPruner.mha_scores" title="Permalink to this definition"></a></dt>
+<dd><p>A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+Store scores for different heads.</p>
+</dd></dl>
 
 </dd></dl>
 

@@ -300,8 +300,26 @@ Functions
    :param that stores the pruning mha modules.:
    :param config: A config dict object that contains the pruner information.
 
-   .. attribute:: Inherit from parent class Pruner.
+   .. attribute:: mha_compressions
 
-      
+      a Dict. (key: MHA module name; value: MHACompression object in .model_slim.weight_slim)
+      Main object to hook critical attributes for mha pruning and modify these attributes.
+
+   .. attribute:: linear_layers
+
+      a Dict. {key: linear layer name; value: torch.nn.Linear object.}
+      Store independent linear layer look-up table, which used by criterion object.
+      linear_layers length should be 4x of mha_compression because one mha_compression hooks 4 linear layers:
+      query, key, value and subsequent ffn layer.
+
+   .. attribute:: head_masks
+
+      A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+      Similar to Huggingface build-in head_mask attribute.
+
+   .. attribute:: mha_scores
+
+      A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+      Store scores for different heads.
 
 

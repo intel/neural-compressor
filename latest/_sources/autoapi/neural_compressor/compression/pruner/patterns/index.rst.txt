@@ -161,7 +161,7 @@ Functions
 
    Pruning Pattern.
 
-   A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+   A Pattern class derived from BasePattern. In this pattern, we calculate head masks for a MHA module
    For more info of this pattern, please refer to :
    https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
 

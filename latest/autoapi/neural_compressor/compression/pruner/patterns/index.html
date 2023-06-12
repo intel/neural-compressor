@@ -287,7 +287,7 @@ For more info of this pattern, please refer to :
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.patterns.PatternMHA">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">PatternMHA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/patterns.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.patterns.PatternMHA" title="Permalink to this definition"></a></dt>
 <dd><p>Pruning Pattern.</p>
-<p>A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+<p>A Pattern class derived from BasePattern. In this pattern, we calculate head masks for a MHA module
 For more info of this pattern, please refer to :
 <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md">https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md</a></p>
 <dl class="field-list simple">
