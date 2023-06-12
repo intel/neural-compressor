@@ -136,7 +136,9 @@ def singleton(cls):
 def time_limit(seconds):
     """Limit the time for context execution."""
     if seconds == 0:
-        seconds = threading.TIMEOUT_MAX
+        #seconds = threading.TIMEOUT_MAX
+        # TODO WA for fixed the crash for py 3.11.3
+        seconds = 3600 * 24 * 365
     timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
     timer.start()
     try:
