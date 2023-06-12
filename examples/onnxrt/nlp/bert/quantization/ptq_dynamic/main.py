@@ -398,6 +398,7 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
+        # optimize model
         from onnxruntime.transformers import optimizer
         from onnxruntime.transformers.fusion_options import FusionOptions
         opt_options = FusionOptions('bert')

@@ -394,22 +394,27 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        try:
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions("bert")
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions("bert")
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                "bert",
-                num_heads=4,
-                hidden_size=512,
-                optimization_options=opt_options)
-            model = model_optimizer.model
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            "bert",
+            num_heads=4,
+            hidden_size=512,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+        
+        # check the optimized model is valid
+        try:
+            onnxruntime.InferenceSession(model.SerializeToString(), providers=onnxruntime.get_available_providers())
         except Exception as e:
-            logger.warning("Model optimizer will be skipped due to error {}. " \
-                        "Try to upgrade onnxruntime to avoid this error".format(e))
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                        "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
