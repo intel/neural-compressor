@@ -799,7 +799,7 @@ Defaults to None.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.MixedPrecisionConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">MixedPrecisionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.MixedPrecisionConfig" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">MixedPrecisionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.MixedPrecisionConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for MixedPrecision.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -807,7 +807,7 @@ Defaults to None.</p></li>
 <li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – Device for execution.
 Support ‘cpu’ and ‘gpu’, default is ‘cpu’.</p></li>
 <li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’,
+Support ‘default’, ‘itex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’,
 default is ‘default’.</p></li>
 <li><p><strong>precisions</strong> (<em>[</em><em>str</em><em>, </em><em>list</em><em>]</em><em>, </em><em>optional</em>) – Target precision for mix precision conversion.
 Support ‘bf16’ and ‘fp16’, default is ‘bf16’.</p></li>
@@ -819,6 +819,50 @@ it won’t work if there is no accuracy tuning process.</p></li>
 <li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – Accuracy constraint settings,
 it won’t work if there is no accuracy tuning process.</p></li>
 <li><p><strong>excluded_precisions</strong> (<em>list</em><em>, </em><em>optional</em>) – Precisions to be excluded during mix precision conversion, default is [].</p></li>
+<li><p><strong>op_type_dict</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
+User can specify the quantization config by op type:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>’Conv’: {</dt><dd><dl class="simple">
+<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+</dd>
+</dl>
+<p>},
+‘activation’: {</p>
+<blockquote>
+<div><p>’dtype’: [‘fp32’]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>op_name_dict</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Tuning constraints on op-wise for advance user to reduce tuning space.
+User can specify the quantization config by op name:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>”layer1.0.conv1”: {</dt><dd><dl class="simple">
+<dt>“activation”: {</dt><dd><p>“dtype”: [“fp32”]</p>
+</dd>
+</dl>
+<p>},
+“weight”: {</p>
+<blockquote>
+<div><p>”dtype”: [“fp32”]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>},</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
 </ul>
 </dd>
 </dl>
