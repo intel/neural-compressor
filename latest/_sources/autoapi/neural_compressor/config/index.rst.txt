@@ -215,7 +215,7 @@ Classes
    :param inputs: Inputs of model, only required in tensorflow.
    :param outputs: Outputs of model, only required in tensorflow.
    :param approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
-                    Default value is 'auto'.
+                    Default value is 'static'.
                     For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
                         or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
                         PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
