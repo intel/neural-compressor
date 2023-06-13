@@ -324,7 +324,7 @@ Functions
    :param param_alias: Alias that can be used for this param.
 
 
-.. py:function:: print_table(column_mapping: Dict[str, str], table_entries: List[Any], output_handler=logger.info, title: Optional[str] = None, insert_newlines=False) -> None
+.. py:function:: print_table(column_mapping: Dict[str, str], table_entries: List[Any], output_handler=logger.info, title: Optional[str] = None, insert_newlines=False, precision: Optional[int] = None) -> None
 
    Print table with prettytable.
 
@@ -336,6 +336,12 @@ Functions
    :type table_entries: list
    :param output_handler: Output handler function.
    :type output_handler: func, optional
+   :param title: Title for the table
+   :type title: str
+   :param insert_newlines: Add newlines to each row
+   :type insert_newlines: bool
+   :param precision: Number of digits after the decimal point
+   :type precision: int
 
    :returns: None
 
