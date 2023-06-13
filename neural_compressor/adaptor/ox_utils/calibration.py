@@ -526,7 +526,9 @@ class ONNXRTAugment:
                     for i in range(iters):
                         map_node_activation[i][node_name] = \
                             {tensor_name.replace('_quantized', ''): tensors[i]}
-                else:
+                elif not (node.op_type in ['Conv', 'Gemm', 'FusedConv'] and tensor_name not in node.input[:2]) and \
+                    not (node.op_type in ['QLinearConv'] and tensor_name not in node.input[:8]) and \
+                    not (node.op_type in ['QGemm'] and tensor_name not in node.input[:6]):
                     map_node_weight[node_name].update({tensor_name.replace('_quantized', ''): \
                                                            tensors[0]})
         dumped_tensors_map = {}

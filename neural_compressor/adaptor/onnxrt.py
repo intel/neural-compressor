@@ -1265,7 +1265,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     'min': np.array(self.min_max[node.output[0]][0], dtype=np.float32),
                     'max': np.array(self.min_max[node.output[0]][1], dtype=np.float32)}
         if save_path:
-            dump_data_to_local(filtered_params, save_path, 'dequan_min_max.pkl')
+            dump_data_to_local(filtered_params, save_path, 'activation_min_max.pkl')
             dump_data_to_local(tune_cfg, save_path, 'cfg.pkl')
         return inspect_node_list, tune_cfg
 

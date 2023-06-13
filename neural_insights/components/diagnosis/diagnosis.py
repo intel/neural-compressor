@@ -79,7 +79,7 @@ class Diagnosis:
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
-            "dequan_min_max.pkl",
+            "activation_min_max.pkl",
         )
         with open(minmax_file_path, "rb") as min_max_file:
             min_max_data: dict = pickle.load(min_max_file)
@@ -110,7 +110,7 @@ class Diagnosis:
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
-            "dequan_min_max.pkl",
+            "activation_min_max.pkl",
         )
         with open(minmax_file_path, "rb") as min_max_file:
             min_max_data: dict = pickle.load(min_max_file)
