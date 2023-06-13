@@ -179,6 +179,18 @@ def benchmark(model):
     print("Inference latency: %.3f sec." % latency)
 
 def eval_func(model):
+    sess_options = ort.SessionOptions()
+    sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    sessions = ORTModelForCausalLM.load_model(
+            os.path.join(model, 'decoder_model.onnx'), 
+            os.path.join(model, 'decoder_with_past_model.onnx'), 
+            session_options=sess_options)
+    model = ORTModelForCausalLM(
+                sessions[0],
+                config, 
+                model, 
+                sessions[1],
+                use_cache=False)
     results = evaluate(
         model="hf-causal",
         user_model=model,
@@ -253,8 +265,7 @@ if __name__ == "__main__":
         if args.mode == 'performance':            
             benchmark(args.model_path)
         elif args.mode == 'accuracy':
-            model = onnx.load(args.model_path)
-            eval_func(model)
+            eval_func(args.model_path)
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
@@ -264,5 +275,8 @@ if __name__ == "__main__":
                      'smooth_quant': True,
                      'smooth_quant_args': {'alpha': args.smooth_quant_alpha}},
             op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
-        q_model = quantization.fit(args.model_path, config, calib_dataloader=KVDataloader(args.model_path, batch_size=1))
-        q_model.save(args.output_model)
+        for model in ['decoder_model.onnx', 'decoder_with_past_model.onnx']:
+            q_model = quantization.fit(os.path.join(args.model_path, model),
+                                       config,
+                                       calib_dataloader=KVDataloader(os.path.join(args.model_path, model), batch_size=1))
+            q_model.save(os.path.join(args.output_model, model))
