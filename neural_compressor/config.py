@@ -1061,7 +1061,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
-                  Default value is 'auto'.
+                  Default value is 'static'.
                   For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
                       or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
                       PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
@@ -1176,8 +1176,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             approach = 'static'
         if 'dynamic' in approach:
             approach = 'dynamic'
-        if _check_value("approach", approach, str, ["static", "dynamic", "auto",\
-                                                     "post_training_static_quant"]):
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
