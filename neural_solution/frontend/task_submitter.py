@@ -16,7 +16,7 @@
 
 import socket
 import json
-from pydantic import BaseModel
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from neural_solution.config import config
 

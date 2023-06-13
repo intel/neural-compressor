@@ -32,16 +32,18 @@ def run():
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
 
     # Ping serve
-    request = neural_solution_pb2.EmptyRequest()
+    request = neural_solution_pb2.EmptyRequest() # pylint: disable=no-member
     response = stub.Ping(request)
     print(response.status)
     print(response.msg)
 
     # Create a task request with the desired fields
-    request = neural_solution_pb2.Task(
-        script_url='https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py',
+    request = neural_solution_pb2.Task( # pylint: disable=no-member
+        script_url=
+    'https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py',
         optimized=False,
-        arguments=["--model_name_or_path", "bert-base-cased",  "--task_name mrpc", "--do_eval", "--output_dir" "result"],
+        arguments=
+        ["--model_name_or_path", "bert-base-cased",  "--task_name mrpc", "--do_eval", "--output_dir" "result"],
         approach="approach",
         requirements=[],
         workers=1
@@ -69,7 +71,7 @@ def run_query_task_result(task_id):
     # Create a stub (client)
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
 
-    request = neural_solution_pb2.TaskId(task_id=task_id)
+    request = neural_solution_pb2.TaskId(task_id=task_id) # pylint: disable=no-member
     response = stub.QueryTaskResult(request)
     print(response.status)
     print(response.tuning_information)
@@ -88,7 +90,7 @@ def run_query_task_status(task_id):
     # Create a stub (client)
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
 
-    request = neural_solution_pb2.TaskId(task_id=task_id)
+    request = neural_solution_pb2.TaskId(task_id=task_id) # pylint: disable=no-member
     response = stub.GetTaskById(request)
     print(response.status)
     print(response.optimized_result)

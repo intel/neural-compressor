@@ -58,7 +58,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         print(f"Ping grpc serve.")
         port_lst = [config.result_monitor_port]
         result = check_service_status(port_lst, service_address=config.service_address)
-        response = neural_solution_pb2.ResponsePingMessage(**result)
+        response = neural_solution_pb2.ResponsePingMessage(**result) # pylint: disable=no-member
         return response
 
     def SubmitTask(self, task, context):
@@ -82,7 +82,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         print(db_path)
         result = submit_task_to_db(task=task, task_submitter=task_submitter, db_path=get_db_path(config.workspace))
         # Return a response
-        response = neural_solution_pb2.TaskResponse(**result)
+        response = neural_solution_pb2.TaskResponse(**result) # pylint: disable=no-member
         return response
 
     def GetTaskById(self, task_id, context):
@@ -97,7 +97,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         db_path = get_db_path(config.workspace)
         result = query_task_status(task_id.task_id, db_path)
         print(f"query result : result")
-        response = neural_solution_pb2.TaskStatus(**result)
+        response = neural_solution_pb2.TaskStatus(**result) # pylint: disable=no-member
         return response
 
     def QueryTaskResult(self, task_id, context):
@@ -113,7 +113,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         result = query_task_result(task_id.task_id, db_path, config.workspace)
         result['tuning_information'] = dict_to_str(result["tuning_information"])
         result['optimization_result'] = dict_to_str(result["optimization_result"])
-        response = neural_solution_pb2.ResponseTaskResult(**result)
+        response = neural_solution_pb2.ResponseTaskResult(**result) # pylint: disable=no-member
         return response
 
 
