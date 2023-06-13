@@ -10,6 +10,7 @@ pr:
     include:
       - neural_compressor
       - setup.py
+      - requirements.txt
       - .azure-pipelines/code-scan.yml
       - .azure-pipelines/scripts/codeScan
 
