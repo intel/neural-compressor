@@ -1,5 +1,5 @@
 datasets==1.6.2
-transformers==4.6
+transformers==4.30.0
 huggingface-hub==0.0.8
 seqeval==1.2.2
 tensorboard==2.7.0
