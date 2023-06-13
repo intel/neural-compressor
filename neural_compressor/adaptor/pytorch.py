@@ -4018,18 +4018,18 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             res = dict()
             self._get_sub_module_op_stats(model, tune_cfg, approach, res)
 
-        if self.use_bf16 and (self.version.release >= Version("1.11.0").release) and \
-            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
-            bf16_ops_list = tune_cfg['bf16_ops_list']
-            if len(bf16_ops_list) > 0:
-                for bf16_op in bf16_ops_list:
-                    op_type = bf16_op[1]
-                    if op_type in res.keys():
-                        res[op_type]['BF16'] += 1
-                        if res[op_type]['FP32'] > 0:
-                            res[op_type]['FP32'] -= 1
-                    else:
-                        res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
+            if self.use_bf16 and (self.version.release >= Version("1.11.0").release) and \
+                (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+                bf16_ops_list = tune_cfg['bf16_ops_list']
+                if len(bf16_ops_list) > 0:
+                    for bf16_op in bf16_ops_list:
+                        op_type = bf16_op[1]
+                        if op_type in res.keys():
+                            res[op_type]['BF16'] += 1
+                            if res[op_type]['FP32'] > 0:
+                                res[op_type]['FP32'] -= 1
+                        else:
+                            res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
 
 
         output_data = [[
