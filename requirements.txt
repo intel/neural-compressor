@@ -4,7 +4,6 @@ pyyaml
 scikit-learn
 schema
 py-cpuinfo
-contextlib2
 requests
 psutil
 Pillow
@@ -12,8 +11,4 @@ pycocotools-windows; sys_platform != 'linux'
 pycocotools; sys_platform == 'linux'
 opencv-python
 prettytable
-cryptography
-sqlalchemy==1.4.27
-alembic==1.7.7
-pywin32; sys_platform != 'linux'
 deprecated >= 1.2.13

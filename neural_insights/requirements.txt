@@ -4,3 +4,4 @@ Flask-Cors
 Flask-SocketIO
 gevent
 gevent-websocket
+pywin32; sys_platform != 'linux'
