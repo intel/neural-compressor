@@ -180,7 +180,7 @@ options.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.str2array" title="neural_compressor.utils.utility.str2array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str2array</span></code></a>(s)</p></td>
 <td><p>Get the array of the string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.DequantizeWeight" title="neural_compressor.utils.utility.DequantizeWeight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DequantizeWeight</span></code></a>(weight_tensor, min_filter_tensor, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.dequantize_weight" title="neural_compressor.utils.utility.dequantize_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_weight</span></code></a>(weight_tensor, min_filter_tensor, ...)</p></td>
 <td><p>Dequantize the weight with min-max filter tensors.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.Dequantize" title="neural_compressor.utils.utility.Dequantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dequantize</span></code></a>(data, scale_info)</p></td>
@@ -397,8 +397,8 @@ options.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.utils.utility.DequantizeWeight">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">DequantizeWeight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_filter_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_filter_tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.DequantizeWeight" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.dequantize_weight">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dequantize_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_filter_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_filter_tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.dequantize_weight" title="Permalink to this definition"></a></dt>
 <dd><p>Dequantize the weight with min-max filter tensors.</p>
 </dd></dl>
 
@@ -683,7 +683,7 @@ options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>minmax_file_path</strong> – path to dequan_min_max.pkl</p></li>
+<li><p><strong>minmax_file_path</strong> – path to activation_min_max.pkl</p></li>
 <li><p><strong>input_model_tensors</strong> – dict with input tensors details</p></li>
 <li><p><strong>optimized_model_tensors</strong> – dict with optimized tensors details</p></li>
 </ul>

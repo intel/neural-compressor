@@ -56,7 +56,7 @@ Functions
    neural_compressor.utils.utility.get_tuning_history
    neural_compressor.utils.utility.recover
    neural_compressor.utils.utility.str2array
-   neural_compressor.utils.utility.DequantizeWeight
+   neural_compressor.utils.utility.dequantize_weight
    neural_compressor.utils.utility.Dequantize
    neural_compressor.utils.utility.load_data_from_pkl
    neural_compressor.utils.utility.dump_data_to_local
@@ -202,7 +202,7 @@ Functions
    Get the array of the string.
 
 
-.. py:function:: DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor)
+.. py:function:: dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor)
 
    Dequantize the weight with min-max filter tensors.
 
@@ -417,7 +417,7 @@ Functions
 
    Get OP list for model.
 
-   :param minmax_file_path: path to dequan_min_max.pkl
+   :param minmax_file_path: path to activation_min_max.pkl
    :param input_model_tensors: dict with input tensors details
    :param optimized_model_tensors: dict with optimized tensors details
 
