@@ -23,6 +23,12 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
       ;;
+      --dataset=*)
+          dataset=$(echo $var |cut -f2 -d=)
+      ;;
+      --alpha=*)
+          alpha=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -36,10 +42,10 @@ function run_tuning {
             --model_path ${input_model} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
+            --alpha ${alpha-0.5} \
+            --dataset ${dataset-NeelNanda/pile-10k} \
             --tune
 }
 
 main "$@"
-
-
 
