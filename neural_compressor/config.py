@@ -1638,8 +1638,8 @@ class MixedPrecisionConfig(object):
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
-                                 Support 'default', 'itex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
-                                 default is 'default'.
+                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
+                                 default is 'default', 'ipex' doesn't support tune.
         precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         model_name (str, optional): The name of the model. Default value is empty.
@@ -1676,6 +1676,7 @@ class MixedPrecisionConfig(object):
                               }
                           },
                       }
+        example_inputs (tensor|list|tuple|dict, optional): Example inputs used for tracing model. Defaults to None.
 
     Example:
         from neural_compressor import mix_precision
@@ -1696,7 +1697,8 @@ class MixedPrecisionConfig(object):
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[],
                  op_name_dict={},
-                 op_type_dict={}):
+                 op_type_dict={},
+                 example_inputs=None):
         """Init a MixedPrecisionConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -1711,6 +1713,7 @@ class MixedPrecisionConfig(object):
         self._framework = None
         self.op_name_dict = op_name_dict
         self.op_type_dict = op_type_dict
+        self.example_inputs = example_inputs
 
     @property
     def precisions(self):
@@ -1863,6 +1866,17 @@ class MixedPrecisionConfig(object):
         else:
             assert False, ("Type of op_type_dict should be dict but not {}".format(
                 type(op_type_dict)))
+
+    @property
+    def example_inputs(self):
+        """Get strategy_kwargs."""
+        return self._example_inputs
+
+    @example_inputs.setter
+    def example_inputs(self, example_inputs):
+        """Set example_inputs."""
+        self._example_inputs = example_inputs
+
 
 class ExportConfig:
     """Common Base Config for Export.

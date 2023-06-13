@@ -24,6 +24,7 @@ from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
+from neural_compressor.adaptor.torch_utils.mixed_precision import ipex_mixed_precision
 
 
 @strategy_registry
@@ -128,6 +129,12 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
     def traverse(self):
         """Traverse the tuning space according to auto-mixed precision strategy."""
+        if self.config.backend == "ipex":
+            self.best_qmodel = ipex_mixed_precision(
+                self.model, self.calib_dataloader, self.config.example_inputs)
+            if self.eval_dataloader or self.eval_func:
+                self._evaluate(self.best_qmodel)
+            return
         self._prepare_tuning()
 
         for op_tuning_cfg in self.next_tune_cfg():
