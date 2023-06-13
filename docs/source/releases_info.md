@@ -11,7 +11,7 @@ View new feature information and release downloads for the latest and previous r
 
 > <https://github.com/intel/neural-compressor/releases>
 
-Contact inc.maintainers@intel.com if you need additional assistance.
+Contact [inc.maintainers@intel.com](mailto:inc.maintainers@intel.com) if you need additional assistance.
 
 ## Known Issues
 

@@ -1771,13 +1771,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 "Input model mean": "input_stats.mean",
                 "Input model standard deviation": "input_stats.std",
                 "Input model variance": "input_stats.var",
-                "Optimized model min": "optimized_stats.min",
-                "Optimized model max": "optimized_stats.max",
-                "Optimized model mean": "optimized_stats.mean",
-                "Optimized model standard deviation": "optimized_stats.std",
-                "Optimized model variance": "optimized_stats.var",
             },
-            table_entries=sorted_weights_details
+            table_entries=sorted_weights_details,
+            precision=5,
         )
         logger.info("For more details execute quantization with Neural Insights GUI.")
 
