@@ -4,7 +4,7 @@ import threading
 import os
 import argparse
 import shutil
-from neural_solution.backend.Runner import parse_args, main
+from neural_solution.backend.runner import parse_args, main
 
 class TestMain(unittest.TestCase):
 

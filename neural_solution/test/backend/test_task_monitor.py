@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch, MagicMock
-from neural_solution.backend.task_monitor import TaskMonitor, Task
+from neural_solution.backend.task_monitor import TaskMonitor
+from neural_solution.backend.task import Task
 import threading
 
 class TestTaskMonitor(unittest.TestCase):
