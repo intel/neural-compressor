@@ -147,7 +147,7 @@ def dynamic_quant_export(
     output_names,
     weight_type,
 ):
-    """export dynamic quantized model.
+    """Export dynamic quantized model.
 
     Args:
         pt_fp32_model (torch.nn.module): PyTorch FP32 model.
@@ -220,7 +220,7 @@ def static_quant_export(
     output_names,
     quant_format,
 ):
-    """export static quantized model.
+    """Export static quantized model.
 
     Args:
         pt_int8_model (torch.nn.module): PyTorch INT8 model.
