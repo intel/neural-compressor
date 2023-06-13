@@ -182,7 +182,10 @@ class ORTSmoothQuant:
                 if key not in self.tensor_scales_info:
                     continue
                 input = node_info[1][1]
-                weight = numpy_helper.to_array(self.model.get_initializer(input))
+                weight = numpy_helper.to_array(
+                        self.model.get_initializer(input),
+                        base_dir=os.path.dirname(self.model.model_path) if \
+                                self.model.model_path is not None else "")
                 scale = self.tensor_scales_info[key]
                 new_weight = weight * scale
                 self.model.set_initializer(input, new_weight)
@@ -467,7 +470,10 @@ class ORTSmoothQuant:
                     node = self.model.input_name_to_nodes[node_info[1][1]][0]
                     if len(target_list) > 0 and node_info[0] not in target_list:
                         continue
-                    weight = numpy_helper.to_array(self.model.get_initializer(node_info[1][1]))
+                    weight = numpy_helper.to_array(
+                            self.model.get_initializer(node_info[1][1]),
+                            base_dir=os.path.dirname(self.model.model_path) if \
+                                    self.model.model_path is not None else "")
                     if (len(weight.shape) == 4 and weight.shape[1] != 1) or \
                         (node.op_type == 'Gemm' and is_B_transposed(node)):
                         weight = np.moveaxis(weight, 0, 1)
@@ -479,7 +485,10 @@ class ORTSmoothQuant:
                 weights_in_channel_max = []
                 for node_info in nodes:
                     node = self.model.input_name_to_nodes[node_info[1][1]][0]
-                    weight = numpy_helper.to_array(self.model.get_initializer(node_info[1][1]))
+                    weight = numpy_helper.to_array(
+                            self.model.get_initializer(node_info[1][1]),
+                            base_dir=os.path.dirname(self.model.model_path) if \
+                                    self.model.model_path is not None else "")
                     if (len(weight.shape) == 4 and weight.shape[1] != 1) or \
                         (node.op_type == 'Gemm' and is_B_transposed(node)):
                         weight = np.moveaxis(weight, 0, 1)
@@ -565,7 +574,10 @@ class ORTSmoothQuant:
                     continue
                 input = node_info[1][1]
                 node = self.model.input_name_to_nodes[input][0]
-                weight = numpy_helper.to_array(self.model.get_initializer(input))
+                weight = numpy_helper.to_array(
+                        self.model.get_initializer(input),
+                        base_dir=os.path.dirname(self.model.model_path) if \
+                                self.model.model_path is not None else "")
                 if len(weight.shape) == 2:
                     scale = np.expand_dims(scales[key], axis=0) if \
                         node.op_type == 'Gemm' and is_B_transposed(node) else\

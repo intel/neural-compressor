@@ -25,7 +25,7 @@
 import copy
 import logging
 import sys
-
+import os
 import numpy as np
 import onnx
 import onnxruntime
@@ -703,5 +703,8 @@ class ONNXRTAugment:
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
             for item in val:
-                shape_infos[item[1][1]] = numpy_helper.to_array(self.model_wrapper.get_initializer(item[1][1])).shape
+                shape_infos[item[1][1]] = numpy_helper.to_array(
+                        self.model_wrapper.get_initializer(item[1][1]),
+                        base_dir=os.path.dirname(self.model_wrapper.model_path) if \
+                                self.model_wrapper.model_path is not None else "").shape
         return max_vals_per_channel, shape_infos, tensors_to_node
