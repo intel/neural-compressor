@@ -150,6 +150,20 @@ class ParseDecodeImagenetTransform(BaseTransform):    # pragma: no cover
             "imagenet decoding will be performed automatically from Neural Compressor v1.4.")
         return sample
 
+@transform_registry(transform_type="TransposeShiftRescale", process="preprocess", framework="tensorflow")
+class TensorflowTransposeShiftRescale(BaseTransform):
+    """Transpose NHWC to NCHW, label shift by 1 and resacle
+
+    Returns:
+        tuple of processed image and label
+    """
+    def __call__(self, sample):
+        image, label = sample
+        image = tf.transpose(image, perm=[2,0,1])
+        label = label - 1
+        image = (image - 127.5) / 127.5
+        return (image, label)
+
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="tensorflow")
 class TensorflowResizeCropImagenetTransform(BaseTransform):    # pragma: no cover 
