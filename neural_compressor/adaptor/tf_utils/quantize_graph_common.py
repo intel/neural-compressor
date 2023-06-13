@@ -350,7 +350,6 @@ class QuantizeGraphHelper():
         range_coefficent = 127 / (2 ** weight_bit - 1)
         if host_op_type in ("Conv2D", "MatMul", "Conv3D", "BatchMatMulV2", \
                             "Conv2DBackpropInput", "Conv3DBackpropInputV2"):
-            to_channel_last = False
             if per_channel:
                 if host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
@@ -359,7 +358,6 @@ class QuantizeGraphHelper():
                 elif host_op_type in ('MatMul'):
                     if 'transpose_b' in input_node.attr and input_node.attr["transpose_b"].b: # pragma: no cover
                         ranges = np.abs(float_tensor).max(axis=(1))
-                        to_channel_last = True
                     else:
                         ranges = np.abs(float_tensor).max(axis=(0))
                 else:
@@ -372,7 +370,7 @@ class QuantizeGraphHelper():
                 ranges[ranges < epsilon] = epsilon
                 min_value[np.abs(min_value) < epsilon] = -epsilon
                 max_value[np.abs(max_value) < epsilon] = epsilon
-                if to_channel_last: # pragma: no cover
+                if 'transpose_b' in input_node.attr and input_node.attr["transpose_b"].b: # pragma: no cover
                     # transpose for broadcasting
                     float_tensor = np.transpose(float_tensor, [1, 0])
                     qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
