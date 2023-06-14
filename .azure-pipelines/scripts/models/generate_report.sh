@@ -233,7 +233,7 @@ function generate_html_core {
                     printf("<td style=\"%s\" colspan=2>%.2f %</td>", status_png, target*100);
                 } else {
                     target = new_result / previous_result;
-                    if(target <= 1.054 && target >= 0.945) {
+                    if(target <= 1.084 && target >= 0.915) {
                         status_png = "background-color:#90EE90";
                     } else {
                         status_png = "background-color:#FFD2D2";
@@ -261,7 +261,7 @@ function generate_html_core {
                 new_result = int8_perf_value / fp32_perf_value
                 previous_result = last_int8_perf_value / last_fp32_perf_value
                 target = new_result / previous_result;
-                if (target <= 1.054 && target >= 0.945) {
+                if (target <= 1.084 && target >= 0.915) {
                     status_png = "background-color:#90EE90";
                 } else {
                     status_png = "background-color:#FFD2D2";

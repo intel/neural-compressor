@@ -934,7 +934,16 @@ class MultiheadAttentionPruner(BasePruner):
         config: A config dict object that contains the pruner information.
 
     Attributes:
-        Inherit from parent class Pruner.
+        mha_compressions: a Dict. (key: MHA module name; value: MHACompression object in .model_slim.weight_slim)
+            Main object to hook critical attributes for mha pruning and modify these attributes.
+        linear_layers: a Dict. {key: linear layer name; value: torch.nn.Linear object.}
+            Store independent linear layer look-up table, which used by criterion object.
+            linear_layers length should be 4x of mha_compression because one mha_compression hooks 4 linear layers:
+            query, key, value and subsequent ffn layer.
+        head_masks: A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+            Similar to Huggingface build-in head_mask attribute.
+        mha_scores: A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+            Store scores for different heads.
     """
     def __init__(self, config, mha_modules):
         """Initialize."""
@@ -961,33 +970,28 @@ class MultiheadAttentionPruner(BasePruner):
         self.init_sparsity_ratio = 0.0
         self.criterion_reduce_type = self.config['criterion_reduce_type']
         self.pruning_scope = self.config['pruning_scope']
-        #-----------------------------------------------------------------------------------------------
-        #---------------------------------------Custom attributes for MHA Pruner
+        #------------------------Custom attributes for MHA Pruner--------------------------------------
         # main initialize process.
         # define some attributes. 
-        # {key: mha_name, value: mha_compression object}
         self.mha_compressions = {}
-        # {key: layer_name, value: corresponding linear object}
         self.linear_layers = {}
-        # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num traced in corresponding mha_compression object
         self.head_masks = {} 
-        # general pruning components (head pruning does not need a pattern component)
         self.mha_scores = {} # {}
         # main initialization process
-        # initialize custom attributes
         self._init_mha_attrs()
         # initialize custom attributes: criterion (snip-momnetum, snip, magnitude, etc.)
         # we have hook modules in mha_compressions therefore do not pass them to patterns
-        self.pattern = get_pattern(self.config, modules = None) 
-        self.criterion = get_criterion(self.config, self.linear_layers) # criterion hooks on linear themselves.
+        self.pattern = get_pattern(self.config, modules = None)
+        # criterion hooks on linear themselves
+        self.criterion = get_criterion(self.config, self.linear_layers)
         self.scheduler = get_scheduler(self.config)
         #-----------------------------------------------------------------------------------------------
     
     def _init_mha_attrs(self):
-        # initialize self.mha_compressions, self.linear_layers, self.head_masks
+        """Initialize self.mha_compressions, self.linear_layers, self.head_masks
         # similar to original mha slim process, but only hook mha modules and their attributes, 
         # do not call slim main functions.
-        # import pdb;pdb.set_trace()
+        """
         for mha_module in self.mha_modules:
             # initialize self.mha_compressions
             mha_comp = MHACompression(mha_module)

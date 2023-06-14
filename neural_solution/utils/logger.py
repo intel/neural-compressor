@@ -23,6 +23,7 @@ import logging
 
 class Logger(object):
     """Logger class."""
+
     __instance = None
 
     def __new__(cls):
@@ -33,7 +34,7 @@ class Logger(object):
         return Logger.__instance
 
     def _log(self):
-        """Setup the logger format and handler."""
+        """Set up the logger format and handler."""
         LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
         self._logger = logging.getLogger("neural_compressor")
         self._logger.handlers.clear()

@@ -6,7 +6,8 @@ from neural_insights.utils.json_serializer import JsonSerializer
 
 class QuantizationWorkload(Workload):
 
-    def __init__(self,  data: Optional[dict] = None):
+    def __init__(self, data: Optional[dict] = None):
+        """Initialize Quantization Workload."""
         super().__init__(data)
         if data is None:
             data = {}
@@ -48,8 +49,8 @@ class AccuracyData(JsonSerializer):
 
     @property
     def ratio(self) -> Optional[float]:
-        """
-        Get accuracy ratio.
+        """Get accuracy ratio.
+
         Returns: accuracy ratio if baseline and optimized accuracy are present
                  Otherwise returns None
         """

@@ -502,25 +502,25 @@ def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
         else:
             continue
     inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
-    dequan_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
-    dump_data_to_local(dequan_min_max, save_path, 'dequan_min_max.pkl')
+    activation_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
+    dump_data_to_local(activation_min_max, save_path, 'activation_min_max.pkl')
     dump_data_to_local(updated_cfg, save_path, 'cfg.pkl')
 
     return inspect_node_lst, updated_cfg
 
 def _parse_config(q_config, cfg, op_list):
     """Parse q_config and get dequantize min max value."""
-    dequan_min_max = {}
+    activation_min_max = {}
     if '__requant_min_max' in q_config:
         for node_name, val in q_config['__requant_min_max'].items():
             node_name = node_name.split('_eightbit_requant_range')[0]
             if node_name in op_list:
-                dequan_min_max[node_name] = {'min': val[0], 'max': val[1]}
+                activation_min_max[node_name] = {'min': val[0], 'max': val[1]}
     updated_cfg = {'op' : {}}
     for op_name_and_type in cfg['op'].keys():
         if op_name_and_type[0] in op_list:
             updated_cfg['op'][op_name_and_type] = cfg['op'][op_name_and_type]
-    return dequan_min_max, updated_cfg
+    return activation_min_max, updated_cfg
 
 def generate_feed_dict(input_tensor, inputs):
     """Generate feed dict helper function."""

@@ -21,15 +21,17 @@ if "neural_insights" in sys.argv:
     neural_insights = True
     sys.argv.remove("neural_insights")
 
-neural_solution  = False
+neural_solution = False
 if "neural_solution" in sys.argv:
     neural_solution = True
     sys.argv.remove("neural_solution")
 
 # define include packages
 include_packages = find_packages(include=['neural_compressor', 'neural_compressor.*',
-                                 'neural_coder', 'neural_coder.*'])
-neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'])
+                                 'neural_coder', 'neural_coder.*'],
+                                 exclude=["neural_compressor.template"])
+neural_insights_packages = find_packages(include=['neural_insights', 'neural_insights.*'],
+                                         exclude=["test.*", "test"])
 neural_solution_packages = find_packages(include=['neural_solution', 'neural_solution.*'])
 
 # define package data
@@ -61,7 +63,7 @@ if neural_insights:
     include_packages = neural_insights_packages
     entry_points = {
         'console_scripts': [
-            'neural_insights = neural_insights.bin.neural_insights:exec'
+            'neural_insights = neural_insights.bin.neural_insights:execute'
         ]
     }
 elif neural_solution:

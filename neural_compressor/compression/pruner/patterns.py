@@ -1333,7 +1333,7 @@ class PatternNInM(BasePattern):
 class PatternMHA(BasePattern):
     """Pruning Pattern.
     
-    A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+    A Pattern class derived from BasePattern. In this pattern, we calculate head masks for a MHA module
     For more info of this pattern, please refer to :
     https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
     
@@ -1347,20 +1347,17 @@ class PatternMHA(BasePattern):
 
     def __init__(self, config, modules = None):
         self.is_global = config.pruning_scope == "global"
-        # 111
     
     # only implement three method: get_masks, get_masks_local, get_masks_global
         
     def get_masks_global(self, scores, target_sparsity_ratio, pre_masks):
         # gather all score items into one tensor
-        # import pdb;pdb.set_trace()
         if target_sparsity_ratio <= .0: 
             return pre_masks
         flatten_score = torch.cat(list(scores.values())).flatten()
         k = int(target_sparsity_ratio * flatten_score.numel())
         if k <= 0:
             return pre_masks
-        # import pdb;pdb.set_trace()
         threshold, _ = torch.kthvalue(flatten_score, k)
         head_masks = {}
         zero = torch.tensor([0.]).to(threshold.device)

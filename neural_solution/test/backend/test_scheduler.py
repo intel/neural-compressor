@@ -55,7 +55,7 @@ class TestScheduler(unittest.TestCase):
     def test_prepare_task(self):
         task = Task("test_task", "test_arguments", "test_workers", "test_status",\
             "test_example", \
-            "test_optimized", "test_approach", "test_requirement", "test_result", "test_q_model_path")
+            "test_optimized", "static", "test_requirement", "test_result", "test_q_model_path")
         test_path = "examples/test_example"
         if not os.path.exists(test_path):
             os.makedirs(test_path)
@@ -71,13 +71,13 @@ class TestScheduler(unittest.TestCase):
         # optimized is False case
         task = Task("test_task", "test_arguments", "test_workers", "test_status",\
             "test_example", \
-            False, "test_approach", "test_requirement", "test_result", "test_q_model_path")
+            False, "static", "test_requirement", "test_result", "test_q_model_path")
         self.scheduler.prepare_task(task)
 
         with patch('neural_solution.backend.scheduler.is_remote_url', return_value=True):
             task = Task("test_task", "test_arguments", "test_workers", "test_status",\
             "test_example/test.py", \
-            False, "test_approach", "test_requirement", "test_result", "test_q_model_path")
+            False, "static", "test_requirement", "test_result", "test_q_model_path")
             self.scheduler.prepare_task(task)
 
 

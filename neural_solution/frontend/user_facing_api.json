@@ -4,7 +4,7 @@
             "description": "Welcome interface",
             "responses": {
                 "200": {
-                    "message": "Welcome to NeuralSolution OaaS!"
+                    "message": "Welcome to Neural Solution!"
                 }
             }
         },
