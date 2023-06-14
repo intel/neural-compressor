@@ -38,7 +38,7 @@ Accuracy:
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
-                      --batch_size=batch_size # optional \
+                      --batch_size=batch_size \ # optional 
                       --mode=accuracy \
                       --tasks=lambada_openai
 ```
