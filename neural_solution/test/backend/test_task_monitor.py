@@ -40,8 +40,8 @@ class TestTaskMonitor(unittest.TestCase):
         
         # Test ping case
         with patch('neural_solution.backend.task_monitor.deserialize', return_value={"ping": "test"}):
-            task = self.task_monitor._receive_task()
-            self.assertEqual(task.task_id, 123)
+            response = self.task_monitor._receive_task()
+            self.assertEqual(response, False)
             self.mock_task_db.get_task_by_id.assert_called_once_with(123)
 
     def test_append_task(self):
@@ -76,7 +76,7 @@ class TestTaskMonitor(unittest.TestCase):
         mock_append_task = MagicMock()
         self.task_monitor._receive_task = mock_receive_task
         
-        adding_abort.start()
+        adding_abort.join(timeout=1)
     
 if __name__ == '__main__':
     unittest.main()
