@@ -131,7 +131,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         """Traverse the tuning space according to auto-mixed precision strategy."""
         if self.config.backend == "ipex":
             self.best_qmodel = ipex_mixed_precision(
-                self.model, self.calib_dataloader, self.config.example_inputs)
+                self.model, self.config.example_inputs)
             if self.eval_dataloader or self.eval_func:
                 self._evaluate(self.best_qmodel)
             return

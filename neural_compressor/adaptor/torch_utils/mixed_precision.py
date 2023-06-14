@@ -16,16 +16,13 @@
 # limitations under the License.
 
 from neural_compressor.utils.utility import LazyImport
-from neural_compressor.adaptor.pytorch import get_example_inputs
 ipex = LazyImport("intel_extension_for_pytorch")
 torch = LazyImport("torch")
 
-def ipex_mixed_precision(model, calib_dataloader=None, example_inputs=None):
+def ipex_mixed_precision(model, example_inputs=None):
     """The function is used for ipex mixed precision quantization."""
     model.eval()
     mp_model = model._model
-    if calib_dataloader is not None:
-        example_inputs = get_example_inputs(mp_model, calib_dataloader)
     if example_inputs is None:
         assert False, "please provide the correct example_inputs for torchscript mode"
     mp_model = ipex.optimize(mp_model, dtype=torch.bfloat16)
