@@ -642,8 +642,14 @@ def main():
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor import quantization
         dummy_input_ids = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
+        dummy_token_type_ids = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
         dummy_attention_mask = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
-        example_inputs = {"input_ids": dummy_input_ids, "attention_mask": dummy_attention_mask}
+        if model.config.model_type == "distilbert":
+            example_inputs = {"input_ids": dummy_input_ids, "attention_mask": dummy_attention_mask}
+        elif model.config.model_type == "bert":
+            example_inputs = {"input_ids": dummy_input_ids, "token_type_ids":dummy_token_type_ids, "attention_mask": dummy_attention_mask}
+        else:
+            example_inputs = None  # please provide correct example_inputs if necessary.
         conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800, example_inputs=example_inputs)
         q_model = quantization.fit(model,
                                    conf,
