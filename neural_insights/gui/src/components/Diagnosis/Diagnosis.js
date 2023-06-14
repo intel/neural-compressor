@@ -40,7 +40,7 @@ function Diagnosis() {
       <div className="flexbox">
         <div className="flex-item">
           <div className="flexbox-inside">
-            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} />
+            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} />
             {/* {selectedWorkload?.mode === 'quantization' &&
               <NodeSearch />
             } */}
