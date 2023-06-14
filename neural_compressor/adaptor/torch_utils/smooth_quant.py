@@ -738,7 +738,8 @@ class TorchSmoothQuant:
             logger.info("Total number of ops with smoothquant optimizations: " + str(len(self.absorb_to_layer)))
 
             if not self.output_is_equal(out_post_sq, out_pre_sq):
-                logger.warning("Mathematical equivelancy of Smoothquant is not preserved. Check model graph for possible skip connections")
+                logger.warning("Mathematical equivelancy of Smoothquant is not preserved. "
+                               "Check model graph for possible skip connections")
             else:
                 logger.info("Mathematical equivelancy of Smoothquant is preserved.")
 
