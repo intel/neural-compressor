@@ -1012,6 +1012,8 @@ class MultiheadAttentionPruner(BasePruner):
         # similar to original mha slim process, but only hook mha modules and their attributes, 
         # do not call slim main functions.
         """
+        # auto slim related: head pruning objects
+        from .model_slim.weight_slim import MHACompression
         for mha_module in self.mha_modules:
             # initialize self.mha_compressions
             mha_comp = MHACompression(mha_module)
