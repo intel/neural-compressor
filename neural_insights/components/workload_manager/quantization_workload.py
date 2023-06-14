@@ -1,3 +1,18 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""The quantization_workload module for Neural Insights quantization workloads."""
 from typing import Optional, Dict, Any
 
 from neural_insights.components.workload_manager.workload import Workload
@@ -5,6 +20,7 @@ from neural_insights.utils.json_serializer import JsonSerializer
 
 
 class QuantizationWorkload(Workload):
+    """QuantizationWorkload class."""
 
     def __init__(self, data: Optional[dict] = None):
         """Initialize Quantization Workload."""
@@ -21,8 +37,10 @@ class QuantizationWorkload(Workload):
 
 
 class AccuracyData(JsonSerializer):
+    """AccuracyData class."""
 
     def __init__(self, data: Optional[dict] = None):
+        """Initialize Accuracy Data."""
         super().__init__()
         if data is None:
             data = {}
@@ -31,8 +49,7 @@ class AccuracyData(JsonSerializer):
 
     @property
     def baseline_accuracy(self) -> Optional[float]:
-        """
-        Get baseline accuracy.
+        """Get baseline accuracy.
 
         Returns: baseline accuracy value
         """
@@ -40,8 +57,7 @@ class AccuracyData(JsonSerializer):
 
     @property
     def optimized_accuracy(self) -> Optional[float]:
-        """
-        Get optimized accuracy.
+        """Get optimized accuracy.
 
         Returns: optimized accuracy value
         """
