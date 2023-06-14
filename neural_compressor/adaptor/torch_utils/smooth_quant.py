@@ -722,6 +722,14 @@ class TorchSmoothQuant:
                     save_input_output = True
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
+
+                # Check if input_maxes match self.absorb_to_layer 
+                # (due to self._get_all_layer_names use layer tree instead of forward_path)
+                if not folding:
+                    diff_modules = set(self.absorb_to_layer.keys()).difference(input_maxes.keys())
+                    for d in diff_modules:
+                        del self.absorb_to_layer[d]
+                        
                 if alpha == 'auto':
                     self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
 
