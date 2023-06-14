@@ -21,7 +21,7 @@ import re
 import uuid
 import pandas as pd
 import socket
-from neural_solution.utils.utility import get_task_log_workspace
+from neural_solution.utils.utility import get_task_log_workspace, dict_to_str
 
 def query_task_status(task_id, db_path):
     res = None
@@ -32,7 +32,9 @@ def query_task_status(task_id, db_path):
         res = cursor.fetchone()
         cursor.close()
         conn.close()
-    return {"status": res[0], 'optimized_result': deserialize(res[1]) if res[1] else res[1], "result_path": res[2]}
+    return {"status": res[0],
+            'optimized_result': dict_to_str(deserialize(res[1]) if res[1] else res[1]),
+            "result_path": res[2]}
 
 def query_task_result(task_id, db_path, workspace):
     status = "unknown"

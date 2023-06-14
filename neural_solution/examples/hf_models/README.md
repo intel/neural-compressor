@@ -24,22 +24,36 @@ neural_solution start --task_monitor_port=22222 --result_monitor_port=33333 --re
 neural_solution stop
 
 # Help Manual
-neural_solution help
+neural_solution -h
 # Help output
 
- *** usage: neural_solution {start|stop} ***
-     start      : start serve
-     stop       : stop serve
+usage: neural_solution {start,stop} [-h] [--hostfile HOSTFILE] [--restful_api_port RESTFUL_API_PORT] [--grpc_api_port GRPC_API_PORT]
+                   [--result_monitor_port RESULT_MONITOR_PORT] [--task_monitor_port TASK_MONITOR_PORT] [--api_type API_TYPE]
+                   [--workspace WORKSPACE] [--conda_env CONDA_ENV] [--upload_path UPLOAD_PATH]
 
-  more start parameters: [usage: neural_solution start {--parameter=value}] [e.g. --restful_api_port=8000]
-    --hostfile           : start backend serve host file which contains all available nodes
-    --restful_api_port         : start web serve with {restful_api_port}, defult 8000
-    --api_type           : start web serve with grpc/http, defult http
-    --task_monitor_port  : start serve for task monitor at {task_monitor_port}, defult 2222
-    --result_monitor_port: start serve for result monitor at {result_monitor_port}, defult 3333
-    --workspace          : neural solution workspace, defult "./"
-    --conda_env          : specify the running environment for the task
-    --upload_path        : specify the file path for the tasks
+Neural Solution
+
+positional arguments:
+  {start,stop}          start/stop service
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hostfile HOSTFILE   start backend serve host file which contains all available nodes
+  --restful_api_port RESTFUL_API_PORT
+                        start restful serve with {restful_api_port}, default 8000
+  --grpc_api_port GRPC_API_PORT
+                        start gRPC with {restful_api_port}, default 8000
+  --result_monitor_port RESULT_MONITOR_PORT
+                        start serve for result monitor at {result_monitor_port}, default 3333
+  --task_monitor_port TASK_MONITOR_PORT
+                        start serve for task monitor at {task_monitor_port}, default 2222
+  --api_type API_TYPE   start web serve with all/grpc/restful, default all
+  --workspace WORKSPACE
+                        neural solution workspace, default "./ns_workspace"
+  --conda_env CONDA_ENV
+                        specify the running environment for the task
+  --upload_path UPLOAD_PATH
+                        specify the file path for the tasks
 ```
 
 
@@ -97,7 +111,7 @@ neural_solution help
 }
 
 ```
-### Stop the serve
+### Stop the service
 ```shell
 neural_solution stop
 ```

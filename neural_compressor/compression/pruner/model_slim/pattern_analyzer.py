@@ -214,7 +214,6 @@ class JitBasicSearcher(object):
         """Generate static graph from a external dataloader."""
         # dummy_input = self.dataloader[0]
         logger.info(f"Generating static graph from original model using external data: start.")
-        # import pdb;pdb.set_trace()
         for dummy_input in self.dataloader:
             if isinstance(dummy_input, dict):
                 try:
@@ -482,7 +481,6 @@ class Linear2LinearSearcher(JitBasicSearcher):
             search_res = self.search_from_root_linear(linear_code)
             if search_res['target_frontier_linears'].__len__() > 0:
                 all_linear_structure_results.append(search_res)
-        #import pdb;pdb.set_trace()
         # Summary
         print_iterables(all_linear_structure_results)
         logger.info(f"Found {all_linear_structure_results.__len__()} linear2linear structures")
@@ -560,7 +558,6 @@ class SelfMHASearcher(JitBasicSearcher):
                 else:
                     # op which is not linear, skip
                     continue
-        # import pdb;pdb.set_trace()
         input_counts_filtered = {}
         # in our strategy, when three linear layers share the same input, they should be query, key, and value
         for k, v in input_counts.items():

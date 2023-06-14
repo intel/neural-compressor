@@ -1,5 +1,5 @@
 <div align="center">
-  
+
 Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
@@ -35,11 +35,11 @@ pip install neural-compressor
 > More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
-### Quantization with Python API    
+### Quantization with Python API
 
 ```shell
 # Install Intel Neural Compressor and TensorFlow
-pip install neural-compressor 
+pip install neural-compressor
 pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
@@ -86,11 +86,11 @@ q_model = fit(
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/quantization.md">Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/mixed_precision.md">Advanced Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning (Sparsity)</a></td> 
+        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning (Sparsity)</a></td>
         <td colspan="2" align="center"><a href="./docs/source/distillation.md">Distillation</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>        
+        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>
         <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
         <td colspan="2" align="center"><a href="./docs/source/distributed.md">Distributed Compression</a></td>
         <td colspan="2" align="center"><a href="./docs/source/export.md">Model Export</a></td>
@@ -107,7 +107,7 @@ q_model = fit(
         <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
         <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
         <td colspan="2" align="center"><a href="./neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
-    </tr>    
+    </tr>
   </tbody>
   <thead>
       <tr>
@@ -130,7 +130,7 @@ q_model = fit(
   <tbody>
       <tr>
           <td colspan="4" align="center"><a href="./neural_insights/README.md">Neural Insights</a></td>
-          <td colspan="4" align="center">Neural Solution (coming soon)</td>
+          <td colspan="4" align="center"><a href="./neural_solution/README.md">Neural Solution</a></td>
       </tr>
   </tbody>
 </table>
@@ -153,5 +153,5 @@ q_model = fit(
 
 ## Research Collaborations
 
-Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Intel Neural Compressor!
+Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us ([inc.maintainers@intel.com](mailto:inc.maintainers@intel.com)). Look forward to our collaborations on Intel Neural Compressor!
 

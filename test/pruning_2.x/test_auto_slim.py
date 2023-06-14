@@ -11,8 +11,8 @@ from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
 
 # auto slim
-from neural_compressor.compression.pruner.model_slim.auto_slim import parse_auto_slim_config
-from neural_compressor.compression.pruner.model_slim.auto_slim import model_slim
+from neural_compressor.compression.pruner import parse_auto_slim_config
+from neural_compressor.compression.pruner import model_slim
 
 class TestPruning(unittest.TestCase):
 
