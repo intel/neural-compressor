@@ -1589,11 +1589,11 @@ class _Unpickler:
         stack = self.stack
         args = stack.pop()
         func = stack[-1]
-        # if len(args) > 0 and args[0] is None:
-        #     stack[-1] = None
-        # else:
-            # stack[-1] = func(*args)
-        stack[-1] = func(*args)
+        if len(args) > 0 and args[0] is None:
+            stack[-1] = None
+        else:
+            stack[-1] = func(*args)
+        # stack[-1] = func(*args)
     dispatch[REDUCE[0]] = load_reduce
 
     def load_pop(self):

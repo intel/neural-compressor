@@ -85,6 +85,8 @@ def load_tensor_from_shard(path, tensor_name):
 
 
 def load_tensor(path, tensor_name=None):
+    if 'lm_head' in tensor_name:
+        tensor_name = 'model.decoder.embed_tokens.weight'
     state_dict = load(path, tensor_name)
     # return state_dict
     return state_dict[tensor_name]
