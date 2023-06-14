@@ -21,14 +21,13 @@ import torch
 import logging
 import argparse
 import numpy as np
-from transformers import AutoTokenizer
 from datasets import load_dataset
 import onnxruntime as ort
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
 from intel_extension_for_transformers.evaluation import evaluate
 from optimum.onnxruntime import ORTModelForCausalLM
-from transformers import PretrainedConfig
+from transformers import LlamaConfig, LlamaTokenizer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -40,7 +39,7 @@ formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     '--model_path',
     type=str,
-    help="Pre-trained resnet50 model on onnx file"
+    help="Folder path of pre-trained onnx model "
 )
 parser.add_argument(
     '--benchmark',
@@ -90,7 +89,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--pad_max',
-    default=512,
+    default=196,
     type=int,
 )
 parser.add_argument(
@@ -110,7 +109,7 @@ parser.add_argument(
 parser.add_argument(
     "--smooth_quant_alpha",
     type=float,
-    default=0.5
+    default=0.6
 )
 parser.add_argument(
     "--intra_op_num_threads",
@@ -120,13 +119,16 @@ parser.add_argument(
 args = parser.parse_args()
 
 # load model
-tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
+tokenizer = LlamaTokenizer.from_pretrained(args.model_name_or_path)
 
 def tokenize_function(examples):
     example = tokenizer(examples['text'])
     return example
 
 def benchmark(model):
+    import json
+    import time
+    config = LlamaConfig.from_pretrained(args.model_name_or_path)
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
     sessions = ORTModelForCausalLM.load_model(
@@ -138,7 +140,7 @@ def benchmark(model):
                 config, 
                 model, 
                 sessions[1],
-                use_cache=False)
+                use_cache=True)
 
     input_tokens = '32'
     max_new_tokens = 32
@@ -160,12 +162,9 @@ def benchmark(model):
     total_list = []
 
     for i in range(num_iter):
-        get_memory_usage("Iteration: " + str(i))
         tic = time.time()
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-        output = model.generate(
-            input_ids, max_new_tokens=max_new_tokens, **generate_kwargs
-        )
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+        output = model.generate(input_ids, max_new_tokens=max_new_tokens)
         gen_ids = output
         gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
         toc = time.time()
@@ -179,21 +178,10 @@ def benchmark(model):
     print("Inference latency: %.3f sec." % latency)
 
 def eval_func(model):
-    sess_options = ort.SessionOptions()
-    sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-    sessions = ORTModelForCausalLM.load_model(
-            os.path.join(model, 'decoder_model.onnx'), 
-            os.path.join(model, 'decoder_with_past_model.onnx'), 
-            session_options=sess_options)
-    model = ORTModelForCausalLM(
-                sessions[0],
-                config, 
-                model, 
-                sessions[1],
-                use_cache=False)
+    from Llama_wrapper import LlamaLM
+    lm_model = LlamaLM(device='cpu', pretrained=args.model_name_or_path, user_model=model)
     results = evaluate(
-        model="hf-causal",
-        user_model=model,
+        model=lm_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
     )
@@ -228,13 +216,14 @@ class KVDataloader:
         last_ind = []
 
         for text in batch:
-            input_ids = text["input_ids"] if text["input_ids"].shape[0] <= self.pad_max else text["input_ids"][0:int(self.pad_max-1)]
+            input_ids = text["input_ids"]
             pad_len = self.pad_max - input_ids.shape[0]
             last_ind.append(input_ids.shape[0] - 1)
             attention_mask = torch.ones(len(input_ids))
+            input_ids = pad(input_ids, (0, pad_len), value=1)
+            attention_mask = pad(attention_mask, (0, pad_len), value=0)
             input_ids_padded.append(input_ids)
             attention_mask_padded.append(attention_mask)
-
         return (torch.vstack(input_ids_padded), torch.vstack(attention_mask_padded)), torch.tensor(last_ind)
 
 
@@ -249,7 +238,7 @@ class KVDataloader:
                                                    'attention_mask':attention_mask[:, :-1].detach().cpu().numpy().astype('int64')})
                     ort_input = {}
                     ort_input['input_ids'] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
-                    for i in range((len(outputs) - 1) / 2):
+                    for i in range(int((len(outputs) - 1) / 2)):
                         ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
                         ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
                     ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
@@ -276,7 +265,8 @@ if __name__ == "__main__":
                      'smooth_quant_args': {'alpha': args.smooth_quant_alpha}},
             op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
         for model in ['decoder_model.onnx', 'decoder_with_past_model.onnx']:
-            q_model = quantization.fit(os.path.join(args.model_path, model),
-                                       config,
-                                       calib_dataloader=KVDataloader(os.path.join(args.model_path, model), batch_size=1))
+            q_model = quantization.fit(
+                    os.path.join(args.model_path, model),
+                    config,
+                    calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
             q_model.save(os.path.join(args.output_model, model))

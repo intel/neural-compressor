@@ -37,12 +37,19 @@ function init_params {
 # run_tuning
 function run_tuning {
 
+    # Check if the directory exists
+    if [ ! -d "$output_model" ]; then
+        # If the directory doesn't exist, create it
+	mkdir -p "$output_model"
+	echo "Created directory $output_model"
+    fi
+
     python main.py \
             --quant_format ${quant_format-QOperator} \
             --model_path ${input_model} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
-            --alpha ${alpha-0.5} \
+            --smooth_quant_alpha ${alpha-0.5} \
             --dataset ${dataset-NeelNanda/pile-10k} \
             --tune
 }

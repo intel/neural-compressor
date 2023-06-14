@@ -24,11 +24,11 @@ optimum-cli export onnx --model decapoda-research/llama-13b-hf --task automatic-
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune \
+bash run_tuning.sh --input_model=/path/to/model \ # folder path of onnx model
+                   --output_model=/path/to/model_tune \ # folder path to save onnx model
                    --batch_size=batch_size # optional \
                    --dataset NeelNanda/pile-10k \
-                   --alpha 0.5 \ # 0.5 for llama-7b, 0.8 for llama-13b
+                   --alpha 0.6 \ # 0.6 for llama-7b, 0.8 for llama-13b
                    --quant_format="QOperator" # or QDQ, optional
 ```
 
@@ -37,7 +37,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
 Accuracy:
 
 ```bash
-bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
+bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                       --batch_size=batch_size # optional \
                       --mode=accuracy \
                       --tasks=lambada_openai
@@ -45,7 +45,7 @@ bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
 
 Performance:
 ```bash
-numactl -m 0 -C 0-3 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
+numactl -m 0 -C 0-3 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                                           --mode=performance \
                                           --batch_size=batch_size # optional \
                                           --intra_op_num_threads=4
