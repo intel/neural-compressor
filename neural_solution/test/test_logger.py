@@ -1,5 +1,5 @@
 """Tests for logging utilities."""
-from neural_solution.backend.utils import logger
+from neural_solution.utils import logger
 import unittest
 
 class TestLogger(unittest.TestCase):

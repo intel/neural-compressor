@@ -171,8 +171,8 @@ def start_service(args):
     start_time = time.time()
     while True:
         # Check if the ports are in use
-        if check_port_free(args.task_monitor_port) and check_port_free(args.result_monitor_port) \
-            and check_port_free(args.restful_api_port):
+        if check_port_free(args.task_monitor_port) or check_port_free(args.result_monitor_port) \
+            or check_port_free(args.restful_api_port):
             # If the ports are not in use, wait for a second and check again
             time.sleep(0.5)
             # Check if timed out
@@ -183,10 +183,9 @@ def start_service(args):
                 print("Timeout!")
                 break
 
-            # Continue to wait for the ports to be in use
-            continue
-
-        break
+        # Continue to wait for all ports to be in use
+        else:
+            break
     ports_flag = 0
     fail_msg = "Neural Solution START FAIL!"
     for port in [args.task_monitor_port, args.result_monitor_port]:
@@ -213,7 +212,7 @@ def start_service(args):
     print("[For information] neural_solution help")
 
 def main():
-    """main function."""
+    """Implement the main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
     parser.add_argument('action', choices=['start', 'stop'], help='start/stop service')
     parser.add_argument("--hostfile", default=None,

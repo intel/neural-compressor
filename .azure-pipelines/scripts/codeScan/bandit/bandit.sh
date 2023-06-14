@@ -1,16 +1,25 @@
 #!/bin/bash
 
+for var in "$@"
+do
+  case $var in
+    --scan_module=*)
+        scan_module=$(echo $var |cut -f2 -d=)
+    ;;
+  esac
+done
+
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 RESET="echo -en \\E[0m \\n" # close color
 
 log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 mkdir -p $log_dir
 
-python -m bandit -r -lll -iii /neural-compressor/neural_compressor >$log_dir/bandit.log
+python -m bandit -r -lll -iii "/neural-compressor/${scan_module}" >$log_dir/bandit.log
 exit_code=$?
 
 $BOLD_YELLOW && echo " -----------------  Current bandit cmd start --------------------------" && $RESET
-echo "python -m bandit -r -lll -iii  /neural-compressor/neural_compressor > $log_dir/bandit.log"
+echo "python -m bandit -r -lll -iii  /neural-compressor/${scan_module} > $log_dir/bandit.log"
 $BOLD_YELLOW && echo " -----------------  Current bandit cmd end --------------------------" && $RESET
 
 $BOLD_YELLOW && echo " -----------------  Current log file output start --------------------------"
