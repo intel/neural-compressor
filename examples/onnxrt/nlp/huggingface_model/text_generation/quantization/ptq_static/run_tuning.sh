@@ -33,6 +33,7 @@ function run_tuning {
 
     python main.py \
             --quant_format ${quant_format-QOperator} \
+            --model_name_or_path ${input_model} \
             --model_path ${input_model} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
