@@ -62,7 +62,9 @@ export default function Graph({ setSelectedNode, selectedWorkload, selectedOp, s
             groupNodeOpList.push(...response.data.groups);
           })
         .catch(error => {
-          setWarningText(error.message);
+          if (error.response.status !== 400) {
+            setWarningText(error.message);
+          }
         });
     }
   }, [selectedPattern]);
