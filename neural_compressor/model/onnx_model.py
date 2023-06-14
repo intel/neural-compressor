@@ -41,14 +41,12 @@ class ONNXModel(BaseModel):
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
         self._is_large_model = False
-        try:
-            ort.InferenceSession(self._model.SerializeToString())
-        except Exception as e:  # pragma: no cover
-            if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
-                self._is_large_model = True
-                if self._model_path is None:
-                    logger.warning('Please use model path instead of onnx model '
-                                   'object to quantize')
+        serialized_model = self._model.SerializeToString()
+        if (len(serialized_model) / 1024. / 1024. / 1024.) > 2:
+            self._is_large_model = True
+            if self._model_path is None:
+                logger.warning('Please use model path instead of onnx model object to quantize.')
+
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -560,6 +558,10 @@ class ONNXModel(BaseModel):
                         return_indice=[]),
 
                     # match bart attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [0, None, 0, 0, 0, 0]),
                     self.match_parent_path(
                         start_node,
                         ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],

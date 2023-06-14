@@ -8,3 +8,4 @@ sympy
 onnxruntime-extensions; python_version < '3.10'
 numpy==1.23.5
 sentencepiece
+protobuf<=3.20.3

@@ -131,4 +131,4 @@ class Collapser:
         if not name.startswith(self.GROUP_NAME_PREFIX):
             return name
 
-        return name[len(self.GROUP_NAME_PREFIX) :]
+        return name[len(self.GROUP_NAME_PREFIX):]

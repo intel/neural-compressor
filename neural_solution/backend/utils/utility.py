@@ -23,7 +23,7 @@ def serialize(request: dict) -> bytes:
     return json.dumps(request).encode()
 
 def deserialize(request: bytes) -> dict:
-    """Deserialize the recived bytes to a dict object"""
+    """Deserialize the recived bytes to a dict object."""
     return json.loads(request)
 
 def dump_elapsed_time(customized_msg=""):
@@ -45,10 +45,14 @@ def dump_elapsed_time(customized_msg=""):
     return f
 
 def get_task_log_path(log_path, task_id):
-    """Get the task log file path.
+    """Get the path of task log according id.
 
     Args:
-        task_id: _description_
+        log_path (str): the log path of task
+        task_id (str): the task id
+
+    Returns:
+        str: the path of task log file
     """
     if not os.path.exists(log_path):
         os.makedirs(log_path)
@@ -57,19 +61,59 @@ def get_task_log_path(log_path, task_id):
 
 
 def get_db_path(workspace="./"):
+    """Get the database path.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: the path of database
+    """
     return os.path.join(workspace, "db", "task.db")
 
 def get_task_workspace(workspace="./"):
+    """Get the workspace of task.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: the workspace of task
+    """
     return os.path.join(workspace, "task_workspace")
 
 def get_task_log_workspace(workspace="./"):
+    """Get the log workspace for task.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: the log workspace for task
+    """
     return os.path.join(workspace, "task_log")
 
 def get_serve_log_workspace(workspace="./"):
+    """Get log workspace for service.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: log workspace for service
+    """
     return os.path.join(workspace, "serve_log")
 
 
 def build_local_cluster(db_path):
+    """Build a local cluster.
+
+    Args:
+        db_path (str): database path
+
+    Returns:
+        (Cluster, int): cluster and num threads per process
+    """
     from neural_solution.backend.cluster import Node, Cluster
     hostname = 'localhost'
     node1 = Node(name=hostname,num_sockets=2, num_cores_per_socket=5)
@@ -110,10 +154,20 @@ def build_cluster(file_path, db_path):
     return cluster, num_threads_per_process
 
 def get_current_time():
+    """Get current time.
+
+    Returns:
+        str: the current time in hours, minutes, and seconds.
+    """
     from datetime import datetime
     return datetime.now().strftime('%H:%M:%S')
 
 def synchronized(func):
+    """Locking for synchronization.
+
+    Args:
+        func (function): decorative function
+    """
     def wrapper(self, *args, **kwargs):
         with self.lock:
             return func(self, *args, **kwargs)
@@ -124,7 +178,7 @@ def build_workspace(path, task_id=""):
 
     Args:
         path: master work directory for all tasks.
-        task_id: _description_
+        task_id: the id of task
     """
     task_path = "{}/{}".format(path, task_id)
     if not os.path.exists(task_path):
@@ -132,7 +186,7 @@ def build_workspace(path, task_id=""):
     return os.path.abspath(task_path)
 
 def is_remote_url(url_or_filename):
-    """Check if input is a URL
+    """Check if input is a URL.
 
     Args:
         url_or_filename (str): url_or_filename
@@ -155,7 +209,7 @@ def get_q_model_path(log_path):
         log_path (str): log path for task
 
     Returns:
-        _type_: quantized model path
+        str: quantized model path
     """
     import re
     for line in reversed(open(log_path).readlines()):

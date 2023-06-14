@@ -722,6 +722,14 @@ class TorchSmoothQuant:
                     save_input_output = True
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
+
+                # Check if input_maxes match self.absorb_to_layer 
+                # (due to self._get_all_layer_names use layer tree instead of forward_path)
+                if not folding:
+                    diff_modules = set(self.absorb_to_layer.keys()).difference(input_maxes.keys())
+                    for d in diff_modules:
+                        del self.absorb_to_layer[d]
+                        
                 if alpha == 'auto':
                     self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
 
@@ -816,9 +824,9 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        if isinstance(dummy_input, dict):
+        if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
-                traced_model = torch.jit.trace(model, dummy_input["input_ids"], strict=False)
+                traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
             except:
                 pass

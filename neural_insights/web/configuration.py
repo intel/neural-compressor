@@ -126,7 +126,7 @@ class Configuration:
             "--workdir-location",
             type=str,
             default=WORKDIR_LOCATION,
-            help="Path to work directory."
+            help="Path to work directory.",
         )
         parser.add_argument(
             "--verbose",

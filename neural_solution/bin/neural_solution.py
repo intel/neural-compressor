@@ -16,6 +16,7 @@
 
 
 def exec():
+    """Execute Neural Solution launch."""
     from neural_solution.launcher import main
     main()
 

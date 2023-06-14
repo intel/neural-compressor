@@ -17,6 +17,8 @@
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 
 class Config:
+    """Config for services."""
+
     workspace: str = "./ns_workspace"
     task_monitor_port: int = 2222
     result_monitor_port: int = 3333
