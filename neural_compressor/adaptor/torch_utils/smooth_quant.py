@@ -738,20 +738,23 @@ class TorchSmoothQuant:
             if alpha == 'auto':
                 alpha = self.alpha_per_layer
             example_inputs = self._get_example_input()
-            out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
+            if example_inputs != None:
+                out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
+            if example_inputs != None:
+                # Check mathematical equivelancy
+                out_post_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
-            # Check mathematical equivelancy
-            out_post_sq = model_forward_per_sample(self.model, example_inputs, self.device)
-
-            if not self.output_is_equal(out_post_sq, out_pre_sq):
-                logger.warning(
-                    "Mathematical equivelancy of Smoothquant is not preserved.  Please kindly report this issue to github")
-                self.recover()
-            # else:
-            #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
+                if not self.output_is_equal(out_post_sq, out_pre_sq):
+                    logger.warning(
+                        "Mathematical equivelancy of Smoothquant is not preserved.  Please kindly report this issue to github")
+                    self.recover()
+                # else:
+                #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
+            else:
+                logger.warning(" Could not get data, equivelancy check is skipped")
 
             self.input_values, self.output_values = {}, {}
             return self.model
@@ -793,8 +796,10 @@ class TorchSmoothQuant:
         return self_absorb_layer
 
     def _get_example_input(self):
+        if self.dataloader == None and self.example_inputs == None:
+            return None
         if self.example_inputs is None:
-            assert self.dataloader, "Please provide dataloader or example_inputs"
+            ##assert self.dataloader, "Please provide dataloader or example_inputs"
             for idx, input in enumerate(self.dataloader):
                 self.example_inputs = input
 
