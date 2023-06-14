@@ -37,6 +37,18 @@ function init_params {
 # run_tuning
 function run_tuning {
 
+    # Check if the input_model ends with the filename extension ".onnx"
+    if [[ $input_model =~ \.onnx$ ]]; then
+        # If the string ends with the filename extension, get the path of the file
+        input_model=$(dirname "$input_model")
+    fi
+
+    # Check if the output_model ends with the filename extension ".onnx"
+    if [[ $output_model =~ \.onnx$ ]]; then
+        # If the string ends with the filename extension, get the path of the file
+        output_model=$(dirname "$output_model")
+    fi
+
     # Check if the directory exists
     if [ ! -d "$output_model" ]; then
         # If the directory doesn't exist, create it
