@@ -698,7 +698,7 @@ class TorchSmoothQuant:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
-                        logger.warning("sorry, could not trace the model, smooth quant is ignored")
+                        logger.warning("sorry, could not trace the model, smooth quant is skipped")
                         logger.warning("if you are using huggingface model,"
                                        "you could set torchscript to True "
                                        "when loading the model or set the return_dict to False")
@@ -749,10 +749,11 @@ class TorchSmoothQuant:
 
                 if not self.output_is_equal(out_post_sq, out_pre_sq):
                     logger.warning(
-                        "Mathematical equivelancy of Smoothquant is not preserved.  Please kindly report this issue to github")
+                        "Mathematical equivelancy of Smoothquant is not preserved.  Please kindly report this issue to github, sq is skipped")
                     self.recover()
                 # else:
                 #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
+
             else:
                 logger.warning(" Could not get data, equivelancy check is skipped")
 
