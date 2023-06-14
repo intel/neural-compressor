@@ -858,7 +858,8 @@ class GraphTrace:
                     # Check if parent has multiple children of unsupported layers
                     set_inp_type = set(dict_inp[parent])
                     set_inp_type.discard('aten::size')
-                    if (set_inp_type.intersection(self.could_absorb_layers) == set_inp_type) or (set_inp_type.intersection(self.skip_ops_to_find_absorb) == set_inp_type):
+                    if ((set_inp_type.intersection(self.could_absorb_layers) == set_inp_type) or
+                       (set_inp_type.intersection(self.skip_ops_to_find_absorb) == set_inp_type)):
                         prev_absorb_layer.append(parent)
                     else:
                         prev_absorb_layer.append(None)
