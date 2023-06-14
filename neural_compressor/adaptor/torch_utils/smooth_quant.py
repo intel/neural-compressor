@@ -711,7 +711,8 @@ class TorchSmoothQuant:
                             to_absorb_cnt += len(item)
 
                         logger.info(
-                            f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} layers could be absorbed in smooth quant")
+                            f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
+                            f"layers could be absorbed in smooth quant")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
@@ -749,7 +750,8 @@ class TorchSmoothQuant:
 
                 if not self.output_is_equal(out_post_sq, out_pre_sq):
                     logger.warning(
-                        "Mathematical equivelancy of Smoothquant is not preserved.  Please kindly report this issue to github, sq is skipped")
+                        "Mathematical equivelancy of Smoothquant is not preserved. "
+                        " Please kindly report this issue to github, sq is skipped")
                     self.recover()
                 # else:
                 #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
