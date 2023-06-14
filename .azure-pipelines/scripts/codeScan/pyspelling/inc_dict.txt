@@ -419,6 +419,7 @@ DDP
 DDR
 de
 deberta
+decapoda
 DecodeImage
 deepengine
 deeplab
@@ -1187,6 +1188,7 @@ nd
 ndarray
 NDArray
 nderlu
+NeelNanda
 neox
 nepoch
 ner
