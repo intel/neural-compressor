@@ -26,7 +26,14 @@ class ResultMonitor:
         port: The port that ResultMonitor listens to
         task_db: the TaskDb object that manages the tasks
     """
+
     def __init__(self, port, task_db: TaskDB):
+        """Init ResultMonitor.
+
+        Args:
+            port (int): the port for monitoring task results.
+            task_db (TaskDB): the object of TaskDB.
+        """
         self.s = socket.socket()
         self.port = port
         self.task_db = task_db
@@ -53,7 +60,7 @@ class ResultMonitor:
             # or let studio manually fresh the page and call the query_task_status to get the result?
 
     def query_task_status(self, task_id):
-        """Synchronous query on the task status."""
+        """Synchronize query on the task status."""
         # TODO send back the result to the studio? RPC for query?
         logger.info(self.task_db.lookup_task_status(task_id))
 

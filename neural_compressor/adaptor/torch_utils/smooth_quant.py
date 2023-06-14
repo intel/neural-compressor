@@ -860,9 +860,9 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        if isinstance(dummy_input, dict):
+        if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
-                traced_model = torch.jit.trace(model, dummy_input["input_ids"], strict=False)
+                traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
             except:
                 pass

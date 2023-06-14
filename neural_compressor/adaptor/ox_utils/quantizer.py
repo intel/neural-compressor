@@ -90,6 +90,9 @@ class Quantizer:
         self.quantized_value_map = {}
         self.new_value_info = {}
 
+        # List of recalculated quantize weight for Gather op.
+        self.recalculate_quantized_value = []
+
         # QuantizeRange tensor name and zero tensor name for scale and zero point calculation.
         # Used when static is False
         self.fixed_qrange_uint8_name = "fixed_quantization_range_uint8"

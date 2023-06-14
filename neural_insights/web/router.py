@@ -67,7 +67,7 @@ class Router:
             "diagnosis/op_list": RealtimeRoutingDefinition(get_op_list),
             "diagnosis/op_details": RealtimeRoutingDefinition(get_op_details),
             "diagnosis/histogram": RealtimeRoutingDefinition(get_histogram),
-            "profiling/result": RealtimeRoutingDefinition(get_profiling_details)
+            "profiling/result": RealtimeRoutingDefinition(get_profiling_details),
         }
 
     def handle(self, request: Request) -> Response:
@@ -126,7 +126,7 @@ def find_pattern_in_graph(data: Dict[str, Any]) -> dict:
     model_path = RequestDataProcessor.get_string_value(data, "path")
     op_name = data.get("op_name", None)
     pattern = data.get("pattern", None)
-    if any([param is None for param in [model_path, op_name, pattern]]):
+    if any(param is None for param in [model_path, op_name, pattern]):
         raise ClientErrorException(
             "Missing parameters. Required parameters are: path, op_name and pattern.",
         )

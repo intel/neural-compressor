@@ -1,9 +1,8 @@
 neural_compressor>=2.2
-pydantic==1.10.6 #TODO release the version requirement
+pydantic
 fastapi
 uvicorn[standard]
 watchdog
-pandas
-protobuf==3.20 #TODO release the version requirement
+protobuf
 grpcio
 mpi4py

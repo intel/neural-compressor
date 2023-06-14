@@ -12,22 +12,64 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Solution utility."""
+
 import os
 import json
 
 def get_db_path(workspace="./"):
+    """Get the database path.
+
+    Args:
+        workspace (str, optional): . Defaults to "./".
+
+    Returns:
+        str: the path of database
+    """
     db_path = os.path.join(workspace, "db", "task.db")
     return os.path.abspath(db_path)
 
 def get_task_workspace(workspace="./"):
+    """Get the workspace of task.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: the workspace of task
+    """
     return os.path.join(workspace, "task_workspace")
 
 def get_task_log_workspace(workspace="./"):
+    """Get the log workspace for task.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: the workspace of task.
+    """
     return os.path.join(workspace, "task_log")
 
 def get_serve_log_workspace(workspace="./"):
+    """Get log workspace for service.
+
+    Args:
+        workspace (str, optional): the workspace for Neural Solution. Defaults to "./".
+
+    Returns:
+        str: the log workspace for service
+    """
     return os.path.join(workspace, "serve_log")
 
 def dict_to_str(d):
+    """Covert a dict object to a string object.
+
+    Args:
+        d (dict): a dict object
+
+    Returns:
+        str: string
+    """
     result = json.dumps(d)
     return result

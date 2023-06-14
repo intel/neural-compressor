@@ -1,0 +1,4 @@
+intel-tensorflow
+onnxruntime
+onnx
+onnxruntime-extensions
