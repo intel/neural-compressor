@@ -10,8 +10,7 @@ This document list steps of reproducing Vision Transformer model tuning results 
 ### Installation
 
 ```
-pip install tensorflow==2.11.0
-pip install intel-extension-for-tensorflow==1.1.0
+pip install -r requirements.txt
 ```
 
 ## 2. Prepare Pretrained model
@@ -35,6 +34,15 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
 
 # Run
 
+## 1. Quantization
+
 ```
-python main.py --input-graph <path to HF-ViT-Base16-Img224-frozen.pb> --output-graph ./output/ --dataset_location=<path to imagenet> --tune
+bash run_tuning.sh --input_model <path to HF-ViT-Base16-Img224-frozen.pb> --output_model ./output --dataset_location <path to imagenet>
+```
+
+
+## 2. Benchmark
+
+```
+bash run_benchmark.sh --input_model=./output.pb --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32
 ```
