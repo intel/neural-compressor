@@ -755,7 +755,7 @@ class TorchSmoothQuant:
                 #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
 
             else:
-                logger.warning(" Could not get data, equivelancy check is skipped")
+                logger.warning(" Could not get example input, equivelancy check is skipped")
 
             self.input_values, self.output_values = {}, {}
             return self.model
