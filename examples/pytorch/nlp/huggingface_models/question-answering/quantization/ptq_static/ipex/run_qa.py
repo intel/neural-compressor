@@ -44,12 +44,14 @@ from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from typing import Optional
 from utils_qa import postprocess_qa_predictions
+from neural_compressor.utils.utility import LazyImport
 try:
     import intel_extension_for_pytorch as ipex
     from intel_extension_for_pytorch.quantization import prepare, convert
     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 except:
     assert False, "transformers 4.19.0 requests IPEX version higher or equal to 1.12"
+torch = LazyImport("torch")
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -639,7 +641,10 @@ def main():
         ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800)
+        dummy_input_ids = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
+        dummy_attention_mask = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
+        example_inputs = {"input_ids": dummy_input_ids, "attention_mask": dummy_attention_mask}
+        conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800, example_inputs=example_inputs)
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=eval_dataloader,
@@ -655,7 +660,6 @@ def main():
         from neural_compressor.adaptor.pytorch import get_example_inputs
         example_inputs = get_example_inputs(model, eval_dataloader)
         model = ipex.optimize(model)
-        import torch
         with torch.no_grad():
             model = torch.jit.trace(model, example_inputs, strict=False)
             model = torch.jit.freeze(model)
