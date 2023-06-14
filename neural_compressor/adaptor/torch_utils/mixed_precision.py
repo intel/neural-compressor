@@ -31,7 +31,10 @@ def ipex_mixed_precision(model, calib_dataloader=None, example_inputs=None):
     mp_model = ipex.optimize(mp_model, dtype=torch.bfloat16)
 
     with torch.no_grad(), torch.cpu.amp.autocast():
-        mp_model = torch.jit.trace(mp_model, example_inputs)
+        if isinstance(example_inputs, dict):
+            mp_model = torch.jit.trace(mp_model, example_kwarg_inputs=example_inputs)
+        else:
+            mp_model = torch.jit.trace(mp_model, example_inputs)
         mp_model = torch.jit.freeze(mp_model.eval())
     model._model = mp_model
     return model
