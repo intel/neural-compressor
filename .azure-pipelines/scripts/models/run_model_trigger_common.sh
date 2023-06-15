@@ -74,7 +74,7 @@ elif [ "${mode}" == "tuning" ]; then
     elif [ "${framework}" == "tensorflow" ]; then
         output_model=${log_dir}/${model}/${framework}-${model}-tune.pb
     fi
-    tuning_cmd="${tuning_cmd} --output_model=${output_model}"
+    [[ ${output_model} ]] && tuning_cmd="${tuning_cmd} --output_model=${output_model}"
 
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
