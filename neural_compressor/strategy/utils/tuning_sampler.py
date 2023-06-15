@@ -414,7 +414,8 @@ class FallbackTuningSampler(TuningSampler):
             # Only support fallback to lower precision.
             if not self.accumulate:
                 new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
-            op_name_type_lst = [op_name_type] if isinstance(op_name_type[1], str) else op_name_type
+            op_name_type_lst = [op_name_type] if len(op_name_type) != 1 and \
+                isinstance(op_name_type[1], str) else op_name_type
             for op_name_type in op_name_type_lst:
                 full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, target_dtype)
                 self.op_complete_path[op_name_type] = copy.deepcopy(full_path)

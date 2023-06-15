@@ -135,7 +135,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             tuning config
         """
         fallback_items_name_lst.sort(key=lambda x: x[1])
-        op_type_groups = groupby(fallback_items_name_lst, key=lambda x: [1])
+        op_type_groups = groupby(fallback_items_name_lst, key=lambda x: x[1])
         # key: ((op1_name, op_type1),(op2_name, op_type1), (op3_name, op_type1), ...)
         # value: target dtype
         ops_dtypes = OrderedDict()
