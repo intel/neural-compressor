@@ -595,7 +595,7 @@ Classes
        model = compression_manager.model
 
 
-.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[], op_name_dict={}, op_type_dict={})
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[], op_name_dict={}, op_type_dict={}, example_inputs=None)
 
 
 
@@ -606,8 +606,8 @@ Classes
                   Support 'cpu' and 'gpu', default is 'cpu'.
    :type device: str, optional
    :param backend: Backend for model execution.
-                   Support 'default', 'itex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
-                   default is 'default'.
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
+                   default is 'default', 'ipex' doesn't support tune.
    :type backend: str, optional
    :param precisions: Target precision for mix precision conversion.
                       Support 'bf16' and 'fp16', default is 'bf16'.
@@ -654,6 +654,8 @@ Classes
                             },
                         }
    :type op_name_dict: dict, optional
+   :param example_inputs: Example inputs used for tracing model. Defaults to None.
+   :type example_inputs: tensor|list|tuple|dict, optional
 
    .. rubric:: Example
 
