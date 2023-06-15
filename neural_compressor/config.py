@@ -1715,10 +1715,12 @@ class MixedPrecisionConfig(object):
 
     @property
     def quant_level(self):
+        """Get the quantization level"""
         return self._quant_level
 
     @quant_level.setter
     def quant_level(self, quant_level):
+        """Set the quantization level"""
         self._quant_level = quant_level
 
     @property
