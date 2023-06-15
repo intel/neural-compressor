@@ -920,10 +920,9 @@ class GraphTrace:
                         parent_out_kinds.discard('aten::size')
                         if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
                             prev_absorb_layer.append(parent)
-                        elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
-                            prev_absorb_layer.append(parent) ##TODO: check other scenarios
+                        # elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        #     prev_absorb_layer.append(parent) ##TODO: check other scenarios
                         else: # When parent to multiple ops, sq transformation could be wrong.
-                            print(f"lyt_debug_FOUND: {parent.kind()}, {parent_out_kinds}, {parent_scopeName}")
                             prev_absorb_layer.append(None)
                     else:
                         prev_absorb_layer.append(parent)
