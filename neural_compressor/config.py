@@ -1372,12 +1372,13 @@ class WeightPruningConfig:
 
     def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
-                 excluded_op_names=[],
+                 excluded_op_names=[], backend=None,
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
         """Init a WeightPruningConfig object."""
+        self.backend = backend
         self.pruning_configs = pruning_configs
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,

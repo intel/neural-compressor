@@ -80,7 +80,7 @@ class CompressionManager:
 
         if isinstance(confs, List) and len(confs) > 1:
             for conf in confs:
-                if isinstance(conf, QuantizationAwareTrainingConfig):
+                if isinstance(conf, QuantizationAwareTrainingConfig) or isinstance(conf, WeightPruningConfig):
                     self.model = Model(model, conf=conf)
             if self.model is None:
                 self.model = Model(model)
@@ -150,7 +150,7 @@ class CompressionManager:
                 callbacks_list.append(QuantizationAwareTrainingCallbacks(confs, adaptor=self.adaptor))
                 self.conf = _Config(quantization=confs, benchmark=None, pruning=None, distillation=None, nas=None)
             elif isinstance(confs, WeightPruningConfig):
-                self.model = Model(model)
+                self.model = Model(model, conf=confs)
                 callbacks_list.append(PruningCallbacks(confs, model=self.model))
                 self.conf = _Config(quantization=None, benchmark=None, pruning=confs, distillation=None, nas=None)
             elif isinstance(confs, DistillationConfig):
