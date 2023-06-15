@@ -949,12 +949,12 @@ class GraphTrace:
         dict_parent_kind = defaultdict(list)
         for node in traced_model.graph.nodes():
             parents_list = get_parents(node)
-            node_kind = node.kind()
+            node_kind, node_scopeName = node.kind(), node.scopeName()
             if parents_list: #save input_kinds of all parent nodes
                 for parent_ in parents_list:
                     parent = parent_.node()
                     parent_kind = parent.kind()
-                    if 'prim' not in parent_kind:
+                    if 'prim' not in parent_kind and parent.scopeName() != node_scopeName:
                         dict_parent_kind[parent.scopeName()].append(node_kind)
 
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
