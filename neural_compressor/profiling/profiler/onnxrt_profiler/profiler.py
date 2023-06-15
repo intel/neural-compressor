@@ -68,6 +68,7 @@ class Profiler(Parent):
         Returns:
             None
         """
+        import numpy as np
         import onnxruntime as ort
 
         graph = self.model
@@ -77,7 +78,7 @@ class Profiler(Parent):
         input_tensors = sess_profile.get_inputs()
 
         for _, (inputs, _) in enumerate(self.dataloader):
-            if len(input_tensors) != len(inputs):
+            if not isinstance(inputs, np.ndarray) and len(input_tensors) != len(inputs):
                 raise Exception("Input data number mismatch.")
             if len(input_tensors) == 1:
                 input_dict = {input_tensors[0].name: inputs}
