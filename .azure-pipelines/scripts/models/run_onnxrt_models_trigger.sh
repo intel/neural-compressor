@@ -27,7 +27,7 @@ FRAMEWORK_VERSION="1.14.1"
 inc_new_api=false
 # ======== set up config for onnxrt models ========
 if [ "${model}" == "resnet50-v1-12" ]; then
-    model_src_dir="image_recognition/onnx_model_zoo/resnet50/quantization/ptq"
+    model_src_dir="image_recognition/onnx_model_zoo/resnet50/quantization/ptq_static"
     dataset_location="/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000/ILSVRC2012_img_val"
     input_model="/tf_dataset2/models/onnx/resnet50-v1-12/resnet50-v1-12.onnx"
     yaml="resnet50_v1_5.yaml"
