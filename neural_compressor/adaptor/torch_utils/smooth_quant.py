@@ -72,6 +72,16 @@ def model_forward(model, dataloader, iters, device):
                 break
 
 
+def model_forward_per_sample(model, sample, device):
+    try:
+        output = forward_wrapper(model, sample, device)
+        return output
+
+    except Exception as e:
+        output = forward_wrapper(model, sample[0], device)
+        return output
+
+
 def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
     eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
@@ -688,7 +698,7 @@ class TorchSmoothQuant:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
-                        logger.warning("sorry, could not trace the model, smooth quant is ignored")
+                        logger.warning("sorry, could not trace the model, smooth quant is skipped")
                         logger.warning("if you are using huggingface model,"
                                        "you could set torchscript to True "
                                        "when loading the model or set the return_dict to False")
@@ -701,7 +711,8 @@ class TorchSmoothQuant:
                             to_absorb_cnt += len(item)
 
                         logger.info(
-                            f"find {to_absorb_cnt} could be absorbed in {to_absorb_cnt + len(no_absorb_layers)}")
+                            f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
+                            f"layers could be absorbed in smooth quant")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
@@ -735,11 +746,38 @@ class TorchSmoothQuant:
 
             if alpha == 'auto':
                 alpha = self.alpha_per_layer
+            example_inputs = self._get_example_input()
+            if example_inputs != None:
+                out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
+            if example_inputs != None:
+                # Check mathematical equivelancy
+                out_post_sq = model_forward_per_sample(self.model, example_inputs, self.device)
+
+                if not self.output_is_equal(out_post_sq, out_pre_sq):
+                    logger.warning(
+                        "Mathematical equivelancy of Smoothquant is not preserved. "
+                        " Please kindly report this issue to github, sq is skipped")
+                    self.recover()
+                # else:
+                #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
+
+            else:
+                logger.warning(" Could not get example input, equivelancy check is skipped")
+
             self.input_values, self.output_values = {}, {}
             return self.model
+
+    def output_is_equal(self, out1, out2, atol=1e-05):
+        if isinstance(out1, tuple):
+            return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
+        elif isinstance(out1, dict):
+            return all(torch.all(torch.isclose(out1[k], out2[k], atol=atol)) for k in out1.keys())
+        elif isinstance(out1, torch.Tensor):
+            return torch.all(torch.isclose(out1, out2, atol=atol))
+        return False
 
     def recover(self):
         """
@@ -768,6 +806,16 @@ class TorchSmoothQuant:
                     self_absorb_layer[name] = [name]
         return self_absorb_layer
 
+    def _get_example_input(self):
+        if self.dataloader == None and self.example_inputs == None:
+            return None
+        if self.example_inputs is None:
+            ##assert self.dataloader, "Please provide dataloader or example_inputs"
+            for idx, input in enumerate(self.dataloader):
+                self.example_inputs = input
+
+        return self.example_inputs
+
     def _trace(self, op_types):
         """
         Try the model to find the layers which can be smooth quantized.
@@ -777,11 +825,7 @@ class TorchSmoothQuant:
         no_absorb_layers: A list saving the layers which could not find the absorb layer
         """
         tg = GraphTrace()
-        if self.example_inputs is None:
-            assert self.dataloader, "Please provide dataloader or example_inputs"
-            for idx, input in enumerate(self.dataloader):
-                self.example_inputs = input
-                break
+        self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
         return absorb_to_layer, no_absorb_layers
 
