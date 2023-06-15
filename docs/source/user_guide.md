@@ -73,7 +73,7 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 <tr>
 <td colspan="3" align="center"><a href="objective.md">Objective</a></td>
 <td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
-<td colspan="3" align="center"><a href="add_new_data_type.md">New Data Type</a></td>
+<td colspan="3" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
 </tr>
 </tbody>
 </table>

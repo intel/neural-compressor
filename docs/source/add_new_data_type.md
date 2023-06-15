@@ -37,7 +37,7 @@ To enable accuracy-aware tuning with various frameworks, Intel® Neural Compress
 
 4. **Strategy**: Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
 
-5. **Adaptor** Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
+5. **Adaptor**: Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
 
 The following section provides an example of extending the PyTorch `Conv2d` operator to include support for 4-bit quantization.
