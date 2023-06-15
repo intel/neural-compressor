@@ -34,37 +34,8 @@ if [ "${model}" == "resnet50-v1-12" ]; then
     strategy="basic"
     batch_size=1
     new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
-elif [ "${model}" == "bert_base_MRPC_static" ]; then
-    model_src_dir="language_translation/bert/quantization/ptq"
-    dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
-    input_model="/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx"
-    yaml="bert_static.yaml"
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
-elif [ "${model}" == "bert_base_MRPC_dynamic" ]; then
-    model_src_dir="language_translation/bert/quantization/ptq"
-    dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
-    input_model="/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx"
-    yaml="bert_dynamic.yaml"
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
-elif [ "${model}" == "distilbert_base_MRPC_qdq" ]; then
-    model_src_dir="language_translation/distilbert/quantization/ptq"
-    dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
-    input_model="/tf_dataset2/models/onnx/distilbert_base_MRPC/distilbert-base-uncased.onnx"
-    yaml="distilbert_qdq.yaml"
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
+    inc_new_api=true
+    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --dataset_location=${dataset_location}"
     benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
 fi
 
