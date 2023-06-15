@@ -89,7 +89,7 @@ class eval_classifier_optimized_graph:
 
     def run(self):
         """This is neural_compressor function include tuning, export and benchmark option."""
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
 
         if args.tune:
@@ -106,8 +106,9 @@ class eval_classifier_optimized_graph:
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import METRICS
+            metrics = METRICS('tensorflow')
+            top1 = metrics['topk']()
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):
@@ -126,8 +127,9 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import METRICS
+            metrics = METRICS('tensorflow')
+            top1 = metrics['topk']()
             from neural_compressor.data import LabelShift
             postprocess = LabelShift(label_shift=1)
             def eval(model):

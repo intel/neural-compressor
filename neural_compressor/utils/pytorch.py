@@ -260,6 +260,16 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     elif tune_cfg['approach'] == "post_training_static_quant":
         approach_quant_mode = 'static'
 
+    recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+    if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+      and not recipe_cfgs['smooth_quant_args']['folding'] \
+      and approach_quant_mode != 'dynamic':
+        from ..adaptor.torch_utils.model_wrapper import _wrapper_sq_linear, _wrapper_qdq_linear
+        model = _wrapper_sq_linear(model, recipe_cfgs['smoothquant_op_info']['sq_linear'])
+        model = _wrapper_qdq_linear(model, recipe_cfgs['smoothquant_op_info']['qdq_linear'])
+        model.load_state_dict(stat_dict)
+        return model
+
     for _, op_cfg in tune_cfg['op'].items():
         if 'quant_mode' not in op_cfg['activation']:
             op_cfg['activation']['quant_mode'] = approach_quant_mode

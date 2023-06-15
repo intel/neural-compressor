@@ -216,13 +216,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 input1_node = self.node_name_mapping[node.input[1].rsplit(':', 1)[0]].node
             else:
                 input1_node = self.node_name_mapping[node.input[1]].node
-            if input0_node.op in ("AvgPool", "MaxPool"):
-                return self._find_relu_node(input0_node)
-            if input1_node.op in ("AvgPool", "MaxPool"):
-                return self._find_relu_node(input1_node)
-            if input1_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
+            if input0_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN') or \
+               input1_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
                 return False
-            return self._find_relu_node(input1_node)
+            return self._find_relu_node(input0_node) and self._find_relu_node(input1_node)
         elif self._check_op_list(node.op) or (self.itex_mode and node.op in ('Add', 'AddV2')):
             if node.op == 'ConcatV2':
                 find_relu = False
@@ -252,10 +249,18 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if each_input_name[0] == '^':
                 continue
 
-            if self.node_name_mapping[original_node.name].node.op == "MatMul":
+            # the qdq in pattern dq+maxpool+q should be the same type in itex mode
+            if self.itex_mode and each_input_name in self.node_name_mapping and \
+                    self.node_name_mapping[each_input_name].node.op == "MaxPool":
+                maxpool_node = self.graph_info[each_input_name].node
+                dtype = dtypes.DType(self.graph_info[maxpool_node.input[0]].node.attr["T"].type)
+            elif self.node_name_mapping[original_node.name].node.op == "MatMul":
                 dtype = dtypes.quint8
             elif self.node_name_mapping[original_node.name].node.op == "BatchMatMulV2" \
                 or self.node_name_mapping[original_node.name].node.op == "BatchMatMul":
+                dtype = dtypes.qint8
+            # the qdq in pattern dq+bn+relu+q and dq+bn+q should be s8 in itex mode
+            elif self.node_name_mapping[original_node.name].node.op == "FusedBatchNormV3":
                 dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
@@ -263,6 +268,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     if self.graph_info[input_node_name].node.op == "Dequantize":
                         dtype = dtypes.DType(
                             self.graph_info[input_node_name].node.attr["T"].type)
+                    elif self.graph_info[input_node_name].node.op == "FusedBatchNormV3":
+                        dtype = dtypes.qint8
                     elif self._find_relu_node(self.node_name_mapping[original_node.name].node):
                         dtype = dtypes.quint8
                     else:

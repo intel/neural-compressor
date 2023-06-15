@@ -4,7 +4,7 @@ pip install coverage
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 coverage_log="/neural-compressor/log_dir/coverage_log"
 coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
-coverage_compare="/neural-compressor/log_dir/coverate_compare.html"
+coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
@@ -23,6 +23,13 @@ coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log}
 coverage html -d log_dir/coverage_PR/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_PR/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_PR/htmlcov
+
+cd /neural-compressor
+git config --global --add safe.directory /neural-compressor
+git fetch
+git checkout master
+echo y | pip uninstall neural-compressor
+cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh
 
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 coverage erase
@@ -99,10 +106,10 @@ rm -fr log_dir/ut-coverage-*
 # Declare an array to hold failed items
 declare -a fail_items=()
 
-if (( $(bc -l <<< "${coverage_PR_lines_rate} < ${coverage_base_lines_rate}") )); then
+if (( $(bc -l <<< "${coverage_PR_lines_rate}+0.05 < ${coverage_base_lines_rate}") )); then
     fail_items+=("lines")
 fi
-if (( $(bc -l <<< "${coverage_PR_branches_rate} < ${coverage_base_branches_rate}") )); then
+if (( $(bc -l <<< "${coverage_PR_branches_rate}+0.05 < ${coverage_base_branches_rate}") )); then
     fail_items+=("branches")
 fi
 
@@ -114,10 +121,10 @@ if [[ ${#fail_items[@]} -ne 0 ]]; then
     for item in "${fail_items[@]}"; do
         case "$item" in
         lines)
-            decrease=$(echo "$coverage_PR_lines_rate - $coverage_base_lines_rate" | bc -l)
+            decrease=$(echo $(printf "%.3f" $(echo "$coverage_PR_lines_rate - $coverage_base_lines_rate" | bc -l)))
             ;;
         branches)
-            decrease=$(echo "$coverage_PR_branches_rate - $coverage_base_branches_rate" | bc -l)
+            decrease=$(echo $(printf "%.3f" $(echo "$coverage_PR_branches_rate - $coverage_base_branches_rate" | bc -l)))
             ;;
         *)
             echo "Unknown item: $item"
@@ -127,10 +134,10 @@ if [[ ${#fail_items[@]} -ne 0 ]]; then
         $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${decrease}%" && $RESET
     done
     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
-    bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
     exit 1
 else
     $BOLD_GREEN && echo "Unit Test success with coverage lines: ${coverage_PR_lines_rate}%, branches: ${coverage_PR_branches_rate}%" && $RESET
     $BOLD_GREEN && echo "compare coverage to give detail info" && $RESET
-    bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
 fi

@@ -17,31 +17,58 @@
 
 """The Bayesian tuning strategy."""
 
-import copy
 import warnings
 import numpy as np
 from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 
-from collections import OrderedDict
 from copy import deepcopy
-
+from ..config import options
 from ..utils import logger
 from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_sampler import OpWiseTuningSampler
-from .utils.tuning_structs import OpTuningConfig
 
 
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
     """The Bayesian tuning strategy."""
-    
-    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
-                 eval_func=None, dicts=None, q_hooks=None):
-        """Init the BaySian tuning strategy."""
-        super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
-                         eval_func, dicts, q_hooks)
+
+    def __init__(self,
+                 model,
+                 conf,
+                 q_dataloader=None,
+                 q_func=None,
+                 eval_func=None,
+                 eval_dataloader=None,
+                 eval_metric=None,
+                 resume=None,
+                 q_hooks=None):
+        """Init the BaySian tuning strategy.
+
+        Args:
+            model: The FP32 model specified for low precision tuning.
+            conf: The Conf class instance includes all user configurations.
+            q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
+            q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and
+                evaluation dataset and metrics should be encapsulated in this function implementation and
+                outputs a higher-is-better accuracy scalar value.
+            eval_dataloader: Data loader for evaluation. Defaults to None.
+            eval_metric: Metric for evaluation. Defaults to None.
+            resume: The dict containing resume information. Defaults to None.
+            q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
+                on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
+        """
+        super().__init__(model=model,
+                         conf=conf,
+                         q_dataloader=q_dataloader,
+                         q_func=q_func,
+                         eval_func=eval_func,
+                         eval_dataloader=eval_dataloader,
+                         eval_metric=eval_metric,
+                         resume=resume,
+                         q_hooks=q_hooks)
         self.bayes_opt = None
 
     def __getstate__(self):
@@ -51,7 +78,7 @@ class BayesianTuneStrategy(TuneStrategy):
             dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
+            if self._same_conf(history['cfg'], self.conf):
                 history['bayes_opt'] = self.bayes_opt
         save_dict = super().__getstate__()
         return save_dict
@@ -73,21 +100,21 @@ class BayesianTuneStrategy(TuneStrategy):
 
     def next_tune_cfg(self):
         """Generate the next tuning config according to bayesian search algorithm.
-        
+
         This strategy comes from the Bayesian optimization package and changed it to a discrete version.
-        It uses Gaussian processes to define the prior/posterior distribution over the black-box 
-        function with the tuning history and then finds the tuning configuration that maximizes 
+        It uses Gaussian processes to define the prior/posterior distribution over the black-box
+        function with the tuning history and then finds the tuning configuration that maximizes
         the expected improvement.
 
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         params = None
-        pbounds = {} 
+        pbounds = {}
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
                                            op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
 
@@ -101,7 +128,7 @@ class BayesianTuneStrategy(TuneStrategy):
             return
         if self.bayes_opt is None:
             self.bayes_opt = BayesianOptimization(
-                pbounds=pbounds, random_seed=self.cfg.tuning.random_seed)
+                pbounds=pbounds, random_seed=options.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
             logger.debug("Dump current bayesian params:")
@@ -119,7 +146,7 @@ class BayesianTuneStrategy(TuneStrategy):
 
 def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     """Find the maximum of the acquisition function parameters.
-    
+
     Args:
         ac: The acquisition function object that return its point-wise value.
         gp: A gaussian process fitted to the relevant data.
@@ -128,7 +155,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
         random_seed: instance of np.RandomState random number generator
         n_warmup: number of times to randomly sample the acquisition function
         n_iter: number of times to run scipy.minimize
-    
+
     Returns:
         x_max: The arg max of the acquisition function.
     """
@@ -152,7 +179,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
         # See if success
         if not res.success:
             continue
-        
+
         if isinstance(res.fun, float):
             res.fun = np.array([res.fun])
         # Store it if better than previous minimum(maximum).
@@ -172,13 +199,13 @@ def _hashable(x):
 # Target space part
 class TargetSpace(object):
     """Holds the param-space coordinates (X) and target values (Y).
-    
+
     Allows for constant-time appends while ensuring no duplicates are added.
     """
 
     def __init__(self, pbounds, random_seed=9527):
         """Construct a TargetSpace.
-        
+
         Args:
             target_func (function): Function to be maximized.
             pbounds (dict): Dictionary with parameters names as keys and a tuple with minimum and maximum values.
@@ -244,11 +271,11 @@ class TargetSpace(object):
         """Generate an array from params.
 
         Args:
-            params (Dict): The dict contains keys in `self.keys`, and 
+            params (Dict): The dict contains keys in `self.keys`, and
               corresponding param.
 
         Returns:
-            np.array: An array contains all params. 
+            np.array: An array contains all params.
         """
         try:
             assert set(params) == set(self.keys)
@@ -295,13 +322,13 @@ class TargetSpace(object):
 
     def register(self, params, target):
         """Append a point and its target value to the known data.
-        
+
         Runs in amortized constant time.
-        
+
         Args:
             params (ndarray): a single point, with len(params) == self.dim
             target (float): target function value
-        
+
         Raises:
             KeyError: if the point is not unique
         """
@@ -317,10 +344,10 @@ class TargetSpace(object):
 
     def get_target(self, params):
         """Get the target value of params.
-        
+
         Args:
             params (ndarray): a single point, with len(params) == self.dim
-        
+
         Returns:
             target (float): target function value.
         """
@@ -330,7 +357,7 @@ class TargetSpace(object):
 
     def random_sample(self):
         """Create random points within the bounds of the space.
-        
+
         Returns:
             data (ndarray): [num x dim] array points with dimensions corresponding to `self._keys`
         """
@@ -366,18 +393,18 @@ class TargetSpace(object):
 # Tuning part
 class BayesianOptimization():
     """The class for bayesian optimization.
-    
-    This class takes the parameters bounds in order to find which values for 
+
+    This class takes the parameters bounds in order to find which values for
     the parameters yield the maximum value using bayesian optimization.
     """
-    
+
     def __init__(self, pbounds, random_seed=9527, verbose=2):
         """Init bayesian optimization.
 
         Args:
             pbounds (dict): Dictionary with parameters names as keys and a tuple with
               minimum and maximum values.
-            random_seed (int, optional): The seed for random searching. Default to 9527. 
+            random_seed (int, optional): The seed for random searching. Default to 9527.
             verbose (int, optional): The level of verbosity. Default to 2.
         """
         self._random_seed = random_seed

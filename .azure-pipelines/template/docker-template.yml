@@ -81,4 +81,6 @@ steps:
           script: |
             docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} --shm-size="2g" \
             -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset -v /tf_dataset2:/tf_dataset2 ${{ parameters.repoName }}:${{ parameters.repoTag }}
-        displayName: "Docker run - ${{ parameters.containerName }}Container"
+            echo "Show the container list after docker run ... "
+            docker ps -a
+        displayName: "Docker run - ${{ parameters.containerName }} Container"

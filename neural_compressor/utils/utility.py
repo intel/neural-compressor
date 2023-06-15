@@ -22,26 +22,31 @@ User should not change values in this file. Instead, user should write a config
 file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
 options.
 """
-import re
+import _thread
 import ast
-import os
-import time
-import sys
-import pickle
-import logging
 import importlib
-from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
+import logging
+import os
 import os.path as osp
-import threading, _thread
+import pickle
+import re
+import subprocess
+import sys
+import threading
+import time
+from contextlib import contextmanager
+from enum import Enum
+from functools import wraps
+from tempfile import NamedTemporaryFile
+from typing import Dict, List, Any, Optional
+
 import cpuinfo
 import numpy as np
-from neural_compressor.utils import logger
 import prettytable as pt
 import psutil
-import subprocess
-from enum import Enum
 from pkg_resources import parse_version
+
+from neural_compressor.utils import logger
 
 required_libs = {
     'tensorflow': ['tensorflow'],
@@ -54,21 +59,26 @@ required_libs = {
     'mxnet': ['mxnet'],
 }
 
+
 def version1_lt_version2(version1, version2):
     """Check whether version1 is less than version2."""
     return parse_version(version1) < parse_version(version2)
-    
+
+
 def version1_gt_version2(version1, version2):
     """Check whether version1 is greater than version2."""
     return parse_version(version1) > parse_version(version2)
+
 
 def version1_eq_version2(version1, version2):
     """Check whether version1 is equal to version2."""
     return parse_version(version1) == parse_version(version2)
 
+
 def version1_gte_version2(version1, version2):
     """Check whether version1 is greater than version2 or is equal to it."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
+
 
 def version1_lte_version2(version1, version2):
     """Check whether version1 is less than version2 or is equal to it."""
@@ -109,7 +119,7 @@ class LazyImport(object):
 
 def singleton(cls):
     """Not displayed in API Docs.
-    
+
     Singleton decorater.
     """
     instances = {}
@@ -126,7 +136,9 @@ def singleton(cls):
 def time_limit(seconds):
     """Limit the time for context execution."""
     if seconds == 0:
-        seconds = threading.TIMEOUT_MAX
+        #seconds = threading.TIMEOUT_MAX
+        # TODO WA for fixed the crash for py 3.11.3
+        seconds = 3600 * 24 * 365
     timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
     timer.start()
     try:
@@ -173,7 +185,7 @@ def get_size(obj, seen=None):
 
 def compute_sparsity(tensor):
     """Compute the sparsity.
-    
+
     Args:
         tensor: Tensorflow or Pytorch tensor
 
@@ -363,7 +375,10 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
     tuning_history = get_tuning_history(tuning_history_path)
     target_history = tuning_history[0]['history']
     q_config = target_history[num]['q_config']
-    framework = tuning_history[0]['cfg']['model']['framework']
+    try:
+        framework = tuning_history[0]['cfg']['model']['framework']
+    except Exception as e:
+        framework = tuning_history[0]['cfg'].quantization.framework
 
     if 'pytorch' in framework:
         from neural_compressor.utils.pytorch import load
@@ -398,16 +413,16 @@ def str2array(s):
     return np.array(ast.literal_eval(s))
 
 
-def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
+def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
     """Dequantize the weight with min-max filter tensors."""
     weight_channel = weight_tensor.shape[-1]
     if len(min_filter_tensor) == 1:
-        return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
-    # TODO to calculate the de-quantized result in a parallel way
-    for i in range(weight_channel):
-        weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
-
-
+         weight_tensor = weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+    else:
+        # TODO to calculate the de-quantized result in a parallel way
+        for i in range(weight_channel):
+            weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+    return weight_tensor
 
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
@@ -422,7 +437,7 @@ def Dequantize(data, scale_info):
 
 class CaptureOutputToFile(object):
     """Not displayed in API Docs.
-    
+
     Capture the output to file.
     """
     def __init__(self, tmp_file_path, stream=sys.stderr):
@@ -447,7 +462,7 @@ class Statistics():
     """The statistics printer."""
     def __init__(self, data, header, field_names, output_handle=logger.info):
         """Init a Statistics object.
-        
+
         Args:
             data: The statistics data
             header: The table header
@@ -495,6 +510,7 @@ class GLOBAL_STATE():
     """Access the global model."""
     STATE = MODE.QUANTIZATION
 
+
 def load_data_from_pkl(path, filename):
     """Load data from local pkl file.
 
@@ -509,6 +525,7 @@ def load_data_from_pkl(path, filename):
             return data
     except FileExistsError:
         logging.getLogger("neural_compressor").info('Can not open %s.' % path)
+
 
 def dump_data_to_local(data, path, filename):
     """Dump data to local as pkl file.
@@ -528,7 +545,6 @@ def dump_data_to_local(data, path, filename):
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
-
 
 
 def set_random_seed(seed: int):
@@ -554,6 +570,7 @@ def set_tensorboard(tensorboard: bool):
     from neural_compressor.config import options
     options.tensorboard = tensorboard
 
+
 def show_memory_info(hint):
     """Show process full memory."""
     pid = os.getpid()
@@ -562,3 +579,498 @@ def show_memory_info(hint):
     info = p.memory_full_info()
     memory = info.uss / 1024. / 1024
     print('{} memory used: {} MB'.format(hint, memory))
+
+
+def dump_class_attrs(obj, result={}):
+    """Dump the attributes and values of a config class.
+
+    Args:
+        obj: An instance of a config class.
+        result: An dict for recording attributes and values.
+    """
+    obj_name = obj.__class__.__name__
+    if obj_name not in result:
+        result[obj_name] = {}
+    for attr in dir(obj):
+        if not attr.startswith("__"):
+            value = getattr(obj, attr)
+            value_class_name = value.__class__.__name__
+            if 'Config' in value_class_name or 'Criterion' in value_class_name:
+                dump_class_attrs(value, result=result[obj_name])
+            else:
+                attr = attr[1:] if attr.startswith('_') else attr
+                result[obj_name][attr] = value
+
+
+class DotDict(dict):
+    """access yaml using attributes instead of using the dictionary notation.
+
+    Args:
+        value (dict): The dict object to access.
+
+    """
+
+    def __init__(self, value=None):
+        """Init DotDict.
+
+        Args:
+            value: The value to be initialized. Defaults to None.
+        """
+        if value is None:
+            pass
+        elif isinstance(value, dict):
+            for key in value:
+                self.__setitem__(key, value[key])
+        else:
+            raise TypeError('expected dict')
+
+    def __getitem__(self, key):
+        """Get value by key.
+
+        Args:
+            key: The query item.
+        """
+        value = self.get(key, None)
+        return value
+
+    def __setitem__(self, key, value):
+        """Add new key and value pair.
+
+        Args:
+            key: something like key in dict.
+            value: value assigned to key.
+        """
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            value = DotDict(value)
+        if isinstance(value, list) and len(value) == 1 and isinstance(
+                value[0], dict):
+            value = DotDict(value[0])
+        if isinstance(value, list) and len(value) > 1 and all(isinstance(
+                v, dict) for v in value):
+            value = DotDict({k: v for d in value for k, v in d.items()})
+        super(DotDict, self).__setitem__(key, value)
+
+    def __getstate__(self):
+        """Return self dict."""
+        return self.__dict__
+
+    def __setstate__(self, d):
+        """Update self dict."""
+        self.__dict__.update(d)
+
+    __setattr__, __getattr__ = __setitem__, __getitem__
+
+
+def compare_objects(obj1, obj2, ignore_attrs):
+    """Compare two objects and ignore the specified attributes.
+
+    Args:
+        obj1: The first object to compare.
+        obj2: The second object to compare.
+        ignore_attrs: A list of attribute names to ignore during the comparison.
+
+    Returns:
+        True if the objects are equal ignoring the specified attributes, False otherwise.
+    """
+    # Check if the objects are of the same type
+    if type(obj1) != type(obj2):
+        return False
+
+    # Check if the objects have the same set of attributes
+    attrs1 = set(obj1.__dict__.keys())
+    attrs2 = set(obj2.__dict__.keys())
+    if attrs1 != attrs2:
+        return False
+    # Compare the attributes, ignoring the specified ones
+    for attr in attrs1 - set(ignore_attrs):
+        if getattr(obj1, attr) != getattr(obj2, attr):
+            return False
+    return True
+
+
+def alias_param(param_name: str, param_alias: str):
+    """Decorator for aliasing a param in a function.
+
+    Args:
+        param_name: Name of param in function to alias.
+        param_alias: Alias that can be used for this param.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            alias_param_value = kwargs.get(param_alias)
+            if alias_param_value:  # pragma: no cover
+                kwargs[param_name] = alias_param_value
+                del kwargs[param_alias]
+            result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+
+def print_table(
+        column_mapping: Dict[str, str],
+        table_entries: List[Any],
+        output_handler=logger.info,
+        title: Optional[str] = None,
+        insert_newlines=False,
+        precision: Optional[int] = None,
+) -> None:
+    """Print table with prettytable.
+
+    Args:
+        :
+        column_mapping (dict): Dictionary where key is a column header and value corresponds
+             to object's attribute.
+        table_entries (list): List of objects to be included in the table.
+        output_handler (func, optional): Output handler function.
+        title (str): Title for the table
+        insert_newlines (bool): Add newlines to each row
+        precision (int): Number of digits after the decimal point
+
+    Returns:
+        None
+    """
+    from functools import reduce
+    import numpy as np
+    table = pt.PrettyTable(min_table_width=40)
+    if title is not None:
+        table.title = title
+    table.field_names = list(column_mapping.keys())
+    for entry in table_entries:
+        table_row = []
+        for _, attribute in column_mapping.items():
+            if isinstance(entry, dict):
+                table_row.append(entry.get(attribute))
+            else:
+                value = reduce(getattr, [entry] + attribute.split("."))
+                if (isinstance(value, np.floating) or isinstance(value, float)) and isinstance(precision, int):
+                    if "e" in str(value):
+                        value = f'{value:.{precision}e}'
+                    else:
+                         value = round(value, precision)
+                table_row.append(value)
+        table.add_row(table_row)
+    lines = table.get_string().split('\n')
+    for i in lines:
+        if insert_newlines:
+            i += "\n"
+        output_handler(i)
+
+
+def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:
+    """Get information about tensors.
+
+    Args:
+        workload_location: path to workload directory
+        model_type: type of model. Supported model types: "input", "optimized"
+
+    Returns:
+        dictionary with tensors info
+    """
+    tensors_filenames = {
+        "input": os.path.join("fp32", "inspect_result.pkl"),
+        "optimized": os.path.join("quan", "inspect_result.pkl"),
+    }
+
+    tensors_filename = tensors_filenames.get(model_type, None)
+    if tensors_filename is None:
+        raise Exception(f"Could not find tensors data for {model_type} model.")
+    tensors_path = os.path.join(
+        workload_location,
+        "inspect_saved",
+        tensors_filename,
+    )
+    if not os.path.exists(tensors_path):
+        raise Exception("Could not find tensor data for specified optimization.")
+    with open(tensors_path, "rb") as tensors_pickle:
+        dump_tensor_result = pickle.load(tensors_pickle)
+    return dump_tensor_result
+
+
+def get_weights_details(workload_location: str) -> list:
+    """Get weights details for model.
+
+    Args:
+        workload_location: path to workload directory
+
+    Returns:
+        list of WeightDetails objects
+    """
+    from neural_compressor.utils.weights_details import WeightsDetails
+    weights_details = []
+
+    input_model_tensors: dict = get_tensors_info(workload_location, model_type="input")["weight"]
+    optimized_model_tensors: dict = get_tensors_info(workload_location, model_type="optimized")[
+        "weight"
+    ]
+
+    common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+    for op_name in common_ops:
+
+        input_model_op_tensors = input_model_tensors[op_name]
+        optimized_model_op_tensors = optimized_model_tensors[op_name]
+
+        if isinstance(input_model_op_tensors, dict):
+            tensors_data = zip(input_model_op_tensors.items(), optimized_model_op_tensors.items())
+            for (_, input_op_tensor_values), (_, optimized_op_tensor_values) in tensors_data:
+                if input_op_tensor_values.shape != optimized_op_tensor_values.shape:
+                    continue
+
+                weights_entry = WeightsDetails(
+                    op_name,
+                    input_op_tensor_values,
+                    optimized_op_tensor_values,
+                )
+                weights_details.append(weights_entry)
+    return weights_details
+
+
+def dump_table(
+        filepath: str,
+        column_mapping: Dict[str, str],
+        table_entries: List[Any],
+        file_type: str = "csv",
+) -> None:
+    """Dump table data to file.
+
+    Args:
+        :
+        filepath (str): The path of the file to which the data is to be dumped.
+        column_mapping (dict): Dictionary where key is a column header and value corresponds
+             to object's attribute.
+        table_entries (list): List of objects to be included in the table.
+        file_type (str): name of the file extension. Currently only csv is supported.
+
+    Returns:
+        None
+    """
+    supported_filetypes = {
+        "csv": dump_table_to_csv,
+    }
+
+    dump_function = supported_filetypes.get(file_type, None)
+    if dump_function is None:
+        raise Exception(f"{file_type} is not supported")
+    dump_function(
+        filepath=filepath,
+        column_mapping=column_mapping,
+        table_entries=table_entries,
+    )
+
+
+def dump_table_to_csv(
+    filepath: str,
+    column_mapping: Dict[str, str],
+    table_entries: List[Any],
+):
+    """Dump table data to csv file.
+
+    Args:
+        :
+        filepath (str): The path of the file to which the data is to be dumped.
+        column_mapping (dict): Dictionary where key is a column header and value corresponds
+             to object's attribute.
+        table_entries (list): List of objects to be included in the table.
+
+    Returns:
+        None
+    """
+    from csv import DictWriter
+    from functools import reduce
+
+    fieldnames = list(column_mapping.keys())
+
+    parsed_entries = []
+
+    for entry in table_entries:
+        parsed_entry = {}
+        for column_name, attribute in column_mapping.items():
+            if isinstance(entry, dict):
+                parsed_entry.update({column_name: entry.get(attribute)})
+            else:
+                value = reduce(getattr, [entry] + attribute.split("."))
+                parsed_entry.update({column_name: value})
+        parsed_entries.append(parsed_entry)
+
+    with open(filepath, "w", newline="") as csv_file:
+        writer = DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(parsed_entries)
+
+
+def get_number_of_sockets() -> int:
+    """Get number of sockets in platform."""
+    cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
+    if sys.platform == "win32":
+        cmd = 'wmic cpu get DeviceID | find /c "CPU"'
+
+    proc = subprocess.Popen(
+        args=cmd,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=False,
+    )
+    proc.wait()
+    if proc.stdout:
+        for line in proc.stdout:
+            return int(line.decode("utf-8", errors="ignore").strip())
+    return 0
+
+
+class OpEntry:
+    """OP entry class."""
+
+    def __init__(self, op_name: str, mse: float, activation_min: float, activation_max: float):
+        """Initialize OP entry.
+
+        Args:
+            op_name: name of the OP
+            mse: MSE value for OP
+            activation_min: minimum value of activation
+            activation_max: maximum value of activation
+
+        Returns:
+            None
+        """
+        self.op_name: str = op_name
+        self.mse: float = mse
+        self.activation_min: float = activation_min
+        self.activation_max: float = activation_max
+
+
+def print_op_list(workload_location: str):
+    """Print OP table and dump it to CSV.
+
+    Args:
+        workload_location: path to workload directory
+
+    Returns:
+        None
+    """
+    minmax_file_path = os.path.join(workload_location, "inspect_saved", "activation_min_max.pkl")
+    input_model_tensors = get_tensors_info(
+        workload_location,
+        model_type="input",
+    )["activation"][0]
+    optimized_model_tensors = get_tensors_info(
+        workload_location,
+        model_type="optimized",
+    )["activation"][0]
+    op_list = get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors)
+    sorted_op_list = sorted(op_list, key=lambda x: x.mse, reverse=True)
+    if len(op_list) <= 0:
+        return
+    print_table(
+        title="Activations summary",
+        column_mapping={
+            "OP name": "op_name",
+            "MSE": "mse",
+            "Activation min": "activation_min",
+            "Activation max": "activation_max",
+        },
+        table_entries=sorted_op_list,
+        precision=5,
+    )
+
+    activations_table_file = os.path.join(
+        workload_location,
+        "activations_table.csv",
+    )
+    dump_table(
+        filepath=activations_table_file,
+        column_mapping={
+            "OP name": "op_name",
+            "MSE": "mse",
+            "Activation min": "activation_min",
+            "Activation max": "activation_max",
+        },
+        table_entries=sorted_op_list,
+        file_type="csv",
+    )
+
+
+def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) -> List[OpEntry]:
+    """Get OP list for model.
+
+    Args:
+        minmax_file_path: path to activation_min_max.pkl
+        input_model_tensors: dict with input tensors details
+        optimized_model_tensors: dict with optimized tensors details
+
+    Returns:
+        list of OpEntry elements
+    """
+    with open(minmax_file_path, "rb") as min_max_file:
+        min_max_data: dict = pickle.load(min_max_file)
+
+    op_list: List[OpEntry] = []
+
+    for op_name, min_max in min_max_data.items():
+        mse = calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
+        if mse is None:
+            continue
+        min = float(min_max.get("min", None))
+        max = float(min_max.get("max", None))
+        op_entry = OpEntry(op_name, mse, min, max)
+        op_list.append(op_entry)
+    return op_list
+
+
+def calculate_mse(
+    op_name: str,
+    input_model_tensors: dict,
+    optimized_model_tensors: dict,
+) -> Optional[float]:
+    """Calculate MSE for specified OP.
+
+    Args:
+        op_name: name of the OP
+        input_model_tensors: dict with input tensors details
+        optimized_model_tensors: dict with optimized tensors details
+
+    Returns:
+        MSE value for specified op_name
+    """
+    input_model_op_data = input_model_tensors.get(op_name, None)
+    optimized_model_op_data = optimized_model_tensors.get(op_name, None)
+
+    if input_model_op_data is None or optimized_model_op_data is None:
+        return None
+
+    mse: float = mse_metric_gap(
+        next(iter(input_model_op_data.values()))[0],
+        next(iter(optimized_model_op_data.values()))[0],
+    )
+
+    return mse
+
+
+def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
+    """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+
+    Args:
+        fp32_tensor (tensor): The FP32 tensor.
+        dequantize_tensor (tensor): The INT8 dequantize tensor.
+
+    Returns:
+        MSE value
+    """
+    import numpy as np
+
+    fp32_max = np.max(fp32_tensor)  # type: ignore
+    fp32_min = np.min(fp32_tensor)  # type: ignore
+    dequantize_max = np.max(dequantize_tensor)  # type: ignore
+    dequantize_min = np.min(dequantize_tensor)  # type: ignore
+    fp32_tensor_norm = fp32_tensor
+    dequantize_tensor_norm = dequantize_tensor
+    if (fp32_max - fp32_min) != 0:
+        fp32_tensor_norm = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
+
+    if (dequantize_max - dequantize_min) != 0:
+        dequantize_tensor_norm = (dequantize_tensor - dequantize_min) / (dequantize_max - dequantize_min)
+
+    diff_tensor = fp32_tensor_norm - dequantize_tensor_norm
+    euclidean_dist = np.sum(diff_tensor**2)  # type: ignore
+    return euclidean_dist / fp32_tensor.size

@@ -51,7 +51,7 @@ flags.DEFINE_integer('batch_size', 32, 'batch_size')
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor import Metric
 from neural_compressor.data.transforms.transform import ComposeTransform
 from neural_compressor.data.datasets.dataset import TensorflowImageRecord
 from neural_compressor.data.transforms.imagenet_transform import LabelShift
@@ -74,13 +74,15 @@ def evaluate(model):
     Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.keras.Model): The input model will be the class of tf.keras.Model.
+        model (tf.keras.Model): The input model will be the objection of tf.keras.Model.
 
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     postprocess = LabelShift(label_shift=1)
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
     latency_list = []
 
     def eval_func(dataloader, metric):
@@ -116,7 +118,7 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex', 
             calibration_sampling_size=[50, 100])
@@ -124,7 +126,6 @@ def main(_):
             model=FLAGS.input_model,
             conf=config,
             calib_dataloader=calib_dataloader,
-            eval_dataloader=eval_dataloader,
             eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
@@ -136,7 +137,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model.model import Model
-            accuracy = evaluate(Model(FLAGS.input_model).model)
+            accuracy = evaluate(Model(FLAGS.input_model, backend='itex').model)
             logger.info('Batch size = %d' % FLAGS.batch_size)
             logger.info("Accuracy: %.5f" % accuracy)
 

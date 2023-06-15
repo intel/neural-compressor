@@ -34,6 +34,18 @@ python eval_lambada.py \
   --alpha auto
 ```
 
+#### For GPT-J model, please enable the fallback_add option
+```shell
+python eval_lambada.py \
+  --model_name_or_path EleutherAI/gpt-j-6B \
+  --int8 \
+  --sq \
+  --alpha auto \
+  --fallback_add 
+```
+
+
+
 ## Benchmarking 
 
 int8 benchmarking

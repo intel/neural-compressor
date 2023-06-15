@@ -274,7 +274,7 @@ class TestMixedPrecisionOnNonEnabledHost(unittest.TestCase):
             output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
-        conf = MixedPrecisionConfig(precision="fp16")
+        conf = MixedPrecisionConfig(precisions="fp16")
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.tf_model, conf)
         self.assertEqual(cm.exception.code, 0)
@@ -309,13 +309,14 @@ class TestMixedPrecision(unittest.TestCase):
         #self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
         tuning_criterion = TuningCriterion(max_trials=3, timeout=1000000)
-        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep', precision="fp16")
+        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep', precisions="fp16")
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
                                          eval_dataloader=self.matmul_dataloader,
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
         self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
+    def test_mixed_precision_with_evaluation_old_api(self):
         from neural_compressor.conf.config import MixedPrecision_Conf
         from neural_compressor.experimental import MixedPrecision
         converter = MixedPrecision(MixedPrecision_Conf('test.yaml'))
@@ -373,6 +374,7 @@ class TestMixedPrecision(unittest.TestCase):
     @unittest.skipIf(PT_VERSION.release < Version("1.11.0").release,
       "Please use PyTroch 1.11 or higher version for mixed precision.")
     def test_mixed_precision_with_eval_func_pt(self):
+        torch = LazyImport("torch")
         def eval(model):
             return 0.5
 
@@ -383,7 +385,30 @@ class TestMixedPrecision(unittest.TestCase):
             eval_func=eval,
         )
         self.assertTrue(isinstance(output_model.model.fc, BF16ModuleWrapper))
-
+        op_name_dict = {"fc":{
+                                "activation": {"dtype": ["fp32"]},
+                                "weight": {"dtype": ["fp32"]},
+                                    }
+                        }
+        conf = MixedPrecisionConfig(op_name_dict=op_name_dict)
+        output_model = mix_precision.fit(
+            self.pt_model,
+            conf,
+            eval_func=eval,
+        )
+        self.assertTrue(isinstance(output_model.model.fc.weight.dtype, type(torch.float32)))
+        op_type_dict = {"Linear":{
+                                "activation": {"dtype": ["fp32"]},
+                                "weight": {"dtype": ["fp32"]},
+                                    }
+                        }
+        conf = MixedPrecisionConfig(op_type_dict=op_type_dict)
+        output_model = mix_precision.fit(
+            self.pt_model,
+            conf,
+            eval_func=eval,
+        )
+        self.assertTrue(isinstance(output_model.model.fc.weight.dtype, type(torch.float32)))
 
 if __name__ == "__main__":
     unittest.main()

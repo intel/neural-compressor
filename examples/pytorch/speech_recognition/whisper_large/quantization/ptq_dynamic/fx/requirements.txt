@@ -1,0 +1,5 @@
+transformers
+datasets
+evaluate
+jiwer
+librosa

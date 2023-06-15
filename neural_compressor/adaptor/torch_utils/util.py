@@ -17,6 +17,7 @@
 """Util Class and Functions."""
 import copy
 import re
+import json
 import numpy as np
 from collections import UserDict
 from packaging.version import Version
@@ -60,121 +61,6 @@ def is_fused_module(module):
         return True
     else:
         return False
-
-
-def _set_input_scale_hook(model, op_cfgs):
-    """Insert hooks to observer input scale and zeropoint.
-
-    Args:
-        model (object): the input model
-        op_cfgs (dict): dictionary of quantization configure for each op
-
-    Returns:
-        hook_list (list): the input observer hooks
-    """
-    def input_scale_hook(module, input):
-        assert hasattr(module, 'input_observer'), \
-            'Expect input_observer attribute already attached to the module'
-        module.input_observer(input[0])
-        return input
-
-    def output_scale_hook(module, input, output):
-        assert hasattr(module, 'output_observer'), \
-            'Expect output_observer attribute already attached to the module'
-        module.output_observer(output)
-        return output
-
-    def ConvReLU2d_scale_hook(module, input):
-        assert hasattr(module, 'input_observer'), \
-            'Expect input_observer attribute already attached to the module'
-        assert hasattr(module, 'output_observer'), \
-            'Expect output_observer attribute already attached to the module'
-        module.input_observer(input[0])
-        output = module._conv_forward(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer(output)
-        return input
-
-    def LinearReLU_scale_hook(module, input):
-        import torch.nn.functional as F
-        assert hasattr(module, 'input_observer'), \
-            'Expect input_observer attribute already attached to the module'
-        assert hasattr(module, 'output_observer'), \
-            'Expect output_observer attribute already attached to the module'
-        module.input_observer(input[0])
-        output = F.linear(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer(output)
-        return input
-
-    hook_list = []
-    for name, module in model.named_modules():
-        if 'Conv' in str(module.__class__.__name__) or \
-          'Linear' in str(module.__class__.__name__):
-            if not hasattr(module, 'qconfig') or not module.qconfig:
-                continue
-            device = next(module.parameters()).device
-            from torch.nn.intrinsic.qat import ConvBn2d, ConvReLU2d, ConvBnReLU2d, LinearReLU
-            if type(module) in [ConvBn2d, ConvBnReLU2d]:
-                module.input_observer = module.qconfig.activation().to(device)
-                handle_in = module.register_forward_pre_hook(input_scale_hook)
-                # module[0] == torch.nn.BatchNorm2d
-                module[0].qconfig = module.qconfig
-                module[0].output_observer = module[0].qconfig.activation().to(device)
-                handle_out = module[0].register_forward_hook(output_scale_hook)
-                hook_list.extend([handle_in, handle_out])
-            elif type(module) in [ConvReLU2d, LinearReLU]:
-                module.input_observer = module.qconfig.activation().to(device)
-                module.output_observer = module.qconfig.activation().to(device)
-                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook if \
-                                        type(module) == ConvReLU2d else LinearReLU_scale_hook)
-                hook_list.extend([handle_in_out])
-            else:
-                if is_fused_module(module):
-                    continue
-                module.input_observer = module.qconfig.activation().to(device)
-                module.output_observer = module.qconfig.activation().to(device)
-                handle_in = module.register_forward_pre_hook(input_scale_hook)
-                handle_out = module.register_forward_hook(output_scale_hook)
-                hook_list.extend([handle_in, handle_out])
-    return hook_list
-
-
-def _get_input_scale(model, hook_list):
-    """Fetch input scale and zeropoint from observer.
-
-    Args:
-        model (object): the input model
-        hook_list (list): the input observer hooks
-
-    Returns:
-        input_scale_info (dict): the input scale and zero_point of each modules
-    """
-    scale_info = {}
-    for name, module in model.named_modules():
-        from torch.nn.intrinsic.qat import ConvBn2d, ConvBnReLU2d
-        if type(module) in [ConvBn2d, ConvBnReLU2d]:
-            if hasattr(module, "input_observer") and hasattr(module[0], "output_observer"):
-                scale_in, zero_point_in = module.input_observer.calculate_qparams()
-                scale_out, zero_point_out = module[0].output_observer.calculate_qparams()
-                scale_info[name] = {
-                    'input_scale': float(scale_in),
-                    'input_zeropoint': int(zero_point_in),
-                    'output_scale': float(scale_out),
-                    'output_zeropoint': int(zero_point_out)
-                }
-                del module.input_observer, module[0].output_observer
-        elif hasattr(module, "input_observer") and hasattr(module, "output_observer"):
-            scale_in, zero_point_in = module.input_observer.calculate_qparams()
-            scale_out, zero_point_out = module.output_observer.calculate_qparams()
-            scale_info[name] = {
-                'input_scale': float(scale_in),
-                'input_zeropoint': int(zero_point_in),
-                'output_scale': float(scale_out),
-                'output_zeropoint': int(zero_point_out)
-            }
-            del module.input_observer, module.output_observer
-    for h in hook_list:
-        h.remove()
-    return scale_info
 
 
 def collate_torch_preds(results):
@@ -368,7 +254,7 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                             pre_op_infos['output_tensor_infos'] = pre_op_output_infos
                             cfgs[pre_op_module][pre_op_state][pre_op_index] = pre_op_infos
                         else:
-                            print("Don't track the previous op name for ", name)
+                            pass
             cfgs[name[0]][name[1]][name[2]] = ipex_op_cfg
     return cfgs
 
@@ -493,6 +379,55 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
             for q_op in q_ops:
                 quantizable_ops.append(q_op)
     return quantizable_ops
+
+def update_sq_scale(ipex_config_path, smoothquant_scale_info):
+    """update ipex_config.json with smoothquant scale info generated by our algorithm.
+
+    Args:
+        ipex_config_path (str): a path to temporary ipex_config.json file.
+        smoothquant_scale_info (dict): a dict contains smoothquant scale info.
+    """
+    with open(ipex_config_path, 'r') as f:
+        ipex_config = json.load(f)
+        for module_name, v in ipex_config.items():
+            if 'q_op_infos' in v and v['q_op_infos']:
+                for op_num, v1 in v['q_op_infos'].items():
+                    # update alpha data instead of updating weight scale
+                    op_name = v1['fqn'] # fqn always exists even it's empty.
+                    if op_name in smoothquant_scale_info:
+                        input_scale_for_mul = \
+                                smoothquant_scale_info[op_name]['input_scale_for_mul'].tolist()
+                        input_scale_after_mul = \
+                                smoothquant_scale_info[op_name]['input_scale_after_mul'].tolist()
+                        input_zero_point_after_mul = \
+                                smoothquant_scale_info[op_name]['input_zero_point_after_mul'].tolist()
+                        weight_scale_for_mul = \
+                                (1 / smoothquant_scale_info[op_name]['input_scale_for_mul']).tolist()
+                        weight_scale_after_mul = \
+                                smoothquant_scale_info[op_name]['weight_scale_after_mul'].tolist()
+                        v1['input_tensor_infos'][0]['smooth_quant_scaling_factor'] = input_scale_for_mul
+                        v1['input_tensor_infos'][0]['scale'] = input_scale_after_mul
+                        v1['input_tensor_infos'][0]['zero_point'] = input_zero_point_after_mul
+                        v1['weight_tensor_infos'][0]['smooth_quant_scaling_factor'] = weight_scale_for_mul
+                        v1['weight_tensor_infos'][0]['scale'] = weight_scale_after_mul
+                        # # observers were overridden by the fallback step, setting it back.
+                        v1['activation_observer'] = {'name': 'SmoothQuantActivationObserver', 
+                                        'smooth_quant_enabled': False, 'dtype': 'torch.quint8', 
+                                        'qscheme': 'torch.per_tensor_affine', 'reduce_range': False,
+                                        'quant_min': 0, 'quant_max': 255, 
+                                        'alpha': smoothquant_scale_info[op_name]['alpha']
+                                        }
+                        v1['weight_observer'] = {'name': 'SmoothQuantWeightObserver', 
+                                        'smooth_quant_enabled': False, 'dtype': 'torch.qint8', 
+                                        'qscheme': 'torch.per_channel_symmetric', 'reduce_range': False, 
+                                        'quant_min': -128, 'quant_max': 127, 
+                                        'alpha': smoothquant_scale_info[op_name]['alpha'] #only update alpha
+                                        }
+        f.close()
+    # overwrite ipex_config_path
+    with open(ipex_config_path, 'w') as f1:
+        json.dump(ipex_config, f1, indent = 4)
+        f1.close()
 
 def auto_copy(module):  # pragma: no cover
     """Get an IPEX prepared model and return a fp32 model.
@@ -634,9 +569,9 @@ def simple_inference(model, input):
         output (object).
     """
     with torch.no_grad():
-        if type(input) is dict:
+        if isinstance(input, (dict, UserDict)):
             output = model(**input)
-        elif type(input) is tuple or type(input) is list:
+        elif isinstance(input, (list, tuple)):
             try:
                 output = model(*input)
             except:
@@ -951,4 +886,33 @@ def calculate_quant_min_max(unsigned, num_bits):
     else:
         quant_min, quant_max = -1 * 2.0**(num_bits - 1), 2.0**(num_bits - 1) - 1
     return quant_min, quant_max
-    
+
+def get_depth(d) -> int:
+    """Query the depth of the dict."""
+    if isinstance(d, dict):
+        return 1 + max(get_depth(v) for v in d.values())
+    return 0
+
+def get_dict_at_depth(d, target_depth, result, depth=0):
+    """Get all sub-dicts that are at a specified depth in a nested dict."""
+    if depth == target_depth:
+        result.append(d)
+        return
+    elif depth < target_depth and isinstance(d, dict):
+        for k, v in d.items():
+            get_dict_at_depth(v, target_depth, result, depth=depth+1)
+
+def get_element_under_depth(d, ops_lst):
+    """Get all values in a nested dict."""
+    if isinstance(d, dict):
+        for k, v in d.items():
+            get_element_under_depth(v, ops_lst)
+    else:
+        ops_lst.append(d)
+
+def get_op_type_by_name(op_name, quantizable_ops):
+    """Get op type by op name."""
+    for pair in quantizable_ops:
+        if pair[0] == op_name:
+            return pair[1]
+    return None

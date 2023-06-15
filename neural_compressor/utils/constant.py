@@ -68,6 +68,7 @@ RECIPES = {
         # 'weight_correction' : [False, True], # Disable it first
         },
     "tensorflow": {
+        'smooth_quant': [False, True],
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
         },

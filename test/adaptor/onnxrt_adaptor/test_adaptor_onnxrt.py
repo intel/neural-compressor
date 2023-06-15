@@ -9,14 +9,16 @@ import numpy as np
 from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
+from packaging.version import Version
+from transformers import AutoConfig, AutoModelForSequenceClassification
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.adaptor.pytorch import get_torch_version
-from neural_compressor import conf
-from packaging.version import Version
+from neural_compressor.conf.config import conf
 from neural_compressor import quantization, PostTrainingQuantConfig
+from neural_compressor.model import Model
 
 def build_static_yaml():
     fake_yaml = """
@@ -330,7 +332,7 @@ def eval_func(model):
     return 1.0
 
 
-def export_onnx_model(model, path, opset=12):
+def export_onnx_cv_model(model, path, opset=12):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
     torch_out = model(x)
 
@@ -345,6 +347,22 @@ def export_onnx_model(model, path, opset=12):
                     output_names = ["output"], # the model"s output names
                     dynamic_axes={"input" : {0 : "batch_size"},    # variable length axes
                                   "output" : {0 : "batch_size"}})
+
+def export_onnx_nlp_model(model, path, opset=12):
+    symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+    inputs = {'input_ids':      torch.ones(1, 128, dtype=torch.int64),
+              'attention_mask': torch.ones(1, 128, dtype=torch.int64)}
+    torch.onnx.export(model,                            # model being run
+                    (inputs['input_ids'],               # model input (or a tuple for multiple inputs) 
+                    inputs['attention_mask']),          
+                    path,                  # where to save the model (can be a file or file-like object)
+                    opset_version=opset,                   # the ONNX version to export the model
+                    do_constant_folding=True,           # whether to execute constant folding
+                    input_names=['input_ids',           # the model's input names
+                                  'attention_mask'],
+                    output_names=['logits'],
+                    dynamic_axes={'input_ids': symbolic_names,        # variable length axes
+                                  'attention_mask' : symbolic_names})
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''
@@ -396,23 +414,44 @@ def build_matmul_model():
 def build_matmul_model2():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
     B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
-    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
-    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
     H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
-     
+
+    C1_init = helper.make_tensor('C1', TensorProto.FLOAT, [1, 1, 5, 5], np.random.random(25).tolist())
     matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    matmul_node2 = onnx.helper.make_node('MatMul', ['C1', 'C'], ['C2'], name='Matmul2')
+    matmul_node3 = onnx.helper.make_node('MatMul', ['A', 'C2'], ['C3'], name='Matmul3')
     e_value = np.random.randint(2, size=(5)).astype(np.float32)
     E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
-    add = onnx.helper.make_node('Add', ['C', 'E'], ['D'], name='add')
+    add = onnx.helper.make_node('Add', ['C3', 'E'], ['D'], name='add')
      
     f_value = np.random.randint(2, size=(5)).astype(np.float32)
     F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
     add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
      
-    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
+    graph = helper.make_graph([matmul_node, matmul_node2, matmul_node3, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init, C1_init])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return  model
+
+def build_matmul_gather_model():
+    input = helper.make_tensor_value_info('input0', TensorProto.INT64, [1, 1])
+    output = helper.make_tensor_value_info('output0', TensorProto.FLOAT, [1, 1])
+
+    axes = helper.make_tensor('axes', TensorProto.INT64, [1], [1])
+    squeeze = onnx.helper.make_node('Squeeze', ['input0', 'axes'], ['A'], name='squeeze')
+
+    b_value = np.random.random((1, 2048))
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [1, 2048], b_value.reshape(2048).tolist())
+
+    gather = onnx.helper.make_node('Gather', ['B', 'A'], ['C'], name='gather')
+
+    d_value = np.random.random((2048, 1)).astype('float32')
+    D_init = helper.make_tensor('D', TensorProto.FLOAT, [2048, 1], d_value.reshape(2048).tolist())
+    matmul = onnx.helper.make_node('MatMul', ['C', 'D'], ['output0'])
+
+    graph = helper.make_graph([squeeze, gather, matmul], 'test_graph_1', [input], [output], [B_init, D_init, axes])
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
 
 def build_model_with_gather():
     b_value = np.random.randint(2, size=(10)).astype(np.int32)
@@ -475,14 +514,18 @@ def build_conv_model():
         np.random.randint(-1, 2, [5, 3, 3, 3]).astype(np.float32), name='conv2_weight')
     conv2_node = helper.make_node('Conv', ['conv1_output', 'conv2_weight'], ['conv2_output'], name='conv2')
 
+    conv3_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [3, 3, 3, 3]).astype(np.float32), name='conv3_weight')
+    conv3_node = helper.make_node('Conv', ['input', 'conv3_weight'], ['conv3_output'], name='conv3')
+
     avg_args = {'kernel_shape': [3, 3]}
-    avgpool_node = helper.make_node('AveragePool', ['conv1_output'], ['avg_output'], name='AveragePool', **avg_args)
+    avgpool_node = helper.make_node('AveragePool', ['conv3_output'], ['avg_output'], name='AveragePool', **avg_args)
 
     concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'], 
         ['concat_output'], name='Concat', axis=1)
     output = helper.make_tensor_value_info('concat_output', TensorProto.FLOAT, [1, 8, 220, 220])
-    initializers = [conv1_weight_initializer, conv2_weight_initializer]
-    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node],
+    initializers = [conv1_weight_initializer, conv2_weight_initializer, conv3_weight_initializer]
+    graph = helper.make_graph([conv1_node, conv2_node, conv3_node, concat_node, avgpool_node],
         'test', [input], [output], initializer=initializers)
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
@@ -595,6 +638,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
     rn50_export_path = "rn50.onnx"
     rn50_model = torchvision.models.resnet50()
 
+    model_name_or_path = "distilbert-base-uncased-finetuned-sst-2-english"
+    distilbert_model = AutoModelForSequenceClassification.from_pretrained(
+        model_name_or_path,
+        config=AutoConfig.from_pretrained(model_name_or_path))
+    distilbert_export_path = "distilbert.onnx"
+
     datasets = Datasets('onnxrt_qlinearops')
     cv_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
@@ -627,10 +676,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         build_benchmark_yaml()
         build_recipe_yaml()
         build_recipe2_yaml()
-        export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
+        export_onnx_cv_model(self.mb_v2_model, self.mb_v2_export_path)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
-        export_onnx_model(self.rn50_model, self.rn50_export_path, 12)
-        export_onnx_model(self.rn50_model, 'rn50_9.onnx', 9)
+        export_onnx_cv_model(self.rn50_model, self.rn50_export_path, 12)
+        export_onnx_cv_model(self.rn50_model, 'rn50_9.onnx', 9)
         self.rn50_model = onnx.load(self.rn50_export_path)
         self.ir3_model = build_ir3_model()
         self.gather_model = build_model_with_gather()
@@ -640,6 +689,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.conv_model = build_conv_model()
         self.gemm_model = build_gemm_model()
         self.conv_model2 = build_conv_model2()
+        export_onnx_nlp_model(self.distilbert_model, self.distilbert_export_path, 14)
+        self.distilbert_model = onnx.load(self.distilbert_export_path)
+        self.gather_matmul_model = build_matmul_gather_model()
         build_benchmark()
 
     @classmethod
@@ -802,9 +854,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_auto_quant(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_auto_quant'
+        conf.quantization.optype_wise ={"Add|MatMul|Conv": {'weight': {'algorithm': ['minmax']}, \
+            'activation': {'algorithm': ['minmax']}}}
         conf.quantization.calibration.sampling_size = 1
         conf.tuning.exit_policy.timeout = 1000000
-        conf.tuning.exit_policy.max_trials = 5
+        conf.tuning.exit_policy.max_trials = 8
         conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
         quantizer = Quantization(conf)
         quantizer.calib_dataloader = self.cv_dataloader
@@ -820,6 +874,21 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.rn50_model
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
+
+    def test_auto_quant_v2(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        tuning_criterion = TuningCriterion(max_trials=8, timeout=10000)
+        accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01)
+        conf = PostTrainingQuantConfig(quant_level=1, approach="auto",
+                                       op_type_dict={"Add|MatMul|Conv": {'weight': {'algorithm': ['minmax']},\
+                                           'activation': {'algorithm': ['minmax']}}},
+                                       tuning_criterion=tuning_criterion, 
+                                       accuracy_criterion=accuracy_criterion)
+        conf.framework = "onnxrt_qlinearops"
+        q_model = fit(model=self.rn50_model, conf=conf, calib_dataloader=self.cv_dataloader, eval_func=lambda model: 1)
+        self.assertIsNotNone(q_model)
+
 
     def test_quantize_data_per_channel(self):
         from neural_compressor.adaptor.ox_utils.util import quantize_data_per_channel
@@ -1046,6 +1115,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         def eval(model):
             return sub_eval(model, result)
+
+        dataset = Datasets("onnxrt_qdq")["dummy"]([(1,1,5,5), (1,1,5,1)])
+        dataloader = DATALOADERS["onnxrt_qdq"](dataset)
+        config = PostTrainingQuantConfig(approach='static')
+        q_model = quantization.fit(self.matmul_model2, config,
+            calib_dataloader=dataloader, eval_func=eval)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'QLinearMatMul']), 2)
+ 
         config = PostTrainingQuantConfig(approach='static', quant_format='QDQ')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
@@ -1066,10 +1143,32 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
  
-        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep')
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep', device='gpu')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
+
+        config = PostTrainingQuantConfig(approach='static', recipes={'optypes_to_exclude_output_quant': ['MatMul']})
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('MatMulIntegerToFloat' in [i.op_type for i in q_model.nodes()])
+
+        dataset = Datasets("onnxrt_qdq")["dummy"]((1,1), low=0., high=0., dtype='int64')
+        dataloader = DATALOADERS["onnxrt_qdq"](dataset)
+        config = PostTrainingQuantConfig()
+        q_model = quantization.fit(self.gather_matmul_model, config,
+            calib_dataloader=dataloader, eval_func=eval)
+
+        config = PostTrainingQuantConfig(quant_format='QDQ')
+        q_model2 = quantization.fit(self.gather_matmul_model, config,
+            calib_dataloader=dataloader, eval_func=eval)
+
+        sess1 = ort.InferenceSession(q_model.model.SerializeToString(), providers=['CPUExecutionProvider'])
+        sess2 = ort.InferenceSession(q_model2.model.SerializeToString(), providers=['CPUExecutionProvider'])
+        for data, _ in dataloader:
+            output1 = sess1.run(None, {'input0': data})
+            output2 = sess2.run(None, {'input0': data})
+        self.assertAlmostEqual(output1[0][0], output2[0][0])
 
     def test_smooth_quant(self):
         config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
@@ -1079,12 +1178,24 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
 
     def test_smooth_quant_args(self):
-        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True, \
-            'smooth_quant_args': {'alpha': 0.6}})
-        q_model = quantization.fit(self.conv_model, config,
-            calib_dataloader=self.cv_dataloader)
-        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
-
+        from neural_compressor.model.onnx_model import ONNXModel
+        framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "backend": "default",
+                               "format": "default",
+                               "domain": "auto",
+                               "recipes": {},
+                               "workspace_path": './nc_workspace/{}/{}/'.format(
+                                                       'onnxrt',
+                                                       'imagenet')}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        adaptor.pre_optimized_model = ONNXModel(self.conv_model)
+        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        self.assertEqual(len([i for i in adaptor.pre_optimized_model.nodes() if i.op_type == 'Mul']), 1)
+ 
     def test_multi_metrics(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'
@@ -1167,6 +1278,74 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertEqual(q_model, None)
 
+    def test_calibrator(self):
+        from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
+        regular_data = [np.arange(15).reshape(3,5).astype('float32'),
+                        np.arange(15).reshape(3,5).astype('float32')]
+        irregular_data = [np.arange(10).reshape(2,5).astype('float32'),
+                          np.arange(5).reshape(1,5).astype('float32')]
+        
+        calibrator = CALIBRATOR['minmax']()
+        calibrator.collect(irregular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(9.0).astype(np.float32))
+        calibrator.collect(regular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(14.0).astype(np.float32))
+        calibrator.clear()
+        res = calibrator.calib_range
+        self.assertIsNone(res[0])
+        self.assertIsNone(res[1])
+        del calibrator
+
+        calibrator = CALIBRATOR['kl']()
+        calibrator.collect(irregular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(9.0).astype(np.float32))
+        calibrator.collect(regular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(9.140625).astype(np.float32))
+        calibrator.clear()
+        res = calibrator.calib_range
+        self.assertIsNone(res[0])
+        self.assertIsNone(res[1])
+        del calibrator
+
+        calibrator = CALIBRATOR['percentile']()
+        calibrator.collect(irregular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(8.991211).astype(np.float32))
+        calibrator.collect(regular_data)
+        res = calibrator.calib_range
+        self.assertEqual(res[0], np.array(0.0).astype(np.float32))
+        self.assertEqual(res[1], np.array(13.9921875).astype(np.float32))
+        calibrator.clear()
+        res = calibrator.calib_range
+        self.assertIsNone(res[0])
+        self.assertIsNone(res[1])
+        del calibrator
+
+    def test_query_block_info(self):
+        framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "backend": "default",
+                               "format": "default",
+                               "domain": "auto",
+                               "recipes": {},
+                               "workspace_path": './nc_workspace/{}/{}/'.format(
+                                                       'onnxrt',
+                                                       'imagenet')}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        q_capability = adaptor.query_fw_capability(Model(self.distilbert_model))
+        self.assertEqual(len(q_capability['block_wise']), 6)
 
 if __name__ == "__main__":
     unittest.main()

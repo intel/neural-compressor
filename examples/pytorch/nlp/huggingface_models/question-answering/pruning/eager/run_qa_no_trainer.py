@@ -975,7 +975,7 @@ def main():
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
+            "excluded_op_names": ["pooler"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }
@@ -988,6 +988,7 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
+    
     compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
@@ -1174,5 +1175,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

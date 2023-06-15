@@ -322,19 +322,6 @@ if __name__ == "__main__":
     parser.add_argument(
         '--model_name_or_path',
         type=str,
-        choices=['Intel/bert-base-uncased-mrpc',
-                'Intel/roberta-base-mrpc',
-                'Intel/xlm-roberta-base-mrpc',
-                'Intel/camembert-base-mrpc',
-                'distilbert-base-uncased-finetuned-sst-2-english',
-                'Alireza1044/albert-base-v2-sst2',
-                'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc',
-                'bert-base-cased-finetuned-mrpc',
-                'Intel/electra-small-discriminator-mrpc',
-                'M-FAC/bert-mini-finetuned-mrpc',
-                'Intel/xlnet-base-cased-mrpc',
-                'Intel/bart-large-mrpc'],
         help="pretrained model name or path"
     )
     parser.add_argument(
@@ -397,25 +384,37 @@ if __name__ == "__main__":
 
 
     if args.tune:
-        if ort.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
-            opt_options = FusionOptions(model_type)
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
+        opt_options = FusionOptions(model_type)
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                model_type,
-                num_heads=args.num_heads,
-                hidden_size=args.hidden_size,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            model_type,
+            num_heads=args.num_heads,
+            hidden_size=args.hidden_size,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic')
+        from neural_compressor.utils.constant import FP32
+        fp32_op_names = None
+        if args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
+            fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
+        config = PostTrainingQuantConfig(approach='dynamic',
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

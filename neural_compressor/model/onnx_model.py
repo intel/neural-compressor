@@ -44,11 +44,11 @@ class ONNXModel(BaseModel):
         try:
             ort.InferenceSession(self._model.SerializeToString())
         except Exception as e:  # pragma: no cover
-            if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
+            if 'maximum protobuf size of 2GB' in str(e) or 'string length exceeds max size' in str(e):
                 self._is_large_model = True
                 if self._model_path is None:
-                    logger.warning('Please use model path instead of onnx model '
-                                   'object to quantize')
+                    logger.warning('Please use model path instead of onnx model object to quantize')
+
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -140,7 +140,7 @@ class ONNXModel(BaseModel):
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
             convert_model_to_external_data(self._model,
                                            all_tensors_to_one_file=True,
-                                           location="weights.pb",
+                                           location="int8_weights.pb",
                                            convert_attribute=False)
         onnx.save(self._model, root)
 
@@ -197,6 +197,13 @@ class ONNXModel(BaseModel):
         for tensor in self._model.graph.initializer:
             if tensor.name == name:
                 return tensor
+        return None
+
+    def get_node(self, name):
+        """Get a node by name."""
+        for node in self._model.graph.node:
+            if node.name == name:
+                return node
         return None
 
     def remove_initializer(self, tensor):
@@ -469,13 +476,33 @@ class ONNXModel(BaseModel):
         self.model.graph.ClearField('node')
         self.model.graph.node.extend(nodes)
 
-    def get_nodes_chain(self, start_node, stop_node, result_chain=[]):
+    def get_nodes_chain(self, start, stop, result_chain=[]):
         """Get nodes chain with given start node and stop node."""
         from collections import deque
-        if not all([isinstance(node, str) for node in start_node]):
-            start_node = deque([node.name for node in start_node])
-        if not all([isinstance(node, str) for node in stop_node]):
-            stop_node = [node.name for node in stop_node]
+        from onnx import NodeProto
+
+        # process start node list
+        start_node = deque()
+        for node in start:
+            if isinstance(node, str):
+                start_node.append(node)
+            elif isinstance(node, NodeProto):
+                start_node.append(node.name)
+            else:
+                assert False, "'get_nodes_chain' function only support list[string]" \
+                              "or list[NodeProto] params"
+        
+        # process stop node list
+        stop_node = []
+        for node in stop:
+            if isinstance(node, str):
+                stop_node.append(node)
+            elif isinstance(node, NodeProto):
+                stop_node.append(node.name)
+            else:
+                assert False, "'get_nodes_chain' function only support list[string]" \
+                              "or list[NodeProto] params"
+
         while start_node:
             node_name = start_node.popleft()
             if node_name in stop_node:
@@ -490,6 +517,82 @@ class ONNXModel(BaseModel):
                 start_node.append(parent.name)
 
         return result_chain
+    
+    def find_qkv_in_attention(self, find_all=False):
+        """Find qkv MatMul in Attention.
+
+        Args:
+            find_all (bool, optional): find all qkv MatMul. Defaults to False
+
+        Returns:
+            qkv (list): qkv MatMul list
+        """
+        qkv = []
+        for node in self._model.graph.node:
+            start_node, qkv_nodes_list = None, None
+            if node.op_type == 'SkipLayerNormalization':
+                start_node = node
+                qkv_nodes_list = [
+                    self.match_parent_path(
+                        start_node,
+                        ["MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [None, 0, 0, 0, 0],)
+                ]
+            if node.op_type == 'Add':
+                start_node = node
+                qkv_nodes_list = [
+                    # match base attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [0, None, 0, 0, 0],),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [1, None, 0, 0, 0]),
+
+                    # match gpt attention no past structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
+                        [ None, 0, 0, 0, 0, 0],
+                        output_name_to_node=self.output_name_to_node,
+                        return_indice=[]),
+
+                    # match bart attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [0, None, 0, 0, 0, 0]),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [1, None, 0, 0, 0, 0]),
+                    ]
+
+            if not start_node:
+                continue
+            if not any(qkv_nodes_list):
+                continue
+            qkv_nodes = [qkv for qkv in qkv_nodes_list if qkv is not None][-1]
+            other_inputs = []
+            for input in start_node.input:
+                if input not in self.output_name_to_node:
+                    continue
+                if input == qkv_nodes[0].output[0]:
+                    continue
+                other_inputs.append(input)
+            if len(other_inputs) != 1:
+                continue
+            root_input = other_inputs[0]
+            input_name_to_nodes = self.input_name_to_nodes
+            children = input_name_to_nodes[root_input]
+            children_types = [child.op_type for child in children]
+            if children_types.count("MatMul") == 3:
+                qkv.append([child.name for child in children if child.op_type == "MatMul"])
+                if not find_all:
+                    break
+        return qkv
 
     def export(self, save_path, conf):
         """Export Qlinear to QDQ model."""

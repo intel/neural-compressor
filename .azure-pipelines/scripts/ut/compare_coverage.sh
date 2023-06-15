@@ -12,16 +12,16 @@ module_name="neural_compressor"
 file_name="./coverage_compare"
 sed -i "s|\/usr.*${module_name}\/||g" $coverage_pr_log
 sed -i "s|\/usr.*${module_name}\/||g" $coverage_base_log
-diff $coverage_pr_log $coverage_base_log > diff_file
+diff $coverage_pr_log $coverage_base_log >diff_file
 [[ $? == 0 ]] && exit 0
-grep -Po "[<,>,\d].*" diff_file | awk '{print $1 "\t" $2 "\t" $3 "\t"  $4 "\t"  $5 "\t" $6 "\t" $7}' | sed "/Name/d" | sed "/TOTAL/d" |sed "/---/d" > $file_name
+grep -Po "[<,>,\d].*" diff_file | awk '{print $1 "\t" $2 "\t" $3 "\t"  $4 "\t"  $5 "\t" $6 "\t" $7}' | sed "/Name/d" | sed "/TOTAL/d" | sed "/---/d" >$file_name
 [[ ! -s $file_name ]] && exit 0
 [[ -f $output_file ]] && rm -f $output_file
 touch $output_file
 
 function generate_html_head {
 
-cat > ${output_file} << eof
+    cat >${output_file} <<eof
 
 <!DOCTYPE html>
 <html lang="en">
@@ -37,7 +37,7 @@ cat > ${output_file} << eof
             background: white no-repeat left top;
         }
 
-        #main {
+        .main {
             margin: 20px auto 10px auto;
             background: white;
             border-radius: 8px;
@@ -82,27 +82,50 @@ cat > ${output_file} << eof
 eof
 }
 
-function main {
-    generate_html_head
+function extract_diff_data() {
+    local file_name=$1 diff_file=$2 reg=$3
+    local file=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $1}')
+    local miss=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $3}')
+    local cover=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $6}')
+    local branch=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $4}')
+
+    echo "$file $miss $cover $branch"
+}
+
+function write_compare_details() {
+    local file=$1 miss1=$2 branch1=$3 cover1=$4 miss2=$5 branch2=$6 cover2=$7
+    echo """
+            <tr>
+                <td>PR | BASE</td>
+                <td style=\"text-align:left\">${file}</td>
+                <td style=\"text-align:left\">${miss1} | ${miss2}</td>
+                <td style=\"text-align:left\">${branch1} | ${branch2}</td>
+                <td style=\"text-align:left\">${cover1} | ${cover2}</td>
+            </tr>
+        """ >>${output_file}
+}
+
+function get_color() {
+    local decrease=$1
+    if (($(echo "$decrease < 0" | bc -l))); then
+        local color="#FFD2D2"
+    else
+        local color="#90EE90"
+    fi
+    echo "$color"
+}
+
+function generate_coverage_summary() {
     # generate table head
-    Lines_cover_decrease=$(echo "$coverage_PR_lines_rate - $coverage_base_lines_rate" | bc -l)
-    Branches_cover_decrease=$(echo "$coverage_PR_branches_rate - $coverage_base_branches_rate" | bc -l)
+    local Lines_cover_decrease=$(echo $(printf "%.3f" $(echo "$coverage_PR_lines_rate - $coverage_base_lines_rate" | bc -l)))
+    local Branches_cover_decrease=$(echo $(printf "%.3f" $(echo "$coverage_PR_branches_rate - $coverage_base_branches_rate" | bc -l)))
 
-    if (( $(echo "$Lines_cover_decrease < 0" | bc -l) )); then
-      lines_coverage_color="#FFD2D2"
-    else
-      lines_coverage_color="#90EE90"
-    fi
-
-    if (( $(echo "$Branches_cover_decrease < 0" | bc -l) )); then
-      branches_coverage_color="#FFD2D2"
-    else
-      branches_coverage_color="#90EE90"
-    fi
+    read lines_coverage_color <<<"$(get_color ${Lines_cover_decrease})"
+    read branches_coverage_color <<<"$(get_color ${Branches_cover_decrease})"
 
     echo """
-    <body>
-        <div id="main">
+<body>
+    <div class="main">
         <h1 align="center">Coverage Summary : ${coverage_status}</h1>
         <table class=\"features-table\" style=\"width: 60%;margin-left:auto;margin-right:auto;empty-cells: hide\">
             <tr>
@@ -124,15 +147,13 @@ function main {
                 <td style=\"background-color:${branches_coverage_color}\"> ${Branches_cover_decrease}% </td>
             </tr>
         </table>
-        </div>
-    """ >> ${output_file}
-    if [[ ${coverage_status} = "SUCCESS" ]]; then
-      echo """</body></html>""" >> ${output_file}
-      echo "coverage PASS, no need to compare difference"
-      exit 0
-    fi
+    </div>
+    """ >>${output_file}
+}
+
+function generate_coverage_details() {
     echo """
-    <div id="main">
+    <div class="main">
         <h2 align="center">Coverage Detail</h2>
         <table class=\"features-table\" style=\"width: 60%;margin-left:auto;margin-right:auto;empty-cells: hide\">
             <tr>
@@ -142,73 +163,60 @@ function main {
                 <th>Branch</th>
                 <th>Cover</th>
             </tr>
-    """ >> ${output_file}
+    """ >>${output_file}
     # generate compare detail
-    cat $file_name | while read line
-    do
-        if [[ $(echo $line | grep "[0-9]a[0-9]") ]] && [[ $(grep -A 1 "$line" $file_name | grep ">") ]]; then
+    cat ${file_name} | while read line; do
+        if [[ $(echo $line | grep "[0-9]a[0-9]") ]] && [[ $(grep -A 1 "$line" ${file_name} | grep ">") ]]; then
             diff_lines=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep ">")
             diff_file_name=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep -Po ">.*[a-z,A-Z].*.py" | sed "s|>||g")
-            for diff_file in ${diff_file_name}
-            do          
-              diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
-              file=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $1}')
-              miss=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $3}')
-              cover=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $6}')
-              branch=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $4}')
-              echo """
-              <tr><td>PR | BASE</td><td style=\"text-align:left\">${file}</td>
-                  <td style=\"text-align:left\">NA | ${miss}</td>
-                  <td style=\"text-align:left\">NA | ${branch}</td>
-                  <td style=\"text-align:left\">NA | ${cover}</td>
-              </tr>""" >> ${output_file}
+            for diff_file in ${diff_file_name}; do
+                diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
+                diff_coverage_data=$(extract_diff_data ${file_name} ${diff_file} ">")
+                read file miss cover branch <<<"$diff_coverage_data"
+                write_compare_details $file "NA" "NA" "NA" $miss $branch $cover
             done
-        elif [[ $(echo $line | grep "[0-9]c[0-9]") ]] && [[ $(cat $file_name | grep -A 1 "$line" | grep "<") ]]; then
+        elif [[ $(echo $line | grep "[0-9]c[0-9]") ]] && [[ $(cat ${file_name} | grep -A 1 "$line" | grep "<") ]]; then
             diff_lines=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep "<")
             diff_file_name=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep -Po "<.*[a-z,A-Z].*.py" | sed "s|<||g")
-            #diff_file_name=$(echo ${diff_lines} | grep -Po "<.*[a-z,A-Z].*.py" | sed "s|,||g)
-            for diff_file in ${diff_file_name}
-            do          
-              diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
-              file1=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $1}')
-              miss1=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $3}')
-              cover1=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $6}')
-              branch1=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $4}')
-              file2=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $1}')
-              miss2=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $3}')
-              cover2=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $6}')
-              branch2=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po ">.*" | sed 's/>[ \t]*//g' | awk '{print $4}')
-              # if branch coverage not change, not consider as regression
-              [[ "${branch1}" == "${branch2}" ]] && continue
-              echo """
-              <tr><td>PR | BASE</td><td style=\"text-align:left\">${file1}</td>
-                  <td style=\"text-align:left\">${miss1} | ${miss2}</td>
-                  <td style=\"text-align:left\">${branch1} | ${branch2}</td>
-                  <td style=\"text-align:left\">${cover1} | ${cover2}</td>
-              </tr>""" >> ${output_file}
+            for diff_file in ${diff_file_name}; do
+                diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
+                diff_coverage_data1=$(extract_diff_data ${file_name} ${diff_file} "<")
+                read file1 miss1 cover1 branch1 <<<"$diff_coverage_data1"
+                diff_coverage_data2=$(extract_diff_data ${file_name} ${diff_file} ">")
+                read file2 miss2 cover2 branch2 <<<"$diff_coverage_data2"
+                write_compare_details $file1 $miss1 $branch1 $cover1 $miss2 $branch2 $cover2
             done
-        elif [[ $(echo $line | grep "[0-9]d[0-9]") ]] && [[ $(cat $file_name | grep -A 1 "$line" | grep "<") ]]; then
+        elif [[ $(echo $line | grep "[0-9]d[0-9]") ]] && [[ $(cat ${file_name} | grep -A 1 "$line" | grep "<") ]]; then
             diff_lines=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep "<")
             diff_file_name=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep -Po "<.*[a-z,A-Z].*.py" | sed "s|<||g")
-            for diff_file in ${diff_file_name}
-            do    
-              diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
-              file=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $1}')
-              miss=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $3}')
-              cover=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $6}')
-              branch=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "<.*" | sed 's/<[ \t]*//g' | awk '{print $4}')
-              echo """
-              <tr><td>PR | BASE</td><td style=\"text-align:left\">${file} | NA</td>
-                  <td style=\"text-align:left\">${miss} | NA</td>
-                  <td style=\"text-align:left\">${branch} | NA</td>
-                  <td style=\"text-align:left\">${cover} | NA</td>
-              </tr>""" >> ${output_file}
+            for diff_file in ${diff_file_name}; do
+                diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
+                diff_coverage_data=$(extract_diff_data ${file_name} ${diff_file} "<")
+                read file miss cover branch <<<"$diff_coverage_data"
+                write_compare_details $file $miss $branch $cover "NA" "NA" "NA"
             done
         fi
     done
     # generate table end
-    echo """</table></div></body></html>""" >> ${output_file}
+    echo """
+        </table>
+    </div>
+</body>
 
+</html>""" >>${output_file}
+}
+
+function main {
+    generate_html_head
+    generate_coverage_summary
+
+    if [[ ${coverage_status} = "SUCCESS" ]]; then
+        echo """</body></html>""" >>${output_file}
+        echo "coverage PASS, no need to compare difference"
+        exit 0
+    else
+        generate_coverage_details
+    fi
 }
 
 main

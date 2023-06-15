@@ -11,10 +11,9 @@ pr:
       - neural_compressor
       - test
       - setup.py
+      - requirements.txt
       - .azure-pipelines/scripts/ut
     exclude:
-      - neural_compressor/ux
-      - test/ux
       - test/neural_coder
 
 pool: ICX-16C

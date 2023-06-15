@@ -10,8 +10,7 @@ This part helps user to get a quick understand about design structure and workfl
 <tr>
   <td colspan="4" align="center"><a href="design.md#architecture">Architecture</a></td>
   <td colspan="3" align="center"><a href="design.md#workflow">Workflow</a></td>
-  <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-  <td colspan="1" align="center"><a href="bench.md">GUI</a></td>
+  <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
 </tr>
 <tr>
   <td colspan="2" align="center"><a href="/examples/README.md#notebook-examples">Notebook</a></td>

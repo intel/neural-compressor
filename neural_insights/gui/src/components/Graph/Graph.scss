@@ -1,0 +1,73 @@
+// -* - coding: utf - 8 -* -
+// Copyright(c) 2023 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0(the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+@import './../../variables.scss';
+
+* {
+  font-family: IntelClearRg;
+}
+
+.Graph {
+  #cy {
+    height: 90vh;
+    position: relative;
+    margin: auto;
+    background: #fafafa;
+    background-image: radial-gradient(#bebebe 1px, transparent 0);
+    background-size: 18px 18px;
+    border-radius: 0.5rem;
+  }
+
+  .plus-sign {
+    color: white;
+    background-color: #5B69FF;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .graph-buttons {
+    position: absolute;
+    margin-top: 6px;
+    z-index: 10;
+    float: right;
+  }
+
+  .graph-button {
+    cursor: pointer;
+    margin-left: 6px;
+    background-color: $accent-yellow;
+    color: black;
+    border: none;
+  }
+
+  .nodes-table-container {
+    position: absolute;
+    top: 50px;
+    left: 5px;
+    background-color: rgba(182, 182, 182, 0.13);
+  }
+
+  .nodes-table {
+    font-family: IntelClearRg;
+    width: 200px;
+  }
+
+  .header {
+    font-family: IntelClearBd;
+    text-align: left;
+  }
+}

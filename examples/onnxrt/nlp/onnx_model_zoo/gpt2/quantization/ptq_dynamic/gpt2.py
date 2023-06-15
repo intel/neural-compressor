@@ -249,20 +249,27 @@ def main():
             evaluate(args, model, tokenizer)
         
     if args.tune:
-        if ort.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('gpt2')
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('gpt2')
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                'gpt2',
-                num_heads=12,
-                hidden_size=768,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            'gpt2',
+            num_heads=12,
+            hidden_size=768,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                        "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization
@@ -272,7 +279,7 @@ def main():
         accuracy_criterion.relative = 0.11
         config = PostTrainingQuantConfig(approach='dynamic',
                                          accuracy_criterion=accuracy_criterion)
-        q_model = quantization.fit(model, 
+        q_model = quantization.fit(model,
                                    config,
                                    eval_func=eval_func)
         q_model.save(args.output_model)

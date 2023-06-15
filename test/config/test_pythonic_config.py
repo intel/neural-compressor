@@ -2,7 +2,7 @@
 import copy
 import unittest
 import os
-from neural_compressor import config
+from neural_compressor.conf.pythonic_config import config
 import onnxruntime as ort
 from onnx import helper, TensorProto
 import numpy as np
@@ -28,7 +28,7 @@ from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
 
 def build_matmul_model():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
-    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [1, 1, 5, 1], np.random.random([1, 1, 5, 1]).reshape(5).tolist())
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
     D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
     H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
@@ -40,7 +40,7 @@ def build_matmul_model():
     f_value = np.random.randint(2, size=(5)).astype(np.float32)
     F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
     add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
-    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
+    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A], [H], [E_init, F_init, B_init])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return  model
@@ -143,10 +143,14 @@ class TestPythonicConf(unittest.TestCase):
         config.quantization.outputs = ['out']
         config.quantization.approach = 'post_training_dynamic_quant'
         config.quantization.device = 'gpu'
-        config.quantization.op_type_dict = {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}}
+        config.quantization.op_type_dict = {'Conv': {'weight': {'dtype': ['fp32']}
+                                                     , 'activation': {'dtype': ['fp32']}}}
+        config.quantization.op_name_dict = {"layer1.0.conv1": {"activation": {"dtype": ["fp32"]}
+                                                               ,"weight": {"dtype": ["fp32"]}}}
         config.quantization.strategy = 'mse'
         config.quantization.objective = 'accuracy'
         config.quantization.timeout = 100
+        config.quantization.max_trials = 100
         config.quantization.accuracy_criterion.relative = 0.5
         config.quantization.reduce_range = False
         config.quantization.use_bf16 = False
@@ -158,9 +162,12 @@ class TestPythonicConf(unittest.TestCase):
         self.assertEqual(config.quantization.device, 'gpu')
         self.assertEqual(config.quantization.op_type_dict,
             {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
+        self.assertEqual(config.quantization.op_name_dict, 
+                         {"layer1.0.conv1": {"activation": {"dtype": ["fp32"]},"weight": {"dtype": ["fp32"]}}})
         self.assertEqual(config.quantization.strategy, 'mse')
         self.assertEqual(config.quantization.objective, 'accuracy')
         self.assertEqual(config.quantization.timeout, 100)
+        self.assertEqual(config.quantization.max_trials, 100)
         self.assertEqual(config.quantization.accuracy_criterion.relative, 0.5)
         self.assertEqual(config.benchmark.cores_per_instance, 10)
 

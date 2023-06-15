@@ -17,6 +17,7 @@
 """Pre Optimization Entrance."""
 
 import logging
+import copy
 import tensorflow as tf
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -49,6 +50,7 @@ from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 from .convert_placeholder_to_const import ConvertPlaceholderToConst
 from neural_compressor.adaptor.tf_utils.util import version1_gte_version2, version1_eq_version2
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 class PreOptimization():
     """Pre optimization for the FP32 models."""
@@ -106,7 +108,7 @@ class PreOptimization():
         """
         from neural_compressor.model import Model
 
-        origin_model = Model(self.model._model, **self.model.kwargs)
+        origin_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
         origin_model.name = self.model.name
         origin_model.model_type = self.model.model_type
         origin_model.output_tensor_names = self.model.output_tensor_names
@@ -131,8 +133,12 @@ class PreOptimization():
             else:
                 gpus = tf.config.list_physical_devices("GPU")
                 if len(gpus) == 0:
-                    cpus = tf.config.list_physical_devices("CPU")
-                    node_device = cpus[0].name.replace('physical_device:', '')
+                    xpus = tf.config.list_physical_devices("XPU")
+                    if len(xpus) == 0:
+                        cpus = tf.config.list_physical_devices("CPU")
+                        node_device = cpus[0].name.replace('physical_device:', '')
+                    else:
+                        node_device = xpus[0].name.replace('physical_device:', '')
                 else:
                     node_device = gpus[0].name.replace('physical_device:', '')
             for node_name in list(graph_info.keys()):
@@ -145,16 +151,6 @@ class PreOptimization():
         else:
             self._tmp_graph_def = ConvertLayoutOptimizer(
                 self.model.graph_def, output_node_names).do_transformation()
-
-        # Remove device info after convert layout
-        if version1_gte_version2(tf.version.VERSION, '2.10.0'):
-            cur_graph = GraphAnalyzer()
-            cur_graph.graph = self._tmp_graph_def
-            graph_info = cur_graph.parse_graph()
-            for node_name in list(graph_info.keys()):
-                node = graph_info[node_name].node
-                node.device = ''
-            self._tmp_graph_def = cur_graph.dump_graph()
 
         self._tmp_graph_def = ConvertPlaceholderToConst(self._tmp_graph_def).do_transformation()
 
@@ -239,10 +235,43 @@ class PreOptimization():
         if self.new_api or itex_mode:
             self._tmp_graph_def = DilatedContraction(
                 self._tmp_graph_def).do_transformation()
+
+        # node device info will be removed by GrapplerOptimizer, insert it again.
+        if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
+            from tensorflow._api.v1.config import experimental
+            list_physical_devices = experimental.list_physical_devices
+        else:
+            list_physical_devices = tf.config.list_physical_devices
+        cur_graph = GraphAnalyzer()
+        cur_graph.graph = self._tmp_graph_def
+        graph_info = cur_graph.parse_graph()
+
+        if self.device == 'cpu':
+            cpus = list_physical_devices("CPU")
+            node_device = cpus[0].name.replace('physical_device:', '')
+        else:
+            gpus = list_physical_devices("GPU")
+            if len(gpus) == 0:
+                xpus = list_physical_devices("XPU")
+                if len(xpus) == 0:
+                    cpus = list_physical_devices("CPU")
+                    node_device = cpus[0].name.replace('physical_device:', '')
+                else:
+                    node_device = xpus[0].name.replace('physical_device:', '')
+            else:
+                node_device = gpus[0].name.replace('physical_device:', '')
+        for node_name in list(graph_info.keys()):
+            node = graph_info[node_name].node
+            node.device = node_device
+        self._tmp_graph_def = cur_graph.dump_graph()
+
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
-        origin_model.graph_def = self._tmp_graph_def
+        for function_def in self.model.graph_def.library.function:
+            if function_def.signature.name == 'swish_f32':
+                self._tmp_graph_def.library.function.extend([copy.deepcopy(function_def)])
 
+        origin_model.graph_def = self._tmp_graph_def
         return origin_model
 
     def get_matched_nodes(self, patterns):

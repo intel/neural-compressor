@@ -314,8 +314,9 @@ def main(unused_args):
                                       batch_size = FLAGS.batch_size)
 
         conf = PostTrainingQuantConfig(inputs=['input_tokens'],
-                                        outputs=['model/Transformer/strided_slice_15'],
-                                        calibration_sampling_size=[500])
+                                        outputs=['model/Transformer/strided_slice_15', 'model/Transformer/strided_slice_16'],
+                                        calibration_sampling_size=[500]
+                                        )
         q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=eval_func)
         try:

@@ -31,7 +31,7 @@ from .graph_util import GraphAnalyzer
 from .graph_util import GraphRewriterHelper
 from pkg_resources import parse_version
 
-TF_SPR_BASE_VERSIONS = ('2.11.0202242', '2.11.0202250')
+TF_SPR_BASE_VERSIONS = ('2.11.0202242', '2.11.0202250', '2.11.0202317')
 
 def version1_lt_version2(version1, version2):
     """Check if version1 is less than version2."""
@@ -502,25 +502,25 @@ def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
         else:
             continue
     inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
-    dequan_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
-    dump_data_to_local(dequan_min_max, save_path, 'dequan_min_max.pkl')
+    activation_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
+    dump_data_to_local(activation_min_max, save_path, 'activation_min_max.pkl')
     dump_data_to_local(updated_cfg, save_path, 'cfg.pkl')
 
     return inspect_node_lst, updated_cfg
 
 def _parse_config(q_config, cfg, op_list):
     """Parse q_config and get dequantize min max value."""
-    dequan_min_max = {}
+    activation_min_max = {}
     if '__requant_min_max' in q_config:
         for node_name, val in q_config['__requant_min_max'].items():
             node_name = node_name.split('_eightbit_requant_range')[0]
             if node_name in op_list:
-                dequan_min_max[node_name] = {'min': val[0], 'max': val[1]}
+                activation_min_max[node_name] = {'min': val[0], 'max': val[1]}
     updated_cfg = {'op' : {}}
     for op_name_and_type in cfg['op'].keys():
         if op_name_and_type[0] in op_list:
             updated_cfg['op'][op_name_and_type] = cfg['op'][op_name_and_type]
-    return dequan_min_max, updated_cfg
+    return activation_min_max, updated_cfg
 
 def generate_feed_dict(input_tensor, inputs):
     """Generate feed dict helper function."""
@@ -581,3 +581,40 @@ def generate_feed_dict(input_tensor, inputs):
                         feed_dict.update({dis_tensor: dis_input})    
                         break
     return feed_dict
+
+def get_weight_from_input_tensor(model, input_tensor_names, op_types):
+    """Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
+
+    Args:
+        model: A TensorFlow model containing a `graph_def` attribute.
+        input_tensor_names: A list of input tensor names to search for weight tensors.
+        op_types: A list of operation types to search for when looking for weight tensors.
+
+    Returns:
+        A tuple of two dictionaries:
+        - sq_weight_tensors: A dictionary mapping each input tensor name to a list of its associated weight tensors.
+        - sq_weights_nodes: A dictionary mapping each input tensor name to a list of its associated weight nodes.
+    """
+    graph_info = GraphAnalyzer(model.graph_def).parse_graph()
+
+    sq_weight_tensors = {}
+    sq_weights_nodes = {}
+
+    from tensorflow.python.framework import tensor_util
+    for name in input_tensor_names:
+        curr_weight_tensors = []
+        curr_weights_nodes = []
+        next_node_names = graph_info[name].outputs
+        for node_name in next_node_names:
+            curr_node = graph_info[node_name].node
+            if curr_node.op not in op_types:
+                continue
+            if len(curr_node.input) >= 2:
+                weight_name = curr_node.input[1]
+                weight_node = graph_info[weight_name].node
+                weight_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
+                curr_weight_tensors.append(weight_tensor)
+                curr_weights_nodes.append(weight_node)
+        sq_weight_tensors[name] = curr_weight_tensors
+        sq_weights_nodes[name] = curr_weights_nodes
+    return sq_weight_tensors, sq_weights_nodes

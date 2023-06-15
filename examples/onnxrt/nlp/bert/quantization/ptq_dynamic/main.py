@@ -292,6 +292,12 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
+        '--diagnose',
+        dest='diagnose',
+        action='store_true',
+        help='use Neural Insights to diagnose tuning and benchmark.',
+    )
+    parser.add_argument(
         '--output_model',
         type=str,
         help="output model path"
@@ -373,13 +379,18 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
+        if args.diagnose and args.mode != "performance":
+            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         model = onnx.load(args.model_path)
         if args.mode == 'performance':            
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=4,
-                                   num_of_instance=1)
+            conf = BenchmarkConfig(
+                iteration=100,
+                cores_per_instance=4,
+                num_of_instance=1,
+                diagnosis=args.diagnose,
+            )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
@@ -387,24 +398,34 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        if onnxruntime.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('bert')
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                'bert',
-                num_heads=12,
-                hidden_size=768,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            'bert',
+            num_heads=12,
+            hidden_size=768,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+        
+        # check the optimized model is valid
+        try:
+            onnxruntime.InferenceSession(model.SerializeToString(), providers=onnxruntime.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic')
+        config = PostTrainingQuantConfig(
+            approach='dynamic',
+            diagnosis=args.diagnose,
+        )
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

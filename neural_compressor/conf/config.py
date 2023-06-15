@@ -17,8 +17,8 @@
 
 import yaml
 from schema import Schema, And, Use, Optional, Or, Hook
+
 from ..adaptor import FRAMEWORKS
-from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
 from ..utils import logger
 from ..version import __version__
@@ -28,6 +28,10 @@ import itertools
 from collections import OrderedDict
 from .dotdict import DotDict, deep_set
 import os, datetime
+# TODO WA for avoid circular import
+# from ..experimental.strategy import EXP_STRATEGIES
+EXP_STRATEGIES = ['basic', 'auto_mixed_precision', 'bayesian', 'conservative',\
+    'exhaustive', 'hawq_v2', 'mse', 'mse_v2', 'random', 'sigopt', 'tpe', 'fake']
 
 def constructor_register(cls):
     yaml_key = "!{}".format(cls.__name__)
@@ -277,7 +281,7 @@ ops_schema = Schema({
         # placeholder are only for PyTorch framework
         Optional('algorithm'): And(
             list,
-            lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))
+            lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s))
     }
 })
 
@@ -887,7 +891,7 @@ schema = Schema({
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s)),
+                    lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s)),
             }
         },
         Optional('optype_wise', default=None): {
@@ -914,7 +918,7 @@ schema = Schema({
         'diagnosis': False,
         }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES),
+            'name': And(str, lambda s: s in EXP_STRATEGIES),
             Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
@@ -951,21 +955,7 @@ schema = Schema({
             Optional('path', default=None): str,
             Optional('resume'): str
         },
-        Optional('diagnosis', default = {
-            'diagnosis_after_tuning': False,
-            'op_list': [],
-            'iteration_list': [1],
-            'inspect_type': 'activation',
-            'save_to_disk': True,
-            'save_path': './nc_workspace/inspect_saved/',
-        }):{
-            Optional('diagnosis_after_tuning', default=False): And(bool, lambda s: s in [True, False]),
-            Optional('op_list', default=[]): And(Or(str, list), Use(input_to_list)),
-            Optional('iteration_list', default=[1]): And(Or(int, list), Use(input_to_list_int)),
-            Optional('inspect_type', default='all'): And(str, lambda s : s in ['all', 'activation', 'weight']),
-            Optional('save_to_disk', default=True): And(bool, lambda s: s in [True, False]),
-            Optional('save_path', default='./nc_workspace/inspect_saved/'): str,
-        },
+        Optional('diagnosis', default=False): And(bool, lambda s: s in [True, False]),
     },
     Optional('evaluation'): {
         Hook('accuracy', handler=_valid_multi_metrics): object,
@@ -1088,6 +1078,7 @@ schema = Schema({
                 Optional('transform'): postprocess_schema
             }
         },
+        Optional('diagnosis', default=False): And(bool, lambda s: s in [True, False]),
     },
     Optional('pruning'): {
         Hook('train', handler=_valid_prune_epoch): object,
@@ -1414,11 +1405,17 @@ class Conf(object):
                 'tuning.exit_policy.timeout': pythonic_config.quantization.timeout,
                 'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
                 'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
-                'tuning.use_distributed_tuning': pythonic_config.quantization.use_distributed_tuning,
                 'use_bf16': pythonic_config.quantization.use_bf16,
                 'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
+
+            if pythonic_config.quantization.diagnosis:
+                mapping.update({
+                    'tuning.diagnosis': True,
+                    'tuning.exit_policy.max_trials': 1,
+                })
+
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
@@ -1474,6 +1471,9 @@ class Conf(object):
                 'evaluation.accuracy.configs.intra_num_of_threads':
                     pythonic_config.benchmark.intra_num_of_threads,
             })
+            if pythonic_config.benchmark.diagnosis:
+                mapping.update({'evaluation.diagnosis': pythonic_config.benchmark.diagnosis})
+
             if "model.backend" not in mapping:
                 mapping.update({
                     'model.backend': pythonic_config.benchmark.backend,

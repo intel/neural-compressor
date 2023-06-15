@@ -107,7 +107,8 @@ class Operator(object):
 
     def cast(self): # pragma: no cover
         """Cast node."""
-        self.quantizer.dtype_cast(self.node, self.dtype)
+        self.quantizer.cast_inputs(self.node, self.dtype)
+        self.quantizer.cast_outputs(self.node, self.dtype)
 
 class QOperator(object):
     """Base QOperator."""
