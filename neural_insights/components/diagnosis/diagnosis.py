@@ -265,7 +265,7 @@ class Diagnosis:
             if tensor_data_raw.ndim != 4:
                 continue
             tensor_data = tensor_data_raw[0]
-            shapes_order = self.model.shape_elements_order
+            shapes_order = self.model.shape_elements_order  # pylint: disable=no-member
             channels_index = shapes_order.index("channels")
             new_order = [channels_index]
             new_order.extend([x for x in range(len(shapes_order)) if x != channels_index])
