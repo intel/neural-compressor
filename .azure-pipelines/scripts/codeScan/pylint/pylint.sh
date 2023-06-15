@@ -41,6 +41,9 @@ if [ "${scan_module}" = "neural_solution" ]; then
     bash /neural-compressor/.azure-pipelines/scripts/install_neural_solution.sh
 
 elif [ "${scan_module}" = "neural_insights" ]; then
+    cd /neural-compressor
+    python setup.py install
+
     echo "Install Neural Insights ... "
     bash /neural-compressor/.azure-pipelines/scripts/install_neural_insights.sh
 
