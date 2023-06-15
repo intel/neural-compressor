@@ -3267,14 +3267,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         assert not self.version.release < Version("2.1").release, \
             "IPEX version >= 2.1 is required for SmoothQuant."
 
-        if not self.performance_only:
-            try:
-                self.tmp_model = copy.deepcopy(model)
-            except Exception as e:  # pragma: no cover
-                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                    repr(e)))
-                self.tmp_model = model
-        else:
+        try:
+            self.tmp_model = copy.deepcopy(model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
             self.tmp_model = model
         q_model = self.tmp_model._model
 

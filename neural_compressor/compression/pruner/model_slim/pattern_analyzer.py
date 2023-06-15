@@ -16,8 +16,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..utils import torch, logger
+from ..utils import logger
 import re
+from ....utils.utility import LazyImport
+torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
 
 JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
@@ -792,3 +795,42 @@ class ClassifierHeadSearcher(object):
         last_lc = all_lc_modules[-1]
         if last_lc == all_modules[-1]: return last_lc
         else: return None
+
+class ClassifierHeadSearcherTF(object):
+    """Static graph searcher for multi-head attention modules.
+
+    Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+    Automatically search multi-head attention modules which can be optimized.
+
+    Args:
+        model (tf.keras.Model): The Keras model for searching.
+            
+    Attributes:
+        model: The Keras model for searching.
+        device: The model's current device type.
+        static_graph: The static graph of original model.
+        flatten_static_graph: A list of string with the model's static graph inference details.
+    """
+
+    def __init__(self, model):
+        """Initialize."""
+        assert isinstance(model, tf.keras.Model)
+        super(ClassifierHeadSearcherTF, self).__init__()
+        self.model = model
+        self.pruning_ops = ["Dense", "Conv2d"]
+        self.excluded_ops = ["Dropout"] # to be extended
+    
+    def search(self, return_name=True):
+        all_modules = []
+        all_lc_modules = []
+        for layer in self.model.layers:
+            if layer.__class__.__name__ not in self.excluded_ops:
+                all_modules.append(layer.name)
+                if layer.__class__.__name__ in self.pruning_ops:
+                    all_lc_modules.append(layer.name)
+            else:
+                continue
+        last_lc = all_lc_modules[-1]
+        if last_lc == all_modules[-1]: 
+            return last_lc
+        return None
