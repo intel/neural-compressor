@@ -250,7 +250,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 continue
 
             # the qdq in pattern dq+maxpool+q should be the same type in itex mode
-            if self.itex_mode and self.node_name_mapping[each_input_name].node.op == "MaxPool":
+            if self.itex_mode and each_input_name in self.node_name_mapping and \
+                    self.node_name_mapping[each_input_name].node.op == "MaxPool":
                 maxpool_node = self.graph_info[each_input_name].node
                 dtype = dtypes.DType(self.graph_info[maxpool_node.input[0]].node.attr["T"].type)
             elif self.node_name_mapping[original_node.name].node.op == "MatMul":
