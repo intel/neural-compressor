@@ -106,6 +106,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassifierHeadSearcher</span></code></a></p></td>
 <td><p>Static graph searcher for multi-head attention modules.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassifierHeadSearcherTF</span></code></a></p></td>
+<td><p>Static graph searcher for multi-head attention modules.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -385,6 +388,43 @@ Automatically search multi-head attention modules which can be optimized.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.flatten_static_graph">
 <span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.flatten_static_graph" title="Permalink to this definition"></a></dt>
+<dd><p>A list of string with the model’s static graph inference details.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">ClassifierHeadSearcherTF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF" title="Permalink to this definition"></a></dt>
+<dd><p>Static graph searcher for multi-head attention modules.</p>
+<p>Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+Automatically search multi-head attention modules which can be optimized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>tf.keras.Model</em>) – The Keras model for searching.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.model" title="Permalink to this definition"></a></dt>
+<dd><p>The Keras model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.device" title="Permalink to this definition"></a></dt>
+<dd><p>The model’s current device type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.static_graph">
+<span class="sig-name descname"><span class="pre">static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.static_graph" title="Permalink to this definition"></a></dt>
+<dd><p>The static graph of original model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.flatten_static_graph">
+<span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.flatten_static_graph" title="Permalink to this definition"></a></dt>
 <dd><p>A list of string with the model’s static graph inference details.</p>
 </dd></dl>
 

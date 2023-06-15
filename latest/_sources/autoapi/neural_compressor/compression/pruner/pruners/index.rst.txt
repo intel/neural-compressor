@@ -58,7 +58,7 @@ Functions
    Get all valid pruner names.
 
 
-.. py:function:: get_pruner(config, modules)
+.. py:function:: get_pruner(config, modules, framework='pytorch')
 
    Get registered pruner class.
 
@@ -72,7 +72,7 @@ Functions
    Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
 
 
-.. py:class:: BasePruner(config, modules)
+.. py:class:: BasePruner(config, modules, framework='pytorch')
 
 
    Pruning Pruner.
@@ -137,7 +137,7 @@ Functions
       A float showing the maximum sparsity ratio for every module.
 
 
-.. py:class:: BasicPruner(config, modules)
+.. py:class:: BasicPruner(config, modules, framework='pytorch')
 
 
 
@@ -168,7 +168,7 @@ Functions
       A Reg object that defines regulization terms.
 
 
-.. py:class:: PatternLockPruner(config, modules)
+.. py:class:: PatternLockPruner(config, modules, framework='pytorch')
 
 
 
@@ -187,7 +187,7 @@ Functions
       
 
 
-.. py:class:: BlockMaskPruner(config, modules)
+.. py:class:: BlockMaskPruner(config, modules, framework='pytorch')
 
 
 
@@ -219,7 +219,7 @@ Functions
       A Reg object that defines regulization terms.
 
 
-.. py:class:: RetrainFreePruner(config, modules)
+.. py:class:: RetrainFreePruner(config, modules, framework='pytorch')
 
 
 
@@ -256,7 +256,7 @@ Functions
       A Reg object that defines regulization terms.
 
 
-.. py:class:: ProgressivePruner(config, modules)
+.. py:class:: ProgressivePruner(config, modules, framework='pytorch')
 
 
 

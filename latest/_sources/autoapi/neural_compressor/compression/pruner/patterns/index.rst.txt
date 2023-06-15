@@ -47,7 +47,7 @@ Functions
    :rtype: cls
 
 
-.. py:function:: get_pattern(config, modules)
+.. py:function:: get_pattern(config, modules, framework='pytorch')
 
    Get registered pattern class.
 
@@ -61,7 +61,7 @@ Functions
    :raises AssertionError: Currently only support patterns which have been registered in PATTERNS.
 
 
-.. py:class:: BasePattern(config, modules)
+.. py:class:: BasePattern(config, modules, framework='pytorch')
 
 
    Pruning Pattern.
@@ -111,7 +111,7 @@ Functions
       A float representing the sparsity ratio of the modules after pruning.
 
 
-.. py:class:: PatternNxM(config, modules)
+.. py:class:: PatternNxM(config, modules, framework='pytorch')
 
 
 
@@ -132,7 +132,7 @@ Functions
       because PyTorch's tensor matmul has a hidden transpose operation.
 
 
-.. py:class:: PatternNInM(config, modules)
+.. py:class:: PatternNInM(config, modules, framework='pytorch')
 
 
 
@@ -154,7 +154,7 @@ Functions
       The size of the weight sequence.
 
 
-.. py:class:: PatternMHA(config, modules=None)
+.. py:class:: PatternMHA(config, modules=None, framework='pytorch')
 
 
 

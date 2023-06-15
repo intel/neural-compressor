@@ -22,6 +22,7 @@ Classes
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF
 
 
 
@@ -230,6 +231,36 @@ Functions
    .. attribute:: model
 
       The PyTorch model for searching.
+
+   .. attribute:: device
+
+      The model's current device type.
+
+   .. attribute:: static_graph
+
+      The static graph of original model.
+
+   .. attribute:: flatten_static_graph
+
+      A list of string with the model's static graph inference details.
+
+
+.. py:class:: ClassifierHeadSearcherTF(model)
+
+
+
+
+   Static graph searcher for multi-head attention modules.
+
+   Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+   Automatically search multi-head attention modules which can be optimized.
+
+   :param model: The Keras model for searching.
+   :type model: tf.keras.Model
+
+   .. attribute:: model
+
+      The Keras model for searching.
 
    .. attribute:: device
 

@@ -19,6 +19,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.compression.pruner.utils.get_sparsity_ratio
+   neural_compressor.compression.pruner.utils.get_sparsity_ratio_tf
    neural_compressor.compression.pruner.utils.check_config
    neural_compressor.compression.pruner.utils.reset_none_to_default
    neural_compressor.compression.pruner.utils.update_params
@@ -28,12 +29,24 @@ Functions
    neural_compressor.compression.pruner.utils.process_and_check_config
    neural_compressor.compression.pruner.utils.process_config
    neural_compressor.compression.pruner.utils.parse_last_linear
+   neural_compressor.compression.pruner.utils.parse_last_linear_tf
    neural_compressor.compression.pruner.utils.parse_to_prune
+   neural_compressor.compression.pruner.utils.parse_to_prune_tf
    neural_compressor.compression.pruner.utils.generate_pruner_config
 
 
 
 .. py:function:: get_sparsity_ratio(pruners, model)
+
+   Calculate sparsity ratio of a module/layer.
+
+   :returns: Three floats.
+             elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+             elementwise_over_all refers to zero elements' ratio in all layers in the model.
+             blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+
+
+.. py:function:: get_sparsity_ratio_tf(pruners, model)
 
    Calculate sparsity ratio of a module/layer.
 
@@ -125,12 +138,32 @@ Functions
    :param model: The model to be pruned.
 
 
+.. py:function:: parse_last_linear_tf(model)
+
+   Locate the last linear layers of the model.
+   While pruning, the final linear often acts like classifier head, which might cause
+   accuracy drop.
+
+   :param model: The model to be pruned.
+   :type model: tf.keras.Model
+
+
 .. py:function:: parse_to_prune(config, model)
 
    Keep target pruned layers.
 
    :param config: A string representing the path to the configuration file.
    :param model: The model to be pruned.
+
+
+.. py:function:: parse_to_prune_tf(config, model)
+
+   Keep target pruned layers.
+
+   :param config: A string representing the path to the configuration file.
+   :type config: string
+   :param model: The model to be pruned.
+   :type model: tf.keras.Model
 
 
 .. py:function:: generate_pruner_config(info)
