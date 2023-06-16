@@ -215,8 +215,7 @@ class Diagnosis:
 
     @staticmethod
     def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
-        """
-        Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
         Args:
             fp32_tensor (tensor): The FP32 tensor.
@@ -266,7 +265,7 @@ class Diagnosis:
             if tensor_data_raw.ndim != 4:
                 continue
             tensor_data = tensor_data_raw[0]
-            shapes_order = self.model.shape_elements_order
+            shapes_order = self.model.shape_elements_order  # pylint: disable=no-member
             channels_index = shapes_order.index("channels")
             new_order = [channels_index]
             new_order.extend([x for x in range(len(shapes_order)) if x != channels_index])
