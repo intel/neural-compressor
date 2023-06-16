@@ -910,7 +910,7 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes, dict_parent_kind=None):
+    def get_prev_absorb_layer(self, nodes, dict_child_kind, dict_child):
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
@@ -920,21 +920,34 @@ class GraphTrace:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
-                    if dict_parent_kind:
-                        parent_out_kinds = set(dict_parent_kind[parent_scopeName])
-                        parent_out_kinds.discard('aten::size')
-                        if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
-                            prev_absorb_layer.append(parent)
-                        elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
-                            prev_absorb_layer.append(parent) ##TODO: check other scenarios
-                        else: # When parent to multiple ops, sq transformation could be wrong.
-                            prev_absorb_layer.append(None)
-                    else:
+                    parent_out_kinds = set(dict_child_kind[parent_scopeName])
+                    parent_out_kinds.discard('aten::size')
+                    if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
                         prev_absorb_layer.append(parent)
+                    elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        intersect = parent_out_kinds.intersection(self.skip_ops_to_find_absorb)
+                        res = self.get_prev_absorb_layer_helper(parent_scopeName, dict_child_kind, dict_child, intersect)
+                        prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                            
+                    else: # When parent to multiple ops, sq transformation could be wrong.
+                        prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
         return prev_absorb_layer
+
+    def get_prev_absorb_layer_helper(self, node_scopeName, dict_child_kind, dict_child, intersect):
+        for child in dict_child[node_scopeName]:
+            if child.kind() in intersect:
+                child_out_kinds = set(dict_child_kind[child.scopeName()])
+                child_out_kinds.discard('aten::size')
+                if child_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                    intersect = child_out_kinds.intersection(self.skip_ops_to_find_absorb)
+                    return self.get_prev_absorb_layer_helper(child.scopeName(), dict_child_kind, dict_child, intersect)
+                elif child_out_kinds.intersection(self.could_absorb_layers) == child_out_kinds:
+                    return True
+                else:
+                    return False
 
     def mapping_torch_module_to_aten(self, op_types):
         res = []
@@ -951,7 +964,8 @@ class GraphTrace:
         if traced_model == None:
             return None, None
 
-        dict_parent_kind = defaultdict(list)
+        dict_child_kind = defaultdict(list) #saves kinds of all child-nodes of a parent node. 
+        dict_child = defaultdict(list) #saves all child-nodes of a parent node. 
         for node in traced_model.graph.nodes():
             parents_list = get_parents(node)
             node_kind, node_scopeName = node.kind(), node.scopeName()
@@ -960,12 +974,13 @@ class GraphTrace:
                     parent = parent_.node()
                     parent_kind = parent.kind()
                     if 'prim' not in parent_kind and parent.scopeName() != node_scopeName:
-                        dict_parent_kind[parent.scopeName()].append(node_kind)
+                        dict_child[parent.scopeName()].append(node)
+                        dict_child_kind[parent.scopeName()].append(node_kind)
 
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, dict_parent_kind)
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, dict_child_kind, dict_child)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
