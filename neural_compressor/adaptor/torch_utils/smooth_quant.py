@@ -761,7 +761,7 @@ class TorchSmoothQuant:
                 if not self.output_is_equal(out_post_sq, out_pre_sq):
                     logger.warning(
                         "Mathematical equivelancy of Smoothquant is not preserved. "
-                        "Please kindly report this issue to github.")
+                        "Please kindly report this issue to https://github.com/intel/neural-compressor.")
                     # self.recover()
                     # self.model._smoothquant_optimized = False
             else:
