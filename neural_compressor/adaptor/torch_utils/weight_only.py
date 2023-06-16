@@ -24,10 +24,10 @@ def quant_weight_asym(weight, num_bits=4):
 def quant_weight_sym(weight, num_bits=4):
     # assert num_bits > 1, "symmetric schema only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1)
-    minq = torch.tensor(2 ** (num_bits - 1))
+    minq = torch.tensor(-2 ** (num_bits - 1))
     if num_bits == 1:
         maxq = torch.tensor(2 ** (num_bits - 1))
-        minq = torch.tensor(2 ** (num_bits - 1))
+        minq = torch.tensor(2 ** (num_bits - 1)-1)
 
     wmax = torch.abs(weight).max(1)[0]
     tmp = (wmax == 0)
