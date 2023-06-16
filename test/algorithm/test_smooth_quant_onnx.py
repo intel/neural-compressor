@@ -50,6 +50,26 @@ class TestORTSq(unittest.TestCase):
 
     def test_sq(self):
         sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
+        model = sq.transform(calib_iter=5, scales_per_op=False)
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 1)
+        sq.recover()
+        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
+        for init in self.model.graph.initializer:
+            tensor = numpy_helper.to_array(init)
+            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
+            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
+
+        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
+        model = sq.transform(calib_iter=5, folding=False, scales_per_op=False)
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 2)
+        sq.recover()
+        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
+        for init in self.model.graph.initializer:
+            tensor = numpy_helper.to_array(init)
+            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
+            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
+
+        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
         model = sq.transform(calib_iter=5, folding=False, scales_per_op=True)
         self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 3)
         sq.recover()
@@ -72,6 +92,17 @@ class TestORTSq(unittest.TestCase):
         sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
         model = sq.transform(calib_iter=5, scales_per_op=True, alpha='auto')
         self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 3)
+        sq.recover()
+        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
+        for init in self.model.graph.initializer:
+            tensor = numpy_helper.to_array(init)
+            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
+            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
+
+
+        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
+        model = sq.transform(calib_iter=5, alpha='auto', scales_per_op=False)
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 1)
         sq.recover()
         self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
         for init in self.model.graph.initializer:
