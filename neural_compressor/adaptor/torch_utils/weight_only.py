@@ -1,9 +1,9 @@
-
 from ...utils import logger
 from ...utils.utility import LazyImport
 
 tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
+
 
 def quant_weight_asym(weight, num_bits=4):
     maxq = torch.tensor(2 ** num_bits - 1)
@@ -22,9 +22,13 @@ def quant_weight_asym(weight, num_bits=4):
 
 
 def quant_weight_sym(weight, num_bits=4):
-    assert num_bits > 1, "symmetric schema only supports num_bits > 1"
+    # assert num_bits > 1, "symmetric schema only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1)
     minq = torch.tensor(2 ** (num_bits - 1))
+    if num_bits == 1:
+        maxq = torch.tensor(2 ** (num_bits - 1))
+        minq = torch.tensor(2 ** (num_bits - 1))
+
     wmax = torch.abs(weight).max(1)[0]
     tmp = (wmax == 0)
     wmax[tmp] = +1
@@ -35,6 +39,7 @@ def quant_weight_sym(weight, num_bits=4):
 
 
 def quant_weight_actor(weight, num_bits, schema):
+    assert num_bits > 0, "num_bits should be larger than 0"
     if schema == "sym":
         return quant_weight_sym(weight, num_bits)
     else:
