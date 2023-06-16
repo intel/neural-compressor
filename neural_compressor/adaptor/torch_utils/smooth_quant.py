@@ -780,7 +780,7 @@ class TorchSmoothQuant:
                 return torch.all(torch.isclose(out1, out2, atol=atol))
             return False
         except:
-            logger.warning("Automatically check failed, Please check equal manually "
+            logger.warning("Automatically check failed, Please check equivelancy manually "
                            "between out_pre_sq and out_post_sq if necessary.")
             return True
 
