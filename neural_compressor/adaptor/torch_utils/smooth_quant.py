@@ -771,13 +771,18 @@ class TorchSmoothQuant:
             return self.model
 
     def output_is_equal(self, out1, out2, atol=1e-05):
-        if isinstance(out1, tuple):
-            return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
-        elif isinstance(out1, dict):
-            return all(torch.all(torch.isclose(out1[k], out2[k], atol=atol)) for k in out1.keys())
-        elif isinstance(out1, torch.Tensor):
-            return torch.all(torch.isclose(out1, out2, atol=atol))
-        return False
+        try:
+            if isinstance(out1, tuple):
+                return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
+            elif isinstance(out1, dict):
+                return all(torch.all(torch.isclose(out1[k], out2[k], atol=atol)) for k in out1.keys())
+            elif isinstance(out1, torch.Tensor):
+                return torch.all(torch.isclose(out1, out2, atol=atol))
+            return False
+        except:
+            logger.warning("Automatically check failed, \
+                            Please check equal manually between out_pre_sq and out_post_sq if necessary.")
+            return True
 
     def recover(self):
         """

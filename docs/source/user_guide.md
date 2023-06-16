@@ -22,9 +22,9 @@ This part helps user to get a quick understand about design structure and workfl
 </table>
 
 ## Python-based APIs
-Python-based APIs contains more details about the functional APIs in Intel® Neural Compressor, 
-which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases. 
-Please note that we will stop to support Intel Neural Compressor 1.X API in the future. 
+Python-based APIs contains more details about the functional APIs in Intel® Neural Compressor,
+which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases.
+Please note that we will stop to support Intel Neural Compressor 1.X API in the future.
 So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.
 
 <table class="docutils">
@@ -68,11 +68,12 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 <td colspan="3" align="center"><a href="adaptor.md">Adaptor</a></td>
 <td colspan="3" align="center"><a href="tuning_strategies.md">Strategy</a></td>
 <td colspan="3" align="center"><a href="distillation_quantization.md">Distillation for Quantization</a></td>
+<td colspan="3" align="center"><a href="metric.md">Metric</a></td>
 </tr>
 <tr>
-<td colspan="3" align="center"><a href="metric.md">Metric</a></td>
 <td colspan="3" align="center"><a href="objective.md">Objective</a></td>
 <td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
+<td colspan="3" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
 </tr>
 </tbody>
 </table>
