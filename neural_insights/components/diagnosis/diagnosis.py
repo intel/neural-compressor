@@ -76,6 +76,9 @@ class Diagnosis:
 
     def get_op_list(self) -> List[dict]:
         """Get OP list for model."""
+        check_module("numpy")
+        import numpy as np
+
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
@@ -92,7 +95,7 @@ class Diagnosis:
         for op_name, min_max in min_max_data.items():
 
             mse = self.calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
-            if mse is None:
+            if mse is None or np.isnan(mse):
                 continue
             min = float(min_max.get("min", None))
             max = float(min_max.get("max", None))

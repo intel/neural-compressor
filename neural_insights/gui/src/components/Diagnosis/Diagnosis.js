@@ -40,7 +40,7 @@ function Diagnosis() {
       <div className="flexbox">
         <div className="flex-item">
           <div className="flexbox-inside">
-            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} />
+            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} />
             {/* {selectedWorkload?.mode === 'quantization' &&
               <NodeSearch />
             } */}
@@ -156,11 +156,11 @@ function AccuracyResults({ selectedWorkload }) {
             <tr>
               <td className="accuracy-title">Accuracy <br /> results</td>
               <td>
-                <div className="accuracy-number">{selectedWorkload.accuracy_data.baseline_accuracy * 100}%</div>
+                <div className="accuracy-number">{(selectedWorkload.accuracy_data.baseline_accuracy * 100).toPrecision(3)}%</div>
                 <div className="accuracy-subtitle">FP32</div>
               </td>
               <td>
-                <div className="accuracy-number">{selectedWorkload.accuracy_data.optimized_accuracy * 100}%</div>
+                <div className="accuracy-number">{(selectedWorkload.accuracy_data.optimized_accuracy * 100).toPrecision(3)}%</div>
                 <div className="accuracy-subtitle">INT8</div>
               </td>
               <td>
