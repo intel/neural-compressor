@@ -37,7 +37,7 @@ from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
     _get_qrange_for_qType, calculate_scale_zp
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
-from neural_compressor.adaptor.ox_utils.util import find_by_name
+from neural_compressor.adaptor.ox_utils.util import to_numpy
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -252,22 +252,22 @@ class ONNXRTAugment:
         name_to_calibrator = {}
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
+
             if len_inputs == 1:
-                ort_inputs.update(
-                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                )
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
             else:
                 assert len_inputs == len(inputs), \
                     'number of input tensors must align with graph inputs'
-                if isinstance(inputs, dict):  # pragma: no cover
-                    ort_inputs.update(inputs)
-                else:
-                    for i in range(len_inputs):
-                        if not isinstance(inputs[i], np.ndarray):  # pragma: no cover
-                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                        else:
-                            ort_inputs.update({inputs_names[i]: inputs[i]})
 
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
             def _collect_data():
                 for output_idx, output in enumerate(session.run(None, ort_inputs)):
                     if q_config is not None and output.size != 0:

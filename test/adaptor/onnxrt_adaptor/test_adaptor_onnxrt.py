@@ -10,9 +10,9 @@ from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
 from packaging.version import Version
-from transformers import AutoConfig, AutoModelForSequenceClassification
+from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
 from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.data import Datasets, DATALOADERS
+from neural_compressor.data import Datasets, DATALOADERS, DataLoader
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.adaptor.pytorch import get_torch_version
@@ -630,6 +630,70 @@ class MatmulDataset:
 
     def __len__(self):
         return len(self.data)
+    
+class DummyNLPDataloader(object):
+    def __init__(self, model_name):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.sequence_a = "intel-extension-for-transformers is based in SH"
+        self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
+        self.encoded_dict = self.tokenizer(self.sequence_a, self.sequence_b, return_tensors='pt')
+        self.encoded_dict['labels'] = 1
+        self.batch_size = 1
+
+class DummyNLPDataloader_list(DummyNLPDataloader):
+    def __init__(self, model_name):
+        super().__init__(model_name)
+    
+    def __iter__(self):
+        yield [self.encoded_dict['input_ids'], self.encoded_dict['attention_mask']], self.encoded_dict['labels']
+
+class DummyNLPDataloader_dict(DummyNLPDataloader):
+    def __init__(self, model_name):
+        super().__init__(model_name)
+    
+    def __iter__(self):
+        yield {k: v.numpy().tolist() for k, v in self.encoded_dict.items() if k != 'labels'}, self.encoded_dict['labels']
+
+class DummyCVDataset(object):
+    def __init__(self, shape):
+        np.random.seed(9527)
+        self.label = True
+        self.shape = [shape]
+        self.low = [0.]
+        self.high = [1.]
+        self.dataset = []
+        
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        sample = self.dataset[index]
+        if self.label:
+            return sample, 0
+        else:
+            return sample
+        
+class DummyCVDataset_list(DummyCVDataset):
+    def __init__(self, shape):
+        super().__init__(shape)
+        self.process()
+    
+    def process(self):
+        for idx in range(0, len(self.shape)):
+            tensor = np.random.uniform(low=self.low[idx], high=self.high[idx], size=self.shape[idx])
+            tensor = tensor.astype(np.float32)
+            self.dataset.append(tensor)
+
+class DummyCVDataset_dict(DummyCVDataset):
+    def __init__(self, shape):
+        super().__init__(shape)
+        self.process()
+    
+    def process(self):
+        for idx in range(0, len(self.shape)):
+            tensor = np.random.uniform(low=self.low[idx], high=self.high[idx], size=self.shape[idx])
+            tensor = tensor.astype(np.float32)
+            self.dataset.append({'input': tensor})
 
 class TestAdaptorONNXRT(unittest.TestCase):
 
@@ -1346,6 +1410,41 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         q_capability = adaptor.query_fw_capability(Model(self.distilbert_model))
         self.assertEqual(len(q_capability['block_wise']), 6)
+
+    def test_dataloader_input(self):
+        cv_dataloader = DataLoader(framework='onnxrt', dataset=DummyCVDataset_list(shape=(3, 224, 224)))
+        quantizer = Quantization('qlinear.yaml')
+        quantizer.calib_dataloader = cv_dataloader
+        quantizer.eval_dataloader = cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        cv_dataloader = DataLoader(framework='pytorch', dataset=DummyCVDataset_dict(shape=(3, 224, 224)))
+        quantizer = Quantization('qlinear.yaml')
+        quantizer.calib_dataloader = cv_dataloader
+        quantizer.eval_dataloader = cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        nlp_dataloader = DummyNLPDataloader_list("distilbert-base-uncased-finetuned-sst-2-english")
+        quantizer = Quantization('qlinear.yaml')
+        quantizer.calib_dataloader = nlp_dataloader
+        quantizer.eval_dataloader = nlp_dataloader
+        quantizer.model = self.distilbert_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+        
+        nlp_dataloader = DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english")
+        quantizer = Quantization('qlinear.yaml')
+        quantizer.calib_dataloader = nlp_dataloader
+        quantizer.eval_dataloader = nlp_dataloader
+        quantizer.model = self.distilbert_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+
 
 if __name__ == "__main__":
     unittest.main()

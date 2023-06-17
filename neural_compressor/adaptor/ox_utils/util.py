@@ -20,8 +20,7 @@ import os
 import numpy as np
 from neural_compressor.utils.utility import LazyImport
 from enum import Enum
-from pathlib import Path
-import abc
+import torch
 
 helper = LazyImport('onnx.helper')
 numpy_helper = LazyImport('onnx.numpy_helper')
@@ -519,3 +518,20 @@ def trt_env_setup(model):
     else:
         os.environ["ORT_TENSORRT_INT8_ENABLE"] = "0"
         
+def to_numpy(data):
+    """Convert to numpy ndarrays."""
+    if not isinstance(data, np.ndarray):
+        if isinstance(data, torch.Tensor):
+            if data.dtype is torch.bfloat16: # pragma: no cover
+                return data.detach().cpu().to(torch.float32).numpy()
+            if data.dtype is torch.chalf: # pragma: no cover
+                return data.detach().cpu().to(torch.cfloat).numpy()
+            return data.detach().cpu().numpy()
+        else:
+            try:
+                return np.array(data)
+            except:
+                assert False, "The input data for onnx model is {}, which is not supported " \
+                              "to convert to numpy ndarrays.".format(type(data))
+    else:
+        return data

@@ -28,7 +28,7 @@ from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
 import onnxruntime
 import onnx
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -447,7 +447,9 @@ def main():
             q_model = quantization.fit(onnx_model, 
                                        config,
                                        eval_func=eval_func,
-                                       calib_dataloader=DefaultDataLoader(calib_dataset, 1))
+                                       calib_dataloader=DataLoader(framework='onnxrt',
+                                                                   dataset=calib_dataset, 
+                                                                   batch_size=1))
             q_model.save(model_args.save_path)
         if model_args.benchmark:
             onnx_model = onnx.load(model_args.input_model)
@@ -458,7 +460,7 @@ def main():
                 conf = BenchmarkConfig(iteration=100,
                                         cores_per_instance=28,
                                         num_of_instance=1)
-                b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
+                b_dataloader = DataLoader(framework='onnxrt', dataset=b_dataset, batch_size=model_args.batch_size)
                 fit(onnx_model, conf, b_dataloader=b_dataloader)
             elif model_args.mode == 'accuracy':
                 eval_f1 = eval_func(onnx_model)

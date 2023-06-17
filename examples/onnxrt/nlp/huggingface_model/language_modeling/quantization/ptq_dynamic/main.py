@@ -217,11 +217,11 @@ def main():
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+            from neural_compressor.data import DataLoader
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
+            b_dataloader = DataLoader(framework='onnxrt', dataset=ds, batch_size=args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
             evaluate(args, model, tokenizer)
