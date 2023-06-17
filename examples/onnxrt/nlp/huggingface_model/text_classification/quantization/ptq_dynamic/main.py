@@ -383,21 +383,28 @@ if __name__ == "__main__":
 
 
     if args.tune:
-        if ort.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
-            opt_options = FusionOptions(model_type)
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
+        opt_options = FusionOptions(model_type)
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                model_type,
-                num_heads=args.num_heads,
-                hidden_size=args.hidden_size,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            model_type,
+            num_heads=args.num_heads,
+            hidden_size=args.hidden_size,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig

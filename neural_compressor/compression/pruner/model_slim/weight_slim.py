@@ -97,7 +97,6 @@ class PostCompressionUtils(object):
             indice: the mask' zero-value elements indice
             indice_to_keep: the masks one-value elements indice
         """
-        # import pdb;pdb.set_trace()
         # round the pruning number to be a multiple of 2^n
         if round_option > 0:
             round_length = (indice.__len__() // round_option) * round_option
@@ -293,7 +292,6 @@ class MHACompression(object):
             'mha_module': [torch.nn.Module] (keep not change),
         }   
         """
-        # import pdb;pdb.set_trace()
         self.qkv_name = mha_object['qkv_name'] # list
         self.ffn_name = mha_object['ffn_name'] # list
         self.mha_name = mha_object['mha_name'] # list
@@ -336,7 +334,6 @@ class MHACompression(object):
         # check
         assert head_mask.numel() == head_nums, f"Module {self.mha_name}'s head num and head mask does not match."
         # extend the masks
-        # import pdb;pdb.set_trace()
         ffn_mask = torch.repeat_interleave(head_mask, head_size, dim = -1)
         qkv_mask = ffn_mask.permute(1, 0)
         # mask the weight data

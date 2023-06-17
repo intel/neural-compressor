@@ -422,6 +422,7 @@ def main():
             return outputs.metrics['f1']
 
         if model_args.tune:
+            # optimize model
             from onnxruntime.transformers import optimizer
             from onnxruntime.transformers.fusion_options import FusionOptions
             opt_options = FusionOptions('bert')
@@ -433,6 +434,15 @@ def main():
                 hidden_size=768,
                 optimization_options=opt_options)
             onnx_model = model_optimizer.model
+
+            # check the optimized model is valid
+            try:
+                onnxruntime.InferenceSession(onnx_model.SerializeToString(), providers=onnxruntime.get_available_providers())
+            except Exception as e:
+                logger.warning("Optimized model is invalid: {}. ".format(e))
+                logger.warning("Model optimizer will be skipped. " \
+                            "Try to upgrade onnxruntime to avoid this error")
+                onnx_model = onnx.load(model_args.input_model)
             
             from neural_compressor import quantization, PostTrainingQuantConfig
             from neural_compressor.utils.constant import FP32

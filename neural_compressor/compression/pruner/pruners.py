@@ -16,18 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import re
-from .utils import torch, F
+import copy
+import numpy as np
 from functools import partial
 from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
-# auto slim related: head pruning objects
-from .model_slim.pattern_analyzer import SelfMHASearcher
-from .model_slim.weight_slim import MHACompression
+
+from ...utils.utility import LazyImport
+torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
+F = LazyImport('torch.nn.functional')
 
 PRUNERS = {}
 
@@ -62,7 +64,7 @@ def parse_valid_pruner_types():
     valid_pruner_types.append("pattern_lock")
     return valid_pruner_types
 
-def get_pruner(config, modules):
+def get_pruner(config, modules, framework='pytorch'):
     """Get registered pruner class.
 
     Get a Pruner object from PRUNERS.
@@ -102,7 +104,7 @@ def get_pruner(config, modules):
 
     if name not in PRUNERS.keys():
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
-    return PRUNERS[name](config, modules)
+    return PRUNERS[name](config, modules, framework)
 
 class BasePruner:
     """Pruning Pruner.
@@ -131,10 +133,11 @@ class BasePruner:
         max_sparsity_ratio_per_op: A float showing the maximum sparsity ratio for every module.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize."""
         self.modules = modules
         self.config = config
+        self.framework = framework
         self.masks = {}
         self.global_step = 0
         self.handled_global_step = -1
@@ -150,10 +153,15 @@ class BasePruner:
             self.total_prune_cnt = 1
             self.completed_pruned_cnt = 1
 
-        for key in self.modules.keys():
-            module = self.modules[key]
-            self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)  ##TODO support bias or others
-
+        if self.framework == 'pytorch':
+            for key in self.modules.keys():
+                module = self.modules[key]
+                ##TODO support bias or others
+                self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
+        elif self.framework == 'keras':
+            for key in self.modules.keys():
+                module = self.modules[key]
+                self.masks[key] = np.ones(module.get_weights()[0].shape)
         self.target_sparsity_ratio = self.config['target_sparsity']
         self.current_sparsity_ratio = 0.0
         self.init_sparsity_ratio = 0.0
@@ -172,10 +180,15 @@ class BasePruner:
 
         Weights are multipled with masks. This is the formal pruning process.
         """
-        with torch.no_grad():
+        if self.framework == 'pytorch':
+            with torch.no_grad():
+                for key in self.modules.keys():
+                    module = self.modules[key]
+                    module.weight.data = module.weight.data * self.masks[key]
+        elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
-                module.weight.data = module.weight.data * self.masks[key]
+                module.set_weights([module.get_weights()[0] * self.masks[key]] + module.get_weights()[1:])
 
     def mask_weights_general(self, input_masks):
         """Apply input masks to corresponding modules' weights.
@@ -185,10 +198,15 @@ class BasePruner:
         Args:
             input_masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
         """
-        with torch.no_grad():
+        if self.framework == 'pytorch':
+            with torch.no_grad():
+                for key in self.modules.keys():
+                    module = self.modules[key]
+                    module.weight.data = module.weight.data * input_masks[key]
+        elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
-                module.weight.data = module.weight.data * input_masks[key]
+                module.set_weights([module.get_weights()[0] * input_masks[key]] + module.get_weights()[1:])
 
     def on_step_begin(self, local_step):
         """Implement at the start of each step."""
@@ -254,6 +272,7 @@ class BasePruner:
 
     def rewrite_forward(self):
         """Rewrite forward to implement block mask operation"""
+        assert self.framework != 'keras', "This pruning method is not supported by Keras now."
         def forward(self, input):
             block_size = [self.weight.shape[0]//self.block_mask.shape[0], \
                     self.weight.shape[1]//self.block_mask.shape[1]]
@@ -269,6 +288,7 @@ class BasePruner:
 
     def recover_forward(self):
         """Restore the forward format at the end of pruning"""
+        assert self.framework != 'keras', "This pruning method is not supported by Keras now."
         with torch.no_grad():
             for key in self.modules.keys():
                 if not hasattr(self.modules[key], 'block_mask'):
@@ -296,18 +316,18 @@ class BasicPruner(BasePruner):
         reg: A Reg object that defines regulization terms.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize."""
         # self.modules = modules
         # self.config = config
         # self.masks = {}
-        super(BasicPruner, self).__init__(config, modules)
+        super(BasicPruner, self).__init__(config, modules, framework)
 
     def _init(self):
         """Auxiliary function for initializing."""
-        self.pattern = get_pattern(self.config, self.modules)
+        self.pattern = get_pattern(self.config, self.modules, self.framework)
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.framework)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # if switch off progressive but use per-channel pruning, give a warn
         if "channel" in self.pattern.pattern:
@@ -388,9 +408,9 @@ class PatternLockPruner(BasePruner):
         Inherit from parent class Pruner.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize."""
-        super(PatternLockPruner, self).__init__(config, modules)
+        super(PatternLockPruner, self).__init__(config, modules, framework)
         self.pattern = get_pattern(self.config, modules)
         assert self.config.end_step == self.config.start_step, "pattern_lock pruner only supports one shot mode"
 
@@ -428,17 +448,17 @@ class BlockMaskPruner(BasePruner):
         scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
         reg: A Reg object that defines regulization terms.
     """
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize."""
-        super(BlockMaskPruner, self).__init__(config, modules)
+        super(BlockMaskPruner, self).__init__(config, modules, framework)
 
     def _init(self):
         """Initialize."""
-        self.pattern = get_pattern(self.config, self.modules)
+        self.pattern = get_pattern(self.config, self.modules, self.framework)
         self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.framework)
         self.reg = get_reg(self.config, self.modules, self.pattern)
 
         if "channel" not in self.pattern.pattern:
@@ -553,17 +573,17 @@ class RetrainFreePruner(BasePruner):
         scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
         reg: A Reg object that defines regulization terms.
     """
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize."""
-        super(RetrainFreePruner, self).__init__(config, modules)
+        super(RetrainFreePruner, self).__init__(config, modules, framework)
 
     def _init(self):
         """Initialize."""
-        self.pattern = get_pattern(self.config, self.modules)
+        self.pattern = get_pattern(self.config, self.modules, self.framework)
         self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.framework)
         self.reg = get_reg(self.config, self.modules, self.pattern)
 
         logger.warning("Retrain-free pruner fixed the weights, please DO NOT turn on gradient update.")
@@ -703,15 +723,15 @@ class ProgressivePruner(BasicPruner):
         Inherit from parent class Pruner.
     """
 
-    def __init__(self, config, modules):
+    def __init__(self, config, modules, framework='pytorch'):
         """Initialize."""
-        super(ProgressivePruner, self).__init__(config, modules)
+        super(ProgressivePruner, self).__init__(config, modules, framework)
 
     def _init(self):
         """Auxiliary function for initialization."""
-        self.pattern = get_pattern(self.config, self.modules)
+        self.pattern = get_pattern(self.config, self.modules, self.framework)
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.framework)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # progressive pruning set up, including check up paramters.
         self.use_progressive = self.config["progressive"]
@@ -934,7 +954,16 @@ class MultiheadAttentionPruner(BasePruner):
         config: A config dict object that contains the pruner information.
 
     Attributes:
-        Inherit from parent class Pruner.
+        mha_compressions: a Dict. (key: MHA module name; value: MHACompression object in .model_slim.weight_slim)
+            Main object to hook critical attributes for mha pruning and modify these attributes.
+        linear_layers: a Dict. {key: linear layer name; value: torch.nn.Linear object.}
+            Store independent linear layer look-up table, which used by criterion object.
+            linear_layers length should be 4x of mha_compression because one mha_compression hooks 4 linear layers:
+            query, key, value and subsequent ffn layer.
+        head_masks: A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+            Similar to Huggingface build-in head_mask attribute.
+        mha_scores: A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+            Store scores for different heads.
     """
     def __init__(self, config, mha_modules):
         """Initialize."""
@@ -961,33 +990,30 @@ class MultiheadAttentionPruner(BasePruner):
         self.init_sparsity_ratio = 0.0
         self.criterion_reduce_type = self.config['criterion_reduce_type']
         self.pruning_scope = self.config['pruning_scope']
-        #-----------------------------------------------------------------------------------------------
-        #---------------------------------------Custom attributes for MHA Pruner
+        #------------------------Custom attributes for MHA Pruner--------------------------------------
         # main initialize process.
         # define some attributes. 
-        # {key: mha_name, value: mha_compression object}
         self.mha_compressions = {}
-        # {key: layer_name, value: corresponding linear object}
         self.linear_layers = {}
-        # {key: mha_name, value: torch.Tensor, 1xhead_num}, head_num traced in corresponding mha_compression object
         self.head_masks = {} 
-        # general pruning components (head pruning does not need a pattern component)
         self.mha_scores = {} # {}
         # main initialization process
-        # initialize custom attributes
         self._init_mha_attrs()
         # initialize custom attributes: criterion (snip-momnetum, snip, magnitude, etc.)
         # we have hook modules in mha_compressions therefore do not pass them to patterns
-        self.pattern = get_pattern(self.config, modules = None) 
-        self.criterion = get_criterion(self.config, self.linear_layers) # criterion hooks on linear themselves.
+        self.pattern = get_pattern(self.config, modules = None)
+        # criterion hooks on linear themselves
+        self.criterion = get_criterion(self.config, self.linear_layers)
         self.scheduler = get_scheduler(self.config)
         #-----------------------------------------------------------------------------------------------
     
     def _init_mha_attrs(self):
-        # initialize self.mha_compressions, self.linear_layers, self.head_masks
+        """Initialize self.mha_compressions, self.linear_layers, self.head_masks
         # similar to original mha slim process, but only hook mha modules and their attributes, 
         # do not call slim main functions.
-        # import pdb;pdb.set_trace()
+        """
+        # auto slim related: head pruning objects
+        from .model_slim.weight_slim import MHACompression
         for mha_module in self.mha_modules:
             # initialize self.mha_compressions
             mha_comp = MHACompression(mha_module)

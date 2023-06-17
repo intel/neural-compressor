@@ -413,15 +413,16 @@ def str2array(s):
     return np.array(ast.literal_eval(s))
 
 
-def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
+def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
     """Dequantize the weight with min-max filter tensors."""
     weight_channel = weight_tensor.shape[-1]
     if len(min_filter_tensor) == 1:
-        return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
-    # TODO to calculate the de-quantized result in a parallel way
-    for i in range(weight_channel):
-        weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
-
+         weight_tensor = weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+    else:
+        # TODO to calculate the de-quantized result in a parallel way
+        for i in range(weight_channel):
+            weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+    return weight_tensor
 
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
@@ -713,6 +714,7 @@ def print_table(
         output_handler=logger.info,
         title: Optional[str] = None,
         insert_newlines=False,
+        precision: Optional[int] = None,
 ) -> None:
     """Print table with prettytable.
 
@@ -722,11 +724,15 @@ def print_table(
              to object's attribute.
         table_entries (list): List of objects to be included in the table.
         output_handler (func, optional): Output handler function.
+        title (str): Title for the table
+        insert_newlines (bool): Add newlines to each row
+        precision (int): Number of digits after the decimal point
 
     Returns:
         None
     """
     from functools import reduce
+    import numpy as np
     table = pt.PrettyTable(min_table_width=40)
     if title is not None:
         table.title = title
@@ -738,6 +744,11 @@ def print_table(
                 table_row.append(entry.get(attribute))
             else:
                 value = reduce(getattr, [entry] + attribute.split("."))
+                if (isinstance(value, np.floating) or isinstance(value, float)) and isinstance(precision, int):
+                    if "e" in str(value):
+                        value = f'{value:.{precision}e}'
+                    else:
+                         value = round(value, precision)
                 table_row.append(value)
         table.add_row(table_row)
     lines = table.get_string().split('\n')
@@ -802,14 +813,14 @@ def get_weights_details(workload_location: str) -> list:
 
         if isinstance(input_model_op_tensors, dict):
             tensors_data = zip(input_model_op_tensors.items(), optimized_model_op_tensors.items())
-            for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in tensors_data:
-                if input_op_values.shape != optimized_op_values.shape:
+            for (_, input_op_tensor_values), (_, optimized_op_tensor_values) in tensors_data:
+                if input_op_tensor_values.shape != optimized_op_tensor_values.shape:
                     continue
 
                 weights_entry = WeightsDetails(
-                    input_op_name,
-                    input_op_values,
-                    optimized_op_values,
+                    op_name,
+                    input_op_tensor_values,
+                    optimized_op_tensor_values,
                 )
                 weights_details.append(weights_entry)
     return weights_details
@@ -938,7 +949,7 @@ def print_op_list(workload_location: str):
     Returns:
         None
     """
-    minmax_file_path = os.path.join(workload_location, "inspect_saved", "dequan_min_max.pkl")
+    minmax_file_path = os.path.join(workload_location, "inspect_saved", "activation_min_max.pkl")
     input_model_tensors = get_tensors_info(
         workload_location,
         model_type="input",
@@ -960,6 +971,7 @@ def print_op_list(workload_location: str):
             "Activation max": "activation_max",
         },
         table_entries=sorted_op_list,
+        precision=5,
     )
 
     activations_table_file = os.path.join(
@@ -983,7 +995,7 @@ def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) 
     """Get OP list for model.
 
     Args:
-        minmax_file_path: path to dequan_min_max.pkl
+        minmax_file_path: path to activation_min_max.pkl
         input_model_tensors: dict with input tensors details
         optimized_model_tensors: dict with optimized tensors details
 
