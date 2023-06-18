@@ -219,7 +219,7 @@ def main():
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            b_dataloader = DataLoader(framework='onnxrt', dataset=ds, batch_size=args.eval_batch_size)
+            b_dataloader = DataLoader(ds, args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
             evaluate(args, model, tokenizer)
@@ -266,9 +266,7 @@ def main():
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
-                                   calib_dataloader=DataLoader(framework='onnxrt', 
-                                                               dataset=ds, 
-                                                               batch_size=args.eval_batch_size))
+                                   calib_dataloader=DataLoader(ds, args.eval_batch_size))
         q_model.save(args.output_model)
 
 

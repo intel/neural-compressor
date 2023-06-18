@@ -40,7 +40,7 @@ from evaluate import load
 from utils_model import ORTModel
 from utils_qa import postprocess_qa_predictions
 
-from neural_compressor.datar import DataLoader
+from neural_compressor.data import DataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.

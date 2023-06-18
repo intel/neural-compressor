@@ -425,7 +425,6 @@ if __name__ == "__main__":
             quant_format=args.quant_format,
             calibration_sampling_size=[8, 16, 32],
             recipes={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]},
-            diagnosis=args.diagnose,
         )
         q_model = quantization.fit(model, 
                                    config,
