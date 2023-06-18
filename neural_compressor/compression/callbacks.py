@@ -84,10 +84,10 @@ class BaseCallbacks(object):
             'on_after_eval': []
         }
 
-    def on_train_begin(self, dataloader=None):
+    def on_train_begin(self, dataloader=None, model=None):
         """Be called before the beginning of training."""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
-            on_train_begin_hook(dataloader)
+            on_train_begin_hook(dataloader, model)
 
     def on_train_end(self):
         """Be called after the end of training."""

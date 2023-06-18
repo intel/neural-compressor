@@ -289,4 +289,49 @@ class RetrainFreeCriterion(PruningCriterion):
                 mask_grad = self.modules[key].block_mask.grad.clone()
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
+   
+
+@register_criterion('sparse_llm')
+class SparseLLMCriterion(PruningCriterion):
+    """Pruning criterion.
     
+    The sparse_llm criterion_class is derived from PruningCriterion.
+
+    Args:
+        config: A config dict object that includes information about pruner and pruning criterion.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+        beta: A parameter that determines how much of the snip score is updated at the current step.
+    
+    Attributes:
+        scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
+    """
+    
+    def __init__(self, modules, config):
+        """Initiliaze a sparse_llm pruning criterion."""
+        super(SparseLLMCriterion, self).__init__(modules, config)
+        
+    def set_hessian_matrix(self, module, device='cpu'):
+        W = module.weight.data.clone()
+        if isinstance(module, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(module, transformers.Conv1D):
+            W = W.t()
+        columns = W.shape[1]
+        module.hessian = torch.zeros(columns, columns).to(device)
+        module.samples = 0
+        self.device = device
+        del W
+            
+    def add_batch(self, module, inp):
+            if len(inp.shape) == 2:
+                inp = inp.unsqueeze(0)
+            sample_num = inp.shape[0] # batchsize
+            if isinstance(module, nn.Linear) or isinstance(module, transformers.Conv1D):
+                if len(inp.shape) == 3:
+                    inp = inp.reshape((-1, inp.shape[-1]))
+                inp = inp.t()
+            module.hessian *= module.samples / (module.samples + sample_num)
+            module.samples += sample_num
+            inp = (math.sqrt(2 / module.samples) * inp.float()).to(self.device)
+            module.hessian += inp.matmul(inp.t()) 

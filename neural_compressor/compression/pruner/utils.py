@@ -583,3 +583,78 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
+
+def get_layers(model):
+    """
+    get each layer's name and its modules
+    :param model:
+    :return: each layer's name and its modules
+    """
+    layers = []
+    search_flag = False
+    def unfoldLayer(module):
+        """
+        unfold each layer
+        :param model: the given model or a single layer
+        :param root: root name
+        :return:
+        """
+        nonlocal search_flag
+        nonlocal layers
+        if search_flag:
+            return
+        if hasattr(type(module),"__name__") and 'ModuleList' in type(module).__name__:
+            layers = module
+            search_flag = True
+        layer_list = list(module.named_children())
+        for item in layer_list:
+            module = item[1]
+            if isinstance(module, torch.nn.Module):
+                unfoldLayer(module)
+
+    unfoldLayer(model)
+    return layers
+
+@torch.no_grad()
+def collect_layer_inputs(model, layers, layer_idx, prev_inputs):
+    """
+    attention_flag: if True collect attention_mask list else the auto-genated causal_attention_mask.
+    """
+    inputs = []
+    inputs_info = {'idx': 0, 'attention_mask': None}
+    if layer_idx == 0:
+        # inputs shape is not fixed??? model.seqlen
+        # inputs = torch.zeros((len(prev_inputs), 512, model.config.hidden_size), \
+        #                       dtype=model.dtype, device=model.device)
+        # attention_masks = torch.zeros(len(prev_inputs) if attention_flag else 1, \
+        #                               model.seqlen, model.seqlen) # check masks dtype and device
+        layer = layers[layer_idx]
+        def forward(self, hidden_states, **kwargs):
+            # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
+            inputs.append(hidden_states)
+            if inputs_info['idx'] == 0:
+                inputs_info['attention_mask'] = kwargs['attention_mask']
+            inputs_info['idx'] += 1
+            raise ValueError
+        
+        forward_cache = layers[layer_idx].forward
+        layer.forward = partial(forward, layer)
+        for batch in prev_inputs:
+            try:
+                # for k, v in batch.items():
+                    # batch[k] = v.to(model.device)
+                # model(**batch)
+                model(batch['input_ids'].to(model.device))
+            except ValueError:
+                pass
+        layer.forward = forward_cache
+    else:
+        prev_layer = layers[layer_idx-1]
+        
+        for batch in prev_inputs:
+            prev_output = prev_layer(*batch) # Be careful to set prev_mask before calling
+            batch[0] = prev_output[0]
+            inputs.append(batch)
+            
+    return inputs, inputs_info['attention_mask']
+

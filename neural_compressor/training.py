@@ -409,10 +409,10 @@ class CallBacks:
         assert len(callbacks_list) >= 1, "The length of callbacks list must be greater than 1."
         self.callbacks_list = callbacks_list
 
-    def on_train_begin(self, dataloader=None):
+    def on_train_begin(self, dataloader=None, model=None):
         """Be called before the beginning of training."""
         for callbacks in self.callbacks_list:
-            callbacks.on_train_begin(dataloader)
+            callbacks.on_train_begin(dataloader, model)
 
     def on_train_end(self):
         """Be called after the end of training."""

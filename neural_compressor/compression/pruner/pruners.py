@@ -24,7 +24,7 @@ from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
-from .utils import logger
+from .utils import torch, F, get_sparsity_ratio, get_layers, logger, collect_layer_inputs
 
 from ...utils.utility import LazyImport
 torch = LazyImport('torch')
@@ -91,16 +91,14 @@ def get_pruner(config, modules, framework='pytorch'):
         name = config["pruning_type"][0:-12]
         config["progressive"] = True
     if name in CRITERIA:
+        config['criterion_type'] = name
         if config["progressive"] == False:
-            config['criterion_type'] = name
             if "block" in name or "free" in name:
                 assert ":" not in config["pattern"], f"{name} pruner type does not support {config['pattern']} pattern."
-            else :
+            if name not in PRUNERS.keys():
                 name = "basic"  ##return the basic pruner
         else:
-            config['criterion_type'] = name
-            # name = "progressive"  ## return the progressive pruner
-            name = "progressive"
+            name = "progressive"  ## return the progressive pruner
 
     if name not in PRUNERS.keys():
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
@@ -239,7 +237,7 @@ class BasePruner:
         self.mask_weights()
         self.global_step += 1
 
-    def on_train_begin(self, dataloader=None):
+    def on_train_begin(self, dataloader=None, model=None):
         """Implement at the beginning of training phase."""
         pass
 
@@ -429,8 +427,8 @@ class PatternLockPruner(BasePruner):
         self.global_step += 1
 
 
-@register_pruner('block_mask')
-class BlockMaskPruner(BasePruner):
+@register_pruner('snip_momentum_block')
+class SnipMomentumBlockPruner(BasePruner):
     """Pruning Pruner.
 
     The class which executes pruning process.
@@ -448,9 +446,9 @@ class BlockMaskPruner(BasePruner):
         scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
         reg: A Reg object that defines regulization terms.
     """
-    def __init__(self, config, modules, framework='pytorch'):
+    def __init__(self, config, modules):
         """Initialize."""
-        super(BlockMaskPruner, self).__init__(config, modules, framework)
+        super(SnipMomentumBlockPruner, self).__init__(config, modules)
 
     def _init(self):
         """Initialize."""
@@ -639,7 +637,7 @@ class RetrainFreePruner(BasePruner):
         ##the order of the following four lines can't not be exchanged
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_after_optimizer_step()
-        # self.mask_weights() 
+        # self.mask_weights()
         # Iterative rearrangement with mask weight at the last step only
         if self.end_step == self.global_step:
             self.mask_weights()
@@ -935,10 +933,10 @@ class MultiheadAttentionPruner(BasePruner):
     """Pruning Pruner.
 
     In this pruner, We apply pruning for multi-head attentions.
-    multi-head attention pruning means remove partial QKV layers and their corresponding feedward layers simultaneously. 
+    multi-head attention pruning means remove partial QKV layers and their corresponding feedward layers simultaneously.
 
     Args:
-        mha_modules: A List 
+        mha_modules: A List
         [
             {
                 'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
@@ -969,7 +967,7 @@ class MultiheadAttentionPruner(BasePruner):
         """Initialize."""
         # use pattern search techique to obtain multihead attention modules
         # modules is a dict that fits the mha auto slim process
-        #----------------------------------------- 
+        #-----------------------------------------
         self.config = config
         self.mha_modules = mha_modules
         self.global_step = 0
@@ -992,10 +990,10 @@ class MultiheadAttentionPruner(BasePruner):
         self.pruning_scope = self.config['pruning_scope']
         #------------------------Custom attributes for MHA Pruner--------------------------------------
         # main initialize process.
-        # define some attributes. 
+        # define some attributes.
         self.mha_compressions = {}
         self.linear_layers = {}
-        self.head_masks = {} 
+        self.head_masks = {}
         self.mha_scores = {} # {}
         # main initialization process
         self._init_mha_attrs()
@@ -1006,10 +1004,10 @@ class MultiheadAttentionPruner(BasePruner):
         self.criterion = get_criterion(self.config, self.linear_layers)
         self.scheduler = get_scheduler(self.config)
         #-----------------------------------------------------------------------------------------------
-    
+
     def _init_mha_attrs(self):
         """Initialize self.mha_compressions, self.linear_layers, self.head_masks
-        # similar to original mha slim process, but only hook mha modules and their attributes, 
+        # similar to original mha slim process, but only hook mha modules and their attributes,
         # do not call slim main functions.
         """
         # auto slim related: head pruning objects
@@ -1028,7 +1026,7 @@ class MultiheadAttentionPruner(BasePruner):
                 self.linear_layers[mha_module['qkv_name'][idx]] = mha_module['qkv_module'][idx]
             for idx in range(mha_module['ffn_name'].__len__()):
                 self.linear_layers[mha_module['ffn_name'][idx]] = mha_module['ffn_module'][idx]
-    
+
     def reduce_mha_scores(self, score, dim = 0):
         # an 2D tensor, return its compiled scores
         if self.criterion_reduce_type == "mean":
@@ -1039,7 +1037,7 @@ class MultiheadAttentionPruner(BasePruner):
             return torch.max(score, dim)
         else:
             raise NotImplementedError
-    
+
     def print_mha_masks(self):
         for k, v in self.head_masks.items():
             logger.info(f"Head mask of module {k} is {v}.")
@@ -1065,9 +1063,9 @@ class MultiheadAttentionPruner(BasePruner):
             qkv_shape = mha_comp.qkv[0].weight.shape
             qkv_block_size = [head_size, qkv_shape[1]]
             qkv_new_shape = [
-                qkv_shape[0] // qkv_block_size[0], 
-                qkv_block_size[0], 
-                qkv_shape[1] // qkv_block_size[1], 
+                qkv_shape[0] // qkv_block_size[0],
+                qkv_block_size[0],
+                qkv_shape[1] // qkv_block_size[1],
                 qkv_block_size[1]
             ]
             for qkv_name, qkv_score in qkv_scores_for_this_mha.items():
@@ -1079,9 +1077,9 @@ class MultiheadAttentionPruner(BasePruner):
             ffn_shape = mha_comp.ffn[0].weight.shape
             ffn_block_size = [ffn_shape[0], head_size]
             ffn_new_shape = [
-                ffn_shape[0] // ffn_block_size[0], 
-                ffn_block_size[0], 
-                ffn_shape[1] // ffn_block_size[1], 
+                ffn_shape[0] // ffn_block_size[0],
+                ffn_block_size[0],
+                ffn_shape[1] // ffn_block_size[1],
                 ffn_block_size[1]
             ]
             for ffn_name, ffn_score in ffn_scores_for_this_mha.items():
@@ -1111,7 +1109,7 @@ class MultiheadAttentionPruner(BasePruner):
         self.criterion.on_step_begin()
         current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
                                                                              self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt, 
+                                                                             self.total_prune_cnt,
                                                                              self.head_masks,
                                                                              self.init_sparsity_ratio)
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
@@ -1129,7 +1127,7 @@ class MultiheadAttentionPruner(BasePruner):
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.head_masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
-    
+
     def mask_weights(self):
         for mha_name, mha_compression in self.mha_compressions.items():
             mha_compression.mask_mha_weights(self.head_masks[mha_name])
@@ -1153,3 +1151,102 @@ class MultiheadAttentionPruner(BasePruner):
         """
         self.mask_weights()
         self.global_step += 1
+        
+
+@register_pruner('sparse_llm')
+class SparseLLMPruner(BasePruner):
+    """Pruning Pruner.
+    The sparse_llm pruner_class is derived from BasePruner.
+    
+    ###     Needs refinement   ###
+        
+
+    Args:
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
+
+    Attributes:
+        pattern: A Pattern object that defines pruning weights' arrangements within space.
+        criterion: A Criterion Object that defines which weights are to be pruned
+        scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+        reg: A Reg object that defines regulization terms.
+    """
+    
+    def __init__(self, config, modules):
+        """Initialize."""
+        super(SparseLLMPruner, self).__init__(config, modules)
+        
+        
+    def _init(self):
+        """Initialize."""
+        self.pattern = get_pattern(self.config, self.modules)
+        # self.masks = self.pattern.register_block_masks()
+        # self.scheduler = get_scheduler(self.config)
+        self.criterion = get_criterion(config=self.config, modules=self.modules)
+        # self.reg = get_reg(self.config, self.modules, self.pattern)
+        logger.warning("Sparse_llm pruner fixed the weights, please DO NOT turn on gradient update.")
+        assert "1x1" in self.pattern.pattern or ":" in self.pattern.pattern, \
+                "sparse_llm pruner type only supports 1x1 and N:M patterns."
+    
+    def on_train_begin(self, dataloader=None, model=None):
+        """Implement at the beginning of training phase."""
+        del self.masks
+        del self.config
+        self.dataloader = dataloader
+        self.model = model
+        self.dev = model.device
+        self.update_masks()
+        self.model = self.model.to(self.dev)
+        del self.dev
+        
+    def update_masks(self):
+        layers = get_layers(self.model)
+        inputs, attention_mask = collect_layer_inputs(model=self.model, \
+                                                      layers=layers, layer_idx=0, prev_inputs=self.dataloader)
+        del self.dataloader
+        self.model = self.model.cpu()
+        if 'cuda' in self.dev.type:
+            torch.cuda.empty_cache()
+        
+        for i in tqdm(range(len(layers))):
+            layer = layers[i].to(self.dev)
+            layer_index_str = '.' + str(i) + '.'
+            layer_op_names = [key for key in self.modules.keys() if layer_index_str in key]
+            
+            def add_batch(self, criterion):
+                def tmp(self, inp):
+                    criterion.add_batch(self, inp[0].data) # get layer-wise matrix, H = (XX> + λI)
+                return tmp
+            handles = []
+            for name in layer_op_names:
+                module = self.modules[name]
+                self.criterion.set_hessian_matrix(module)
+                handles.append(module.register_forward_pre_hook(add_batch(module, self.criterion)))
+            for j in range(len(inputs)):
+                layer(inputs[j], attention_mask=attention_mask)[0]
+            for h in handles:
+                h.remove()
+                
+            for name in layer_op_names:
+                logger.info(f"\t{name}")
+                module = self.modules[name]
+                self.pattern.fasterprune(module) # is there necessary to add a hyperparameter of blocksize
+                if 'cuda' in self.dev.type:
+                    torch.cuda.empty_cache()
+            
+            for j in range(len(inputs)):
+                inputs[j] = layer(inputs[j], attention_mask=attention_mask)[0] # the weights have been pruned, get the latest outputs as inputs for next layer
+            layers[i] = layer.cpu()
+            del layer
+            if 'cuda' in self.dev.type:
+                torch.cuda.empty_cache()
+            
+        
+    def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
+        pass
+    
+    def on_after_optimizer_step(self):
+        """Prune the model after optimization."""
+        pass
+
