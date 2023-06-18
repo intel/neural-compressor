@@ -24,7 +24,8 @@ import numpy as np
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.adaptor.ox_utils.util import to_numpy, quantize_data, _get_qrange_for_qType
+from neural_compressor.adaptor.ox_utils.util import to_numpy, \
+                    quantize_data, _get_qrange_for_qType, is_B_transposed
 from onnx import numpy_helper, helper
 
 logger = logging.getLogger("neural_compressor")
