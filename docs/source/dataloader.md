@@ -90,4 +90,4 @@ q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func
 
 - Refer to this [example](https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static) for how to define a customised dataloader.
 
-- Refer to this [example](https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/image_recognition/resnet50/quantization/ptq) for how to use internal dataloader.
+- Refer to this [example](https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/nlp/bert/quantization/ptq_static) for how to use internal dataloader.

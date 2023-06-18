@@ -131,13 +131,13 @@ After defining the metric class, users can initialize it and pass it to quantize
 ```python
 from neural_compressor import quantization, PostTrainingQuantConfig
 
-new_mtric = NewMetric()
+new_metric = NewMetric()
 config = PostTrainingQuantConfig()
-q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader,eval_metric=new_mtric)
+q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader,eval_metric=new_metric)
 ```
 
 ## Example
 
-- Refer to this [example](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static) for how to define a customised metirc.
+- Refer to this [example](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static) for how to define a customised metric.
 
 - Refer to this [example](https://github.com/intel/neural-compressor/blob/master/examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq) for how to use internal metric.
