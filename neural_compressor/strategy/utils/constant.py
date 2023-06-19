@@ -22,7 +22,8 @@ QUANT_MODE_SET = {'static', 'dynamic'}
 LOWER_BIT_LIST = ['int4']
 
 TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
-                    ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'), 'sampling_size']
+                    ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
+                    ('weight','bit'), ('weight','group_size'), 'sampling_size']
 
 PRECISION_SET_V2_0 = {'fp32', 'bf16'}
 
@@ -30,6 +31,7 @@ auto_query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
 static_query_order = ['static', 'bf16', 'fp16', 'fp32']
 dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
 auto_query_order_o0 = ['bf16', 'fp16', 'fp32', 'static', 'dynamic']
+weight_only_query_order = ['weight_only', 'fp32']
 
 
 FALLBACK_RECIPES_SET = {'first_conv_or_matmul_quantization', 'last_conv_or_matmul_quantization', \

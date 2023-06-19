@@ -832,6 +832,8 @@ class TemplateAdaptor(Adaptor):
                 else:
                     self.q_mapping = \
                         tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
+            elif framework_specific_info['approach'] == "post_training_weight_only":
+                pass
             else:
                 if not self.benchmark:
                     assert False, "Unsupport approach: {}".format(self.approach)
@@ -1107,6 +1109,25 @@ class TemplateAdaptor(Adaptor):
                             q_capability['opwise'][q_op].append(fp32_config)
                         if fp32_config not in q_capability['optypewise'][q_op[1]]:
                             q_capability['optypewise'][q_op[1]].append(fp32_config)
+        elif self.approach == "post_training_weight_only":
+            capability_pair = [(self.query_handler.get_quantization_capability('weight_only_integer'), 'weight_only')]
+            fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
+            for pair in capability_pair:
+                capability, mode = pair
+                for q_op in quantizable_ops:
+                    if q_op not in q_capability['opwise']:
+                        q_capability['opwise'][q_op] = []
+                    if q_op[1] not in q_capability['optypewise']:
+                        q_capability['optypewise'][q_op[1]] = []
+                    op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
+                        else copy.deepcopy(capability['default'])
+                    op_cfg['activation']['quant_mode'] = mode
+                    if op_cfg not in q_capability['opwise'][q_op]:
+                        q_capability['opwise'][q_op].append(op_cfg)
+                        q_capability['opwise'][q_op].append(fp32_config)
+                    if op_cfg not in q_capability['optypewise'][q_op[1]]:
+                        q_capability['optypewise'][q_op[1]].append(op_cfg)
+                        q_capability['optypewise'][q_op[1]].append(fp32_config)
         else:
             for datatype in quant_datatypes:
                 if self.approach == "post_training_dynamic_quant":
@@ -4434,6 +4455,169 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         return ordered_ops
 
 
+@adaptor_registry
+class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
+    """Adaptor of PyTorch framework, all PyTorch API is in this class.
+
+    Args:
+        framework_specific_info (dict): dictionary of tuning configure from yaml file.
+    """
+    def __init__(self, framework_specific_info):
+        super(PyTorchWeightOnlyAdaptor, self).__init__(framework_specific_info)
+        self.tune_cfg = None
+        if self.device == "cpu":
+            query_config_file = "pytorch_cpu.yaml"
+        else:  # pragma: no cover
+            assert False, "Unsupport this device {}".format(self.device)
+        self.query_handler = PyTorchQuery(
+            local_config_file=os.path.join(os.path.dirname(__file__), query_config_file))
+
+        self.white_list = [torch.nn.Linear, torch.nn.Conv2d]
+        # Contains parameters for algorithms such as AWQ, GPTQ, etc.
+        self.recipes = framework_specific_info['recipes']
+        self.optype_statistics = None
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization config.
+            model (object): model need to do quantization.
+            dataloader (object): calibration dataset.
+            q_func (objext, optional): training function for quantization aware training mode.
+
+        Returns:
+            (object): quantized model
+        """
+        assert isinstance(model._model, torch.nn.Module), \
+               "The model passed in is not the instance of torch.nn.Module"
+        if self.performance_only:
+            q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
+
+        # For tensorboard display
+        self.tune_cfg = tune_cfg
+        self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["framework"] = "pytorch"
+        assert self.approach=='post_training_weight_only', "Please make sure the approach is weight_only"
+
+        q_model._model = self.RTN_quantize(q_model._model, tune_cfg)
+        q_model._model = self.GPTQ_quantize(q_model._model, tune_cfg, dataloader)
+        q_model._model = self.AWQ_quantize(q_model._model, tune_cfg, dataloader)
+
+        q_model.q_config = copy.deepcopy(self.tune_cfg)
+        q_model.is_quantized = True
+        self._dump_model_op_stats(q_model._model, q_model.q_config)
+        return q_model
+
+    def RTN_quantize(self, model, tune_cfg):
+        from .torch_utils.weight_only import quant_weight
+        from .torch_utils.util import fetch_module
+        import pdb; pdb.set_trace()
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32':
+                continue
+            else:
+                num_bits = config['weight']['bit']
+                group_size = config['weight']['group_size']
+                schema = config['weight']['scheme']
+                m = fetch_module(model, op_name)
+                weight = m.weight
+                if op_type == "Conv2d":
+                    orig_shape = weight.shape
+                    weight = weight.permute(1, 0, 2, 3)
+                    weight = weight.reshape(weight.shape[0], -1)
+                q_weight = quant_weight(weight, num_bits, group_size, schema)
+                if op_type == "Conv2d":
+                    q_weight = q_weight.reshape(orig_shape[1], orig_shape[0], orig_shape[2], orig_shape[3])
+                    q_weight = q_weight.permute(1, 0, 2, 3)
+                m.weight.data.copy_(q_weight)
+        return model
+
+    def GPTQ_quantize(self, model, tune_cfg, dataloader):
+        if 'gptq_args' in self.recipes:
+            percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
+        # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
+        # TODO: implementation
+        return model
+
+    def AWQ_quantize(self, model, tune_cfg, dataloader):
+        # set default value if has args in recipes, else we use function 
+        if 'gptq_args' in self.recipes:
+            alpha = self.recipes['gptq_args'].get('alpha', 'auto')
+        # AWQ(model, dataloader, w_bit, group_size, alpha='auto', clip=True)
+        # TODO: implementation
+        return model
+
+    def _dump_model_op_stats(self, model, tune_cfg):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            model (object): input model
+            tune_cfg (dict): quantization config
+        Returns:
+            None
+        """
+        pass
+        # res = {}
+        # ignore_log = False
+        # modules = dict(model.named_modules())
+        # # fetch quantizable ops supported in Neural Compressor from tune_cfg
+        # for key in tune_cfg['op']:
+        #     op_name, op_type = key[0], key[1]
+        #     if op_type not in res.keys():
+                
+        #         res[op_type] = {'FP32': 0}
+        # field_names=["Op Type", "Total", "A32W8", "FP32"]
+        # output_data = [[
+        #     op_type, sum(res[op_type].values()),
+        #     res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']]
+        # for op_type in res.keys()]
+
+        # Statistics(output_data,
+        #            header='Mixed Precision Statistics',
+        #            field_names=field_names).print_stat()
+        # self.optype_statistics = field_names, output_data
+
+
+    def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            quantizable_ops (list): list of quantizable ops from model include op name and type.
+
+        Returns:
+            None
+        """
+
+        module_dict = dict(model.named_modules())
+        for op_name, child in module_dict.items():
+            if type(child) in self.white_list:
+                quantizable_ops.append((op_name, str(child.__class__.__name__)))
+
+    @dump_elapsed_time("Pass query framework capability")
+    def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model which is Neural Compressor model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
+        self.pre_optimized_model = model
+        return self._get_quantizable_ops(model.model)
+
 class PyTorchQuery(QueryBackendCapability):
     def __init__(self, local_config_file=None):
         super().__init__()
@@ -4500,7 +4684,7 @@ class PyTorchQuery(QueryBackendCapability):
         # TODO to handle other data types such FP8, FP8E4M3
         datatype_lst = []
         for key in self.cur_config:
-            if key.startswith('int'):
+            if key.startswith('int') or key == 'weight_only_integer':
                 datatype_lst.append(key)
         return datatype_lst
 

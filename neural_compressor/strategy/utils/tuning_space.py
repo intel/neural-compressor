@@ -471,7 +471,7 @@ class TuningSpace:
                                 # The dtype should be a string, need to align with fwk.yaml.
                                 self.ops_data_type[op_name_type][(quant_mode, att, _data_type, signed_flag)] = \
                                     item_options[0] if isinstance(item_options, list) else item_options
-                            if item_name not in ['dtype', 'quant_mode']:
+                            if item_name not in ['quant_mode']:
                                 parsed_op_cap[quant_mode][att][_data_type][signed_flag][item_name] = item_options
                     else:
                         # Parse the data info for item　with unique value.

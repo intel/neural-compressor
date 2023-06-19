@@ -17,7 +17,7 @@
 """Configs for Neural Compressor 2.x."""
 import datetime
 import logging
-from schema import Schema, And, Optional
+from schema import Schema, And, Optional, Or
 from .utils import alias_param
 
 logger = logging.getLogger("neural_compressor")
@@ -28,7 +28,7 @@ QUANTMAPPING = {
     "auto": "post_training_auto_quant",
     "dynamic": "post_training_dynamic_quant",
     "static": "post_training_static_quant",
-    "qat": "quant_aware_training",
+    "weight_only": "post_training_weight_only",
 }
 
 
@@ -36,7 +36,7 @@ ops_schema = Schema({
     Optional('weight', default=None): {
         Optional('granularity'): And(
             list,
-            lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+            lambda s: all(i in ['per_channel', 'per_tensor', 'per_block'] for i in s)),
         Optional('scheme'): And(
             list,
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
@@ -44,8 +44,15 @@ ops_schema = Schema({
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
+            list, # TODO: allow AWQ+GPTQ algo
+            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ',] for i in s)),
+        Optional('bit'):  And(
             list,
-            lambda s: all(i in ['minmax'] for i in s))},
+            lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
+        Optional('group_size'):  And(
+            list,
+            lambda s: all(i > 0 and type(i)==int for i in s)),
+    },
     Optional('activation', default=None): {
         Optional('granularity'): And(
             list,
@@ -58,7 +65,9 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
-            lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s))}})
+            lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s))
+    }
+})
 
 
 def _check_value(name, src, supported_type, supported_value=[]):
@@ -796,6 +805,18 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def awq_args(val=None):
+            if val is not None:
+                return _check_value("awq_args", val, dict)
+            else:
+                return {}
+
+        def gptq_args(val=None):
+            if val is not None:
+                return _check_value("gptq_args", val, dict)
+            else:
+                return {}
+
         def fast_bias_correction(val=None):
             if val is not None:
                 return _check_value("fast_bias_correction", val, bool)
@@ -868,7 +889,9 @@ class _BaseQuantizationConfig:
                    "pre_post_process_quantization": pre_post_process_quantization,
                    "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
                    "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
-                   "dedicated_qdq_pair": dedicated_qdq_pair
+                   "dedicated_qdq_pair": dedicated_qdq_pair,
+                   "awq_args": awq_args,
+                   "gptq_args": gptq_args,
                    }
         self._recipes = {}
         for k in RECIPES.keys():
@@ -1176,7 +1199,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             approach = 'static'
         if 'dynamic' in approach:
             approach = 'dynamic'
-        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto", "weight_only"]):
             self._approach = QUANTMAPPING[approach]
 
     @property

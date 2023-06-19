@@ -1021,7 +1021,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
             initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
         """
-        from .utils.constant import auto_query_order, static_query_order, dynamic_query_order
+        from .utils.constant import auto_query_order, static_query_order, dynamic_query_order, \
+                                    weight_only_query_order
         from .utils.tuning_space import initial_tuning_cfg_with_quant_mode
         if self.config.approach == 'post_training_auto_quant':
             query_order = auto_query_order
@@ -1029,6 +1030,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             query_order = dynamic_query_order
         elif self.config.approach == 'post_training_static_quant':
             query_order = static_query_order
+        elif self.config.approach == 'post_training_weight_only':
+            query_order = weight_only_query_order
         elif self.config.approach == 'quant_aware_training':
             query_order = auto_query_order
 
@@ -1260,6 +1263,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     {"default_qconfig": self.config.op_name_dict['default_qconfig']})
             framework_specific_info.update({"q_func": q_func})
             framework_specific_info.update({"example_inputs": self.config.example_inputs})
+            if self.config.approach =='post_training_weight_only':
+                framework = 'pytorchweightonly'   # use specific adaptor for weight_only approach
         return framework, framework_specific_info
 
     def _set_objectives(self):
