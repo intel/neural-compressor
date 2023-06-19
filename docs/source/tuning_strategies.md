@@ -151,7 +151,6 @@ The `Basic` strategy is designed for quantizing most models. There are several s
 
 ```mermaid
 flowchart TD
-	classDef circleText text-anchor:middle;
 	start([Start])
 	s1("1. Default quantization")
 	s2("2. Apply all recipes [Opt]")
@@ -162,11 +161,11 @@ flowchart TD
 	s7("5.3 Accumulated fallback")
 	
 	start --> s1
-	s1 --> s2:::circleText
+	s1 --> s2
 	s2 --> s3
 	s3 --> s4
 	s4 --> s5
-	subgraph "     Fallback"
+	subgraph "Fallback  #nbsp; "
 	s5 --> s6
 	s6 --> s7
 	end
@@ -175,7 +174,7 @@ flowchart TD
 
 > `Opt` stands for optional which mean this stage can be skipped.
 
-> `*` INC will detect the block pattern for transformer-like model by default.
+> `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
 
 **1.** Default quantization
 
@@ -203,7 +202,7 @@ If the above trials not meet the accuracy requirements, it start to performs fal
 
 **5.1** Block-wise fallback*
 
-For the transformer-like model, it will use the detected transformer block by default, and conduct the block-wise fallback. In each trial, all OPs within a block are reverted to high precision.
+For the [transformer-like](https://arxiv.org/abs/1706.03762) model, it will use the detected transformer block by default, and conduct the block-wise fallback. In each trial, all OPs within a block are reverted to high-precision.
 
 **5.2** Instance-wise fallback
 
