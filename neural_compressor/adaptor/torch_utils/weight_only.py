@@ -27,12 +27,12 @@ def quant_weight_sym(weight, num_bits=4):
     minq = torch.tensor(-2 ** (num_bits - 1))
     if num_bits == 1:
         maxq = torch.tensor(2 ** (num_bits - 1))
-        minq = torch.tensor(2 ** (num_bits - 1)-1)
+        minq = torch.tensor(2 ** (num_bits - 1) - 1)
 
     wmax = torch.abs(weight).max(1)[0]
     tmp = (wmax == 0)
     wmax[tmp] = +1
-    scale = wmax / maxq
+    scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
     q = torch.clamp(torch.round(weight / scale), minq, maxq)
     return scale * q
