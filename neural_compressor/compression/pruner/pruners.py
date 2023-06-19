@@ -25,8 +25,8 @@ from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import torch, F, get_sparsity_ratio, get_layers, logger, collect_layer_inputs
-
 from ...utils.utility import LazyImport
+from tqdm.auto import tqdm
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 F = LazyImport('torch.nn.functional')
@@ -1235,7 +1235,8 @@ class SparseLLMPruner(BasePruner):
                     torch.cuda.empty_cache()
             
             for j in range(len(inputs)):
-                inputs[j] = layer(inputs[j], attention_mask=attention_mask)[0] # the weights have been pruned, get the latest outputs as inputs for next layer
+                # the weights have been pruned, get the latest outputs as inputs for next layer
+                inputs[j] = layer(inputs[j], attention_mask=attention_mask)[0]
             layers[i] = layer.cpu()
             del layer
             if 'cuda' in self.dev.type:

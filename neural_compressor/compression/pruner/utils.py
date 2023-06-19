@@ -32,6 +32,7 @@ try:
     torch = LazyImport('torch')
     tf = LazyImport('tensorflow')
     F = LazyImport('torch.nn.functional')
+    from functools import partial
 except:
     import torch
     import torch.nn.functional as F
@@ -39,6 +40,7 @@ except:
     import logging
     logger = logging.getLogger(__name__)
     from .schema_check import PrunerV2
+    from functools import partial
 
     class WeightPruningConfig:
         """Similiar to torch optimizer's interface."""

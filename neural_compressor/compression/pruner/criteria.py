@@ -17,6 +17,9 @@
 # limitations under the License.
 
 import numpy as np
+import math
+import transformers
+from .utils import torch, nn
 from ...utils.utility import LazyImport
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
