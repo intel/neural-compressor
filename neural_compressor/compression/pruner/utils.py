@@ -30,11 +30,13 @@ try:
     from neural_compressor.conf.config import Pruner
     LazyImport('torch.nn')
     torch = LazyImport('torch')
+    nn = LazyImport('torch.nn')
     tf = LazyImport('tensorflow')
     F = LazyImport('torch.nn.functional')
     from functools import partial
 except:
     import torch
+    import torch.nn as nn
     import torch.nn.functional as F
     from .dot_dict import DotDict  ##TODO
     import logging
