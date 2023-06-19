@@ -25,7 +25,7 @@ export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, se
       api.post('api/diagnosis/op_list?token=' + localStorage.getItem('token'), { workload_id: selectedWorkload.uuid })
         .then(
           response => {
-            setOpList(response.data);
+            setOpList(response.data.sort((a, b) => b.MSE - a.MSE));
           })
         .catch(error => {
           if (selectedWorkload?.status !== 'wip') {

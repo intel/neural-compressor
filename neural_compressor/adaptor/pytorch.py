@@ -1300,7 +1300,6 @@ class TemplateAdaptor(Adaptor):
             calib_iter=calib_iter,
             **kwargs
         )
-        model._model._smoothquant_optimized = True
         return model
 
     def qdq_quantize(self, model, tune_cfg):
@@ -1483,7 +1482,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-            return self.qdq_quantize(q_model, tune_cfg)
+            if model._model._smoothquant_optimized:
+                return self.qdq_quantize(q_model, tune_cfg)
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
@@ -2514,7 +2514,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
           and self.version.release >= Version("2.1").release \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-            return self.qdq_quantize(model, tune_cfg, dataloader, q_func)
+            if model._model._smoothquant_optimized:
+                return self.qdq_quantize(model, tune_cfg, dataloader, q_func)
 
         assert self.approach != 'quant_aware_training', \
             "Intel PyTorch Extension didn't support quantization aware training mode"
@@ -4018,18 +4019,18 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             res = dict()
             self._get_sub_module_op_stats(model, tune_cfg, approach, res)
 
-        if self.use_bf16 and (self.version.release >= Version("1.11.0").release) and \
-            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
-            bf16_ops_list = tune_cfg['bf16_ops_list']
-            if len(bf16_ops_list) > 0:
-                for bf16_op in bf16_ops_list:
-                    op_type = bf16_op[1]
-                    if op_type in res.keys():
-                        res[op_type]['BF16'] += 1
-                        if res[op_type]['FP32'] > 0:
-                            res[op_type]['FP32'] -= 1
-                    else:
-                        res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
+            if self.use_bf16 and (self.version.release >= Version("1.11.0").release) and \
+                (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+                bf16_ops_list = tune_cfg['bf16_ops_list']
+                if len(bf16_ops_list) > 0:
+                    for bf16_op in bf16_ops_list:
+                        op_type = bf16_op[1]
+                        if op_type in res.keys():
+                            res[op_type]['BF16'] += 1
+                            if res[op_type]['FP32'] > 0:
+                                res[op_type]['FP32'] -= 1
+                        else:
+                            res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
 
 
         output_data = [[

@@ -303,6 +303,32 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
+## Pruning
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Approach</th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>ResNet V2</td>
+    <td>Image Recognition</td>
+    <td>Structured (4x1, 2in4)</td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">keras</a></td>
+  </tr>
+  <tr>
+    <td>ViT</td>
+    <td>Image Recognition</td>
+    <td>Structured (4x1, 2in4)</td>
+    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">keras</a></td>
+  </tr>
+</tbody>
+</table>
+
 ## Model Export
 <table>
 <thead>

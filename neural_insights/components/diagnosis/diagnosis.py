@@ -76,6 +76,9 @@ class Diagnosis:
 
     def get_op_list(self) -> List[dict]:
         """Get OP list for model."""
+        check_module("numpy")
+        import numpy as np
+
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
@@ -92,7 +95,7 @@ class Diagnosis:
         for op_name, min_max in min_max_data.items():
 
             mse = self.calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
-            if mse is None:
+            if mse is None or np.isnan(mse):
                 continue
             min = float(min_max.get("min", None))
             max = float(min_max.get("max", None))
@@ -102,9 +105,6 @@ class Diagnosis:
 
     def get_weights_details(self, inspect_type: str) -> List[WeightsDetails]:
         """Get weights details for model."""
-        check_module("numpy")
-        import numpy as np
-
         weights_details = []
 
         minmax_file_path = os.path.join(
@@ -132,7 +132,8 @@ class Diagnosis:
                 continue
 
             if isinstance(input_model_op_tensors, dict):
-                for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in zip(input_model_op_tensors.items(), optimized_model_op_tensors.items()):
+                for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in\
+                        zip(input_model_op_tensors.items(), optimized_model_op_tensors.items()):
                     if input_op_values.ndim != 4 or optimized_op_values.ndim != 4:
                         continue
 
@@ -151,7 +152,6 @@ class Diagnosis:
         optimized_model_tensors: dict,
     ) -> Optional[float]:
         """Calculate MSE for specified tensors."""
-
         input_model_op_data = input_model_tensors.get(op_name, None)
         optimized_model_op_data = optimized_model_tensors.get(op_name, None)
 
@@ -218,8 +218,7 @@ class Diagnosis:
 
     @staticmethod
     def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
-        """
-        Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
         Args:
             fp32_tensor (tensor): The FP32 tensor.
@@ -255,7 +254,7 @@ class Diagnosis:
         tensors = self.get_tensors_info(model_type="optimized").get("weight", None)
         if tensors is None:
             raise ClientErrorException(
-                f"Could not get tensor information to display activations.",
+                "Could not get tensor information to display activations.",
             )
 
         op_tensors: Optional[dict] = tensors.get(op_name, None)
@@ -269,7 +268,7 @@ class Diagnosis:
             if tensor_data_raw.ndim != 4:
                 continue
             tensor_data = tensor_data_raw[0]
-            shapes_order = self.model.shape_elements_order
+            shapes_order = self.model.shape_elements_order  # pylint: disable=no-member
             channels_index = shapes_order.index("channels")
             new_order = [channels_index]
             new_order.extend([x for x in range(len(shapes_order)) if x != channels_index])
@@ -281,12 +280,9 @@ class Diagnosis:
 
             for tensor in tensor_data:
                 if channel_normalization:
-                    tensor = 255 * (tensor-np.min(tensor))/(np.max(tensor) - np.min(tensor))
+                    tensor = 255 * (tensor - np.min(tensor)) / (np.max(tensor) - np.min(tensor))
                 img = Image.fromarray(tensor)
                 img = img.convert("L")
                 img.show()
-                # filename = f"tf/tensor_activations/{tensor_name}/{idx}.jpg"
-                # os.makedirs(os.path.dirname(filename), exist_ok=True)
-                # img.save(filename)
                 weights.append(tensor.tolist())
         return weights

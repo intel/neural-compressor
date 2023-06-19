@@ -21,6 +21,8 @@ from neural_solution.utils import logger
 from collections import Counter
 
 class Cluster:
+    """Cluster resource management based on sockets."""
+
     def __init__(self, node_lst=[], db_path=None):
         """Init Cluster.
 
@@ -97,7 +99,13 @@ class Cluster:
 
     @synchronized
     def initial_cluster_from_node_lst(self, node_lst):
-        self.conn = sqlite3.connect(f'{self.db_path}', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        """Initialize cluster according to the node list.
+
+        Args:
+            node_lst (List): the node list.
+        """
+        # sqlite should set this check_same_thread to False
+        self.conn = sqlite3.connect(f'{self.db_path}', check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute('drop table if exists cluster ')
         self.cursor.execute(r'create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,' +
@@ -120,6 +128,8 @@ class Cluster:
         logger.info(f"socket_queue:  {self.socket_queue}")
 
 class Node:
+    """Node definition."""
+
     name: str = "unknown_node"
     ip: str = "unknown_ip"
     num_sockets: int = 0
@@ -152,6 +162,11 @@ class Node:
         self.num_gpus = num_gpus
 
     def __repr__(self) -> str:
+        """Return node info.
+
+        Returns:
+            str: node info.
+        """
         return f"Node: {self.name}(ip: {self.ip}) has {self.num_sockets} socket(s) " \
             f"and each socket has {self.num_cores_per_socket} cores."
 
