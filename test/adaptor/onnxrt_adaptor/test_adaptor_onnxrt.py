@@ -774,7 +774,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
             self.assertTrue(len(fp32_tensor['activation']) == len(int8_tensor['activation']))
             self.assertTrue(sorted(fp32_tensor['activation'][0].keys()) == sorted(int8_tensor['activation'][0].keys()))
             for op in op_list:
-                self.assertTrue(sorted(fp32_tensor['activation'][0][op].keys()) == sorted(int8_tensor['activation'][0][op].keys()))
+                for x, y in zip(fp32_tensor['activation'][0][op].values(), int8_tensor['activation'][0][op].values()):
+                    self.assertTrue(x.shape == y.shape)
 
             if fake_yaml == "qlinear.yaml":
                 fp32_tensor = quantizer.strategy.adaptor.inspect_tensor(opt_model.model, self.cv_dataloader, op_list, inspect_type='weight')

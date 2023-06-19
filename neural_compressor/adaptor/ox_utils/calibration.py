@@ -53,7 +53,7 @@ class ONNXRTAugment:
                  black_nodes=[],
                  white_nodes=[],
                  iterations=[],
-                 backend=['CPUExecutionProvider'],
+                 backend='CPUExecutionProvider',
                  reduce_range=False):
         """Initialization.
 
@@ -149,7 +149,7 @@ class ONNXRTAugment:
                         elif not self.already_quantized and input in initializers:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    tensors_to_dump.update(node.output)
+                    tensors_to_dump.update([node.input[0]])
 
         model_inputs = [i.name for i in model.graph.input]
         for tensor in tensors_to_dump:
@@ -160,9 +160,7 @@ class ONNXRTAugment:
                 for augment_node_type in self.augment_nodes:
                     if augment_node_type in ['DequantizeLinear']:
                         # insert DequantizeLinear node as output
-                        if tensor.endswith('_scale') or tensor.endswith('_zero_point') or \
-                                tensor.endswith('_QuantizeLinear') or \
-                                tensor.endswith('_QuantizeInput_quantized'):
+                        if tensor.endswith('_scale') or tensor.endswith('_zero_point'):
                             continue
 
                         if not self.dynamically_quantized:
@@ -509,8 +507,6 @@ class ONNXRTAugment:
             if tensor_name.replace('_dequantized', '_quantized') in model_initializer_names:
                 nodes = [node for node in map_input[tensor_name] \
                          if node.name.replace('_quant', '') in self.white_nodes]
-            elif tensor_name.replace('_quantized', '') in model_input_names:
-                continue
             elif tensor_name in model_output_names:
                 nodes = [map_output[tensor_name]]
             else:
