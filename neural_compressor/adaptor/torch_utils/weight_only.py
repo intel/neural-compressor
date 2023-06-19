@@ -23,8 +23,8 @@ def quant_weight_asym(weight, num_bits=4):
 
 def quant_weight_sym(weight, num_bits=4):
     # assert num_bits > 1, "symmetric schema only supports num_bits > 1"
-    maxq = torch.tensor(2 ** (num_bits - 1) - 1)
-    minq = torch.tensor(-2 ** (num_bits - 1))
+    maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
+    minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
     if num_bits == 1:
         maxq = torch.tensor(2 ** (num_bits - 1))
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
@@ -45,23 +45,22 @@ def quant_weight_actor(weight, num_bits, schema):
     else:
         return quant_weight_asym(weight, num_bits)
 
-
 def quant_weight(weight, num_bits=4, group_size=-1, schema="asym"):
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, schema=schema)
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
-        weight = weight.view(-1, group_size)
+        weight = weight.reshape(-1, group_size)
         weight = quant_weight_actor(weight, num_bits, schema=schema)
-        weight = weight.view(orig_shape)
+        weight = weight.reshape(orig_shape)
         return weight
     else:
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
-        weight1 = weight1.view(-1, group_size)
+        weight1 = weight1.reshape(-1, group_size)
         weight1 = quant_weight_actor(weight1, num_bits, schema=schema)
-        weight1 = weight1.view(orig_shape[0], split_index)
+        weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
         weight2 = quant_weight_actor(weight2, num_bits, schema=schema)
         weight = torch.cat([weight1, weight2], dim=1)
