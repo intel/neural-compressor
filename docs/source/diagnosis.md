@@ -4,9 +4,10 @@
 4. [Example](#example)
 
 # Diagnosis introduction
+To validate the quality of the optimized model we should run diagnostics and check its accuracy and performance.
 There are 2 ways to diagnose a model with Intel® Neural Compressor. First is non-GUI mode that is described below and second is GUI mode with [Neural Insights](https://github.com/intel/neural-compressor/tree/master/neural_insights) component.
 
-The workflow is described in the diagram below. First we have to configure scripts with diagnosis, then un them and check diagnosis info in the terminal.
+The workflow is described in the diagram below. First we have to configure scripts with diagnosis, then run them and check diagnosis info in the terminal. Test if the result is satisfying and repeat the steps if needed.
 ![workflow](./imgs/workflow.jpg)
 
 # Supported feature matrix
@@ -56,7 +57,6 @@ tar -xvzf caffe_ilsvrc12.tar.gz val.txt
 ```
 
 ## Run quantization script 
-
 Then execute script with quantization APi in another terminal with --diagnose flag.
 ```
 python examples/onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static/main.py \
