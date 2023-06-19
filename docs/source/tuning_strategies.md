@@ -150,6 +150,7 @@ The `Basic` strategy is designed for quantizing most models. There are several s
 
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
 flowchart TD
 	start([Start])
 	s1("1. Default quantization")
