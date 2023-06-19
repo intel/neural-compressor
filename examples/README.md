@@ -1295,6 +1295,22 @@ Intel® Neural Compressor validated examples with multiple compression technique
     </td>
   </tr>
   <tr>
+    <td>LayoutLMv3 FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>LayoutLM FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
     <td>SSD MobileNet V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
