@@ -924,7 +924,7 @@ class GraphTrace:
                         prev_absorb_layer.append(parent)
                     elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
                         intersect = parent_out_kinds.intersection(self.skip_ops_to_find_absorb)
-                        res = self.get_skipconnect_helper(parent_scopeName, dict_child_kind, dict_child, intersect)
+                        res = self.skip_op_absorb_helper(parent_scopeName, dict_child_kind, dict_child, intersect)
                         prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
                             
                     else: # When parent to multiple ops, sq transformation could be wrong.
@@ -934,7 +934,7 @@ class GraphTrace:
                 break
         return prev_absorb_layer
 
-    def get_skipconnect_helper(self, node_scopeName, dict_child_kind, dict_child, intersect):
+    def skip_op_absorb_helper(self, node_scopeName, dict_child_kind, dict_child, intersect):
         for child in dict_child[node_scopeName]:
             if child.kind() not in intersect:
                 continue
@@ -942,7 +942,7 @@ class GraphTrace:
             child_out_kinds.discard('aten::size')
             if child_out_kinds.intersection(self.skip_ops_to_find_absorb):
                 intersect = child_out_kinds.intersection(self.skip_ops_to_find_absorb)
-                return self.get_skipconnect_helper(child.scopeName(), dict_child_kind, dict_child, intersect)
+                return self.skip_op_absorb_helper(child.scopeName(), dict_child_kind, dict_child, intersect)
             elif child_out_kinds.intersection(self.could_absorb_layers) == child_out_kinds:
                 return True
             else:
