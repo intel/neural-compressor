@@ -75,7 +75,7 @@ def run_query_task_result(args):
     """Query task result according to id.
 
     Args:
-        task_id (str): the id of task
+        args: args includes task_id
     """
     task_id = args.task_id
     # Create a gRPC channel
@@ -95,7 +95,7 @@ def run_query_task_status(args):
     """Query task status according to id.
 
     Args:
-        task_id (str): the id of task
+        args: args includes task_id
     """
     task_id = args.task_id
     # Create a gRPC channel
