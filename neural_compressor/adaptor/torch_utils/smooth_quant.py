@@ -835,17 +835,15 @@ class TorchSmoothQuant:
         return absorb_to_layer, no_absorb_layers
 
 
-def get_parent(node):
-    if node.inputs() == None:
-        return None
-    return list(node.inputs())[0].node()
-
-def get_parents(node):
+def get_parent(node, all_parents=False):
     if node.inputs() == None:
         return None
     elif len(list(node.inputs())) == 0:
         return None
-    return list(node.inputs())
+    if not all_parents:
+        return list(node.inputs())[0].node()
+    else:
+        return list(node.inputs())
 
 
 class GraphTrace:
@@ -967,15 +965,16 @@ class GraphTrace:
         dict_child_kind = defaultdict(list) #saves kinds of all child-nodes of a parent node. 
         dict_child = defaultdict(list) #saves all child-nodes of a parent node. 
         for node in traced_model.graph.nodes():
-            parents_list = get_parents(node)
+            parents_list = get_parent(node, all_parents=True) #save input_kinds of all parent nodes
+            if not parents_list: 
+                continue
             node_kind, node_scopeName = node.kind(), node.scopeName()
-            if parents_list: #save input_kinds of all parent nodes
-                for parent_ in parents_list:
-                    parent = parent_.node()
-                    parent_kind = parent.kind()
-                    if 'prim' not in parent_kind and parent.scopeName() != node_scopeName:
-                        dict_child[parent.scopeName()].append(node)
-                        dict_child_kind[parent.scopeName()].append(node_kind)
+            for parent_ in parents_list:
+                parent = parent_.node()
+                parent_kind = parent.kind()
+                if 'prim' not in parent_kind and parent.scopeName() != node_scopeName:
+                    dict_child[parent.scopeName()].append(node)
+                    dict_child_kind[parent.scopeName()].append(node_kind)
 
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
