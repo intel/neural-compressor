@@ -645,9 +645,9 @@ def main():
         dummy_token_type_ids = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
         dummy_attention_mask = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
         if model.config.model_type == "distilbert":
-            example_inputs = {"input_ids": dummy_input_ids, "attention_mask": dummy_attention_mask}
+            example_inputs = (dummy_input_ids, dummy_attention_mask)
         elif model.config.model_type == "bert":
-            example_inputs = {"input_ids": dummy_input_ids, "token_type_ids":dummy_token_type_ids, "attention_mask": dummy_attention_mask}
+            example_inputs = (dummy_input_ids, dummy_attention_mask, dummy_token_type_ids)
         else:
             example_inputs = None  # please provide correct example_inputs if necessary.
         conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800, example_inputs=example_inputs)
