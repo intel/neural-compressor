@@ -732,7 +732,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         with self.assertRaises(ValueError):
             test()
 
-    @unittest.skipIf(Version(ort.__version__) == Version("1.13.1"))
+    @unittest.skipIf(Version(ort.__version__) == Version("1.13.1"), 
+                     "This function does not work with ONNX Runtime 1.13.1 for QDQ format quantization of ONNX models.")
     def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
