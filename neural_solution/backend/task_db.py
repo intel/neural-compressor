@@ -29,10 +29,17 @@ class TaskDB:
         task_collections: a growing-only list of all task objects and their details (no garbage collection currently)
         lock: the lock on the data structures to provide atomic operations
     """
+
     def __init__(self, db_path):
+        """Init TaskDB.
+
+        Args:
+            db_path (str): the database path.
+        """
         self.task_queue = deque()
         create_dir(db_path)
-        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)  # sqlite should set this check_same_thread to False
+        # sqlite should set this check_same_thread to False
+        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute(
             'create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), ' +
@@ -92,5 +99,6 @@ class TaskDB:
         return Task(*attr_tuple)
 
     def remove_task(self, task_id): # currently no garbage collection
+        """Remove task."""
         pass
 

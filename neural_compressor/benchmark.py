@@ -535,6 +535,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
             profile(wrapped_model, conf, b_dataloader)
             update_neural_insights_workload(ni_workload_id, "success")
         except Exception as e:
+            logger.error(e)
             update_neural_insights_workload(ni_workload_id, "failure")
 
     logger.info("Start to run Benchmark.")

@@ -42,8 +42,7 @@ class JsonSerializer:
         self,
         serialization_type: str = "default",
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-        """
-        Serialize class to dict.
+        """Serialize class to dict.
 
         :param serialization_type: serialization type, defaults to "default"
         :type serialization_type: str, optional
@@ -121,8 +120,7 @@ class JsonSerializer:
 
     @staticmethod
     def serialize_item(value: Any, serialization_type: str = "default") -> Any:
-        """
-        Serialize objects that don't support json dump.
+        """Serialize objects that don't support json dump.
 
         i.e datetime object can't be serialized to JSON format and throw an TypeError exception
         TypeError: datetime.datetime(2016, 4, 8, 11, 22, 3, 84913) is not JSON serializable

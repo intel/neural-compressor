@@ -21,9 +21,18 @@ import re
 import uuid
 import pandas as pd
 import socket
-from neural_solution.utils.utility import get_task_log_workspace
+from neural_solution.utils.utility import get_task_log_workspace, dict_to_str
 
 def query_task_status(task_id, db_path):
+    """Query task status according to id.
+
+    Args:
+        task_id (str): the id of task
+        db_path (str): the path of database
+
+    Returns:
+        dict: the task status and information.
+    """
     res = None
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
@@ -32,9 +41,21 @@ def query_task_status(task_id, db_path):
         res = cursor.fetchone()
         cursor.close()
         conn.close()
-    return {"status": res[0], 'optimized_result': deserialize(res[1]) if res[1] else res[1], "result_path": res[2]}
+    return {"status": res[0],
+            'optimized_result': dict_to_str(deserialize(res[1]) if res[1] else res[1]),
+            "result_path": res[2]}
 
 def query_task_result(task_id, db_path, workspace):
+    """Query the task result according id.
+
+    Args:
+        task_id (str): the id of task
+        db_path (str): the path of database
+        workspace (str): the workspace for Neural Solution
+
+    Returns:
+        dict: task result
+    """
     status = "unknown"
     tuning_info = {}
     optimization_result = {}
@@ -65,6 +86,15 @@ def query_task_result(task_id, db_path, workspace):
     return result
 
 def check_service_status(port_lst, service_address):
+    """Check server status.
+
+    Args:
+        port_lst (List): ports list
+        service_address (str): service ip
+
+    Returns:
+        dict: server status and messages
+    """
     count = 0
     msg = "Neural Solution is running."
     for port in port_lst:
@@ -89,6 +119,16 @@ def check_service_status(port_lst, service_address):
 
 
 def submit_task_to_db(task, task_submitter, db_path):
+    """Submit the task to db.
+
+    Args:
+        task (Task): the object of Task
+        task_submitter (TaskSubmitter): the object of TaskSubmitter
+        db_path (str): the path of database
+
+    Returns:
+        str: task id and information
+    """
     msg = "Task submitted failed"
     status = "failed"
     task_id = "-1"
@@ -129,11 +169,11 @@ def serialize(request: dict) -> bytes:
     return json.dumps(request).encode()
 
 def deserialize(request: bytes) -> dict:
-    """Deserialize the received bytes to a dict object"""
+    """Deserialize the received bytes to a dict object."""
     return json.loads(request)
 
 def get_cluster_info(db_path:str):
-    """Get cluster information from database
+    """Get cluster information from database.
 
     Returns:
         json: cluster information includes the number of nodes and node information.
@@ -147,7 +187,7 @@ def get_cluster_info(db_path:str):
     return {"Cluster info": rows}
 
 def get_cluster_table(db_path:str):
-    """Get cluster table from database
+    """Get cluster table from database.
 
     Returns:
         html: table of cluster information.
@@ -211,7 +251,7 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
     return  results if results else "Getting FP32 baseline..."
 
 def check_log_exists(task_id: str, task_log_path):
-    """Check whether the log file exists
+    """Check whether the log file exists.
 
     Args:
         task_id (str): task id.
@@ -226,4 +266,12 @@ def check_log_exists(task_id: str, task_log_path):
         return False
 
 def list_to_string(lst: list):
+    """Convert the list to a space concatenated string.
+
+    Args:
+        lst (list): strings
+
+    Returns:
+        str: string
+    """
     return " ".join(str(i) for i in lst)

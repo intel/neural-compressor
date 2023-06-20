@@ -14,6 +14,10 @@ from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
 )
+from neural_compressor import mix_precision
+from neural_compressor.utils.utility import LazyImport
+from neural_compressor.config import MixedPrecisionConfig
+
 torch_utils = LazyImport("neural_compressor.adaptor.torch_utils")
 
 os.environ["WANDB_DISABLED"] = "true"
@@ -317,8 +321,27 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_func=calib_func,
         )
         q_model.save('./saved')
-    
 
+class TestMixedPrecision(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        os.environ['FORCE_FP16'] = '1'
+        os.environ['FORCE_BF16'] = '1'
+        self.pt_model = M()
 
+    @unittest.skipIf(IPEX_VERSION.release < Version("1.11.0").release,
+      "Please use PyTroch 1.11 or higher version for mixed precision.")
+    def test_mixed_precision_with_eval_func_ipex(self):
+        torch = LazyImport("torch")
+        def eval(model):
+            return 0.5
+
+        conf = MixedPrecisionConfig(backend="ipex", example_inputs=torch.randn(1, 3, 224, 224))
+        output_model = mix_precision.fit(
+            self.pt_model,
+            conf,
+            eval_func=eval,
+        )
+        self.assertTrue(isinstance(output_model._model, torch.jit.ScriptModule))
 if __name__ == "__main__":
     unittest.main()

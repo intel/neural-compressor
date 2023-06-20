@@ -73,8 +73,3 @@ class WeightsStatistics(JsonSerializer):
             "Standard deviation": self.std,
             "Variance": self.var,
         }
-
-
-
-
-

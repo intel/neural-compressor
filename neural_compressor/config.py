@@ -1061,7 +1061,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
-                  Default value is 'auto'.
+                  Default value is 'static'.
                   For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
                       or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
                       PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
@@ -1176,8 +1176,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             approach = 'static'
         if 'dynamic' in approach:
             approach = 'dynamic'
-        if _check_value("approach", approach, str, ["static", "dynamic", "auto",\
-                                                     "post_training_static_quant"]):
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
@@ -1373,12 +1372,13 @@ class WeightPruningConfig:
 
     def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
-                 excluded_op_names=[],
+                 excluded_op_names=[], backend=None,
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
         """Init a WeightPruningConfig object."""
+        self.backend = backend
         self.pruning_configs = pruning_configs
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
@@ -1639,7 +1639,7 @@ class MixedPrecisionConfig(object):
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
-                                 default is 'default'.
+                                 default is 'default', 'ipex' doesn't support tune.
         precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         model_name (str, optional): The name of the model. Default value is empty.
@@ -1650,6 +1650,33 @@ class MixedPrecisionConfig(object):
         accuracy_criterion (AccuracyCriterion object, optional): Accuracy constraint settings,
                                                                  it won't work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
+        op_type_dict (dict, optional): Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                      User can specify the quantization config by op type:
+                      example:
+                      {
+                          'Conv': {
+                              'weight': {
+                                  'dtype': ['fp32']
+                              },
+                              'activation': {
+                                  'dtype': ['fp32']
+                              }
+                          }
+                      }
+        op_name_dict (dict, optional): Tuning constraints on op-wise for advance user to reduce tuning space.
+                      User can specify the quantization config by op name:
+                      example:
+                      {
+                          "layer1.0.conv1": {
+                              "activation": {
+                                  "dtype": ["fp32"]
+                              },
+                              "weight": {
+                                  "dtype": ["fp32"]
+                              }
+                          },
+                      }
+        example_inputs (tensor|list|tuple|dict, optional): Example inputs used for tracing model. Defaults to None.
 
     Example:
         from neural_compressor import mix_precision
@@ -1668,7 +1695,10 @@ class MixedPrecisionConfig(object):
                  outputs=[],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-                 excluded_precisions=[]):
+                 excluded_precisions=[],
+                 op_name_dict={},
+                 op_type_dict={},
+                 example_inputs=None):
         """Init a MixedPrecisionConfig object."""
         self.inputs = inputs
         self.outputs = outputs
@@ -1681,6 +1711,9 @@ class MixedPrecisionConfig(object):
         self.use_bf16 = "bf16" in self.precisions
         self.model_name = model_name
         self._framework = None
+        self.op_name_dict = op_name_dict
+        self.op_type_dict = op_type_dict
+        self.example_inputs = example_inputs
 
     @property
     def precisions(self):
@@ -1797,6 +1830,52 @@ class MixedPrecisionConfig(object):
         if _check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions
+
+    @property
+    def op_name_dict(self):
+        """Get op name dict."""
+        return self._op_name_dict
+
+    @op_name_dict.setter
+    def op_name_dict(self, op_name_dict):
+        """Set op name dict."""
+        if op_name_dict is None:
+            self._op_name_dict = op_name_dict
+        elif isinstance(op_name_dict, dict):
+            for k, v in op_name_dict.items():
+                ops_schema.validate(v)
+            self._op_name_dict = op_name_dict
+        else:
+            assert False, ("Type of op_name_dict should be dict but not {}, ".format(
+                type(op_name_dict)))
+
+    @property
+    def op_type_dict(self):
+        """Get op type dict."""
+        return self._op_type_dict
+
+    @op_type_dict.setter
+    def op_type_dict(self, op_type_dict):
+        """Set op type dict."""
+        if op_type_dict is None:
+            self._op_type_dict = op_type_dict
+        elif isinstance(op_type_dict, dict):
+            for k, v in op_type_dict.items():
+                ops_schema.validate(v)
+            self._op_type_dict = op_type_dict
+        else:
+            assert False, ("Type of op_type_dict should be dict but not {}".format(
+                type(op_type_dict)))
+
+    @property
+    def example_inputs(self):
+        """Get strategy_kwargs."""
+        return self._example_inputs
+
+    @example_inputs.setter
+    def example_inputs(self, example_inputs):
+        """Set example_inputs."""
+        self._example_inputs = example_inputs
 
 
 class ExportConfig:

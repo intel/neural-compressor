@@ -42,6 +42,8 @@ cmd="echo $(conda info --base)/etc/profile.d/conda.sh"
 CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
 
 class Scheduler:
+    """Scheduler dispatches the task with the available resources, calls the mpi command and report results."""
+
     def __init__(self, cluster: Cluster, task_db: TaskDB, result_monitor_port, \
         conda_env_name=None, upload_path="./examples", config=None, num_threads_per_process=5):
         """Scheduler dispatches the task with the available resources, calls the mpi command and report results.
@@ -63,11 +65,12 @@ class Scheduler:
 
     def prepare_env(self, task:Task):
         """Check and create a conda environment.
+        
         If the required packages are not installed in the conda environment,
         create a new conda environment and install the required packages.
 
         Args:
-            task (Task): _description_
+            task (Task): task
         """
         # Define the prefix of the conda environment name
         env_prefix = self.conda_env_name
@@ -89,7 +92,8 @@ class Scheduler:
                 output = subprocess.getoutput(cmd)
                 # Parse the output to get a list of installed package names
                 installed_packages = [line.split()[0] for line in output.splitlines()[2:]]
-                installed_packages_version = [line.split()[0] + "=" + line.split()[1] for line in output.splitlines()[2:]]
+                installed_packages_version = \
+                    [line.split()[0] + "=" + line.split()[1] for line in output.splitlines()[2:]]
                 missing_packages = set(requirement) - set(installed_packages) - set(installed_packages_version)
                 if not missing_packages:
                     conda_env = env_name
@@ -103,17 +107,17 @@ class Scheduler:
             # Construct the name of the new conda environment
             cmd = (f"source {CONDA_SOURCE_PATH} && conda create -n {conda_env} --clone {env_prefix}"
                 f" && conda activate {conda_env} && pip install {task.requirement.replace('=','==')}")
-            p = subprocess.Popen(cmd, shell=True)
+            p = subprocess.Popen(cmd, shell=True) # nosec
             logger.info(f"[Scheduler] Creating new environment {conda_env} start.")
             p.wait()
             logger.info(f"[Scheduler] Creating new environment {conda_env} end.")
         return conda_env
 
     def prepare_task(self, task:Task):
-        """prepare workspace and download run_task.py for task
+        """Prepare workspace and download run_task.py for task.
 
         Args:
-            task (Task): _description_
+            task (Task): task
         """
         self.task_path = build_workspace(path=get_task_workspace(self.config.workspace), task_id=task.task_id)
         logger.info(f"****TASK PATH: {self.task_path}")
@@ -144,12 +148,20 @@ class Scheduler:
             neural_coder_cmd.append(self.script_name)
             neural_coder_cmd = " ".join(neural_coder_cmd)
             full_cmd = """cd {}\n{}""".format(self.task_path, neural_coder_cmd)
-            p = subprocess.Popen(full_cmd, shell=True)
+            p = subprocess.Popen(full_cmd, shell=True) # nosec
             logger.info("[Neural Coder] Generating optimized code start.")
             p.wait()
             logger.info("[Neural Coder] Generating optimized code end.")
 
     def check_task_status(self, log_path):
+        """Check status for the task from log path.
+
+        Args:
+            log_path (str): the log path for task.
+
+        Returns:
+            str: status "done" or "failed"
+        """
         for line in reversed(open(log_path).readlines()):
             res_pattern = r'[INFO] Save deploy yaml to'
             # res_matches = re.findall(res_pattern, line)
@@ -235,13 +247,14 @@ class Scheduler:
         full_cmd = self._parse_cmd(task, resource)
         logger.info(f"[TaskScheduler] Parsed the command from task: {full_cmd}")
         log_path = get_task_log_path(log_path=get_task_log_workspace(self.config.workspace), task_id=task.task_id)
-        p = subprocess.Popen(full_cmd, stdout=open(log_path, 'w+'), stderr=subprocess.STDOUT, shell=True)
+        p = subprocess.Popen(full_cmd, stdout=open(log_path, 'w+'), stderr=subprocess.STDOUT, shell=True) # nosec
         logger.info(f"[TaskScheduler] Start run task {task.task_id}, dump log into {log_path}")
         start_time = time.time()
         p.wait()
         self.cluster.free_resource(resource)
         task_runtime = time.time() - start_time
-        logger.info(f"[TaskScheduler] Finished task {task.task_id}, and free resource {resource}, dump log into {log_path}")
+        logger.info(\
+            f"[TaskScheduler] Finished task {task.task_id}, and free resource {resource}, dump log into {log_path}")
         task_status = self.check_task_status(log_path)
         self.task_db.update_task_status(task.task_id, task_status)
         self.q_model_path = get_q_model_path(log_path=log_path) if task_status == "done" else None
@@ -258,7 +271,8 @@ class Scheduler:
             time.sleep(5)
             logger.info(f"[TaskScheduler {get_current_time()}] try to dispatch a task...")
             if self.task_db.get_pending_task_num() > 0:
-                logger.info(f"[TaskScheduler {get_current_time()}], there are {self.task_db.get_pending_task_num()} task pending.")
+                logger.info(f"[TaskScheduler {get_current_time()}], " + \
+                    f"there are {self.task_db.get_pending_task_num()} task pending.")
                 task_id = self.task_db.task_queue[0]
                 task = self.task_db.get_task_by_id(task_id)
                 resource = self.cluster.reserve_resource(task)
@@ -272,4 +286,5 @@ class Scheduler:
                 logger.info("[TaskScheduler] no requests in the deque!")
 
     def sanitize_arguments(self, arguments: str):
+        """Replace space encoding with space."""
         return arguments.replace(u'\xa0', u' ')

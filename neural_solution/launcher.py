@@ -20,6 +20,7 @@ import argparse
 import socket
 import psutil
 import time
+import shlex
 from datetime import datetime
 
 def check_ports(args):
@@ -87,16 +88,10 @@ def check_port_free(port):
     Returns:
         bool : the free state of the port.
     """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = False
-    try:
-        sock.bind(("0.0.0.0", port))
-        result = True
-    except:
-        # Port is in use
-        pass 
-    sock.close()
-    return result
+    for conn in psutil.net_connections():
+        if conn.status == 'LISTEN' and conn.laddr.port == port:
+            return False
+    return True
 
 def start_service(args):
     """Start service.
@@ -131,37 +126,38 @@ def start_service(args):
     # Check completed
 
     serve_log_dir = f"{args.workspace}/serve_log"
-    os.makedirs(serve_log_dir, exist_ok=True)
+    if not os.path.exists(serve_log_dir):
+        os.makedirs(serve_log_dir)
     date_time = datetime.now()
     date_suffix = "_" + date_time.strftime("%Y%m%d-%H%M%S")
     date_suffix = ""
     with open(f"{serve_log_dir}/backend{date_suffix}.log", "w") as f:
         subprocess.Popen([
             "python", "-m", "neural_solution.backend.runner",
-            "--hostfile", str(args.hostfile),
-            "--task_monitor_port", str(args.task_monitor_port),
-            "--result_monitor_port", str(args.result_monitor_port),
-            "--workspace", str(args.workspace),
-            "--conda_env_name", str(conda_env_name),
-            "--upload_path", str(args.upload_path)
-        ], stdout=f, stderr=subprocess.STDOUT)
+            "--hostfile", shlex.quote(str(args.hostfile)),
+            "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
+            "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
+            "--workspace", shlex.quote(str(args.workspace)),
+            "--conda_env_name", shlex.quote(str(conda_env_name)),
+            "--upload_path", shlex.quote(str(args.upload_path))
+        ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
     with open(f"{serve_log_dir}/frontend{date_suffix}.log", "w") as f:
         subprocess.Popen([
             "python", "-m", "neural_solution.frontend.fastapi.main_server",
             "--host", "0.0.0.0",
-            "--fastapi_port", str(args.restful_api_port),
-            "--task_monitor_port", str(args.task_monitor_port),
-            "--result_monitor_port", str(args.result_monitor_port),
-            "--workspace", str(args.workspace)
-        ], stdout=f, stderr=subprocess.STDOUT)
+            "--fastapi_port", shlex.quote(str(args.restful_api_port)),
+            "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
+            "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
+            "--workspace", shlex.quote(str(args.workspace))
+        ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
     with open(f"{serve_log_dir}/frontend_grpc.log", "w") as f:
         subprocess.Popen([
             "python", "-m", "neural_solution.frontend.gRPC.server",
-            "--grpc_api_port", str(args.grpc_api_port),
-            "--task_monitor_port", str(args.task_monitor_port),
-            "--result_monitor_port", str(args.result_monitor_port),
-            "--workspace", str(args.workspace)
-        ], stdout=f, stderr=subprocess.STDOUT)
+            "--grpc_api_port", shlex.quote(str(args.grpc_api_port)),
+            "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
+            "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
+            "--workspace", shlex.quote(str(args.workspace))
+        ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
     ip_address = get_local_service_ip(80)
 
     # Check if the service is started
@@ -171,8 +167,8 @@ def start_service(args):
     start_time = time.time()
     while True:
         # Check if the ports are in use
-        if check_port_free(args.task_monitor_port) and check_port_free(args.result_monitor_port) \
-            and check_port_free(args.restful_api_port):
+        if check_port_free(args.task_monitor_port) or check_port_free(args.result_monitor_port) \
+            or check_port_free(args.restful_api_port):
             # If the ports are not in use, wait for a second and check again
             time.sleep(0.5)
             # Check if timed out
@@ -183,10 +179,9 @@ def start_service(args):
                 print("Timeout!")
                 break
 
-            # Continue to wait for the ports to be in use
-            continue
-
-        break
+        # Continue to wait for all ports to be in use
+        else:
+            break
     ports_flag = 0
     fail_msg = "Neural Solution START FAIL!"
     for port in [args.task_monitor_port, args.result_monitor_port]:
@@ -194,7 +189,7 @@ def start_service(args):
             ports_flag += 1
 
     # Check if the serve port is occupied
-    if check_port_free(args.restful_api_port):
+    if not check_port_free(args.restful_api_port):
         ports_flag += 1
     else:
         fail_msg = f"{fail_msg}\nPlease check frontend serve log!"
@@ -213,7 +208,7 @@ def start_service(args):
     print("[For information] neural_solution help")
 
 def main():
-    """main function."""
+    """Implement the main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
     parser.add_argument('action', choices=['start', 'stop'], help='start/stop service')
     parser.add_argument("--hostfile", default=None,
@@ -221,7 +216,7 @@ def main():
     parser.add_argument("--restful_api_port", type=int, default=8000,
                         help="start restful serve with {restful_api_port}, default 8000")
     parser.add_argument("--grpc_api_port", type=int, default=8001,
-                        help="start gRPC with {restful_api_port}, default 8000")
+                        help="start gRPC with {restful_api_port}, default 8001")
     parser.add_argument("--result_monitor_port", type=int, default=3333,
                         help="start serve for result monitor at {result_monitor_port}, default 3333")
     parser.add_argument("--task_monitor_port", type=int, default=2222,
