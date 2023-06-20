@@ -1,10 +1,11 @@
+# Diagnosis
 1. [Diagnosis introduction](#diagnosis-introduction)
 2. [Supported Feature Matrix](#supported-feature-matrix)
 3. [Get started](#get-started)
 4. [Example](#example)
 
 # Diagnosis introduction
-To validate the quality of the optimized model we should run diagnostics and check its accuracy and performance.
+The diagnosis feature provides methods to debug the accuracy loss during quantization and profile the performance gap during benchmark.
 There are 2 ways to diagnose a model with Intel® Neural Compressor. First is non-GUI mode that is described below and second is GUI mode with [Neural Insights](https://github.com/intel/neural-compressor/tree/master/neural_insights) component.
 
 The workflow is described in the diagram below. First we have to configure scripts with diagnosis, then run them and check diagnosis info in the terminal. Test if the result is satisfying and repeat the steps if needed.
@@ -31,16 +32,46 @@ The workflow is described in the diagram below. First we have to configure scrip
             <td align="center">ONNX Runtime</td>
             <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
         </tr>
+        <tr>
+            <td rowspan="2" align="center">Benchmark Profiling</td>
+            <td rowspan="2" align="center">OP, execution and duration</td>
+            <td align="center">TensorFlow</td>
+            <td align="center"><a href="h[label](https://github.com/intel/neural-compressor/assets/51692656/69598de6-4d48-4991-bbbb-e04902500e55)ttps://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td align="center">ONNX Runtime</td>
+            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
+        </tr>
     </tbody>
 </table>
 
 # Get started 
+## Install Intel® Neural Compressor
 First you need to install Intel® Neural Compressor.
-```
+```shell
 git clone https://github.com/intel/neural-compressor.git
 cd neural-compressor 
 pip install -r requirements.txt 
 python setup.py install
+```
+
+## Modify script
+Modify quantization/benchmark script to run diagnosis by adding argument `diagnosis` set to `True` to `PostTrainingQuantConfig`/`BenchmarkConfig` as shown below.
+
+### Quantization diagnosis
+```python
+config = PostTrainingQuantConfig(
+    diagnosis=True,
+    ...
+)
+``` 
+
+### Benchmark diagnosis
+```python
+config = BenchmarkConfig(
+    diagnosis=True,
+    ...
+)
 ```
 
 # Example
@@ -51,14 +82,14 @@ Below it is explained how to run diagnosis for ONNX ResNet50 model.
 Download dataset [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads).
 
 Download label:
-```
+```shell
 wget http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz
 tar -xvzf caffe_ilsvrc12.tar.gz val.txt
 ```
 
 ## Run quantization script 
-Then execute script with quantization APi in another terminal with --diagnose flag.
-```
+Then execute script with quantization API in another terminal with --diagnose flag.
+```shell
 python examples/onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static/main.py \
   --model_path=/path/to/resnet50_v1.onnx/ \
   --dataset_location=/path/to/ImageNet/ \
@@ -66,6 +97,19 @@ python examples/onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_s
   --tune 
   --diagnose 
 ```
+
+## Run benchmark script
+To run profiling execute script with parameters shown in the command below.
+```shell
+python examples/onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static/main.py \
+  --model_path=/path/to/resnet50_v1.onnx/ \
+  --dataset_location=/path/to/ImageNet/ \
+  --label_path=/path/to/val.txt/
+  --mode=performance \​
+  --benchmark \​
+  --diagnose
+```
+
 
 ## See quantization data
 
