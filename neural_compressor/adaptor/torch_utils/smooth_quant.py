@@ -924,7 +924,7 @@ class GraphTrace:
                         prev_absorb_layer.append(parent)
                     elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
                         intersect = parent_out_kinds.intersection(self.skip_ops_to_find_absorb)
-                        res = self.get_prev_absorb_layer_helper(parent_scopeName, dict_child_kind, dict_child, intersect)
+                        res = self.get_skipconnect_helper(parent_scopeName, dict_child_kind, dict_child, intersect)
                         prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
                             
                     else: # When parent to multiple ops, sq transformation could be wrong.
@@ -934,18 +934,19 @@ class GraphTrace:
                 break
         return prev_absorb_layer
 
-    def get_prev_absorb_layer_helper(self, node_scopeName, dict_child_kind, dict_child, intersect):
+    def get_skipconnect_helper(self, node_scopeName, dict_child_kind, dict_child, intersect):
         for child in dict_child[node_scopeName]:
-            if child.kind() in intersect:
-                child_out_kinds = set(dict_child_kind[child.scopeName()])
-                child_out_kinds.discard('aten::size')
-                if child_out_kinds.intersection(self.skip_ops_to_find_absorb):
-                    intersect = child_out_kinds.intersection(self.skip_ops_to_find_absorb)
-                    return self.get_prev_absorb_layer_helper(child.scopeName(), dict_child_kind, dict_child, intersect)
-                elif child_out_kinds.intersection(self.could_absorb_layers) == child_out_kinds:
-                    return True
-                else:
-                    return False
+            if child.kind() not in intersect:
+                continue
+            child_out_kinds = set(dict_child_kind[child.scopeName()])
+            child_out_kinds.discard('aten::size')
+            if child_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                intersect = child_out_kinds.intersection(self.skip_ops_to_find_absorb)
+                return self.get_skipconnect_helper(child.scopeName(), dict_child_kind, dict_child, intersect)
+            elif child_out_kinds.intersection(self.could_absorb_layers) == child_out_kinds:
+                return True
+            else:
+                return False
 
     def mapping_torch_module_to_aten(self, op_types):
         res = []
