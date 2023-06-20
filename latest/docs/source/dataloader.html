@@ -84,22 +84,25 @@
              
   <section id="dataloader">
 <h1>DataLoader<a class="headerlink" href="#dataloader" title="Permalink to this heading"></a></h1>
-<ol class="simple">
+<ol>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-framework-dataloader-matrix">Supported Framework Dataloader Matrix</a></p></li>
-<li><p><a class="reference external" href="#get-start-with-dataloader-api">Get Start with Dataloader API</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-dataloader">Get Start with Dataloader</a></p>
+<p>3.1 <a class="reference external" href="#use-intel%C2%AE-neural-compressor-dataloader-api">Use Intel® Neural Compressor DataLoader API</a></p>
+<p>3.2 <a class="reference external" href="#build-custom-dataloader-with-python-api">Build Custom Dataloader with Python API</a></p>
+</li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p>Deep Learning often encounters large datasets that are memory-consuming. Previously, working with large datasets required loading them into memory all at once. The constant lack of memory resulted in the need for an efficient data generation scheme. This is not only about handling the lack of memory in large datasets, but also about making the process of loading data faster using a multi-processing thread. We call the data generation object a DataLoader.</p>
-<p>With the importance of a dataloader, different frameworks can have their own DataLoader module. As for Intel® Neural Compressor, it has implemented an internal dataloader and provides a unified DataLoader API for the following three reasons:</p>
+<p>With the importance of a dataloader, different frameworks can have their own DataLoader module. As for Intel® Neural Compressor, it implements an internal dataloader and provides a unified <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API for the following two reasons:</p>
 <ul class="simple">
 <li><p>The framework-specific dataloader has different features and APIs that will make it hard to use them same way in Neural Compressor.</p></li>
 <li><p>Neural Compressor treats batch size as a tuning parameter which means it can dynamically change the batch size to reach the accuracy goal.</p></li>
-<li><p>Internal dataloader makes it easy to config dataloaders in a yaml file without any code modification.</p></li>
 </ul>
-<p>The internal dataloader takes a <a class="reference internal" href="dataset.html"><span class="doc">dataset</span></a> as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> attribute and <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> function.</p>
+<p>The unified  <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API takes a <a class="reference internal" href="dataset.html"><span class="doc">dataset</span></a> as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> attribute and <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> function.</p>
+<p>Of cause, users can also use frameworks own dataloader in Neural Compressor.</p>
 </section>
 <section id="supported-framework-dataloader-matrix">
 <h2>Supported Framework Dataloader Matrix<a class="headerlink" href="#supported-framework-dataloader-matrix" title="Permalink to this heading"></a></h2>
@@ -116,6 +119,14 @@
 <td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
+<td>Keras</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>MXNet</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
 <td>PyTorch</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
@@ -123,57 +134,40 @@
 <td>ONNX Runtime</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
-<tr>
-<td>MXNet</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
 </tbody>
 </table></section>
-<section id="get-start-with-dataloader-api">
-<h2>Get Start with Dataloader API<a class="headerlink" href="#get-start-with-dataloader-api" title="Permalink to this heading"></a></h2>
-<section id="config-dataloader-in-a-yaml-file">
-<h3>Config Dataloader in a Yaml File<a class="headerlink" href="#config-dataloader-in-a-yaml-file" title="Permalink to this heading"></a></h3>
-<p>Users can use internal dataloader in the following manners. In this case, the dataloader is created after the Quantization object is initialized. As calibration and evaluation may have different transforms and datasets, users can config different dataloaders in a yaml file.</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post_training_static_quant</span>
-<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/calibration/dataset</span>
-<span class="w">      </span><span class="nt">filter</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">LabelBalance</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+<section id="get-start-with-dataloader">
+<h2>Get Start with DataLoader<a class="headerlink" href="#get-start-with-dataloader" title="Permalink to this heading"></a></h2>
+<section id="use-intel-neural-compressor-dataloader-api">
+<h3>Use Intel® Neural Compressor DataLoader API<a class="headerlink" href="#use-intel-neural-compressor-dataloader-api" title="Permalink to this heading"></a></h3>
+<p>Acceptable parameters for <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API including:
+| Parameter     | Description     |
+|:————–|:———-|
+|framework (str)| different frameworks, such as <code class="docutils literal notranslate"><span class="pre">tensorflow</span></code>, <code class="docutils literal notranslate"><span class="pre">keras</span></code>, <code class="docutils literal notranslate"><span class="pre">mxnet</span></code>, <code class="docutils literal notranslate"><span class="pre">pytorch</span></code> and <code class="docutils literal notranslate"><span class="pre">onnxrt</span></code>.|
+|dataset (object)| A dataset object from which to get data. Dataset must implement <strong>iter</strong> or <strong>getitem</strong> method.|
+|batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
+|collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|
+|last_batch (str, optional)| How to handle the last batch if the batch size does not evenly divide by the number of examples in the dataset. ‘discard’: throw it away. ‘rollover’: insert the examples to the beginning of the next batch.Defaults to ‘rollover’.|
+|sampler (Iterable, optional)| Defines the strategy to draw samples from the dataset.Defaults to None.|
+|batch_sampler (Iterable, optional)| Returns a batch of indices at a time. Defaults to None.|
+|num_workers (int, optional)| how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. Defaults to 0.|
+|pin_memory (bool, optional)| If True, the data loader will copy Tensors into device pinned memory before returning them. Defaults to False.|
+|shuffle (bool, optional)| Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to have the data reshuffled at every epoch. Defaults to False.|
+|distributed (bool, optional)| Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to support distributed computing. Defaults to False.|</p>
+<p>Users can use the unified <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API in the following manners.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
 
-<span class="nt">evaluation</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">metric</span><span class="p">:</span><span class="w"> </span>
-<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
-<span class="w">  </span><span class="nt">performance</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">dummy_v2</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">input_shape</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">]</span><span class="w"> </span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="create-a-user-specific-dataloader">
-<h3>Create a User-specific Dataloader<a class="headerlink" href="#create-a-user-specific-dataloader" title="Permalink to this heading"></a></h3>
+<section id="build-custom-dataloader-with-python-api">
+<h3>Build Custom Dataloader with Python API<a class="headerlink" href="#build-custom-dataloader-with-python-api" title="Permalink to this heading"></a></h3>
 <p>Users can define their own dataloaders as shown as below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="k">class</span> <span class="nc">Dataloader</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewDataloader</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="p">[]</span>
@@ -185,10 +179,8 @@
 
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">dataloader</span> <span class="o">=</span> <span class="n">Dataloader</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
-    <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_model</span><span class="p">)</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">NewDataloader</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -196,8 +188,8 @@
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <ul class="simple">
-<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq">example</a> for how to define a customised dataloader.</p></li>
-<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/image_recognition/resnet50/quantization/ptq">example</a> for how to use internal dataloader.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">example</a> for how to define a customised dataloader.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/nlp/bert/quantization/ptq_static">example</a> for how to use internal dataloader.</p></li>
 </ul>
 </section>
 </section>
