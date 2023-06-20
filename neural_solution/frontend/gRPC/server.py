@@ -152,5 +152,5 @@ if __name__ == '__main__':
     args = parse_arguments()
     print(args.workspace)
     config.workspace = args.workspace
-    config.grpc_api_port = config.grpc_api_port
+    config.grpc_api_port = args.grpc_api_port
     serve()
