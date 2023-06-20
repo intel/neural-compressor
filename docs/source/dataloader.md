@@ -17,13 +17,15 @@ DataLoader
 
 Deep Learning often encounters large datasets that are memory-consuming. Previously, working with large datasets required loading them into memory all at once. The constant lack of memory resulted in the need for an efficient data generation scheme. This is not only about handling the lack of memory in large datasets, but also about making the process of loading data faster using a multi-processing thread. We call the data generation object a DataLoader.
 
-With the importance of a dataloader, different frameworks can have their own DataLoader module. As for Intel® Neural Compressor, it implements an internal dataloader and provides a unified `DataLoader` API for the following three reasons:
+With the importance of a dataloader, different frameworks can have their own DataLoader module. As for Intel® Neural Compressor, it implements an internal dataloader and provides a unified `DataLoader` API for the following two reasons:
 
 - The framework-specific dataloader has different features and APIs that will make it hard to use them same way in Neural Compressor.
 
 - Neural Compressor treats batch size as a tuning parameter which means it can dynamically change the batch size to reach the accuracy goal.
 
 The unified  `DataLoader` API takes a [dataset](./dataset.md) as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have `batch_size` attribute and `__iter__` function.
+
+Of cause, users can also use frameworks own dataloader in Neural Compressor.
 
 ## Supported Framework Dataloader Matrix
 
