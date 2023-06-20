@@ -6,6 +6,7 @@ import torch
 import torchvision
 import onnx
 import numpy as np
+from packaging.version import Version
 from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
@@ -731,6 +732,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         with self.assertRaises(ValueError):
             test()
 
+    @unittest.skipIf(Version(ort.__version__) == Version("1.13.1"))
     def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
