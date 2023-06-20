@@ -313,7 +313,15 @@ class PyTorchModel(PyTorchBaseModel):
         try:
             stat_dict = self._model.state_dict()
             if self.q_config:
-                stat_dict['best_configure'] = self.q_config
+                if self.q_config['approach'] == 'post_training_weight_only':
+                    from neural_compressor.adaptor.torch_utils.util import collect_weight_info
+                    weight_config_path = os.path.join(root, "weight_config.json")
+                    weight_config = collect_weight_info(self.q_config)
+                    with open(weight_config_path, 'w') as f:
+                        json.dump(weight_config, f, indent = 4)
+                        f.close()
+                else:
+                    stat_dict['best_configure'] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
             logger.info("Save config file and weights of quantized model to {}.".format(root))
         except IOError as e:   # pragma: no cover

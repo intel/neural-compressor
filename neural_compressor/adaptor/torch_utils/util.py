@@ -916,3 +916,37 @@ def get_op_type_by_name(op_name, quantizable_ops):
         if pair[0] == op_name:
             return pair[1]
     return None
+
+def collect_weight_info(q_config):
+    """collect weight info from q_config for dumping into weight_config.json
+
+    weight_config.json example:
+    ```
+    {
+        'fc': {
+            'bit': 4,
+            'group_size': 128,
+            'scheme': 'asym',
+            'algorithm': 'RTN'
+        }
+        ...
+    }
+    ```
+
+    Args:
+        q_config (_type_): quantization configue
+    """
+    weight_info = {}
+    for op, config in q_config['op'].items():
+        op_name, op_type = op
+        if config['weight']['dtype'] == 'fp32':
+            weight_info[op_name] = {'dtype': 'fp32'}
+        else:
+            weight_info[op_name] = {
+                'dtype': config['weight']['dtype'],
+                'bit': config['weight']['bit'],
+                'group_size': config['weight']['group_size'],
+                'scheme': config['weight']['scheme'],
+                'algorithm': config['weight']['algorithm']
+            }
+    return weight_info

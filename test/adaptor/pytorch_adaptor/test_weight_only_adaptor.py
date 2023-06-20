@@ -52,8 +52,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "weight": {
                         'bit': [8], # 1-8 bit 
                         'group_size': [128],  # 1 - 1024 or higher
-                        'scheme': ['sym', 'asym'], 
-                        'algorithm': ['minmax'], 
+                        'scheme': ['sym'], 
+                        'algorithm': ['RTN'], 
                     },
                 },
             },
@@ -73,8 +73,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "weight": {
                         'bit': [4], # 1-8 bit 
                         'group_size': [32],  # 1 - 1024 or higher
-                        'scheme': ['sym', 'asym'], 
-                        'algorithm': ['minmax'], 
+                        'scheme': ['asym'], 
+                        'algorithm': ['RTN'], 
                     },
                 },
             },
@@ -94,16 +94,16 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "weight": {
                         'bit': [4], # 1-8 bit 
                         'group_size': [32],  # 1 - 1024 or higher
-                        'scheme': ['sym', 'asym'], 
-                        'algorithm': ['minmax'], 
+                        'scheme': ['sym'], 
+                        'algorithm': ['RTN'], 
                     },
                 },
                 'fc2':{ 	# re.match
                     "weight": {
                         'bit': [3], # 1-8 bit 
                         'group_size': [16],  # 1 - 1024 or higher
-                        'scheme': ['sym', 'asym'], 
-                        'algorithm': ['minmax'], 
+                        'scheme': ['asym'], 
+                        'algorithm': ['RTN'], 
                     },
                 },
                 'fc3':{ 	# re.match
@@ -120,6 +120,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        q_model.save('saved')
 
 
 if __name__ == "__main__":

@@ -4528,6 +4528,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 num_bits = config['weight']['bit']
                 group_size = config['weight']['group_size']
                 scheme = config['weight']['scheme']
+                algorithm = config['weight']['algorithm']
+                if algorithm != 'RTN':
+                    continue
                 m = fetch_module(model, op_name)
                 weight = m.weight
                 if op_type == "Conv2d":
