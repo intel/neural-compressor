@@ -149,6 +149,7 @@ def get_workloads_list(data: Dict[str, Any]) -> dict:
 
 
 def get_diagnosis(workload_id: str) -> Diagnosis:
+    """Get diagnosis object for specified workload."""
     workload = WorkloadManager().get_workload(workload_id)
     diagnosis = DiagnosisFactory.get_diagnosis(workload)
     return diagnosis

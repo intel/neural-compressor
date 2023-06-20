@@ -19,6 +19,8 @@ mkdir -p $log_dir
 scan_path="scan_path.txt"
 if [ "${scan_module}" = "neural_solution" ]; then
     scan_path="scan_path_neural_solution.txt"
+elif [ "${scan_module}" = "neural_insights" ]; then
+    scan_path="scan_path_neural_insights.txt"
 fi
 
 exit_code=0

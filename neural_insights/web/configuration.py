@@ -138,8 +138,7 @@ class Configuration:
         return vars(parser.parse_args())
 
     def determine_server_port(self, args: Dict) -> int:
-        """
-        Return port to be used by the server.
+        """Return port to be used by the server.
 
         Will raise a NotFoundException if port is already in use.
 
@@ -172,8 +171,7 @@ class Configuration:
         )
 
     def determine_gui_port(self, args: Dict) -> int:
-        """
-        Return port to be used by the GUI client.
+        """Return port to be used by the GUI client.
 
         Will return self.server_port unless specified in configuration.
         """

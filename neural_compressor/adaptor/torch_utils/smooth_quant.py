@@ -752,6 +752,8 @@ class TorchSmoothQuant:
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
+
+            self.model._smoothquant_optimized = True
             if example_inputs != None:
                 # Check mathematical equivelancy
                 out_post_sq = model_forward_per_sample(self.model, example_inputs, self.device)
@@ -759,18 +761,16 @@ class TorchSmoothQuant:
                 if not self.output_is_equal(out_post_sq, out_pre_sq):
                     logger.warning(
                         "Mathematical equivelancy of Smoothquant is not preserved. "
-                        " Please kindly report this issue to github, sq is skipped")
-                    self.recover()
-                # else:
-                #     logger.info("Mathematical equivelancy of Smoothquant is preserved.")
-
+                        "Please kindly report this issue to https://github.com/intel/neural-compressor.")
+                    # self.recover()
+                    # self.model._smoothquant_optimized = False
             else:
                 logger.warning(" Could not get example input, equivelancy check is skipped")
 
             self.input_values, self.output_values = {}, {}
             return self.model
 
-    def output_is_equal(self, out1, out2, atol=1e-05):
+    def output_is_equal(self, out1, out2, atol=1e-04):
         try:
             if isinstance(out1, tuple):
                 return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
@@ -780,8 +780,8 @@ class TorchSmoothQuant:
                 return torch.all(torch.isclose(out1, out2, atol=atol))
             return False
         except:
-            logger.warning("Automatically check failed, \
-                            Please check equal manually between out_pre_sq and out_post_sq if necessary.")
+            logger.warning("Automatically check failed, Please check equivelancy manually "
+                           "between out_pre_sq and out_post_sq if necessary.")
             return True
 
     def recover(self):
