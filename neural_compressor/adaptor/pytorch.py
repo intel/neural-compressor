@@ -3064,7 +3064,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     logger.warning("Smoothquant for ipex requires a deepcopy of model"
                                     + ", please avoid out of memory.")
                     try:
-                        tmp_model = copy.deepcopy(model) # Deepcopy due to model changed when `ipex.quantization.prepare`
+                        # Deepcopy due to model changed when `ipex.quantization.prepare`
+                        tmp_model = copy.deepcopy(model)
                     except Exception as e:  # pragma: no cover
                         logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                             repr(e)))
