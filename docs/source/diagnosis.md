@@ -122,6 +122,72 @@ In the weights summary table there are parameters like minimum, maximum, mean, s
 
 ![weights](./imgs/terminal-weights.jpg)
 
+## How to do diagnosis
+Neural Compressor diagnosis mode provides weights and activation data that includes several useful metrics for diagnosing potential losses of model accuracy.
+
+### Parameter description
+Data is presented in the terminal in form of table where each row describes single OP in the model. We present such quantities measures like:
+
+**MSE - Mean Squared Error** - it is a metric that measures how big is the difference between input and optimized model's weights for specific OP.
+
+$$
+MSE = \sum_{i=1}^{n}(x_i-y_i)^2
+$$
+
+**Input model min** - minimum value of the input OP tensor data
+
+$$
+\min{\vec{x}}
+$$
+
+**Input model max** - maximum value of the input OP tensor data
+
+$$
+\max{\vec{x}}
+$$
+
+**Input model mean** - mean value of the input OP tensor data
+
+$$
+\mu =\frac{1}{n} \sum_{i=1}^{n} x_{i}
+$$
+
+**Input model standard deviation** - standard deviation of the input OP tensor data
+
+$$
+\sigma =\sqrt{\frac{1}{n}\sum\limits_{i=1}^n (x_i - \mu)} 
+$$
+
+**Input model variance** - variance of the input OP tensor data
+
+$$
+Var = \sigma^2
+$$
+
+where, </br>
+$x_i$ - input OP tensor data, </br>
+$y_i$ - optimized OP tensor data, </br>
+$\mu_x$ - input model mean, </br>
+$\sigma_x$ - input model variance
+
+### Diagnosis suggestions 
+1. Check the nodes with MSE order. High MSE usually means higher possibility of accuracy loss happened during the quantization, so fallback those Ops may get some accuracy back.  
+2. Check the Min-Max data range. An dispersed data range usually means higher accuracy loss, so we can also try to full back those Ops. 
+3. Check with the other data and find some outliers, and try to fallback some Ops and test for the quantization accuracy.
+
+*Note: We can't always trust the debug rules, it's only a reference, sometimes the accuracy regression is hard to explain.*
+
+### Fallback setting example
+```python
+from neural_compressor import quantization, PostTrainingQuantConfig 
+op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}}} 
+config = PostTrainingQuantConfig( 
+       diagnosis=True,  
+       op_name_dict=op_name_dict 
+)
+q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval) 
+```
+
 ## See profiling data
 
 In profiling section there is a table with nodes sorted by total execution time. It is possible to check which operations take the most time.
