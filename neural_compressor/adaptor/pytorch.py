@@ -4080,7 +4080,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        block_wise = [[(name, get_op_type_by_name(name, quantizable_ops)) for name in block] for block in ffn_blocks]
+        # discard the op does not belong to quantizable_ops
+        block_wise = [[(name, get_op_type_by_name(name, quantizable_ops)) for name in block if\
+            get_op_type_by_name(name, quantizable_ops) != None] for block in ffn_blocks]
         self.block_wise = block_wise
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
