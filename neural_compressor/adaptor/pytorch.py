@@ -4520,7 +4520,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
     def RTN_quantize(self, model, tune_cfg):
         from .torch_utils.weight_only import quant_weight
         from .torch_utils.util import fetch_module
-        import pdb; pdb.set_trace()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
@@ -4528,14 +4527,14 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             else:
                 num_bits = config['weight']['bit']
                 group_size = config['weight']['group_size']
-                schema = config['weight']['scheme']
+                scheme = config['weight']['scheme']
                 m = fetch_module(model, op_name)
                 weight = m.weight
                 if op_type == "Conv2d":
                     orig_shape = weight.shape
                     weight = weight.permute(1, 0, 2, 3)
                     weight = weight.reshape(weight.shape[0], -1)
-                q_weight = quant_weight(weight, num_bits, group_size, schema)
+                q_weight = quant_weight(weight, num_bits, group_size, scheme)
                 if op_type == "Conv2d":
                     q_weight = q_weight.reshape(orig_shape[1], orig_shape[0], orig_shape[2], orig_shape[3])
                     q_weight = q_weight.permute(1, 0, 2, 3)
@@ -4565,26 +4564,47 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        pass
-        # res = {}
-        # ignore_log = False
-        # modules = dict(model.named_modules())
-        # # fetch quantizable ops supported in Neural Compressor from tune_cfg
-        # for key in tune_cfg['op']:
-        #     op_name, op_type = key[0], key[1]
-        #     if op_type not in res.keys():
-                
-        #         res[op_type] = {'FP32': 0}
-        # field_names=["Op Type", "Total", "A32W8", "FP32"]
-        # output_data = [[
-        #     op_type, sum(res[op_type].values()),
-        #     res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']]
-        # for op_type in res.keys()]
+        res = {}
+        # collect all dtype info and build empty results with existing op_type
+        dtype_set = set()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if not config['weight']['dtype'] == 'fp32':
+                num_bits = config['weight']['bit']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                dtype_set.add(dtype_str)
+        dtype_set.add('FP32')
+        dtype_list = list(dtype_set)
+        dtype_list.sort()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if op_type not in res.keys():
+                res[op_type] = {dtype: 0 for dtype in dtype_list}
 
-        # Statistics(output_data,
-        #            header='Mixed Precision Statistics',
-        #            field_names=field_names).print_stat()
-        # self.optype_statistics = field_names, output_data
+        # fill in results with op_type and dtype
+        for op, config in tune_cfg['op'].items():
+            if config['weight']['dtype'] == 'fp32':
+                res[op_type]['FP32'] += 1
+            else:
+                num_bits = config['weight']['bit']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                res[op_type][dtype_str] += 1
+
+        # update stats format for dump.
+        field_names = ["Op Type", "Total"]
+        field_names.extend(dtype_list)
+        output_data = []
+        for op_type in res.keys():
+            field_results = [op_type, sum(res[op_type].values())]
+            field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+            output_data.append(field_results)
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
 
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):

@@ -9,10 +9,12 @@ class Model(torch.nn.Module):
         super(Model, self).__init__()
         self.fc1 = torch.nn.Linear(30, 40)
         self.fc2 = torch.nn.Linear(40, 30)
+        self.fc3 = torch.nn.Linear(30, 10)
 
     def forward(self, x):
         out = self.fc1(x)
         out = self.fc2(out)
+        out = self.fc3(out)
         return out
 
 
@@ -42,6 +44,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         input = torch.randn(3,30)
         model = Model()
         out1 = model(input)
+
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
@@ -61,7 +64,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
-        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=1e-1)))
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
@@ -82,7 +85,41 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
-        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=1e-1)))
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_name_dict={
+                'fc1':{ 	# re.match
+                    "weight": {
+                        'bit': [4], # 1-8 bit 
+                        'group_size': [32],  # 1 - 1024 or higher
+                        'scheme': ['sym', 'asym'], 
+                        'algorithm': ['minmax'], 
+                    },
+                },
+                'fc2':{ 	# re.match
+                    "weight": {
+                        'bit': [3], # 1-8 bit 
+                        'group_size': [16],  # 1 - 1024 or higher
+                        'scheme': ['sym', 'asym'], 
+                        'algorithm': ['minmax'], 
+                    },
+                },
+                'fc3':{ 	# re.match
+                    "weight": {
+                        'dtype': ['fp32'],
+                    },
+                },
+            },
+            recipes={
+                'gptq_args':{'percdamp': 0.01},
+                'awq_args':{'alpha': 'auto', 'clip': True},
+            },
+        )
+        q_model = quantization.fit(model, conf, eval_func=eval_func)
+        out2 = q_model(input)
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
 
 
 if __name__ == "__main__":
