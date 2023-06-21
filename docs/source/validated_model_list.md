@@ -25,6 +25,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 ## Validated Quantization Examples
 
+> Notes: v2.2 release data will be updated in 1-2 weeks after the release. 
+
 Performance results test on ​​01/04/2023 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 8 instances and batch size 1. 
 
 Performance varies by use, configuration and other factors. See [platform configuration](./platform_configuration.md) for configuration details. For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
