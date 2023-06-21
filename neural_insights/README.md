@@ -7,7 +7,11 @@ Neural Insights
 
 </div>
 
-<div align="left">
+## Introduction
+Neural Insights is a GUI component which provide GUI mode for [diagnosis](/docs/source/diagnosis.md) feature of Intel Neural Compressor. 
+It provides the capability to quickly show the model graph, the histograms of weights and activations, the quantization config, etc. 
+The workflow shows the relationship of Neural Insights and diagnosis.   
+![workflow](/docs/imgs/workflow.jpg)
 
 ## Installation
 
