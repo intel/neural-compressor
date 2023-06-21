@@ -3060,11 +3060,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 self.example_inputs = get_example_inputs(model, self.q_dataloader)
         else:
             if self.performance_only:
-                if self.recipes and self.recipes.get('smooth_quant', False) \
-                    and self.version.release >= Version("2.1").release:  # pragma: no cover
+                if self.recipes and self.recipes.get('smooth_quant', False):  # pragma: no cover
                     logger.warning("Smoothquant for ipex requires a deepcopy of model"
                                     + ", please avoid out of memory.")
                     try:
+                        # Deepcopy due to model changed when `ipex.quantization.prepare`
                         tmp_model = copy.deepcopy(model)
                     except Exception as e:  # pragma: no cover
                         logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
