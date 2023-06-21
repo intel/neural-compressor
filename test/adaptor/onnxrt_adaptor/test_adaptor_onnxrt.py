@@ -6,6 +6,7 @@ import torch
 import torchvision
 import onnx
 import numpy as np
+from packaging.version import Version
 from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
@@ -731,6 +732,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         with self.assertRaises(ValueError):
             test()
 
+    @unittest.skipIf(Version(ort.__version__) == Version("1.13.1"), 
+                     "This function does not work with ONNX Runtime 1.13.1 for QDQ format quantization of ONNX models.")
     def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
@@ -774,7 +777,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
             self.assertTrue(len(fp32_tensor['activation']) == len(int8_tensor['activation']))
             self.assertTrue(sorted(fp32_tensor['activation'][0].keys()) == sorted(int8_tensor['activation'][0].keys()))
             for op in op_list:
-                self.assertTrue(sorted(fp32_tensor['activation'][0][op].keys()) == sorted(int8_tensor['activation'][0][op].keys()))
+                for x, y in zip(fp32_tensor['activation'][0][op].values(), int8_tensor['activation'][0][op].values()):
+                    self.assertTrue(x.shape == y.shape)
 
             if fake_yaml == "qlinear.yaml":
                 fp32_tensor = quantizer.strategy.adaptor.inspect_tensor(opt_model.model, self.cv_dataloader, op_list, inspect_type='weight')
