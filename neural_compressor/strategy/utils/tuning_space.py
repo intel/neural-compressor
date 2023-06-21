@@ -23,7 +23,7 @@ from typing import Dict, Tuple, List
 from copy import deepcopy
 import itertools
 from ...utils import logger
-from .utility import OrderedDefaultDict
+from .utility import OrderedDefaultDict, preprocess_user_cfg
 from .tuning_structs import OpTuningConfig
 
 from .constant import TUNING_ITEMS_LST
@@ -217,6 +217,7 @@ class TuningSpace:
         from .utility import extract_data_type, reverted_data_type
         fw_op_cap = deepcopy(fw_op_cap)
         new_op_cap = deepcopy(cur_op_cap)
+        op_user_cfg = preprocess_user_cfg(op_user_cfg)
         for att in ['activation', 'weight']:
             if op_user_cfg.get(att, None) is not None:
                 user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att].get('dtype', None) is not None else []

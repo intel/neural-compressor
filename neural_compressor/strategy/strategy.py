@@ -53,7 +53,7 @@ from ..algorithm import AlgorithmScheduler, ALGORITHMS
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
-from .utils.utility import build_slave_faker_model
+from .utils.utility import build_slave_faker_model, quant_options
 
 
 
@@ -139,6 +139,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self.model = model
         self.conf = conf
         self.config = self._initialize_config(conf)
+        self._set_quant_type(self.config)
         self.history_path = self._create_path(options.workspace, './history.snapshot')
         self.deploy_path = self._create_path(options.workspace, 'deploy.yaml')
         self.calib_dataloader = q_dataloader
@@ -300,6 +301,11 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             value: The new value for the algo_scheduler.
         """
         self._algo_scheduler = value
+
+    def _set_quant_type(self, config):
+        if config.approach == 'post_training_weight_only':
+            quant_options.quant_type = 3
+        # TODO for future usage(other quantization type)
 
     def _initialize_algo_scheduler(self):
         algo_scheduler = AlgorithmScheduler(self.config.recipes)

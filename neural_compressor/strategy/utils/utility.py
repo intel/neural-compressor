@@ -16,16 +16,43 @@
 # limitations under the License.
 
 """Tuning utility."""
-import os
-import pickle
 from collections import OrderedDict
-from typing import List, Optional, Any
+import enum
 
-import prettytable
+class QuantType(enum.IntEnum):
+    DYNAMIC = 0
+    STATIC = 1
+    QAT = 2
+    WEIGHT_ONLY = 3
 
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import print_table, dump_table, OpEntry
+class QuantOptions:
+    """Option Class for Quantization.
 
+    This class is used for configuring global variable related to quantization. 
+    The global variable quant_options is created with this class.
+
+    Args:
+        quant_type(int): Quantization type. Default value is 1.
+    """
+    def __init__(self, quant_type=1):
+        """Init an Option object."""
+        self._quant_type = quant_type
+    
+    @property
+    def quant_type(self):
+        """Get quant type."""
+        return self._quant_type
+    
+    @quant_type.setter
+    def quant_type(self, quant_type):
+        """Set quant type."""
+        self._quant_type = quant_type
+
+quant_options = QuantOptions()
+
+def preprocess_user_cfg(op_user_cfg):
+    #TODO add preprocess
+    return op_user_cfg
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
