@@ -274,14 +274,6 @@
                       },
                   },
       'Conv2d': *cap_weight_only_integer_linear,
-      'default': &cap_weight_only_integer_default {
-          'activation': {
-                      'dtype': ['fp32'],
-                      },
-          'weight': {
-                      'dtype': ['fp32'],
-                      },
-                  },
   }
 
 

@@ -937,16 +937,25 @@ def collect_weight_info(q_config):
         q_config (_type_): quantization configue
     """
     weight_info = {}
+    from neural_compressor.utils.logger import level, DEBUG
     for op, config in q_config['op'].items():
         op_name, op_type = op
         if config['weight']['dtype'] == 'fp32':
             weight_info[op_name] = {'dtype': 'fp32'}
         else:
-            weight_info[op_name] = {
-                'dtype': config['weight']['dtype'],
-                'bit': config['weight']['bit'],
-                'group_size': config['weight']['group_size'],
-                'scheme': config['weight']['scheme'],
-                'algorithm': config['weight']['algorithm']
-            }
+            if level == DEBUG:
+                weight_info[op_name] = {
+                    'dtype': config['weight']['dtype'],
+                    'bit': config['weight']['bit'],
+                    'group_size': config['weight']['group_size'],
+                    'scheme': config['weight']['scheme'],
+                    'algorithm': config['weight']['algorithm']
+                }
+            else:
+                weight_info[op_name] = {
+                    'dtype': config['weight']['dtype'],
+                    'bit': config['weight']['bit'],
+                    'group_size': config['weight']['group_size'],
+                    'scheme': config['weight']['scheme'],
+                }
     return weight_info
