@@ -59,7 +59,6 @@ q_model = fit(
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
-> More quick samples can be found in [Get Started Page](./docs/source/get_started.md).
 
 ## Documentation
 
