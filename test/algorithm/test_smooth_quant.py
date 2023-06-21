@@ -3,6 +3,10 @@ import unittest
 import numpy as np
 import shutil
 import torch
+import sys
+
+sys.path.append('./')
+
 from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
@@ -699,6 +703,52 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_dataloader=CalibDataloader(),
         )
         output2 = q_model.model(input_ids)
+
+
+class TestSqSkipOp(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                pass
+            def __iter__(self):
+                yield torch.rand((1, 4))
+
+        self.linear_dl = RandDataloader()
+
+    @classmethod 
+    def test_sq_skip_op_auto(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.linear0 = nn.Linear(4, 4, bias=False)
+                self.layernorm1 = nn.LayerNorm(4)
+                self.linear1 = nn.Linear(4, 4, bias=False)
+                self.ac1 = nn.ReLU()
+                self.ac2 = nn.LeakyReLU()
+                self.linear2 = nn.Linear(4, 4, bias=True)
+                self.linear3 = nn.Linear(4, 2, bias=True)
+                self.ac3 = nn.Sigmoid()
+
+            def forward(self, x):
+                x = self.linear0(x)
+                x1 = self.layernorm1(x)
+                x_l1 = self.linear1(x1)
+                x_ac1 = self.ac1(x1)
+                x_ac2 = self.ac2(x_ac1)
+                x_l2 = self.linear2(x1)
+                x = x_l1 * x_l2 + x_ac2
+                x = self.linear3(x)
+                x = self.ac3(x)
+                return x
+                
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha='auto', calib_iter=1, folding=True)
+        #the layernorm could not used for sq-absorb because it outputs to an add op.
+        assert len(sq.absorb_to_layer) == 0 
+
 
 
 if __name__ == '__main__':
