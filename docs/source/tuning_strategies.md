@@ -147,11 +147,10 @@ conf = PostTrainingQuantConfig(
 
 The `Basic` strategy is designed for quantizing most models. There are several stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy.  The diagram below illustrates each stage, accompanied by additional details provided for each annotated step.
 
-
-
 ```mermaid
 %%{init: {"flowchart": {"htmlLabels": false}} }%%
 flowchart TD
+    classDef itemStyle fill:#CCE5FF,stroke:#99CCFF;
 	start([Start])
 	s1("1. Default quantization")
 	s2("2. Apply all recipes [Opt]")
@@ -161,16 +160,17 @@ flowchart TD
 	s6("5.2 Instance-wise fallback")
 	s7("5.3 Accumulated fallback")
 	
-	start --> s1
-	s1 --> s2
-	s2 --> s3
-	s3 --> s4
-	s4 --> s5
-	subgraph "Fallback  #nbsp; "
-	s5 --> s6
-	s6 --> s7
+	start:::itemStyle --> s1:::itemStyle
+	s1 --> s2:::itemStyle
+	s2 --> s3:::itemStyle
+	s3 --> s4:::itemStyle
+	s4 --> s5:::itemStyle
+	subgraph title["Fallback  #nbsp; "]
+	s5 --> s6:::itemStyle
+	s6 --> s7:::itemStyle
 	end
-	
+	classDef subgraphStyle fill:#FFFFFF,stroke:#99CCFF;
+    class title subgraphStyle
 ```
 
 > `Opt` stands for optional which mean this stage can be skipped.

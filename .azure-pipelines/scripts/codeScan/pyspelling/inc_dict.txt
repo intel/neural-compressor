@@ -2638,3 +2638,5 @@ autonumber
 ceee
 htmlLabels
 LayoutLM
+subgraphStyle
+itemStyle
