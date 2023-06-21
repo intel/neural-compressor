@@ -36,7 +36,7 @@ The workflow is described in the diagram below. First we have to configure scrip
             <td rowspan="2" align="center">Benchmark Profiling</td>
             <td rowspan="2" align="center">OP, execution and duration</td>
             <td align="center">TensorFlow</td>
-            <td align="center"><a href="h[label](https://github.com/intel/neural-compressor/assets/51692656/69598de6-4d48-4991-bbbb-e04902500e55)ttps://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
         </tr>
         <tr>
             <td align="center">ONNX Runtime</td>
