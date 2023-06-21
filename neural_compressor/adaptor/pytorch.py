@@ -1129,6 +1129,7 @@ class TemplateAdaptor(Adaptor):
                         q_capability['optypewise'][q_op[1]].append(op_cfg)
                         q_capability['optypewise'][q_op[1]].append(fp32_config)
         else:
+            quant_datatypes.remove('weight_only_integer')
             for datatype in quant_datatypes:
                 if self.approach == "post_training_dynamic_quant":
                     capability_pair = [
