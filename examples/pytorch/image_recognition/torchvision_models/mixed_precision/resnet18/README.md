@@ -10,14 +10,14 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
 ```Shell
-cd examples/pytorch/image_recognition/torchvision_models/mixedprecision/resnet18
+cd examples/pytorch/image_recognition/torchvision_models/mixed_precision/resnet18
 pip install -r requirements.txt
 ```
 > Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare Dataset
 
-Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet. The dir includes below folder:
 
 ```bash
 ls /path/to/imagenet

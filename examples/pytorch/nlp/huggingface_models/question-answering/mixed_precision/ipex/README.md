@@ -8,7 +8,7 @@ This document describes the step-by-step instructions for reproducing Huggingfac
 ## Environment
 Recommend python 3.6 or higher version.
 ```shell
-cd examples/pytorch/nlp/huggingface_models/question-answering/mixedprecision/ipex
+cd examples/pytorch/nlp/huggingface_models/question-answering/mixed_precision/ipex
 pip install -r requirements.txt
 ```
 > Note: Intel® Extension for PyTorch* has PyTorch version requirement. 
@@ -16,16 +16,17 @@ pip install -r requirements.txt
 # Run 
 ## Mixed Precision
 If IPEX version is equal or higher than 1.12, please install transformers 4.19.0.  
-IPEX doesn't support accuracy-driven mixed precision, so the model convert just execute once based on the FW capability.
+IPEX doesn't support accuracy-driven mixed precision, so the model convert just execute once based on the framework capability.
 ```shell
 python run_qa.py 
-    --model_name_or_path bert-large-uncased-whole-word-masking-finetuned-squad \
+    --model_name_or_path distilbert-base-uncased-distilled-squad \
     --dataset_name squad \
     --do_eval \
     --max_seq_length 384 \
     --doc_stride 128 \
     --no_cuda \
-    --output_dir ./savedresult
+    --optimize \
+    --output_dir ./saved_results
 ```
 > NOTE: 
 > /path/to/checkpoint/dir is the path to finetune output_dir

@@ -25,7 +25,7 @@ pip install intel-tensorflow
 
 ### Installation Dependency packages
 ```shell
-cd examples/tensorflow/object_detection/tensorflow_models/mixedprecision
+cd examples/tensorflow/object_detection/tensorflow_models/mixed_precision
 pip install -r requirements.txt
 ```
 
@@ -83,14 +83,14 @@ config = MixedPrecisionConfig(
 ## 1 MixedPrecision
 
   ```shell
-  cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixedprecision
+  cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision
   bash run_tuning.sh --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
       --output_model=./nc_resnet50_v1.pb --dataset_location=/path/to/ImageNet/
   ```
 
 ## 2. Benchmark
   ```shell
-  cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixedprecision
+  cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision
   bash run_benchmark.sh --input_model=./nc_resnet50_v1.pb --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
   bash run_benchmark.sh --input_model=./nc_resnet50_v1.pb --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
   ```

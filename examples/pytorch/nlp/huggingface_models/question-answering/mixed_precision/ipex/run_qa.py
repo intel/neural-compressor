@@ -47,6 +47,7 @@ from utils_qa import postprocess_qa_predictions
 from neural_compressor.utils.utility import LazyImport
 try:
     import intel_extension_for_pytorch as ipex
+    from intel_extension_for_pytorch.quantization import prepare, convert
 except:
     assert False, "transformers 4.19.0 requests IPEX version higher or equal to 1.12"
 torch = LazyImport("torch")
@@ -92,7 +93,7 @@ class ModelArguments:
             "with private models)."
         },
     )
-    tune: bool = field(
+    optimize: bool = field(
         default=False,
         metadata={"help": "Whether or not to apply optimization."},
      )
@@ -635,7 +636,7 @@ def main():
     def eval_func(model):
         return take_eval_steps(model, trainer, metric_name)
 
-    if model_args.tune:
+    if model_args.optimize:
         ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
         from neural_compressor.config import MixedPrecisionConfig
         from neural_compressor import mix_precision
