@@ -14,7 +14,7 @@
 
 """Fast api server."""
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.responses import StreamingResponse, HTMLResponse
 from neural_solution.frontend.task_submitter import Task, task_submitter
 from neural_solution.frontend.utility import (
@@ -36,6 +36,8 @@ import asyncio
 import json
 import socket
 import uvicorn
+from fastapi.responses import FileResponse
+import zipfile
 
 from neural_solution.utils.utility import (
     get_task_log_workspace,
@@ -223,7 +225,7 @@ def get_all_tasks():
     return {"message": res}
 
 @app.get("/task/status/{task_id}")
-def get_task_status_by_id(task_id: str):
+def get_task_status_by_id(request: Request, task_id: str):
     """Get task status and information according to id.
 
     Args:
@@ -250,7 +252,8 @@ def get_task_status_by_id(task_id: str):
     elif res[0] == "done":
         status = res[0]
         optimization_result = deserialize(res[1]) if res[1] else res[1]
-        optimization_result["result_path"] = res[2]
+        download_url = str(request.base_url) + "download/" + task_id
+        optimization_result["result_path"] = download_url
     elif res[0] == "pending":
         status = "pending"
     else:
@@ -397,6 +400,42 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
         observer.stop()
         await observer.join()
 
+@app.get("/download/{task_id}")
+async def download_file(task_id: str):
+    """Download quantized model.
+
+    Args:
+        task_id (str): the task id
+
+    Raises:
+        HTTPException: 400, Please check URL
+        HTTPException: 404, Task failed, file not found
+
+    Returns:
+        FileResponse: quantized model of zip file format
+    """
+    db_path = get_db_path(config.workspace)
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
+        res = cursor.fetchone()
+        cursor.close()
+        conn.close()
+    if res is None:
+        raise HTTPException(status_code=400, detail="Please check URL")
+    if res[0] != "done":
+        raise HTTPException(status_code=404, detail="Task failed, file not found")
+    path = res[2]
+    zip_filename = "quantized_model.zip"
+    # create zipfile and add file
+    with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.basename(file_path))
+
+    return FileResponse(zip_filename, media_type='application/octet-stream', filename=zip_filename)
 
 if __name__ == "__main__":
     # parse the args and modified the config accordingly
