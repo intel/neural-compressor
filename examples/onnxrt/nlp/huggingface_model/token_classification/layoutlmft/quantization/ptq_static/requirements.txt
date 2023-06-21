@@ -1,18 +1,18 @@
-datasets==1.6.2
-transformers==4.6
-huggingface-hub==0.0.8
-seqeval==1.2.2
-tensorboard==2.7.0
+datasets
+transformers
+huggingface-hub
+seqeval
+tensorboard
 sentencepiece
-timm==0.4.12
+timm
 Pillow
 einops
 textdistance
 shapely
 protobuf==3.20.0
-torch==1.10.0
-torchvision==0.11.1
-setuptools==56.1.0
+torch
+torchvision
+setuptools
 onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.10'
