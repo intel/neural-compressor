@@ -56,6 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#python-based-apis">Python-based APIs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#neural-coder-zero-code-optimization">Neural Coder (Zero-code Optimization)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#advanced-topics">Advanced Topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#innovations-for-productivity">Innovations for Productivity</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
@@ -116,7 +117,8 @@
 <p>Python-based APIs contains more details about the functional APIs in Intel® Neural Compressor,
 which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases.
 Please note that we will stop to support Intel Neural Compressor 1.X API in the future.
-So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.</p>
+So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.
+In 2.X API, it’s very important to create the <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> and <code class="docutils literal notranslate"><span class="pre">Metrics</span></code> for your examples, so we provide the detail introductions.</p>
 <table class="docutils">
 <tbody>
 <tr>
@@ -133,6 +135,10 @@ So we provide a comprehensive migration document in Code Migration to help the u
 </tr>
 <tr>
 <td colspan="9" align="center"><a href="migration.html">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
+</tr>
+<tr>
+<td colspan="4" align="center"><a href="dataloader.html">DataLoader</a></td>
+<td colspan="5" align="center"><a href="metric.html">Metric</a></td>
 </tr>
 </tbody>
 </table></section>
@@ -162,8 +168,19 @@ So we provide a comprehensive migration document in Code Migration to help the u
 </tr>
 <tr>
 <td colspan="3" align="center"><a href="objective.html">Objective</a></td>
-<td colspan="3" align="center"><a href="smooth_quant.html">SmoothQuant</a></td>
-<td colspan="3" align="center"><a href="add_new_data_type.html">Add New Data Type</a></td>
+<td colspan="4" align="center"><a href="smooth_quant.html">SmoothQuant</a></td>
+<td colspan="5" align="center"><a href="add_new_data_type.html">Add New Data Type</a></td>
+</tr>
+</tbody>
+</table></section>
+<section id="innovations-for-productivity">
+<h2>Innovations for Productivity<a class="headerlink" href="#innovations-for-productivity" title="Permalink to this heading"></a></h2>
+<p>We are continue creating some user-friendly applications to improve the productivity. From v2.2 we have <code class="docutils literal notranslate"><span class="pre">Neural</span> <span class="pre">Solution</span></code> for distributed quantization and <code class="docutils literal notranslate"><span class="pre">Neural</span> <span class="pre">Insights</span></code> for quantization accuracy debugging.</p>
+<table class="docutils">
+<tbody>
+<tr>
+<td colspan="4" align="center"><a href="/neural_solution/README.html">Neural Solution</a></td>
+<td colspan="4" align="center"><a href="/neural_insights/README.html">Neural Insights</a></td>
 </tr>
 </tbody>
 </table></section>

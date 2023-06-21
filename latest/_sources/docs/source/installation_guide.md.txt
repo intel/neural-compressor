@@ -30,7 +30,7 @@ You can install Neural Compressor using one of three options: Install single com
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.7 or 3.8 or 3.9 or 3.10
+- Python version: 3.7 or 3.8 or 3.9 or 3.10 or 3.11
 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
@@ -82,7 +82,7 @@ The AI Kit is distributed through many common channels, including from Intel's w
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.7 or 3.8 or 3.9 or 3.10
+- Python version: 3.7 or 3.8 or 3.9 or 3.10 or 3.11
 
 ### Install from Binary
 
@@ -127,7 +127,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 ### Validated Software Environment
 
 * OS version: CentOS 8.4, Ubuntu 22.04
-* Python version: 3.7, 3.8, 3.9, 3.10
+* Python version: 3.7, 3.8, 3.9, 3.10, 3.11
 
 <table class="docutils">
 <thead>
@@ -148,20 +148,20 @@ The following prerequisites and requirements must be satisfied for a successful 
     <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.1>2.10.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.1.0>1.1.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.0.0>1.0.0</a></td>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>2.0.0+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.13.0+cpu</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.2.0>1.2.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.1.0>1.1.0</a></td>
+    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>2.0.1+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
     <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.0+cpu>2.0.0+cpu</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.0+cpu>1.13.0+cpu</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.100+cpu>2.0.1+cpu</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.100+cpu>1.13.1+cpu</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.100>1.12.1+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.14.1>1.14.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.15.0>1.15.0</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.14.1>1.14.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br></td>
     <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br></td>
   </tr>
 </tbody>

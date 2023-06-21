@@ -11,7 +11,7 @@ Metrics
 
     2.4. [ONNXRT](#onnxrt)
 
-3. [Get Start with Metric](#get-start-with-metric)
+3. [Get Started with Metric](#get-start-with-metric)
     
     3.1. [Use Intel® Neural Compressor Metric API](#use-intel®-neural-compressor-metric-api)
     
@@ -88,11 +88,11 @@ Neural Compressor supports some built-in metrics that are popularly used in indu
 
 
 
-## Get Start with Metric
+## Get Started with Metric
 
 ### Use Intel® Neural Compressor Metric API
 
-Users can specify an Neural Compressor built-in metric such as shown below:
+Users can specify a Neural Compressor built-in metric such as shown below:
 
 ```python
 from neural_compressor import Metric

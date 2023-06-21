@@ -5,7 +5,7 @@ DataLoader
 
 2. [Supported Framework Dataloader Matrix](#supported-framework-dataloader-matrix)
 
-3. [Get Start with Dataloader](#get-start-with-dataloader)
+3. [Get Started with Dataloader](#get-start-with-dataloader)
 
     3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel®-neural-compressor-dataloader-api)
 
@@ -37,7 +37,7 @@ Of cause, users can also use frameworks own dataloader in Neural Compressor.
 | PyTorch       |  &#10004;  |
 | ONNX Runtime   |  &#10004;  |
 
-## Get Start with DataLoader
+## Get Started with DataLoader
 
 ### Use Intel® Neural Compressor DataLoader API
 
