@@ -17,13 +17,17 @@
 
 """Tuning utility."""
 from collections import OrderedDict
+from copy import deepcopy
 import enum
+from typing import Dict
 
 class QuantType(enum.IntEnum):
+    """Quantization type."""
     DYNAMIC = 0
     STATIC = 1
     QAT = 2
     WEIGHT_ONLY = 3
+    AUTO = 4
 
 class QuantOptions:
     """Option Class for Quantization.
@@ -35,7 +39,7 @@ class QuantOptions:
         quant_type(int): Quantization type. Default value is 1.
     """
     def __init__(self, quant_type=1):
-        """Init an Option object."""
+        """Init an QuantOptions object."""
         self._quant_type = quant_type
     
     @property
@@ -45,14 +49,36 @@ class QuantOptions:
     
     @quant_type.setter
     def quant_type(self, quant_type):
-        """Set quant type."""
+        """Set quant type.
+        
+        Args:
+            quant_type(int): Quantization type. Default value is 1.
+        """
         self._quant_type = quant_type
 
 quant_options = QuantOptions()
 
-def preprocess_user_cfg(op_user_cfg):
-    #TODO add preprocess
-    return op_user_cfg
+def preprocess_user_cfg(op_user_cfg: Dict):
+    """Preprocess the op user config for weight only.
+
+    Args:
+        op_user_cfg: The original user config. 
+
+    Example: 
+        op_user_cfg = {'activation': {'bit': [4]}}
+        op_user_cfg_modified = {'activation': {'bit': [4], 'group_size': [128]}}
+
+    Returns:
+        The modified config.
+    """
+    op_user_cfg_modified = deepcopy(op_user_cfg)
+    if quant_options.quant_type == QuantType.WEIGHT_ONLY:
+        for att, att_cfg in op_user_cfg.items():
+            if 'bit' not in att_cfg:
+                op_user_cfg_modified[att]['bit'] = [4]
+            if 'group_size' not in att_cfg:
+                op_user_cfg_modified[att]['group_size'] = [128]
+    return op_user_cfg_modified
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
