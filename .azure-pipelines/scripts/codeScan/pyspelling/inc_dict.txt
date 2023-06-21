@@ -2489,6 +2489,7 @@ Thalaiyasingam
 Torr
 QOperator
 MixedPrecisionConfig
+mixedprecision
 contrib
 ONNXConfig
 Arial

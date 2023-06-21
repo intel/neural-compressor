@@ -119,7 +119,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
   2. Software: onnxruntime-gpu.
 
 ### During quantization mixed precision
-During quantization, if the HW support BF16, the conversion is default enabled. So you may get an INT8/BF16/FP32 mixed precision model on those HW. FP16 can be executed if 'device' of config is 'gpu'.
+During quantization, if the hardware support BF16, the conversion is default enabled. So you may get an INT8/BF16/FP32 mixed precision model on those hardware. FP16 can be executed if 'device' of config is 'gpu'.
 Please refer to this [document](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_mixed_precision.md) for its workflow.
 
 ### Accuracy-driven mixed precision
