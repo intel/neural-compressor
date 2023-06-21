@@ -105,7 +105,7 @@ neural_solution stop
 
 The default logs locate in `./ns_workspace/`. Users can specify a custom workspace by using `neural_solution ---workspace=/path/to/custom/workspace`.
 
-There are serval logs under workspace:
+There are several logs under workspace:
 
 ```shell
 (ns) [username@servers ns_workspace]$ tree
