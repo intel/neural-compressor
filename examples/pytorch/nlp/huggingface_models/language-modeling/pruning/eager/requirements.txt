@@ -1,5 +1,6 @@
 accelerate
 datasets
+sentencepiece
 transformers
 torch
 tqdm

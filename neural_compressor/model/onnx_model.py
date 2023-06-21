@@ -329,11 +329,21 @@ class ONNXModel(BaseModel):
         if not tensor.endswith('_quantized'):
             logger.debug("Find {} in the quantized graph is not quantized.".format(tensor))
             return None, None
-        input_name_to_nodes = self._input_name_to_nodes
-        node = input_name_to_nodes[tensor][0]
-        scale = "_".join(tensor.split('_')[:-1] + ['scale'])
+        node = self._input_name_to_nodes[tensor][0]
+        parent = self._output_name_to_node[tensor] if tensor in self._output_name_to_node else None
+        direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad']
+        if parent is not None and parent.op_type in direct_int8:
+            fp32_tensor_name = \
+                parent.input[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+        elif node.op_type in ['Gather']:
+            fp32_tensor_name = \
+                node.output[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+        else:
+            fp32_tensor_name = \
+                tensor.replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+        scale = fp32_tensor_name + '_scale'
         scale_tensor = self.get_initializer(scale)
-        zo = "_".join(tensor.split('_')[:-1] + ['zero_point'])
+        zo = fp32_tensor_name + '_zero_point'
         zo_tensor = self.get_initializer(zo)
 
         #TODO check if scale_tensor and zero_point is needed
