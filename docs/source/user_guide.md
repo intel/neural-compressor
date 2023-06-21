@@ -26,8 +26,9 @@ Python-based APIs contains more details about the functional APIs in Intel® Neu
 which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases.
 Please note that we will stop to support Intel Neural Compressor 1.X API in the future.
 So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.
+In 2.X API, it's very important to create the `DataLoader` and `Metrics` for your examples, so we provide the detail introductions.
 
-<table class="docutils">
+<table class="docutils" style="margin-left:0%; margin-right:20%;">
 <tbody>
 <tr>
 <td colspan="2" align="center"><a href="quantization.md">Quantization</a></td>
@@ -43,6 +44,10 @@ So we provide a comprehensive migration document in Code Migration to help the u
 </tr>
 <tr>
 <td colspan="9" align="center"><a href="migration.md">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
+</tr>
+<tr>
+<td colspan="4" align="center"><a href="dataloader.md">DataLoader</a></td>
+<td colspan="5" align="center"><a href="metric.md">Metric</a></td>
 </tr>
 </tbody>
 </table>
@@ -72,8 +77,19 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 </tr>
 <tr>
 <td colspan="3" align="center"><a href="objective.md">Objective</a></td>
-<td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
-<td colspan="3" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
+<td colspan="4" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
+<td colspan="5" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
+</tr>
+</tbody>
+</table>
+
+## Innovations for Productivity
+We are continue creating some user-friendly applications to improve the productivity. From v2.2 we have `Neural Solution` for distributed quantization and `Neural Insights` for quantization accuracy debugging.
+<table class="docutils">
+<tbody>
+<tr>
+<td colspan="4" align="center"><a href="/neural_solution/README.md">Neural Solution</a></td>
+<td colspan="4" align="center"><a href="/neural_insights/README.md">Neural Insights</a></td>
 </tr>
 </tbody>
 </table>
