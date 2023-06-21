@@ -1730,6 +1730,7 @@ spm
 spnasnet
 sqlalchemy
 Sqrt
+sqrt
 sqSiUy
 Squad
 SQuAD
