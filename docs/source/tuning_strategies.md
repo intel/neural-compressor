@@ -145,37 +145,74 @@ conf = PostTrainingQuantConfig(
 
 ### Design
 
-The `Basic` strategy is designed for quantizing most models. There are six stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy. 
+The `Basic` strategy is designed for quantizing most models. There are several stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy.  The diagram below illustrates each stage, accompanied by additional details provided for each annotated step.
 
-- **Stage I**. Quantize with default quantization configuration
-    
-    At this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.
+```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
+flowchart TD
+    classDef itemStyle fill:#CCE5FF,stroke:#99CCFF;
+	start([Start])
+	s1("1. Default quantization")
+	s2("2. Apply all recipes [Opt]")
+	s3("3. OP-type-wise tuning")
+	s4("4. Try recipe one by one [Opt]")
+	s5("5.1 Block-wise fallback*")
+	s6("5.2 Instance-wise fallback")
+	s7("5.3 Accumulated fallback")
+	
+	start:::itemStyle --> s1:::itemStyle
+	s1 --> s2:::itemStyle
+	s2 --> s3:::itemStyle
+	s3 --> s4:::itemStyle
+	s4 --> s5:::itemStyle
+	subgraph title["Fallback  #nbsp; "]
+	s5 --> s6:::itemStyle
+	s6 --> s7:::itemStyle
+	end
+	classDef subgraphStyle fill:#FFFFFF,stroke:#99CCFF;
+    class title subgraphStyle
+```
 
-- **Stage II**. Apply all recipes
+> `Opt` stands for optional which mean this stage can be skipped.
 
-    At this stage, it tries to apply all recipes.
+> `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
 
-- **Stage III**. OP-Type-Wise Tuning
+**1.** Default quantization
 
-    At this stage, it tries to quantize OPs as many as possible and traverse all OP type wise tuning configs. Note that, the OP is initialized with different quantization modes according to the quantization approach.
-    
-    a. `post_training_static_quant`: Quantize all OPs support PTQ static.
+At this stage, it attempts to quantize OPs with the default quantization configuration which is consistent with the framework's behavior.
 
-    b. `post_training_dynamic_quant`: Quantize all OPs support PTQ dynamic.
-    
-    c. `post_training_auto_quant`: Quantize all OPs support PTQ static or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise tuning configs meet the accuracy loss criteria.
+**2.** Apply all recipes
 
-- **Stage IV**. Try recipe One by One
+At this stage, it tries to apply all recipes. This stage will be skipped if user assigned the usage of all recipes.
 
-    At this stage, it tries recipe one by one based on the tuning config with the best result in the previous stage.
+**3.** OP-Type-Wise Tuning
 
-- **Stage V**. Fallback OP One by One
+At this stage, it tries to quantize OPs as many as possible and traverse all OP type wise tuning configs. Note that, the OP is initialized with different quantization modes according to the quantization approach.
 
-    At this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+a. `post_training_static_quant`: Quantize all OPs support PTQ static.
 
-- **Stage VI**. Fallback Multiple OPs Accumulated
+b. `post_training_dynamic_quant`: Quantize all OPs support PTQ dynamic.
 
-    At the final stage, it first sorted the OPs list according to the impact score in stage V, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
+c. `post_training_auto_quant`: Quantize all OPs support PTQ static or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise tuning configs meet the accuracy loss criteria.
+
+**4.** Try recipe One by One
+
+At this stage, it sequentially tries recipe based on the tuning config with the best result in the previous stage. This stage will be skipped the recipes(s) specified by user.
+
+If the above trials not meet the accuracy requirements, it start to performs fallback, which mean converting quantized OP(s) into high-precision(FP32, BF16 ...).
+
+**5.1** Block-wise fallback*
+
+For the [transformer-like](https://arxiv.org/abs/1706.03762) model, it will use the detected transformer block by default, and conduct the block-wise fallback. In each trial, all OPs within a block are reverted to high-precision.
+
+**5.2** Instance-wise fallback
+
+At this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+
+**5.3**  Accumulated fallback
+
+At the final stage, it first sorted the OPs list according to the impact score in stage V, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
+
 
 ### Usage
 
