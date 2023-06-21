@@ -2636,6 +2636,13 @@ wip
 adaptor's
 autonumber
 ceee
+htmlLabels
+subgraphStyle
+itemStyle
 NewDataloader
 subprocesses
 LayoutLM
+CCE
+CCFF
+FFFFFF
+classDef
