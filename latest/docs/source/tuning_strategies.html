@@ -211,30 +211,56 @@ below:</p>
 <h2>Basic<a class="headerlink" href="#basic" title="Permalink to this heading"></a></h2>
 <section id="id3">
 <h3>Design<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy is designed for quantizing most models. There are six stages executed by <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy sequentially, and the tuning process ends once the condition meets the exit policy.</p>
-<ul>
-<li><p><strong>Stage I</strong>. Quantize with default quantization configuration</p>
-<p>At this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.</p>
-</li>
-<li><p><strong>Stage II</strong>. Apply all recipes</p>
-<p>At this stage, it tries to apply all recipes.</p>
-</li>
-<li><p><strong>Stage III</strong>. OP-Type-Wise Tuning</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy is designed for quantizing most models. There are several stages executed by <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy sequentially, and the tuning process ends once the condition meets the exit policy.  The diagram below illustrates each stage, accompanied by additional details provided for each annotated step.</p>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>%%{init: {&quot;flowchart&quot;: {&quot;htmlLabels&quot;: false}} }%%
+flowchart TD
+    classDef itemStyle fill:#CCE5FF,stroke:#99CCFF;
+	start([Start])
+	s1(&quot;1. Default quantization&quot;)
+	s2(&quot;2. Apply all recipes [Opt]&quot;)
+	s3(&quot;3. OP-type-wise tuning&quot;)
+	s4(&quot;4. Try recipe one by one [Opt]&quot;)
+	s5(&quot;5.1 Block-wise fallback*&quot;)
+	s6(&quot;5.2 Instance-wise fallback&quot;)
+	s7(&quot;5.3 Accumulated fallback&quot;)
+	
+	start:::itemStyle --&gt; s1:::itemStyle
+	s1 --&gt; s2:::itemStyle
+	s2 --&gt; s3:::itemStyle
+	s3 --&gt; s4:::itemStyle
+	s4 --&gt; s5:::itemStyle
+	subgraph title[&quot;Fallback  #nbsp; &quot;]
+	s5 --&gt; s6:::itemStyle
+	s6 --&gt; s7:::itemStyle
+	end
+	classDef subgraphStyle fill:#FFFFFF,stroke:#99CCFF;
+    class title subgraphStyle
+</pre></div>
+</div>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">Opt</span></code> stands for optional which mean this stage can be skipped.</p>
+</div></blockquote>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">*</span></code> INC will detect the block pattern for <a class="reference external" href="https://arxiv.org/abs/1706.03762">transformer-like</a> model by default.</p>
+</div></blockquote>
+<p><strong>1.</strong> Default quantization</p>
+<p>At this stage, it attempts to quantize OPs with the default quantization configuration which is consistent with the framework’s behavior.</p>
+<p><strong>2.</strong> Apply all recipes</p>
+<p>At this stage, it tries to apply all recipes. This stage will be skipped if user assigned the usage of all recipes.</p>
+<p><strong>3.</strong> OP-Type-Wise Tuning</p>
 <p>At this stage, it tries to quantize OPs as many as possible and traverse all OP type wise tuning configs. Note that, the OP is initialized with different quantization modes according to the quantization approach.</p>
 <p>a. <code class="docutils literal notranslate"><span class="pre">post_training_static_quant</span></code>: Quantize all OPs support PTQ static.</p>
 <p>b. <code class="docutils literal notranslate"><span class="pre">post_training_dynamic_quant</span></code>: Quantize all OPs support PTQ dynamic.</p>
 <p>c. <code class="docutils literal notranslate"><span class="pre">post_training_auto_quant</span></code>: Quantize all OPs support PTQ static or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise tuning configs meet the accuracy loss criteria.</p>
-</li>
-<li><p><strong>Stage IV</strong>. Try recipe One by One</p>
-<p>At this stage, it tries recipe one by one based on the tuning config with the best result in the previous stage.</p>
-</li>
-<li><p><strong>Stage V</strong>. Fallback OP One by One</p>
+<p><strong>4.</strong> Try recipe One by One</p>
+<p>At this stage, it sequentially tries recipe based on the tuning config with the best result in the previous stage. This stage will be skipped the recipes(s) specified by user.</p>
+<p>If the above trials not meet the accuracy requirements, it start to performs fallback, which mean converting quantized OP(s) into high-precision(FP32, BF16 …).</p>
+<p><strong>5.1</strong> Block-wise fallback*</p>
+<p>For the <a class="reference external" href="https://arxiv.org/abs/1706.03762">transformer-like</a> model, it will use the detected transformer block by default, and conduct the block-wise fallback. In each trial, all OPs within a block are reverted to high-precision.</p>
+<p><strong>5.2</strong> Instance-wise fallback</p>
 <p>At this stage, it performs high-precision OP (FP32, BF16 …) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP.</p>
-</li>
-<li><p><strong>Stage VI</strong>. Fallback Multiple OPs Accumulated</p>
+<p><strong>5.3</strong>  Accumulated fallback</p>
 <p>At the final stage, it first sorted the OPs list according to the impact score in stage V, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.</p>
-</li>
-</ul>
 </section>
 <section id="id4">
 <h3>Usage<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h3>
