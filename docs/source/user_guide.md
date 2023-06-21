@@ -28,7 +28,7 @@ Please note that we will stop to support Intel Neural Compressor 1.X API in the 
 So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.
 In 2.X API, it's very important to create the `DataLoader` and `Metrics` for your examples, so we provide the detail introductions.
 
-<table class="docutils" style="margin-left:0%; margin-right:20%;">
+<table class="docutils">
 <tbody>
 <tr>
 <td colspan="2" align="center"><a href="quantization.md">Quantization</a></td>

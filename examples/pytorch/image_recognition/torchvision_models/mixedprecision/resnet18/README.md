@@ -10,7 +10,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
 ```Shell
-cd examples/pytorch/image_recognition/torchvision_models/quantization/qat/fx
+cd examples/pytorch/image_recognition/torchvision_models/mixedprecision/resnet18
 pip install -r requirements.txt
 ```
 > Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).

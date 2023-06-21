@@ -27,4 +27,4 @@ The MSE tuning strategy does not work with the PyTorch adaptor layer. This strat
 
 [Neural Compressor v2.0](https://github.com/intel/neural-compressor/tree/v2.0) renames the `DATASETS` class as `Datasets`, please notice use cases like `from neural_compressor.data import Datasets`. Details please check the [PR](https://github.com/intel/neural-compressor/pull/244/files).
 
-[Neural Compressor v2.2](https://github.com/intel/neural-compressor/tree/v2.2) binary `neural-compressor-full` is deprecated, from this release we will deliver 3 binaries named `neural-compressor`, `neural-solution` and `neural-insights`. 
+[Neural Compressor v2.2](https://github.com/intel/neural-compressor/tree/v2.2) from this release, binary `neural-compressor-full` is deprecated, we deliver 3 binaries named `neural-compressor`, `neural-solution` and `neural-insights`. 

@@ -26,7 +26,6 @@ function init_params {
       --output_model=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
-      --debug) debug="--debug";;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1

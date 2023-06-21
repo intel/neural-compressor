@@ -102,7 +102,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 </table>
 
 
-### Hardware and Software request for **BF16**
+### Hardware and Software requests for **BF16**
 - TensorFlow
   1. Hardware: CPU supports `avx512_bf16` instruction set.
   2. Software: intel-tensorflow >= [2.3.0](https://pypi.org/project/intel-tensorflow/2.3.0/).
@@ -113,7 +113,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
   1. Hardware: GPU, set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'.
   2. Software: onnxruntime-gpu.
 
-### Hardware and Software request for **FP16**
+### Hardware and Software requests for **FP16**
 - ONNX Runtime
   1. Hardware: GPU, set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'.
   2. Software: onnxruntime-gpu.
@@ -122,10 +122,10 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 During quantization, if the HW support BF16, the conversion is default enabled. So you may get an INT8/BF16/FP32 mixed precision model on those HW. FP16 can be executed if 'device' of config is 'gpu'.
 Please refer to this [document](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_mixed_precision.md) for its workflow.
 
-### Accuracy driven mixed precision
-BF16/FP16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-aware tuning function to reduce accuracy loss, 
+### Accuracy-driven mixed precision
+BF16/FP16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-driven tuning function to reduce accuracy loss, 
 which will fallback converted ops to FP32 automatically to get better accuracy. To enable this function, users only to provide 
-`evaluation function` or (`evaluation dataloader` plus `evaluation metric`) for [mixed precision input](https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py).   
+`evaluation function` or (`evaluation dataloader` plus `evaluation metric`) for [mixed precision inputs](https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py).   
 To be noticed, IPEX backend doesn't support accuracy-driven mixed precision.  
 
 ## Get Started with Mixed Precision API
