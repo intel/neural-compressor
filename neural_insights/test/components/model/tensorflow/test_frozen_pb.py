@@ -120,7 +120,7 @@ class TestFrozenPbModel(unittest.TestCase):
 
     def test_domain_object_detection_domain(self) -> None:
         """Test getting domain of a model."""
-        self.assert_model_domain_matches_expected(
+        self.assert_model_domain_matches_expected(    # pylint: disable=E1120
             node_names=["boxes", "scores", "classes"],
             expected_domain=Domains.OBJECT_DETECTION.value,
             expected_domain_flavour=DomainFlavours.NONE.value,
@@ -128,7 +128,7 @@ class TestFrozenPbModel(unittest.TestCase):
 
     def test_domain_object_detection_domain_ssd(self) -> None:
         """Test getting domain of a model."""
-        self.assert_model_domain_matches_expected(
+        self.assert_model_domain_matches_expected(  # pylint: disable=E1120
             node_names=["bboxes", "scores", "classes", "ssd"],
             expected_domain=Domains.OBJECT_DETECTION.value,
             expected_domain_flavour=DomainFlavours.SSD.value,
@@ -136,7 +136,7 @@ class TestFrozenPbModel(unittest.TestCase):
 
     def test_domain_object_detection_domain_yolo(self) -> None:
         """Test getting domain of a model."""
-        self.assert_model_domain_matches_expected(
+        self.assert_model_domain_matches_expected(  # pylint: disable=E1120
             node_names=["boxes", "yolo"],
             expected_domain=Domains.OBJECT_DETECTION.value,
             expected_domain_flavour=DomainFlavours.YOLO.value,
@@ -144,7 +144,7 @@ class TestFrozenPbModel(unittest.TestCase):
 
     def test_domain_image_recognition_resnet(self) -> None:
         """Test getting domain of a model."""
-        self.assert_model_domain_matches_expected(
+        self.assert_model_domain_matches_expected(  # pylint: disable=E1120
             node_names=["resnet_model/Pad"],
             expected_domain=Domains.IMAGE_RECOGNITION.value,
             expected_domain_flavour=DomainFlavours.NONE.value,
@@ -152,7 +152,7 @@ class TestFrozenPbModel(unittest.TestCase):
 
     def test_domain_unknown(self) -> None:
         """Test getting domain of a model."""
-        self.assert_model_domain_matches_expected(
+        self.assert_model_domain_matches_expected(  # pylint: disable=E1120
             node_names=["foo", "bar", "baz", "ssd"],
             expected_domain="",
             expected_domain_flavour="",
