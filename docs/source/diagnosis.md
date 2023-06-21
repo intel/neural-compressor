@@ -34,7 +34,7 @@ The workflow is described in the diagram below. First we have to configure scrip
         </tr>
         <tr>
             <td rowspan="2" align="center">Benchmark Profiling</td>
-            <td rowspan="2" align="center">OP, execution and duration</td>
+            <td rowspan="2" align="center">OP execute duration</td>
             <td align="center">TensorFlow</td>
             <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
         </tr>

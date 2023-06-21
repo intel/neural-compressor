@@ -2,12 +2,12 @@
   
 Neural Insights
 ===========================
-
-<h3>Neural Insights is a web application for easier use of Intel® Neural Compressor diagnosis.</h3>
-
 </div>
 
-<div align="left">
+Neural Insights is a web application for easier use of Intel® Neural Compressor [diagnosis](/docs/source/diagnosis.md) feature.
+It provides the capability to show the model graph, histograms of weights and activations, quantization configs, etc. 
+The workflow shows the relationship of Neural Insights and diagnosis. 
+![workflow](/docs/source/imgs/workflow.jpg)
 
 ## Installation
 
