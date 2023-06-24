@@ -49,9 +49,9 @@ To enable accuracy-aware tuning with a specific framework, we should define the 
 
 After the framework YAML enabled, The The abstract class `QueryBackendCapability` should be inherited and implemented. This class is used to load the YAML file and parse the quantization config from the specific framework version. You can refer to Tensorflow implementation [TensorflowQuery](../neural_compressor/adaptor/tensorflow.py#L628).
 
-With the inherited `QueryBackendCapability` class enabled. The Adaptor will initialize a query_handler and used in API query_fw_capability.
+With the inherited `QueryBackendCapability` class enabled. The Adaptor will initialize a `query_handler` and used in API `query_fw_capability`.
 
-Each framework adaptor should implement the query_fw_capability fucntion, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator's opwise details and optypewise capability. You should return a standard dict of the input model's tuning capability. The format is like below:
+Each framework adaptor should implement the `query_fw_capability` fucntion, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator's opwise details and optypewise capability. You should return a standard dict of the input model's tuning capability. The format is like below:
 
 ```python
     def query_fw_capability(self, model):
@@ -62,7 +62,7 @@ Each framework adaptor should implement the query_fw_capability fucntion, this f
         }
         return capability
 ```
-The quantizable_op_details is key-value pairs of each operators. The key is a tuple (node_name, node_op) and the value is a list including different data type quantization config. 
+The `quantizable_op_details` is key-value pairs of each operators. The key is a tuple (node_name, node_op) and the value is a list including different data type quantization config. 
 
 ```python
     op_capability = self.query_handler.get_quantization_capability()
@@ -74,7 +74,7 @@ The quantizable_op_details is key-value pairs of each operators. The key is a tu
     }
 
 ```
-In most case, bf16_config and fp32_config stay the same on different operators and we can add config of different data type to the quantizable_op_details. It's configured in the YAML file and parsed out with format like below.
+In most case, `bf16_config` and `fp32_config` stay the same on different operators and we can add config of different data type to the `quantizable_op_details`. It's configured in the YAML file and parsed out with format like below.
 
 ```python
     int8_conv_config = {
@@ -115,12 +115,12 @@ After we got the opwise capability of the model, we should also get the optypewi
         }
     }
 ```
-There is an API get_optype_wise_ability to get the optype_wise_ability from the quantizable_op_details. You can refer to [get_optype_wise_ability](../neural_compressor/adaptor/keras.py#L614) for the implementation.
+There is an API get_optype_wise_ability to get the optype_wise_ability from the `quantizable_op_details`. You can refer to [get_optype_wise_ability](../neural_compressor/adaptor/keras.py#L614) for the implementation.
 
-After the work above, we have implement the query_fw_capability API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.
+After the work above, we have implement the `query_fw_capability` API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.
 
 ## Add Pre-quantization optimizations
-As the query_fw_capability only invoked once, we can do some pre-optimizations in the query_fw_capability API and cache the pre_optimized_object for quantization. It's not mandatory and if you have done optimizations on the model, take care to use the optimized model in the quantize API.
+As the `query_fw_capability` only invoked once, we can do some pre-optimizations in the `query_fw_capability` API and cache the pre_optimized_object for quantization. It's not mandatory and if you have done optimizations on the model, take care to use the optimized model in the quantize API.
 
 
 ## Quantize Model according to tune_cfg
@@ -139,7 +139,7 @@ self.quantize_config  = {
     }
 }
 ```
-As the Strategy object will decide which operator to quantize or not, some quantizable operators may not be in the tune_cfg. Only dispatched operators will be set to the 'op_wise_config' in self.quantize_config. 'op_wise_config' is a dict with format like 
+As the Strategy object will decide which operator to quantize or not, some quantizable operators may not be in the `tune_cfg`. Only dispatched operators will be set to the `op_wise_config` in `self.quantize_config`. `op_wise_config` is a dict with format like 
 
 ```
 op_wise_config = {
@@ -150,9 +150,9 @@ op_wise_config = {
 } 
 ```
 
-You can also set bf16_ops in `tuning_cfg_to_fw` and the self.bf16_ops will be converted in `convert_bf16` function.
+You can also set bf16_ops in `tuning_cfg_to_fw` and the `self.bf16_ops` will be converted in `convert_bf16` function.
 
-After got the self.quantize_config, we can prepare to quantize the model. It usually have three steps.
+After got the `self.quantize_config`, we can prepare to quantize the model. It usually have three steps.
 
 ### Insert FakeQuant operator to the fp32 graph for calibration.
 FakeQuant operator is inserted before the quantizable operator and responsible for the activation collection. Only operators in self.quantize_config['op_wise_config'] can have FakeQuant before. The fake code should be like
@@ -168,7 +168,7 @@ for operator in self.pre_optimized_model:
         calib_model.add_layer(operator)
                 
 ```
-In this sample code, we initialize an empty framework model and loop over the pre_optimized_model from query_fw_capability, when we see operator in self.quantize_config, then initialize a fake quant operator and add before the quantizable operator.
+In this sample code, we initialize an empty framework model and loop over the pre_optimized_model from `query_fw_capability`, when we see operator in `self.quantize_config`, then initialize a fake quant operator and add before the quantizable operator.
 
 ### Run sampling iterations of the fp32 graph to calibrate quantizable operators.
 When we get the calib_model, it's still fp32 model with FakeQuant operator inserted, We should run calibration on this fp32 model and collect the fp32 activation data. In this step, we will use the dataloader and forward the model. The sample code is like below
