@@ -5,17 +5,18 @@ How to Support New Adaptor
 
 
 - [Introduction](#introduction)
-- [Define the Quantization Ability of the Specific Operator](#define-the-quantization-ability-of-the-specific-operator)
-- [Add the Pre-quantization optimizations](#add-the-pre-quantization-optimizations)
+- [Add query_fw_capability to Adaptor](#add-query-fw-capability-to-adaptor)
+- [Add Pre-quantization Optimizations](#add-pre-quantization-optimizations)
 - [Quantize Model according to tune cfg](#quantize-model-according-to-tune-cfg)
-- [Adaptor API of backend](#several-configuraitons-of-backend)
-- [Use the New Data Type](#use-the-new-data-type)
+- [Evaluate Model on Validation Dataset](#evaluate-model-on-validation-dataset)
+- [Train Model for Quantization-aware Training](#Train-model-for-quantization-awar-training)
+- [Other API that not Mandatory Needed](#other-api-that-not-mandatory-needed)
 - [Summary](#summary)
 
 ## Introduction
 Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs.
 
-The quantizable operator behavior and it's tuning scope is defined in specific framework YAML file. The adaptor will parse this file and give the quantization capability to the Strategy object. Then Strategy will build tuning space of the specific graph/model and gegnerate different tuning configuration from the tuning space to adaptor.
+The quantizable operator behavior and it's tuning scope is defined in specific framework YAML file. The adaptor will parse this file and give the quantization capability to the Strategy object. Then Strategy will build tuning space of the specific graph/model and generate different tuning configuration from the tuning space to adaptor.
 
 The diagram below illustrates all the relevant steps of how adaptor is invoked, with additional details provided for each annotated step.
 ```mermaid
@@ -41,7 +42,7 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 5. **Adaptor**: Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
 
-## Define the Quantization Ability and Add query_fw_capability to Adaptor
+## Add query_fw_capability to Adaptor
 
 To enable accuracy-aware tuning with a specific framework, we should define the [framework YAML](./framework_yaml.md) which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework. 
 >**Note**: You should refer to [framework_yaml.md](./framework_yaml.md) to define the framework specific YAML.
@@ -125,7 +126,7 @@ As the query_fw_capability only invoked once, we can do some pre-optimizations i
 ## Quantize Model according to tune_cfg
 `quantize` function is used to perform quantization for post-training quantization and quantization-aware training. Quantization processing includes calibration and conversion processing for post-training quantization, while for quantization-aware training, it includes training and conversion processing.
 
-The first work of `quantize` function is to invoke `tuning_cfg_to_fw` to generate the self.quantize_config. The self.quantize_config is a dict including the quantization infomation. It's format is like below
+The first work of `quantize` function is to invoke `tuning_cfg_to_fw` to generate the self.quantize_config. The self.quantize_config is a dict including the quantization information. It's format is like below
 
 ```
 self.quantize_config  = {
@@ -138,7 +139,7 @@ self.quantize_config  = {
     }
 }
 ```
-As the Strategy object will decide which operator to quantize or not, some quantizable operators may not be in the tung_cfg. Only dispatched operators will be set to the 'op_wise_config' in self.quantize_config. 'op_wise_config' is a dict with format like 
+As the Strategy object will decide which operator to quantize or not, some quantizable operators may not be in the tune_cfg. Only dispatched operators will be set to the 'op_wise_config' in self.quantize_config. 'op_wise_config' is a dict with format like 
 
 ```
 op_wise_config = {
@@ -169,7 +170,7 @@ for operator in self.pre_optimized_model:
 ```
 In this sample code, we initialize an empty framework model and loop over the pre_optimized_model from query_fw_capability, when we see operator in self.quantize_config, then initialize a fake quant operator and add before the quantizable operator.
 
-### Run sampling interations of the fp32 graph to calibrate quantizable operators.
+### Run sampling iterations of the fp32 graph to calibrate quantizable operators.
 When we get the calib_model, it's still fp32 model with FakeQuant operator inserted, We should run calibration on this fp32 model and collect the fp32 activation data. In this step, we will use the dataloader and forward the model. The sample code is like below
 ```
     results = {}
@@ -182,12 +183,12 @@ When we get the calib_model, it's still fp32 model with FakeQuant operator inser
                     results[layer['op_name']] = {'calib_data': calib_data}
                 else:
                     results[layer['op_name']]['calib_data'].append(calib_data)
-        if idx + 1  == calib_interation:
+        if idx + 1  == calib_iteration:
             break
 ```
-After calib_interations inference, the `results` above will collect all quantizable operators' activations. These activations is called calibration data. 
+After calib_iteration inference, the `results` above will collect all quantizable operators' activations. These activations is called calibration data. 
 
-### Replace the FakeQuant with Quant/DeQuant 
+### Replace the FakeQuant with Quantize/DeQuantize 
 Calibration data can only approximate the data distribution of the entire dataset, larger sampling size means a more complete approximation of the data distribution, but it will also introduce some outliers, which will cause the data range obtained to be somewhat distorted.
 
  we will use different algorithms to make the data range more in line with the real data distribution. After applying these algorithms, we obtained the data distribution range of each operator. At this time, operator replacement can be performed.
@@ -196,7 +197,7 @@ We take the FakeQuant and replace it with Quant and Dequant, then connect it in 
 
 This quantized model can be evaluated. If the evaluation meets the set metric goal, the entire quantization process will be over. Otherwise, a new tuning configuration will be generated until a quantized model that meets the metric requirements.
 
-## Evaluate Model on validation dataset
+## Evaluate Model on Validation Dataset
 After getting the quantization model, we need to evaluate the model. The `evaluate` function needs to use dataloader to generate data and labels, then use the generated quantization model to predict on these data, and then use postprocess and metric method to calculate the final result. Because some evaluation criteria are not accuracy-driven, we can also insert the measurer to evaluate the performance of quantization model such as memory usage. The evaluate function returns a scalar representing the measured performance during the evaluation. The reference code example is as follows
 
 ```python
@@ -224,11 +225,11 @@ After getting the quantization model, we need to evaluate the model. The `evalua
 
 ```
 
-## Train Model for quantization-aware training
+## Train Model for Quantization-aware Training
 
-## Other API that not mandatory needed
+## Other API that not Mandatory Needed
 
-|Fucntion      | Description                                                 |
+|Function      | Description                                                 |
 |--------------|:-----------------------------------------------------------:|
 |save          |used by tune strategy class for saving model                 |
 |convert       |convert a source model format to another                     |
@@ -239,4 +240,4 @@ After getting the quantization model, we need to evaluate the model. The `evalua
 
 
 ## Summary
-The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new backend. By following the steps outlined in the document, users can extend Intel® Neural Compressor's functionality to accommodate new adaptors and incorporate them into their quantization workflows.
+The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new backend. By following the steps outlined in the document, users can extend Intel® Neural Compressor's functionality to accommodate new adaptor and incorporate it into quantization workflows.
