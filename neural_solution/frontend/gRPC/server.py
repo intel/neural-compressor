@@ -131,7 +131,7 @@ def serve():
 
 def parse_arguments():
     """Parse the command line options."""
-    parser = argparse.ArgumentParser(description="Frontend with RESTful API")
+    parser = argparse.ArgumentParser(description="Frontend with gRPC API")
     parser.add_argument("-H", "--host", type=str, default="0.0.0.0", \
         help="The address to submit task.")
     parser.add_argument("-FP", "--grpc_api_port", type=int, default=8001, \
@@ -152,5 +152,5 @@ if __name__ == '__main__':
     args = parse_arguments()
     print(args.workspace)
     config.workspace = args.workspace
-    config.grpc_api_port = config.grpc_api_port
+    config.grpc_api_port = args.grpc_api_port
     serve()

@@ -1216,7 +1216,6 @@ def main():
         return True
 
     #-----------------------------start auto slim----------------------------------#
-    import pdb;pdb.set_trace()
     if args.auto_slim:
         from timers import CPUTimer, GPUTimer
         from neural_compressor.compression.pruner import model_slim

@@ -3,7 +3,7 @@ Adaptor
 1. [Introduction](#introduction)
 2. [Adaptor Support Matrix](#adaptor-support-matrix)
 3. [Working Flow](#working-flow)
-4. [Get Start with Adaptor API](#get-start-with-adaptor-api)
+4. [Get Started with Adaptor API](#get-start-with-adaptor-api)
 
     4.1 [Query API](#query-api)
 
@@ -33,7 +33,7 @@ tuning strategy and vanilla framework quantization APIs.
 ## Working Flow
 Adaptor only provide framework API for tuning strategy. So we can find complete working flow in [tuning strategy working flow](./tuning_strategies.md).
 
-## Get Start with Adaptor API
+## Get Started with Adaptor API
 
 Neural Compressor supports a new adaptor extension by
 implementing a subclass `Adaptor` class in the neural_compressor.adaptor package

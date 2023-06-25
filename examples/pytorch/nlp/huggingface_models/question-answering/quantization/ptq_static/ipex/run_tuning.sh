@@ -26,7 +26,6 @@ function init_params {
       --output_model=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
-      --debug) debug="--debug";;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -47,8 +46,7 @@ function run_tuning {
             --max_seq_length 384 \
             --no_cuda \
             --tune \
-            --output_dir $tuned_checkpoint \
-            ${extra_cmd}
+            --output_dir $tuned_checkpoint
     fi
     if [[ "${topology}" == "distilbert_base_ipex" ]]; then
         model_name_or_path="distilbert-base-uncased-distilled-squad"
@@ -59,8 +57,7 @@ function run_tuning {
            --max_seq_length 384 \
            --no_cuda \
            --tune \
-           --output_dir $tuned_checkpoint \
-           ${extra_cmd}
+           --output_dir $tuned_checkpoint
     fi
 }
 

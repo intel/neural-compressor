@@ -493,7 +493,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   white_nodes=op_list,
                   backend=self.backend)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
-                                      weight=(inspect_type!='activation'),)
+                                      weight=(inspect_type!='activation'),
+                                      format=self.format)
         if save_to_disk:
             if not save_path:
                 save_path = self.work_space
