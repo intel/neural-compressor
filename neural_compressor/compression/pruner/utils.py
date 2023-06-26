@@ -413,6 +413,7 @@ def process_and_check_config(val):
                              'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
                              'sparsity_decay_type': 'exp', "criterion_type": "snip_momentum",
                              'pruning_op_types': ['Conv', 'Linear'],
+                             'low_memory_usage': False
                              }
     default_local_config = {'resume_from_pruned_checkpoint': False, 'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}

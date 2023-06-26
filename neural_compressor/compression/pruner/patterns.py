@@ -335,6 +335,7 @@ class BasePattern:
         self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
         self.block = bool('block' in self.config['pruning_type'] or 'free' in self.config['pruning_type'])
+        self.low_memory_usage = self.config['low_memory_usage']
         # Not using deterministic_algorithms for all examples
         if self.framework == 'pytorch':
             torch.use_deterministic_algorithms(False)
@@ -471,7 +472,8 @@ class BasePattern:
         total_cnt = 0
         for key in pre_masks.keys():
             pre_mask = pre_masks[key]
-            zero_cnt += torch.sum(pre_mask == 0.0).data.item()
+            zero_tag = False if self.low_memory_usage else 0.0
+            zero_cnt += torch.sum(pre_mask == zero_tag).data.item()
             total_cnt += pre_mask.numel()  ##FIXME
 
         if return_dict:
@@ -564,7 +566,10 @@ class BasePattern:
             for key in masks.keys():
                 if key in self.invalid_layers:
                     continue
-                reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
+                if self.low_memory_usage:
+                    reduced_mask = masks[key].float() if self.block else self.get_reduced_masks_from_data(masks[key].float(), key)
+                else:
+                    reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
                 zero_cnt = (int(torch.sum(reduced_mask == 0.0).data.item()))
                 total_cnt = int(reduced_mask.numel())
                 sparsity_ratio = float(zero_cnt) / total_cnt
@@ -998,6 +1003,8 @@ class PatternNxM(BasePattern):
                         residual_k -= zero_cnt
                 else:
                     masks[key] = mask
+                if self.low_memory_usage:
+                    masks[key] = masks[key].bool()
             if not keep_exact_sparsity_ratio:
                 break
 
@@ -1009,7 +1016,8 @@ class PatternNxM(BasePattern):
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
-            layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
+            zero_cnt = False if self.low_memory_usage else 0.0
+            layer_ratio = torch.sum(masks[key] == zero_cnt).data.item() / masks[key].numel()
             logger.info(f'{key} sparsity is {layer_ratio}')
         return masks
 
@@ -1467,6 +1475,8 @@ class PatternNInM(BasePattern):
                         residual_k -= zero_cnt
                 else:
                     masks[key] = mask
+                if self.low_memory_usage:
+                    masks[key] = masks[key].bool()
             if not keep_exact_sparsity_ratio:
                 break
             new_not_exceed_layers = [key for key in new_scores.keys() if not self.keep_mask_layers.get(key, False)]
@@ -1483,7 +1493,8 @@ class PatternNInM(BasePattern):
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
-            layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
+            zero_tag = False if self.low_memory_usage else 0.0
+            layer_ratio = torch.sum(masks[key] == zero_tag).data.item() / masks[key].numel()
             logger.info(f'layer {key} sparsity_ratio is {layer_ratio}')
         return masks
 
@@ -1506,7 +1517,8 @@ class PatternNInM(BasePattern):
                 continue
             mask = self.get_least_ninm_mask_from_data(weight)
             mask = self._reshape_2dims_to_orig(mask, orig_shape)
-            pattern_lock_masks[key] = mask
+            if self.low_memory_usage:
+                pattern_lock_masks[key] = mask.bool()
         return pattern_lock_masks
 
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
@@ -1551,4 +1563,6 @@ class PatternMHA(BasePattern):
         one = torch.tensor([1.]).to(threshold.device)
         for mha_name, mha_score in scores.items():
             head_masks[mha_name] = torch.where(mha_score <= threshold, zero, one).permute(1, 0)
+            if self.low_memory_usage:
+                head_masks[mha_name] = head_masks[mha_name].bool()
         return head_masks

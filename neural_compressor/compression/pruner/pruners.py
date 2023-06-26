@@ -152,12 +152,16 @@ class BasePruner:
         if self.total_prune_cnt == 0:
             self.total_prune_cnt = 1
             self.completed_pruned_cnt = 1
+        
+        self.low_memory_usage = self.config['low_memory_usage']
 
         if self.framework == 'pytorch':
             for key in self.modules.keys():
                 module = self.modules[key]
                 ##TODO support bias or others
                 self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
+                if self.low_memory_usage:
+                    self.masks[key] = self.masks[key].bool()
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
@@ -371,6 +375,7 @@ class BasicPruner(BasePruner):
         self.completed_pruned_cnt += 1
         if self.criterion.scores == {}:
             return
+        breakpoint()
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.mask_weights()
 
