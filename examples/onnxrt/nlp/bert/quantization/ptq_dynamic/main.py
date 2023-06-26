@@ -292,12 +292,6 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
-        '--diagnose',
-        dest='diagnose',
-        action='store_true',
-        help='use Neural Insights to diagnose tuning and benchmark.',
-    )
-    parser.add_argument(
         '--output_model',
         type=str,
         help="output model path"
@@ -379,8 +373,6 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        if args.diagnose and args.mode != "performance":
-            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         model = onnx.load(args.model_path)
         if args.mode == 'performance':            
             from neural_compressor.benchmark import fit
@@ -389,7 +381,6 @@ if __name__ == "__main__":
                 iteration=100,
                 cores_per_instance=4,
                 num_of_instance=1,
-                diagnosis=args.diagnose,
             )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
@@ -424,7 +415,6 @@ if __name__ == "__main__":
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(
             approach='dynamic',
-            diagnosis=args.diagnose,
         )
         q_model = quantization.fit(model, 
                                    config,

@@ -14,6 +14,7 @@
 # limitations under the License.
 """Onnxrt Graph reader."""
 
+import uuid
 from typing import Any, Dict, List, Optional
 
 from neural_insights.components.graph.attribute import Attribute
@@ -48,25 +49,27 @@ class OnnxrtReader:
         edges: dict = {}
 
         for node_def in onnx_nodes:
+            node_name = node_def.name
+            if node_name == "":
+                node_name = f"{node_def.op_type}_{uuid.uuid4()}"
+
             if self._should_hide_node(node_def):
-                self._hide_node(node_def)
+                self._hide_node(node_name)
                 continue
 
-            edges = self._add_edges_from_node(edges, node_def)
-
-            current_node_id = node_def.name
+            edges = self._add_edges_from_node(edges, node_def, node_name)
 
             graph.add_node(
                 Node(
-                    id=current_node_id,
+                    id=node_name,
                     label=node_def.op_type,
                     highlight=False,
                     properties={
-                        "name": node_def.name,
+                        "name": node_name,
                         "type": node_def.op_type,
                     },
                     attributes=self._convert_attributes(node_def),
-                    groups=self._get_group_names(current_node_id),
+                    groups=self._get_group_names(node_name),
                 ),
             )
 
@@ -102,9 +105,9 @@ class OnnxrtReader:
         )
         return len(not_hidden_input_ids) > 0
 
-    def _hide_node(self, node: Any) -> None:
+    def _hide_node(self, node_name: str) -> None:
         """Mark node as hidden."""
-        self._hidden_node_ids[node.name] = True
+        self._hidden_node_ids[node_name] = True
 
     def _is_node_id_hidden(self, node_id: str) -> bool:
         """Check if provided node_id is hidden."""
@@ -161,19 +164,19 @@ class OnnxrtReader:
                 )
         return graph
 
-    def _add_edges_from_node(self, edges: dict, node: Any) -> dict:
+    def _add_edges_from_node(self, edges: dict, node: Any, node_name: str) -> dict:
         """Add update edges from node data."""
         for edge in node.input:
             edge_data = edges.get(edge, {})
             input_nodes = edge_data.get("inputs", [])
-            input_nodes.append(node.name)
+            input_nodes.append(node_name)
             edge_data.update({"inputs": input_nodes})
             edges.update({edge: edge_data})
 
         for edge in node.output:
             edge_data = edges.get(edge, {})
             output_nodes = edge_data.get("outputs", [])
-            output_nodes.append(node.name)
+            output_nodes.append(node_name)
             edge_data.update({"outputs": output_nodes})
             edges.update({edge: edge_data})
 

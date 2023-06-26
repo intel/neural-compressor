@@ -41,11 +41,13 @@ class ONNXModel(BaseModel):
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
         self._is_large_model = False
-        serialized_model = self._model.SerializeToString()
-        if (len(serialized_model) / 1024. / 1024. / 1024.) > 2:
-            self._is_large_model = True
-            if self._model_path is None:
-                logger.warning('Please use model path instead of onnx model object to quantize.')
+        try:
+            ort.InferenceSession(self._model.SerializeToString())
+        except Exception as e:  # pragma: no cover
+            if 'maximum protobuf size of 2GB' in str(e) or 'string length exceeds max size' in str(e):
+                self._is_large_model = True
+                if self._model_path is None:
+                    logger.warning('Please use model path instead of onnx model object to quantize')
 
         self.node_name_counter = {}
         self._output_name_to_node = {}

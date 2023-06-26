@@ -76,6 +76,9 @@ class Diagnosis:
 
     def get_op_list(self) -> List[dict]:
         """Get OP list for model."""
+        check_module("numpy")
+        import numpy as np
+
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
@@ -92,7 +95,7 @@ class Diagnosis:
         for op_name, min_max in min_max_data.items():
 
             mse = self.calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
-            if mse is None:
+            if mse is None or np.isnan(mse):
                 continue
             min = float(min_max.get("min", None))
             max = float(min_max.get("max", None))
@@ -215,8 +218,7 @@ class Diagnosis:
 
     @staticmethod
     def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
-        """
-        Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
         Args:
             fp32_tensor (tensor): The FP32 tensor.
@@ -266,7 +268,7 @@ class Diagnosis:
             if tensor_data_raw.ndim != 4:
                 continue
             tensor_data = tensor_data_raw[0]
-            shapes_order = self.model.shape_elements_order
+            shapes_order = self.model.shape_elements_order  # pylint: disable=no-member
             channels_index = shapes_order.index("channels")
             new_order = [channels_index]
             new_order.extend([x for x in range(len(shapes_order)) if x != channels_index])

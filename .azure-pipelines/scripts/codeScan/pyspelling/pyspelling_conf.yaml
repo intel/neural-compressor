@@ -16,3 +16,4 @@ matrix:
       - ${REPO_DIR}/neural_solution/*.md
       - ${REPO_DIR}/neural_solution/docs/source/*.md
       - ${REPO_DIR}/neural_solution/examples/**/*.md
+      - ${REPO_DIR}/neural_insights/*.md

@@ -303,6 +303,32 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
+## Pruning
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Approach</th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>ResNet V2</td>
+    <td>Image Recognition</td>
+    <td>Structured (4x1, 2in4)</td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">keras</a></td>
+  </tr>
+  <tr>
+    <td>ViT</td>
+    <td>Image Recognition</td>
+    <td>Structured (4x1, 2in4)</td>
+    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">keras</a></td>
+  </tr>
+</tbody>
+</table>
+
 ## Model Export
 <table>
 <thead>
@@ -741,6 +767,20 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Structured (2x1)</td>
     <td>Snip-momentum</td>
     <td><a href="./pytorch/image_recognition/ResNet50/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-base</td>
+    <td>Question Answering</td>
+    <td>Structured (channel, multi-head attention)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/model_slim/">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>Question Answering</td>
+    <td>Structured (channel, multi-head attention)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/model_slim/">eager</a></td>
   </tr>
 </tbody>
 </table>
@@ -1266,6 +1306,22 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Dynamic / Static Quantization</td>
     <td>
       <a href="./onnxrt/nlp/huggingface_model/language_modeling/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/language_modeling/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>LayoutLMv3 FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>LayoutLM FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_static">qlinearops</a>
     </td>
   </tr>
   <tr>
