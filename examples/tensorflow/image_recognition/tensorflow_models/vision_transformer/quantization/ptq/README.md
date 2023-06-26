@@ -7,7 +7,7 @@ This document list steps of reproducing Vision Transformer model tuning results 
 
 ## 1. Environment
 
-### Instal Dependency Package
+### Install Dependency Package
 
 ```
 pip install -r requirements.txt
