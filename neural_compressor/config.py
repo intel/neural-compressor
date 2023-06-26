@@ -36,7 +36,7 @@ ops_schema = Schema({
     Optional('weight', default=None): {
         Optional('granularity'): And(
             list,
-            lambda s: all(i in ['per_channel', 'per_tensor', 'per_block'] for i in s)),
+            lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
         Optional('scheme'): And(
             list,
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
@@ -51,7 +51,7 @@ ops_schema = Schema({
             lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
         Optional('group_size'):  And(
             list,
-            lambda s: all(i > 0 and type(i)==int for i in s)),
+            lambda s: all(i >= -1 and i != 0 and type(i)==int for i in s)),
     },
     Optional('activation', default=None): {
         Optional('granularity'): And(

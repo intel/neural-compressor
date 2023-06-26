@@ -1,11 +1,7 @@
-import numpy as np
 import unittest
-import os
-import yaml
-import importlib
-import shutil
+import copy
 import torch
-from neural_compressor.adaptor.torch_utils.weight_only import quant_model_weight_only
+from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize
 
 
 class TestWeightOnlyQuant(unittest.TestCase):
@@ -31,10 +27,15 @@ class TestWeightOnlyQuant(unittest.TestCase):
         pass
 
     def test_conv(self):
-        quant_model_weight_only(self.model, num_bits=3, group_size=-1)
-    #
-    # def test_conv_memory_format(self):
-    #     import  copy
-    #     model = copy.deepcopy(self.model)
-    #     model = model.to(memory_format=torch.channels_last)
-    #     quant_model_weight_only(self.model, num_bits=3, group_size=-1)
+        fp32_model = copy.deepcopy(self.model)
+        model1 = rtn_quantize(fp32_model, num_bits=3, group_size=-1)
+        w_layers_config = {
+            # 'op_name': (bit, group_size, sheme)
+            'conv1': (8, 128, 'sym'),
+            'conv2': (4, 32, 'asym')
+        }
+        model2 = rtn_quantize(fp32_model, num_bits=3, group_size=-1, w_layers_config=w_layers_config)
+
+
+if __name__ == "__main__":
+    unittest.main()

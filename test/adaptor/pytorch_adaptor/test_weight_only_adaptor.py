@@ -51,7 +51,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 '.*':{ 	# re.match
                     "weight": {
                         'bit': [8], # 1-8 bit 
-                        'group_size': [128],  # 1 - 1024 or higher
+                        'group_size': [-1],  # -1 (per-channel)
                         'scheme': ['sym'], 
                         'algorithm': ['RTN'], 
                     },
@@ -65,6 +65,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        self.assertFalse(torch.all(out1 == out2))
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
@@ -86,6 +87,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        self.assertFalse(torch.all(out1 == out2))
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
@@ -120,6 +122,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        self.assertFalse(torch.all(out1 == out2))
         q_model.save('saved')
 
 

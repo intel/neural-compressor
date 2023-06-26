@@ -4510,17 +4510,18 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         self.tune_cfg["framework"] = "pytorch"
         assert self.approach=='post_training_weight_only', "Please make sure the approach is weight_only"
 
-        q_model._model = self.RTN_quantize(q_model._model, tune_cfg)
-        q_model._model = self.GPTQ_quantize(q_model._model, tune_cfg, dataloader)
-        q_model._model = self.AWQ_quantize(q_model._model, tune_cfg, dataloader)
+        q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
+        q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
+        q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
         self._dump_model_op_stats(q_model._model, q_model.q_config)
         return q_model
 
-    def RTN_quantize(self, model, tune_cfg):
-        from .torch_utils.weight_only import quant_weight
+    def rtn_quantize(self, model, tune_cfg):
+        logger.debug("quantizing with the round-to-nearest algorithm")
+        from .torch_utils.weight_only import rtn_quantize
         from .torch_utils.util import fetch_module
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
@@ -4534,29 +4535,22 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if algorithm != 'RTN':
                     continue
                 m = fetch_module(model, op_name)
-                weight = m.weight
-                if op_type == "Conv2d":
-                    orig_shape = weight.shape
-                    weight = weight.permute(1, 0, 2, 3)
-                    weight = weight.reshape(weight.shape[0], -1)
-                q_weight = quant_weight(weight, num_bits, group_size, scheme)
-                if op_type == "Conv2d":
-                    q_weight = q_weight.reshape(orig_shape[1], orig_shape[0], orig_shape[2], orig_shape[3])
-                    q_weight = q_weight.permute(1, 0, 2, 3)
-                m.weight.data.copy_(q_weight)
+                rtn_quantize(m, num_bits, group_size, scheme)
         return model
 
-    def GPTQ_quantize(self, model, tune_cfg, dataloader):
+    def gptq_quantize(self, model, tune_cfg, dataloader):
+        logger.debug("quantizing with the GPTQ algorithm")
         if 'gptq_args' in self.recipes:
             percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
         # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
         # TODO: implementation
         return model
 
-    def AWQ_quantize(self, model, tune_cfg, dataloader):
+    def awq_quantize(self, model, tune_cfg, dataloader):
+        logger.debug("quantizing with the AWQ algorithm")
         # set default value if has args in recipes, else we use function 
-        if 'gptq_args' in self.recipes:
-            alpha = self.recipes['gptq_args'].get('alpha', 'auto')
+        if 'awq_args' in self.recipes:
+            alpha = self.recipes['awq_args'].get('alpha', 'auto')
         # AWQ(model, dataloader, w_bit, group_size, alpha='auto', clip=True)
         # TODO: implementation
         return model
