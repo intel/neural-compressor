@@ -375,7 +375,6 @@ class BasicPruner(BasePruner):
         self.completed_pruned_cnt += 1
         if self.criterion.scores == {}:
             return
-        breakpoint()
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.mask_weights()
 
