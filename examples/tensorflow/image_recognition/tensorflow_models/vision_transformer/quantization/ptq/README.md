@@ -7,10 +7,16 @@ This document list steps of reproducing Vision Transformer model tuning results 
 
 ## 1. Environment
 
-### Installation
+### Instal Dependency Package
 
 ```
 pip install -r requirements.txt
+```
+
+### Install Intel Extension for Tensorflow
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
 ## 2. Prepare Pretrained model

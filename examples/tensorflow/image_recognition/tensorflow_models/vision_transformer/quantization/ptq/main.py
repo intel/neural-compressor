@@ -132,8 +132,9 @@ class eval_classifier_optimized_graph:
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
 
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
-                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.03),
-                                           op_type_dict={'conv2d':{ 'weight':{'dtype':['fp32']}, 'activation':{'dtype':['fp32']} }})
+                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01),
+                                           op_type_dict={'conv2d':{ 'weight':{'dtype':['fp32']}, 'activation':{'dtype':['fp32']} }},
+                                           backend='itex')
             from neural_compressor import METRICS
             metrics = METRICS('tensorflow')
             top1 = metrics['topk']()
@@ -173,7 +174,7 @@ class eval_classifier_optimized_graph:
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
+                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1, backend='itex')
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)
