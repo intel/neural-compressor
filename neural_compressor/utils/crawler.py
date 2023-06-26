@@ -38,7 +38,7 @@ class Crawler:
         sublinks = []
         for links in soup.find_all('a'):
             link = str(links.get('href'))
-            if link.startswith('#') or link is None:
+            if link.startswith('#') or link is None or link == 'None':
                 continue
             suffix = link.split('/')[-1]
             if '.' in suffix and suffix.split('.')[-1] not in ['html', 'htmld']:
@@ -120,11 +120,14 @@ class Crawler:
 
     def download(self, url, file_name):
         logger.info(f'download {url} into {file_name}...')
-        r = requests.get(url, stream=True, headers=self.headers, verify=False)
-        f = open(file_name, "wb")
-        for chunk in r.iter_content(chunk_size=512):
-            if chunk:
-                f.write(chunk)
+        try:
+            r = requests.get(url, stream=True, headers=self.headers, verify=False)
+            f = open(file_name, "wb")
+            for chunk in r.iter_content(chunk_size=512):
+                if chunk:
+                    f.write(chunk)
+        except Exception as e:
+            logger.error(f'fail to download {url}, cased by {e}')
 
     def get_base_url(self, url):
         result = urlparse(url)
@@ -258,12 +261,29 @@ class CircuitCrawler(Crawler):
         self.fetched_pool = set()
     
     def _work(self, url, soup):
-        element = soup.find('body')
+        # element = soup.find('body')
+        useless_domain = ['content/it']
+        for i in useless_domain:
+            if i in url:
+                return
+        element = soup.find('main')
         if not element:
-            return None
+            element = soup.find('body')
         text = element.text
         text = self.clean_text(text)
-        file_name = url.split('/')[-1].split('.')[0]
+        text = text + f'\nThe detail information could refer to {url}.'
+
+        file_name = soup.select_one('head > title')
+        if file_name:
+            file_name = file_name.text
+        else:
+            file_name = url.split('/')[-1].split('.')[0]
+        file_name = file_name.replace('/', '|').replace(' ', '_')
+        file_path = f'{self.output_dir}/text/{file_name}.txt'
+        idx = 0
+        while os.path.exists(file_path):
+            file_path = f'{self.output_dir}/text/{file_name}_{idx}.txt'
+            idx += 1
         with open(f'{self.output_dir}/text/{file_name}.txt', 'w') as f:
             f.write(text)
         sublinks = self.get_sublinks(soup)
@@ -273,7 +293,8 @@ class CircuitCrawler(Crawler):
                 link = base_url + link
             if link.endswith('pdf'):
                 file_name = link.split('/')[-1]
-                self.download(link, file_name)
+                file_name = file_name.replace('/', '|').replace(' ', '_')
+                self.download(link, f'{self.output_dir}/pdf/{file_name}')
 
     def start(self, max_depth=10, workers=10):
         if isinstance(self.pool, str):
@@ -282,6 +303,20 @@ class CircuitCrawler(Crawler):
             
 
 if __name__ == '__main__':
-    c = CircuitCrawler(pool='https://circuit.intel.com/content/corp/working-at-intel/work-at-intel-guidance.html')
-    c.start(max_depth=2)
+    pool_list = {
+        # 'healthcare_benefits': "https://circuit.intel.com/content/entrypage/99f2d344-dec3-47b5-8b76-943ce2d0313d.html",
+        "ergonomics-homepage": "https://circuit.intel.com/content/cs/home/ergonomics/ergonomics-homepage.html",
+        # "time_off": "https://circuit.intel.com/content/entrypage/2ebbdfe8-43ae-422f-991c-60ec1195b035.html",
+        "compensation_at_intel": "https://circuit.intel.com/content/hr/pay/general/compensation-home.html",
+        "employment_guideline": "https://circuit.intel.com/content/entrypage/433515a7-514e-43ff-a5d3-9109318ebaab.html",
+        "working-at-intel": "https://circuit.intel.com/content/corp/working-at-intel/home.html",
+        "EmpLetterRequestProcess_PRC": "https://circuit.intel.com/content/hr/data-mgmt/records/EmpLetterRequestProcess_PRC.html"
+    }
+    # c = CircuitCrawler(pool='https://circuit.intel.com/content/entrypage/99f2d344-dec3-47b5-8b76-943ce2d0313d.html', 
+    #                    output_dir='./crawl_result/healthcare_benefits')
+    # c.start(max_depth=2)
     # c.get_md_content('https://github.com/intel/neural-compressor/blob/master/README.md')
+    for name, url in pool_list.items():
+        print(name)
+        c = CircuitCrawler(pool=url, output_dir=f'./crawl_result/{name}')
+        c.start(max_depth=2)
