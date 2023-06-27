@@ -41,7 +41,8 @@ import zipfile
 
 from neural_solution.utils.utility import (
     get_task_log_workspace,
-    get_db_path
+    get_db_path,
+    get_task_workspace
 )
 
 from neural_solution.config import config
@@ -428,14 +429,15 @@ async def download_file(task_id: str):
         raise HTTPException(status_code=404, detail="Task failed, file not found")
     path = res[2]
     zip_filename = "quantized_model.zip"
+    zip_filepath = os.path.join(get_task_workspace(config.workspace), task_id, zip_filename)
     # create zipfile and add file
-    with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zip_file:
+    with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for root, dirs, files in os.walk(path):
             for file in files:
                 file_path = os.path.join(root, file)
                 zip_file.write(file_path, os.path.basename(file_path))
 
-    return FileResponse(zip_filename, media_type='application/octet-stream', filename=zip_filename)
+    return FileResponse(zip_filepath, media_type='application/octet-stream', filename=zip_filename)
 
 if __name__ == "__main__":
     # parse the args and modified the config accordingly
