@@ -3,10 +3,13 @@ import re
 import json
 import logging
 import requests
-from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlunparse
 import multiprocessing
 import urllib3
+
+import langid
+import PyPDF2
+from bs4 import BeautifulSoup
 
 urllib3.disable_warnings()
 
@@ -15,6 +18,14 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.INFO)
 
+def load_pdf(pdf_path):
+    pdf_file = open(pdf_path, 'rb')
+    pdf_reader = PyPDF2.PdfReader(pdf_file, strict=False)
+    text = ''
+    for num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[num]
+        text += page.extract_text()
+    return text
 
 class Crawler:
     def __init__(self, pool):
@@ -242,7 +253,7 @@ class CircuitCrawler(Crawler):
         super().__init__(*args, **kwargs)
         self.headers.update({
             "Cache-Control": "max-age=0",
-            "Cookie": "access_token=561hoQKWR9dmQmC0SqXHS3uETgpDkxVVdAXPXvEVHJY; _ga=GA1.2.2073446506.1658713529; isManager=N; BadgeType=BB; IDSID=hengguo; CNCampusCode=SHZ; isMenuVisible=1; ajs_user_id=%2240696693%22; ajs_group_id=null; ajs_anonymous_id=%22cf578c2c-07ec-4ac3-b1eb-a1131cf24ff4%22; s_fid=26C8F0AB24F5B476-298199E6962D1F6F; ELQSTATUS=OK; ELOQUA=GUID=906697F39E824DBF885ED50A398B150B; _cs_c=0; _abck=B51103F18F0989A871324DCB7C6A6228~-1~YAAQdqwsF5kmlAGDAQAA038pCwjsSQiWJnovwNl5wtPLCZzkLadrEmXQKx9j++9Eua1pwXeSsMPz2GOl772NQF+sSQDc+ML6qClNJ1jJTNoZ2NCGE7+90w6B3zWTyn8mLJh+L/Upuj4GCh74hk6lpBHYExXMokSFYbaAKLGw2/4vfCWsZ+XXfUEnymWmb+27volGnYjUDbPFD7Pv8JkmC3BSdmImqbgKCb2w3zkmM9Q3OPQ4J82PLuAzHpMi4uBBficY2apnttO099jggehPhvOqSyQFNopkt6lQx65Cb6Ww7SSGUJE2+bsKXZzoTpQQENAlRxoyNNJIEmpFoTHDXbofGNgRhpF0dWbtUbwUFC2FZ8mr30NdoHcpbg==~-1~-1~-1; AMCV_AD2A1C8B53308E600A490D4D%40AdobeOrg=1585540135%7CMCIDTS%7C19252%7CMCMID%7C75310779783706370332434931749805207698%7CMCAAMLH-1663919541%7C3%7CMCAAMB-1663919541%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1663321941s%7CNONE%7CvVersion%7C4.4.0%7CMCCIDH%7C2131965003; adcloud={%22_les_v%22:%22y%2Cintel.com%2C1663316542%22}; mbox=PC#e0741b84312444dfabf1a6673620ca2c.35_0#1724471070|session#e23cd74f92354c4bb56c59d32b9fb2b3#1663316604; OptanonConsent=isGpcEnabled=0&datestamp=Tue+Mar+28+2023+15%3A07%3A05+GMT%2B0800+(China+Standard+Time)&version=202209.2.0&isIABGlobal=false&hosts=&consentId=3cfefc52-a9fe-4d46-a57f-125e1a84a4cb&interactionCount=0&landingPath=https%3A%2F%2Fwww.intel.com%2Fcontent%2Fwww%2Fus%2Fen%2Fdeveloper%2Ftopic-technology%2Fartificial-intelligence%2Fdeep-learning-boost.html&groups=C0001%3A1%2CC0003%3A0%2CC0004%3A0%2CC0002%3A0; intelresearchSTG=5; intelresearchUID=9098949724218M1679987234236; _cs_id=81508dff-8c83-a140-f131-314d094ea9f8.1661226277.40.1679989156.1679989156.1589385054.1695390277819; utag_main=v_id:0182c8cd1abd0095db8d333c6c600506f003a06700978$_sn:26$_se:1$_ss:1$_st:1680741698802$wa_ecid:75310779783706370332434931749805207698$wa_erpm_id:12253843$ses_id:1680739898802%3Bexp-session$_pn:1%3Bexp-session; kndctr_AD2A1C8B53308E600A490D4D_AdobeOrg_identity=CiY3NTMxMDc3OTc4MzcwNjM3MDMzMjQzNDkzMTc0OTgwNTIwNzY5OFIPCKPttMasMBgBKgRKUE4z8AHxk5%2Df9TA%3D; BIGipServerlbauto-prdeppubdisplb-443=!gpPHJMNhbha3tSF9e6x3zjaYWx2wLtcWLBJaE9pIWPjkxR6Hb8ityCoOf5GBp0LHkZvQg10E7qHVY2E=; _gid=GA1.2.2097819079.1686707457; p-s-t-16b2bfbd-e4d0-493d-be07-e98700e46be1-avm-chat-initiated=true; login-token=97d9b5d9-9341-41c7-a130-17f60d0a1997%3ae9f927a0-85a8-40f5-9bf9-080121414803_635081d4628408f00ad8a87eb3087ad0%3acrx.default; JSESSIONID=node0ymlgikgtgbqawkszgx22yceo57956.node0; _gat=1",
+            "Cookie": "access_token=z770ZFQEIdGf6czCwsoy2nokcozM4NeHoYwnhg5hGaI; _ga=GA1.2.2073446506.1658713529; IDSID=hengguo; BadgeType=BB; isManager=N; CNCampusCode=SHZ; isMenuVisible=1; ajs_group_id=null; ajs_user_id=%2240696693%22; ajs_anonymous_id=%22cf578c2c-07ec-4ac3-b1eb-a1131cf24ff4%22; s_fid=26C8F0AB24F5B476-298199E6962D1F6F; ELQSTATUS=OK; ELOQUA=GUID=906697F39E824DBF885ED50A398B150B; _cs_c=0; _abck=B51103F18F0989A871324DCB7C6A6228~-1~YAAQdqwsF5kmlAGDAQAA038pCwjsSQiWJnovwNl5wtPLCZzkLadrEmXQKx9j++9Eua1pwXeSsMPz2GOl772NQF+sSQDc+ML6qClNJ1jJTNoZ2NCGE7+90w6B3zWTyn8mLJh+L/Upuj4GCh74hk6lpBHYExXMokSFYbaAKLGw2/4vfCWsZ+XXfUEnymWmb+27volGnYjUDbPFD7Pv8JkmC3BSdmImqbgKCb2w3zkmM9Q3OPQ4J82PLuAzHpMi4uBBficY2apnttO099jggehPhvOqSyQFNopkt6lQx65Cb6Ww7SSGUJE2+bsKXZzoTpQQENAlRxoyNNJIEmpFoTHDXbofGNgRhpF0dWbtUbwUFC2FZ8mr30NdoHcpbg==~-1~-1~-1; AMCV_AD2A1C8B53308E600A490D4D%40AdobeOrg=1585540135%7CMCIDTS%7C19252%7CMCMID%7C75310779783706370332434931749805207698%7CMCAAMLH-1663919541%7C3%7CMCAAMB-1663919541%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1663321941s%7CNONE%7CvVersion%7C4.4.0%7CMCCIDH%7C2131965003; adcloud={%22_les_v%22:%22y%2Cintel.com%2C1663316542%22}; mbox=PC#e0741b84312444dfabf1a6673620ca2c.35_0#1724471070|session#e23cd74f92354c4bb56c59d32b9fb2b3#1663316604; OptanonConsent=isGpcEnabled=0&datestamp=Tue+Mar+28+2023+15%3A07%3A05+GMT%2B0800+(China+Standard+Time)&version=202209.2.0&isIABGlobal=false&hosts=&consentId=3cfefc52-a9fe-4d46-a57f-125e1a84a4cb&interactionCount=0&landingPath=https%3A%2F%2Fwww.intel.com%2Fcontent%2Fwww%2Fus%2Fen%2Fdeveloper%2Ftopic-technology%2Fartificial-intelligence%2Fdeep-learning-boost.html&groups=C0001%3A1%2CC0003%3A0%2CC0004%3A0%2CC0002%3A0; intelresearchUID=9098949724218M1679987234236; _cs_id=81508dff-8c83-a140-f131-314d094ea9f8.1661226277.40.1679989156.1679989156.1589385054.1695390277819; utag_main=v_id:0182c8cd1abd0095db8d333c6c600506f003a06700978$_sn:26$_se:1$_ss:1$_st:1680741698802$wa_ecid:75310779783706370332434931749805207698$wa_erpm_id:12253843$ses_id:1680739898802%3Bexp-session$_pn:1%3Bexp-session; kndctr_AD2A1C8B53308E600A490D4D_AdobeOrg_identity=CiY3NTMxMDc3OTc4MzcwNjM3MDMzMjQzNDkzMTc0OTgwNTIwNzY5OFIPCKPttMasMBgBKgRKUE4z8AHxk5%2Df9TA%3D; BIGipServerlbauto-prdeppubdisplb-443=!roIjSuTSMi+UC5p9e6x3zjaYWx2wLhvVQQPHelzO52Ib4EDhyKb8c4FNX+55yubaT8TzQ9VwSD19ANY=; login-token=97d9b5d9-9341-41c7-a130-17f60d0a1997%3a3820bfd7-dfcd-459a-991d-dca4db9d22e7_25a1903af751648a8f95a05b09902c56%3acrx.default; JSESSIONID=node0ujxl1vh1zity12xk7icbuynp8109692.node0; _gid=GA1.2.349545364.1687825459; _gat=1",
             "Referer": "https://login.microsoftonline.com/",
             "Host": "circuit.intel.com",
             "Sec-Ch-Ua": 'Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114',
@@ -259,10 +270,13 @@ class CircuitCrawler(Crawler):
         os.makedirs(f'{self.output_dir}/text', exist_ok=True)
         os.makedirs(f'{self.output_dir}/pdf', exist_ok=True)
         self.fetched_pool = set()
+        self.root = 'circuit.intel.com'
     
     def _work(self, url, soup):
         # element = soup.find('body')
         useless_domain = ['content/it']
+        if self.root not in url:
+            return
         for i in useless_domain:
             if i in url:
                 return
@@ -271,7 +285,6 @@ class CircuitCrawler(Crawler):
             element = soup.find('body')
         text = element.text
         text = self.clean_text(text)
-        text = text + f'\nThe detail information could refer to {url}.'
 
         file_name = soup.select_one('head > title')
         if file_name:
@@ -279,22 +292,39 @@ class CircuitCrawler(Crawler):
         else:
             file_name = url.split('/')[-1].split('.')[0]
         file_name = file_name.replace('/', '|').replace(' ', '_')
-        file_path = f'{self.output_dir}/text/{file_name}.txt'
+        file_path = f'{self.output_dir}/text/{file_name}.json'
         idx = 0
         while os.path.exists(file_path):
-            file_path = f'{self.output_dir}/text/{file_name}_{idx}.txt'
+            file_path = f'{self.output_dir}/text/{file_name}_{idx}.json'
             idx += 1
-        with open(f'{self.output_dir}/text/{file_name}.txt', 'w') as f:
-            f.write(text)
+        if langid.classify(text)[0] in ['en', 'zh']:
+            json_str = {'content': text, 'link': url}
+            json.dump(json_str, open(file_path, 'w'))
+
         sublinks = self.get_sublinks(soup)
         base_url = self.get_base_url(url)
         for link in sublinks:
             if link.startswith('/'):
                 link = base_url + link
             if link.endswith('pdf'):
+                if self.root not in link:
+                    continue
                 file_name = link.split('/')[-1]
                 file_name = file_name.replace('/', '|').replace(' ', '_')
-                self.download(link, f'{self.output_dir}/pdf/{file_name}')
+                pdf_file = f'{self.output_dir}/pdf/{file_name}'
+                self.download(link, pdf_file)
+                try:
+                    pdf_content = load_pdf(pdf_file)
+                    if langid.classify(pdf_content)[0] in ['en', 'zh']:
+                        json_str = {'content': pdf_content, 'link': link}
+                        file_path = f'{self.output_dir}/text/{file_name}.json'
+                        idx = 0
+                        while os.path.exists(file_path):
+                            file_path = f'{self.output_dir}/text/{file_name}_{idx}.json'
+                            idx += 1
+                        json.dump(json_str, open(file_path, 'w'))
+                except:
+                    logger.error(f'fail to load pdf file {pdf_file}...')
 
     def start(self, max_depth=10, workers=10):
         if isinstance(self.pool, str):
@@ -304,9 +334,9 @@ class CircuitCrawler(Crawler):
 
 if __name__ == '__main__':
     pool_list = {
-        # 'healthcare_benefits': "https://circuit.intel.com/content/entrypage/99f2d344-dec3-47b5-8b76-943ce2d0313d.html",
+        'healthcare_benefits': "https://circuit.intel.com/content/entrypage/99f2d344-dec3-47b5-8b76-943ce2d0313d.html",
         "ergonomics-homepage": "https://circuit.intel.com/content/cs/home/ergonomics/ergonomics-homepage.html",
-        # "time_off": "https://circuit.intel.com/content/entrypage/2ebbdfe8-43ae-422f-991c-60ec1195b035.html",
+        "time_off": "https://circuit.intel.com/content/entrypage/2ebbdfe8-43ae-422f-991c-60ec1195b035.html",
         "compensation_at_intel": "https://circuit.intel.com/content/hr/pay/general/compensation-home.html",
         "employment_guideline": "https://circuit.intel.com/content/entrypage/433515a7-514e-43ff-a5d3-9109318ebaab.html",
         "working-at-intel": "https://circuit.intel.com/content/corp/working-at-intel/home.html",
