@@ -46,10 +46,10 @@ conf = PostTrainingQuantConfig(
     op_type_dict={
         '.*':{ 	# re.match
             "weight": {
-                'bit': [8], # 1-8 bit 
-                'group_size': [-1],  # -1 (per-channel)
-                'scheme': ['sym'], 
-                'algorithm': ['RTN'], 
+                'bit': 8, # 1-8 bit 
+                'group_size': -1,  # -1 (per-channel)
+                'scheme': 'sym', 
+                'algorithm': 'RTN', 
             },
         },
     },
