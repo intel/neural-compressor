@@ -1,124 +1,128 @@
-## Design Doc for Optimization as a Service [WIP]
+# Get started
 
+- [Get started](#get-started)
+  - [Install Neural Solution](#install-neural-solution)
+    - [Prerequisites](#prerequisites)
+    - [Method 1. Using pip](#method-1-using-pip)
+    - [Method 2. Building from source](#method-2-building-from-source)
+  - [Start service](#start-service)
+  - [Submit task](#submit-task)
+  - [Query task status](#query-task-status)
+  - [Stop service](#stop-service)
+  - [Inspect logs](#inspect-logs)
 
+## Install Neural Solution
+### Prerequisites
+- Install [Anaconda](https://docs.anaconda.com/free/anaconda/install/)
+- Install [Open MPI](https://www.open-mpi.org/faq/?category=building#easy-build)
+- Python 3.8 or later
 
-### Contents
+There are two ways to install the neural solution:
+### Method 1. Using pip
+```
+pip install neural-solution
+```
+### Method 2. Building from source
 
-- [Design Doc for Optimization as a Service \[WIP\]](#design-doc-for-optimization-as-a-service-wip)
-  - [Contents](#contents)
-  - [Overview](#overview)
-  - [Workflow of OaaS](#workflow-of-oaas)
-  - [Class definition diagram](#class-definition-diagram)
-  - [Extensibility](#extensibility)
+```shell
+# get source code
+git clone https://github.com/intel/neural-compressor
+cd neural-compressor
 
-### Overview
+# install neural compressor
+pip install -r requirements.txt
+python setup.py install
 
-Optimization as a service(OaaS) is a platform that enables users to submit quantization tasks for their models and automatically dispatches these tasks to one or multiple nodes for accuracy-aware tuning. OaaS is designed to parallelize the tuning process in two levels: tuning and model. At the tuning level, OaaS execute the tuning process across multiple nodes for one model. At the model level, OaaS allocate free nodes to incoming requests automatically.
+# install neural solution
+pip install -r neural_solution/requirements.txt
+python setup.py neural_solution install
+```
 
+## Start service
 
-### Workflow of OaaS
+```shell
+# Start neural solution service with custom configuration
+neural_solution start --task_monitor_port=22222 --result_monitor_port=33333 --restful_api_port=8001
 
-```mermaid
-sequenceDiagram
-    participant Studio
-    participant TaskMonitor
-    participant Scheduler
-    participant Cluster
-    participant TaskLauncher
-    participant ResultMonitor
-    Par receive task
-    Studio ->> TaskMonitor: P1-1. Post quantization Request
-    TaskMonitor ->> TaskMonitor: P1-2. Add task to task DB
-    TaskMonitor ->> Studio: P1-3. Task received notification
-    and Schedule task
-        loop 
-            Scheduler ->> Scheduler: P2-1. Pop task from task DB
-            Scheduler ->> Cluster: P2-2. Apply for resouces
-            Note over Scheduler, Cluster: the number of Nodes
-            Cluster ->> Cluster: P2-3. Check the status of nodes in cluster
-            Cluster ->> Scheduler: P2-4. Resouces info 
-            Note over Scheduler, Cluster: host:socket list
-            Scheduler ->> TaskLauncher: P2-5. Dispatch task
-        end
-    and Run task
-    TaskLauncher ->> TaskLauncher: P3-1. Run task
-    Note over TaskLauncher, TaskLauncher: mpirun -np 4 -hostfile hostfile python main.py
-    TaskLauncher ->> TaskLauncher: P3-2. Wait task to finish...
-    TaskLauncher ->> Cluster: P3-3. Free resource
-    TaskLauncher ->> ResultMonitor: P3-4. Report the Acc and Perf
-    ResultMonitor ->> Studio: P3-5. Post result to Studio
-    and Query task status
-    Studio ->> ResultMonitor: P4-1. Query the status of the submmited task 
-    ResultMonitor ->> Studio: P4-2. Post the status of queried task
-    End
+# Help Manual
+neural_solution -h
+# Help output
+
+usage: neural_solution {start,stop} [-h] [--hostfile HOSTFILE] [--restful_api_port RESTFUL_API_PORT] [--grpc_api_port GRPC_API_PORT]
+                   [--result_monitor_port RESULT_MONITOR_PORT] [--task_monitor_port TASK_MONITOR_PORT] [--api_type API_TYPE]
+                   [--workspace WORKSPACE] [--conda_env CONDA_ENV] [--upload_path UPLOAD_PATH]
+
+Neural Solution
+
+positional arguments:
+  {start,stop}          start/stop service
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hostfile HOSTFILE   start backend serve host file which contains all available nodes
+  --restful_api_port RESTFUL_API_PORT
+                        start restful serve with {restful_api_port}, default 8000
+  --grpc_api_port GRPC_API_PORT
+                        start gRPC with {restful_api_port}, default 8000
+  --result_monitor_port RESULT_MONITOR_PORT
+                        start serve for result monitor at {result_monitor_port}, default 3333
+  --task_monitor_port TASK_MONITOR_PORT
+                        start serve for task monitor at {task_monitor_port}, default 2222
+  --api_type API_TYPE   start web serve with all/grpc/restful, default all
+  --workspace WORKSPACE
+                        neural solution workspace, default "./ns_workspace"
+  --conda_env CONDA_ENV
+                        specify the running environment for the task
+  --upload_path UPLOAD_PATH
+                        specify the file path for the tasks
 
 ```
 
-The optimization process is divided into four parts, each executed in separate threads.
+## Submit task
 
-- Part 1. Posting new quantization task. (P1-1 -> P1-2 -> P1-3)
+- For RESTful API: `[user@server hf_model]$ curl -H "Content-Type: application/json" --data @./task.json  http://localhost:8000/task/submit/`
+- For gRPC API: `python  -m neural_solution.frontend.gRPC.client submit --request="test.json"`
 
-- Part 2. Resource allocation and scheduling. (P2-1 -> P2-2 -> P2-3 -> P2-4 -> P2-5)
+> For more details, please reference the [API description](./description_api.md) and [examples](../../examples/README.md).
 
-- Part 3. Task execution and reporting. (P3-1 -> P3-2 -> P3-3 -> P3-4 -> P3-5)
+## Query task status
 
-- Part 4. Updating the status. (P4-1 -> P4-2)
+Query the task status and result according to the `task_id`.
 
-### Class definition diagram
+- For RESTful API: `[user@server hf_model]$ curl  -X GET  http://localhost:8000/task/status/{task_id}`
+- For gRPC API: `python  -m neural_solution.frontend.gRPC.client query --task_id={task_id}`
 
+> For more details, please reference the [API description](./description_api.md) and [examples](../../examples/README.md).
 
+## Stop service
 
-```mermaid
-classDiagram
-
-
-
-TaskDB "1" --> "*" Task
-TaskMonitor --> TaskDB
-ResultMonitor  -->  TaskDB
-Scheduler --> TaskDB
-Scheduler --> Cluster
-
-
-class Task{
-	+ status
-	+ get_status()
-	+ update_status()
-}
-
-class TaskDB{
-   - task_collections
-   + append_task()
-   + get_all_pending_tasks()
-   + update_task_status()
-}
-class TaskMonitor{
-    - task_db
-    + wait_new_task()
-}
-class Scheduler{
-    - task_db
-    - cluster
-    + schedule_tasks()
-    + dispatch_task()
-    + launch_task()
-}
-
-class ResultMonitor{
-	- task_db
-    + query_task_status()
-}
-class Cluster{
-    - node_list
-    + free()
-    + reserve_resource()
-    + get_node_status()
-}
-
+```shell
+# Stop neural solution service with default configuration
+neural_solution stop
 ```
 
+## Inspect logs
 
-### Extensibility
+The default logs locate in `./ns_workspace/`. Users can specify a custom workspace by using `neural_solution ---workspace=/path/to/custom/workspace`.
 
-- The service can be deployed on various resource pool, including a set of worker nodes, such as a local cluster or cloud cluster (AWS and GCP).
+There are several logs under workspace:
+
+```shell
+(ns) [username@servers ns_workspace]$ tree
+.
+├── db
+│   └── task.db # database to save the task-related information
+├── serve_log # service running log
+│   ├── backend.log # backend log 
+│   ├── frontend_grpc.log # grpc frontend log
+│   └── frontend.log # HTTP/RESTful frontend log
+├── task_log # overall log for each task
+│   ├── task_bdf0bd1b2cc14bc19bce12d4f9b333c7.txt # task log
+│   └── ...
+└── task_workspace # the log for each task
+    ...
+    ├── bdf0bd1b2cc14bc19bce12d4f9b333c7 # task_id
+    ...
+
+```
 

@@ -66,7 +66,7 @@ class MaxPoolOperator(Operator):
             all([i.op_type != 'QuantizeLinear' for i in children]): # pragma: no cover
             return
         node.input[0] = parent.input[0]
-        node.output[0] = node.output[0] + '_quantized'
+        node.output[0] = node.output[0].replace('_QuantizeInput', '_quantized')
         for child in children:
             if child.op_type == 'QuantizeLinear':
                 self.quantizer.remove_nodes.append(child)

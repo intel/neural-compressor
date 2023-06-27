@@ -1,3 +1,4 @@
+"""Running script."""
 import tensorflow as tf
 
 from neural_compressor.data import TensorflowImageRecord
@@ -24,6 +25,7 @@ eval_dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=Comp
 eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 
 def main():
+    """Implement running function."""
     top1 = Metric(name="topk", k=1)
     config = PostTrainingQuantConfig(calibration_sampling_size=[20])
     model_path = FLAGS.model_path + "/mobilenet_v1_1.0_224_frozen.pb"

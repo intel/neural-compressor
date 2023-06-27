@@ -493,7 +493,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   white_nodes=op_list,
                   backend=self.backend)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
-                                      weight=(inspect_type!='activation'),)
+                                      weight=(inspect_type!='activation'),
+                                      format=self.format)
         if save_to_disk:
             if not save_path:
                 save_path = self.work_space
@@ -1265,7 +1266,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     'min': np.array(self.min_max[node.output[0]][0], dtype=np.float32),
                     'max': np.array(self.min_max[node.output[0]][1], dtype=np.float32)}
         if save_path:
-            dump_data_to_local(filtered_params, save_path, 'dequan_min_max.pkl')
+            dump_data_to_local(filtered_params, save_path, 'activation_min_max.pkl')
             dump_data_to_local(tune_cfg, save_path, 'cfg.pkl')
         return inspect_node_list, tune_cfg
 

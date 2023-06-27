@@ -14,6 +14,7 @@ omit =
  */neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_decomposed_in.py
  */neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_in.py
  */neural_compressor/adaptor/tf_utils/graph_rewriter/int8/freeze_value.py
+ */neural_compressor/template/*
 exclude_lines =
  pragma: no cover
  raise NotImplementedError

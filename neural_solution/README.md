@@ -4,7 +4,8 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 
 # Why Neural Solution?
 
-- Efficiency: Neural Solution accelerates the optimization process by seamlessly parallelizing the tuning across multiple nodes.
+- Task Parallelism: Neural Solution automatically schedules the optimization task queue by coordinating available resources and allows execution of multiple optimization tasks simultaneously.
+- Tuning Parallelism: Neural Solution accelerates the optimization process by seamlessly parallelizing the tuning across multiple nodes.
 - APIs Support: Neural Solution supports both RESTful and gRPC APIs, enabling users to conveniently submit optimization tasks.
 - Code Less: When working with Hugging Face models, Neural Solution seamlessly integrates the functionality of the [Neural Coder](https://github.com/intel/neural-compressor/tree/master/neural_coder), eliminating the need for any code modifications during the optimization process.
 
@@ -13,13 +14,12 @@ Neural Solution is a flexible and easy to use tool that brings the capabilities 
 
 # Get Started
 ## Installation
-<details>
-  <summary>Prerequisites</summary>
+### Prerequisites
 
 - Install [Anaconda](https://docs.anaconda.com/free/anaconda/install/)
 - Install [Open MPI](https://www.open-mpi.org/faq/?category=building#easy-build)
 - Python 3.8 or later
-</details>
+
 
 There are two ways to install the neural solution:
 ### Method 1. Using pip:

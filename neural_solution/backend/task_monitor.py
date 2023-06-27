@@ -24,7 +24,9 @@ class TaskMonitor:
         port: the port that the task monitor listens to
         task_db: the TaskDb object that manages the tasks
     """
+
     def __init__(self, port, task_db):
+        """Init TaskMonitor."""
         self.s = socket.socket()
         self.port = port
         self.task_db = task_db

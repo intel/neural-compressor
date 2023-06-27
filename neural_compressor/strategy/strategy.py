@@ -33,6 +33,7 @@ import numpy as np
 import yaml
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
+from neural_compressor.config import MixedPrecisionConfig
 from .utils.constant import FALLBACK_RECIPES_SET
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
@@ -322,6 +323,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self._eval_baseline()
 
     def _check_tuning_status(self):
+        # ipex mix precision doesn't support tune.
+        if isinstance(self.config, MixedPrecisionConfig) and self.config.backend == "ipex":
+            logger.info("Intel extension for pytorch mixed precision doesn't support tune.")
+            return
         # got eval func
         if self.eval_func:
             self._not_tuning = False
@@ -1771,13 +1776,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 "Input model mean": "input_stats.mean",
                 "Input model standard deviation": "input_stats.std",
                 "Input model variance": "input_stats.var",
-                "Optimized model min": "optimized_stats.min",
-                "Optimized model max": "optimized_stats.max",
-                "Optimized model mean": "optimized_stats.mean",
-                "Optimized model standard deviation": "optimized_stats.std",
-                "Optimized model variance": "optimized_stats.var",
             },
-            table_entries=sorted_weights_details
+            table_entries=sorted_weights_details,
+            precision=5,
         )
         logger.info("For more details execute quantization with Neural Insights GUI.")
 

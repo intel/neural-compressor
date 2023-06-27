@@ -425,6 +425,8 @@ class GraphAnalyzer():
                                                                         outputs=target_node)
 
         for sub_node in target_node:
+            if not sub_node in self.node_name_details:
+                continue
             for index, each_node_name in enumerate(self.node_name_details[sub_node].node.input):
                 if each_node_name + ':0' == old_constant_node_name \
                         or each_node_name == old_constant_node_name:

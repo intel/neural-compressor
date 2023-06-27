@@ -63,4 +63,3 @@ class WorkloadStatus(Enum):
     WIP = "wip"
     SUCCESS = "success"
     FAILURE = "failure"
-
