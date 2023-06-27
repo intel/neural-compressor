@@ -101,15 +101,15 @@ def _check_value(name, src, supported_type, supported_value=[]):
 
 
 def _list_wrapper(config):
-    """help function to wrapper custom op_type_dict and op_name_dict items with list.
+    """A help function to wrapper custom op_type_dict and op_name_dict items with list.
 
     Args:
         config (dict): op_type_dict/op_name_dict.
-        for example: {'weight': {'dtype': 'fp32'}, ...}
+            for example: {'weight': {'dtype': 'fp32'}, ...}
 
     Returns:
         config: new_config wrapped with list
-        for example: {'weight': {'dtype': ['fp32']}, ...}
+            for example: {'weight': {'dtype': ['fp32']}, ...}
     """
     for k, v in config.items():
         # k = weight/activation
@@ -121,7 +121,7 @@ def _list_wrapper(config):
 
 
 class DotDict(dict):
-    """access yaml using attributes instead of using the dictionary notation.
+    """Access yaml using attributes instead of using the dictionary notation.
 
     Args:
         value (dict): The dict object to access.
