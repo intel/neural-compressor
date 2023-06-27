@@ -24,7 +24,7 @@ import numpy as np
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.adaptor.ox_utils.util import find_by_name, \
+from neural_compressor.adaptor.ox_utils.util import to_numpy, \
                     quantize_data, _get_qrange_for_qType, is_B_transposed
 from onnx import numpy_helper, helper
 
@@ -363,15 +363,27 @@ class ORTSmoothQuant:
  
             inputs_names = [i.name for i in session.get_inputs()]
             model = None
+            ort_inputs = {}
             for idx, (inputs, labels) in enumerate(self.dataloader):
                 if idx + 1 > calib_iter:
                     break
-                if isinstance(inputs, dict):
-                    ort_inputs = inputs
-                elif len(inputs_names) == 1:
-                    ort_inputs = {inputs_names[0]: inputs}
-                else:
-                    ort_inputs = dict(zip(inputs_names, [np.array(i) for i in inputs]))
+
+                if len(inputs_names) == 1:
+                    if isinstance(inputs, dict): # pragma: no cover
+                        for name, input in inputs.items():
+                            ort_inputs.update({name: to_numpy(input)})
+                    else:
+                        ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
+                else: # pragma: no cover
+                    assert len(inputs_names) == len(inputs), \
+                        'number of input tensors must align with graph inputs'
+
+                    if isinstance(inputs, dict):
+                        for name, input in inputs.items():
+                            ort_inputs.update({name: to_numpy(input)})
+                    else:
+                        ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
+
                 outputs = session.run(added_tensors, ort_inputs)
                 if model is None:
                     model = make_sub_graph(node, inits, outputs[0], outputs[1],
