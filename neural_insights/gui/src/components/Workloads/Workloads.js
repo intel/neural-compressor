@@ -21,7 +21,7 @@ import { api } from './../../App';
 import { getLabel } from './../Diagnosis/Diagnosis';
 import { io } from 'socket.io-client';
 
-export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText }) {
+export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText, setSelectedOp }) {
   const [workloads, setWorkloads] = useState([]);
   const [spinner, setSpinner] = useState(true);
 
@@ -53,7 +53,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   let workloadsList = workloads.map(workload => {
     return (
-      <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload) }}>
+      <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload); setSelectedOp(null); }}>
         <Button variant="secondary" className={workload.uuid === selectedWorkload.uuid ? 'active' : ''}>
           {workload.mode}
           <div className='date'>{moment(moment.unix(workload.creation_time)).fromNow()}</div>

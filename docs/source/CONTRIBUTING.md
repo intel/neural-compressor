@@ -42,7 +42,7 @@ any library dependency introduced or removed
 ## Support
 
 Submit your questions, feature requests, and bug reports to the
-[GitHub issues](https://github.com/intel/neural-compressor/issues) page. You may also reach out to [Maintainers](inc.maintainers@intel.com).
+[GitHub issues](https://github.com/intel/neural-compressor/issues) page. You may also reach out to [Maintainers](mailto:inc.maintainers@intel.com).
 
 ## Contributor Covenant Code of Conduct
 

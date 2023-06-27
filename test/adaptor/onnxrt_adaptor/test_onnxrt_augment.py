@@ -124,9 +124,9 @@ class TestAugment(unittest.TestCase):
                                 white_nodes=["conv"])
         map_dumped_tensors = augment.dump_tensor()
         assert "conv" in map_dumped_tensors["activation"][0]
-        assert "C" in map_dumped_tensors["activation"][0]["conv"]
+        assert "A" in map_dumped_tensors["activation"][0]["conv"]
         assert "conv" in map_dumped_tensors["activation"][1]
-        assert "C" in map_dumped_tensors["activation"][1]["conv"]
+        assert "A" in map_dumped_tensors["activation"][1]["conv"]
 
         model, dataloader = self.cv_session
         augment = ONNXRTAugment(ONNXModel(model),
@@ -321,6 +321,7 @@ class TestAugment(unittest.TestCase):
         #        |
         #    QuantizeLinear
    
+        Attention_input = helper.make_tensor_value_info('input_quantized', TensorProto.INT8, [7, 13])
         Attention_weight = helper.make_tensor_value_info('weight_quantized', TensorProto.INT8, [13,7])
         weight_quantized = generate_input_initializer([13, 7], np.int8, 'weight_quantized')
         Attention_bias = helper.make_tensor_value_info('bias', TensorProto.FLOAT, [13, 7])
@@ -340,7 +341,8 @@ class TestAugment(unittest.TestCase):
         Q_zo = helper.make_tensor_value_info('attn_output_zero_point', TensorProto.INT8, [1])
         attn_output_zero_point = generate_input_initializer([1], np.int8, 'attn_output_zero_point')
         Output = helper.make_tensor_value_info('output', TensorProto.INT8, [13,7])
-        attention_node = onnx.helper.make_node('QAttention', ['weight_quantized', 
+        attention_node = onnx.helper.make_node('QAttention', ['input_quantized',
+                                                             'weight_quantized', 
                                                              'bias', 
                                                              'input_scale',
                                                              'weight_scale',
@@ -354,7 +356,8 @@ class TestAugment(unittest.TestCase):
                                              name='attn_output_QuantizeLinear')
         graph = helper.make_graph([attention_node, qlinear_node], 
                                    'test_graph_5', 
-                                   [Attention_weight, 
+                                   [Attention_input,
+                                   Attention_weight, 
                                    Attention_bias, 
                                    Input_scale,
                                    Weight_scale,
@@ -380,14 +383,15 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model), data_reader, [], white_nodes=['attention'])
         augment.augment_nodes = ['DequantizeLinear']
         augment.already_quantized = True
+
         augment.augment_graph(activation_only=True, weight_only=False)
         augmented_model = augment.augmented_model
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
         added_node_names = ['attention_quant', 'attn_output_QuantizeLinear']
-        added_outputs = ['attn_output', 'output']
-        self.assertEqual(len(augmented_model_node_names), 2)
+        added_outputs = ['input_quantized_output', 'output']
+        self.assertEqual(len(augmented_model_node_names), 3)
         self.assertEqual(len(augmented_model_outputs), 2)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
@@ -406,10 +410,6 @@ class TestAugment(unittest.TestCase):
         a_scale = generate_input_initializer([1], np.float32, 'A_scale')
         A_zo = helper.make_tensor_value_info('A_zero_point', TensorProto.INT8, [1])
         a_zero_point = generate_input_initializer([1], np.int8, 'A_zero_point')
-        B_scale = helper.make_tensor_value_info('B_scale', TensorProto.FLOAT, [1])
-        b_scale = generate_input_initializer([1], np.float32, 'B_scale')
-        B_zo = helper.make_tensor_value_info('B_zero_point', TensorProto.INT8, [1])
-        b_zero_point = generate_input_initializer([1], np.int8, 'B_zero_point')
         C = helper.make_tensor_value_info('C', TensorProto.INT8, [1, 1, 5, 5])
         c = generate_input_initializer([1, 1, 5, 5], np.int8, 'C')
         C_scale = helper.make_tensor_value_info('C_scale', TensorProto.FLOAT, [1])
@@ -423,14 +423,12 @@ class TestAugment(unittest.TestCase):
         D_zo = helper.make_tensor_value_info('D_zero_point', TensorProto.INT8, [1])
         d_zero_point = generate_input_initializer([1], np.int8, 'D_zero_point')
         D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
-        quantize_node = onnx.helper.make_node('QuantizeLinear', ['A', 'A_scale', 'A_zero_point'], ['B'], name='A_QuantizeLinear')
-        conv_node = onnx.helper.make_node('QLinearConv', ['B', 'B_scale', 'B_zero_point', 'C', 'C_scale', 'C_zero_point', 'D_scale', 'D_zero_point', 'E'], ['D_quantized'], name='conv_quant', kernel_shape=[3, 3], pads=[1, 1, 1, 1])
+        quantize_node = onnx.helper.make_node('QuantizeLinear', ['A', 'A_scale', 'A_zero_point'], ['A_quantized'], name='A_QuantizeLinear')
+        conv_node = onnx.helper.make_node('QLinearConv', ['A_quantized', 'A_scale', 'A_zero_point', 'C_quantized', 'C_scale', 'C_zero_point', 'D_scale', 'D_zero_point', 'E'], ['D_quantized'], name='conv_quant', kernel_shape=[3, 3], pads=[1, 1, 1, 1])
         dequantize_node = onnx.helper.make_node('DequantizeLinear', ['D_quantized', 'D_scale', 'D_zero_point'], ['D'], name='D_DequantizeLinear')
         graph = helper.make_graph([quantize_node, conv_node, dequantize_node], 'test_graph_5', [A, A_scale, A_zo, C, C_scale, C_zo, E, D_scale, D_zo], [D])
         graph.initializer.add().CopyFrom(a_scale)
         graph.initializer.add().CopyFrom(a_zero_point)
-        graph.initializer.add().CopyFrom(b_scale)
-        graph.initializer.add().CopyFrom(b_zero_point)
         graph.initializer.add().CopyFrom(c)
         graph.initializer.add().CopyFrom(c_scale)
         graph.initializer.add().CopyFrom(c_zero_point)
@@ -449,8 +447,8 @@ class TestAugment(unittest.TestCase):
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['A_QuantizeLinear', 'conv_quant', 'D_DequantizeLinear', 'D_quantized_DequantizeLinear']
-        added_outputs = ['D', 'D_quantized_output']
+        added_node_names = ['A_QuantizeLinear', 'conv_quant', 'D_DequantizeLinear', 'A_quantized_DequantizeLinear']
+        added_outputs = ['D', 'A_quantized_output']
         self.assertEqual(len(augmented_model_node_names), 4)
         self.assertEqual(len(augmented_model_outputs), 2)
         for name in added_node_names:

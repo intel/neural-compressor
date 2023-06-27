@@ -68,16 +68,22 @@ class Profiler(Parent):
         Returns:
             None
         """
+        import numpy as np
         import onnxruntime as ort
 
         graph = self.model
         onnx_options = create_onnx_config(ort, intra_num_of_threads, inter_num_of_threads)
         # Create a profile session
         sess_profile = ort.InferenceSession(graph.SerializePartialToString(), onnx_options)
-        input_tensor = sess_profile.get_inputs()[0]
+        input_tensors = sess_profile.get_inputs()
 
         for _, (inputs, _) in enumerate(self.dataloader):
-            input_dict = {input_tensor.name: inputs}
+            if not isinstance(inputs, np.ndarray) and len(input_tensors) != len(inputs):
+                raise Exception("Input data number mismatch.")
+            if len(input_tensors) == 1:
+                input_dict = {input_tensors[0].name: inputs}
+            else:
+                input_dict = {input_tensor.name: input_data for input_tensor, input_data in zip(input_tensors, inputs)}
             sess_profile.run(None, input_dict)
             break
 

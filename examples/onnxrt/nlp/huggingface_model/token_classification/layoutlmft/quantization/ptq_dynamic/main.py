@@ -28,7 +28,7 @@ from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
 import onnxruntime
 import onnx
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -418,6 +418,7 @@ def main():
             return outputs.metrics['f1']
 
         if model_args.tune:
+            # optimize model
             from onnxruntime.transformers import optimizer
             from onnxruntime.transformers.fusion_options import FusionOptions
             opt_options = FusionOptions('bert')
@@ -429,6 +430,15 @@ def main():
                 hidden_size=768,
                 optimization_options=opt_options)
             onnx_model = model_optimizer.model
+
+            # check the optimized model is valid
+            try:
+                onnxruntime.InferenceSession(model.SerializeToString(), providers=onnxruntime.get_available_providers())
+            except Exception as e:
+                logger.warning("Optimized model is invalid: {}. ".format(e))
+                logger.warning("Model optimizer will be skipped. " \
+                            "Try to upgrade onnxruntime to avoid this error")
+                onnx_model = onnx.load(model_args.input_model)
         
             from neural_compressor import quantization, PostTrainingQuantConfig
 
@@ -446,7 +456,7 @@ def main():
                 conf = BenchmarkConfig(iteration=100,
                                         cores_per_instance=28,
                                         num_of_instance=1)
-                b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
+                b_dataloader = DataLoader(framework='onnxrt', dataset=b_dataset, batch_size=model_args.batch_size)
                 fit(onnx_model, conf, b_dataloader=b_dataloader)
             elif model_args.mode == 'accuracy':
                 eval_f1 = eval_func(onnx_model)

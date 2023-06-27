@@ -239,30 +239,37 @@ def main():
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+            from neural_compressor.data import DataLoader
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
+            b_dataloader = DataLoader(framework='onnxrt', dataset=ds, batch_size=args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
             evaluate(args, model, tokenizer)
         
     if args.tune:
-        if ort.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('gpt2')
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('gpt2')
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                'gpt2',
-                num_heads=12,
-                hidden_size=768,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            'gpt2',
+            num_heads=12,
+            hidden_size=768,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                        "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization
