@@ -2652,3 +2652,9 @@ FFFFFF
 classDef
 bdf
 bmm
+AWQ
+GPTQ
+RTN
+awq
+gptq
+percdamp

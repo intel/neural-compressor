@@ -37,7 +37,7 @@ The quantization capability of weight-only approach is as follows:
 | scheme | ['asym', 'sym'] |
 | algorithm | ['RTN', ] |
 
-**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates spliting the input channel elements per group_size.
+**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
 
 The use case code is as follows:
 ```python
