@@ -154,17 +154,12 @@ class BasePruner:
         
         self.low_memory_usage = self.config['low_memory_usage']
 
-        if self.framework == 'pytorch':
-            for key in self.modules.keys():
-                module = self.modules[key]
-                ##TODO support bias or others
-                self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
-                if self.low_memory_usage:
-                    self.masks[key] = self.masks[key].bool()
-        elif self.framework == 'keras':
-            for key in self.modules.keys():
-                module = self.modules[key]
-                self.masks[key] = np.ones(module.get_weights()[0].shape)
+        for key in self.modules.keys():
+            module = self.modules[key]
+            ##TODO support bias or others
+            self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
+            if self.low_memory_usage:
+                self.masks[key] = self.masks[key].bool()
         self.target_sparsity_ratio = self.config['target_sparsity']
         self.current_sparsity_ratio = 0.0
         self.init_sparsity_ratio = 0.0

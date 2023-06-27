@@ -57,6 +57,7 @@ class PruningCriterion:
         self.scores = {}
         self.modules = modules
         self.config = config
+        self.low_memory_usage = config['low_memory_usage']
 
     def on_step_begin(self):
         """Calculate and store the pruning scores of pruning modules at the beginning of a step."""
@@ -181,7 +182,10 @@ class SnipMomentumCriterion(PruningCriterion):
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in modules.keys():
             p = modules[key].weight
-            self.scores[key] = torch.zeros(p.shape).to(p.device)
+            dtype = torch.float32
+            if self.low_memory_usage:
+                dtype = torch.bfloat16 if p.device.type == 'cpu' else torch.float16
+            self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
 
         self.alpha = 0.9
         self.beta = 1.0
@@ -193,6 +197,9 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(p * p.grad)
+                if self.low_memory_usage:
+                    self.scores[key] = self.scores[key].bfloat16() if p.device.type == 'cpu' \
+                        else self.scores[key].float16()
                 
                 
 @register_criterion('snip_momentum_block')
@@ -220,7 +227,10 @@ class SnipMomentumBlockCriterion(PruningCriterion):
             if not hasattr(self.modules[key], 'block_mask'):
                 continue # No corresponding block mask, skip.
             mask = self.modules[key].block_mask
-            self.scores[key] = torch.zeros(mask.shape).to(mask.device)
+            dtype = torch.float32
+            if self.low_memory_usage:
+                dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
+            self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
         self.alpha = 0.9
         self.beta = 1.0
 
@@ -233,6 +243,9 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                 mask = self.modules[key].block_mask
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(mask.grad)
+                if self.low_memory_usage:
+                    self.scores[key] = self.scores[key].bfloat16() if mask.device.type == 'cpu' \
+                        else self.scores[key].float16()
 
 
 @register_criterion('retrain_free')
@@ -265,7 +278,10 @@ class RetrainFreeCriterion(PruningCriterion):
             if not hasattr(self.modules[key], 'block_mask'):
                 continue # No corresponding block mask, skip.
             mask = self.modules[key].block_mask
-            self.scores[key] = torch.zeros(mask.shape).to(mask.device)
+            dtype = torch.float32
+            if self.low_memory_usage:
+                dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
+            self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
             self.collected_grads[key] = []
 
     def on_before_optimizer_step(self):
@@ -277,4 +293,7 @@ class RetrainFreeCriterion(PruningCriterion):
                 mask_grad = self.modules[key].block_mask.grad.clone()
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
+                if self.low_memory_usage:
+                    self.scores[key] = self.scores[key].bfloat16() if mask_grad.device.type == 'cpu' \
+                        else self.scores[key].float16()
     
