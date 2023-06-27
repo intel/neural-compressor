@@ -52,6 +52,7 @@ Functions
    neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg
    neural_compressor.adaptor.ox_utils.util.find_by_name
    neural_compressor.adaptor.ox_utils.util.trt_env_setup
+   neural_compressor.adaptor.ox_utils.util.to_numpy
 
 
 
@@ -244,5 +245,10 @@ Functions
 .. py:function:: trt_env_setup(model)
 
    Set environment variable for Tensorrt Execution Provider.
+
+
+.. py:function:: to_numpy(data)
+
+   Convert to numpy ndarrays.
 
 
