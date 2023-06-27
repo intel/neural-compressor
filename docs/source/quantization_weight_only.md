@@ -2,7 +2,7 @@ Motivation
 
 As large language models (LLMs) become more prevalent, there is a growing need for new and improved quantization methods that 
 can meet the computational demands of these modern architectures while maintaining the accuracy.  Compared to normal quantization like W8A8,  
-weight only quantization is probably a better tradeoff to balance the performance and the accuracy, 
+weight only quantization is probably a better trade-off to balance the performance and the accuracy, 
 since we will see below that the bottleneck of deploying LLMs is the memory bandwidth and normally weight only quantization could lead to better accuracy.
 
 Model inference: Roughly speaking , two key steps are required to get the model's result. 
