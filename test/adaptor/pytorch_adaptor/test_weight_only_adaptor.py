@@ -47,13 +47,21 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
+        )
+        q_model = quantization.fit(model, conf)
+        out2 = q_model(input)
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        self.assertFalse(torch.all(out1 == out2))
+
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
             op_type_dict={
                 '.*':{ 	# re.match
                     "weight": {
-                        'bit': [8], # 1-8 bit 
-                        'group_size': [-1],  # -1 (per-channel)
-                        'scheme': ['sym'], 
-                        'algorithm': ['RTN'], 
+                        'bits': 8, # 1-8 bits 
+                        'group_size': -1,  # -1 (per-channel)
+                        'scheme': 'sym', 
+                        'algorithm': 'RTN', 
                     },
                 },
             },
@@ -72,10 +80,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             op_type_dict={
                 '.*':{ 	# re.match
                     "weight": {
-                        'bit': [4], # 1-8 bit 
-                        'group_size': [32],  # 1 - 1024 or higher
-                        'scheme': ['asym'], 
-                        'algorithm': ['RTN'], 
+                        'bits': 4, # 1-8 bits 
+                        'group_size': 32,  # 1 - 1024 or higher
+                        'scheme': 'asym', 
+                        'algorithm': 'RTN', 
                     },
                 },
             },
@@ -94,23 +102,23 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             op_name_dict={
                 'fc1':{ 	# re.match
                     "weight": {
-                        'bit': [4], # 1-8 bit 
-                        'group_size': [32],  # 1 - 1024 or higher
-                        'scheme': ['sym'], 
-                        'algorithm': ['RTN'], 
+                        'bits': 4, # 1-8 bits 
+                        'group_size': 32,  # 1 - 1024 or higher
+                        'scheme': 'sym', 
+                        'algorithm': 'RTN', 
                     },
                 },
                 'fc2':{ 	# re.match
                     "weight": {
-                        'bit': [3], # 1-8 bit 
-                        'group_size': [16],  # 1 - 1024 or higher
-                        'scheme': ['asym'], 
-                        'algorithm': ['RTN'], 
+                        'bits': 3, # 1-8 bits 
+                        'group_size': 16,  # 1 - 1024 or higher
+                        'scheme': 'asym', 
+                        'algorithm': 'RTN', 
                     },
                 },
                 'fc3':{ 	# re.match
                     "weight": {
-                        'dtype': ['fp32'],
+                        'dtype': 'fp32',
                     },
                 },
             },
@@ -124,6 +132,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
         q_model.save('saved')
+        from neural_compressor.utils.pytorch import load
+        new_model = load('saved', model)
+        out1 = new_model(input)
+        self.assertTrue(torch.all(out1 == out2))
 
 
 if __name__ == "__main__":

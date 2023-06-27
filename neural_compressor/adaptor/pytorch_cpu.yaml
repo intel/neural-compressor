@@ -263,9 +263,9 @@
       'Linear': &cap_weight_only_integer_linear {  # only Linear now
           'weight': {
                       'dtype': ['int'], # no need to care uint 
-                      'bit': [4, 3, 8], # [1-8], # 4
+                      'bits': [4, 1, 2, 3, 5, 6, 7, 8], # [1-8], # 4
                       # group_size=-1 means per-channel, others means per-group
-                      'group_size': [32, -1, 1, 16, 64, 128, 256, 512, 1024], # [1-inf], # 32
+                      'group_size': [32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024], # [1-inf], # 32
                       'scheme': ['sym', 'asym'], # sym, no ZP
                       'algorithm': ['RTN'], # RTN, [RTN, GPTQ, AWQ,] RTN+AWQ+TEQ order
                       },

@@ -65,8 +65,8 @@ def preprocess_user_cfg(op_user_cfg: Dict):
         op_user_cfg: The original user config. 
 
     Example: 
-        op_user_cfg = {'activation': {'bit': [4]}}
-        op_user_cfg_modified = {'activation': {'bit': [4], 'group_size': [128]}}
+        op_user_cfg = {'activation': {'bits': [4]}}
+        op_user_cfg_modified = {'activation': {'bits': [4], 'group_size': [32]}}
 
     Returns:
         The modified config.
@@ -74,10 +74,10 @@ def preprocess_user_cfg(op_user_cfg: Dict):
     op_user_cfg_modified = deepcopy(op_user_cfg)
     if quant_options.quant_type == QuantType.WEIGHT_ONLY:
         for att, att_cfg in op_user_cfg.items():
-            if 'bit' not in att_cfg:
-                op_user_cfg_modified[att]['bit'] = [4]
+            if 'bits' not in att_cfg:
+                op_user_cfg_modified[att]['bits'] = [4]
             if 'group_size' not in att_cfg:
-                op_user_cfg_modified[att]['group_size'] = [128]
+                op_user_cfg_modified[att]['group_size'] = [32]
     return op_user_cfg_modified
 
 class OrderedDefaultDict(OrderedDict):

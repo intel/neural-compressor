@@ -46,7 +46,7 @@ ops_schema = Schema({
         Optional('algorithm'): And(
             list, # TODO: allow AWQ+GPTQ algo
             lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ',] for i in s)),
-        Optional('bit'):  And(
+        Optional('bits'):  And(
             list,
             lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
         Optional('group_size'):  And(
@@ -98,6 +98,26 @@ def _check_value(name, src, supported_type, supported_value=[]):
                 src, name, str(supported_value)))
 
     return True
+
+
+def _list_wrapper(config):
+    """help function to wrapper custom op_type_dict and op_name_dict items with list.
+
+    Args:
+        config (dict): op_type_dict/op_name_dict.
+        for example: {'weight': {'dtype': 'fp32'}, ...}
+
+    Returns:
+        config: new_config wrapped with list
+        for example: {'weight': {'dtype': ['fp32']}, ...}
+    """
+    for k, v in config.items():
+        # k = weight/activation
+        for m, n in v.items():
+            # m = dtype, bits, etc.
+            if not isinstance(n, list):
+                v[m] = [n]
+    return config
 
 
 class DotDict(dict):
@@ -701,7 +721,7 @@ class _BaseQuantizationConfig:
                               }
                           },
                       }
-        reduce_range: Whether use 7 bit to quantization.
+        reduce_range: Whether use 7 bits to quantization.
         example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
@@ -957,6 +977,7 @@ class _BaseQuantizationConfig:
             self._op_name_dict = op_name_dict
         elif isinstance(op_name_dict, dict):
             for k, v in op_name_dict.items():
+                v = _list_wrapper(v)
                 ops_schema.validate(v)
             self._op_name_dict = op_name_dict
         else:
@@ -973,6 +994,7 @@ class _BaseQuantizationConfig:
             self._op_type_dict = op_type_dict
         elif isinstance(op_type_dict, dict):
             for k, v in op_type_dict.items():
+                v = _list_wrapper(v)
                 ops_schema.validate(v)
             self._op_type_dict = op_type_dict
         else:
@@ -1083,7 +1105,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
-        approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
+        approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic', 
+                      'weight_only' and 'auto' method.
                   Default value is 'static'.
                   For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
                       or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
@@ -1120,7 +1143,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                               }
                           },
                       }
-        reduce_range: Whether use 7 bit to quantization.
+        reduce_range: Whether use 7 bits to quantization.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
@@ -1248,7 +1271,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                               }
                           },
                       }
-        reduce_range: Whether use 7 bit to quantization.
+        reduce_range: Whether use 7 bits to quantization.
         model_name: The name of the model. Default value is empty.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.

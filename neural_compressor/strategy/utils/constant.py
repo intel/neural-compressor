@@ -23,7 +23,7 @@ LOWER_BIT_LIST = ['int4']
 
 TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
                     ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
-                    ('weight','bit'), ('weight','group_size'), 'sampling_size']
+                    ('weight','bits'), ('weight','group_size'), 'sampling_size']
 
 PRECISION_SET_V2_0 = {'fp32', 'bf16'}
 

@@ -924,7 +924,7 @@ def collect_weight_info(q_config):
     ```
     {
         'fc': {
-            'bit': 4,
+            'bits': 4,
             'group_size': 128,
             'scheme': 'asym',
             'algorithm': 'RTN'
@@ -946,7 +946,7 @@ def collect_weight_info(q_config):
             if level == DEBUG:
                 weight_info[op_name] = {
                     'dtype': config['weight']['dtype'],
-                    'bit': config['weight']['bit'],
+                    'bits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'scheme': config['weight']['scheme'],
                     'algorithm': config['weight']['algorithm']
@@ -954,7 +954,7 @@ def collect_weight_info(q_config):
             else:
                 weight_info[op_name] = {
                     'dtype': config['weight']['dtype'],
-                    'bit': config['weight']['bit'],
+                    'bits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'scheme': config['weight']['scheme'],
                 }

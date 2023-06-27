@@ -4528,7 +4528,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 continue
             else:
-                num_bits = config['weight']['bit']
+                num_bits = config['weight']['bits']
                 group_size = config['weight']['group_size']
                 scheme = config['weight']['scheme']
                 algorithm = config['weight']['algorithm']
@@ -4569,7 +4569,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         for op, config in tune_cfg['op'].items():
             op_type = op[1]
             if not config['weight']['dtype'] == 'fp32':
-                num_bits = config['weight']['bit']
+                num_bits = config['weight']['bits']
                 group_size = config['weight']['group_size']
                 dtype_str = "A32W{}G{}".format(num_bits, group_size)
                 dtype_set.add(dtype_str)
@@ -4586,7 +4586,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 res[op_type]['FP32'] += 1
             else:
-                num_bits = config['weight']['bit']
+                num_bits = config['weight']['bits']
                 group_size = config['weight']['group_size']
                 dtype_str = "A32W{}G{}".format(num_bits, group_size)
                 res[op_type][dtype_str] += 1
