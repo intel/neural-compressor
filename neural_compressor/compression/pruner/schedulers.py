@@ -77,7 +77,7 @@ class PruningScheduler:
         """Initialize."""
         self.config = config
 
-    def update_sparsity_ratio(self, target_ratio, current_prune_step, total_prune_steps, masks, init_ratio=0.0):
+    def update_sparsity_ratio(self, target_ratio, current_prune_step, total_prune_steps, masks=None, init_ratio=0.0):
         """To be implemented in subclasses."""
         raise NotImplementedError
 
