@@ -218,7 +218,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
 
-    def __init__(self, modules, config):
+    def __init__(self, modules, config, alpha=0.9, beta=1.0):
         """Initiliaze a block_mask pruning criterion."""
         super(SnipMomentumBlockCriterion, self).__init__(modules, config)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
@@ -230,8 +230,8 @@ class SnipMomentumBlockCriterion(PruningCriterion):
             if self.low_memory_usage:
                 dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
             self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
-        self.alpha = 0.9
-        self.beta = 1.0
+        self.alpha = alpha
+        self.beta = beta
 
     def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip_momentum_block criterion."""
