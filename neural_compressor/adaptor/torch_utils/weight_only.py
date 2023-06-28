@@ -5,7 +5,12 @@ tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 
-def quant_weight_asym(weight, num_bits=4):
+def qdq_weight_asym(weight, num_bits=4):
+    """quant and dequant tensor with asym schema
+    :param weight:  input weight
+    :param num_bits:  num_bits
+    :return: qdq weight
+    """
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     wmin = torch.minimum(weight.min(1)[0], zeros)
@@ -21,7 +26,12 @@ def quant_weight_asym(weight, num_bits=4):
     return scale * (q - zp)
 
 
-def quant_weight_sym(weight, num_bits=4):
+def qdq_weight_sym(weight, num_bits=4):
+    """quant and dequant tensor with sym schema
+    :param weight:  input weight
+    :param num_bits:  num_bits
+    :return: qdq weight
+    """
     # assert num_bits > 1, "symmetric scheme only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
@@ -38,39 +48,61 @@ def quant_weight_sym(weight, num_bits=4):
     return scale * q
 
 
-def quant_weight_actor(weight, num_bits, scheme):
+def qdq_weight_actor(weight, num_bits, scheme):
+    """quant and dequant tensor per channel
+    :param weight: input weight
+    :param num_bits: num_bits
+    :param scheme: sym or asym
+    :return: qdq weight
+    """
     assert num_bits > 0, "num_bits should be larger than 0"
     if scheme == "sym":
-        return quant_weight_sym(weight, num_bits)
+        return qdq_weight_sym(weight, num_bits)
     else:
-        return quant_weight_asym(weight, num_bits)
+        return qdq_weight_asym(weight, num_bits)
 
 def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym"):
+    """quant and dequant tensor with group size
+    :param weight: input weight
+    :param num_bits: num_bits
+    :param group_size: how many elements share one scale/zp
+    :param scheme:  sym or asym
+    :return: qdq weight
+    """
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, scheme=scheme)
+        return qdq_weight_actor(weight, num_bits, scheme=scheme)
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        weight = quant_weight_actor(weight, num_bits, scheme=scheme)
+        weight = qdq_weight_actor(weight, num_bits, scheme=scheme)
         weight = weight.reshape(orig_shape)
         return weight
     else:
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        weight1 = quant_weight_actor(weight1, num_bits, scheme=scheme)
+        weight1 = qdq_weight_actor(weight1, num_bits, scheme=scheme)
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = quant_weight_actor(weight2, num_bits, scheme=scheme)
+        weight2 = qdq_weight_actor(weight2, num_bits, scheme=scheme)
         weight = torch.cat([weight1, weight2], dim=1)
         return weight
 
 
 def rtn_quantize(model, num_bits, group_size=-1, scheme="asym", w_layers_config={}):
+    """ quant the model with round to nearst method
+    :param model: torch module
+    :param num_bits:  num bits
+    :param group_size: how many elements share one scale/zp
+    :param scheme: sym or asym
+    :param w_layers_config:  specific layer wise configirations {"layer_name":[num_bits,group_size,schema]}
+    :return:
+    """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     assert num_bits > 0, "bit for weight only should large than zero!"
-    supported_layers = ['Linear', 'Conv2d']
+    ##supported_layers = ['Linear', 'Conv2d']
+    supported_layers = ['Linear']
     for n, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue

@@ -16,7 +16,7 @@ Model inference: Roughly speaking , two key steps are required to get the model'
 
 Text generation:  The most famous application of LLMs is text generation, which predicts the next token/word  based on the inputs/context. To generate a sequence of texts, we need to predict them one by one. In this scenario,  $F\approx P$  if some operations like bmm are ignored and past key values have been saved. However, the  $C/B$ of the modern device could be to **100X,** that makes the memory bandwidth as the bottleneck in this scenario.
 
-Besides, as mentioned in many papers, activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option
+Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.
 
 
 ## Supported Framework Model Matrix
@@ -64,3 +64,9 @@ q_model.save('saved_results')
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `weight_config.json`, and the generated q_model is a fake quantized model.
+
+## Reference
+
+[1]Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
+
+[2]Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
