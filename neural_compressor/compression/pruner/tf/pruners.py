@@ -870,7 +870,7 @@ class ProgressivePruner(BasicPruner):
                 # in the end, directly use new masks.
                 for n in self.masks.keys():
                     self.progressive_masks[n] = self.masks[n].clone()
-            self.mask_weights_general(self.progressive_masks)
+            self.mask_weights(self.progressive_masks)
             if self.progressive_logger:
                 self.print_progressive_sparsity()
             return
@@ -893,7 +893,7 @@ class ProgressivePruner(BasicPruner):
         self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
                                                                        self.criterion.scores, 1, \
                                                                        self.progressive_configs)
-        self.mask_weights_general(self.progressive_masks)
+        self.mask_weights(self.progressive_masks)
         if self.progressive_logger:
             self.print_progressive_sparsity()
         return
@@ -927,7 +927,7 @@ class ProgressivePruner(BasicPruner):
         if not self.use_progressive:
             self.mask_weights()
         else:
-            self.mask_weights_general(self.progressive_masks)
+            self.mask_weights(self.progressive_masks)
 
         self.global_step += 1
 

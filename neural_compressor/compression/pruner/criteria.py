@@ -93,7 +93,6 @@ class MagnitudeCriterion(PruningCriterion):
 
     def on_step_begin(self):
         """Calculate and store the pruning scores based on a magnitude criterion."""
-
         with torch.no_grad():
             for key in self.modules.keys():
                 p = self.modules[key].weight.data
@@ -199,7 +198,7 @@ class SnipMomentumCriterion(PruningCriterion):
                 self.scores[key] += self.beta * torch.abs(p * p.grad)
                 if self.low_memory_usage:
                     self.scores[key] = self.scores[key].bfloat16() if p.device.type == 'cpu' \
-                        else self.scores[key].float16()
+                        else self.scores[key].half()
                 
                 
 @register_criterion('snip_momentum_block')
@@ -245,7 +244,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                 self.scores[key] += self.beta * torch.abs(mask.grad)
                 if self.low_memory_usage:
                     self.scores[key] = self.scores[key].bfloat16() if mask.device.type == 'cpu' \
-                        else self.scores[key].float16()
+                        else self.scores[key].half()
 
 
 @register_criterion('retrain_free')
@@ -295,5 +294,5 @@ class RetrainFreeCriterion(PruningCriterion):
                 self.scores[key] += mask_grad.pow(2)
                 if self.low_memory_usage:
                     self.scores[key] = self.scores[key].bfloat16() if mask_grad.device.type == 'cpu' \
-                        else self.scores[key].float16()
+                        else self.scores[key].half()
     
