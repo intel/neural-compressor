@@ -1,0 +1,7 @@
+torch
+intel_extension_for_pytorch
+accelerate
+datasets>=1.8.0
+transformers==4.30.0
+tensorboard
+tqdm

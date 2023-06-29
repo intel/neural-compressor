@@ -3060,11 +3060,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 self.example_inputs = get_example_inputs(model, self.q_dataloader)
         else:
             if self.performance_only:
-                if self.recipes and self.recipes.get('smooth_quant', False) \
-                    and self.version.release >= Version("2.1").release:  # pragma: no cover
+                if self.recipes and self.recipes.get('smooth_quant', False):  # pragma: no cover
                     logger.warning("Smoothquant for ipex requires a deepcopy of model"
                                     + ", please avoid out of memory.")
                     try:
+                        # Deepcopy due to model changed when `ipex.quantization.prepare`
                         tmp_model = copy.deepcopy(model)
                     except Exception as e:  # pragma: no cover
                         logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
@@ -4080,7 +4080,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(
                          child.__class__.__name__)))
                 q_ops_set.add(op_name)
-        block_wise = [[(name, get_op_type_by_name(name, quantizable_ops)) for name in block] for block in ffn_blocks]
+        # discard the op does not belong to quantizable_ops
+        block_wise = [[(name, get_op_type_by_name(name, quantizable_ops)) for name in block if\
+            get_op_type_by_name(name, quantizable_ops) != None] for block in ffn_blocks]
         self.block_wise = block_wise
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):

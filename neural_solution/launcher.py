@@ -141,23 +141,25 @@ def start_service(args):
             "--conda_env_name", shlex.quote(str(conda_env_name)),
             "--upload_path", shlex.quote(str(args.upload_path))
         ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
-    with open(f"{serve_log_dir}/frontend{date_suffix}.log", "w") as f:
-        subprocess.Popen([
-            "python", "-m", "neural_solution.frontend.fastapi.main_server",
-            "--host", "0.0.0.0",
-            "--fastapi_port", shlex.quote(str(args.restful_api_port)),
-            "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
-            "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
-            "--workspace", shlex.quote(str(args.workspace))
-        ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
-    with open(f"{serve_log_dir}/frontend_grpc.log", "w") as f:
-        subprocess.Popen([
-            "python", "-m", "neural_solution.frontend.gRPC.server",
-            "--grpc_api_port", shlex.quote(str(args.grpc_api_port)),
-            "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
-            "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
-            "--workspace", shlex.quote(str(args.workspace))
-        ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
+    if args.api_type in ["all", "restful"]:
+        with open(f"{serve_log_dir}/frontend{date_suffix}.log", "w") as f:
+            subprocess.Popen([
+                "python", "-m", "neural_solution.frontend.fastapi.main_server",
+                "--host", "0.0.0.0",
+                "--fastapi_port", shlex.quote(str(args.restful_api_port)),
+                "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
+                "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
+                "--workspace", shlex.quote(str(args.workspace))
+            ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
+    if args.api_type in ["all", "grpc"]:
+        with open(f"{serve_log_dir}/frontend_grpc.log", "w") as f:
+            subprocess.Popen([
+                "python", "-m", "neural_solution.frontend.gRPC.server",
+                "--grpc_api_port", shlex.quote(str(args.grpc_api_port)),
+                "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
+                "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
+                "--workspace", shlex.quote(str(args.workspace))
+            ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
     ip_address = get_local_service_ip(80)
 
     # Check if the service is started
