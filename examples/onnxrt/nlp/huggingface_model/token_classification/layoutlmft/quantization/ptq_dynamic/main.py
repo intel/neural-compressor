@@ -456,7 +456,7 @@ def main():
                 conf = BenchmarkConfig(iteration=100,
                                         cores_per_instance=28,
                                         num_of_instance=1)
-                b_dataloader = DataLoader(framework='onnxrt', dataset=b_dataset, batch_size=model_args.batch_size)
+                b_dataloader = DataLoader(framework='onnxruntime', dataset=b_dataset, batch_size=model_args.batch_size)
                 fit(onnx_model, conf, b_dataloader=b_dataloader)
             elif model_args.mode == 'accuracy':
                 eval_f1 = eval_func(onnx_model)
