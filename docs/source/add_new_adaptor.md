@@ -1,10 +1,11 @@
 
 
-How to Support New Adaptor
+How to Add An Adaptor
 =======
 
 
 - [Introduction](#introduction)
+- [API List that Need to Implement](#api-list-that-need-to-implement)
 - [Add query_fw_capability to Adaptor](#add-query-fw-capability-to-adaptor)
 - [Add Pre-quantization Optimizations](#add-pre-quantization-optimizations)
 - [Quantize Model according to tune cfg](#quantize-model-according-to-tune-cfg)
@@ -15,6 +16,8 @@ How to Support New Adaptor
 
 ## Introduction
 Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs.
+
+The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new adaptor. By following the steps outlined in the document, users can extend Intel® Neural Compressor's functionality to accommodate new adaptor and incorporate it into quantization workflows.
 
 The quantizable operator behavior and it's tuning scope is defined in specific framework YAML file. The adaptor will parse this file and give the quantization capability to the Strategy object. Then Strategy will build tuning space of the specific graph/model and generate different tuning configuration from the tuning space to adaptor.
 
@@ -41,6 +44,15 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 
 5. **Adaptor**: Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
+## API List that Need to Implement
+These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
+| API | Parameters | Usage | Comments|
+| :------ | :------ | :------ | :------ |
+| query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. | The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
+| get_optype_wise_ability(self, quantizable_op_details) | **quantizable_op_details** (string dict): the key is op type while the value is the detail configurations of activation and weight for this op type. | Used in query_fw_capability. When get the quantizable_op_details, use this API to generate optype wise ability | |
+| quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
+| tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config gegerated . | The function is used in quantize API and transfer the chosen tuning config to self.quantize_config. |Confirm the the data format output by the function must meet the requirements |
+| evaluate(self, model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1,metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=Falsetensorboard=False, fp32_baseline=False) | **model** (object): The model to do calibration.<br> **dataloader** (generator): generate the data and labels.<br>  **postprocess** (object, optional): process the result from the model. <br> **metric** (object, optional): Depends on model category. Defaults to None.<br> **measurer** (object, optional): for precise benchmark measurement. <br> **iteration**(int, optional): control steps of mini-batch<br> **tensorboard** (boolean, optional): for tensorboard inspect tensor.<br> **fp32_baseline** (boolen, optional): only for compare_label=False pipeline <br>  | The function is used in evaluate the model with accuracy as output |evaluate function can used to get the fp32 model or other data type model, it's not mandatory to evaluate int8 model|
 
 ## Add query_fw_capability to Adaptor
 
@@ -154,7 +166,9 @@ You can also set bf16_ops in `tuning_cfg_to_fw` and the `self.bf16_ops` will be 
 
 After got the `self.quantize_config`, we can prepare to quantize the model. It usually have three steps.
 
-### Insert FakeQuant operator to the fp32 graph for calibration.
+### (Optional) Insert FakeQuant operator to the fp32 graph for calibration.
+The calibration process needs to collect the activation and weight during inference. After collection, a reasonable data range is calculated for subsequent data type conversion. The operator for calibration supported by some frameworks is FakeQuant, at this time, you need to insert FakeQuant in front of the operators to be collected. Of course, there are also some frameworks that can directly collect data through Quantize and Dequantize operator. So it is not mandatory  to insert FakeQuant for calibration.
+
 FakeQuant operator is inserted before the quantizable operator and responsible for the activation collection. Only operators in self.quantize_config['op_wise_config'] can have FakeQuant before. The fake code should be like
 
 ```python
@@ -225,8 +239,6 @@ After getting the quantization model, we need to evaluate the model. The `evalua
 
 ```
 
-## Train Model for Quantization-aware Training
-
 ## Other API that not Mandatory Needed
 
 |Function      | Description                                                 |
@@ -238,6 +250,3 @@ After getting the quantization model, we need to evaluate the model. The `evalua
 |set_tensor    |used by tune strategy class for setting tensor back to model |
 |convert_bf16  |execute bf16 model conversion                                |
 
-
-## Summary
-The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new backend. By following the steps outlined in the document, users can extend Intel® Neural Compressor's functionality to accommodate new adaptor and incorporate it into quantization workflows.
