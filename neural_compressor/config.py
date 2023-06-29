@@ -842,6 +842,15 @@ class _BaseQuantizationConfig:
                             assert v == "auto", "the alpha of sq only supports float and 'auto'"
                         else:
                             _check_value("alpha", v, float)
+                    if k == "alpha_lst":
+                        if isinstance(v, float) or isinstance(int):
+                            val[k] = [k]
+                        # TODO double-check it if we can set alpha to 0 and 1?
+                        if isinstance(v, list):
+                            assert all([vv >= 0.0 and vv <=1.0 for vv in v]), \
+                                "The alpha candidate value of smooth quantization should be between 0 and 1."
+                        else:
+                            logger.warning("Ignore the alpha_list as it's not a list, int or float.")
 
                 return True
             else:
