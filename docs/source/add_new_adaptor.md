@@ -14,7 +14,7 @@ How to Add An Adaptor
 - [Summary](#summary)
 
 ## Introduction
-Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs.
+Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
 
 The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new adaptor. By following the steps outlined in the document, users can extend Intel® Neural Compressor's functionality to accommodate new adaptor and incorporate it into quantization workflows.
 
@@ -40,7 +40,7 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 ```
 1. Design the framework YAML, inherit `QueryBackendCapability` class to parse the framework yaml. 
 2. Initialize the inherited QueryBackendCapability class as self.query_handler when initialize the adaptor object. 
-3. Drives the overall tuning process and utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
+3. Utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
 4. Use self.query_handler to parse the framework YAML and get_quantization_capability()
 5. Pre-optimize the input fp32 model as self.optimized_model
 6. Send the capability including 'opwise' and 'optypewise' ability to Strategy
@@ -54,7 +54,7 @@ These APIs are necessary to add a new adapter. Here are the parameter types and 
 | query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format {'opwise': {(node_name, node_op): [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}, ...]}, 'optypewise':{node_op: [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
 | get_optype_wise_ability(self, quantizable_op_details) | **quantizable_op_details** (string dict): the key is op type while the value is the detail configurations of activation and weight for this op type. |output optypewise capability with format {node_op: {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...} |Used in query_fw_capability. When get the quantizable_op_details, use this API to generate optype wise ability | |
 | quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| output quantized model object|This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
-| tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config generated . | The function is used in quantize API and transfer the chosen tuning config to self.quantize_config.|None |Confirm the the data format output by the function must meet the requirements |
+| tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config generated . |None| The function is used in quantize API and transfer the chosen tuning config to self.quantize_config.|Confirm the the data format output by the function must meet the requirements |
 | evaluate(self, model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1,metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False tensorboard=False, fp32_baseline=False) | **model** (object): The model to do calibration.<br> **dataloader** (generator): generate the data and labels.<br>  **postprocess** (object, optional): process the result from the model. <br> **metric** (object, optional): Depends on model category. Defaults to None.<br> **measurer** (object, optional): for precise benchmark measurement. <br> **iteration**(int, optional): control steps of mini-batch<br> **tensorboard** (boolean, optional): for tensorboard inspect tensor.<br> **fp32_baseline** (boolean, optional): only for compare_label=False pipeline <br>  |acc of the model which is a scalar, eg 0.97| The function is used in evaluate the model with accuracy as output |evaluate function can be used to get the fp32 model accuracy or other data type model accuracy, it's not mandatory to evaluate int8 model|
 
 ## Add query_fw_capability to Adaptor
