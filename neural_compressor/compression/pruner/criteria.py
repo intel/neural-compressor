@@ -195,12 +195,12 @@ class SnipMomentumCriterion(PruningCriterion):
             for key in self.modules.keys():
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
-                self.scores[key] += self.beta * torch.abs(p * p.grad)
+                tmp = torch.abs(p * p.grad)
                 if self.low_memory_usage:
-                    self.scores[key] = self.scores[key].bfloat16() if p.device.type == 'cpu' \
-                        else self.scores[key].half()
-                
-                
+                    tmp = tmp.bfloat16() if p.device.type == 'cpu' else tmp.half()
+                self.scores[key] += self.beta * tmp
+
+
 @register_criterion('snip_momentum_block')
 class SnipMomentumBlockCriterion(PruningCriterion):
     """Pruning criterion.
@@ -239,12 +239,11 @@ class SnipMomentumBlockCriterion(PruningCriterion):
             for key in self.modules.keys():
                 if not hasattr(self.modules[key], 'block_mask'):
                     continue # No corresponding block mask, skip.
-                mask = self.modules[key].block_mask
-                self.scores[key] *= self.alpha
-                self.scores[key] += self.beta * torch.abs(mask.grad)
+                grad = self.modules[key].block_mask.grad
                 if self.low_memory_usage:
-                    self.scores[key] = self.scores[key].bfloat16() if mask.device.type == 'cpu' \
-                        else self.scores[key].half()
+                    grad = grad.bfloat16() if grad.device.type == 'cpu' else grad.half()
+                self.scores[key] *= self.alpha
+                self.scores[key] += self.beta * torch.abs(grad)
 
 
 @register_criterion('retrain_free')
@@ -290,9 +289,7 @@ class RetrainFreeCriterion(PruningCriterion):
                 if not hasattr(self.modules[key], 'block_mask'):
                     continue # No corresponding block mask, skip.
                 mask_grad = self.modules[key].block_mask.grad.clone()
+                if self.low_memory_usage:
+                    mask_grad = mask_grad.bfloat16() if mask_grad.device.type == 'cpu' else mask_grad.half()
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
-                if self.low_memory_usage:
-                    self.scores[key] = self.scores[key].bfloat16() if mask_grad.device.type == 'cpu' \
-                        else self.scores[key].half()
-    

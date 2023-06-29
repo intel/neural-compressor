@@ -100,7 +100,6 @@ class BasePruner:
         self.current_sparsity_ratio = 0.0
         self.init_sparsity_ratio = 0.0
         self.low_memory_usage = self.config['low_memory_usage']
-        self._init()
 
     def _init(self):
         """Auxiliary function for initializing."""
@@ -212,8 +211,8 @@ class PytorchBasePruner(BasePruner):
             module = self.modules[key]
             # TODO: support bias or others
             self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
-            if self.low_memory_usage:
-                self.masks[key] = self.masks[key].bool()
+            self.masks[key] = self.masks[key].bool()
+        self._init()
 
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
@@ -279,6 +278,7 @@ class KerasBasePruner(BasePruner):
         for key in self.modules.keys():
             module = self.modules[key]
             self.masks[key] = np.ones(module.get_weights()[0].shape)
+        self._init()
 
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.

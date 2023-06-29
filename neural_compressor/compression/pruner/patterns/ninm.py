@@ -311,8 +311,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                         residual_k -= zero_cnt
                 else:
                     masks[key] = mask
-                if self.low_memory_usage:
-                    masks[key] = masks[key].bool()
+                masks[key] = masks[key].bool()
             if not keep_exact_sparsity_ratio:
                 break
             new_not_exceed_layers = [key for key in new_scores.keys() if not self.keep_mask_layers.get(key, False)]

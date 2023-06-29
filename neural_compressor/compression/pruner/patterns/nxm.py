@@ -314,6 +314,7 @@ class PytorchPatternNxM(PytorchBasePattern):
                         residual_k -= zero_cnt
                 else:
                     masks[key] = mask
+                masks[key] = masks[key].bool()
             if not keep_exact_sparsity_ratio:
                 break
 
