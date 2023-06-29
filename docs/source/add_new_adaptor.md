@@ -25,8 +25,13 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 ```mermaid
   sequenceDiagram
   	autonumber
-    Strategy ->> Adaptor: query framework capability
-    Adaptor ->> Strategy: Parse the framework YAML and return capability
+  	autonumber
+    Adaptor ->> Adaptor: Design the [framework YAML](./framework_yaml.md) and inherit `QueryBackendCapability` class
+    Adaptor ->> Adaptor: Initialize the inherited QueryBackendCapability class as self.query_handler
+    Strategy ->> Adaptor: use query_framework_capability to get the capability of the model
+    Adaptor ->> Adaptor: Use self.query_handler to parse the framework YAML and get_quantization_capability
+    Adaptor ->> Adaptor: Pre-optimize the input fp32 model as self.optimized_model
+    Adaptor ->> Strategy: Send the capability including 'opwise' and 'optypewise' ability
     Strategy ->> Strategy: Build tuning space
     loop Traverse tuning space
     	Strategy->> Adaptor: generate next tuning cfg
@@ -34,15 +39,14 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 
     end
 ```
-1. **Strategy**: Drives the overall tuning process and utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
-
-2. **Adaptor**: Parses the framework YAML, filters some corner cases, and constructs the framework capability. This includes the capabilities of each operator and other model-related information.
-
-3. **Strategy**: Constructs the tuning space based on the framework capability and initiates the tuning process.
-
-4. **Strategy**: Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
-
-5. **Adaptor**: Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
+1. **Adaptor**: Design the framework YAML, inherit `QueryBackendCapability` class to parse the framework yaml. 
+2. **Adaptor**: Initialize the inherited QueryBackendCapability class as self.query_handler when initialize the adaptor object. 
+3. **Strategy**: Drives the overall tuning process and utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
+4. **Adaptor**: Use self.query_handler to parse the framework YAML and get_quantization_capability()
+5. **Adaptor**: Pre-optimize the input fp32 model as self.optimized_model
+6. **Adaptor**: Send the capability including 'opwise' and 'optypewise' ability to Strategy
+7. **Strategy**: Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
+8. **Adaptor**: Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
 ## API List that Need to Implement
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
@@ -52,7 +56,7 @@ These APIs are necessary to add a new adapter. Here are the parameter types and 
 | get_optype_wise_ability(self, quantizable_op_details) | **quantizable_op_details** (string dict): the key is op type while the value is the detail configurations of activation and weight for this op type. | Used in query_fw_capability. When get the quantizable_op_details, use this API to generate optype wise ability | |
 | quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
 | tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config gegerated . | The function is used in quantize API and transfer the chosen tuning config to self.quantize_config. |Confirm the the data format output by the function must meet the requirements |
-| evaluate(self, model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1,metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=Falsetensorboard=False, fp32_baseline=False) | **model** (object): The model to do calibration.<br> **dataloader** (generator): generate the data and labels.<br>  **postprocess** (object, optional): process the result from the model. <br> **metric** (object, optional): Depends on model category. Defaults to None.<br> **measurer** (object, optional): for precise benchmark measurement. <br> **iteration**(int, optional): control steps of mini-batch<br> **tensorboard** (boolean, optional): for tensorboard inspect tensor.<br> **fp32_baseline** (boolen, optional): only for compare_label=False pipeline <br>  | The function is used in evaluate the model with accuracy as output |evaluate function can used to get the fp32 model or other data type model, it's not mandatory to evaluate int8 model|
+| evaluate(self, model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1,metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=Falsetensorboard=False, fp32_baseline=False) | **model** (object): The model to do calibration.<br> **dataloader** (generator): generate the data and labels.<br>  **postprocess** (object, optional): process the result from the model. <br> **metric** (object, optional): Depends on model category. Defaults to None.<br> **measurer** (object, optional): for precise benchmark measurement. <br> **iteration**(int, optional): control steps of mini-batch<br> **tensorboard** (boolean, optional): for tensorboard inspect tensor.<br> **fp32_baseline** (boolen, optional): only for compare_label=False pipeline <br>  | The function is used in evaluate the model with accuracy as output |evaluate function can be used to get the fp32 model accuracy or other data type model accuracy, it's not mandatory to evaluate int8 model|
 
 ## Add query_fw_capability to Adaptor
 
