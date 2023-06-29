@@ -19,9 +19,6 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
-      --label_path=*)
-          label_path=$(echo $var |cut -f2 -d=)
-      ;;
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
@@ -34,12 +31,12 @@ function run_benchmark {
     cd table-transformer/src
     python main.py \
             --input_onnx_model ${input_model} \
-            --data_root_dir ${dataset_location} \
-            --table_words_dir ${label_path} \
+            --data_root_dir ${dataset_location}/PubTables1M-Structure-PASCAL-VOC \
+            --table_words_dir ${dataset_location}/PubTables1M-Table-Words-JSON \
             --mode ${mode} \
             --data_type structure \
             --device cpu \
-            --config_file structure_config.json \
+            --config_file structure_config.json
 }
 
 main "$@"

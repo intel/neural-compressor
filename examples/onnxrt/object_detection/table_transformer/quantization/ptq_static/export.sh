@@ -22,9 +22,6 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
-      --label_path=*)
-          label_path=$(echo $var |cut -f2 -d=)
-      ;;
     esac
   done
 
@@ -35,12 +32,12 @@ function export_model {
     python main.py \
             --model_load_path ${input_model} \
             --output_model ${output_model} \
-            --data_root_dir ${dataset_location} \
-            --table_words_dir ${label_path} \
+            --data_root_dir ${dataset_location}/PubTables1M-Structure-PASCAL-VOC \
+            --table_words_dir ${dataset_location}/PubTables1M-Table-Words-JSON \
             --mode 'export' \
             --data_type structure \
             --device cpu \
-            --config_file structure_config.json \
+            --config_file structure_config.json
 }
 
 main "$@"
