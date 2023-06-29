@@ -334,7 +334,7 @@
       "main_script": "run_asr.py",
       "batch_size": 1
     },
-    "wav2vec2_static":{
+    "wav2vec2":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "wav2vec2",
@@ -355,7 +355,7 @@
        "main_script": "run_whisper_large.py",
        "batch_size": 1
     },
-    "hubert_static":{
+    "hubert":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "hubert",
