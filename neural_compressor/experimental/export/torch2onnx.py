@@ -259,7 +259,7 @@ def static_quant_export(
                 output_names=output_names,
                 dynamic_axes=dynamic_axes,
                 )
-        except Exception as e:
+        except TypeError:
             config_name = "QuantizationAwareTrainingConfig" \
                 if q_config['approach'] == "quant_aware_training" else "PostTrainingQuantConfig"
             logger.error("Export failed, possibly because unsupported quantized ops. Check " 
@@ -267,7 +267,11 @@ def static_quant_export(
                         "for supported ops.")
             logger.error("Please fallback unsupported quantized ops by setting 'op_type_dict' or "
                         "'op_name_dict' in '{}' config. ".format(config_name))
-            return
+            exit(0)
+        except Exception as e:
+            import pdb;pdb.set_trace()
+            logger.error(e)
+            exit(0)
             
     if quant_format != "QDQ":
         sess_options = ort.SessionOptions()
