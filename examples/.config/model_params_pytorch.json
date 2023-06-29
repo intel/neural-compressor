@@ -328,21 +328,21 @@
       "new_benchmark": false
     },
     "wav2vec2_dynamic":{
-      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "wav2vec2",
       "main_script": "run_asr.py",
       "batch_size": 1
     },
     "wav2vec2_static":{
-      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "wav2vec2",
       "main_script": "run_asr.py",
       "batch_size": 1
     },
     "hubert_dynamic":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
        "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
        "input_model": "hubert",
        "main_script": "run_asr.py",
