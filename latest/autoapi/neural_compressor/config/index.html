@@ -92,7 +92,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.DotDict" title="neural_compressor.config.DotDict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DotDict</span></code></a></p></td>
-<td><p>access yaml using attributes instead of using the dictionary notation.</p></td>
+<td><p>Access yaml using attributes instead of using the dictionary notation.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.Options" title="neural_compressor.config.Options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Options</span></code></a></p></td>
 <td><p>Option Class for configs.</p></td>
@@ -165,7 +165,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.DotDict">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">DotDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.config.DotDict" title="Permalink to this definition"></a></dt>
-<dd><p>access yaml using attributes instead of using the dictionary notation.</p>
+<dd><p>Access yaml using attributes instead of using the dictionary notation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>value</strong> (<em>dict</em>) – The dict object to access.</p>
@@ -352,8 +352,11 @@ If users set domain as auto, automatic detection for domain will be executed.</p
 <li><p><strong>quant_format</strong> – Support ‘default’, ‘QDQ’ and ‘QOperator’, only required in ONNXRuntime.</p></li>
 <li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
 <li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
-<li><p><strong>approach</strong> – <p>Post-Training Quantization method. Neural compressor support ‘static’, ‘dynamic’ and ‘auto’ method.
-Default value is ‘static’.
+<li><p><strong>approach</strong> – <dl class="simple">
+<dt>Post-Training Quantization method. Neural compressor support ‘static’, ‘dynamic’,</dt><dd><p>’weight_only’ and ‘auto’ method.</p>
+</dd>
+</dl>
+<p>Default value is ‘static’.
 For strategy ‘basic’, ‘auto’ method means neural compressor will quantize all OPs support PTQ static</p>
 <blockquote>
 <div><p>or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
@@ -412,7 +415,7 @@ example:
 </div></blockquote>
 <p>}</p>
 </p></li>
-<li><p><strong>reduce_range</strong> – Whether use 7 bit to quantization.</p></li>
+<li><p><strong>reduce_range</strong> – Whether use 7 bits to quantization.</p></li>
 <li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
 Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
 If you want to disable bf16 data type, you can specify excluded_precisions = [‘bf16].</p></li>
@@ -504,7 +507,7 @@ example:
 </div></blockquote>
 <p>}</p>
 </p></li>
-<li><p><strong>reduce_range</strong> – Whether use 7 bit to quantization.</p></li>
+<li><p><strong>reduce_range</strong> – Whether use 7 bits to quantization.</p></li>
 <li><p><strong>model_name</strong> – The name of the model. Default value is empty.</p></li>
 <li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
 Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.

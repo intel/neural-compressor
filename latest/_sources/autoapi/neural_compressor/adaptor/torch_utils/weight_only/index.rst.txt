@@ -1,0 +1,71 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.weight_only`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.weight_only
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_asym
+   neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_sym
+   neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_actor
+   neural_compressor.adaptor.torch_utils.weight_only.quant_weight
+   neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize
+
+
+
+.. py:function:: qdq_weight_asym(weight, num_bits=4)
+
+   quant and dequant tensor with asym schema
+   :param weight:  input weight
+   :param num_bits:  num_bits
+   :return: qdq weight
+
+
+.. py:function:: qdq_weight_sym(weight, num_bits=4)
+
+   quant and dequant tensor with sym schema
+   :param weight:  input weight
+   :param num_bits:  num_bits
+   :return: qdq weight
+
+
+.. py:function:: qdq_weight_actor(weight, num_bits, scheme)
+
+   quant and dequant tensor per channel
+   :param weight: input weight
+   :param num_bits: num_bits
+   :param scheme: sym or asym
+   :return: qdq weight
+
+
+.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym')
+
+   quant and dequant tensor with group size
+   :param weight: input weight
+   :param num_bits: num_bits
+   :param group_size: how many elements share one scale/zp
+   :param scheme:  sym or asym
+   :return: qdq weight
+
+
+.. py:function:: rtn_quantize(model, num_bits, group_size=-1, scheme='asym', w_layers_config={})
+
+   quant the model with round to nearst method
+   :param model: torch module
+   :param num_bits:  num bits
+   :param group_size: how many elements share one scale/zp
+   :param scheme: sym or asym
+   :param w_layers_config:  specific layer wise configirations {"layer_name":[num_bits,group_size,schema]}
+   :return:
+
+

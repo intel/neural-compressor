@@ -43,6 +43,7 @@ Functions
    neural_compressor.adaptor.torch_utils.util.get_dict_at_depth
    neural_compressor.adaptor.torch_utils.util.get_element_under_depth
    neural_compressor.adaptor.torch_utils.util.get_op_type_by_name
+   neural_compressor.adaptor.torch_utils.util.collect_weight_info
 
 
 
@@ -307,5 +308,26 @@ Functions
 .. py:function:: get_op_type_by_name(op_name, quantizable_ops)
 
    Get op type by op name.
+
+
+.. py:function:: collect_weight_info(q_config)
+
+   collect weight info from q_config for dumping into weight_config.json
+
+   weight_config.json example:
+   ```
+   {
+       'fc': {
+           'bits': 4,
+           'group_size': 128,
+           'scheme': 'asym',
+           'algorithm': 'RTN'
+       }
+       ...
+   }
+   ```
+
+   :param q_config: quantization configue
+   :type q_config: _type_
 
 

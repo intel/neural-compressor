@@ -166,6 +166,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.get_op_type_by_name" title="neural_compressor.adaptor.torch_utils.util.get_op_type_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_op_type_by_name</span></code></a>(op_name, quantizable_ops)</p></td>
 <td><p>Get op type by op name.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.collect_weight_info" title="neural_compressor.adaptor.torch_utils.util.collect_weight_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_weight_info</span></code></a>(q_config)</p></td>
+<td><p>collect weight info from q_config for dumping into weight_config.json</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -523,6 +526,35 @@ output_tensor_ids_op_name (dict): dictionary of output tensor op names.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.get_op_type_by_name">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_op_type_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizable_ops</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.get_op_type_by_name" title="Permalink to this definition"></a></dt>
 <dd><p>Get op type by op name.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.collect_weight_info">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">collect_weight_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.collect_weight_info" title="Permalink to this definition"></a></dt>
+<dd><p>collect weight info from q_config for dumping into weight_config.json</p>
+<p>weight_config.json example:
+<a href="#id1"><span class="problematic" id="id2">``</span></a>`
+{</p>
+<blockquote>
+<div><dl class="simple">
+<dt>‘fc’: {</dt><dd><p>‘bits’: 4,
+‘group_size’: 128,
+‘scheme’: ‘asym’,
+‘algorithm’: ‘RTN’</p>
+</dd>
+</dl>
+</div></blockquote>
+<section id="id3">
+<h4>}<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">param q_config<span class="colon">:</span></dt>
+<dd class="field-odd"><p>quantization configue</p>
+</dd>
+<dt class="field-even">type q_config<span class="colon">:</span></dt>
+<dd class="field-even"><p>_type_</p>
+</dd>
+</dl>
+</section>
 </dd></dl>
 
 </section>

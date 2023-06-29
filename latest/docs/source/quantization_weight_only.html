@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weight Only Quantization &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Weight Only Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/quantization_weight_only.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="weight-only-quantization">
+<h1>Weight Only Quantization<a class="headerlink" href="#weight-only-quantization" title="Permalink to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-framework-model-matrix">Supported Framework Model Matrix</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>As large language models (LLMs) become more prevalent, there is a growing need for new and improved quantization methods that can meet the computational demands of these modern architectures while maintaining the accuracy.  Compared to normal quantization like W8A8,  weight only quantization is probably a better trade-off to balance the performance and the accuracy, since we will see below that the bottleneck of deploying LLMs is the memory bandwidth and normally weight only quantization could lead to better accuracy.</p>
+<p>Model inference: Roughly speaking , two key steps are required to get the model’s result. The first one is moving the model from the memory to the cache piece by piece, in which, memory bandwidth $B$ and parameter count $P$ are the key factors, theoretically the time cost is  $P*4 /B$. The second one is  computation, in which, the device’s computation capacity  $C$  measured in FLOPS and the forward FLOPs $F$ play the key roles, theoretically the cost is $F/C$.</p>
+<p>Text generation:  The most famous application of LLMs is text generation, which predicts the next token/word  based on the inputs/context. To generate a sequence of texts, we need to predict them one by one. In this scenario,  $F\approx P$  if some operations like bmm are ignored and past key values have been saved. However, the  $C/B$ of the modern device could be to <strong>100X,</strong> that makes the memory bandwidth as the bottleneck in this scenario.</p>
+<p>Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.</p>
+</section>
+<section id="supported-framework-model-matrix">
+<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Framework</th>
+<th style="text-align: center;">Weight-only</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">PyTorch</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td style="text-align: center;">ONNX</td>
+<td style="text-align: center;">WIP</td>
+</tr>
+</tbody>
+</table></section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p>The quantization capability of weight-only approach is as follows:
+| Config | Capability |
+| :—: | :—:|
+| bits | [1-8] |
+| group_size | [-1, 1-N] |
+| scheme | [’asym’, ‘sym’] |
+| algorithm | [’RTN’, ] |</p>
+<p><strong>Note</strong>: <code class="docutils literal notranslate"><span class="pre">group_size=-1</span></code> indicates the per-channel quantization per output channel. <code class="docutils literal notranslate"><span class="pre">group_size=[1-N]</span></code> indicates splitting the input channel elements per group_size.</p>
+<p>The use case code is as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s1">&#39;weight_only&#39;</span><span class="p">,</span>
+    <span class="n">op_type_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;.*&#39;</span><span class="p">:{</span> 	<span class="c1"># re.match</span>
+            <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;bit&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="c1"># 1-8 bit </span>
+                <span class="s1">&#39;group_size&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># -1 (per-channel)</span>
+                <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span><span class="p">,</span> 
+                <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;RTN&#39;</span><span class="p">,</span> 
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1">### AWQ and GPTQ is WIP</span>
+    <span class="c1"># recipes={</span>
+    <span class="c1">#     &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01},</span>
+    <span class="c1">#     &#39;awq_args&#39;:{&#39;alpha&#39;: &#39;auto&#39;, &#39;clip&#39;: True},</span>
+    <span class="c1"># },</span>
+<span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;saved_results&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The saved_results folder contains two files: <code class="docutils literal notranslate"><span class="pre">best_model.pt</span></code> and <code class="docutils literal notranslate"><span class="pre">weight_config.json</span></code>, and the generated q_model is a fake quantized model.</p>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
+<p>[1]Xiao, Guangxuan, et al. “Smoothquant: Accurate and efficient post-training quantization for large language models.” arXiv preprint arXiv:2211.10438 (2022).</p>
+<p>[2]Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

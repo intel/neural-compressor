@@ -49,7 +49,7 @@ Classes
 
 
 
-   access yaml using attributes instead of using the dictionary notation.
+   Access yaml using attributes instead of using the dictionary notation.
 
    :param value: The dict object to access.
    :type value: dict
@@ -214,7 +214,9 @@ Classes
    :param quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
    :param inputs: Inputs of model, only required in tensorflow.
    :param outputs: Outputs of model, only required in tensorflow.
-   :param approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
+   :param approach:
+                    Post-Training Quantization method. Neural compressor support 'static', 'dynamic',
+                        'weight_only' and 'auto' method.
                     Default value is 'static'.
                     For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
                         or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
@@ -251,7 +253,7 @@ Classes
                                 }
                             },
                         }
-   :param reduce_range: Whether use 7 bit to quantization.
+   :param reduce_range: Whether use 7 bits to quantization.
    :param excluded_precisions: Precisions to be excluded, Default value is empty list.
                                Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                                If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
@@ -319,7 +321,7 @@ Classes
                                 }
                             },
                         }
-   :param reduce_range: Whether use 7 bit to quantization.
+   :param reduce_range: Whether use 7 bits to quantization.
    :param model_name: The name of the model. Default value is empty.
    :param excluded_precisions: Precisions to be excluded, Default value is empty list.
                                Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.

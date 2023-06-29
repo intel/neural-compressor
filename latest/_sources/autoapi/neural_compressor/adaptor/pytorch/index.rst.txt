@@ -18,6 +18,7 @@ Classes
    neural_compressor.adaptor.pytorch.PyTorchAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor
+   neural_compressor.adaptor.pytorch.PyTorchWeightOnlyAdaptor
 
 
 
@@ -84,6 +85,17 @@ Functions
 
 
    Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+
+.. py:class:: PyTorchWeightOnlyAdaptor(framework_specific_info)
+
+
+
+
+   Adaptor of PyTorch framework, all PyTorch API is in this class.
 
    :param framework_specific_info: dictionary of tuning configure from yaml file.
    :type framework_specific_info: dict
