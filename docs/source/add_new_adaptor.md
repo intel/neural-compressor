@@ -11,7 +11,6 @@ How to Add An Adaptor
 - [Quantize Model according to tune cfg](#quantize-model-according-to-tune-cfg)
 - [Evaluate Model on Validation Dataset](#evaluate-model-on-validation-dataset)
 - [Other API that not Mandatory Needed](#other-api-that-not-mandatory-needed)
-- [Summary](#summary)
 
 ## Introduction
 Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
