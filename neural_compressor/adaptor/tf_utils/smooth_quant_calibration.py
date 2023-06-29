@@ -154,6 +154,9 @@ class SmoothQuantCalibration:
         for node in sorted_graph.node:
             if node.op not in self.op_types or node.name in self.black_nodes:
                 continue
+            # Fix retval already been set issue
+            if 'while' in node.input[0]: # pragma: no cover
+                continue
             self._sq_input_node_names.append(node.input[0])
             self._sq_weight_node_names[node.input[1]] = node.name
 
@@ -184,7 +187,7 @@ class SmoothQuantCalibration:
                 permute_datas.append(np.abs(data))
             else:   # pragma: no cover
                 assert False, "not supported"
-        permute_datas = np.stack(permute_datas, axis=0)
+        permute_datas = np.concatenate(permute_datas, axis=0)
         permute_datas = permute_datas.reshape(-1, permute_datas.shape[-1])
         # try:
         #     np.percentile(permute_datas, percentile, axis=0)
