@@ -34,11 +34,11 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
     end
 ```
 1. Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. 
-3. Utilizes adaptor.query_fw_capability to query the framework's capabilities.
-4. Parse the framework YAML and get quantization capability
-6. Send the capability including 'opwise' and 'optypewise' ability to Strategy
-7. Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
-8. Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
+2. Utilizes adaptor.query_fw_capability to query the framework's capabilities.
+3. Parse the framework YAML and get quantization capability
+4. Send the capability including 'opwise' and 'optypewise' ability to Strategy
+5. Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
+6. Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
 ## API List that Need to Implement
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
@@ -46,7 +46,6 @@ These APIs are necessary to add a new adapter. Here are the parameter types and 
 | :------ | :------|:------ |:------ | :------ |
 | query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format: <br> {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]},<br> 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
 | quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| output quantized model object|This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
-| tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config generated . |None| The function is used in quantize API and transfer the chosen tuning config to self.quantize_config.|Confirm the the data format output by the function must meet the requirements |
 
 ## Design the framework YAML
 To enable accuracy-aware tuning with a specific framework, we should define the [framework YAML](./framework_yaml.md) which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework. 
