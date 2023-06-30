@@ -37,9 +37,9 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 
     end
 ```
-1. Design the framework YAML, inherit `QueryBackendCapability` class to parse the framework yaml. 
+1. Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. 
 2. Initialize the inherited QueryBackendCapability class as self.query_handler when initialize the adaptor object. 
-3. Utilizes `adaptor.query_fw_capability` to query the framework's capabilities.
+3. Utilizes adaptor.query_fw_capability to query the framework's capabilities.
 4. Use self.query_handler to parse the framework YAML and get_quantization_capability()
 5. Pre-optimize the input fp32 model as self.optimized_model
 6. Send the capability including 'opwise' and 'optypewise' ability to Strategy
@@ -68,20 +68,14 @@ With the inherited `QueryBackendCapability` class enabled. The Adaptor will init
 Each framework adaptor should implement the `query_fw_capability` function, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator's opwise details and optypewise capability. You should return a standard dict of the input model's tuning capability. The format is like below:
 
 ```python
-    def query_fw_capability(self, model):
-        # loop over the model and generate the capability of the model
-        quantizable_op_details = generate_quantizable_op_details()
-        capability = {
-            'opwise': quantizable_op_details,
-            'optypewise': self.get_optype_wise_ability(quantizable_op_details),
-        }
-        return capability
+    capability = {
+        'opwise': quantizable_op_details,
+        'optypewise': optype_wise_ability,
+    }
 ```
-The `quantizable_op_details` is key-value pairs of each operators. The key is a tuple (node_name, node_op) and the value is a list including different data type quantization config. What the generate_quantizable_op_details do in above code is first get op_capability use `self.query_handler.get_quantization_capability()`, then construct the key-value pair as quantizable_op_details like below.
+The `quantizable_op_details` is key-value pairs of each operators. The key is a tuple (node_name, node_op) and the value is a list including different data type quantization config. You can get op_capability use `self.query_handler.get_quantization_capability()` to get the op_capability from the YAML, then construct the key-value pair as quantizable_op_details like below.
 
 ```python
-    op_capability = self.query_handler.get_quantization_capability()
-    int8_conv_config = copy.deepcopy(op_capability['int8']['Conv2D'])
     fp32_config = {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}
     bf16_config = {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
     quantizable_op_details = {
@@ -109,7 +103,7 @@ In most case, `bf16_config` and `fp32_config` stay the same on different operato
     }
 
 ```
-After we got the opwise capability of the model, we should also get the optypewise ability. It's also a key-value pair but the key is op type and the value is the configuration of activation and weight for this op type. It has format like below:
+After we got the opwise capability of the model, we should also get the `optype_wise_ability`. It's also a key-value pair but the key is op type and the value is the configuration of activation and weight for this op type. It has format like below:
 
 ```python
     optype_wise_ability = {
