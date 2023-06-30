@@ -8,7 +8,7 @@ How to Add An Adaptor
 - [API List that Need to Implement](#api-list-that-need-to-implement)
 - [Design the framework YAML](#design-the-framework-yaml)
 - [Add query_fw_capability API to Adaptor](#add-query-fw-capability-api-to-adaptor)
-- [Add quantize API according to tune cfg](#add-quantize-api-accordingto-tune-cfg)
+- [Add quantize API according to tune cfg](#add-quantize-api-according-to-tune-cfg)
 
 ## Introduction
 Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
@@ -45,7 +45,6 @@ These APIs are necessary to add a new adapter. Here are the parameter types and 
 | API | Parameters |Output   |Usage   | Comments|
 | :------ | :------|:------ |:------ | :------ |
 | query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format: <br> {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]},<br> 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
-| get_optype_wise_ability(self, quantizable_op_details) | **quantizable_op_details** (string dict): the key is op type while the value is the detail configurations of activation and weight for this op type. |output optypewise capability with format: <br> {node_op: {'weight': {'dtype': ...#int8/fp32 or other datatype}, 'activation': {'dtype': ...#int8/fp32 or other datatype}}], ...} |Used in query_fw_capability. When get the quantizable_op_details, use this API to generate optype wise ability | |
 | quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| output quantized model object|This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
 | tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config generated . |None| The function is used in quantize API and transfer the chosen tuning config to self.quantize_config.|Confirm the the data format output by the function must meet the requirements |
 
