@@ -879,7 +879,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if precision == 'bf16' and \
                     (not self.use_bf16 or (not CpuInfo().bf16 and os.getenv('FORCE_BF16') != '1')):
                     continue
- 
+                elif precision == 'weight_only_integer':
+                    continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
@@ -1424,6 +1425,300 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return predictions
 
 @adaptor_registry
+class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+        """The function is used to do calibration and quanitization in post-training
+           quantization.
+
+        Args:
+            tune_cfg (dict):     quantization config.
+            model (object):      model need to do quantization.
+            data_loader (object): calibration dataset.
+            q_func (optional):   training function for quantization aware training mode,
+                                 unimplement yet for onnx.
+
+        Returns:
+            (dict): quantized model
+        """
+        assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
+        from .ox_utils.weight_only import rtn_quantize, awq_quantize
+        quant_config = self._cfg_to_quantize_config(tune_cfg)
+        #model = rtn_quantize(model, quant_config)
+        model = awq_quantize(model, quant_config, data_loader)
+
+        #model.q_config = copy.deepcopy(self.tune_cfg)
+        #self._dump_model_op_stats(model, self.tune_cfg)
+        model.topological_sort()
+        return model
+
+    def _dump_model_op_stats(self, model, tune_cfg):
+        res = {}
+        # collect all dtype info and build empty results with existing op_type
+        dtype_set = set()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if not config['weight']['dtype'] == 'fp32':
+                num_bits = config['weight']['bit']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                dtype_set.add(dtype_str)
+        dtype_set.add('FP32')
+        dtype_list = list(dtype_set)
+        dtype_list.sort()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if op_type not in res.keys():
+                res[op_type] = {dtype: 0 for dtype in dtype_list}
+
+        # fill in results with op_type and dtype
+        for op, config in tune_cfg['op'].items():
+            if config['weight']['dtype'] == 'fp32':
+                res[op_type]['FP32'] += 1
+            else:
+                num_bits = config['weight']['bit']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                res[op_type][dtype_str] += 1
+
+        # update stats format for dump.
+        field_names = ["Op Type", "Total"]
+        field_names.extend(dtype_list)
+        output_data = []
+        for op_type in res.keys():
+            field_results = [op_type, sum(res[op_type].values())]
+            field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+            output_data.append(field_results)
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
+
+    def _cfg_to_quantize_config(self, tune_cfg):
+        quantize_config = {}
+        quantize_config['calib_iteration'] = tune_cfg['calib_iteration']
+
+        for _, op in enumerate(self.quantizable_ops):
+            if (op.name, op.op_type) not in tune_cfg['op']:
+                continue
+            if tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype'] in \
+                self.query_handler.get_fallback_list():
+                quantize_config[op.name] = \
+                    tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype']
+            else:
+                quantize_config[op.name] = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
+
+        return quantize_config
+
+    def query_fw_capability(self, model):
+        """The function is used to query framework capability.
+        TODO: will be replaced by framework query API
+
+        Args:
+            model: onnx model
+
+        Returns:
+            (dict): quantization capability
+        """
+        # optype_wise and op_wise capability
+        self._pre_optimize(model)
+        recipes_ops = {}
+        recipes_ops['first_conv_or_matmul_quantization'] = []
+        recipes_ops['last_conv_or_matmul_quantization'] = []
+        recipes_ops['pre_post_process_quantization'] = []
+        exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
+            self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
+            else False
+        exclude_last_quantizable_op = True if 'last_conv_or_matmul_quantization' in \
+            self.recipes and not self.recipes['last_conv_or_matmul_quantization'] \
+            else False
+        exclude_pre_post_process = True if 'pre_post_process_quantization' in \
+            self.recipes and not self.recipes['pre_post_process_quantization'] \
+            else False
+ 
+        quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
+        optype_wise = OrderedDict()
+        op_wise = OrderedDict()
+        for query in [self.query_handler, self.query_handler_ext]:
+            if query is None:
+                continue
+            precisions = query.get_precisions()
+
+            for precision in precisions:
+                if precision != 'weight_only_integer':
+                    continue
+                # get supported optype for target precision
+                optypes = query.get_op_types_by_precision(precision) if \
+                    query.get_op_types_by_precision(precision) != ['*'] else \
+                    optype_wise.keys()
+ 
+                configs = query.get_quantization_capability()[precision] if \
+                    precision in query.get_quantization_capability() else \
+                    {'default': {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}}
+
+                for op in optypes:
+                    if op not in quantizable_optype:
+                        continue
+                    if op not in configs:
+                        if 'default' in configs:
+                            op_capability = copy.deepcopy(configs['default'])
+                        else:
+                            continue
+                    else:
+                        op_capability = copy.deepcopy(configs[op])
+                    op_capability['activation']['quant_mode'] = 'weight_only'
+                    if op not in optype_wise.keys():
+                        optype_wise[op] = [op_capability]
+                    elif op_capability not in optype_wise[op]:
+                        optype_wise[op].append(op_capability)
+
+        first_quantizable_node = []
+        last_quantizable_node = []
+        all_conv_matmul = []
+        attention_matmul = []
+        for _, node in enumerate(self.pre_optimized_model.nodes()):
+            if node.op_type in ['Conv', 'MatMul', 'Attention']:
+                # get first Conv or MatMul node
+                if len(first_quantizable_node) == 0:
+                    first_quantizable_node.append(node)
+
+                # get last Conv or MatMul node
+                if len(last_quantizable_node) != 0:
+                    last_quantizable_node.pop()
+                last_quantizable_node.append(node)
+
+                all_conv_matmul.append(node)
+                if node.op_type != 'Conv':
+                    attention_matmul.append(node)
+        
+        if len(first_quantizable_node) != 0:
+            recipes_ops['first_conv_or_matmul_quantization'] = [(first_quantizable_node[0].name, 
+                                                                first_quantizable_node[0].op_type)]
+        if len(last_quantizable_node) != 0:
+            recipes_ops['last_conv_or_matmul_quantization'] = [(last_quantizable_node[0].name, 
+                                                                last_quantizable_node[0].op_type)]
+        
+        
+        ffn_matmul = []
+        attention_matmul_optype = [node.op_type for node in attention_matmul]
+        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
+        if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            # model is optimized and Attention is fused,
+            # index of Attention is used as split to find FFN MatMul
+            first_attention_index = attention_matmul_optype.index('Attention')
+            attention_matmul_optype = attention_matmul_optype[first_attention_index:]
+            attention_matmul = attention_matmul[first_attention_index:]
+            attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
+            block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+            for idx in range(len(attention_index)):
+                if idx != len(attention_index) - 1:
+                    index = attention_index[idx + 1]
+                    if index - 2 >= 0 and index - 1 >= 0:
+                        ffn_matmul.append([attention_matmul[index - 2], 
+                                           attention_matmul[index - 1]])
+                else:
+                    index = attention_index[idx]
+                    if index + block_len - 2 < len(attention_matmul) and \
+                        index + block_len - 1 < len(attention_matmul):
+                        ffn_matmul.append([attention_matmul[index + block_len - 2], 
+                                        attention_matmul[index + block_len - 1]])
+        else:
+            # model is not optimized or Attention isn't fused, 
+            # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
+            qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
+            if len(qkv) != 0:
+                attention_starts = [nodes[0] for nodes in qkv]
+                attention_index = [np.where(np.array([n.name for n in attention_matmul]) \
+                                            == attention_start)[0].tolist()[0] \
+                                                for attention_start in attention_starts]
+                block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+                for idx in range(len(attention_index)):
+                    if idx != len(attention_index) - 1:
+                        index = attention_index[idx + 1]
+                        if index - 2 >= 0 and index - 1 >= 0:
+                            ffn_matmul.append([attention_matmul[index - 2],
+                                            attention_matmul[index - 1]])
+                    else:
+                        index = attention_index[idx]
+                        if index + block_len - 2 < len(attention_matmul) and \
+                            index + block_len - 1 < len(attention_matmul):
+                            ffn_matmul.append([attention_matmul[index + block_len - 2],
+                                            attention_matmul[index + block_len - 1]])
+
+        block_wise = []
+        for block in reversed(ffn_matmul):
+            node_info = []
+            for node in block:
+                node_info.append((node.name, node.op_type))
+            if len(node_info) != 0:
+                block_wise.append(node_info)
+
+        for _, node in enumerate(self.pre_optimized_model.nodes()):
+
+            if node.op_type in optype_wise:
+                if (exclude_first_quantizable_op and node in first_quantizable_node) \
+                     or (exclude_last_quantizable_op and node in last_quantizable_node):
+                    tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
+                    tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
+                    op_wise.update({(node.name, node.op_type): tmp_cfg})
+                    continue
+                op_wise.update(
+                    {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
+        # only when first and last quantizable nodes are found and they are not the same,
+        # fallback pre/postprocess ops
+        if len(first_quantizable_node) != 0 and \
+           len(last_quantizable_node) != 0 and \
+           first_quantizable_node[0].name != last_quantizable_node[0].name:
+            # get backbone nodes
+            from collections import deque
+            
+            # get nodes between first quantizable node and last quantizable node
+            backbone_queue = deque(last_quantizable_node)
+            backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
+
+            # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
+            backbone_queue_extra = deque()
+            for conv_or_matmul in all_conv_matmul:
+                if conv_or_matmul.name not in backbone_nodes:
+                    backbone_queue_extra.append(conv_or_matmul)
+                    backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
+                                                    first_quantizable_node, backbone_nodes)
+            backbone_nodes += [i.name for i in first_quantizable_node]
+            
+            for _, node in enumerate(self.pre_optimized_model.nodes()):
+                if node.name not in backbone_nodes and node.op_type in optype_wise:
+                    recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
+            if exclude_pre_post_process:
+                for _, node in enumerate(self.pre_optimized_model.nodes()):
+                    if node.op_type in optype_wise:
+                        # nodes not in backbone are not quantized
+                        if node.name not in backbone_nodes:
+                            tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
+                            tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
+                            op_wise.update({(node.name, node.op_type): tmp_cfg})
+                            continue
+                        if (node.name, node.op_type) in op_wise:
+                            op_wise.update(
+                                {(node.name, node.op_type): copy.deepcopy(op_wise[(node.name, node.op_type)])})
+                        else: # pragma: no cover
+                            op_wise.update(
+                                {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_wise': block_wise}
+
+
+@adaptor_registry
 class ONNXRT_QLinearOpsAdaptor(ONNXRUNTIMEAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
@@ -1533,6 +1828,7 @@ class ONNXRTQuery(QueryBackendCapability):
 
         # generate specified version config according to quantization approach and format
         config = {}
+        config['capabilities'] = {} 
         for k, v in version_config.items():
             if k == 'version':
                 config['version'] = v
@@ -1540,15 +1836,15 @@ class ONNXRTQuery(QueryBackendCapability):
                 config['graph_optimization'] = v['graph_optimization']
             else:
                 if self.static and 'static' in v:
-                    config['capabilities'] = {k: {node_op: node_config 
+                    config['capabilities'].update({k: {node_op: node_config 
                     for node_op, node_config in v['static'].items() 
                     if 'mode' in node_config and \
                     self.format.split('ops')[0].lower() in \
-                    [mode.lower() for mode in node_config['mode']]}}
+                    [mode.lower() for mode in node_config['mode']]}})
                 elif self.dynamic and 'dynamic' in v:
-                    config['capabilities'] = {k: v['dynamic']}
-        if 'capabilities' not in config:
-            config['capabilities'] = {} 
+                    config['capabilities'].update({k: v['dynamic']})
+                elif k == 'weight_only_integer':
+                    config['capabilities'].update({k: v})
 
         # generate other config content including precisions and ops 
         precisions = list(version_config.keys() - {'version', 'recipes'})
