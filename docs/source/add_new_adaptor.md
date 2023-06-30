@@ -6,11 +6,10 @@ How to Add An Adaptor
 
 - [Introduction](#introduction)
 - [API List that Need to Implement](#api-list-that-need-to-implement)
+- [Design the framework YAML](#design-the-framework-yaml)
 - [Add query_fw_capability to Adaptor](#add-query-fw-capability-to-adaptor)
 - [Add Pre-quantization Optimizations](#add-pre-quantization-optimizations)
 - [Quantize Model according to tune cfg](#quantize-model-according-to-tune-cfg)
-- [Evaluate Model on Validation Dataset](#evaluate-model-on-validation-dataset)
-- [Other API that not Mandatory Needed](#other-api-that-not-mandatory-needed)
 
 ## Introduction
 Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
@@ -24,11 +23,9 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
   sequenceDiagram
   	autonumber
   	autonumber
-    Adaptor ->> Adaptor: Design the framework YAML and inherit `QueryBackendCapability` class
-    Adaptor ->> Adaptor: Initialize the inherited QueryBackendCapability class as self.query_handler
+    Adaptor ->> Adaptor: Design the framework YAML
     Strategy ->> Adaptor: use query_framework_capability to get the capability of the model
-    Adaptor ->> Adaptor: Use self.query_handler to parse the framework YAML and get_quantization_capability
-    Adaptor ->> Adaptor: Pre-optimize the input fp32 model as self.optimized_model
+    Adaptor ->> Adaptor: Parse the framework YAML and get quantization capability
     Adaptor ->> Strategy: Send the capability including 'opwise' and 'optypewise' ability
     Strategy ->> Strategy: Build tuning space
     loop Traverse tuning space
@@ -38,10 +35,8 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
     end
 ```
 1. Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. 
-2. Initialize the inherited QueryBackendCapability class as self.query_handler when initialize the adaptor object. 
 3. Utilizes adaptor.query_fw_capability to query the framework's capabilities.
-4. Use self.query_handler to parse the framework YAML and get_quantization_capability()
-5. Pre-optimize the input fp32 model as self.optimized_model
+4. Parse the framework YAML and get quantization capability
 6. Send the capability including 'opwise' and 'optypewise' ability to Strategy
 7. Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
 8. Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
@@ -50,41 +45,25 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
 | API | Parameters |Output   |Usage   | Comments|
 | :------ | :------|:------ |:------ | :------ |
-| query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format {'opwise': {(node_name, node_op): [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}, ...]}, 'optypewise':{node_op: [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
-| get_optype_wise_ability(self, quantizable_op_details) | **quantizable_op_details** (string dict): the key is op type while the value is the detail configurations of activation and weight for this op type. |output optypewise capability with format {node_op: {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...} |Used in query_fw_capability. When get the quantizable_op_details, use this API to generate optype wise ability | |
+| query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]}, 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
+| get_optype_wise_ability(self, quantizable_op_details) | **quantizable_op_details** (string dict): the key is op type while the value is the detail configurations of activation and weight for this op type. |output optypewise capability with format {node_op: {'weight': {'dtype': ...#int8/fp32 or other datatype}, 'activation': {'dtype': ...#int8/fp32 or other datatype}}], ...} |Used in query_fw_capability. When get the quantizable_op_details, use this API to generate optype wise ability | |
 | quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| output quantized model object|This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
 | tuning_cfg_to_fw(self, tuning_cfg) | **tuning_cfg** (string dict): Tuning config generated . |None| The function is used in quantize API and transfer the chosen tuning config to self.quantize_config.|Confirm the the data format output by the function must meet the requirements |
-| evaluate(self, model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1,metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False tensorboard=False, fp32_baseline=False) | **model** (object): The model to do calibration.<br> **dataloader** (generator): generate the data and labels.<br>  **postprocess** (object, optional): process the result from the model. <br> **metric** (object, optional): Depends on model category. Defaults to None.<br> **measurer** (object, optional): for precise benchmark measurement. <br> **iteration**(int, optional): control steps of mini-batch<br> **tensorboard** (boolean, optional): for tensorboard inspect tensor.<br> **fp32_baseline** (boolean, optional): only for compare_label=False pipeline <br>  |acc of the model which is a scalar, eg 0.97| The function is used in evaluate the model with accuracy as output |evaluate function can be used to get the fp32 model accuracy or other data type model accuracy, it's not mandatory to evaluate int8 model|
 
-## Add query_fw_capability to Adaptor
-
+## Design the framework YAML
 To enable accuracy-aware tuning with a specific framework, we should define the [framework YAML](./framework_yaml.md) which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework. 
 >**Note**: You should refer to [framework_yaml.md](./framework_yaml.md) to define the framework specific YAML.
 
-After the framework YAML enabled, The The abstract class `QueryBackendCapability` should be inherited and implemented. This class is used to load the YAML file and parse the quantization config from the specific framework version. You can refer to Tensorflow implementation [TensorflowQuery](../neural_compressor/adaptor/tensorflow.py#L628).
-
-With the inherited `QueryBackendCapability` class enabled. The Adaptor will initialize a `query_handler` and used in API `query_fw_capability`.
-
+## Add query_fw_capability to Adaptor
 Each framework adaptor should implement the `query_fw_capability` function, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator's opwise details and optypewise capability. You should return a standard dict of the input model's tuning capability. The format is like below:
 
 ```python
     capability = {
-        'opwise': quantizable_op_details,
+        'opwise': {('conv2d', 'Conv2D'): [int8_conv_config, {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}, {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...# all quantizable opwise key-value pair with key tuple: (node_name, node_op)}
         'optypewise': optype_wise_ability,
     }
 ```
-The `quantizable_op_details` is key-value pairs of each operators. The key is a tuple (node_name, node_op) and the value is a list including different data type quantization config. You can get op_capability use `self.query_handler.get_quantization_capability()` to get the op_capability from the YAML, then construct the key-value pair as quantizable_op_details like below.
-
-```python
-    fp32_config = {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}
-    bf16_config = {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
-    quantizable_op_details = {
-      ('conv2d', 'Conv2D'): [int8_conv_config, bf16_config, fp32_config]
-    }
-
-```
-In most case, `bf16_config` and `fp32_config` stay the same on different operators and we can add config of different data type to the `quantizable_op_details`. It's configured in the YAML file and parsed out with format like below.
-
+The int8_conv_config is like below, it's parsed from the framework YAML.
 ```python
     int8_conv_config = {
         'weight': {
@@ -103,7 +82,7 @@ In most case, `bf16_config` and `fp32_config` stay the same on different operato
     }
 
 ```
-After we got the opwise capability of the model, we should also get the `optype_wise_ability`. It's also a key-value pair but the key is op type and the value is the configuration of activation and weight for this op type. It has format like below:
+The `optype_wise_ability` exmaple config is like below.
 
 ```python
     optype_wise_ability = {
@@ -121,16 +100,11 @@ After we got the opwise capability of the model, we should also get the `optype_
                    'granularity': 'per_tensor',
                    'scheme': 'sym'
             }
-        }
+        },
+        ... #all optype wise ability
     }
 ```
-There is an API get_optype_wise_ability to get the optype_wise_ability from the `quantizable_op_details`. You can refer to [get_optype_wise_ability](../neural_compressor/adaptor/keras.py#L614) for the implementation.
-
 After the work above, we have implement the `query_fw_capability` API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.
-
-## Add Pre-quantization optimizations
-As the `query_fw_capability` only invoked once, we can do some pre-optimizations in the `query_fw_capability` API and cache the pre_optimized_object for quantization. It's not mandatory and if you have done optimizations on the model, take care to use the optimized model in the quantize API.
-
 
 ## Quantize Model according to tune_cfg
 `quantize` function is used to perform quantization for post-training quantization and quantization-aware training. Quantization processing includes calibration and conversion processing for post-training quantization, while for quantization-aware training, it includes training and conversion processing.
@@ -163,87 +137,16 @@ You can also set bf16_ops in `tuning_cfg_to_fw` and the `self.bf16_ops` will be 
 
 After got the `self.quantize_config`, we can prepare to quantize the model. It usually have three steps.
 
-### (Optional) Insert FakeQuant operator to the fp32 graph for calibration.
-The calibration process needs to collect the activation and weight during inference. After collection, a reasonable data range is calculated for subsequent data type conversion. The operator for calibration supported by some frameworks is FakeQuant, at this time, you need to insert FakeQuant in front of the operators to be collected. Of course, there are also some frameworks that can directly collect data through Quantize and Dequantize operator. So it is not mandatory  to insert FakeQuant for calibration.
-
-FakeQuant operator is inserted before the quantizable operator and responsible for the activation collection. Only operators in self.quantize_config['op_wise_config'] can have FakeQuant before. The fake code should be like
-
-```python
-calib_model = FrameworkModel()
-for operator in self.pre_optimized_model:
-    if operator['op_name'] in self.quantize_config['op_wise_config']:
-        fake_q_operator = FakeQuant(self.quantize_config['op_wise_config']['op_name'])
-        calib_model.add_layer(fake_q_operator)
-        calib_model.add_layer(operator)
-    else:
-        calib_model.add_layer(operator)
-                
-```
-In this sample code, we initialize an empty framework model and loop over the pre_optimized_model from `query_fw_capability`, when we see operator in `self.quantize_config`, then initialize a fake quant operator and add before the quantizable operator.
+### Prepare calibration model from fp32 graph
+The calibration process needs to collect the activation and weight during inference. After collection, a reasonable data range is calculated for subsequent data type conversion. You should to prepare the calibration model in the quantize API.
 
 ### Run sampling iterations of the fp32 graph to calibrate quantizable operators.
-When we get the calib_model, it's still fp32 model with FakeQuant operator inserted, We should run calibration on this fp32 model and collect the fp32 activation data. In this step, we will use the dataloader and forward the model. The sample code is like below
-```
-    results = {}
-    for idx, (inputs, labels) in enumerate(dataloader):
-        outputs = calib_model.predict_on_batch(inputs)
-        for layer in calib_model.layers:
-            if layer['op_type'] == 'FakeQuant':
-                calib_data = layer['calib_data']
-                if layer['op_name'] not in results:
-                    results[layer['op_name']] = {'calib_data': calib_data}
-                else:
-                    results[layer['op_name']]['calib_data'].append(calib_data)
-        if idx + 1  == calib_iteration:
-            break
-```
-After calib_iteration inference, the `results` above will collect all quantizable operators' activations. These activations is called calibration data. 
+When we get the calib_model, We should run calibration on this model and collect the fp32 activation data. In this step, we will use the dataloader and forward the model. 
 
-### Replace the FakeQuant with Quantize/DeQuantize 
+### Calculate the data range and generate quantized model
 Calibration data can only approximate the data distribution of the entire dataset, larger sampling size means a more complete approximation of the data distribution, but it will also introduce some outliers, which will cause the data range obtained to be somewhat distorted.
 
- we will use different algorithms to make the data range more in line with the real data distribution. After applying these algorithms, we obtained the data distribution range of each operator. At this time, operator replacement can be performed.
-
-We take the FakeQuant and replace it with Quant and Dequant, then connect it in front of the original quantizable operator. Notice the data range calculated by the algorithm should be written into the Quant and Dequant operators.
+ You can use different algorithms to make the data range more in line with the real data distribution. After applying these algorithms, we obtained the data distribution range of each operator. At this time, you can generate the quantized model.
 
 This quantized model can be evaluated. If the evaluation meets the set metric goal, the entire quantization process will be over. Otherwise, a new tuning configuration will be generated until a quantized model that meets the metric requirements.
-
-## Evaluate Model on Validation Dataset
-After getting the quantization model, we need to evaluate the model. The `evaluate` function needs to use dataloader to generate data and labels, then use the generated quantization model to predict on these data, and then use postprocess and metric method to calculate the final result. Because some evaluation criteria are not accuracy-driven, we can also insert the measurer to evaluate the performance of quantization model such as memory usage. The evaluate function returns a scalar representing the measured performance during the evaluation. The reference code example is as follows
-
-```python
-   def evaluate(self, model, dataloader, postprocess=None,
-                 metrics=None, measurer=None, iteration=-1,
-                 tensorboard=False, fp32_baseline=False):
-       results = []
-       for idx, (inputs, labels) in enumerate(dataloader):
-           if measurer is not None:
-               measurer.start()
-               predictions = model.predict_on_batch(inputs)
-               measurer.end()
-           else:
-               predictions = model.predict_on_batch(inputs)
-
-           if postprocess is not None:
-               predictions, labels = postprocess((predictions, labels))
-           if metrics:
-               for metric in metrics:
-                   metric.update(predictions, labels)
-           if idx + 1 == iteration:
-               break
-       acc = 0 if metrics is None else [metric.result() for metric in metrics]
-       return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
-
-```
-
-## Other API that not Mandatory Needed
-
-|Function      | Description                                                 |
-|--------------|:-----------------------------------------------------------:|
-|save          |used by tune strategy class for saving model                 |
-|convert       |convert a source model format to another                     |
-|quantize_input|quantize the model to be able to take quantized input        |
-|inspect_tensor|used by tune strategy class for dumping tensor info          |
-|set_tensor    |used by tune strategy class for setting tensor back to model |
-|convert_bf16  |execute bf16 model conversion                                |
 
