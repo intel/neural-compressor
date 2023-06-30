@@ -16,16 +16,69 @@
 # limitations under the License.
 
 """Tuning utility."""
-import os
-import pickle
 from collections import OrderedDict
-from typing import List, Optional, Any
+from copy import deepcopy
+import enum
+from typing import Dict
 
-import prettytable
+class QuantType(enum.IntEnum):
+    """Quantization type."""
+    DYNAMIC = 0
+    STATIC = 1
+    QAT = 2
+    WEIGHT_ONLY = 3
+    AUTO = 4
 
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import print_table, dump_table, OpEntry
+class QuantOptions:
+    """Option Class for Quantization.
 
+    This class is used for configuring global variable related to quantization. 
+    The global variable quant_options is created with this class.
+
+    Args:
+        quant_type(int): Quantization type. Default value is 1.
+    """
+    def __init__(self, quant_type=1):
+        """Init an QuantOptions object."""
+        self._quant_type = quant_type
+    
+    @property
+    def quant_type(self):
+        """Get quant type."""
+        return self._quant_type
+    
+    @quant_type.setter
+    def quant_type(self, quant_type):
+        """Set quant type.
+        
+        Args:
+            quant_type(int): Quantization type. Default value is 1.
+        """
+        self._quant_type = quant_type
+
+quant_options = QuantOptions()
+
+def preprocess_user_cfg(op_user_cfg: Dict):
+    """Preprocess the op user config for weight only.
+
+    Args:
+        op_user_cfg: The original user config. 
+
+    Example: 
+        op_user_cfg = {'activation': {'bits': [4]}}
+        op_user_cfg_modified = {'activation': {'bits': [4], 'group_size': [32]}}
+
+    Returns:
+        The modified config.
+    """
+    op_user_cfg_modified = deepcopy(op_user_cfg)
+    if quant_options.quant_type == QuantType.WEIGHT_ONLY:
+        for att, att_cfg in op_user_cfg.items():
+            if 'bits' not in att_cfg:
+                op_user_cfg_modified[att]['bits'] = [4]
+            if 'group_size' not in att_cfg:
+                op_user_cfg_modified[att]['group_size'] = [32]
+    return op_user_cfg_modified
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""

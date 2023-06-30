@@ -120,6 +120,9 @@ q_model = fit(
           <td colspan="2" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
           <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
+      <tr>
+          <td colspan="8" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization</td>
+      </tr>
   </tbody>
   <thead>
       <tr>
