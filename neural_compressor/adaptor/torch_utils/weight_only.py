@@ -1,3 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 MIT HAN Lab
+# This source code is licensed under the MIT license
+#
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import math
+from typing import OrderedDict
 from ...utils import logger
 from ...utils.utility import LazyImport
 
@@ -5,16 +27,23 @@ tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 
-def qdq_weight_asym(weight, num_bits=4):
-    """quant and dequant tensor with asym schema
-    :param weight:  input weight
-    :param num_bits:  num_bits
-    :return: qdq weight
+def qdq_weight_asym(weight, num_bits=4, quantile=1.0):
+    """Quant and dequant tensor with asym schema.
+
+    Args:
+        weight:  input weight
+        num_bits (int, optional): num_bits. Defaults to 4.
+        quantile (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: qdq weight
     """
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     wmin = torch.minimum(weight.min(1)[0], zeros)
     wmax = torch.maximum(weight.max(1)[0], zeros)
+    wmin = wmin * quantile
+    wmax = wmax * quantile
     tmp = (wmin == 0) & (wmax == 0)
     wmin[tmp] = -1
     wmax[tmp] = +1
@@ -26,11 +55,16 @@ def qdq_weight_asym(weight, num_bits=4):
     return scale * (q - zp)
 
 
-def qdq_weight_sym(weight, num_bits=4):
-    """quant and dequant tensor with sym schema
-    :param weight:  input weight
-    :param num_bits:  num_bits
-    :return: qdq weight
+def qdq_weight_sym(weight, num_bits=4, quantile=1.0):
+    """Quant and dequant tensor with sym schema.
+
+    Args:
+        weight : input weight
+        num_bits (int, optional): num_bits. Defaults to 4.
+        quantile (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: qdq weight
     """
     # assert num_bits > 1, "symmetric scheme only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
@@ -40,6 +74,7 @@ def qdq_weight_sym(weight, num_bits=4):
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
 
     wmax = torch.abs(weight).max(1)[0]
+    wmax = wmax * quantile
     tmp = (wmax == 0)
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
@@ -48,56 +83,80 @@ def qdq_weight_sym(weight, num_bits=4):
     return scale * q
 
 
-def qdq_weight_actor(weight, num_bits, scheme):
-    """quant and dequant tensor per channel
-    :param weight: input weight
-    :param num_bits: num_bits
-    :param scheme: sym or asym
-    :return: qdq weight
+def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0):
+    """Quant and dequant tensor per channel.
+
+    Args:
+        weight : input weight
+        num_bits (int, optional): num_bits. Defaults to 4.
+        quantile (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
     if scheme == "sym":
-        return qdq_weight_sym(weight, num_bits)
+        return qdq_weight_sym(weight, num_bits, quantile)
     else:
-        return qdq_weight_asym(weight, num_bits)
+        return qdq_weight_asym(weight, num_bits, quantile)
 
-def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym"):
-    """quant and dequant tensor with group size
-    :param weight: input weight
-    :param num_bits: num_bits
-    :param group_size: how many elements share one scale/zp
-    :param scheme:  sym or asym
-    :return: qdq weight
+
+def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        num_bits (int, optional): num_bits. Defaults to 4.
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+        scheme (str, optional): sym or asym. Defaults to "asym".
+        quantile (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: qdq weight.
     """
     if group_size == -1 or weight.shape[1] < group_size:
-        return qdq_weight_actor(weight, num_bits, scheme=scheme)
+        return qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile)
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        weight = qdq_weight_actor(weight, num_bits, scheme=scheme)
+        weight = qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile)
         weight = weight.reshape(orig_shape)
         return weight
     else:
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        weight1 = qdq_weight_actor(weight1, num_bits, scheme=scheme)
+        weight1 = qdq_weight_actor(weight1, num_bits, scheme=scheme, quantile=quantile)
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = qdq_weight_actor(weight2, num_bits, scheme=scheme)
+        weight2 = qdq_weight_actor(weight2, num_bits, scheme=scheme, quantile=quantile)
         weight = torch.cat([weight1, weight2], dim=1)
         return weight
 
 
-def rtn_quantize(model, num_bits, group_size=-1, scheme="asym", w_layers_config={}):
-    """ quant the model with round to nearst method
-    :param model: torch module
-    :param num_bits:  num bits
-    :param group_size: how many elements share one scale/zp
-    :param scheme: sym or asym
-    :param w_layers_config:  specific layer wise configirations {"layer_name":[num_bits,group_size,schema]}
-    :return:
+def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", quantile=1.0, weight_config={}):
+    """Quant the model with round to nearst method.
+
+    Args:
+        model: torch module
+        num_bits: num bits. Defaults to 4.
+        group_size (int, optional): how many elements share one scale/zp. Defaults to 32.
+        scheme (str, optional): sym or asym. Defaults to "asym".
+        quantile (float, optional): percentile of clip. Defaults to 1.0.
+        weight_config (dict, optional): specific layer wise configirations. Defaults to {}.
+                For example, 
+                weight_config={
+                    'fc2':
+                        {
+                            'bits': 4, 
+                            'group_size': 32, 
+                            'scheme': 'sym'
+                        }
+                }
+
+    Returns:
+        model: fake quantized torch module
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     assert num_bits > 0, "bit for weight only should large than zero!"
@@ -106,12 +165,14 @@ def rtn_quantize(model, num_bits, group_size=-1, scheme="asym", w_layers_config=
     for n, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
-        if n in w_layers_config:  # pragma: no cover
-            num_bits = w_layers_config[n][0]
-            group_size = w_layers_config[n][1]
-            scheme = w_layers_config[n][2]
+        if n in weight_config:  # pragma: no cover
+            num_bits = weight_config[n]['bits']
+            group_size = weight_config[n]['group_size']
+            scheme = weight_config[n]['scheme']
+            quantile = weight_config[n].get('weight_config[n]', 1.0)
         logger.debug(f"RTN quantized module:{n, m}")
-        logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, scheme={scheme}")
+        logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
+                                                f"scheme={scheme}, quantile={quantile}")
         if num_bits <= 0:
             logger.info(f"skip {n}")
             continue
@@ -122,9 +183,307 @@ def rtn_quantize(model, num_bits, group_size=-1, scheme="asym", w_layers_config=
             weight = weight.reshape(weight.shape[0], -1)
         else:
             weight = m.weight
-        q_weight = quant_weight(weight, num_bits, group_size, scheme)
+        q_weight = quant_weight(weight, num_bits, group_size, scheme, quantile)
         if m.__class__.__name__ == "Conv2d":
             q_weight = q_weight.reshape(orig_shape[1], orig_shape[0], orig_shape[2], orig_shape[3])
             q_weight = q_weight.permute(1, 0, 2, 3)
         m.weight.data.copy_(q_weight)
+    return model
+
+
+def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
+                            calib_func=None):
+    """A help function to get input and output tensor of modules in module_name_list.
+
+    Args:
+        model: torch model.
+        module_hook_config (dict, optional): required module name for input/output. Defaults to {}.
+            For example:
+                module_hook_config = {
+                    'fc1': ['output'],
+                    'fc2': ['input', 'output']
+                }
+        dataloader: dataloader for model input.
+        iters: iterations for inference.
+        calib_func: a custom inference function to replace dataloader and iters.
+
+    Returns:
+        input_values, output_values: recorded input_values, output_values.
+    """
+    input_values, output_values = {}, {}
+    def _save_input_output_hook(name):
+        """
+        A forward hook to save input and output values of a module
+            param name: the module name
+            return: A hook function
+        """
+        def save_input_hook(module, inputs):
+            input = inputs[0]
+            if name in input_values:
+                input_values[name] = torch.cat((input_values[name], input), 0)
+            else:
+                input_values[name] = input
+        def save_output_hook(module, inputs, outputs):
+            if isinstance(outputs, tuple):
+                outputs = outputs[0]
+            if name in output_values:
+                output_values[name] = torch.cat((output_values[name], outputs), 0)
+            else:
+                output_values[name] = outputs
+        return save_input_hook, save_output_hook
+
+    hook_list = []
+    for name, module in model.named_modules():
+        if name in module_hook_config:
+            save_input_hook, save_output_hook = _save_input_output_hook(name)
+            require_list = module_hook_config[name]
+            if 'input' in require_list:
+                hook_list.append(
+                    module.register_forward_pre_hook(save_input_hook))
+            if 'output' in require_list:
+                hook_list.append(
+                    module.register_forward_hook(save_output_hook))
+    if calib_func:
+        calib_func(model)
+    else:
+        from .smooth_quant import model_forward
+        model_forward(model, dataloader, iters, device='cpu')
+    for h in hook_list:
+        h.remove()
+    return input_values, output_values
+
+
+@torch.no_grad()
+def _get_weight_scale(weight, q_group_size=-1):
+    org_shape = weight.shape
+    if q_group_size > 0:
+        weight = weight.view(-1, q_group_size)
+    scale = weight.abs() / weight.abs().amax(dim=1, keepdim=True)
+    scale = scale.view(org_shape)
+    scale = scale.mean(0)
+    return scale
+
+
+@torch.no_grad()
+def _get_act_scale(x):
+    return x.abs().view(-1, x.shape[-1]).mean(0)
+
+
+@torch.no_grad()
+def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
+                 auto_scale=True, mse_range=True, calib_func=None):
+    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+    Args:
+        model (torch.nn.Module): torch model.
+        weight_config (dict, optional): contains all info required by AWQ. Defaults to {}.
+            For example, 
+                weight_config={
+                    'fc2':
+                        {
+                            # 'absorb_layer': 'fc1', 
+                            'bits': 4, 
+                            'group_size': 32, 
+                            'scheme': 'sym'
+                        }
+                }
+        absorb_dict (dict, optional): contains all absorb info required by AWQ.. Defaults to {}.
+            For example,
+                absorb_dict = {
+                    # 'absorb_layer': absorbed_layer
+                    'fc1': ['fc2', 'fc3']
+                } # in this case, fc2 and fc3 need to share the same scale.
+        n_samples: calibration sample number.
+        auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
+        mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        calib_func: a custom inference function to replace dataloader and iters.
+
+    Returns:
+        model: fake quantized model
+    """
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    # collect module names to record their input/output for loss calculation.
+    module_hook_list = []
+    # get the upper module if absorbed modules have the same absorb module.
+    for absorb, absorbed in absorb_dict.items():
+        # used as input for absob module
+        module_hook_list.append(absorb)
+        if len(absorbed) > 1:
+            upper_name = []
+            end_flag = False
+            for part_name in absorbed[0].split('.'):
+                for i in range(1, len(absorbed)):
+                    if part_name not in absorbed[i]:
+                        end_flag = True
+                        break
+                if not end_flag:
+                    upper_name.append(part_name)
+                else:
+                    upper_name = '.'.join(upper_name)
+                    break
+            module_hook_list.append(upper_name)
+            for ab in absorbed:
+                weight_config[ab]['module_for_loss'] = upper_name
+        else:
+            module_hook_list.append(absorbed[0])
+            weight_config[absorbed[0]]['module_for_loss'] = absorbed[0]
+
+    def calibration(module_name_list):
+        if calib_func:
+            input_values, output_values = get_module_input_output(
+                model, 
+                module_name_list, 
+                calib_func=calib_func,
+            )
+        else:
+            batch_size = dataloader.batch_size
+            iters = int(math.ceil(n_samples / batch_size))
+            if n_samples % batch_size != 0:
+                logger.info("calibration samples increase from {} to {} due to batch_size is {}".format(
+                    n_samples, iters*batch_size, batch_size,
+                ))
+            input_values, output_values = get_module_input_output(
+                model, 
+                module_name_list, 
+                dataloader=dataloader, 
+                iters=iters,
+            )
+        return input_values, output_values
+
+    if auto_scale:
+        final_scale_info = {}
+        logger.info("Searching best scales with AWQ algorithm")
+        for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
+            # Split module_name_list to avoid OOM when recording output tensors.
+            from .util import fetch_module
+            if idx % 5 == 0:
+                part_module_hook_config = {}
+                for id, name in enumerate(module_hook_list):
+                    if idx * 2 <= id < (idx + 5) * 2:
+                        part_module_hook_config[name] = ['output'] # only fetch output tensor
+                input_values, output_values = calibration(part_module_hook_config)
+            weight = torch.cat([fetch_module(model, _m).weight for _m in absorbed], dim=0)
+            w_max = _get_weight_scale(
+                weight, q_group_size=weight_config[absorbed[0]]['group_size'])
+            del weight
+            x_max = _get_act_scale(output_values[absorb])
+
+            best_error = float('inf')
+            best_scales = None
+            n_grid = 20
+            history = []
+
+            absorbed_module = {_m: fetch_module(model, _m) for _m in absorbed}
+            org_stat = {_m: module.state_dict() for _m, module in absorbed_module.items()}
+            org_out = output_values[weight_config[absorbed[0]]['module_for_loss']]
+            block = fetch_module(model, weight_config[absorbed[0]]['module_for_loss'])
+            x = output_values[absorb]
+
+            for ratio in range(n_grid):
+                ratio = ratio * 1 / n_grid
+                scales = (x_max.pow(ratio) / w_max.pow(1-ratio)
+                        ).clamp(min=1e-4).view(-1)
+                scales = scales / (scales.max() * scales.min()).sqrt()
+                for name, module in absorbed_module.items():
+                    module.weight.mul_(scales.view(1, -1))
+                    module.weight.data = quant_weight(
+                        module.weight.data,
+                        num_bits=weight_config[name]['bits'], 
+                        group_size=weight_config[name]['group_size'], 
+                        scheme=weight_config[name]['scheme'],
+                    ) / scales.view(1, -1)
+
+                out = block(x)
+                if isinstance(out, tuple):
+                    out = out[0]
+                loss = (org_out - out).float().pow(2).mean().item()  # float prevents overflow
+                history.append(loss)
+                is_best = loss < best_error
+                if is_best:
+                    best_error = loss
+                    best_scales = scales
+                for name, module in absorbed_module.items():
+                    module.load_state_dict(org_stat[name])
+                
+            logger.debug("The loss history of different scale:{}".format(history))
+            best_scales = best_scales.view(-1)
+            assert torch.isnan(best_scales).sum() == 0, best_scales
+            final_scale_info[absorb] = best_scales.detach()
+            # logger.debug("The best scale:{}".format(final_scale_info))
+
+        # apply scale
+        logger.info("Applying best scales for fp32 model")
+        for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
+            scales = final_scale_info[absorb]
+            # update absorb model
+            absorb_module = fetch_module(model, absorb)
+            if len(absorb_module.weight.shape) == 1:
+                absorb_module.weight.div_(scales)  # for LayerNorm
+            else:
+                absorb_module.weight.div_(scales.view(-1, 1))
+            if absorb_module.bias is not None:
+                absorb_module.bias.div_(scales.view(-1))
+            # update absorbed model
+            for name in absorbed:
+                absorbed_module = fetch_module(model, name)
+                absorbed_module.weight.mul_(scales.view(1, -1))
+
+    if mse_range:
+        final_clip_info = {}
+        logger.info("Searching best clip range with AWQ algorithm")
+        for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
+            # Split module_name_list to avoid OOM when recording output tensors.
+            from .util import fetch_module
+            if idx % 5 == 0:
+                part_module_hook_config = {}
+                for id, name in enumerate(module_hook_list):
+                    if idx * 2 <= id < (idx + 5) * 2:
+                        part_module_hook_config[name] = ['output'] # only fetch output tensor
+                input_values, output_values = calibration(part_module_hook_config)
+
+            best_error = float('inf')
+            best_clip_ratio = None
+            n_grid = 20
+            max_shrink = 0.5
+            history = []
+
+            absorbed_module = {_m: fetch_module(model, _m) for _m in absorbed}
+            org_stat = {_m: module.state_dict() for _m, module in absorbed_module.items()}
+            org_out = output_values[weight_config[absorbed[0]]['module_for_loss']]
+            block = fetch_module(model, weight_config[absorbed[0]]['module_for_loss'])
+            x = output_values[absorb]
+
+            for i_s in range(int(max_shrink * n_grid)):
+                ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
+                for name, module in absorbed_module.items():
+                    module.weight.data = quant_weight(
+                        module.weight.data,
+                        num_bits=weight_config[name]['bits'], 
+                        group_size=weight_config[name]['group_size'], 
+                        scheme=weight_config[name]['scheme'],
+                        quantile=ratio,
+                    )
+
+                out = block(x)
+                if isinstance(out, tuple):
+                    out = out[0]
+                loss = (org_out - out).float().pow(2).mean().item()  # float prevents overflow
+                history.append(loss)
+                is_best = loss < best_error
+                if is_best:
+                    best_error = loss
+                    best_clip_ratio = ratio
+                for name, module in absorbed_module.items():
+                    module.load_state_dict(org_stat[name])
+
+            logger.debug("The loss history of different scale:{}".format(history))
+            final_clip_info[absorb] = best_clip_ratio
+            # To apply clip ratio
+            for name in absorbed:
+                weight_config[name]['quantile'] = best_clip_ratio
+            logger.debug("The best clip ratio:{}".format(final_clip_info))
+
+    # apply quantization and clip
+    logger.info("Quantizing the AWQ optimized fp32 model")
+    model = rtn_quantize(model, weight_config=weight_config)
     return model

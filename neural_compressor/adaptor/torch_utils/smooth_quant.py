@@ -698,21 +698,7 @@ class TorchSmoothQuant:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
-                        logger.warning("sorry, could not trace the model, smooth quant is skipped")
-                        logger.warning("if you are using huggingface model,"
-                                       "you could set torchscript to True "
-                                       "when loading the model or set the return_dict to False")
                         return self.model
-                    elif self.absorb_to_layer == {}:
-                        logger.warning("could not find any layer to be absorbed")
-                    else:
-                        to_absorb_cnt = 0
-                        for key, item in self.absorb_to_layer.items():
-                            to_absorb_cnt += len(item)
-
-                        logger.info(
-                            f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
-                            f"layers could be absorbed in smooth quant")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
@@ -832,6 +818,20 @@ class TorchSmoothQuant:
         tg = GraphTrace()
         self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
+        if absorb_to_layer == None and no_absorb_layers == None:
+            logger.warning("sorry, could not trace the model, smooth quant is skipped")
+            logger.warning("if you are using huggingface model,"
+                            "you could set torchscript to True "
+                            "when loading the model or set the return_dict to False")
+        elif absorb_to_layer == {}:
+            logger.warning("could not find any layer to be absorbed")
+        else:
+            to_absorb_cnt = 0
+            for key, item in absorb_to_layer.items():
+                to_absorb_cnt += len(item)
+            logger.info(
+                f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
+                f"layers could be absorbed in smooth quant")
         return absorb_to_layer, no_absorb_layers
 
 
@@ -970,7 +970,8 @@ class GraphTrace:
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
             if absorb == None:
-                no_absorb_layers.append(nodes[index])
+                no_absorb_layers.append(
+                    '.'.join(nodes[index].scopeName().split('/')[-1].split('.')[1:]))
                 continue
             node = nodes[index]
             layer_name = '.'.join(node.scopeName().split('/')[-1].split('.')[1:])
@@ -981,17 +982,17 @@ class GraphTrace:
                 absorb_to_layer[absorb_name].append(layer_name)
             else:
                 absorb_to_layer[absorb_name] = [layer_name]
-        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer)
+        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
         return absorb_to_layer, no_absorb_layers
 
-    def remove_unsupported_layers(self, model, absorb_to_layer):
+    def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
         res = {}
 
         for key in absorb_to_layer.keys():
-
             absorb_layer = get_module(model, key)
             layer_type = absorb_layer.__class__.__name__
             if layer_type not in self.supported_torch_module_to_aten.keys():
+                no_absorb_layers.extend(absorb_to_layer[key])
                 continue
             supported = True
             for layer_name in absorb_to_layer[key]:
@@ -999,6 +1000,7 @@ class GraphTrace:
                 layer_type = layer.__class__.__name__
                 if layer_type not in self.supported_torch_module_to_aten.keys():
                     supported = False
+                    no_absorb_layers.extend(absorb_to_layer[key])
                     break
             if supported:
                 res[key] = absorb_to_layer[key]
