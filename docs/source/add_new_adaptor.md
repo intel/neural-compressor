@@ -33,12 +33,12 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 
     end
 ```
-1. Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. 
-2. Utilizes adaptor.query_fw_capability to query the framework's capabilities.
-3. Parse the framework YAML and get quantization capability
-4. Send the capability including 'opwise' and 'optypewise' ability to Strategy
-5. Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
-6. Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
+❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. 
+❷ Utilizes adaptor.query_fw_capability to query the framework's capabilities.
+❸ Parse the framework YAML and get quantization capability
+❹ Send the capability including 'opwise' and 'optypewise' ability to Strategy
+❺ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.
+❻ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.
 
 ## API List that Need to Implement
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
