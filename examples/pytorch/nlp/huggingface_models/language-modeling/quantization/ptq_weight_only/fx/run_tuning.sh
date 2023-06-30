@@ -14,6 +14,7 @@ function init_params {
   weight_only_bits=8
   weight_only_group=-1
   weight_only_scheme=sym
+  weight_only_algorithm=RTN
   for var in "$@"
   do
     case $var in
@@ -37,6 +38,9 @@ function init_params {
        ;;
        --weight_only_scheme=*)
            weight_only_scheme=$(echo $var |cut -f2 -d=)
+       ;;
+       --weight_only_algorithm=*)
+           weight_only_algorithm=$(echo $var |cut -f2 -d=)
        ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -68,6 +72,7 @@ function run_tuning {
         --weight_only_bits ${weight_only_bits} \
         --weight_only_group ${weight_only_group} \
         --weight_only_scheme ${weight_only_scheme} \
+        --weight_only_algorithm ${weight_only_algorithm} \
         --output_dir ${tuned_checkpoint} \
         --overwrite_output_dir \
         --tune \

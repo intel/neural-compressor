@@ -630,6 +630,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">smooth quant</a></td>
   </tr>
   <tr>
+    <td>EleutherAI/gpt-j-6B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Weight Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only">weight_only</a></td>
+  </tr>
+  <tr>
     <td>abeja/gpt-neox-japanese-2.7b</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>

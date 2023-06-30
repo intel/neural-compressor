@@ -24,6 +24,7 @@ python run_clm.py \
   --weight_only_bits 8 \
   --weight_only_group -1 \
   --weight_only_scheme sym \
+  --weight_only_algorithm RTN \
   --tune \
   --output_dir saved_results
 ```
@@ -33,12 +34,12 @@ python run_clm.py \
 
 or
 ```bash
-sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym
+sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym --weight_only_algorithm=RTN
 ```
 
 > NOTE
 >
-> `weight_only_bits`, `weight_only_group`, and `weight_only_scheme` can be modified by user. For details, please refer to [README](../../../../../../../../docs/source/quantization_weight_only.md).
+> `weight_only_bits`, `weight_only_group`, `weight_only_scheme`, and `weight_only_algorithm` can be modified by user. For details, please refer to [README](../../../../../../../../docs/source/quantization_weight_only.md).
 
 ## 2. Benchmark
 ```bash
@@ -74,7 +75,7 @@ op_type_dict={
     '.*':{
         "weight": {
             'bits': 8,
-            'group_size': -1,
+            'group_size': 32,
             'scheme': 'sym', 
             'algorithm': 'RTN', 
         },

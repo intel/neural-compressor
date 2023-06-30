@@ -144,6 +144,9 @@ class ModelArguments:
     weight_only_scheme: str = field(
         default="sym", metadata={"help": "Scheme for weight only quantization. Choose from 'sym' and 'asym'."}
     )
+    weight_only_algorithm: str = field(
+        default="RTN", metadata={"help": "Scheme for weight only quantization. Choose from 'sym' and 'asym'."}
+    )
 
 
     def __post_init__(self):
@@ -579,7 +582,7 @@ def main():
                     'bits': model_args.weight_only_bits,
                     'group_size': model_args.weight_only_group,
                     'scheme': model_args.weight_only_scheme, 
-                    'algorithm': 'RTN', 
+                    'algorithm': model_args.weight_only_algorithm,  
                 },
             },
         }
