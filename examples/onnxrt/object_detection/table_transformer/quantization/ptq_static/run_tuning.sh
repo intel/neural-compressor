@@ -28,6 +28,13 @@ function init_params {
 }
 
 function run_tuning {
+
+    # Check if the directory exists
+    if [ ! -d "./table-transformer" ]; then
+        # If the directory doesn't exist, create it
+	      bash prepare.sh
+    fi
+
     cd table-transformer/src
     python main.py \
             --input_onnx_model ${input_model} \
