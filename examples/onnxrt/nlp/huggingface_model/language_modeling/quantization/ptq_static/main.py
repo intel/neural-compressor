@@ -216,11 +216,10 @@ def main():
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
+            b_dataloader = DataLoader(ds, args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
             evaluate(args, model, tokenizer)
@@ -251,7 +250,6 @@ def main():
 
         from neural_compressor import quantization
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
         from neural_compressor.utils.constant import FP32
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
@@ -268,7 +266,7 @@ def main():
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
-                                   calib_dataloader=DefaultDataLoader(ds, args.eval_batch_size))
+                                   calib_dataloader=DataLoader(ds, args.eval_batch_size))
         q_model.save(args.output_model)
 
 

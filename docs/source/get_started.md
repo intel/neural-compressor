@@ -2,10 +2,6 @@
 
 1. [Quick Samples](#quick-samples)
 
-    1.1 [Quantization with Python API](#quantization-with-python-api)
-
-    1.2 [Quantization with JupyterLab Extension](#quantization-with-jupyterlab-extension)
-
 2. [Validated Models](#validated-models)
 
 ## Quick Samples
@@ -34,14 +30,6 @@ q_model = fit(
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
-
-### Quantization with [JupyterLab Extension](/neural_coder/extensions/neural_compressor_ext_lab/README.md)
-
-Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
-
-<a target="_blank" href="/neural_coder/extensions/screenshots/extmanager.png">
-  <img src="/neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
-</a>
 
 ## Validated Models
 Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo). 
