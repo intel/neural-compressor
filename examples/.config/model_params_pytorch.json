@@ -8,7 +8,7 @@
       "batch_size": 100
     },
     "resnet18": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
       "main_script": "main.py",
@@ -29,21 +29,21 @@
       "batch_size": 100
      },
     "efficientnet_b0": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b0",
       "main_script": "main.py",
       "batch_size": 100
     },
     "efficientnet_b3": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b3",
       "main_script": "main.py",
       "batch_size": 100
     },
     "efficientnet_b7": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b7",
       "main_script": "main.py",
