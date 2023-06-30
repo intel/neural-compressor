@@ -8,7 +8,6 @@ How to Add An Adaptor
 - [API List that Need to Implement](#api-list-that-need-to-implement)
 - [Design the framework YAML](#design-the-framework-yaml)
 - [Add query_fw_capability to Adaptor](#add-query-fw-capability-to-adaptor)
-- [Add Pre-quantization Optimizations](#add-pre-quantization-optimizations)
 - [Quantize Model according to tune cfg](#quantize-model-according-to-tune-cfg)
 
 ## Introduction
