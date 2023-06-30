@@ -445,7 +445,7 @@ class SmoothQuantSampler(TuningSampler):
         self._kwargs = kwargs
         self._alpha_lst = [0.5]
         if kwargs.get('smooth_quant_agrs', {}):
-            self._alpha_lst = kwargs['smooth_quant_agrs'].get('alpha_list', [0.5])
+            self._alpha_lst = kwargs['smooth_quant_agrs'].get('alpha_lst', [0.5])
 
     def __iter__(self, tune_cfg=None) -> OpTuningConfig:
         """Yield the next tuning config with update alpha.
