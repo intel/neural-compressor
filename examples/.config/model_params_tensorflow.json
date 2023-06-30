@@ -1803,7 +1803,7 @@
     },
     "ViT": {
       "model_src_dir": "image_recognition/tensorflow_models/vision_transformer/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/tensorflow/vit/HF-ViT-Base16-Img224-frozen.pb",
       "main_script": "main.py",
       "batch_size": 32
