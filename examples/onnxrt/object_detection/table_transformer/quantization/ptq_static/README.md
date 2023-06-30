@@ -10,6 +10,7 @@ This example show how to export, quantize and evaluate the DETR R18 model for ta
 ```shell
 pip install neural-compressor
 pip install -r requirements.txt
+bash prepare.sh
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
@@ -28,24 +29,6 @@ bash export.sh --input_model=/path/to/pubtables1m_structure_detr_r18.pth \
 ```
 
 # Run
-
-## Diagnosis
-Neural Compressor offers quantization and benchmark diagnosis. Adding `diagnosis` parameter to Quantization/Benchmark config will provide additional details useful in diagnostics.
-### Quantization diagnosis
-```
-config = PostTrainingQuantConfig(
-    diagnosis=True,
-    ...
-)
-``` 
-
-### Benchmark diagnosis
-```
-config = BenchmarkConfig(
-    diagnosis=True,
-    ...
-)
-``` 
 
 ## 1. Quantization
 
