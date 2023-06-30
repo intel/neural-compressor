@@ -74,7 +74,7 @@ op_type_dict={
     '.*':{
         "weight": {
             'bits': 8,
-            'group_size': 32,
+            'group_size': -1,
             'scheme': 'sym', 
             'algorithm': 'RTN', 
         },
