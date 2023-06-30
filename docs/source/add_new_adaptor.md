@@ -37,8 +37,9 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 ❷ Utilizes adaptor.query_fw_capability to query the framework's capabilities. <br>
 ❸ Parse the framework YAML and get quantization capability. <br>
 ❹ Send the capability including 'opwise' and 'optypewise' ability to Strategy. <br>
-❺ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process. <br>
-❻ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.<br>
+❺ Build the tuning space in Strategy. <br>
+❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process. <br>
+❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.<br>
 
 ## API List that Need to Implement
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
