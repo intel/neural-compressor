@@ -5,9 +5,9 @@ DataLoader
 
 2. [Supported Framework Dataloader Matrix](#supported-framework-dataloader-matrix)
 
-3. [Get Started with Dataloader](#get-start-with-dataloader)
+3. [Get Started with Dataloader](#get-started-with-dataloader)
 
-    3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel®-neural-compressor-dataloader-api)
+    3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel-neural-compressor-dataloader-api)
 
     3.2 [Build Custom Dataloader with Python API](#build-custom-dataloader-with-python-api)
 
