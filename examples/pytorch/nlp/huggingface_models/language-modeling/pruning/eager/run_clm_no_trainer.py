@@ -61,8 +61,8 @@ from transformers.utils.versions import require_version
 from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 from timers import CPUTimer, GPUTimer
-from neural_compressor.compression import model_slim
-from neural_compressor.compression import parse_auto_slim_config
+from neural_compressor.compression.pruner import model_slim
+from neural_compressor.compression.pruner import parse_auto_slim_config
 
     
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
