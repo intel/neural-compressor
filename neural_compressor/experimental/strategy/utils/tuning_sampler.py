@@ -443,9 +443,9 @@ class SmoothQuantSampler(TuningSampler):
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg, kwargs)
         # TODO use the alpha list specified by user
         self._kwargs = kwargs
-        self._alpha_lst = [0.5]
+        self._alpha_list = [0.5]
         if kwargs.get('smooth_quant_agrs', {}):
-            self._alpha_lst = kwargs['smooth_quant_agrs'].get('alpha_lst', [0.5])
+            self._alpha_list = kwargs['smooth_quant_agrs'].get('alpha_list', [0.5])
 
     def __iter__(self, tune_cfg=None) -> OpTuningConfig:
         """Yield the next tuning config with update alpha.
@@ -453,7 +453,7 @@ class SmoothQuantSampler(TuningSampler):
         Args:
             tune_cfg: tuning config. Defaults to None.
         """
-        for alpha in self._alpha_lst:
+        for alpha in self._alpha_list:
             new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg) if not tune_cfg else copy.deepcopy(tune_cfg)
             sq_args = {'smooth_quant': True, 'smooth_quant_args': {'alpha': alpha}}
             if 'recipe_cfgs' not in new_tune_cfg:

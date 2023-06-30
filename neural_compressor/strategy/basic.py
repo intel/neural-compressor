@@ -25,7 +25,9 @@ from .utils.tuning_sampler import (
     OpTypeWiseTuningSampler,
     FallbackTuningSampler,
     BlockFallbackTuningSampler,
-    LowerBitsSampler)
+    LowerBitsSampler,
+    tuning_sampler_dict,
+    )
 
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import TUNING_ITEMS_LST, PRECISION_LIST, LOWER_BIT_LIST
@@ -214,7 +216,7 @@ class BasicTuneStrategy(TuneStrategy):
 
         Args:
             initial_op_tuning_cfg: the initial tuning config
-            calib_sampling_size: _description_
+            calib_sampling_size: calibration sampling size
 
         Yields:
             tuning config
@@ -271,8 +273,8 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in self.quant_to_lower_bits(self.cur_best_tuning_cfg, calib_sampling_size):
                         yield op_tuning_cfg
                 # try to tune sq alpha
-                if self._should_tuning_sq_alpha():
-                    for tune_cfg in self.tuning_sq_alpha(deepcopy(self.cur_best_tuning_cfg)):
+                if self._should_tuning_sq_alpha(self.config.recipes):
+                    for tune_cfg in self.tuning_sq_alpha(tuning_space, deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
                         yield tune_cfg
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:
@@ -361,14 +363,31 @@ class BasicTuneStrategy(TuneStrategy):
                 If the quantized model does not seem to work well, it might be worth considering other strategies.")
 
                         
-    def _should_tuning_sq_alpha(self):
-        # TODO update the check
-        return False
+    def _should_tuning_sq_alpha(self, recipes):
+        return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha_list", [])) > 0
     
     def tuning_sq_alpha(self, tuning_cfg):
         # TODO generate tuning config
         pass
 
+    def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
+        """Tuning smooth quant's alpha.
+
+        Args:
+            tuning_space: tuning space
+            tuning_cfg: the initial tuning config
+            recipes: recipes specified by user
+
+        Yields:
+            tuning config
+        """
+        sq_alpha_list = recipes.get("smooth_quant_args", {}).get("alpha_list", [])
+        assert len(sq_alpha_list) > 0, "Only tune the smooth quant's alpha when user provide the alpha list,\
+            but got alpha_list: {alpha_list}"
+        sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
+        for tune_cfg in sq_sampler:
+            yield tune_cfg
+    
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name

@@ -421,12 +421,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 logger.warn("Find evaluated tuning config, skip.")
                 continue
             self._remove_redundant_qmodel()
-            logger.debug("Dump current tuning configuration:")
-            logger.debug(tune_cfg)
             self.tuning_times += 1
             # set the parameter for pre quantization algos and run
             self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
             self.model = self.algo_scheduler('pre_quantization') # pylint: disable=E1102
+            logger.debug("Dump current tuning configuration:")
+            logger.debug(tune_cfg)
             # quantize
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             assert self.adaptor.pre_optimized_model
@@ -847,7 +847,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             # set the alpha to 0.5 by default
             smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
             sq_algo = ALGORITHMS()['smooth_quant']
-            sq_algo.alpha = smooth_quant_args['alpha']
+            sq_algo.alpha = smooth_quant_args.get('alpha', 0.5)
             if 'folding' not in smooth_quant_args:
                 smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx', 'onnxruntime'] \
                   else False
@@ -855,7 +855,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == 'pytorch_ipex':
                     smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args['folding']
-            logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
+            logger.debug(f"Set smooth quant with alpha {smooth_quant_args.get('alpha', 0.5)} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
 
 
@@ -1141,7 +1141,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
         tune_cfg['trial_number'] = deepcopy(self.trials_count)
         # WA for get the smooth quant args
-        if 'smooth_quant_args' in self.config.recipes:
+        # TODO simplify the check logic
+        if 'smooth_quant_args' in self.config.recipes and "smooth_quant_args" not in tune_cfg['recipe_cfgs']:
             tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.config.recipes['smooth_quant_args']
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():

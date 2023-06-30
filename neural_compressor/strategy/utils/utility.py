@@ -140,3 +140,23 @@ def build_slave_faker_model():
             return self
 
     return FakerModel()
+
+class ClassRegister:
+    """Class register."""
+    
+    def __init__(self):
+        """Init class register."""
+        self.register = {}
+
+    def __call__(self, name):
+        def decorator(func):
+            self.register[name] = func
+            return func
+        return decorator
+
+    def get_class(self, name):
+        """Get class by name."""
+        if name in self.register:
+            return self.register[name]
+        else:
+            raise ValueError(f"Class with name '{name}' is not registered.")

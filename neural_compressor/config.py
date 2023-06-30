@@ -842,8 +842,9 @@ class _BaseQuantizationConfig:
                             assert v == "auto", "the alpha of sq only supports float and 'auto'"
                         else:
                             _check_value("alpha", v, float)
-                    if k == "alpha_lst":
-                        if isinstance(v, float) or isinstance(int):
+                    if k == "alpha_list":
+                        # TODO if user passes the alpha and alpha list at the same time, which behavior should we use?
+                        if isinstance(v, float) or isinstance(v, int):
                             val[k] = [k]
                         # TODO double-check it if we can set alpha to 0 and 1?
                         if isinstance(v, list):
