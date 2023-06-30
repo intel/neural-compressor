@@ -830,7 +830,7 @@
       "model_src_dir": "object_detection/table_transformer/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/pubtables1m",
       "input_model": "/tf_dataset2/models/onnx/table-transformer/model.onnx",
-      "main_script": "main.py",
+      "main_script": "table-transformer/src/main.py",
       "batch_size": 1
     }
   }
