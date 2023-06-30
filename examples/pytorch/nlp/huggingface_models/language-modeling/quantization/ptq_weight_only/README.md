@@ -8,7 +8,7 @@ This document is used to list the steps of reproducing weight only quantization 
 Python 3.6 or higher version is recommended.
 The dependent packages are all in requirements, please install as following.
 ```shell
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx
+cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only
 pip install -r requirements.txt
 ```
 
@@ -39,7 +39,7 @@ sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path --wei
 
 > NOTE
 >
-> `weight_only_bits`, `weight_only_group`, `weight_only_scheme`, and `weight_only_algorithm` can be modified by user. For details, please refer to [README](../../../../../../../../docs/source/quantization_weight_only.md).
+> `weight_only_bits`, `weight_only_group`, `weight_only_scheme`, and `weight_only_algorithm` can be modified by user. For details, please refer to [README](../../../../../../../docs/source/quantization_weight_only.md).
 
 ## 2. Benchmark
 ```bash
