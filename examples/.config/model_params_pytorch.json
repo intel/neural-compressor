@@ -327,23 +327,19 @@
       "batch_size": 100,
       "new_benchmark": false
     },
-    "wav2vec2":{
-      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+    "wav2vec2_dynamic":{
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "wav2vec2",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
+      "main_script": "run_asr.py",
+      "batch_size": 1
     },
-    "hubert":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+    "hubert_dynamic":{
+       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
        "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
        "input_model": "hubert",
-       "yaml": "conf.yaml",
-       "strategy": "basic",
-       "batch_size": 1,
-       "new_benchmark": false
+       "main_script": "run_asr.py",
+       "batch_size": 1
     },
     "whisper_large":{
        "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_dynamic/fx",
@@ -352,7 +348,7 @@
        "main_script": "run_whisper_large.py",
        "batch_size": 1
     },
-    "hubert_fx":{
+    "hubert":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "hubert",
