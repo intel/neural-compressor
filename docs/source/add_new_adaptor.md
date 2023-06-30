@@ -8,7 +8,7 @@ How to Add An Adaptor
 - [API List that Need to Implement](#api-list-that-need-to-implement)
 - [Design the framework YAML](#design-the-framework-yaml)
 - [Add query_fw_capability to Adaptor](#add-query-fw-capability-to-adaptor)
-- [Quantize Model according to tune cfg](#quantize-model-according-to-tune-cfg)
+- [Add quantize API according to tune cfg](#add-quantize-api-accordingto-tune-cfg)
 
 ## Introduction
 Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
@@ -105,7 +105,7 @@ The `optype_wise_ability` exmaple config is like below.
 ```
 After the work above, we have implement the `query_fw_capability` API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.
 
-## Quantize Model according to tune_cfg
+## Add quantize API according to tune_cfg
 `quantize` function is used to perform quantization for post-training quantization and quantization-aware training. Quantization processing includes calibration and conversion processing for post-training quantization, while for quantization-aware training, it includes training and conversion processing.
 
 The first work of `quantize` function is to invoke `tuning_cfg_to_fw` to generate the self.quantize_config. The self.quantize_config is a dict including the quantization information. Its format is like below
