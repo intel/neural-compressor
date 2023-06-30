@@ -11,6 +11,9 @@ function main {
 # init params
 function init_params {
   tuned_checkpoint=saved_results
+  weight_only_bits=8
+  weight_only_group=-1
+  weight_only_scheme=sym
   for var in "$@"
   do
     case $var in
