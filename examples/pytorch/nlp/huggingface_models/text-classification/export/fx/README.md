@@ -45,7 +45,7 @@ Please pass in the name of dataset, supported datasets are 'mrpc', 'qqp', 'qnli'
 # export fp32 model
 bash run_export.sh --input_model=[model_name_or_path] --dataset_location=[dataset_name] --dtype=fp32 --output_model=bert-fp32.onnx
 # export int8 model
-bash run_export.sh --input_model=[model_name_or_path] --dataset_location=[dataset_name]  --dtype=int8 --quant_format=[QDQ/QLinear] --output_model=bert-int8.onnx
+bash run_export.sh --input_model=[model_name_or_path] --dataset_location=[dataset_name]  --dtype=int8 --quant_format=[QDQ/QOperator] --output_model=bert-int8.onnx --approach=[static|dynamic]
 ``` 
 
 ### 2. Get the benchmark results of exported and tuned models, including Batch_size and Throughput: 
