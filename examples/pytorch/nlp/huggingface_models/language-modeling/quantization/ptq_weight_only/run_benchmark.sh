@@ -64,7 +64,7 @@ function run_benchmark {
         exit 1
     fi
 
-    if [ "${topology}" = "gpt_j_wikitext" ]; then
+    if [ "${topology}" = "gpt_j_wikitext_weight_only" ]; then
         TASK_NAME='wikitext'
         model_name_or_path=${input_model}
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
