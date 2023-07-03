@@ -137,7 +137,7 @@ q_model = fit(
   </tbody>
 </table>
 
-> More documentations can be found at [User Guide](./docs/source/user_guide.md) 
+> More documentations can be found at [User Guide](./docs/source/user_guide.md).
 
 ## Selected Publications/Events
 * Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
@@ -148,7 +148,7 @@ q_model = fit(
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
-> View our [Full Publication List](./docs/source/publication_list.md).
+> View [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
 
