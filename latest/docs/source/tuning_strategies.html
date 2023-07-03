@@ -527,6 +527,8 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 <section id="id21">
 <h3>Design<a class="headerlink" href="#id21" title="Permalink to this heading"></a></h3>
 <p>Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the <code class="docutils literal notranslate"><span class="pre">fp32</span></code> model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources.</p>
+<p>The diagram below provides an overview of the distributed tuning process.
+<img alt="distributed tuning" src="../../_images/distributed_tuning_intro.png" /></p>
 </section>
 <section id="id22">
 <h3>Usage<a class="headerlink" href="#id22" title="Permalink to this heading"></a></h3>
