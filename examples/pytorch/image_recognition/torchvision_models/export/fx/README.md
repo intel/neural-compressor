@@ -34,7 +34,7 @@ Run run_export.sh to get ONNX model from PyTorch model.
 # export fp32 model
 bash run_export.sh --input_model=resnet50 --dtype=fp32 --dataset_location=/path/to/pytorch-imagenet --output_model=resnet50-fp32.onnx
 # export int8 model
-bash run_export.sh --input_model=resnet50 --dtype=int8 --quant_format=[QDQ|QLinear] --dataset_location=/path/to/pytorch-imagenet --output_model=resnet50-int8.onnx
+bash run_export.sh --input_model=resnet50 --dtype=int8 --quant_format=[QDQ|QOperator] --dataset_location=/path/to/pytorch-imagenet --output_model=resnet50-int8.onnx --approach=[static|dynamic]
 ```
 
 ### 2. To get the benchmark of exported and tuned models, includes Batch_size and Throughput: 

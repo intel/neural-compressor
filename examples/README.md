@@ -476,8 +476,14 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>HuBERT</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic /Static Quantization</td>
+    <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>HuBERT</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
@@ -652,6 +658,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./pytorch/speech_recognition/whisper_large/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>torchaudio/wav2vec2</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
 
 </tbody>

@@ -9,7 +9,6 @@ This example load LayoutLMv3 model and confirm its accuracy and speed based on [
 ```shell
 pip install neural-compressor
 pip install -r requirements.txt
-bash install_layoutlmft.sh
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 

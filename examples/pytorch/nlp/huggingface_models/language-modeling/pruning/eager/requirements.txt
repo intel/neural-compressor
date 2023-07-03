@@ -4,3 +4,5 @@ sentencepiece
 transformers
 torch
 tqdm
+cupy
+optimum
