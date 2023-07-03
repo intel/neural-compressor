@@ -2658,3 +2658,10 @@ RTN
 awq
 gptq
 percdamp
+DeQuantize
+FakeQuant
+FrameworkModel
+boolean
+deepcopy
+optype
+perchannel

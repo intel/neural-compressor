@@ -70,15 +70,16 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 <table class="docutils">
 <tbody>
 <tr>
-<td colspan="3" align="center"><a href="adaptor.md">Adaptor</a></td>
-<td colspan="3" align="center"><a href="tuning_strategies.md">Strategy</a></td>
+<td colspan="2" align="center"><a href="adaptor.md">Adaptor</a></td>
+<td colspan="2" align="center"><a href="tuning_strategies.md">Strategy</a></td>
+<td colspan="3" align="center"><a href="objective.md">Objective</a></td>
 <td colspan="3" align="center"><a href="distillation_quantization.md">Distillation for Quantization</a></td>
 </tr>
 <tr>
-<td colspan="2" align="center"><a href="objective.md">Objective</a></td>
 <td colspan="2" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
-<td colspan="3" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
 <td colspan="2" align="center"><a href="diagnosis.md">Diagnosis</a></td>
+<td colspan="3" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
+<td colspan="3" align="center"><a href="add_new_adaptor.md">Add New Adaptor</a></td>
 </tr>
 </tbody>
 </table>
