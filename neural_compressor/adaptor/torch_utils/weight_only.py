@@ -220,14 +220,22 @@ def get_module_input_output(model, module_hook_config={}, dataloader=None, iters
         def save_input_hook(module, inputs):
             input = inputs[0]
             if name in input_values:
-                input_values[name] = torch.cat((input_values[name], input), 0)
+                try:
+                    input_values[name] = torch.cat((input_values[name], input), 0)
+                except Exception as e:
+                    logger.error(e)
+                    assert False, "Please unify the input shape for AWQ algorithm calibration."
             else:
                 input_values[name] = input
         def save_output_hook(module, inputs, outputs):
             if isinstance(outputs, tuple):
                 outputs = outputs[0]
             if name in output_values:
-                output_values[name] = torch.cat((output_values[name], outputs), 0)
+                try:
+                    output_values[name] = torch.cat((output_values[name], outputs), 0)
+                except Exception as e:
+                    logger.error(e)
+                    assert False, "Please unify the input shape for AWQ algorithm calibration."
             else:
                 output_values[name] = outputs
         return save_input_hook, save_output_hook
@@ -303,30 +311,23 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     # collect module names to record their input/output for loss calculation.
-    module_hook_list = []
+    module_for_loss_dict = OrderedDict()
     # get the upper module if absorbed modules have the same absorb module.
     for absorb, absorbed in absorb_dict.items():
         # used as input for absob module
-        module_hook_list.append(absorb)
+        module_for_loss_dict[absorb] = set()
         if len(absorbed) > 1:
-            upper_name = []
-            end_flag = False
-            for part_name in absorbed[0].split('.'):
-                for i in range(1, len(absorbed)):
-                    if part_name not in absorbed[i]:
-                        end_flag = True
-                        break
-                if not end_flag:
-                    upper_name.append(part_name)
-                else:
-                    upper_name = '.'.join(upper_name)
-                    break
-            module_hook_list.append(upper_name)
+            split_dict = {}
             for ab in absorbed:
-                weight_config[ab]['module_for_loss'] = upper_name
+                split_dict[ab] = ab.split('.')
+            for ab, sp_list in split_dict.items():
+                for i in range(len(sp_list)):
+                    group_name = '.'.join(sp_list[:i+1])
+                    if group_name not in absorb:
+                        module_for_loss_dict[absorb].add(group_name)
+                        break
         else:
-            module_hook_list.append(absorbed[0])
-            weight_config[absorbed[0]]['module_for_loss'] = absorbed[0]
+            module_for_loss_dict[absorb].add(absorbed[0])
 
     def calibration(module_name_list):
         if calib_func:
@@ -350,18 +351,50 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
             )
         return input_values, output_values
 
+    layer_args = {}
+    layer_kwargs = {}
+    # to fetch kwargs which torch hook cannot handle
+    class Catcher(torch.nn.Module):
+        def __init__(self, module, name):
+            super().__init__()
+            self.module = module
+            self.module_name = name
+
+        def forward(self, *args, **kwargs):
+            layer_args[self.module_name] = args
+            layer_kwargs[self.module_name] = kwargs
+            return self.module.forward(*args, **kwargs)
+
     if auto_scale:
+        from .util import fetch_module, set_module
         final_scale_info = {}
         logger.info("Searching best scales with AWQ algorithm")
+        logger.info(f"Scale search is splitted into {math.floor(len(absorb_dict)//5)} parts to avoid OOM")
         for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
             # Split module_name_list to avoid OOM when recording output tensors.
-            from .util import fetch_module
             if idx % 5 == 0:
+                layer_args = {}
+                layer_kwargs = {}
                 part_module_hook_config = {}
-                for id, name in enumerate(module_hook_list):
-                    if idx * 2 <= id < (idx + 5) * 2:
-                        part_module_hook_config[name] = ['output'] # only fetch output tensor
+                logger.info(f"Scale search calibration round {idx//5 + 1}")
+                for id, name in enumerate(module_for_loss_dict):
+                    if idx <= id < (idx + 5):
+                        part_module_hook_config[name] = ['output'] # fetch input tensor
+                        for i in module_for_loss_dict[name]:
+                            # use Catcher to record input args and kwargs
+                            tmp_module = fetch_module(model, i)
+                            new_module = Catcher(tmp_module, i)
+                            set_module(model, i, new_module)
+                            part_module_hook_config[i] = ['output'] # fetch output tensor
                 input_values, output_values = calibration(part_module_hook_config)
+                # recover Catcher
+                for id, name in enumerate(module_for_loss_dict):
+                    if idx <= id < (idx + 5):
+                        for i in module_for_loss_dict[name]:
+                            # use Catcher to record input args and kwargs
+                            tmp_module = fetch_module(model, i)
+                            set_module(model, i, tmp_module.module)
+
             weight = torch.cat([fetch_module(model, _m).weight for _m in absorbed], dim=0)
             w_max = _get_weight_scale(
                 weight, q_group_size=weight_config[absorbed[0]]['group_size'])
@@ -375,9 +408,14 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
             absorbed_module = {_m: fetch_module(model, _m) for _m in absorbed}
             org_stat = {_m: module.state_dict() for _m, module in absorbed_module.items()}
-            org_out = output_values[weight_config[absorbed[0]]['module_for_loss']]
-            block = fetch_module(model, weight_config[absorbed[0]]['module_for_loss'])
-            x = output_values[absorb]
+            org_out = {}
+            for loss_module_name in module_for_loss_dict[absorb]:
+                out = output_values[loss_module_name]
+                if isinstance(out, tuple):
+                    out = out[0]
+                org_out[loss_module_name] = out
+            for loss_module_name in module_for_loss_dict[absorb]:
+                blockes = {_m: fetch_module(model, _m) for _m in module_for_loss_dict[absorb]}
 
             for ratio in range(n_grid):
                 ratio = ratio * 1 / n_grid
@@ -393,10 +431,12 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                         scheme=weight_config[name]['scheme'],
                     ) / scales.view(1, -1)
 
-                out = block(x)
-                if isinstance(out, tuple):
-                    out = out[0]
-                loss = (org_out - out).float().pow(2).mean().item()  # float prevents overflow
+                loss = 0
+                for name, block in blockes.items():
+                    out = block(*layer_args[name], **layer_kwargs[name])
+                    if isinstance(out, tuple):
+                        out = out[0]
+                    loss += (org_out[name] - out).float().pow(2).mean().item()  # float prevents overflow
                 history.append(loss)
                 is_best = loss < best_error
                 if is_best:
@@ -431,15 +471,30 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     if mse_range:
         final_clip_info = {}
         logger.info("Searching best clip range with AWQ algorithm")
+        logger.info(f"Clip range search is splitted into {math.ceil(len(absorb_dict)//5)} parts to avoid OOM")
         for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
             # Split module_name_list to avoid OOM when recording output tensors.
-            from .util import fetch_module
             if idx % 5 == 0:
+                layer_args = {}
+                layer_kwargs = {}
                 part_module_hook_config = {}
-                for id, name in enumerate(module_hook_list):
-                    if idx * 2 <= id < (idx + 5) * 2:
-                        part_module_hook_config[name] = ['output'] # only fetch output tensor
+                logger.info(f"Clip range search calibration round {idx//5 + 1}")
+                for id, name in enumerate(module_for_loss_dict):
+                    if idx <= id < (idx + 5):
+                        for i in module_for_loss_dict[name]:
+                            # use Catcher to record input args and kwargs
+                            tmp_module = fetch_module(model, i)
+                            new_module = Catcher(tmp_module, i)
+                            set_module(model, i, new_module)
+                            part_module_hook_config[i] = ['output'] # only fetch output tensor
                 input_values, output_values = calibration(part_module_hook_config)
+                # recover Catcher
+                for id, name in enumerate(module_for_loss_dict):
+                    if idx <= id < (idx + 5):
+                        for i in module_for_loss_dict[name]:
+                            # use Catcher to record input args and kwargs
+                            tmp_module = fetch_module(model, i)
+                            set_module(model, i, tmp_module.module)
 
             best_error = float('inf')
             best_clip_ratio = None
@@ -449,9 +504,14 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
             absorbed_module = {_m: fetch_module(model, _m) for _m in absorbed}
             org_stat = {_m: module.state_dict() for _m, module in absorbed_module.items()}
-            org_out = output_values[weight_config[absorbed[0]]['module_for_loss']]
-            block = fetch_module(model, weight_config[absorbed[0]]['module_for_loss'])
-            x = output_values[absorb]
+            org_out = {}
+            for loss_module_name in module_for_loss_dict[absorb]:
+                out = output_values[loss_module_name]
+                if isinstance(out, tuple):
+                    out = out[0]
+                org_out[loss_module_name] = out
+            for loss_module_name in module_for_loss_dict[absorb]:
+                blockes = {_m: fetch_module(model, _m) for _m in module_for_loss_dict[absorb]}
 
             for i_s in range(int(max_shrink * n_grid)):
                 ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
@@ -464,10 +524,12 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                         quantile=ratio,
                     )
 
-                out = block(x)
-                if isinstance(out, tuple):
-                    out = out[0]
-                loss = (org_out - out).float().pow(2).mean().item()  # float prevents overflow
+                loss = 0
+                for name, block in blockes.items():
+                    out = block(*layer_args[name], **layer_kwargs[name])
+                    if isinstance(out, tuple):
+                        out = out[0]
+                    loss += (org_out[name] - out).float().pow(2).mean().item()  # float prevents overflow
                 history.append(loss)
                 is_best = loss < best_error
                 if is_best:

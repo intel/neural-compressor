@@ -4579,6 +4579,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 flipped_dict[m] = {'absorb_layer': k}
 
         # check tune_cfg to skip layers without AWQ config
+        skipped_op_name_set = set()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
@@ -4593,19 +4594,21 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                         if op_name in flipped_dict:
                             absorb_to_layer.pop(flipped_dict[op_name])
                 else:
-                    logger.info("{} is skipped by AWQ algorithm".format(op_name))
+                    skipped_op_name_set.add(op_name)
+        if skipped_op_name_set:
+            logger.info("{} is skipped by AWQ algorithm".format(skipped_op_name_set))
 
         # collect AWQ config from tune_cfg for quantization.
         weight_config = {}
         if len(absorb_to_layer) == 0:
             logger.warning('skipped AWQ algorithm')
         else:
-            logger.info("**absorb layer**: **absorbed layers**")
+            logger.debug("**absorb layer**: **absorbed layers**")
         for k, v in absorb_to_layer.items():
-            logger.info(f"{k}: {v}")
+            logger.debug(f"{k}: {v}")
             for m in v:
                 weight_config[m] = flipped_dict[m]
-        logger.info("absorbed layers with the same absorb layer use the same config")
+        logger.info("Absorbed layers with the same absorb layer use the same config")
 
         if 'awq_args' in self.recipes:
             auto_scale = self.recipes['awq_args'].get('auto_scale', True)
