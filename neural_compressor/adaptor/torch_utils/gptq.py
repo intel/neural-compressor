@@ -4,13 +4,14 @@ import time
 import torch
 import torch.nn as nn
 import transformers
+from tqdm import tqdm
 
 # different models may have different input structures. 
-arch_inputs = {
-    'opt': ['attention_mask'],
-    'bloom': ['attention_mask', 'alibi'],
-    'llama': ['attention_mask', 'position_ids']
-}
+# arch_inputs = {
+#     'opt': ['attention_mask'],
+#     'bloom': ['attention_mask', 'alibi'],
+#     'llama': ['attention_mask', 'position_ids']
+# }
 
 DEBUG = False 
 
@@ -65,13 +66,16 @@ class InputHooker(nn.Module):
         self.module = module
         self.inp = inp
         self.cache = cache
-        self.input_args = arch_inputs[arch]
+        # self.input_args = arch_inputs[arch]
     def forward(self, inp, **kwargs):
         # import pdb;pdb.set_trace()
         self.inp[self.cache['i']] = inp
         self.cache['i'] += 1
-        for arg in self.input_args:
-            self.cache[arg] = kwargs[arg]
+        for arg in kwargs:
+            if isinstance(kwargs[arg], torch.Tensor):
+                self.cache[arg] = kwargs[arg]
+            else:
+                continue
         raise ValueError
 
 class GPTQuantizer(object):
@@ -81,6 +85,7 @@ class GPTQuantizer(object):
         # generally, an llm models follows such structure:
         # embeddings => [transformer_block_1, transformer_block_2, ...] => lm_head
         self.model = model
+        self.use_cache = model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(model) # get the transformer block list above
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
         self.dataloader = dataloader
@@ -95,14 +100,15 @@ class GPTQuantizer(object):
             self.cache = {'i': 0}
             # for opt, bloom, llama, etc, their inputs are different thus their cache structures vary
             # initialization
-            for special_input_terms in arch_inputs[self.args.arch]:
-                self.cache[special_input_terms] = None
+            # for special_input_terms in arch_inputs[self.args.arch]:
+            #     self.cache[special_input_terms] = None
             self.out = torch.zeros_like(self.inp)
             self.is_ready = True
         except:
             pass
     
-    def collect_inputs(self):
+    @torch.no_grad()
+    def pre_quantization(self):
         # by executing forward process, collect inputs of transformer blocks
         # process the embedding related layers, set devices
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
@@ -132,23 +138,24 @@ class GPTQuantizer(object):
         torch.cuda.empty_cache()
         print('Quantization prepared.')
     
-    def perform_transformer_forward(self, module, inp):
-        assert self.is_ready, "calibration datasets are not prepared!"
-        if self.args.arch == "bloom":
-            return module(inp, attention_mask=self.cache['attention_mask'], alibi=self.cache['alibi'], )[0]
-        elif self.args.arch == "opt":
-            return module(inp, attention_mask=self.cache['attention_mask'], )[0]
-        elif self.args.arch == 'llama':
-            return module(inp, attention_mask=self.cache['attention_mask'], position_ids=self.cache['position_ids'])[0]
-        else:
-            raise NotImplementedError
+    # def perform_transformer_forward(self, module, inp):
+    #     assert self.is_ready, "calibration datasets are not prepared!"
+    #     if self.args.arch == "bloom":
+    #         return module(inp, attention_mask=self.cache['attention_mask'], alibi=self.cache['alibi'], )[0]
+    #     elif self.args.arch == "opt":
+    #         return module(inp, attention_mask=self.cache['attention_mask'], )[0]
+    #     elif self.args.arch == 'llama':
+    #         return module(inp, attention_mask=self.cache['attention_mask'], position_ids=self.cache['position_ids'])[0]
+    #     else:
+    #         raise NotImplementedError
+    
+    # def perform_transformer_forward_v2(self, module, inp, args, **kwargs):
+    #     pass
 
-    def __call__(self, means=None, stds=None):
+    @torch.no_grad()
+    def execute_quantization(self, means=None, stds=None):
         print("Begin ====>")
-        self.collect_inputs()
-
-        attention_mask = self.cache['attention_mask']
-        alibi = self.cache['alibi']
+        self.pre_quantization()
 
         # quantizers = {}
         # Triggle GPTQ algorithm block by block.
@@ -173,11 +180,16 @@ class GPTQuantizer(object):
             
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-            import pdb;pdb.set_trace()
+            # import pdb;pdb.set_trace()
+            idx = self.cache.pop('i')
             for j in range(self.args.nsamples):
                 # during the forward process, the batch data has been registered into gptq object, which contributes to quantization process.
-                #self.out[j] = transformer_block(self.inp[j].unsqueeze(0), attention_mask=attention_mask, alibi=alibi)[0]
-                self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
+                # self.out[j] = transformer_block(self.inp[j].unsqueeze(0), attention_mask=attention_mask, alibi=alibi)[0]
+                # method 1: use pre-defined methods
+                # self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
+                # method 2: use dict passing
+                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+            self.cache['i'] = idx
             for h in handles:
                 h.remove()
             
@@ -186,17 +198,111 @@ class GPTQuantizer(object):
                 print(f"Quantizing layer {layer_name}")
                 gptq_for_this_block[layer_name].fasterquant(percdamp=self.args.percdamp, groupsize=self.args.groupsize)
             # import pdb;pdb.set_trace()
+            idx = self.cache.pop('i')
             for j in range(self.args.nsamples):
                 # out should be quantized results
-                # self.out[j] = transformer_block(self.inp[j].unsqueeze(0), attention_mask=attention_mask, alibi=alibi)[0]
-                self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
+                # idx = self.cache.pop('i')
+                # self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+                # self.cache[i] = idx
+                # idx = self.cache.pop('i')
+                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+                # self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
+            self.cache['i'] = idx
             self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output (next block)
             self.inp, self.out = self.out, self.inp
         # import pdb;pdb.set_trace()
-        self.model.config.use_cache = use_cache
+        self.model.config.use_cache = self.use_cache
+    
+    @torch.no_grad()
+    def post_quantization(self, test_dataloader):
+        print("Evaluation...")
+
+        test_dataloader = test_dataloader.input_ids
+        nsamples = test_dataloader.numel() // self.model.seqlen
+        try:
+            del self.inp
+        except:
+            pass
+        self.inp = torch.zeros((nsamples, self.model.seqlen, self.model.config.hidden_size), dtype=self.dtype, device=self.device)
+
+        try:
+            del self.out
+        except:
+            pass
+        self.out = torch.zeros_like(self.inp)
+        
+        use_cache = self.use_cache
+        self.model.config.use_cache = False
+
+        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+            embedding_layer = embedding_layer.to(self.device)
+
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
+        # layer_0_handle = self.gptq_related_blocks['transformers'][0].register_forward_hook(input_hook)
+        self.gptq_related_blocks['transformers'][0] = InputHooker(self.gptq_related_blocks['transformers'][0], self.args.arch, self.inp, self.cache)
+        for i in range(nsamples):
+            batch = test_dataloader[:, (i * self.model.seqlen):((i + 1) * self.model.seqlen)].to(self.device)
+            try:
+                self.model(batch[0].to(self.device))
+            except ValueError:
+                pass
+
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].module
+        # t_layer = t_layer.cpu()
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
+        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+            embedding_layer.to(self.device)
+        torch.cuda.empty_cache()
+        print('Evaluation dataset prepared. Begin evaluation...')
+
+        # begin evaluation
+        for block_idx in tqdm(range(len(self.gptq_related_blocks['transformers']))):
+            transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
+            # if args.nearest:
+            #     subset = find_layers(layer)
+            #     for name in subset:
+            #         quantizer = Quantizer()
+            #         quantizer.configure(
+            #             args.wbits, perchannel=True, sym=args.sym, mse=False
+            #         )
+            #         W = subset[name].weight.data
+            #         quantizer.find_params(W, weight=True)
+            #         subset[name].weight.data = quantize(
+            #             W, quantizer.scale, quantizer.zero, quantizer.maxq
+            #         ).to(next(iter(layer.parameters())).dtype)
+
+            idx = self.cache.pop('i')
+            for j in range(nsamples):
+                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+            self.cache['i'] = idx
+            self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
+            del transformer_block
+            torch.cuda.empty_cache()
+            self.inp, self.out = self.out, self.inp
+
+        # to be modified
+        self.model.transformer.ln_f = self.model.transformer.ln_f.to(self.device)
+        self.model.lm_head = self.model.lm_head.to(self.device)
+
+        test_dataloader = test_dataloader.to(self.device)
+        nlls = []
+        for i in range(nsamples):
+            hidden_states = self.inp[i].unsqueeze(0)
+            hidden_states = self.model.transformer.ln_f(hidden_states)
+            lm_logits = self.model.lm_head(hidden_states)
+            shift_logits = lm_logits[:, :-1, :].contiguous()
+            shift_labels = test_dataloader[:, (i * self.model.seqlen):((i + 1) * self.model.seqlen)][:, 1:]
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+            neg_log_likelihood = loss.float() * self.model.seqlen
+            nlls.append(neg_log_likelihood)
+        ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * self.model.seqlen))
+        print(ppl.item())
+
+#------------------------gptq source codes---------------------------------
 
 class GPTQ:
     def __init__(self, layer):
@@ -241,7 +347,7 @@ class GPTQ:
         self.H += inp.matmul(inp.t()) # H = X*X, which should be a sysm matrix
 
     def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, actorder=False):
-        import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
