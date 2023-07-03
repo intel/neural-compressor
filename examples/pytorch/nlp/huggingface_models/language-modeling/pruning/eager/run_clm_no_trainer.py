@@ -176,9 +176,11 @@ class Net(torch.nn.Module):
         return self.model(input_ids=input_ids, attention_mask=mask, past_key_values=pastkv, return_dict=False)
         
 def trace_model(model, tokenizer):
-    num_layers = model.config.num_hidden_layers ## TODO Automatic detection of config
-    num_attention_heads = model.config.num_attention_heads
-    hidden_size = model.config.hidden_size
+    from optimum.utils import NormalizedConfigManager
+    normalized_config = NormalizedConfigManager.get_normalized_config_class(model.config.model_type)(model.config)
+    num_layers = normalized_config.num_layers
+    num_attention_heads = normalized_config.num_attention_heads
+    hidden_size = normalized_config.hidden_size
     d_k = hidden_size // num_attention_heads
     model_type = model.config.model_type
     model = model.cpu()
@@ -916,6 +918,7 @@ def main():
         if args.output_dir is not None:
             accelerator.wait_for_everyone()
             traced_model = trace_model(model, tokenizer)
+            logger.info(f"Save silmed jit model")
             torch.jit.save(traced_model, args.output_dir+"/slimed_jit_model.pt")
             
     
