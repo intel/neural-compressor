@@ -16,6 +16,7 @@
 
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 
+
 class Config:
     """Config for services."""
 
@@ -24,6 +25,7 @@ class Config:
     result_monitor_port: int = 3333
     service_address: str = "localhost"
     grpc_api_port: int = 4444
-    #TODO add set and get methods for each attribute
+    # TODO add set and get methods for each attribute
+
 
 config = Config()
