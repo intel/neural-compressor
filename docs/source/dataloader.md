@@ -66,7 +66,7 @@ dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 config = PostTrainingQuantConfig()
 q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
 ```
-> Note: `DataLoader(framework='onnxruntime', dataset=dataset)` failed in neural-compressor v2.2. We have fixed it in [39867d5](https://github.com/intel/neural-compressor/commit/39867d5b951d623c657315d685bb8a37ffddcc31).
+> Note: `DataLoader(framework='onnxruntime', dataset=dataset)` failed in neural-compressor v2.2. We have fixed it in this [PR](https://github.com/intel/neural-compressor/pull/1048).
 
 ### Build Custom Dataloader with Python API
 
