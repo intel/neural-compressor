@@ -4510,11 +4510,22 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         self.tune_cfg["framework"] = "pytorch"
         assert self.approach=='post_training_weight_only', "Please make sure the approach is weight_only"
 
-        # q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
+        all_algo = set()
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32':
+                continue
+            else:
+                algorithm = config['weight']['algorithm']
+                all_algo.add(algorithm)
 
-        # Run AWQ first to get real scale of fp32 model.
-        q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-        q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
+        if 'GPTQ' in all_algo:
+            q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
+
+        if 'AWQ' in all_algo: # includes RTN in AWQ
+            q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
+        elif 'RTN' in all_algo:
+            q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True

@@ -318,12 +318,13 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
         module_for_loss_dict[absorb] = set()
         if len(absorbed) > 1:
             split_dict = {}
+            split_absorb = absorb.split('.')
             for ab in absorbed:
                 split_dict[ab] = ab.split('.')
             for ab, sp_list in split_dict.items():
                 for i in range(len(sp_list)):
-                    group_name = '.'.join(sp_list[:i+1])
-                    if group_name not in absorb:
+                    if sp_list[i] != split_absorb[i]:
+                        group_name = '.'.join(sp_list[:i+1])
                         module_for_loss_dict[absorb].add(group_name)
                         break
         else:
@@ -361,24 +362,36 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
             self.module_name = name
 
         def forward(self, *args, **kwargs):
-            layer_args[self.module_name] = args
-            layer_kwargs[self.module_name] = kwargs
+            if self.module_name not in layer_args:
+                layer_args[self.module_name] = list(args)
+                layer_kwargs[self.module_name] = kwargs
+            else:
+                # to concat different batches
+                for i, v in enumerate(args):
+                    if isinstance(v, torch.Tensor):
+                        layer_args[self.module_name][i] = \
+                                    torch.cat([layer_args[self.module_name][i], v], dim=0)
+                for k, v in kwargs.items():
+                    if isinstance(v, torch.Tensor):
+                        layer_kwargs[self.module_name][k] = \
+                                    torch.cat([layer_kwargs[self.module_name][k], v], dim=0)
             return self.module.forward(*args, **kwargs)
 
-    if auto_scale:
+    if auto_scale or mse_range:
         from .util import fetch_module, set_module
         final_scale_info = {}
-        logger.info("Searching best scales with AWQ algorithm")
-        logger.info(f"Scale search is splitted into {math.floor(len(absorb_dict)//5)} parts to avoid OOM")
+        split_num = 15
+        logger.info(f"AWQ search is splitted into {math.floor(len(absorb_dict)//split_num)} parts to avoid OOM")
         for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
+            logger.info(f"Processing module: {absorb}:{absorbed}")
             # Split module_name_list to avoid OOM when recording output tensors.
-            if idx % 5 == 0:
+            if idx % split_num == 0:
                 layer_args = {}
                 layer_kwargs = {}
                 part_module_hook_config = {}
-                logger.info(f"Scale search calibration round {idx//5 + 1}")
+                logger.info(f"AWQ search calibration round {idx//split_num + 1}")
                 for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + 5):
+                    if idx <= id < (idx + split_num):
                         part_module_hook_config[name] = ['output'] # fetch input tensor
                         for i in module_for_loss_dict[name]:
                             # use Catcher to record input args and kwargs
@@ -389,7 +402,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                 input_values, output_values = calibration(part_module_hook_config)
                 # recover Catcher
                 for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + 5):
+                    if idx <= id < (idx + split_num):
                         for i in module_for_loss_dict[name]:
                             # use Catcher to record input args and kwargs
                             tmp_module = fetch_module(model, i)
@@ -400,14 +413,8 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                 weight, q_group_size=weight_config[absorbed[0]]['group_size'])
             del weight
             x_max = _get_act_scale(output_values[absorb])
-
-            best_error = float('inf')
-            best_scales = None
-            n_grid = 20
-            history = []
-
-            absorbed_module = {_m: fetch_module(model, _m) for _m in absorbed}
-            org_stat = {_m: module.state_dict() for _m, module in absorbed_module.items()}
+            absorbed_modules = {_m: fetch_module(model, _m) for _m in absorbed}
+            org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
             org_out = {}
             for loss_module_name in module_for_loss_dict[absorb]:
                 out = output_values[loss_module_name]
@@ -417,133 +424,99 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
             for loss_module_name in module_for_loss_dict[absorb]:
                 blockes = {_m: fetch_module(model, _m) for _m in module_for_loss_dict[absorb]}
 
-            for ratio in range(n_grid):
-                ratio = ratio * 1 / n_grid
-                scales = (x_max.pow(ratio) / w_max.pow(1-ratio)
-                        ).clamp(min=1e-4).view(-1)
-                scales = scales / (scales.max() * scales.min()).sqrt()
-                for name, module in absorbed_module.items():
-                    module.weight.mul_(scales.view(1, -1))
-                    module.weight.data = quant_weight(
-                        module.weight.data,
-                        num_bits=weight_config[name]['bits'], 
-                        group_size=weight_config[name]['group_size'], 
-                        scheme=weight_config[name]['scheme'],
-                    ) / scales.view(1, -1)
+            if auto_scale:
+                logger.info("Searching best scales with AWQ algorithm")
+                best_error = float('inf')
+                best_scales = None
+                n_grid = 20
+                history = []
 
-                loss = 0
-                for name, block in blockes.items():
-                    out = block(*layer_args[name], **layer_kwargs[name])
-                    if isinstance(out, tuple):
-                        out = out[0]
-                    loss += (org_out[name] - out).float().pow(2).mean().item()  # float prevents overflow
-                history.append(loss)
-                is_best = loss < best_error
-                if is_best:
-                    best_error = loss
-                    best_scales = scales
-                for name, module in absorbed_module.items():
-                    module.load_state_dict(org_stat[name])
-                
-            logger.debug("The loss history of different scale:{}".format(history))
-            best_scales = best_scales.view(-1)
-            assert torch.isnan(best_scales).sum() == 0, best_scales
-            final_scale_info[absorb] = best_scales.detach()
-            # logger.debug("The best scale:{}".format(final_scale_info))
+                for ratio in range(n_grid):
+                    ratio = ratio * 1 / n_grid
+                    scales = (x_max.pow(ratio) / w_max.pow(1-ratio)
+                            ).clamp(min=1e-4).view(-1)
+                    scales = scales / (scales.max() * scales.min()).sqrt()
+                    for name, module in absorbed_modules.items():
+                        module.weight.data = module.weight.data.mul(scales.view(1, -1))
+                        module.weight.data = quant_weight(
+                            module.weight.data,
+                            num_bits=weight_config[name]['bits'], 
+                            group_size=weight_config[name]['group_size'], 
+                            scheme=weight_config[name]['scheme'],
+                        ) / scales.view(1, -1)
 
-        # apply scale
-        logger.info("Applying best scales for fp32 model")
-        for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
-            scales = final_scale_info[absorb]
-            # update absorb model
-            absorb_module = fetch_module(model, absorb)
-            if len(absorb_module.weight.shape) == 1:
-                absorb_module.weight.div_(scales)  # for LayerNorm
-            else:
-                absorb_module.weight.div_(scales.view(-1, 1))
-            if absorb_module.bias is not None:
-                absorb_module.bias.div_(scales.view(-1))
-            # update absorbed model
-            for name in absorbed:
-                absorbed_module = fetch_module(model, name)
-                absorbed_module.weight.mul_(scales.view(1, -1))
+                    loss = 0
+                    for name, block in blockes.items():
+                        out = block(*layer_args[name], **layer_kwargs[name])
+                        if isinstance(out, tuple):
+                            out = out[0]
+                        loss += (org_out[name] - out).float().pow(2).mean().item()  # float prevents overflow
+                    history.append(loss)
+                    is_best = loss < best_error
+                    if is_best:
+                        best_error = loss
+                        best_scales = scales
+                    for name, module in absorbed_modules.items():
+                        module.load_state_dict(org_stat[name])
+                    break
 
-    if mse_range:
-        final_clip_info = {}
-        logger.info("Searching best clip range with AWQ algorithm")
-        logger.info(f"Clip range search is splitted into {math.ceil(len(absorb_dict)//5)} parts to avoid OOM")
-        for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
-            # Split module_name_list to avoid OOM when recording output tensors.
-            if idx % 5 == 0:
-                layer_args = {}
-                layer_kwargs = {}
-                part_module_hook_config = {}
-                logger.info(f"Clip range search calibration round {idx//5 + 1}")
-                for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + 5):
-                        for i in module_for_loss_dict[name]:
-                            # use Catcher to record input args and kwargs
-                            tmp_module = fetch_module(model, i)
-                            new_module = Catcher(tmp_module, i)
-                            set_module(model, i, new_module)
-                            part_module_hook_config[i] = ['output'] # only fetch output tensor
-                input_values, output_values = calibration(part_module_hook_config)
-                # recover Catcher
-                for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + 5):
-                        for i in module_for_loss_dict[name]:
-                            # use Catcher to record input args and kwargs
-                            tmp_module = fetch_module(model, i)
-                            set_module(model, i, tmp_module.module)
+                logger.debug("The loss history of different scale:{}".format(history))
+                best_scales = best_scales.view(-1)
+                best_scales = torch.ones(best_scales.shape)
+                assert torch.isnan(best_scales).sum() == 0, best_scales
+                final_scale_info[absorb] = best_scales.detach()
+                # logger.debug("The best scale:{}".format(final_scale_info))
+                scales = final_scale_info[absorb]
+                # update absorb model
+                absorb_module = fetch_module(model, absorb)
+                if len(absorb_module.weight.shape) == 1:
+                    absorb_module.weight.div_(scales)  # for LayerNorm
+                else:
+                    absorb_module.weight.div_(scales.view(-1, 1))
+                if absorb_module.bias is not None:
+                    absorb_module.bias.div_(scales.view(-1))
+                # update absorbed model
+                for name in absorbed:
+                    absorbed_module = fetch_module(model, name)
+                    absorbed_module.weight.mul_(scales.view(1, -1))
 
-            best_error = float('inf')
-            best_clip_ratio = None
-            n_grid = 20
-            max_shrink = 0.5
-            history = []
+            if mse_range:
+                logger.info("Searching best clip range with AWQ algorithm")
+                best_error = float('inf')
+                best_clip_ratio = None
+                n_grid = 20
+                max_shrink = 0.5
+                history = []
+                org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
 
-            absorbed_module = {_m: fetch_module(model, _m) for _m in absorbed}
-            org_stat = {_m: module.state_dict() for _m, module in absorbed_module.items()}
-            org_out = {}
-            for loss_module_name in module_for_loss_dict[absorb]:
-                out = output_values[loss_module_name]
-                if isinstance(out, tuple):
-                    out = out[0]
-                org_out[loss_module_name] = out
-            for loss_module_name in module_for_loss_dict[absorb]:
-                blockes = {_m: fetch_module(model, _m) for _m in module_for_loss_dict[absorb]}
+                for name, module in absorbed_modules.items():
+                    for i_s in range(int(max_shrink * n_grid)):
+                        ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
+                        module.weight.data = quant_weight(
+                            module.weight.data,
+                            num_bits=weight_config[name]['bits'], 
+                            group_size=weight_config[name]['group_size'], 
+                            scheme=weight_config[name]['scheme'],
+                            quantile=ratio,
+                        )
 
-            for i_s in range(int(max_shrink * n_grid)):
-                ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
-                for name, module in absorbed_module.items():
-                    module.weight.data = quant_weight(
-                        module.weight.data,
-                        num_bits=weight_config[name]['bits'], 
-                        group_size=weight_config[name]['group_size'], 
-                        scheme=weight_config[name]['scheme'],
-                        quantile=ratio,
-                    )
+                        loss = 0
+                        for n, block in blockes.items():
+                            if n in name:
+                                out = block(*layer_args[n], **layer_kwargs[n])
+                                if isinstance(out, tuple):
+                                    out = out[0]
+                                loss += (org_out[n] - out).float().pow(2).mean().item()  # float prevents overflow
+                        history.append(loss)
+                        is_best = loss < best_error
+                        if is_best:
+                            best_error = loss
+                            best_clip_ratio = ratio
+                        module.load_state_dict(org_stat[name])
 
-                loss = 0
-                for name, block in blockes.items():
-                    out = block(*layer_args[name], **layer_kwargs[name])
-                    if isinstance(out, tuple):
-                        out = out[0]
-                    loss += (org_out[name] - out).float().pow(2).mean().item()  # float prevents overflow
-                history.append(loss)
-                is_best = loss < best_error
-                if is_best:
-                    best_error = loss
-                    best_clip_ratio = ratio
-                for name, module in absorbed_module.items():
-                    module.load_state_dict(org_stat[name])
-
-            logger.debug("The loss history of different scale:{}".format(history))
-            final_clip_info[absorb] = best_clip_ratio
-            # To apply clip ratio
-            for name in absorbed:
-                weight_config[name]['quantile'] = best_clip_ratio
-            logger.debug("The best clip ratio:{}".format(final_clip_info))
+                    logger.debug("The loss history of different clip range:{}".format(history))
+                    weight_config[name]['quantile'] = best_clip_ratio
+                    logger.debug("The best clip ratio for {}:{}".format(name, best_clip_ratio))
 
     # apply quantization and clip
     logger.info("Quantizing the AWQ optimized fp32 model")
