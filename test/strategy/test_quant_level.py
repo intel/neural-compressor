@@ -324,6 +324,45 @@ class TestQuantLevel(unittest.TestCase):
                       eval_func=_fake_eval)
         self.assertIsNone(q_model)
 
+
+    def test_pt_quant_level_1_with_perf_obj(self):
+        logger.info("*** Test: quantization level 1 with perf obj [pytorch model].")
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        import torchvision
+        import time
+
+        # model
+        resnet18 = torchvision.models.resnet18()
+
+        # fake evaluation function
+        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        self._internal_index = -1
+        def _fake_eval(model):
+            self._internal_index += 1
+            perf = perf_lst[self._internal_index]
+            time.sleep(perf)
+            return acc_lst[self._internal_index]
+
+        # dataset and dataloader
+        dataset = Datasets("pytorch")["dummy"](((16, 3, 3, 1)))
+        dataloader = DATALOADERS["pytorch"](dataset)
+
+        # tuning and accuracy criterion
+        # accuracy_criterion = AccuracyCriterion(object)
+        tuning_criterion = TuningCriterion(max_trials=4, objective=['performance'])
+        conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tuning_criterion)
+
+        # fit
+        q_model = fit(model=resnet18,
+                      conf=conf,
+                      calib_dataloader= dataloader,
+                      eval_dataloader=dataloader,
+                      eval_func=_fake_eval)
+        self.assertIsNotNone(q_model)
+
     def test_pt_quant_level_0(self):
         logger.info("*** Test: quantization level 0 with pytorch model.")
         from neural_compressor.quantization import fit

@@ -626,9 +626,16 @@ class TuningCriterion:
 
     @objective.setter
     def objective(self, objective):
+        # TODO objective can also be a list of str, such as ['performance', 'modelsize']
+        if isinstance(objective, list):
+            for val in objective:
+                assert _check_value('objective', val, str, ['performance', 'accuracy', 'modelsize', 'footprint'])
+            self._objective = objective
+            return
+
         if _check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
-            self._objective = objective
+            self._objective = [objective]
             return
 
         if _check_value('objective', objective, dict):

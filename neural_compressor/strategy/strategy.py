@@ -1275,11 +1275,15 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
 
     def _set_objectives(self):
         # set objectives
+        def _use_multiple_objs(usr_obj):
+            # TODO add implementation
+            return False
+        
         self.higher_is_better = bool(self.config.accuracy_criterion.higher_is_better)
         obj_higher_is_better = None
         obj_weight = None
         obj = self.config.tuning_criterion.objective
-        use_multi_objs = isinstance(obj, dict)
+        use_multi_objs = _use_multiple_objs(obj)
         self.use_multi_objective = False
         if use_multi_objs:
             obj_higher_is_better = obj.get('higher_is_better', None)
@@ -1288,7 +1292,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             objectives = [i.lower() for i in obj_lst]
             self.use_multi_objective = True
         else:
-            objectives = [obj.lower()]
+            objectives = [val.lower() for val in obj]
 
         # set metric
         self.metric_name = ['Accuracy']
