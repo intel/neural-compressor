@@ -137,7 +137,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         for key in pre_masks.keys():
             if key in self.invalid_layers:
                 continue
-            reduced_mask = pre_masks[key] if self.block else self.get_reduced_masks_from_data(pre_masks[key], key)
+            reduced_mask = pre_masks[key].float() if self.block else self.get_reduced_masks_from_data(pre_masks[key].float(), key)
             zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
             total_cnt += int(reduced_mask.numel())
         if total_cnt == 0:
@@ -155,7 +155,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         Args:
             data: Input.
 
-        Returns:
+        Returnn:
             Reshaped data.
         """
         # TODO: need to verify whether it's ok for transposed conv
@@ -245,8 +245,8 @@ class PytorchPatternNxM(PytorchBasePattern):
 
     def get_mask_per_threshold(self, score, threshold, block_size):
         """Get the mask per threshold."""
-        zero = torch.tensor([0.]).to(score.device)
-        one = torch.tensor([1.]).to(score.device)
+        zero = torch.tensor([False]).to(score.device)
+        one = torch.tensor([True]).to(score.device)
         mask = torch.where(score <= threshold, zero, one)
         if not self.block:
             mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
@@ -374,7 +374,7 @@ class PytorchPatternNxM(PytorchBasePattern):
                 continue
             block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
             module.register_parameter("block_mask", block_mask)
-            masks[key] = modules[key].block_mask.data
+            masks[key] = modules[key].block_mask.data.bool()
 
         return masks
 

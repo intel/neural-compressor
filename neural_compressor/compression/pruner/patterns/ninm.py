@@ -110,8 +110,8 @@ class PytorchPatternNInM(PytorchBasePattern):
         threshold = threshold.expand(shape[0], shape[1] // M, M)
         threshold = threshold.reshape((shape[0], shape[1]))
 
-        one = torch.tensor([1.]).to(current_score.device)
-        zero = torch.tensor([0.]).to(current_score.device)
+        one = torch.tensor([True]).to(current_score.device)
+        zero = torch.tensor([False]).to(current_score.device)
         mask = torch.where(current_score <= threshold, zero, one)
         return mask
 
@@ -134,7 +134,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                 # total_cnt += pre_masks[key].numel() // self.M
                 continue
             reduced_mask = self.get_reduced_masks_from_data(pre_masks[key], key)
-            zero_cnt += int((torch.sum(reduced_mask == 0)).data.item())
+            zero_cnt += int((torch.sum(reduced_mask == 0.0)).data.item())
             total_cnt += int(reduced_mask.numel())
         sparsity_ratio = float(zero_cnt) / total_cnt * self.N / self.M
 
@@ -245,8 +245,8 @@ class PytorchPatternNInM(PytorchBasePattern):
         Returns:
             mask: The elementwise pruning mask.
         """
-        zero = torch.tensor([0.]).to(score.device)
-        one = torch.tensor([1.]).to(score.device)
+        zero = torch.tensor([False]).to(score.device)
+        one = torch.tensor([True]).to(score.device)
         mask = torch.where(score <= threshold, zero, one)
         mask = mask.repeat_interleave(block_size[1], dim=-1)
         # both zero will be zero
@@ -328,8 +328,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
-            zero_cnt = False if self.low_memory_usage else 0.0
-            layer_ratio = torch.sum(masks[key] == zero_cnt).data.item() / masks[key].numel()
+            layer_ratio = torch.sum(masks[key] is False).data.item() / masks[key].numel()
             logger.info(f'layer {key} sparsity_ratio is {layer_ratio}')
         return masks
 
@@ -348,7 +347,7 @@ class PytorchPatternNInM(PytorchBasePattern):
             orig_shape = weight.shape
             if key in self.invalid_layers:
                 mask = torch.ones(orig_shape, device=weight.device)
-                pattern_lock_masks[key] = mask
+                pattern_lock_masks[key] = mask.bool()
                 continue
             mask = self.get_least_ninm_mask_from_data(weight)
             mask = self._reshape_2dims_to_orig(mask, orig_shape)

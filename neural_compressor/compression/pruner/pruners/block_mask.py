@@ -133,7 +133,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         with torch.no_grad():
             for key in self.masks.keys():
                 module = self.modules[key]
-                module.block_mask.data = masks[key].data
+                module.block_mask.data = masks[key].data.to(module.block_mask.dtype)
 
     def zero_mask_grad(self):
         with torch.no_grad():

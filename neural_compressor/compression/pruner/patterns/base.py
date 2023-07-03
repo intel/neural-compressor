@@ -312,7 +312,6 @@ class BasePattern:
         self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
         self.block = bool('block' in self.config['pruning_type'] or 'free' in self.config['pruning_type'])
-        self.low_memory_usage = self.config['low_memory_usage']
         # Not using deterministic_algorithms for all examples
 
     def get_masks(self, scores, target_sparsity_ratio, pre_masks):
@@ -517,8 +516,8 @@ class PytorchBasePattern(BasePattern):
         k = int(exact_sparsity_ratio * flattern_score.numel())
         threshold, _ = torch.kthvalue(flattern_score, k)
         if not k < 1:
-            zero = torch.tensor([0.]).to(score.device)
-            one = torch.tensor([1.]).to(score.device)
+            zero = torch.tensor([False]).to(score.device)
+            one = torch.tensor([True]).to(score.device)
             mask = torch.where(score <= threshold, zero, one)
         else:
             mask = torch.ones(score.shape, device=score.device)
@@ -538,8 +537,7 @@ class PytorchBasePattern(BasePattern):
         total_cnt = 0
         for key in pre_masks.keys():
             pre_mask = pre_masks[key]
-            zero_tag = False if self.low_memory_usage else 0.0
-            zero_cnt += torch.sum(pre_mask == zero_tag).data.item()
+            zero_cnt += torch.sum(pre_mask == 0.0).data.item()
             total_cnt += pre_mask.numel()  # FIXME
 
         if return_dict:
@@ -563,7 +561,7 @@ class PytorchBasePattern(BasePattern):
             if key in self.invalid_layers:
                 continue
             # progressive masks are unstructured, therefore directly find zeros
-            zero_cnt += float(torch.sum(pre_masks[key] == 0).data.item())
+            zero_cnt += float(torch.sum(pre_masks[key] == 0.0).data.item())
             total_cnt += float(pre_masks[key].numel())
 
         return (zero_cnt / total_cnt)
@@ -583,6 +581,7 @@ class PytorchBasePattern(BasePattern):
             shape = weight.shape
             mask = torch.ones(shape)
             mask[weight == 0] = 0.0
+            mask = mask.bool()
             pattern_lock_masks[key] = mask.to(weight.device)
 
         return pattern_lock_masks
@@ -604,10 +603,8 @@ class PytorchBasePattern(BasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            if self.low_memory_usage:
-                reduced_mask = masks[key].float() if self.block else self.get_reduced_masks_from_data(masks[key].float(), key)
-            else:
-                reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
+            reduced_mask = masks[key] if self.block else self.get_reduced_masks_from_data(masks[key], key)
+
             zero_cnt = (int(torch.sum(reduced_mask == 0.0).data.item()))
             total_cnt = int(reduced_mask.numel())
             sparsity_ratio = float(zero_cnt) / total_cnt
