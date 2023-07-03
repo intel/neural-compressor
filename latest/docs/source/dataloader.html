@@ -87,8 +87,8 @@
 <ol>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-framework-dataloader-matrix">Supported Framework Dataloader Matrix</a></p></li>
-<li><p><a class="reference external" href="#get-start-with-dataloader">Get Started with Dataloader</a></p>
-<p>3.1 <a class="reference external" href="#use-intel%C2%AE-neural-compressor-dataloader-api">Use Intel® Neural Compressor DataLoader API</a></p>
+<li><p><a class="reference external" href="#get-started-with-dataloader">Get Started with Dataloader</a></p>
+<p>3.1 <a class="reference external" href="#use-intel-neural-compressor-dataloader-api">Use Intel® Neural Compressor DataLoader API</a></p>
 <p>3.2 <a class="reference external" href="#build-custom-dataloader-with-python-api">Build Custom Dataloader with Python API</a></p>
 </li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
@@ -143,7 +143,7 @@
 <p>Acceptable parameters for <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API including:
 | Parameter     | Description     |
 |:————–|:———-|
-|framework (str)| different frameworks, such as <code class="docutils literal notranslate"><span class="pre">tensorflow</span></code>, <code class="docutils literal notranslate"><span class="pre">keras</span></code>, <code class="docutils literal notranslate"><span class="pre">mxnet</span></code>, <code class="docutils literal notranslate"><span class="pre">pytorch</span></code> and <code class="docutils literal notranslate"><span class="pre">onnxrt</span></code>.|
+|framework (str)| different frameworks, such as <code class="docutils literal notranslate"><span class="pre">tensorflow</span></code>, <code class="docutils literal notranslate"><span class="pre">tensorflow_itex</span></code>, <code class="docutils literal notranslate"><span class="pre">keras</span></code>, <code class="docutils literal notranslate"><span class="pre">mxnet</span></code>, <code class="docutils literal notranslate"><span class="pre">pytorch</span></code> and <code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code>.|
 |dataset (object)| A dataset object from which to get data. Dataset must implement <strong>iter</strong> or <strong>getitem</strong> method.|
 |batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
 |collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|
@@ -163,6 +163,9 @@
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span>
 </pre></div>
 </div>
+<blockquote>
+<div><p>Note: <code class="docutils literal notranslate"><span class="pre">DataLoader(framework='onnxruntime',</span> <span class="pre">dataset=dataset)</span></code> failed in neural-compressor v2.2. We have fixed it in this <a class="reference external" href="https://github.com/intel/neural-compressor/pull/1048">PR</a>.</p>
+</div></blockquote>
 </section>
 <section id="build-custom-dataloader-with-python-api">
 <h3>Build Custom Dataloader with Python API<a class="headerlink" href="#build-custom-dataloader-with-python-api" title="Permalink to this heading"></a></h3>
