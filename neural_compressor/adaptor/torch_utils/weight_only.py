@@ -458,7 +458,6 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                         best_scales = scales
                     for name, module in absorbed_modules.items():
                         module.load_state_dict(org_stat[name])
-                    break
 
                 logger.debug("The loss history of different scale:{}".format(history))
                 best_scales = best_scales.view(-1)
