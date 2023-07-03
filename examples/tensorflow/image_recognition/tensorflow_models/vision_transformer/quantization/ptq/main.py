@@ -49,6 +49,7 @@ arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
 arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
+arg_parser.add_argument('--int8', dest='int8', action='store_true', help='whether to use int8 model for benchmark')
 args = arg_parser.parse_args()
 
 def evaluate(model, eval_dataloader, metric, postprocess=None):
@@ -166,6 +167,16 @@ class eval_classifier_optimized_graph:
             metrics = METRICS('tensorflow')
             top1 = metrics['topk']()
 
+            if args.int8 or args.input_graph.endswith("-tune.pb"):
+                input_graph = args.input_graph
+            else:
+                from tensorflow.core.protobuf import saved_model_pb2
+                sm = saved_model_pb2.SavedModel()
+                with tf.io.gfile.GFile(args.input_graph, "rb") as f:
+                    sm.ParseFromString(f.read())
+                graph_def = sm.meta_graphs[0].graph_def
+                input_graph = graph_def
+
             from neural_compressor.data import TensorflowShiftRescale
             postprocess = TensorflowShiftRescale()
             def eval(model):
@@ -175,9 +186,9 @@ class eval_classifier_optimized_graph:
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
                 conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1, backend='itex')
-                fit(args.input_graph, conf, b_dataloader=dataloader)
+                fit(input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
-                acc_result = eval(args.input_graph)
+                acc_result = eval(input_graph)
                 print("Batch size = %d" % dataloader.batch_size)
                 print("Accuracy: %.5f" % acc_result)
 

@@ -49,6 +49,14 @@ bash run_tuning.sh --input_model <path to HF-ViT-Base16-Img224-frozen.pb> --outp
 
 ## 2. Benchmark
 
+### Benchmark the fp32 model
+
 ```
-bash run_benchmark.sh --input_model=./output.pb --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32
+bash run_benchmark.sh --input_model=<path to HF-ViT-Base16-Img224-frozen.pb> --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32
+```
+
+### Benchmark the int8 model
+
+```
+bash run_benchmark.sh --input_model=./output.pb --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32 --int8=true
 ```

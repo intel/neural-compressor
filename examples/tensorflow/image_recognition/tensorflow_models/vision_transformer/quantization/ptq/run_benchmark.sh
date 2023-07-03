@@ -31,6 +31,9 @@ function init_params {
       --iters=*)
           iters=$(echo $var |cut -f2 -d=)
       ;;
+      --int8=*)
+          int8=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -38,14 +41,17 @@ function init_params {
 
 # run_tuning
 function run_benchmark {
-
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
     python main.py \
             --input-graph ${input_model} \
             --mode ${mode} \
             --dataset_location ${dataset_location} \
             --batch_size ${batch_size} \
             --benchmark \
-            --iters ${iters}
+            --iters ${iters} \
+            ${extra_cmd}
 }
 
 main "$@"
