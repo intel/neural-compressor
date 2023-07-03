@@ -137,6 +137,8 @@ q_model = fit(
   </tbody>
 </table>
 
+> More documentations can be found at [User Guide](./docs/source/user_guide.md) 
+
 ## Selected Publications/Events
 * Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
 * Blog by MSFT: [Automate optimization techniques for transformer models](https://cloudblogs.microsoft.com/opensource/2023/06/26/automate-optimization-techniques-for-transformer-models/) (June 2023)
