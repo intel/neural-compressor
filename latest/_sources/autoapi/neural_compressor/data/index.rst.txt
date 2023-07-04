@@ -49,6 +49,7 @@ Classes
    neural_compressor.data.RescaleTFTransform
    neural_compressor.data.NormalizeTFTransform
    neural_compressor.data.ParseDecodeCocoTransform
+   neural_compressor.data.TensorflowShiftRescale
    neural_compressor.data.FILTERS
    neural_compressor.data.Filter
    neural_compressor.data.LabelBalanceCOCORecordFilter
@@ -73,6 +74,7 @@ Attributes
 .. autoapisummary::
 
    neural_compressor.data.DATALOADERS
+
 
 
 

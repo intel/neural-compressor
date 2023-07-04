@@ -43,6 +43,7 @@ Classes
    neural_compressor.data.transforms.LabelShift
    neural_compressor.data.transforms.BilinearImagenetTransform
    neural_compressor.data.transforms.TensorflowResizeCropImagenetTransform
+   neural_compressor.data.transforms.TensorflowShiftRescale
 
 
 
@@ -52,6 +53,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.data.transforms.transform_registry
+
 
 
 

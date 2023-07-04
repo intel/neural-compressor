@@ -21,6 +21,8 @@ Classes
    neural_compressor.data.transforms.imagenet_transform.LabelShift
    neural_compressor.data.transforms.imagenet_transform.ParseDecodeImagenet
    neural_compressor.data.transforms.imagenet_transform.ParseDecodeImagenetTransform
+   neural_compressor.data.transforms.imagenet_transform.TensorflowTransposeLastChannel
+   neural_compressor.data.transforms.imagenet_transform.TensorflowShiftRescale
    neural_compressor.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform
    neural_compressor.data.transforms.imagenet_transform.BilinearImagenetTransform
    neural_compressor.data.transforms.imagenet_transform.OnnxBilinearImagenetTransform
@@ -74,6 +76,26 @@ Classes
    Imagenet decoding will be performed automatically from Neural Compressor v1.4.
 
    :returns: sample
+
+
+.. py:class:: TensorflowTransposeLastChannel
+
+
+
+
+   Transpose NHWC to NCHW
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: TensorflowShiftRescale
+
+
+
+
+   label shift by 1 and rescale
+
+   :returns: tuple of processed image and label
 
 
 .. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
