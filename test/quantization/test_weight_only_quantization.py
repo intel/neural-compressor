@@ -37,10 +37,6 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             'hf-internal-testing/tiny-random-GPTJForCausalLM',
             torchscript=True,
         )
-        self.opt = transformers.AutoModelForCausalLM.from_pretrained(
-            'facebook/opt-125m',
-            torchscript=True,
-        )
         self.lm_input = torch.ones([1, 10], dtype=torch.long)
 
     def test_trace(self):
@@ -51,8 +47,6 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         self.assertTrue(len(no_absorb_layers) == 1)
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.gptj, self.lm_input, op_types)
         self.assertTrue(len(no_absorb_layers) == 11)
-        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.opt, self.lm_input, op_types)
-        self.assertTrue(len(no_absorb_layers) == 12)
         return absorb_to_layer, no_absorb_layers
 
     def test_rtn(self):

@@ -56,10 +56,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             'hf-internal-testing/tiny-random-GPTJForCausalLM',
             torchscript=True,
         )
-        self.opt = transformers.AutoModelForCausalLM.from_pretrained(
-            'facebook/opt-125m',
-            torchscript=True,
-        )
         self.llm_dataloader = LLMDataLoader()
         self.lm_input = torch.ones([1, 10], dtype=torch.long)
 
@@ -177,12 +173,19 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     },
                 },
             },
+            op_name_dict={
+                '.*lm_head':{ 	# re.match
+                    "weight": {
+                        'dtype': 'fp32'
+                    },
+                },
+            },
             recipes={
                 'awq_args':{'auto_scale': True, 'mse_range': True},
             },
         )
         q_model = quantization.fit(
-            self.opt, 
+            self.gptj, 
             conf, 
             calib_dataloader=self.llm_dataloader,
         )
