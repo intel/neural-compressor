@@ -4594,6 +4594,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
+                if op_name in flipped_dict:
+                    absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
                 continue
             else:
                 if op_name in flipped_dict:
@@ -4603,7 +4605,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     algorithm = config['weight']['algorithm']
                     if algorithm != 'AWQ':
                         if op_name in flipped_dict:
-                            absorb_to_layer.pop(flipped_dict[op_name])
+                            absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
                 else:
                     skipped_op_name_set.add(op_name)
         if skipped_op_name_set:
