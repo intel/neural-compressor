@@ -169,7 +169,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", quantile=1.0, 
             num_bits = weight_config[n]['bits']
             group_size = weight_config[n]['group_size']
             scheme = weight_config[n]['scheme']
-            quantile = weight_config[n].get('weight_config[n]', 1.0)
+            quantile = weight_config[n].get('quantile', 1.0)
         logger.debug(f"RTN quantized module:{n, m}")
         logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                                                 f"scheme={scheme}, quantile={quantile}")
@@ -275,6 +275,23 @@ def _get_weight_scale(weight, q_group_size=-1):
 @torch.no_grad()
 def _get_act_scale(x):
     return x.abs().view(-1, x.shape[-1]).mean(0)
+
+
+def _update_input_with_scale(args, kwargs, scales):
+    new_args, new_kwargs = args, kwargs
+    for i, v in enumerate(args):
+        if isinstance(v, torch.Tensor):
+            try:
+                new_args[i] = torch.div(v, scales.view(1, 1, -1))
+            except:
+                new_args[i] = v
+    for k, v in kwargs.items():
+        if isinstance(v, torch.Tensor):
+            try:
+                new_kwargs[k] = torch.div(v, scales.view(1, 1, -1))
+            except:
+                new_kwargs[k] = v
+    return new_args, new_kwargs
 
 
 @torch.no_grad()
@@ -428,6 +445,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                 logger.info("Searching best scales with AWQ algorithm")
                 best_error = float('inf')
                 best_scales = None
+                best_scale_alpha = None
                 n_grid = 20
                 history = []
 
@@ -456,16 +474,15 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                     if is_best:
                         best_error = loss
                         best_scales = scales
+                        best_scale_alpha = ratio
                     for name, module in absorbed_modules.items():
                         module.load_state_dict(org_stat[name])
 
                 logger.debug("The loss history of different scale:{}".format(history))
+                logger.debug("The best alpha for scale: {}:{}".format(absorb, best_scale_alpha))
                 best_scales = best_scales.view(-1)
-                best_scales = torch.ones(best_scales.shape)
                 assert torch.isnan(best_scales).sum() == 0, best_scales
-                final_scale_info[absorb] = best_scales.detach()
-                # logger.debug("The best scale:{}".format(final_scale_info))
-                scales = final_scale_info[absorb]
+                scales = best_scales.detach()
                 # update absorb model
                 absorb_module = fetch_module(model, absorb)
                 if len(absorb_module.weight.shape) == 1:
@@ -483,8 +500,8 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                 logger.info("Searching best clip range with AWQ algorithm")
                 best_error = float('inf')
                 best_clip_ratio = None
-                n_grid = 20
-                max_shrink = 0.5
+                n_grid = 100
+                max_shrink = 0.1
                 history = []
                 org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
 
@@ -502,7 +519,13 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                         loss = 0
                         for n, block in blockes.items():
                             if n in name:
-                                out = block(*layer_args[n], **layer_kwargs[n])
+                                # preprocess input with existing scale
+                                if auto_scale:
+                                    new_args, new_kwargs = _update_input_with_scale(
+                                                    layer_args[n], layer_kwargs[n], scales)
+                                else:
+                                    new_args, new_kwargs = layer_args[n], layer_kwargs[n]
+                                out = block(*new_args, **new_kwargs)
                                 if isinstance(out, tuple):
                                     out = out[0]
                                 loss += (org_out[n] - out).float().pow(2).mean().item()  # float prevents overflow
