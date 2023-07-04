@@ -32,8 +32,8 @@ from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
                                             GLOBAL_STATE, MODE
 from neural_compressor.utils.utility import Statistics
 from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
-from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.utils.utility import CpuInfo
+from neural_compressor.adaptor.ox_utils.util import to_numpy
 import math
 import sys
 import re
@@ -1168,31 +1168,31 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
                 not metric.compare_label for metric in metrics]) 
 
-        ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
 
         def eval_func(dataloader):
+            ort_inputs = {}
             for idx, (inputs, labels) in enumerate(dataloader):
                 if not isinstance(labels, list):
                     labels = [labels]
+
                 if len_inputs == 1:
-                    ort_inputs.update(
-                        inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                    )
+                    if isinstance(inputs, dict):
+                        for name, input in inputs.items():
+                            ort_inputs.update({name: to_numpy(input)})
+                    else:
+                        ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
                 else:
                     assert len_inputs == len(inputs), \
                         'number of input tensors must align with graph inputs'
 
-                    if isinstance(inputs, dict):  # pragma: no cover
-                        ort_inputs.update(inputs)
+                    if isinstance(inputs, dict):
+                        for name, input in inputs.items():
+                            ort_inputs.update({name: to_numpy(input)})
                     else:
-                        for i in range(len_inputs):
-                            # in case dataloader contains non-array input
-                            if not isinstance(inputs[i], np.ndarray):
-                                ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                            else:
-                                ort_inputs.update({inputs_names[i]: inputs[i]})
+                        ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
+
                 if measurer is not None:
                     measurer.start()
                     predictions = session.run(None, ort_inputs)
@@ -1384,23 +1384,22 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         for idx, (inputs, _) in enumerate(dataloader):
             if idx + 1 > iterations:
                 break
+
             if len_inputs == 1:
-                ort_inputs.update(
-                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                )
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
             else:
                 assert len_inputs == len(inputs), \
                     'number of input tensors must align with graph inputs'
 
-                if isinstance(inputs, dict):  # pragma: no cover
-                    ort_inputs.update(inputs)
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
                 else:
-                    for i in range(len_inputs):
-                        # in case dataloader contains non-array input
-                        if not isinstance(inputs[i], np.ndarray):
-                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                        else:
-                            ort_inputs.update({inputs_names[i]: inputs[i]})
+                    ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
 
             predictions.extend(session.run(None, ort_inputs))
         return predictions
