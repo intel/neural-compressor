@@ -15,9 +15,11 @@
 """Neural Solution result monitor."""
 
 import socket
-from neural_solution.backend.utils.utility import serialize, deserialize
-from neural_solution.utils import logger
+
 from neural_solution.backend.task_db import TaskDB
+from neural_solution.backend.utils.utility import deserialize, serialize
+from neural_solution.utils import logger
+
 
 class ResultMonitor:
     """ResultMonitor is a thread that monitors the coming task results and update the task collection in the TaskDb.
@@ -40,7 +42,7 @@ class ResultMonitor:
 
     def wait_result(self):
         """Monitor the task results and update them in the task db and send back to studio."""
-        self.s.bind(("localhost", self.port)) # open a port as the serving port for results
+        self.s.bind(("localhost", self.port))  # open a port as the serving port for results
         self.s.listen(10)
         while True:
             logger.info("[ResultMonitor] waiting for results...")
@@ -53,7 +55,7 @@ class ResultMonitor:
                 c.close()
                 continue
             logger.info("[ResultMonitor] getting result: {}".format(result))
-            logger.info("[ResultMonitor] getting q_model path: {}".format(result['q_model_path']))
+            logger.info("[ResultMonitor] getting q_model path: {}".format(result["q_model_path"]))
             self.task_db.update_q_model_path_and_result(result["task_id"], result["q_model_path"], result["result"])
             c.close()
             # TODO send back the result to the studio
@@ -63,4 +65,3 @@ class ResultMonitor:
         """Synchronize query on the task status."""
         # TODO send back the result to the studio? RPC for query?
         logger.info(self.task_db.lookup_task_status(task_id))
-

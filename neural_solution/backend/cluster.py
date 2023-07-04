@@ -13,12 +13,14 @@
 # limitations under the License.
 
 """Neural Solution cluster."""
-import threading
 import sqlite3
-from typing import List
-from neural_solution.backend.utils.utility import synchronized, create_dir
-from neural_solution.utils import logger
+import threading
 from collections import Counter
+from typing import List
+
+from neural_solution.backend.utils.utility import create_dir, synchronized
+from neural_solution.utils import logger
+
 
 class Cluster:
     """Cluster resource management based on sockets."""
@@ -35,7 +37,7 @@ class Cluster:
         self.socket_queue = []
         self.db_path = db_path
         create_dir(db_path)
-        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)
+        self.conn = sqlite3.connect(f"{db_path}", check_same_thread=False)
         self.initial_cluster_from_node_lst(node_lst)
         self.lock = threading.Lock()
 
@@ -63,7 +65,6 @@ class Cluster:
             logger.info(f"[Cluster] Assign {reserved_resource_lst} to task {task.task_id}")
         return reserved_resource_lst
 
-
     @synchronized
     def free_resource(self, reserved_resource_lst):
         """Free the resource by adding the previous occupied resources to the socket queue."""
@@ -71,9 +72,9 @@ class Cluster:
         counts = Counter(int(item.split()[0]) for item in reserved_resource_lst)
         free_resources = {}
         for node_id, count in counts.items():
-                free_resources[node_id] = count
+            free_resources[node_id] = count
         for node_id, count in counts.items():
-                free_resources[node_id] = count
+            free_resources[node_id] = count
         for node_id in free_resources:
             sql = """
                     UPDATE cluster
@@ -146,29 +147,31 @@ class Cluster:
             node_lst (List): the node list.
         """
         # sqlite should set this check_same_thread to False
-        self.conn = sqlite3.connect(f'{self.db_path}', check_same_thread=False)
+        self.conn = sqlite3.connect(f"{self.db_path}", check_same_thread=False)
         self.cursor = self.conn.cursor()
-        self.cursor.execute('drop table if exists cluster ')
-        self.cursor.execute(r'create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-             'name varchar(100),' +
-             'node_info varchar(500),' +
-             'status varchar(100),' +
-             'free_sockets int,' +
-             'busy_sockets int,' +
-             'total_sockets int)')
+        self.cursor.execute("drop table if exists cluster ")
+        self.cursor.execute(
+            r"create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + "name varchar(100),"
+            + "node_info varchar(500),"
+            + "status varchar(100),"
+            + "free_sockets int,"
+            + "busy_sockets int,"
+            + "total_sockets int)"
+        )
         self.node_lst = node_lst
         for index, node in enumerate(self.node_lst):
-            self.socket_queue += [str(index+1) + " " + node.name] * node.num_sockets
+            self.socket_queue += [str(index + 1) + " " + node.name] * node.num_sockets
             self.cursor.execute(
-                r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)" +
-                    "values ('{}', '{}', '{}', {}, {}, {})".format(node.name, repr(node).replace("Node", f"Node{index+1}"),
-                                                             "alive",
-                                                             node.num_sockets,
-                                                             0,
-                                                             node.num_sockets))
+                r"insert into cluster(node_info, status, free_sockets, busy_sockets, total_sockets)"
+                + "values ('{}', '{}', '{}', {}, {}, {})".format(
+                    node.name, repr(node).replace("Node", f"Node{index+1}"), "alive", node.num_sockets, 0, node.num_sockets
+                )
+            )
 
         self.conn.commit()
         logger.info(f"socket_queue:  {self.socket_queue}")
+
 
 class Node:
     """Node definition."""
@@ -177,14 +180,11 @@ class Node:
     ip: str = "unknown_ip"
     num_sockets: int = 0
     num_cores_per_socket: int = 0
-    num_gpus: int = 0 # For future use
+    num_gpus: int = 0  # For future use
 
-    def __init__(self,
-                 name: str,
-                 ip: str = "unknown_ip",
-                 num_sockets: int = 0,
-                 num_cores_per_socket: int = 0,
-                 num_gpus: int = 0) -> None:
+    def __init__(
+        self, name: str, ip: str = "unknown_ip", num_sockets: int = 0, num_cores_per_socket: int = 0, num_gpus: int = 0
+    ) -> None:
         """Init node.
 
         hostfile template:
@@ -210,8 +210,7 @@ class Node:
         Returns:
             str: node info.
         """
-        return f"Node: {self.name}(ip: {self.ip}) has {self.num_sockets} socket(s) " \
+        return (
+            f"Node: {self.name}(ip: {self.ip}) has {self.num_sockets} socket(s) "
             f"and each socket has {self.num_cores_per_socket} cores."
-
-
-
+        )

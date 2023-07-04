@@ -13,18 +13,20 @@
 # limitations under the License.
 
 """The entry of Neural Solution."""
-import sys
-import subprocess
-import os
 import argparse
-import socket
+import os
 import psutil
-import time
 import shlex
+import socket
 import sqlite3
+import subprocess
+import sys
+import time
 from datetime import datetime
 from neural_solution.utils.utility import get_db_path
 from prettytable import PrettyTable
+
+
 
 def check_ports(args):
     """Check parameters ending in '_port'.
@@ -33,8 +35,9 @@ def check_ports(args):
         args (argparse.Namespace): parameters.
     """
     for arg in vars(args):
-        if '_port' in arg:
+        if "_port" in arg:
             check_port(getattr(args, arg))
+
 
 def check_port(port):
     """Check if the given port is standardized.
@@ -46,6 +49,7 @@ def check_port(port):
         print(f"Error: Invalid port number: {port}")
         sys.exit(1)
 
+
 def get_local_service_ip(port):
     """Get the local IP address of the machine running the service.
 
@@ -56,8 +60,9 @@ def get_local_service_ip(port):
         str: The IP address of the machine running the service.
     """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.connect(('8.8.8.8', port))
+        s.connect(("8.8.8.8", port))
         return s.getsockname()[0]
+
 
 def stop_service():
     """Stop service."""
@@ -65,22 +70,23 @@ def stop_service():
     for proc in psutil.process_iter():
         try:
             # Get the process details
-            pinfo = proc.as_dict(attrs=['pid', 'name', 'cmdline'])
+            pinfo = proc.as_dict(attrs=["pid", "name", "cmdline"])
             # Check if the process is the target process
-            if "neural_solution.backend.runner" in pinfo['cmdline']:
+            if "neural_solution.backend.runner" in pinfo["cmdline"]:
                 # Terminate the process using Process.kill() method
-                process = psutil.Process(pinfo['pid'])
+                process = psutil.Process(pinfo["pid"])
                 process.kill()
-            elif "neural_solution.frontend.fastapi.main_server" in pinfo['cmdline']:
-                process = psutil.Process(pinfo['pid'])
+            elif "neural_solution.frontend.fastapi.main_server" in pinfo["cmdline"]:
+                process = psutil.Process(pinfo["pid"])
                 process.kill()
-            elif "neural_solution.frontend.gRPC.server" in pinfo['cmdline']:
-                process = psutil.Process(pinfo['pid'])
+            elif "neural_solution.frontend.gRPC.server" in pinfo["cmdline"]:
+                process = psutil.Process(pinfo["pid"])
                 process.kill()
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     # Service End
     print("Neural Solution Service Stopped!")
+
 
 def check_port_free(port):
     """Check if the port is free.
@@ -92,9 +98,10 @@ def check_port_free(port):
         bool : the free state of the port.
     """
     for conn in psutil.net_connections():
-        if conn.status == 'LISTEN' and conn.laddr.port == port:
+        if conn.status == "LISTEN" and conn.laddr.port == port:
             return False
     return True
+
 
 def start_service(args):
     """Start service.
@@ -121,8 +128,10 @@ def start_service(args):
             print("No environment specified or conda environment activated !!!")
             sys.exit(1)
         else:
-            print(f"No environment specified, use environment activated:" + \
-                f" ({conda_env}) as the task runtime environment.")
+            print(
+                f"No environment specified, use environment activated:"
+                + f" ({conda_env}) as the task runtime environment."
+            )
             conda_env_name = conda_env
     else:
         conda_env_name = args.conda_env
@@ -135,34 +144,67 @@ def start_service(args):
     date_suffix = "_" + date_time.strftime("%Y%m%d-%H%M%S")
     date_suffix = ""
     with open(f"{serve_log_dir}/backend{date_suffix}.log", "w") as f:
-        subprocess.Popen([
-            "python", "-m", "neural_solution.backend.runner",
-            "--hostfile", shlex.quote(str(args.hostfile)),
-            "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
-            "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
-            "--workspace", shlex.quote(str(args.workspace)),
-            "--conda_env_name", shlex.quote(str(conda_env_name)),
-            "--upload_path", shlex.quote(str(args.upload_path))
-        ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
+        subprocess.Popen(
+            [
+                "python",
+                "-m",
+                "neural_solution.backend.runner",
+                "--hostfile",
+                shlex.quote(str(args.hostfile)),
+                "--task_monitor_port",
+                shlex.quote(str(args.task_monitor_port)),
+                "--result_monitor_port",
+                shlex.quote(str(args.result_monitor_port)),
+                "--workspace",
+                shlex.quote(str(args.workspace)),
+                "--conda_env_name",
+                shlex.quote(str(conda_env_name)),
+                "--upload_path",
+                shlex.quote(str(args.upload_path)),
+            ],
+            stdout=os.dup(f.fileno()),
+            stderr=subprocess.STDOUT,
+        )
     if args.api_type in ["all", "restful"]:
         with open(f"{serve_log_dir}/frontend{date_suffix}.log", "w") as f:
-            subprocess.Popen([
-                "python", "-m", "neural_solution.frontend.fastapi.main_server",
-                "--host", "0.0.0.0",
-                "--fastapi_port", shlex.quote(str(args.restful_api_port)),
-                "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
-                "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
-                "--workspace", shlex.quote(str(args.workspace))
-            ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
+            subprocess.Popen(
+                [
+                    "python",
+                    "-m",
+                    "neural_solution.frontend.fastapi.main_server",
+                    "--host",
+                    "0.0.0.0",
+                    "--fastapi_port",
+                    shlex.quote(str(args.restful_api_port)),
+                    "--task_monitor_port",
+                    shlex.quote(str(args.task_monitor_port)),
+                    "--result_monitor_port",
+                    shlex.quote(str(args.result_monitor_port)),
+                    "--workspace",
+                    shlex.quote(str(args.workspace)),
+                ],
+                stdout=os.dup(f.fileno()),
+                stderr=subprocess.STDOUT,
+            )
     if args.api_type in ["all", "grpc"]:
         with open(f"{serve_log_dir}/frontend_grpc.log", "w") as f:
-            subprocess.Popen([
-                "python", "-m", "neural_solution.frontend.gRPC.server",
-                "--grpc_api_port", shlex.quote(str(args.grpc_api_port)),
-                "--task_monitor_port", shlex.quote(str(args.task_monitor_port)),
-                "--result_monitor_port", shlex.quote(str(args.result_monitor_port)),
-                "--workspace", shlex.quote(str(args.workspace))
-            ], stdout=os.dup(f.fileno()), stderr=subprocess.STDOUT)
+            subprocess.Popen(
+                [
+                    "python",
+                    "-m",
+                    "neural_solution.frontend.gRPC.server",
+                    "--grpc_api_port",
+                    shlex.quote(str(args.grpc_api_port)),
+                    "--task_monitor_port",
+                    shlex.quote(str(args.task_monitor_port)),
+                    "--result_monitor_port",
+                    shlex.quote(str(args.result_monitor_port)),
+                    "--workspace",
+                    shlex.quote(str(args.workspace)),
+                ],
+                stdout=os.dup(f.fileno()),
+                stderr=subprocess.STDOUT,
+            )
     ip_address = get_local_service_ip(80)
 
     # Check if the service is started
@@ -172,8 +214,11 @@ def start_service(args):
     start_time = time.time()
     while True:
         # Check if the ports are in use
-        if check_port_free(args.task_monitor_port) or check_port_free(args.result_monitor_port) \
-            or check_port_free(args.restful_api_port):
+        if (
+            check_port_free(args.task_monitor_port)
+            or check_port_free(args.result_monitor_port)
+            or check_port_free(args.restful_api_port)
+        ):
             # If the ports are not in use, wait for a second and check again
             time.sleep(0.5)
             # Check if timed out
@@ -208,11 +253,11 @@ def start_service(args):
     # Check completed
 
     print("Neural Solution Service Started!")
-    print(f"Service log saving path is in \"{os.path.abspath(serve_log_dir)}\"")
+    print(f'Service log saving path is in "{os.path.abspath(serve_log_dir)}"')
     print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
     print("[For information] neural_solution -h")
 
-def query_cluster(db_path:str):
+def query_cluster(db_path: str):
     """Query cluster information from database.
 
     Args:
@@ -251,7 +296,7 @@ def create_node(line: str):
     node = Node(name=hostname, num_sockets=num_sockets, num_cores_per_socket=num_cores_per_socket)
     return node
 
-def join_node_to_cluster(db_path:str, args):
+def join_node_to_cluster(db_path: str, args):
     """Append new node into cluster.
 
     Args:
@@ -292,7 +337,7 @@ def join_node_to_cluster(db_path:str, args):
     cursor.close()
     conn.close()
 
-def remove_node_from_cluster(db_path:str, node_id: int):
+def remove_node_from_cluster(db_path: str, node_id: int):
     """Remove one node from cluster table. In the future, it will be deleted in the Cluster class.
 
     Args:
@@ -335,41 +380,66 @@ def manage_cluster(args):
     if args.rm:
         remove_node_from_cluster(db_path, node_id=args.rm)
 
+
 def main():
     """Implement the main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
-    parser.add_argument('action', choices=['start', 'stop', "cluster"], help='start/stop/management service')
-    parser.add_argument("--hostfile", default=None,
-                        help="start backend serve host file which contains all available nodes")
-    parser.add_argument("--restful_api_port", type=int, default=8000,
-                        help="start restful serve with {restful_api_port}, default 8000")
-    parser.add_argument("--grpc_api_port", type=int, default=8001,
-                        help="start gRPC with {restful_api_port}, default 8001")
-    parser.add_argument("--result_monitor_port", type=int, default=3333,
-                        help="start serve for result monitor at {result_monitor_port}, default 3333")
-    parser.add_argument("--task_monitor_port", type=int, default=2222,
-                        help="start serve for task monitor at {task_monitor_port}, default 2222")
-    parser.add_argument("--api_type", default="all",
-                        help="start web serve with all/grpc/restful, default all")
-    parser.add_argument("--workspace", default="./ns_workspace", 
-                        help="neural solution workspace, default \"./ns_workspace\"")
-    parser.add_argument("--conda_env", default=None, help="specify the running environment for the task")
-    parser.add_argument("--upload_path", default="examples", help="specify the file path for the tasks")
-    parser.add_argument("--query", action="store_true", help="[cluster parameter] query cluster information")
-    parser.add_argument("--join", help="[cluster parameter] add new node into cluster")
-    parser.add_argument("--rm", help="[cluster parameter] remove <node-id> from cluster")
+    parser.add_argument(
+        'action', choices=['start', 'stop', "cluster"], help='start/stop/management service'
+    )
+    parser.add_argument(
+        "--hostfile", default=None, help="start backend serve host file which contains all available nodes"
+    )
+    parser.add_argument(
+        "--restful_api_port", type=int, default=8000, help="start restful serve with {restful_api_port}, default 8000"
+    )
+    parser.add_argument(
+        "--grpc_api_port", type=int, default=8001, help="start gRPC with {restful_api_port}, default 8001"
+    )
+    parser.add_argument(
+        "--result_monitor_port",
+        type=int,
+        default=3333,
+        help="start serve for result monitor at {result_monitor_port}, default 3333",
+    )
+    parser.add_argument(
+        "--task_monitor_port",
+        type=int,
+        default=2222,
+        help="start serve for task monitor at {task_monitor_port}, default 2222",
+    )
+    parser.add_argument(
+        "--api_type", default="all", help="start web serve with all/grpc/restful, default all"
+    )
+    parser.add_argument(
+        "--workspace", default="./ns_workspace", help='neural solution workspace, default "./ns_workspace"'
+    )
+    parser.add_argument(
+        "--conda_env", default=None, help="specify the running environment for the task"
+    )
+    parser.add_argument(
+        "--upload_path", default="examples", help="specify the file path for the tasks"
+    )
+    parser.add_argument(
+        "--query", action="store_true", help="[cluster parameter] query cluster information"
+    )
+    parser.add_argument(
+        "--join", help="[cluster parameter] add new node into cluster"
+    )
+    parser.add_argument(
+        "--rm", help="[cluster parameter] remove <node-id> from cluster"
+    )
     args = parser.parse_args()
 
     # Check parameters ending in '_port'
     check_ports(args)
 
-
-    if args.action == 'start':
+    if args.action == "start":
         start_service(args)
-    elif args.action == 'stop':
+    elif args.action == "stop":
         stop_service()
-    elif args.action == 'cluster':
+    elif args.action == "cluster":
         manage_cluster(args)
         
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

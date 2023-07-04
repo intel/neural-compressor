@@ -486,6 +486,9 @@ An example of customizing a new tuning strategy can be reached at [TPE Strategy]
 
 Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the `fp32` model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources. 
 
+The diagram below provides an overview of the distributed tuning process.
+![distributed tuning](./imgs/distributed_tuning_intro.png "Distributed Tuning")
+
 
 ### Usage
 
