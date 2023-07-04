@@ -84,10 +84,11 @@ class Cluster:
                 """
             self.cursor.execute(sql, (free_resources[node_id], free_resources[node_id], node_id))
             self.conn.commit()
-        # delete nodes with status of remove
-        self.cursor.execute("DELETE FROM cluster WHERE status='remove' AND busy_sockets=0 RETURNING id")
+        # delete nodes with status of remove, some version without RETURNING syntax
+        self.cursor.execute("SELECT id FROM cluster WHERE status='remove' AND busy_sockets=0")
         deleted_ids = self.cursor.fetchall()
         deleted_ids = [str(id_tuple[0]) for id_tuple in deleted_ids]
+        self.cursor.execute("DELETE FROM cluster WHERE status='remove' AND busy_sockets=0")
         self.conn.commit()
 
         # remove deleted nodes from socket queue
