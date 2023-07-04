@@ -212,6 +212,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
+        if self.backend == 'DnnlExecutionProvider' and \
+            any([i.domain in ['', 'ai.onnx'] and i.version < 15 for i in model.model.opset_import]):
+            from onnx import version_converter
+            try:
+                model.model = version_converter.convert_version(model.model, 15)
+            except:
+                logging.warning("Fail to upgrade model opset_import to >= 15, "\
+                                "please upgrate it manually to run with bf16 data type")
+                exit(0)
+            
         from neural_compressor.adaptor.ox_utils.util import QuantizationMode
         if self.format == "qlinearops":
             format = QuantizationMode.QLinearOps
