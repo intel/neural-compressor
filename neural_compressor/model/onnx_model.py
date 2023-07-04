@@ -430,18 +430,20 @@ class ONNXModel(BaseModel):
                 unused_nodes.extend(self.get_children(node))
             else:
                 # remove the node if it does not serve as the input or output of any other nodes
+                unused = True
                 for output in node.output:
-                    if output not in self._input_name_to_nodes and \
-                    output not in self.output() and \
-                    len(output) != 0:
-                        unused_nodes.append(node)
+                    if output in self._input_name_to_nodes or \
+                    output in self.output():
+                        unused = False
+                        break
                 for input in node.input:
-                    if self.get_initializer(input) is None and \
-                    input not in self._output_name_to_node and \
-                    input not in self.input() and \
-                    len(input) != 0:
-                        unused_nodes.append(node)   
-        
+                    if self.get_initializer(input) is not None or \
+                    input in self._output_name_to_node or \
+                    input in self.input():
+                        unused = False
+                        break
+                if unused:
+                    unused_nodes.append(node)
         self.remove_nodes(unused_nodes)
 
         ununsed_weights = []
