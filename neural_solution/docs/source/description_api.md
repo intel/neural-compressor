@@ -1,4 +1,4 @@
-# Neural Solution OaaS API Documentation
+# Neural Solution API
 
 Welcome to Neural Solution OaaS API documentation. This API documentation provides a detailed description of all the endpoints available in Neural Solution OaaS API.
 

@@ -5,7 +5,7 @@ Intel® Neural Compressor
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
 [![python](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-2.1-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-2.2-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
@@ -59,7 +59,6 @@ q_model = fit(
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
-> More quick samples can be found in [Get Started Page](./docs/source/get_started.md).
 
 ## Documentation
 
@@ -121,6 +120,9 @@ q_model = fit(
           <td colspan="2" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
           <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
+      <tr>
+          <td colspan="8" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization</td>
+      </tr>
   </tbody>
   <thead>
       <tr>
@@ -135,14 +137,18 @@ q_model = fit(
   </tbody>
 </table>
 
+> More documentations can be found at [User Guide](./docs/source/user_guide.md).
+
 ## Selected Publications/Events
-* Blog on Medium: [Intel Optimization at Netflix](https://medium.com/@amerather_9719/intel-optimization-at-netflix-79ef0efb9d2) (May 2023)
-* Blog on Medium: [Effective Post-training Quantization for Large Language Models with Enhanced SmoothQuant Approach](https://medium.com/@NeuralCompressor/effective-post-training-quantization-for-large-language-models-with-enhanced-smoothquant-approach-93e9d104fb98) (Apr 2023)
-* Blog by Intel: [Intel® Xeon® Processors Are Still the Only CPU With MLPerf Results, Raising the Bar By 5x](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Intel-Xeon-Processors-Are-Still-the-Only-CPU-With-MLPerf-Results/post/1472750) (Apr 2023)
+* Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
+* Blog by MSFT: [Automate optimization techniques for transformer models](https://cloudblogs.microsoft.com/opensource/2023/06/26/automate-optimization-techniques-for-transformer-models/) (June 2023)
+* Post on Social Media: [Get Started Post-Training Dynamic Quantization | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=5xHKe4wWLes&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=4) (June 2023)
+* Post on Social Media: [How to Choose AI Model Quantization Techniques | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=ie3w_j0Ntsk) (June 2023)
+* Post on Social Media: [What is AI Model Optimization | AI Model Optimization with Intel® Neural Compressor | Intel Software](https://www.youtube.com/watch?v=m2LokuUdeVg&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=2) (June 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
-> View our [Full Publication List](./docs/source/publication_list.md).
+> View [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
 

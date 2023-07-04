@@ -5,9 +5,9 @@ DataLoader
 
 2. [Supported Framework Dataloader Matrix](#supported-framework-dataloader-matrix)
 
-3. [Get Start with Dataloader](#get-start-with-dataloader)
+3. [Get Started with Dataloader](#get-started-with-dataloader)
 
-    3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel®-neural-compressor-dataloader-api)
+    3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel-neural-compressor-dataloader-api)
 
     3.2 [Build Custom Dataloader with Python API](#build-custom-dataloader-with-python-api)
 
@@ -37,14 +37,14 @@ Of cause, users can also use frameworks own dataloader in Neural Compressor.
 | PyTorch       |  &#10004;  |
 | ONNX Runtime   |  &#10004;  |
 
-## Get Start with DataLoader
+## Get Started with DataLoader
 
 ### Use Intel® Neural Compressor DataLoader API
 
 Acceptable parameters for `DataLoader` API including:
 | Parameter     | Description     |
 |:--------------|:----------|
-|framework (str)| different frameworks, such as `tensorflow`, `keras`, `mxnet`, `pytorch` and `onnxrt`.|
+|framework (str)| different frameworks, such as `tensorflow`, `tensorflow_itex`, `keras`, `mxnet`, `pytorch` and `onnxruntime`.|
 |dataset (object)| A dataset object from which to get data. Dataset must implement __iter__ or __getitem__ method.|
 |batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
 |collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|
@@ -66,6 +66,7 @@ dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 config = PostTrainingQuantConfig()
 q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
 ```
+> Note: `DataLoader(framework='onnxruntime', dataset=dataset)` failed in neural-compressor v2.2. We have fixed it in this [PR](https://github.com/intel/neural-compressor/pull/1048).
 
 ### Build Custom Dataloader with Python API
 

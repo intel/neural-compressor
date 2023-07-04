@@ -13,41 +13,38 @@
 # limitations under the License.
 
 """Fast api server."""
-
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
-from fastapi.responses import StreamingResponse, HTMLResponse
-from neural_solution.frontend.task_submitter import Task, task_submitter
-from neural_solution.frontend.utility import (
-    get_cluster_info,
-    get_cluster_table,
-    serialize,
-    deserialize,
-    get_res_during_tuning,
-    get_baseline_during_tuning,
-    check_log_exists,
-    list_to_string)
-
-import sqlite3
-import os
-import uuid
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 import asyncio
 import json
+import os
 import socket
+import sqlite3
+import uuid
 import uvicorn
-from fastapi.responses import FileResponse
 import zipfile
-from starlette.background import BackgroundTask
 
-from neural_solution.utils.utility import (
-    get_task_log_workspace,
-    get_db_path,
-    get_task_workspace
-)
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from starlette.background import BackgroundTask
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 from neural_solution.config import config
-
+from neural_solution.frontend.task_submitter import Task, task_submitter
+from neural_solution.frontend.utility import (
+    check_log_exists,
+    deserialize,
+    get_baseline_during_tuning,
+    get_cluster_info,
+    get_cluster_table,
+    get_res_during_tuning,
+    list_to_string,
+    serialize,
+)
+from neural_solution.utils.utility import (
+    get_db_path,
+    get_task_log_workspace,
+    get_task_workspace
+)
 
 # Get config from Launcher.sh
 task_monitor_port = None
@@ -61,19 +58,15 @@ import argparse
 
 args = None
 
+
 def parse_arguments():
     """Parse the command line options."""
     parser = argparse.ArgumentParser(description="Frontend with RESTful API")
-    parser.add_argument("-H", "--host", type=str, default="0.0.0.0", \
-        help="The address to submit task.")
-    parser.add_argument("-FP", "--fastapi_port", type=int, default=8000, \
-        help="Port to submit task by user.")
-    parser.add_argument("-TMP", "--task_monitor_port", type=int, default=2222, \
-        help="Port to monitor task.")
-    parser.add_argument("-RMP", "--result_monitor_port", type=int, default=3333, \
-        help="Port to monitor result.")
-    parser.add_argument("-WS", "--workspace", type=str, default="./", \
-        help="Work space.")
+    parser.add_argument("-H", "--host", type=str, default="0.0.0.0", help="The address to submit task.")
+    parser.add_argument("-FP", "--fastapi_port", type=int, default=8000, help="Port to submit task by user.")
+    parser.add_argument("-TMP", "--task_monitor_port", type=int, default=2222, help="Port to monitor task.")
+    parser.add_argument("-RMP", "--result_monitor_port", type=int, default=3333, help="Port to monitor result.")
+    parser.add_argument("-WS", "--workspace", type=str, default="./", help="Work space.")
     args = parser.parse_args()
     return args
 
@@ -82,6 +75,7 @@ def parse_arguments():
 def read_root():
     """Root route."""
     return {"message": "Welcome to Neural Solution!"}
+
 
 @app.get("/ping")
 def ping():
@@ -104,13 +98,14 @@ def ping():
                 sock.close()
                 continue
         except ConnectionRefusedError:
-             msg = "Ping fail! Make sure Neural Solution runner is running!"
-             break
+            msg = "Ping fail! Make sure Neural Solution runner is running!"
+            break
         except Exception as e:
             msg = "Ping fail! {}".format(e)
             break
         sock.close()
     return {"status": "Healthy", "msg": msg} if count == 2 else {"status": "Failed", "msg": msg}
+
 
 @app.get("/cluster")
 def get_cluster():
@@ -122,6 +117,7 @@ def get_cluster():
     db_path = get_db_path(config.workspace)
     return get_cluster_info(db_path=db_path)
 
+
 @app.get("/clusters")
 def get_clusters():
     """Get the cluster info.
@@ -131,6 +127,7 @@ def get_clusters():
     """
     db_path = get_db_path(config.workspace)
     return HTMLResponse(content=get_cluster_table(db_path=db_path))
+
 
 @app.get("/description")
 async def get_description():
@@ -143,6 +140,7 @@ async def get_description():
     with open(os.path.join(current_dir, "..", "user_facing_api.json")) as f:
         data = json.load(f)
     return data
+
 
 @app.post("/task/submit/")
 async def submit_task(task: Task):
@@ -167,10 +165,19 @@ async def submit_task(task: Task):
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        task_id = str(uuid.uuid4()).replace('-','')
-        sql = r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)" +\
-         r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(task_id, task.script_url, task.optimized,
-                list_to_string(task.arguments), task.approach, list_to_string(task.requirements), task.workers)
+        task_id = str(uuid.uuid4()).replace("-", "")
+        sql = (
+            r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)"
+            + r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
+                task_id,
+                task.script_url,
+                task.optimized,
+                list_to_string(task.arguments),
+                task.approach,
+                list_to_string(task.requirements),
+                task.workers,
+            )
+        )
         cursor.execute(sql)
         conn.commit()
         try:
@@ -184,8 +191,9 @@ async def submit_task(task: Task):
         conn.close()
     else:
         msg = "Task Submitted fail! db not found!"
-        return {"msg": msg} # TODO to align with return message when submit task successfully
+        return {"msg": msg}  # TODO to align with return message when submit task successfully
     return {"status": status, "task_id": task_id, "msg": msg}
+
 
 @app.get("/task/{task_id}")
 def get_task_by_id(task_id: str):
@@ -206,7 +214,8 @@ def get_task_by_id(task_id: str):
         res = cursor.fetchone()
         cursor.close()
         conn.close()
-    return {"status": res[0], 'optimized_result': deserialize(res[1]) if res[1] else res[1], "result_path": res[2]}
+    return {"status": res[0], "optimized_result": deserialize(res[1]) if res[1] else res[1], "result_path": res[2]}
+
 
 @app.get("/task/")
 def get_all_tasks():
@@ -225,6 +234,7 @@ def get_all_tasks():
         cursor.close()
         conn.close()
     return {"message": res}
+
 
 @app.get("/task/status/{task_id}")
 def get_task_status_by_id(request: Request, task_id: str):
@@ -245,12 +255,12 @@ def get_task_status_by_id(request: Request, task_id: str):
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id,))
         res = cursor.fetchone()
         cursor.close()
         conn.close()
     if not res:
-        status  = "Please check url."
+        status = "Please check url."
     elif res[0] == "done":
         status = res[0]
         optimization_result = deserialize(res[1]) if res[1] else res[1]
@@ -259,14 +269,13 @@ def get_task_status_by_id(request: Request, task_id: str):
     elif res[0] == "pending":
         status = "pending"
     else:
-        baseline = get_baseline_during_tuning(task_id,get_task_log_workspace(config.workspace))
+        baseline = get_baseline_during_tuning(task_id, get_task_log_workspace(config.workspace))
         tuning_result = get_res_during_tuning(task_id, get_task_log_workspace(config.workspace))
         status = res[0]
-        tuning_info = {
-            "baseline": baseline,
-            "message": tuning_result}
+        tuning_info = {"baseline": baseline, "message": tuning_result}
     result = {"status": status, "tuning_info": tuning_info, "optimization_result": optimization_result}
     return result
+
 
 @app.get("/task/log/{task_id}")
 async def read_logs(task_id: str):
@@ -284,6 +293,7 @@ async def read_logs(task_id: str):
     log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
     if not os.path.exists(log_path):
         return {"error": "Logfile not found."}
+
     def stream_logs():
         with open(log_path) as f:
             while True:
@@ -291,7 +301,9 @@ async def read_logs(task_id: str):
                 if not line:
                     break
                 yield line.encode()
+
     return StreamingResponse(stream_logs(), media_type="text/plain")
+
 
 # Real time output log
 class LogEventHandler(FileSystemEventHandler):
@@ -313,10 +325,9 @@ class LogEventHandler(FileSystemEventHandler):
         self.websocket = websocket
         self.task_id = task_id
         self.loop = asyncio.get_event_loop()
-        self.last_position = last_position # record last line
+        self.last_position = last_position  # record last line
         self.queue = asyncio.Queue()
         self.timer = self.loop.create_task(self.send_messages())
-
 
     async def send_messages(self):
         """Send messages to the client."""
@@ -344,6 +355,7 @@ class LogEventHandler(FileSystemEventHandler):
                 self.last_position = f.tell()
                 for line in lines:
                     self.queue.put_nowait(line.strip())
+
 
 # start log watcher
 def start_log_watcher(websocket, task_id, last_position):
@@ -449,8 +461,8 @@ if __name__ == "__main__":
     config.task_monitor_port = args.task_monitor_port
     config.result_monitor_port = args.result_monitor_port
     # initialize the task submitter
-    task_submitter.task_monitor_port=config.task_monitor_port
-    task_submitter.result_monitor_port=config.result_monitor_port
+    task_submitter.task_monitor_port = config.task_monitor_port
+    task_submitter.result_monitor_port = config.result_monitor_port
     config.service_address = task_submitter.service_address
     # start the app
     uvicorn.run(app, host=args.host, port=args.fastapi_port)

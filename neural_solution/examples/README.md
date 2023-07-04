@@ -18,5 +18,10 @@
     <td>quantize a huggingface model by specifying a URL</td>
     <td><a href="./hf_models">hf_models</a></td>
   </tr>
+  <tr>
+    <td>huggingface model</td>
+    <td>quantize a huggingface model by specifying a URL with gRPC API</td>
+    <td><a href="./hf_models_grpc">hf_models_grpc</a></td>
+  </tr>
 </tbody>
 </table>
