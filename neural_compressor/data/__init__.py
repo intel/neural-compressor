@@ -28,7 +28,7 @@ from .transforms import TRANSFORMS, BaseTransform, ComposeTransform, transform_r
 from .transforms import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
 from .transforms import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 from .transforms import TensorflowResizeWithRatio, ResizeTFTransform, RescaleTFTransform, NormalizeTFTransform
-from .transforms import ParseDecodeCocoTransform
+from .transforms import ParseDecodeCocoTransform, TensorflowShiftRescale
 
 from .filters import FILTERS, Filter, filter_registry, LabelBalanceCOCORecordFilter
 
@@ -51,6 +51,7 @@ __all__ = [
     'LabelShift',
     "ResizeTFTransform", 
     "RescaleTFTransform",
+    'TensorflowShiftRescale',
     "NormalizeTFTransform",
     "ParseDecodeCocoTransform",
     'BilinearImagenetTransform',
