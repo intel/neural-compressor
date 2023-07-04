@@ -139,17 +139,22 @@ class ONNXRTAugment:
                              (node.name in self.white_nodes)
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    tensors_to_dump.update(node.input)
+                    tensors_to_dump.update([input for input in node.input if len(input) != 0])
+                    tensors_to_dump.update([output for output in node.output if len(output) != 0])
                     tensors_to_dump.update(node.output)
                 elif weight_only:
                     for input in node.input:
                         if self.already_quantized and \
-                                input.replace('_dequantized', '_quantized') in initializers:
+                            input.replace('_dequantized', '_quantized') in initializers and \
+                            len(input) != 0:
                             tensors_to_dump.add(input)
-                        elif not self.already_quantized and input in initializers:
+                        elif not self.already_quantized and \
+                            input in initializers and \
+                            len(input) != 0:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    tensors_to_dump.update([node.input[0]])
+                    if len(node.input[0]) != 0:
+                        tensors_to_dump.update([node.input[0]])
 
         model_inputs = [i.name for i in model.graph.input]
         for tensor in tensors_to_dump:
@@ -524,6 +529,8 @@ class ONNXRTAugment:
                     tensor_name in node.input[:2]:
                     for i in range(iters):
                         if node.op_type in ['Attention', 'QAttention'] and tensor_name not in node.input[:2]:
+                            continue
+                        if node.op_type in ['MatMul', 'QLinearMatMul'] and tensor_name != node.input[0]:
                             continue
                         if is_qdq:
                             map_node_activation[i][node_name] = \

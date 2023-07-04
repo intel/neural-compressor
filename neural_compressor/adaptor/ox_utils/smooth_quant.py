@@ -171,7 +171,7 @@ class ORTSmoothQuant:
         if folding:
             self._fold_scale(scales)
         self.model.topological_sort()
-        self.model.remove_unused_constant()
+        self.model.remove_unused_nodes()
         return self.model
 
     def recover(self):

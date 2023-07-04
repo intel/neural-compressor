@@ -149,7 +149,7 @@ class Quantizer:
         """Quantize onnx model."""
         # step 1: insert q-dq, cast-cast pairs
         self.insert_qdq()
- 
+        
         # step 2: remove redundant pairs -> qdq model
         self.remove_redundant_pairs()
  
@@ -158,7 +158,7 @@ class Quantizer:
  
         self.merge_dedicated_qdq_pair() 
  
-        self.model.remove_unused_constant()
+        self.model.remove_unused_nodes()
 
         self.model.model.producer_name = __producer__
         self.model.model.producer_version = __version__
