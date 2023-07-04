@@ -101,7 +101,7 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
         # we have hook modules in mha_compressions therefore do not pass them to patterns
         self.pattern = get_pattern(self.config, modules=None)
         # criterion hooks on linear themselves
-        self.criterion = get_criterion(self.config, self.linear_layers)
+        self.criterion = get_criterion(self.config, self.linear_layers, self.pattern)
         self.scheduler = get_scheduler(self.config)
         # -----------------------------------------------------------------------------------------------
 

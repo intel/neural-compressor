@@ -219,6 +219,25 @@ class PytorchPatternNxM(PytorchBasePattern):
         data = data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
         data = self._reshape_2dims_to_orig(data, orig_shape)
         return data
+    
+    def reduce_score(self, score, key):
+        """Recalculate the pruning score after reducing the data.
+
+        Args:
+            scores: A Tensor that stores the pruning score of weights.
+
+        Returns:
+            The reduced pruning score.
+        """
+        if key in self.invalid_layers:
+            return score
+        if self.keep_mask_layers.get(key, False):
+            return score
+        self.keep_mask_layers[key] = False
+        new_score = self.reshape_orig_to_pattern(score, key)
+        # sum or mean is quite different for per channel pruning
+        new_score = self.reduce_tensor(self.reduce_tensor(new_score, dim=-1), dim=1)
+        return new_score
 
     def reduce_scores(self, scores):
         """Recalculate the pruning scores after reducing the data.
@@ -276,7 +295,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         k_blockwise = self.update_residual_cnt(masks, cur_target_sparsity_ratio)
         if k_blockwise <= 0:
             return masks
-        new_scores = scores if self.block else self.reduce_scores(scores)
+        new_scores = scores # if self.block else self.reduce_scores(scores)
         not_exceed_layers = []
         residual_k = k_blockwise
         if self.min_sparsity_ratio_per_op > 0:

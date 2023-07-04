@@ -53,7 +53,7 @@ class PytorchBasicPruner(PytorchBasePruner):
         """Auxiliary function for initializing."""
         self.pattern = get_pattern(self.config, self.modules)
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.pattern)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # if switch off progressive but use per-channel pruning, give a warn
         if "channel" in self.pattern.pattern:

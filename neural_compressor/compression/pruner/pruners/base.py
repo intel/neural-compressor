@@ -210,8 +210,7 @@ class PytorchBasePruner(BasePruner):
         for key in self.modules.keys():
             module = self.modules[key]
             # TODO: support bias or others
-            self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
-            self.masks[key] = self.masks[key].bool()
+            self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device).bool()
         self._init()
 
     def mask_weights(self):

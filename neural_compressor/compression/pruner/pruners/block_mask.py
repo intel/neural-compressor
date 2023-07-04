@@ -58,7 +58,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.pattern)
         self.reg = get_reg(self.config, self.modules, self.pattern)
 
         if "channel" not in self.pattern.pattern:

@@ -54,7 +54,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
         """Auxiliary function for initialization."""
         self.pattern = get_pattern(self.config, self.modules)
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules, self.pattern)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # progressive pruning set up, including check up paramters.
         self.use_progressive = self.config["progressive"]
