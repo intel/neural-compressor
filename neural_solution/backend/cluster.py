@@ -163,7 +163,7 @@ class Cluster:
         for index, node in enumerate(self.node_lst):
             self.socket_queue += [str(index + 1) + " " + node.name] * node.num_sockets
             self.cursor.execute(
-                r"insert into cluster(node_info, status, free_sockets, busy_sockets, total_sockets)"
+                r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)"
                 + "values ('{}', '{}', '{}', {}, {}, {})".format(
                     node.name, repr(node).replace("Node", f"Node{index+1}"), "alive", node.num_sockets, 0, node.num_sockets
                 )
