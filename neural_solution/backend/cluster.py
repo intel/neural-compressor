@@ -83,12 +83,53 @@ class Cluster:
                 """
             self.cursor.execute(sql, (free_resources[node_id], free_resources[node_id], node_id))
             self.conn.commit()
+        # delete nodes with status of remove
+        self.cursor.execute("DELETE FROM cluster WHERE status='remove' AND busy_sockets=0 RETURNING id")
+        deleted_ids = self.cursor.fetchall()
+        deleted_ids = [str(id_tuple[0]) for id_tuple in deleted_ids]
+        self.conn.commit()
+
+        # remove deleted nodes from socket queue
+        socket_queue_delete_ids = [socket for socket in self.socket_queue if socket.split()[0] in deleted_ids]
+        if len(socket_queue_delete_ids) > 0:
+            logger.info(f"[Cluster] remove node-list {socket_queue_delete_ids} from socket_queue:  {self.socket_queue}")
+            self.socket_queue = [socket for socket in self.socket_queue if socket.split()[0] not in deleted_ids]
         logger.info(f"[Cluster] free resource {reserved_resource_lst}, now have free resource {self.socket_queue}")
 
     @synchronized
     def get_free_socket(self, num_sockets: int) -> List[str]:
         """Get the free sockets list."""
         booked_socket_lst = []
+
+        # detect and append new resource
+        self.cursor.execute(f"SELECT id, name, total_sockets FROM cluster where status = 'join'")
+        new_node_lst = self.cursor.fetchall()
+        for index, name, total_sockets in new_node_lst:
+            sql = """
+                    UPDATE cluster
+                    SET status = ?
+                    WHERE id = ?
+                """
+            self.cursor.execute(sql, ('alive', index))
+            self.conn.commit()
+            self.socket_queue += [str(index) + " " + name] * total_sockets
+            logger.info(f"[Cluster] add new node-id {index} to socket_queue:  {self.socket_queue}")
+
+        # do not assign nodes with status of remove
+        # remove to-delete nodes from socket queue
+        self.cursor.execute("SELECT id FROM cluster WHERE status='remove'")
+        deleted_ids = self.cursor.fetchall()
+        deleted_ids = [str(id_tuple[0]) for id_tuple in deleted_ids]
+
+        socket_queue_delete_ids = [socket for socket in self.socket_queue if socket.split()[0] in deleted_ids]
+        if len(socket_queue_delete_ids) > 0:
+            logger.info(f"[Cluster] remove node-list {socket_queue_delete_ids} from socket_queue:  {self.socket_queue}")
+            self.socket_queue = [socket for socket in self.socket_queue if socket.split()[0] not in deleted_ids]
+
+        # delete nodes with status of remove
+        self.cursor.execute("DELETE FROM cluster WHERE status='remove' AND busy_sockets=0")
+        self.conn.commit()
+
         if len(self.socket_queue) < num_sockets:
             logger.info(f"Can not allocate {num_sockets} sockets, due to only {len(self.socket_queue)} left.")
             return 0
@@ -109,6 +150,7 @@ class Cluster:
         self.cursor = self.conn.cursor()
         self.cursor.execute('drop table if exists cluster ')
         self.cursor.execute(r'create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+             'name varchar(100),' +
              'node_info varchar(500),' +
              'status varchar(100),' +
              'free_sockets int,' +
@@ -117,8 +159,9 @@ class Cluster:
         self.node_lst = node_lst
         for index, node in enumerate(self.node_lst):
             self.socket_queue += [str(index+1) + " " + node.name] * node.num_sockets
-            self.cursor.execute(r"insert into cluster(node_info, status, free_sockets, busy_sockets, total_sockets)" +
-                    "values ('{}', '{}', {}, {}, {})".format(repr(node).replace("Node", f"Node{index+1}"),
+            self.cursor.execute(
+                r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)" +
+                    "values ('{}', '{}', '{}', {}, {}, {})".format(node.name, repr(node).replace("Node", f"Node{index+1}"),
                                                              "alive",
                                                              node.num_sockets,
                                                              0,
