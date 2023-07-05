@@ -21,7 +21,7 @@
     'MatMul': &cap_weight_only_matmul {
         'weight': {
                     'dtype': ['int'], # no need to care uint
-                    'bit': [4, 3, 8], # [1-8]
+                    'bits': [4, 3, 8], # [1-8]
                     'granularity':['per_group', 'per_channel'],
                     'group_size': [32, 1, 16, 64, 128, 256, 512, 1024], # [1-inf]
                     'scheme': ['sym', 'asym'], # sym, no ZP

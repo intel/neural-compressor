@@ -1452,10 +1452,22 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         """
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         from .ox_utils.weight_only import rtn_quantize, awq_quantize
-        quant_config = self._cfg_to_quantize_config(tune_cfg)
-        #model = rtn_quantize(model, quant_config)
-        model = awq_quantize(model, quant_config, data_loader)
+        for precision in self.query_handler.get_precisions():
+            if precision == 'weight_only_integer':
+                self.quantizable_op_types += \
+                    self.query_handler.get_op_types_by_precision(precision=precision)
+        self.quantizable_ops = self._query_quantizable_ops(model.model)
 
+        quant_config = self._cfg_to_quantize_config(tune_cfg)
+        algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
+        if "GPTQ" in algos:
+            model = gptq_quantize(model, quant_config, data_loader)
+        if "AWQ" in algos:
+            model = awq_quantize(model, quant_config, data_loader)
+        elif "RTN" in algos:
+            model = rtn_quantize(model, quant_config)
+        
+        #model = rtn_quantize(model, quant_config)
         #model.q_config = copy.deepcopy(self.tune_cfg)
         #self._dump_model_op_stats(model, self.tune_cfg)
         model.topological_sort()
@@ -1511,10 +1523,10 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         for _, op in enumerate(self.quantizable_ops):
             if (op.name, op.op_type) not in tune_cfg['op']:
                 continue
-            if tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype'] in \
+            if tune_cfg['op'][(op.name, op.op_type)]['weight']['dtype'] in \
                 self.query_handler.get_fallback_list():
                 quantize_config[op.name] = \
-                    tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype']
+                    tune_cfg['op'][(op.name, op.op_type)]['weight']['dtype']
             else:
                 quantize_config[op.name] = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
 
@@ -1663,17 +1675,17 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             if len(node_info) != 0:
                 block_wise.append(node_info)
 
-        for _, node in enumerate(self.pre_optimized_model.nodes()):
-
-            if node.op_type in optype_wise:
-                if (exclude_first_quantizable_op and node in first_quantizable_node) \
-                     or (exclude_last_quantizable_op and node in last_quantizable_node):
-                    tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
-                    tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
-                    op_wise.update({(node.name, node.op_type): tmp_cfg})
-                    continue
-                op_wise.update(
-                    {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+        for parent, nodes in self.pre_optimized_model.get_absorb_pairs(["MatMul", "Attention"]).items():
+            for node in nodes:
+                if node.op_type in optype_wise:
+                    if (exclude_first_quantizable_op and node in first_quantizable_node) \
+                         or (exclude_last_quantizable_op and node in last_quantizable_node):
+                        tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
+                        tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
+                        op_wise.update({(node.name, node.op_type): tmp_cfg})
+                        continue
+                    op_wise.update(
+                        {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
         # only when first and last quantizable nodes are found and they are not the same,
         # fallback pre/postprocess ops
