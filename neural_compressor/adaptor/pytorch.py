@@ -4564,7 +4564,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         from .torch_utils.weight_only import awq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None:
-            ##assert self.dataloader, "Please provide dataloader or example_inputs"
+            if dataloader is None:
+                assert False, "Please provide dataloader or example_inputs for AWQ algorithm."
             try:
                 for idx, (input, label) in enumerate(dataloader):
                     self.example_inputs = input
