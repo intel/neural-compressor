@@ -377,8 +377,8 @@ def manage_cluster(args):
         query_cluster(db_path)
     if args.join:
         join_node_to_cluster(db_path, args)
-    if args.rm:
-        remove_node_from_cluster(db_path, node_id=args.rm)
+    if args.remove:
+        remove_node_from_cluster(db_path, node_id=args.remove)
 
 
 def main():
@@ -427,7 +427,7 @@ def main():
         "--join", help="[cluster parameter] add new node into cluster"
     )
     parser.add_argument(
-        "--rm", help="[cluster parameter] remove <node-id> from cluster"
+        "--remove", help="[cluster parameter] remove <node-id> from cluster"
     )
     args = parser.parse_args()
 
