@@ -492,8 +492,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                         self.best_tune_result = best_result
                     self._dump_tuning_process_statistics()
                 break
-        logger.warning(f"[Strategy] All tuning options for the current strategy have been tried.\
-            If the quantized model does not seem to work well, it might be worth considering other strategies.")
         self._recover_best_qmodel_from_tuning_cfg()
 
     def _initialize_recipe(self):
@@ -1280,15 +1278,17 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
 
     def _set_objectives(self):
         # set objectives
-        def _use_multiple_objs(usr_obj):
-            # TODO add implementation
-            return False
-        
+        def _use_multi_obj_check(obj):
+            if isinstance(obj, list):
+                return len(obj) > 1
+            elif isinstance(obj, dict):
+                return len(obj.get('objective', [])) > 1
+
         self.higher_is_better = bool(self.config.accuracy_criterion.higher_is_better)
         obj_higher_is_better = None
         obj_weight = None
         obj = self.config.tuning_criterion.objective
-        use_multi_objs = _use_multiple_objs(obj)
+        use_multi_objs = _use_multi_obj_check(obj)
         self.use_multi_objective = False
         if use_multi_objs:
             obj_higher_is_better = obj.get('higher_is_better', None)
@@ -1618,7 +1618,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                                                       # value of timeout. max_trials control the exit policy
         # 2) Even after finding a model that meets the accuracy goal, we may want to continue the
         #    tuning process for better performance or other objectives.
-        #    timeout = 100000, max_trials = 10 # Specifics a fairly large timeout, use max_trials to control the exit policy.
+        #    timeout = 100000, max_trials = 10 # Specifics a fairly large timeout, use max_trials
+        #                                      # to control the exit policy.
         # 3) Only want to try a certain number of trials
         #    timeout = 100000, max_trials = 3 # only want to try the first 3 trials
         if self._not_tuning:

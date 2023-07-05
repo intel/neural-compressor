@@ -379,6 +379,42 @@ class TestQuantLevel(unittest.TestCase):
                       eval_func=_fake_eval)
         self.assertIsNotNone(q_model)
         self.assertEqual(q_model.q_config.get('trial_number', -1), 4)
+        
+    def test_pt_quant_level_1_with_perf_obj2(self):
+        logger.info("*** Test: quantization level 1 with perf obj [pytorch model].")
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
+        import time
+
+        # model
+        model = get_torch_demo_model()
+
+        # fake evaluation function
+        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3, 2.1, 2.1, 2.2]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1, 1.0, 1.0, 1.0]
+        self._internal_index = -1
+        def _fake_eval(model):
+            self._internal_index += 1
+            perf = perf_lst[self._internal_index]
+            time.sleep(perf)
+            return acc_lst[self._internal_index]
+
+        # dataset and dataloader
+        dataset = Datasets("pytorch")["dummy"](((16, 2, 3)))
+        dataloader = DATALOADERS["pytorch"](dataset)
+
+        tuning_criterion = TuningCriterion(timeout=10000, max_trials=6, objective=['performance'])
+        conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tuning_criterion)
+
+        # fit
+        q_model = fit(model=model,
+                      conf=conf,
+                      calib_dataloader= dataloader,
+                      eval_dataloader=dataloader,
+                      eval_func=_fake_eval)
+        self.assertIsNotNone(q_model)
+        self.assertEqual(q_model.q_config.get('trial_number', -1), 4)
 
     def test_pt_quant_level_0(self):
         logger.info("*** Test: quantization level 0 with pytorch model.")
