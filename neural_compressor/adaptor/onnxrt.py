@@ -216,7 +216,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             any([i.domain in ['', 'ai.onnx'] and i.version < 15 for i in model.model.opset_import]):
             from onnx import version_converter
             try:
-                model.model = version_converter.convert_version(model.model, 15)
+                model.model = self._rename_node(version_converter.convert_version(model.model, 15))
             except:
                 logging.warning("Fail to upgrade model opset_import to >= 15, "\
                                 "please upgrate it manually to run with bf16 data type")
