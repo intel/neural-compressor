@@ -637,17 +637,17 @@ if __name__ == "__main__":
 #     main()
     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     import time
-    from neural_compressor.compression.hpo import XgbSearcher, DiscreteSearchSpace, ContinuousSearchSpace
+    from neural_compressor.compression.hpo import XgbSearcher, get_searchspace
 
     args = parse_args()
 
     search_space = {
-        'learning_rate': ContinuousSearchSpace((0.0001, 0.001)),
-        'num_train_epochs': DiscreteSearchSpace(bound=(20, 100), interval=1),
-        'weight_decay': ContinuousSearchSpace((0.0001, 0.001)),
-        'cooldown_epochs': DiscreteSearchSpace(bound=(0, 10), interval=1),
-        'sparsity_warm_epochs': DiscreteSearchSpace(bound=(0, 5), interval=1),
-        'per_device_train_batch_size': DiscreteSearchSpace((5, 20), 1)
+        'learning_rate': get_searchspace((0.0001, 0.001)),
+        'num_train_epochs': get_searchspace(bound=(20, 100), interval=1),
+        'weight_decay': get_searchspace((0.0001, 0.001)),
+        'cooldown_epochs': get_searchspace(bound=(0, 10), interval=1),
+        'sparsity_warm_epochs': get_searchspace(bound=(0, 5), interval=1),
+        'per_device_train_batch_size': get_searchspace((5, 20), 1)
     }
     
     searcher = XgbSearcher(search_space)

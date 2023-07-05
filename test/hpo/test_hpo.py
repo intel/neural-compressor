@@ -4,22 +4,24 @@ import sys
 sys.path.insert(0, './')
 from neural_compressor.compression.hpo import (GridSearcher,
                                                RandomSearcher,
-                                               BayesianOptimizationSearcher, 
+                                               BayesianOptimizationSearcher,
                                                XgbSearcher,
                                                DiscreteSearchSpace,
                                                ContinuousSearchSpace,
+                                               get_searchspace,
                                                SimulatedAnnealingOptimizer)
 
 
 class TestHPO(unittest.TestCase):
     search_space = {
-        'learning_rate': ContinuousSearchSpace((0.0001, 0.001)),
-        'num_train_epochs': DiscreteSearchSpace(bound=(20, 100), interval=1),
-        'weight_decay': ContinuousSearchSpace((0.0001, 0.001)),
-        'cooldown_epochs': DiscreteSearchSpace(bound=(0, 10), interval=1),
-        'sparsity_warm_epochs': DiscreteSearchSpace(bound=(0, 5), interval=1),
-        'per_device_train_batch_size': DiscreteSearchSpace((5, 20), 1)
+        'learning_rate': get_searchspace((0.0001, 0.001)),
+        'num_train_epochs': get_searchspace(bound=(20, 100), interval=1),
+        'weight_decay': get_searchspace((0.0001, 0.001)),
+        'cooldown_epochs': get_searchspace(bound=(0, 10), interval=1),
+        'sparsity_warm_epochs': get_searchspace(bound=(0, 5), interval=1),
+        'per_device_train_batch_size': get_searchspace((5, 20), 1)
     }
+    print(search_space)
 
     def test_searcher(self):
         searcher = GridSearcher({'num_train_epochs': self.search_space['num_train_epochs'],
