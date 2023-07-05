@@ -150,11 +150,10 @@ class BasePruner:
             self.completed_pruned_cnt = 1
 
         if self.framework == 'pytorch':
-            self.masks = {}
-            # for key in self.modules.keys():
-            #     module = self.modules[key]
-            #     ##TODO support bias or others
-            #     self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
+            for key in self.modules.keys():
+                module = self.modules[key]
+                ##TODO support bias or others
+                self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
