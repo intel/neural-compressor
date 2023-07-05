@@ -106,6 +106,26 @@ def build_fake_model():
     return graph
 
 
+def get_torch_demo_model():
+    import torch
+    class DemoModel(torch.nn.Module):
+        def __init__(self):
+            super(DemoModel, self).__init__()
+            self.fc1 = torch.nn.Linear(3, 3)
+            self.fc2 = torch.nn.Linear(3, 3)
+            self.fc3 = torch.nn.Linear(3, 3)
+            self.fc4 = torch.nn.Linear(3, 3)
+            self.fc5 = torch.nn.Linear(3, 3)
+
+        def forward(self, x):
+            x = self.fc1(x)
+            x = self.fc2(x)
+            x = self.fc3(x)
+            x = self.fc4(x)
+            x = self.fc5(x)
+            return x
+    return DemoModel()
+
 class TestQuantLevel(unittest.TestCase):
 
     @classmethod
@@ -324,21 +344,19 @@ class TestQuantLevel(unittest.TestCase):
                       eval_func=_fake_eval)
         self.assertIsNone(q_model)
 
-
     def test_pt_quant_level_1_with_perf_obj(self):
         logger.info("*** Test: quantization level 1 with perf obj [pytorch model].")
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         from neural_compressor.data import Datasets, DATALOADERS
-        import torchvision
         import time
 
         # model
-        resnet18 = torchvision.models.resnet18()
+        model = get_torch_demo_model()
 
         # fake evaluation function
-        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
-        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3, 2.1, 2.1, 2.2]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1, 1.0, 1.0, 1.0]
         self._internal_index = -1
         def _fake_eval(model):
             self._internal_index += 1
@@ -347,21 +365,20 @@ class TestQuantLevel(unittest.TestCase):
             return acc_lst[self._internal_index]
 
         # dataset and dataloader
-        dataset = Datasets("pytorch")["dummy"](((16, 3, 3, 1)))
+        dataset = Datasets("pytorch")["dummy"](((16, 2, 3)))
         dataloader = DATALOADERS["pytorch"](dataset)
 
-        # tuning and accuracy criterion
-        # accuracy_criterion = AccuracyCriterion(object)
-        tuning_criterion = TuningCriterion(max_trials=4, objective=['performance'])
+        tuning_criterion = TuningCriterion(timeout=10000, max_trials=6, objective='performance')
         conf = PostTrainingQuantConfig(quant_level=1, tuning_criterion=tuning_criterion)
 
         # fit
-        q_model = fit(model=resnet18,
+        q_model = fit(model=model,
                       conf=conf,
                       calib_dataloader= dataloader,
                       eval_dataloader=dataloader,
                       eval_func=_fake_eval)
         self.assertIsNotNone(q_model)
+        self.assertEqual(q_model.q_config.get('trial_number', -1), 4)
 
     def test_pt_quant_level_0(self):
         logger.info("*** Test: quantization level 0 with pytorch model.")

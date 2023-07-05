@@ -412,8 +412,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
             tuning_start_time = time()
-            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             self.trials_count += 1
+            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             tuning_history = self._find_tuning_history(tune_cfg)
             if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials: # pragma: no cover
                 self.last_tune_result = tuning_history['last_tune_result']
@@ -919,6 +919,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def _recover_best_qmodel_from_tuning_cfg(self):
         """Recover the best quantized model from tuning config."""
         if self.best_tuning_cfg and not self.best_qmodel:
+            logger.info(f"[Strategy] Recover the {self.best_tuning_cfg.get('trial_number', 'N/A')}-trial\
+                as the tuning result.")
             self.best_qmodel = self.adaptor.quantize(copy.deepcopy(self.best_tuning_cfg), self.model,
                                                      self.calib_dataloader, self.q_func)
 
@@ -1137,6 +1139,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
         # For not tuning recipe, tune cfg use it directly
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
+        tune_cfg['trial_number'] = deepcopy(self.trials_count)
         # WA for get the smooth quant args
         if 'smooth_quant_args' in self.config.recipes:
             tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.config.recipes['smooth_quant_args']
@@ -1599,13 +1602,30 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                    header='Tune Result Statistics',
                    field_names=['Info Type', 'Baseline', 'Tune {} result'.format(self.trials_count), \
                                                                 'Best tune result']).print_stat()
-
-
+        # exit policy
+        # 1. not_tuning(performance_only): only quantize the model without tuning or evaluation.
+        # 2. timeout = 0, exit the tuning process once it is found model meets the accuracy requirement.
+        # 3. max_trials, the number of the actually trials is less or equal to the max_trials
+        # There are two ways to use max_trials to dominate the exit policy.
+        # 1) timeout = 0, the tuning process exit when the actual_trails_count >= max_trials or 
+        #    a quantized model meets the accuracy requirements
+        # 2) timeout = inf, the tuning process exit until the trials_count >= max_trials
+        # Some use case:
+        # 1) Ending tuning process after a quantized model meets the accuracy requirements
+        #    max_trials = inf, timeout = 0 (by default) # the default max_trials is 100
+                                                      # value of timeout. max_trials control the exit policy
+        # 2) Even after finding a model that meets the accuracy goal, we may want to continue the
+        #    tuning process for better performance or other objectives.
+        #    timeout = 100000, max_trials = 10 # Specifics a fairly large timeout, use max_trials to control the exit policy.
+        # 3) Only want to try a certain number of trials
+        #    timeout = 100000, max_trials = 3 # only want to try the first 3 trials
         if self._not_tuning:
             need_stop = True
         elif timeout == 0 and self.best_tune_result:
+            logger.info("[Strategy] Found a model that meets the accuracy requirements.")
             need_stop = True
         elif self.trials_count >= self.config.tuning_criterion.max_trials:
+            logger.info("[Strategy] The number of trials is equal to the maximum trials, ending the tuning process.")
             need_stop = True
         else:
             need_stop = False
