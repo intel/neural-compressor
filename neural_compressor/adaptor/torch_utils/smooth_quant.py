@@ -884,8 +884,9 @@ class GraphTrace:
             try:
                 traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(e)
+                logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         else:
             try:
                 traced_model = torch.jit.trace(model, dummy_input, strict=False)
@@ -894,8 +895,9 @@ class GraphTrace:
                 try:
                     traced_model = torch.jit.trace(model, dummy_input[0], strict=False)
                     traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(e)
+                    logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         return traced_model
 
     def get_nodes(self, traced_model, op_types=['Linear']):

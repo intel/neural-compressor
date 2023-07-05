@@ -4580,7 +4580,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         supported_layers = ['Linear']
         absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
         if absorb_to_layer is None or absorb_to_layer == {}:
-            logger.warning('skipped AWQ algorithm')
+            logger.warning('No absorb layer is detected, skip AWQ algorithm')
             return model
 
         # got flipped dict from absorb_to_layer dict
@@ -4614,7 +4614,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         # collect AWQ config from tune_cfg for quantization.
         weight_config = {}
         if len(absorb_to_layer) == 0:
-            logger.warning('skipped AWQ algorithm')
+            logger.warning('No absorb layer needs AWQ algorithim, skip it')
         else:
             logger.debug("**absorb layer**: **absorbed layers**")
         for k, v in absorb_to_layer.items():
