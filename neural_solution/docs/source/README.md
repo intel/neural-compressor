@@ -10,7 +10,7 @@
   - [Query task status](#query-task-status)
   - [Stop service](#stop-service)
   - [Inspect logs](#inspect-logs)
-  - [Start resource management](#start-resource-management)
+  + [Manage resource](#manage-resource)  
     - [Node States](#node-states)
     - [Query cluster](#query-cluster)
     - [Add node](#add-node)
