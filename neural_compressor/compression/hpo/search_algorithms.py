@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import numpy as np
 import xgboost as xgb
 
@@ -24,7 +23,11 @@ from neural_compressor.strategy.bayesian import BayesianOptimization
 from .search_space import BaseSearchSpace, DiscreteSearchSpace, ContinuousSearchSpace
 from .sa_optimizer import SimulatedAnnealingOptimizer
 
-logger = logging.getLogger(__name__)
+try:
+    from neural_compressor.utils import logger
+except:
+    import logging
+    logger = logging.getLogger(__name__)
 
 
 class Searcher(object):
