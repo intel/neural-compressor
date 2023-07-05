@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import transformers
 from tqdm import tqdm
-
+from functools import partial
 # different models may have different input structures. 
 # arch_inputs = {
 #     'opt': ['attention_mask'],
@@ -76,6 +76,7 @@ class InputHooker(nn.Module):
                 self.cache[arg] = kwargs[arg]
             else:
                 continue
+        print("input hooked successfully")
         raise ValueError
 
 class GPTQuantizer(object):
@@ -109,6 +110,20 @@ class GPTQuantizer(object):
     
     @torch.no_grad()
     def pre_quantization(self):
+        # hooker function which collects inputs
+        def forward(layer, hidden_states, **kwargs):
+            # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
+            self.inp[self.cache['i']] = hidden_states
+            self.cache['i'] += 1
+            for arg in kwargs:
+                if isinstance(kwargs[arg], torch.Tensor):
+                    self.cache[arg] = kwargs[arg]
+                else:
+                    continue
+            print("input hooked successfully")
+            raise ValueError
+
+        # import pdb;pdb.set_trace()
         # by executing forward process, collect inputs of transformer blocks
         # process the embedding related layers, set devices
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
@@ -118,8 +133,12 @@ class GPTQuantizer(object):
 
         # obtain the first layer inputs and registered to inputs
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
-        # layer_0_handle = self.gptq_related_blocks['transformers'][0].register_forward_hook(input_hook)
-        self.gptq_related_blocks['transformers'][0] = InputHooker(self.gptq_related_blocks['transformers'][0], self.args.arch, self.inp, self.cache)
+        # method 1: use original Catcher/InputHooker to collect inputs
+        # self.gptq_related_blocks['transformers'][0] = InputHooker(self.gptq_related_blocks['transformers'][0], self.args.arch, self.inp, self.cache)
+        # method 2: use partial to modify original forward function
+        forward_cache = self.gptq_related_blocks['transformers'][0].forward
+        self.gptq_related_blocks['transformers'][0].forward = partial(forward, self.gptq_related_blocks['transformers'][0])
+
         for batch in self.dataloader:
             try:
                 self.model(batch[0].to(self.device))
@@ -127,9 +146,11 @@ class GPTQuantizer(object):
                 pass
 
         # copy data from hookers
-        # self.inp = self.gptq_related_blocks['transformers'][0].inp # no need to add this process
-        # self.cache = self.gptq_related_blocks['transformers'][0].cache
-        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].module
+        # method 1: use catcher to do this
+        # self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].module
+        # method 2: use partial
+        self.gptq_related_blocks['transformers'][0].forward = forward_cache
+
         # t_layer = t_layer.cpu()
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
         # after store inputs, locate embedding layers and transformer[0] back to cpu
@@ -155,6 +176,7 @@ class GPTQuantizer(object):
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         print("Begin ====>")
+        # import pdb;pdb.set_trace()
         self.pre_quantization()
 
         # quantizers = {}
