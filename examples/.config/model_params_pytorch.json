@@ -264,7 +264,7 @@
       "batch_size": 16384
     },
     "blendcnn": {
-      "model_src_dir": "nlp/blendcnn/quantization/ptq/eager",
+      "model_src_dir": "nlp/blendcnn/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",
       "input_model": "/tf_dataset/pytorch/blendcnn/models/",
       "main_script": "classify.py",
