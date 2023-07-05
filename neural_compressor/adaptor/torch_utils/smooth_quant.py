@@ -17,7 +17,6 @@
 #
 import copy
 import json
-
 try:
     from neural_compressor.utils.utility import LazyImport
 
@@ -28,7 +27,7 @@ except:
     import logging
 
     logger = logging.getLogger()
-from collections import UserDict
+from collections import UserDict, defaultdict
 
 
 def move_input_to_device(input, device):
@@ -50,10 +49,8 @@ def move_input_to_device(input, device):
 def forward_wrapper(model, input, device='cpu'):
     input = move_input_to_device(input, device)
     if isinstance(input, dict) or isinstance(input, UserDict):
-
         output = model(**input)
     elif isinstance(input, list) or isinstance(input, tuple):
-
         output = model(*input)
     else:
         output = model(input)
@@ -81,12 +78,18 @@ def quant_dequant_w(m, num_bits=8, scheme='sym'):  ##TODO take sym as default
     eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
         x = m.weight
+        tmp = torch.zeros(torch.max(x, dim=1).values.size())
         if scheme == 'sym':
             q_min, q_max = -2. ** (num_bits - 1), 2. ** (num_bits - 1) - 1.
-            scale = torch.max(torch.abs(x), dim=1).values / (float(q_max - q_min) / 2)
+            x_max = torch.max(torch.abs(x), dim=1).values
+            scale = torch.maximum(x_max, tmp) / (float(q_max - q_min) / 2)
+            # scale = torch.max(torch.abs(x), dim=1).values / (float(q_max - q_min) / 2)
         else:
             q_min, q_max = 0, 2. ** num_bits - 1.
-            scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
+            x_max = torch.maximum(torch.max(x, dim=1).values, tmp)
+            x_min = torch.minimum(torch.min(x, dim=1).values, tmp)
+            scale = (x_max - x_min) / (2 ** num_bits - 1)
+            # scale = (torch.max(x, dim=1).values - torch.min(x, dim=1).values) / (2 ** num_bits - 1)
 
         scale = torch.clip(scale, min=eps)
 
@@ -103,12 +106,18 @@ def quant_dequant_w(m, num_bits=8, scheme='sym'):  ##TODO take sym as default
         x = m.weight
         x = torch.permute(x, (0, 2, 3, 1))
         x = x.reshape(-1, x.shape[-1])
+        tmp = torch.zeros(torch.max(x, dim=0).values.size(s))
         if scheme == 'sym':
             q_min, q_max = -2. ** (num_bits - 1), 2. ** (num_bits - 1) - 1.
-            scale = torch.max(torch.abs(x), dim=0).values / (2 ** (num_bits - 1) - 1)
+            x_max = torch.max(torch.abs(x), dim=0).values
+            scale = torch.maximum(x_max, tmp) / (2 ** (num_bits - 1) - 1)
+            # scale = torch.max(torch.abs(x), dim=0).values / (2 ** (num_bits - 1) - 1)
         else:
             q_min, q_max = 0, 2. ** num_bits - 1.
-            scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
+            x_max = torch.maximum(torch.max(x, dim=0).values, tmp)
+            x_min = torch.minimum(torch.min(x, dim=0).values, tmp)
+            scale = (x_max - x_min) / (2 ** num_bits - 1)
+            # scale = (torch.max(x, dim=0).values - torch.min(x, dim=0).values) / (2 ** num_bits - 1)
         scale = torch.clip(scale, min=eps)
         if scheme == 'sym':
             bias = 0
@@ -328,6 +337,7 @@ class TorchSmoothQuant:
         self.allow_absorb = False
         self.self_absorb_layers = {}
         self.absorb_to_layer = {}
+        self.adjust_alpha_space = False
 
     def _get_device(self):
         """
@@ -1003,6 +1013,28 @@ class TorchSmoothQuant:
         self._qdq_model_unwrapper_for_auto()
         return best_alphas
 
+    def adjust_alpha_space_by_outlier(self, layer_key):
+        """
+        Adjust alpha search space based on outlier distribution of a given input op.
+        """
+        input_of_ops = self.input_values[layer_key]
+        input_mean = torch.mean(torch.abs(input_of_ops[0]), dim=0, keepdim=True)
+        input_std = torch.std(torch.abs(input_of_ops[0]))
+        input_outlier = torch.where(torch.abs(input_of_ops[0]) >= 3 * input_std + input_mean, 1.0, 0.0)
+        input_outlier_count = torch.sum(input_outlier)
+        input_outlier_ratio = input_outlier_count / torch.numel(input_of_ops[0])
+        if input_outlier_ratio < 0.01:
+            alpha_space_adjusted = [0.35, 0.375, 0.4, 0.425, 0.45]
+        elif input_outlier_ratio < 0.1:
+            alpha_space_adjusted = [0.45, 0.475, 0.5, 0.525, 0.55]
+        elif input_outlier_ratio < 0.3:
+            alpha_space_adjusted = [0.55, 0.575, 0.6, 0.625, 0.65]
+        else:
+            alpha_space_adjusted = [0.65, 0.675, 0.7, 0.725, 0.75]
+        return alpha_space_adjusted
+        
+
+
     def _auto_tune_alpha_new(self, input_maxes, auto_calib_iter=32, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05,
                              shared_criterion='min'):
         """
@@ -1078,7 +1110,7 @@ class TorchSmoothQuant:
         logger.info("auto tuning done")
         return best_alphas
 
-    def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, shared_criterion='min'):
+    def _auto_tune_alpha(self, input_maxes, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, shared_criterion='min', adjust_alpha_space=False):
         """
         Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
         input_maxes:
@@ -1088,7 +1120,6 @@ class TorchSmoothQuant:
         shared_criterion: criterion method used on attention ops; currently min, max and mean are supported.
         """
         logger.info("auto tuning alpha")
-        import copy
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
@@ -1101,6 +1132,8 @@ class TorchSmoothQuant:
             loss_all_layers = {}
             for layer_key in self.absorb_to_layer[absorb_key]:
                 loss_alpha = {}
+                if self.adjust_alpha_space:
+                    alpha_space = self.adjust_alpha_space_by_outlier(layer_key)
                 for alpha in alpha_space:
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
                         {absorb_key: self.absorb_to_layer[absorb_key]},
