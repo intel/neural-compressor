@@ -267,10 +267,8 @@
       "model_src_dir": "nlp/blendcnn/quantization/ptq/eager",
       "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",
       "input_model": "/tf_dataset/pytorch/blendcnn/models/",
-      "yaml": "blendcnn.yaml",
-      "strategy": "basic",
-      "batch_size": 32,
-      "new_benchmark": false
+      "main_script": "classify.py",
+      "batch_size": 32
     },
     "gpt_WikiText(rm)": {
       "model_src_dir": "eager/language_translation/ptq",
