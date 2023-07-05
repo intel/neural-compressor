@@ -153,7 +153,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             if args.int8:
                 from neural_compressor.utils.pytorch import load
                 new_model = load(
-                        os.path.abspath(os.path.expanduser(args.output_dir)), model)
+                        os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
             else:
                 new_model = model
 
