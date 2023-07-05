@@ -331,39 +331,43 @@ class ONNXModel(BaseModel):
             return None, None
         
         def _searcher(tensor_name):
-            """search scale and zero point tensor recursivly"""
+            """Search scale and zero point tensor recursivly."""
             node = self._input_name_to_nodes[tensor_name][0]
             parent = self._output_name_to_node[tensor_name] if tensor_name in self._output_name_to_node else None
             direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad', 'Split']
             if parent is not None and parent.op_type in direct_int8:
                 fp32_tensor_name = \
-                    parent.input[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+                    parent.input[0].replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
             elif node.op_type in ['Gather']: # pragma: no cover
                 fp32_tensor_name = \
-                    node.output[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+                    node.output[0].replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
             else:
                 fp32_tensor_name = \
-                    tensor_name.replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+                    tensor_name.replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
             scale = fp32_tensor_name + '_scale'
             scale_tensor = self.get_initializer(scale)
             zo = fp32_tensor_name + '_zero_point'
             zo_tensor = self.get_initializer(zo)
 
-            #TODO check if scale_tensor and zero_point is needed
-            # for bias of qlinearconv, scale and zero_point is not needed
-            if (node.op_type == 'QLinearConv' and tensor_name == node.input[-1]) or \
-                (node.op_type == 'QGemm' and tensor_name == node.input[-3]):
-                pass
-            else:
-                if scale_tensor is None or zo_tensor is None:
-                    if parent is not None:
-                        scale_tensor, zo_tensor = _searcher(parent.input[0])
+            if scale_tensor is None or zo_tensor is None:
+                if parent is not None:
+                    scale_tensor, zo_tensor = _searcher(parent.input[0])
             return scale_tensor, zo_tensor
-
-        scale_tensor, zo_tensor = _searcher(tensor)
-        assert scale_tensor, 'missing scale for tensor {}'.format(tensor)
-        assert zo_tensor, 'missing zero point for tensor {}'.format(tensor)
-        return scale_tensor, zo_tensor
+        
+        node = self._input_name_to_nodes[tensor][0]
+        #TODO check if scale_tensor and zero_point is needed
+        # for bias of qlinearconv, scale and zero_point is not needed
+        if (node.op_type == 'QLinearConv' and tensor == node.input[-1]) or \
+            (node.op_type == 'QGemm' and tensor == node.input[-3]):
+            return None, None
+        else:
+            scale_tensor, zo_tensor = _searcher(tensor)
+            assert scale_tensor, 'missing scale for tensor {}'.format(tensor)
+            assert zo_tensor, 'missing zero point for tensor {}'.format(tensor)
+            return scale_tensor, zo_tensor
 
     def save_model_to_file(self, output_path, use_external_data_format=False):
         """Save model to external data, which is needed for model size > 2GB."""
