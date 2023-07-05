@@ -440,7 +440,7 @@ class BasePattern:
                 one = tf.convert_to_tensor([1.])
                 mask = tf.where(score <= threshold, zero, one)
             else:
-                mask = tf.ones_like(score.shape)
+                mask = tf.ones_like(score)
 
         return mask
 
