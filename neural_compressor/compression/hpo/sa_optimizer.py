@@ -17,12 +17,15 @@
 
 import time
 import math
-import logging
 from random import random
 
 import numpy as np
 
-logger = logging.getLogger("sa_optimizer")
+try:
+    from neural_compressor.utils import logger
+except:
+    import logging
+    logger = logging.getLogger("sa_optimizer")
 
 
 class SimulatedAnnealingOptimizer(object):
