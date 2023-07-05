@@ -3,13 +3,6 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch BlendCNN tuning(with MRPC dataset) results with Intel® Neural Compressor.
 
-> **Note**
->
-> PyTorch quantization implementation in imperative path has limitation on automatically execution.
-> It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> Intel® Neural Compressor has no capability to solve this framework limitation. Intel® Neural Compressor supposes user have done these two steps before invoking Intel® Neural Compressor interface.
-> For details, please refer to https://pytorch.org/docs/stable/quantization.html
-
 # Prerequisite
 
 ## 1. Installation
@@ -38,7 +31,7 @@ After below steps, you can find the pre-trained model weights ***model_final.pt*
 
 ### dataset
 
-After downloading the datasets, you need to put datasets at `./MRPC/`, list this:
+After downloading the datasets, you need to put datasets at `./MRPC/`, including:
 
 ```Shell
 ls MRPC/
@@ -46,13 +39,12 @@ dev_ids.tsv  dev.tsv  test.tsv  train.tsv
 ```
 
 ## Run
-
-### blendcnn
-
+### Tuning
 ```Shell
 bash run_tuning.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
-
+```
+### Benchmark
+```Shell
 bash run_benchmark.sh --int8=true --mode=performance --batch_size=32 --input_model=/DIR/TO/INT8_MODEL/
 bash run_benchmark.sh --int8=False --mode=performance --batch_size=32 --input_model=/PATH/TO/FP32_MODEL
-
 ```

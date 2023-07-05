@@ -114,7 +114,6 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
         total_samples = 0
         total_time = 0
         index = 0
-        #model.eval()
         for batch, label in eval_dataloader:
             index += 1
             tic = time.time()
