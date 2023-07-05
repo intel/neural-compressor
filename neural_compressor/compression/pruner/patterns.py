@@ -15,13 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import gc
 import numpy as np
-from .utils import logger
+import math
+import time
+import transformers
+from .utils import torch, tf, logger, nn
 from collections import namedtuple
-from ...utils.utility import LazyImport
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
 
 PATTERNS = {}
 
@@ -1180,6 +1180,77 @@ class PatternNxM(BasePattern):
                                                         progressive_step, progressive_configs, self.block_size)
         else:
             raise NotImplementedError
+        
+    # ---------------sparseGPT related--------------------
+    def fasterprune(self, module, blocksize=128, percdamp=.01):
+        sparsity = self.target_sparsity_ratio
+        W = module.weight.data.clone()
+        dev = module.weight.device
+        if isinstance(module, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(module, transformers.Conv1D):
+            W = W.t()
+        W = W.float()
+        rows = W.shape[0]
+        columns = W.shape[1]
+        tick = time.time()
+
+        H = module.hessian
+        del module.hessian
+        del module.samples
+        # gc.collect()
+        dead = torch.diag(H) == 0
+        H[dead, dead] = 1
+        W[:, dead] = 0
+
+        Losses = torch.zeros(rows, device=dev)
+        damp = percdamp * torch.mean(torch.diag(H)) # λI
+        diag = torch.arange(columns, device=dev)
+        H[diag, diag] += damp   # H = (X*X.t() + λI)
+        H = torch.linalg.cholesky(H) # the default is lower triangle
+        H = torch.cholesky_inverse(H)
+        H = torch.linalg.cholesky(H, upper=True)
+        Hinv = H
+
+        for i1 in range(0, columns, blocksize):
+            i2 = min(i1 + blocksize, columns)
+            count = i2 - i1
+            W1 = W[:, i1:i2].clone()
+            Q1 = torch.zeros_like(W1)
+            Err1 = torch.zeros_like(W1)
+            Losses1 = torch.zeros_like(W1)
+            Hinv1 = Hinv[i1:i2, i1:i2]
+
+            tmp = W1 ** 2 / (torch.diag(Hinv1).reshape((1, -1))) ** 2
+            thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * sparsity)]
+            mask1 = tmp <= thresh
+
+            for i in range(count):
+                w = W1[:, i]
+                d = Hinv1[i, i]
+                q = w.clone()
+                q[mask1[:, i]] = 0
+
+                Q1[:, i] = q
+                Losses1[:, i] = (w - q) ** 2 / d ** 2
+
+                err1 = (w - q) / d
+                W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0))
+                Err1[:, i] = err1
+
+            W[:, i1:i2] = Q1
+            Losses += torch.sum(Losses1, 1) / 2
+
+            W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:])
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
+        logger.info(f"time {(time.time() - tick)},    error {torch.sum(Losses).item()}")
+
+        if isinstance(module, transformers.Conv1D):
+            W = W.t()
+        module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)
+        
 
 @register_pattern('N:M')
 class PatternNInM(BasePattern):
@@ -1552,3 +1623,80 @@ class PatternMHA(BasePattern):
         for mha_name, mha_score in scores.items():
             head_masks[mha_name] = torch.where(mha_score <= threshold, zero, one).permute(1, 0)
         return head_masks
+
+    # ---------------sparseGPT related--------------------
+    def fasterprune(self, module, blocksize=128, percdamp=.01, device='cpu'):
+        """"""
+        sparsity = self.target_sparsity_ratio
+        dev = module.weight.device
+        W = module.weight.data.clone()
+        if isinstance(module, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(module, transformers.Conv1D):
+            W = W.t()
+        W = W.float()
+        rows = W.shape[0]
+        columns = W.shape[1]
+        tick = time.time()
+
+        H = module.hessian
+        del module.hessian
+        del module.samples
+        gc.collect()
+        dead = torch.diag(H) == 0
+        H[dead, dead] = 1
+        W[:, dead] = 0 # 'dead' means pruned weights
+
+        Losses = torch.zeros(rows, device=dev)
+
+        damp = percdamp * torch.mean(torch.diag(H)) # λI
+        diag = torch.arange(columns, device=dev)
+        H[diag, diag] += damp   # H = (X*X.t() + λI)
+        H = torch.linalg.cholesky(H) # te default is lower triangle
+        H = torch.cholesky_inverse(H)
+        H = torch.linalg.cholesky(H, upper=True)
+        Hinv = H
+
+        M = self.M
+        N = self.N
+
+        for i1 in range(0, columns, blocksize):
+            i2 = min(i1 + blocksize, columns)
+            count = i2 - i1
+
+            W1 = W[:, i1:i2].clone()
+            Q1 = torch.zeros_like(W1)
+            Err1 = torch.zeros_like(W1)
+            Losses1 = torch.zeros_like(W1)
+            Hinv1 = Hinv[i1:i2, i1:i2]
+            mask1 = torch.zeros_like(W1) == 1
+
+            for i in range(count):
+                w = W1[:, i]
+                d = Hinv1[i, i]
+
+                if N != 0 and i % M == 0:
+                    tmp = W1[:, i:(i + M)] ** 2 / (torch.diag(Hinv1)[i:(i + M)].reshape((1, -1))) ** 2
+                    mask1.scatter_(1, i + torch.topk(tmp, N, dim=1, largest=False)[1], True)
+
+                q = w.clone()
+                q[mask1[:, i]] = 0
+
+                Q1[:, i] = q
+                Losses1[:, i] = (w - q) ** 2 / d ** 2
+
+                err1 = (w - q) / d
+                W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0))
+                Err1[:, i] = err1
+
+            W[:, i1:i2] = Q1
+            Losses += torch.sum(Losses1, 1) / 2
+
+            W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:])
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        logger.info(f"time {(time.time() - tick)},    error {torch.sum(Losses).item()}")
+
+        if isinstance(module, transformers.Conv1D):
+            W = W.t()
+        module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)

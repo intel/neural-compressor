@@ -15,11 +15,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import math
 import numpy as np
-from ...utils.utility import LazyImport
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
+import transformers
+from .utils import torch, tf, nn
 
 
 CRITERIA = {}
@@ -290,3 +289,49 @@ class RetrainFreeCriterion(PruningCriterion):
                 self.collected_grads[key].append(mask_grad)
                 self.scores[key] += mask_grad.pow(2)
     
+   
+@register_criterion('sparse_gpt')
+class SparseGPTCriterion(PruningCriterion):
+    """Pruning criterion.
+    
+    The sparse_gpt criterion_class is derived from PruningCriterion.
+
+    Args:
+        config: A config dict object that includes information about pruner and pruning criterion.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+        beta: A parameter that determines how much of the snip score is updated at the current step.
+    
+    Attributes:
+        scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
+    """
+    
+    def __init__(self, modules, config, framework='pytorch'):
+        """Initiliaze a sparse_gpt pruning criterion."""
+        super(SparseGPTCriterion, self).__init__(modules, config)
+        
+    def set_hessian_matrix(self, module):
+        W = module.weight.data.clone()
+        dev = module.weight.device
+        if isinstance(module, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(module, transformers.Conv1D):
+            W = W.t()
+        columns = W.shape[1]
+        module.hessian = torch.zeros(columns, columns).to(dev)
+        module.samples = 0
+        del W
+            
+    def add_batch(self, module, inp): # 计算每个 module 的 init-H
+        if len(inp.shape) == 2:
+            inp = inp.unsqueeze(0)
+        sample_num = inp.shape[0] # batchsize
+        if isinstance(module, nn.Linear) or isinstance(module, transformers.Conv1D):
+            if len(inp.shape) == 3:
+                inp = inp.reshape((-1, inp.shape[-1]))
+            inp = inp.t()
+        module.hessian *= module.samples / (module.samples + sample_num)
+        module.samples += sample_num
+        inp = (math.sqrt(2 / module.samples) * inp.float())
+        module.hessian += inp.matmul(inp.t())
+

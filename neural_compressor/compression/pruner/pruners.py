@@ -20,16 +20,14 @@ import re
 import copy
 import numpy as np
 from functools import partial
+import gc
+from tqdm.auto import tqdm
 from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
-from .utils import logger
+from .utils import logger, torch, tf, F, get_layers, collect_layer_inputs, find_layers
 
-from ...utils.utility import LazyImport
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
-F = LazyImport('torch.nn.functional')
 
 PRUNERS = {}
 
@@ -91,16 +89,14 @@ def get_pruner(config, modules, framework='pytorch'):
         name = config["pruning_type"][0:-12]
         config["progressive"] = True
     if name in CRITERIA:
+        config['criterion_type'] = name
         if config["progressive"] == False:
-            config['criterion_type'] = name
             if "block" in name or "free" in name:
                 assert ":" not in config["pattern"], f"{name} pruner type does not support {config['pattern']} pattern."
-            else :
+            if name not in PRUNERS.keys():
                 name = "basic"  ##return the basic pruner
         else:
-            config['criterion_type'] = name
-            # name = "progressive"  ## return the progressive pruner
-            name = "progressive"
+            name = "progressive"  ## return the progressive pruner
 
     if name not in PRUNERS.keys():
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
@@ -154,10 +150,11 @@ class BasePruner:
             self.completed_pruned_cnt = 1
 
         if self.framework == 'pytorch':
-            for key in self.modules.keys():
-                module = self.modules[key]
-                ##TODO support bias or others
-                self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
+            self.masks = {}
+            # for key in self.modules.keys():
+            #     module = self.modules[key]
+            #     ##TODO support bias or others
+            #     self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)
         elif self.framework == 'keras':
             for key in self.modules.keys():
                 module = self.modules[key]
@@ -239,7 +236,7 @@ class BasePruner:
         self.mask_weights()
         self.global_step += 1
 
-    def on_train_begin(self, dataloader=None):
+    def on_train_begin(self, dataloader=None, model=None):
         """Implement at the beginning of training phase."""
         pass
 
@@ -1153,3 +1150,103 @@ class MultiheadAttentionPruner(BasePruner):
         """
         self.mask_weights()
         self.global_step += 1
+
+
+@register_pruner('sparse_gpt')
+class SparseGPTPruner(BasePruner):
+    """Pruning Pruner.
+    The sparse_gpt pruner_class is derived from BasePruner.
+    
+    ###     Needs refinement   ###
+        
+
+    Args:
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
+
+    Attributes:
+        pattern: A Pattern object that defines pruning weights' arrangements within space.
+        criterion: A Criterion Object that defines which weights are to be pruned
+        scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+        reg: A Reg object that defines regulization terms.
+    """
+    
+    def __init__(self, config, modules, framework='pytorch'):
+        """Initialize."""
+        super(SparseGPTPruner, self).__init__(config, modules)
+        
+        
+    def _init(self):
+        """Initialize."""
+        self.pattern = get_pattern(self.config, self.modules)
+        self.criterion = get_criterion(config=self.config, modules=self.modules)
+        del self.config
+        del self.masks
+        gc.collect()
+        logger.warning("sparse_gpt pruner fixed the weights, please DO NOT turn on gradient update.")
+        assert "1x1" in self.pattern.pattern or ":" in self.pattern.pattern, \
+                "sparse_gpt pruner type only supports 1x1 and N:M patterns."
+    
+    def on_train_begin(self, dataloader=None, model=None):
+        """Implement at the beginning of training phase."""
+        self.dataloader = dataloader
+        self.model = model
+        self.dev = torch.device(type='cpu')
+        if torch.cuda.is_available():
+            self.dev = torch.device(type='cuda')
+        self.update_masks()
+        del self.dev
+        
+    def update_masks(self):
+        self.model = self.model.cpu()
+        layers = get_layers(self.model)
+        inputs, inp_dict = collect_layer_inputs(model=self.model, layers=layers, layer_idx=0, \
+                                                prev_inputs=self.dataloader, device=self.dev)
+        del self.dataloader
+        gc.collect()
+        if 'cuda' in self.dev.type:
+            torch.cuda.empty_cache()
+        
+        for i in tqdm(range(len(layers))):
+            layer = layers[i].to(self.dev)
+            layer_index_str = '.' + str(i) + '.'
+            layer_op_names = [key for key in self.modules.keys() if layer_index_str in key]
+            
+            def add_batch(self, criterion):
+                def tmp(self, inp):
+                    criterion.add_batch(self, inp[0].data) # get layer-wise matrix, H = (XX> + λI)
+                return tmp
+            handles = []
+            for name in layer_op_names:
+                module = self.modules[name]
+                self.criterion.set_hessian_matrix(module)
+                handles.append(module.register_forward_pre_hook(add_batch(module, self.criterion)))
+            for j in range(len(inputs)):
+                layer(inputs[j], **inp_dict)[0]
+            for h in handles:
+                h.remove()
+                
+            for name in layer_op_names:
+                logger.info(f"\t{name}")
+                module = self.modules[name]
+                self.pattern.fasterprune(module) # is there necessary to add a hyperparameter of blocksize
+                if 'cuda' in self.dev.type:
+                    torch.cuda.empty_cache()
+            
+            for j in range(len(inputs)):
+                inputs[j] = layer(inputs[j], **inp_dict)[0] # the weights have been pruned, get the latest outputs as inputs for next layer
+            layers[i] = layer.cpu()
+            del layer
+            # gc.collect()
+            if 'cuda' in self.dev.type:
+                torch.cuda.empty_cache()
+        
+            
+        
+    def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
+        pass
+    
+    def on_after_optimizer_step(self):
+        """Prune the model after optimization."""
+        pass
