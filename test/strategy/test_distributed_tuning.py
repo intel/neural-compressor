@@ -108,7 +108,7 @@ class TestDistributedTuning(unittest.TestCase):
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig(quant_level=1, use_distributed_tuning=True)
+        conf = PostTrainingQuantConfig(quant_level=1)
         # fit
         q_model = fit(model=resnet18,
                       conf=conf,
@@ -147,7 +147,7 @@ class TestDistributedTuning(unittest.TestCase):
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig(quant_level=1, use_distributed_tuning=True)
+        conf = PostTrainingQuantConfig(quant_level=1)
         # fit
         q_model = fit(model=resnet18,
                       conf=conf,
@@ -186,7 +186,7 @@ class TestDistributedTuning(unittest.TestCase):
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig(quant_level=1, use_distributed_tuning=True)
+        conf = PostTrainingQuantConfig(quant_level=1)
         # fit
         q_model = fit(model=resnet18,
                       conf=conf,
@@ -206,8 +206,8 @@ class TestDistributedTuning(unittest.TestCase):
 
         # fake evaluation function
         num_baseline = num_processes # TODO, replace num_baseline with 1 when evaluating baseline only once.
-        acc_lst =  [2.0] * num_baseline + [1.0] * 57
-        perf_lst = [2.0] * num_baseline + [1.0] * 57
+        acc_lst =  [2.0] * num_baseline + [1.0] * 60
+        perf_lst = [2.0] * num_baseline + [1.0] * 60
 
         # make sure this path can be accessed by all nodes
         acc_perf_data_file_path = 'test_pt_stage_not_met.json'
@@ -224,7 +224,7 @@ class TestDistributedTuning(unittest.TestCase):
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig(quant_level=1, use_distributed_tuning=True)
+        conf = PostTrainingQuantConfig(quant_level=1)
         # fit
         q_model = fit(model=resnet18,
                       conf=conf,
@@ -263,7 +263,7 @@ class TestDistributedTuning(unittest.TestCase):
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig(quant_level=1, use_distributed_tuning=True)
+        conf = PostTrainingQuantConfig(quant_level=1)
         # fit
         q_model = fit(model=resnet18,
                       conf=conf,
@@ -318,6 +318,9 @@ class TestDistributedTuning(unittest.TestCase):
                                 stderr = subprocess.PIPE, shell=True) # nosec
             try:
                 out, error = p.communicate()
+                print("Test command:", distributed_cmd)
+                print(out.decode('utf-8'))
+                print(error.decode('utf-8'))
                 matches = re.findall(r'FAILED', error.decode('utf-8'))
                 self.assertEqual(matches, [])
 
