@@ -15,6 +15,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.adaptor.mxnet.MxNetAdaptor
+   neural_compressor.adaptor.mxnet.MXNetQuery
 
 
 
@@ -28,5 +29,14 @@ Classes
 
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
+
+
+.. py:class:: MXNetQuery(local_config_file)
+
+
+
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
 
 
