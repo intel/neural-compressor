@@ -151,7 +151,7 @@ Download optimized result locally.
 
 #### Usage
 ```bash
-curl -X GET {host_ip}:port/download/{task_id}
+curl -X GET {host_ip}:port/download/{task_id} --output quantized_model.zip
 ```
 
 #### Responses

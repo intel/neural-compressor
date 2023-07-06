@@ -151,7 +151,7 @@ When using distributed quantization, the `workers` needs to be set to greater th
 - Download the optimized model according to the `task_id`.
 
 ``` shell
-[user@server tf_example1]$ curl -X GET  http://localhost:8000/download/{task_id}
+[user@server tf_example1]$ curl -X GET  http://localhost:8000/download/{task_id} --output quantized_model.zip
 # download quantized_model.zip
 ```
 
