@@ -398,11 +398,10 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     if auto_scale or mse_range:
         from .util import fetch_module, set_module
         block_num = n_blocks
-        module_num = math.ceil(len(absorb_dict) // block_num)
-        logger.info(f"AWQ search is splitted into {block_num} blocks to avoid OOM, " +\
+        module_num = math.ceil(len(absorb_dict) / block_num)
+        logger.info(f"AWQ search splits the model into {block_num} blocks to avoid OOM, " +\
                     f"each block contains {module_num} modules")
         for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
-            logger.info(f"Processing module: {absorb}:{absorbed}")
             # Split module_name_list to avoid OOM when recording output tensors.
             if idx % module_num == 0:
                 layer_args = {}
@@ -427,6 +426,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                             tmp_module = fetch_module(model, i)
                             set_module(model, i, tmp_module.module)
 
+            logger.info(f"Processing module: {absorb}:{absorbed}")
             weight = torch.cat([fetch_module(model, _m).weight for _m in absorbed], dim=0)
             w_max = _get_weight_scale(
                 weight, q_group_size=weight_config[absorbed[0]]['group_size'])
@@ -499,7 +499,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                     absorbed_module.weight.mul_(scales.view(1, -1))
 
             if mse_range:
-                logger.info("Searching best clip range with AWQ algorithm")
+                logger.info("Searching the best clip range with AWQ algorithm")
                 best_error = float('inf')
                 best_clip_ratio = None
                 n_grid = 100
@@ -545,4 +545,5 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     # apply quantization and clip
     logger.info("Quantizing the AWQ optimized fp32 model")
     model = rtn_quantize(model, weight_config=weight_config)
+    logger.info("AWQ quantization is done.")
     return model
