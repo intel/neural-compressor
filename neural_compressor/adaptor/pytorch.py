@@ -4627,6 +4627,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         if 'awq_args' in self.recipes:
             auto_scale = self.recipes['awq_args'].get('auto_scale', True)
             mse_range = self.recipes['awq_args'].get('mse_range', True)
+            n_blocks = self.recipes['awq_args'].get('n_blocks', True)
         else:
             auto_scale, mse_range = True, True
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
@@ -4639,6 +4640,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             auto_scale=auto_scale, 
             mse_range=mse_range,
             calib_func=calib_func,
+            n_blocks=n_blocks,
         )
         return model
 

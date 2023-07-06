@@ -296,7 +296,7 @@ def _update_input_with_scale(args, kwargs, scales):
 
 @torch.no_grad()
 def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
-                 auto_scale=True, mse_range=True, calib_func=None):
+                 auto_scale=True, mse_range=True, calib_func=None, n_blocks=5):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -322,6 +322,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
         calib_func: a custom inference function to replace dataloader and iters.
+        n_blocks: split model into block number to avoid OOM.
 
     Returns:
         model: fake quantized model
@@ -396,19 +397,20 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
     if auto_scale or mse_range:
         from .util import fetch_module, set_module
-        final_scale_info = {}
-        split_num = 15
-        logger.info(f"AWQ search is splitted into {math.floor(len(absorb_dict)//split_num)} parts to avoid OOM")
+        block_num = n_blocks
+        module_num = math.ceil(len(absorb_dict) // block_num)
+        logger.info(f"AWQ search is splitted into {block_num} blocks to avoid OOM, " +\
+                    f"each block contains {module_num} modules")
         for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
             logger.info(f"Processing module: {absorb}:{absorbed}")
             # Split module_name_list to avoid OOM when recording output tensors.
-            if idx % split_num == 0:
+            if idx % module_num == 0:
                 layer_args = {}
                 layer_kwargs = {}
                 part_module_hook_config = {}
-                logger.info(f"AWQ search calibration round {idx//split_num + 1}")
+                logger.info(f"AWQ search calibration round {idx//module_num + 1}")
                 for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + split_num):
+                    if idx <= id < (idx + module_num):
                         part_module_hook_config[name] = ['output'] # fetch input tensor
                         for i in module_for_loss_dict[name]:
                             # use Catcher to record input args and kwargs
@@ -419,7 +421,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                 input_values, output_values = calibration(part_module_hook_config)
                 # recover Catcher
                 for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + split_num):
+                    if idx <= id < (idx + module_num):
                         for i in module_for_loss_dict[name]:
                             # use Catcher to record input args and kwargs
                             tmp_module = fetch_module(model, i)
