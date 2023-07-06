@@ -13,17 +13,18 @@
 # limitations under the License.
 
 """Fast api server."""
-
 import asyncio
 import json
 import os
 import socket
 import sqlite3
 import uuid
-
 import uvicorn
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, StreamingResponse
+import zipfile
+
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from starlette.background import BackgroundTask
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -39,7 +40,11 @@ from neural_solution.frontend.utility import (
     list_to_string,
     serialize,
 )
-from neural_solution.utils.utility import get_db_path, get_task_log_workspace
+from neural_solution.utils.utility import (
+    get_db_path,
+    get_task_log_workspace,
+    get_task_workspace
+)
 
 # Get config from Launcher.sh
 task_monitor_port = None
@@ -232,7 +237,7 @@ def get_all_tasks():
 
 
 @app.get("/task/status/{task_id}")
-def get_task_status_by_id(task_id: str):
+def get_task_status_by_id(request: Request, task_id: str):
     """Get task status and information according to id.
 
     Args:
@@ -259,7 +264,8 @@ def get_task_status_by_id(task_id: str):
     elif res[0] == "done":
         status = res[0]
         optimization_result = deserialize(res[1]) if res[1] else res[1]
-        optimization_result["result_path"] = res[2]
+        download_url = str(request.base_url) + "download/" + task_id
+        optimization_result["result_path"] = download_url
     elif res[0] == "pending":
         status = "pending"
     else:
@@ -408,6 +414,44 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
         observer.stop()
         await observer.join()
 
+@app.get("/download/{task_id}")
+async def download_file(task_id: str):
+    """Download quantized model.
+
+    Args:
+        task_id (str): the task id
+
+    Raises:
+        HTTPException: 400, Please check URL
+        HTTPException: 404, Task failed, file not found
+
+    Returns:
+        FileResponse: quantized model of zip file format
+    """
+    db_path = get_db_path(config.workspace)
+    if os.path.isfile(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
+        res = cursor.fetchone()
+        cursor.close()
+        conn.close()
+    if res is None:
+        raise HTTPException(status_code=400, detail="Please check URL")
+    if res[0] != "done":
+        raise HTTPException(status_code=404, detail="Task failed, file not found")
+    path = res[2]
+    zip_filename = "quantized_model.zip"
+    zip_filepath = os.path.abspath(os.path.join(get_task_workspace(config.workspace), task_id, zip_filename))
+    # create zipfile and add file
+    with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.basename(file_path))
+
+    return FileResponse(zip_filepath, media_type='application/octet-stream',
+                        filename=zip_filename, background=BackgroundTask(os.remove, zip_filepath))
 
 if __name__ == "__main__":
     # parse the args and modified the config accordingly

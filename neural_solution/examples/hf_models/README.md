@@ -107,9 +107,17 @@ optional arguments:
         "accuracy": "0.3162",
         "duration (seconds)": "4.6488"
     },
-    "result_path": "/path/to/projects/neural solution service/workspace/fafdcd3b22004a36bc60e92ec1d646d0/q_model_path"
+    "result_path": "http://localhost:8000/download/7602cd63d4c849e7a686a8165a77f69d"
+    }
 }
+```
+### Download optimized model
 
+- Download the optimized model according to the `task_id`.
+
+``` shell
+[user@server tf_example1]$ curl -X GET  http://localhost:8000/download/{task_id} --output quantized_model.zip
+# download quantized_model.zip
 ```
 ### Stop the service
 ```shell
