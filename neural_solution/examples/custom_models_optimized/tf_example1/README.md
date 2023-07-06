@@ -136,7 +136,7 @@ When using distributed quantization, the `workers` needs to be set to greater th
 - Query the task status and result according to the `task_id`.
 
 ``` shell
-[user@server tf_example1]$ curl  -X GET  http://localhost:8000/task/status/{task_id}
+[user@server tf_example1]$ curl -X GET  http://localhost:8000/task/status/{task_id}
 # return the task status
 {
     "status": "done",
@@ -145,11 +145,20 @@ When using distributed quantization, the `workers` needs to be set to greater th
         "optimization time (seconds)": "151.16",
         "Accuracy": "0.8617",
         "Duration (seconds)": "17.8213",
-        "result_path": "/path/to/projects/neural_solution/ns_workspace/task_workspace/7602cd63d4c849e7a686a8165a77f69d/q_model_path"
+        "result_path": "http://localhost:8000/download/7602cd63d4c849e7a686a8165a77f69d"
     }
 }
 
 ```
+### Download optimized model
+
+- Download the optimized model according to the `task_id`.
+
+``` shell
+[user@server tf_example1]$ curl -X GET  http://localhost:8000/download/{task_id} --output quantized_model.zip
+# download quantized_model.zip
+```
+
 ### Manage resource
 ```shell
 # query cluster information
@@ -162,6 +171,7 @@ neural_solution cluster --join "host1 2 20; host2 5 20"
 # remove node from cluster according to id
 neural_solution cluster --remove <node-id>
 ```
+
 ### Stop the service
 ```shell
 neural_solution stop
