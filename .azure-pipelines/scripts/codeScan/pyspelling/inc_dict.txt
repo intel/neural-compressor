@@ -2658,3 +2658,6 @@ RTN
 awq
 gptq
 percdamp
+Frantar
+Ji
+mose
