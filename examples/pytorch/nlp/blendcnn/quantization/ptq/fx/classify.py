@@ -140,7 +140,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
             from neural_compressor import quantization
             accuracy_criterion = AccuracyCriterion(higher_is_better=True, tolerable_loss=0.01)
-            conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
+            conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion, approach="dynamic")
             q_model = quantization.fit(model,
                                         conf,
                                         calib_dataloader=eval_dataloader,
