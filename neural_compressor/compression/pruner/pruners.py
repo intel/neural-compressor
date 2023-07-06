@@ -1193,8 +1193,11 @@ class SparseGPTPruner(BasePruner):
         self.dev = torch.device(type='cpu')
         if torch.cuda.is_available():
             self.dev = torch.device(type='cuda')
+        # self.update_masks()
+        # del self.dev
+    
+    def on_step_begin(self, local_step):
         self.update_masks()
-        del self.dev
         
     def update_masks(self):
         self.model = self.model.cpu()
