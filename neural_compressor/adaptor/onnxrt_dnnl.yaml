@@ -400,7 +400,7 @@
     name: '1.14.0'
   int8: *ref_1_11
   bf16: &common_bf16 ['MatMul', 'Gemm', 'BatchNormalization', 'Softmax', 'Sum',
-    'Abs', 'BiasGelu', 'Exp', 'FastGelu', 'Gelu', 'Log', 'Relu', 'Round', 'Sigmoid',
+    'Abs', 'Exp', 'FastGelu', 'Gelu', 'Log', 'Relu', 'Round', 'Sigmoid',
     'Sqrt', 'Tanh', 'Add', 'Sub', 'Mul', 'Div', 'Pow', 'ReduceMean', 'Equal',
     'FusedMatMul', 'Greater', 'GreaterOrEqual', 'LeakyRelu', 'Less', 'LessOrEqual',
     'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze', 'ReduceL1', 'ReduceL2', 'ReduceLogSum',
