@@ -328,7 +328,7 @@ class TestMixedPrecision(unittest.TestCase):
         def eval(model):
             return 0.5
 
-        result = [0., 0.1, 0.102, 0.1006, 0.1005, 0.1004, 0.1002]
+        result = [0., 0.1, 0.102, 0.1003, 0.1005, 0.1004, 0.1002]
 
         def eval2(model):
             del result[0]
