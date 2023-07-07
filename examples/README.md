@@ -494,14 +494,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BlendCNN</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/fx">fx</a></td>
-  </tr>
-  <tr>
-    <td>BlendCNN</td>
-    <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/ipex">ipex</a></td>
+    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/fx">fx</a> / <a href="./pytorch/nlp/blendcnn/quantization/ptq/ipex">ipex</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>

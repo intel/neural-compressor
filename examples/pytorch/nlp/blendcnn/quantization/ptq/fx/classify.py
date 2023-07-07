@@ -32,6 +32,7 @@ import models
 from utils import set_seeds, get_device
 import os
 
+
 class Config(NamedTuple):
     """ Config for classification """
     mode: str = "train"
@@ -109,26 +110,54 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
 
     eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
-    def eval_func(model):
-        results = [] # prediction results
+    def benchmark(model):
         total_samples = 0
         total_time = 0
         index = 0
-        for batch, label in eval_dataloader:
+
+        class RandomDataset(object):
+            def __init__(self, size, shape):
+                self.len = size
+                self.input_ids = torch.randint(low=0, high=30522, size=(size, shape), dtype=torch.int64)
+                self.segment_ids = torch.randint(low=0, high=1, size=(size, shape), dtype=torch.int64)
+                self.input_mask = torch.randint(low=0, high=1, size=(size, shape), dtype=torch.int64)
+                self.data = (self.input_ids, self.segment_ids, self.input_mask)
+
+            def __getitem__(self, index):
+                return (self.data[0][index], self.data[1][index], self.data[2][index])
+
+            def __len__(self):
+                return self.len
+
+        rand_loader = DataLoader(dataset=RandomDataset(size=5000, shape=128),
+                                batch_size=args.batch_size, shuffle=True)
+                                
+        for batch in rand_loader:
             index += 1
             tic = time.time()
             with torch.no_grad(): # evaluation without gradient calculation
-                accuracy, result = evaluate(model, (*batch, label)) 
-            results.append(result)
+                input_ids, segment_ids, input_mask = batch
+                _ = model(*batch)
             if index > args.warmup:
                 total_samples += batch[0].size()[0]
                 total_time += time.time() - tic
-        total_accuracy = torch.cat(results).mean().item()
-        throughput = total_samples / total_time
+        throughput = total_samples / total_time 
         print('Latency: %.3f ms' % (1 / throughput * 1000))
-        print('Throughput: %.3f samples/sec' % (throughput))
+        print('Throughput: %.3f images/sec' % (throughput))
+
+    def eval_func(model):
+        results = [] # prediction results
+        index = 0
+        model.eval()
+        for batch, label in eval_dataloader:
+            index += 1
+            with torch.no_grad(): # evaluation without gradient calculation
+                accuracy, result = evaluate(model, (*batch, label)) 
+            results.append(result)
+        total_accuracy = torch.cat(results).mean().item()
         print('Accuracy: %.3f ' % (total_accuracy))
         return total_accuracy
+
 
     if cfg.mode == "train":
         train_loop.train(get_loss, cfg.model_file, None) # not use pretrain_file
@@ -137,10 +166,9 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
     elif cfg.mode == "eval":
 
         if args.tune:
-            from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
+            from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor import quantization
-            accuracy_criterion = AccuracyCriterion(higher_is_better=True, tolerable_loss=0.01)
-            conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion, approach="dynamic")
+            conf = PostTrainingQuantConfig()
             q_model = quantization.fit(model,
                                         conf,
                                         calib_dataloader=eval_dataloader,
@@ -158,10 +186,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
                 new_model = model
 
             if args.performance:
-                from neural_compressor.config import BenchmarkConfig
-                from neural_compressor import benchmark
-                b_conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=1)
-                benchmark.fit(new_model, b_conf, b_dataloader=eval_dataloader)
+                benchmark(new_model)
             else:
                 eval_func(new_model)
 
