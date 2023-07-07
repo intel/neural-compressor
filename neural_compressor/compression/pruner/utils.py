@@ -589,10 +589,11 @@ def generate_pruner_config(info):
                   )
 
 def get_layers(model):
-    """
-    get each layer's name and its module
-    :param model:
-    :return: each layer's name and its module
+    """get each layer's name and its module
+    Args:
+        model: The model to be pruned.
+
+    Returns: each layer's name and its modules
     """
     layers = []
     search_flag = False
@@ -652,7 +653,6 @@ def collect_layer_inputs(model, layers, layer_idx, prev_inputs, device='cuda:0')
             except ValueError:
                 pass
         layer.forward = forward_cache
-        # inputs = inputs_info.pop()
         for key in inputs_info.keys():
             if inputs_info[key] is not None:
                 inputs_info[key] = inputs_info[key].to(device)
@@ -665,13 +665,3 @@ def collect_layer_inputs(model, layers, layer_idx, prev_inputs, device='cuda:0')
             inputs.append(batch)
             
     return inputs, inputs_info
-
-def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
-    if type(module) in layers:
-        return {name: module}
-    res = {}
-    for name1, child in module.named_children():
-        res.update(find_layers(
-            child, layers=layers, name=name + '.' + name1 if name != '' else name1
-        ))
-    return res

@@ -1250,6 +1250,8 @@ class PatternNxM(BasePattern):
         if isinstance(module, transformers.Conv1D):
             W = W.t()
         module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         
 
 @register_pattern('N:M')
@@ -1585,45 +1587,7 @@ class PatternNInM(BasePattern):
         # we only have to handle global score or local score
         return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores, \
                 progressive_step, progressive_configs)
-
-@register_pattern('MHA')
-class PatternMHA(BasePattern):
-    """Pruning Pattern.
-    
-    A Pattern class derived from BasePattern. In this pattern, we calculate head masks for a MHA module
-    For more info of this pattern, please refer to :
-    https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
-    
-    Args:
-        config: A config dict object that contains the pattern information.
         
-    Attributes:
-        N: The number of elements to be pruned in a weight sequence.
-        M: The size of the weight sequence.
-    """
-
-    def __init__(self, config, modules = None, framework='pytorch'):
-        self.framework = framework
-        self.is_global = config.pruning_scope == "global"
-    
-    # only implement three method: get_masks, get_masks_local, get_masks_global
-        
-    def get_masks_global(self, scores, target_sparsity_ratio, pre_masks):
-        # gather all score items into one tensor
-        if target_sparsity_ratio <= .0: 
-            return pre_masks
-        flatten_score = torch.cat(list(scores.values())).flatten()
-        k = int(target_sparsity_ratio * flatten_score.numel())
-        if k <= 0:
-            return pre_masks
-        threshold, _ = torch.kthvalue(flatten_score, k)
-        head_masks = {}
-        zero = torch.tensor([0.]).to(threshold.device)
-        one = torch.tensor([1.]).to(threshold.device)
-        for mha_name, mha_score in scores.items():
-            head_masks[mha_name] = torch.where(mha_score <= threshold, zero, one).permute(1, 0)
-        return head_masks
-
     # ---------------sparseGPT related--------------------
     def fasterprune(self, module, blocksize=128, percdamp=.01, device='cpu'):
         """"""
@@ -1700,3 +1664,45 @@ class PatternMHA(BasePattern):
         if isinstance(module, transformers.Conv1D):
             W = W.t()
         module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            
+
+@register_pattern('MHA')
+class PatternMHA(BasePattern):
+    """Pruning Pattern.
+    
+    A Pattern class derived from BasePattern. In this pattern, we calculate head masks for a MHA module
+    For more info of this pattern, please refer to :
+    https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+    
+    Args:
+        config: A config dict object that contains the pattern information.
+        
+    Attributes:
+        N: The number of elements to be pruned in a weight sequence.
+        M: The size of the weight sequence.
+    """
+
+    def __init__(self, config, modules = None, framework='pytorch'):
+        self.framework = framework
+        self.is_global = config.pruning_scope == "global"
+    
+    # only implement three method: get_masks, get_masks_local, get_masks_global
+        
+    def get_masks_global(self, scores, target_sparsity_ratio, pre_masks):
+        # gather all score items into one tensor
+        if target_sparsity_ratio <= .0: 
+            return pre_masks
+        flatten_score = torch.cat(list(scores.values())).flatten()
+        k = int(target_sparsity_ratio * flatten_score.numel())
+        if k <= 0:
+            return pre_masks
+        threshold, _ = torch.kthvalue(flatten_score, k)
+        head_masks = {}
+        zero = torch.tensor([0.]).to(threshold.device)
+        one = torch.tensor([1.]).to(threshold.device)
+        for mha_name, mha_score in scores.items():
+            head_masks[mha_name] = torch.where(mha_score <= threshold, zero, one).permute(1, 0)
+        return head_masks
+

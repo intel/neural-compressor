@@ -26,7 +26,7 @@ from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
-from .utils import logger, torch, tf, F, get_layers, collect_layer_inputs, find_layers
+from .utils import logger, torch, tf, F, get_layers, collect_layer_inputs
 
 
 PRUNERS = {}
@@ -1191,11 +1191,15 @@ class SparseGPTPruner(BasePruner):
         self.dataloader = dataloader
         self.model = model
         self.dev = torch.device(type='cpu')
+        self.model_dev = model.device
         if torch.cuda.is_available():
             self.dev = torch.device(type='cuda')
         self.update_masks()
+        self.model = self.model.to(self.model_dev)
         del self.dev
+        del self.model_dev
         
+    @torch.no_grad()
     def update_masks(self):
         self.model = self.model.cpu()
         layers = get_layers(self.model)
@@ -1229,14 +1233,11 @@ class SparseGPTPruner(BasePruner):
                 logger.info(f"\t{name}")
                 module = self.modules[name]
                 self.pattern.fasterprune(module) # is there necessary to add a hyperparameter of blocksize
-                if 'cuda' in self.dev.type:
-                    torch.cuda.empty_cache()
-            
+                
             for j in range(len(inputs)):
-                inputs[j] = layer(inputs[j], **inp_dict)[0] # the weights have been pruned, get the latest outputs as inputs for next layer
+                # the weights have been pruned, get the latest outputs as inputs for next layer
+                inputs[j] = layer(inputs[j], **inp_dict)[0]
             layers[i] = layer.cpu()
-            del layer
-            # gc.collect()
             if 'cuda' in self.dev.type:
                 torch.cuda.empty_cache()
         
