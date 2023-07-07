@@ -1139,8 +1139,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
         # WA for get the smooth quant args
         # TODO simplify the check logic
-        if 'smooth_quant_args' in self.config.recipes and "smooth_quant_args" not in tune_cfg['recipe_cfgs']:
-            tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.config.recipes['smooth_quant_args']
+        for k, v in self.config.recipes.get("smooth_quant_args", {}).items():
+            if k not in tune_cfg['recipe_cfgs']['smooth_quant_args']:
+                tune_cfg['recipe_cfgs']['smooth_quant_args'][k] = v
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
             if recipe_name not in tune_cfg['recipe_cfgs']:
