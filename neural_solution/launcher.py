@@ -15,14 +15,17 @@
 """The entry of Neural Solution."""
 import argparse
 import os
+import psutil
 import shlex
 import socket
+import sqlite3
 import subprocess
 import sys
 import time
 from datetime import datetime
+from neural_solution.utils.utility import get_db_path
+from prettytable import PrettyTable
 
-import psutil
 
 
 def check_ports(args):
@@ -252,13 +255,138 @@ def start_service(args):
     print("Neural Solution Service Started!")
     print(f'Service log saving path is in "{os.path.abspath(serve_log_dir)}"')
     print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
-    print("[For information] neural_solution help")
+    print("[For information] neural_solution -h")
+
+def query_cluster(db_path: str):
+    """Query cluster information from database.
+
+    Args:
+        db_path (str): the database path
+    """
+    conn = sqlite3.connect(f"{db_path}")
+    cursor = conn.cursor()
+    cursor.execute(r"select * from cluster")
+    conn.commit()
+    results = cursor.fetchall()
+
+    table = PrettyTable()
+    table.field_names = [i[0] for i in cursor.description]
+
+    for row in results:
+        table.add_row(row)
+
+    table.title = "Neural Solution Cluster Management System"
+    print(table)
+    cursor.close()
+    conn.close()
+
+
+def create_node(line: str):
+    """Parse line to create node.
+
+    Args:
+        line (str): node information, e.g. "localhost 2 20"
+
+    Returns:
+        Node: node object
+    """
+    from neural_solution.backend.cluster import Node
+    hostname, num_sockets, num_cores_per_socket = line.strip().split(" ")
+    num_sockets, num_cores_per_socket = int(num_sockets), int(num_cores_per_socket)
+    node = Node(name=hostname, num_sockets=num_sockets, num_cores_per_socket=num_cores_per_socket)
+    return node
+
+def join_node_to_cluster(db_path: str, args):
+    """Append new node into cluster.
+
+    Args:
+        db_path (str): the database path
+    """
+    is_file = os.path.isfile(args.join)
+    node_lst = []
+    if is_file:
+        num_threads_per_process = 5
+        with open(args.join, 'r') as f:
+            for line in f:
+                node_lst.append(create_node(line))
+    else:
+        for line in args.join.split(";"):
+            node_lst.append(create_node(line))
+
+    # Insert node into cluster table.
+    for count, node in enumerate(node_lst):
+        print(node)
+        conn = sqlite3.connect(f"{db_path}")
+        cursor = conn.cursor()
+        if count == 0:
+            cursor.execute("SELECT id FROM cluster ORDER BY id DESC LIMIT 1")
+            result = cursor.fetchone()
+            index = result[0] if result else 0
+
+        cursor.execute(r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)" +
+                        "values ('{}', '{}', '{}', {}, {}, {})".format(node.name,
+                                                                repr(node).replace("Node", f"Node{index+1}"),
+                                                                "join",
+                                                                node.num_sockets,
+                                                                0,
+                                                                node.num_sockets))
+        conn.commit()
+        index += 1
+        print(f"Insert node-id: {index} successfully!")
+
+    cursor.close()
+    conn.close()
+
+def remove_node_from_cluster(db_path: str, node_id: int):
+    """Remove one node from cluster table. In the future, it will be deleted in the Cluster class.
+
+    Args:
+        db_path (str): the database path
+        node_id (int): the node id
+    """
+    conn = sqlite3.connect(f"{db_path}")
+    cursor = conn.cursor()
+
+    cursor.execute(f"SELECT status, busy_sockets FROM cluster where id = {node_id}")
+    results = cursor.fetchone()
+
+    if results is None:
+        print(f"No node-id {node_id} in cluster table.")
+        return
+    elif results[1] == 0:
+        sql = f"UPDATE cluster SET status = 'remove' WHERE id = {node_id}"
+        cursor.execute(sql)
+        print(f"Remove node-id {node_id} successfully.")
+    else:
+        sql = f"UPDATE cluster SET status = 'remove' WHERE id = {node_id}"
+        cursor.execute(sql)
+        print(f"Resource occupied, will be removed after resource release")
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+def manage_cluster(args):
+    """Neural Solution resource management. query/join/remove node.
+
+    Args:
+        args (argparse.Namespace): configuration
+    """
+    db_path = get_db_path(args.workspace)
+    if args.query:
+        query_cluster(db_path)
+    if args.join:
+        join_node_to_cluster(db_path, args)
+    if args.remove:
+        remove_node_from_cluster(db_path, node_id=args.remove)
 
 
 def main():
     """Implement the main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
-    parser.add_argument("action", choices=["start", "stop"], help="start/stop service")
+    parser.add_argument(
+        'action', choices=['start', 'stop', "cluster"], help='start/stop/management service'
+    )
     parser.add_argument(
         "--hostfile", default=None, help="start backend serve host file which contains all available nodes"
     )
@@ -280,12 +408,27 @@ def main():
         default=2222,
         help="start serve for task monitor at {task_monitor_port}, default 2222",
     )
-    parser.add_argument("--api_type", default="all", help="start web serve with all/grpc/restful, default all")
+    parser.add_argument(
+        "--api_type", default="all", help="start web serve with all/grpc/restful, default all"
+    )
     parser.add_argument(
         "--workspace", default="./ns_workspace", help='neural solution workspace, default "./ns_workspace"'
     )
-    parser.add_argument("--conda_env", default=None, help="specify the running environment for the task")
-    parser.add_argument("--upload_path", default="examples", help="specify the file path for the tasks")
+    parser.add_argument(
+        "--conda_env", default=None, help="specify the running environment for the task"
+    )
+    parser.add_argument(
+        "--upload_path", default="examples", help="specify the file path for the tasks"
+    )
+    parser.add_argument(
+        "--query", action="store_true", help="[cluster parameter] query cluster information"
+    )
+    parser.add_argument(
+        "--join", help="[cluster parameter] add new node into cluster"
+    )
+    parser.add_argument(
+        "--remove", help="[cluster parameter] remove <node-id> from cluster"
+    )
     args = parser.parse_args()
 
     # Check parameters ending in '_port'
@@ -295,7 +438,8 @@ def main():
         start_service(args)
     elif args.action == "stop":
         stop_service()
-
-
+    elif args.action == "cluster":
+        manage_cluster(args)
+        
 if __name__ == "__main__":
     main()

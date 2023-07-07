@@ -283,8 +283,8 @@ class BenchmarkConfig:
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend='default',
-                 device='cpu',
+                 backend="default",
+                 device="cpu",
                  warmup=5,
                  iteration=-1,
                  model_name="",
@@ -297,7 +297,7 @@ class BenchmarkConfig:
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
-        self.device=device
+        self.device = device
         self.warmup = warmup
         self.iteration = iteration
         self.model_name = model_name
@@ -310,9 +310,9 @@ class BenchmarkConfig:
 
     def keys(self):
         """Returns keys of the dict."""
-        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', \
-                'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
-                'inter_num_of_threads','intra_num_of_threads')
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration',
+                'model_name', 'cores_per_instance', 'num_of_instance', 'framework',
+                'inter_num_of_threads', 'intra_num_of_threads')
 
     def __getitem__(self, item):
         """Get the dict."""
