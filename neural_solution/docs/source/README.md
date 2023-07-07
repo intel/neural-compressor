@@ -10,7 +10,7 @@
   - [Query task status](#query-task-status)
   - [Stop service](#stop-service)
   - [Inspect logs](#inspect-logs)
-  + [Manage resource](#manage-resource)  
+  - [Manage resource](#manage-resource)
     - [Node States](#node-states)
     - [Query cluster](#query-cluster)
     - [Add node](#add-node)
@@ -131,7 +131,7 @@ There are several logs under workspace:
 
 ```
 
-## Start resource management
+## Manage resource
 Neural Solution supports cluster management for service maintainers, providing several command-line tools for efficient resource management. 
 
 ### Node States
@@ -150,7 +150,15 @@ This command is used to query the current status of the cluster. No additional p
 neural_solution cluster --query
 ```
 ### Add node
-This command is used to add nodes to the cluster. You can either specify a host file or provide a list of nodes separated by ";". For example:
+This command is used to add nodes to the cluster. You can either specify a host file or provide a list of nodes separated by ";". The node format consists of three parts: hostname, number_of_sockets, and cores_per_socket. Here's a breakdown of each part:
+
+- hostname: This refers to the name or IP address of the node that you want to add to the cluster. It identifies the specific machine or server that will be part of the cluster.
+
+- number_of_sockets: This indicates the number of physical CPU sockets available on the node. A socket is a physical component that houses one or more CPU cores. It represents a physical processor unit.
+
+- cores_per_socket: This specifies the number of CPU cores present in each socket. A core is an individual processing unit within a CPU.
+
+For example:
 ```shell
 neural_solution cluster --join "host1 2 20; host2 4 20"
 ```
