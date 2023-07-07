@@ -63,6 +63,7 @@ class TestDistributedTuning(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.comm = MPI.COMM_WORLD
+        self.size = self.comm.Get_size()
         self.rank = self.comm.Get_rank()
 
     @classmethod
@@ -78,6 +79,11 @@ class TestDistributedTuning(unittest.TestCase):
                 os.remove('test_pt_stage_not_met.json')
             if os.path.exists('test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met.json'):
                 os.remove('test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met.json')
+
+    def test_mpi4py_installation(self):
+        logger.info(f"Test rank {self.rank} of {self.size} processes")
+        self.assertGreater(self.size, 0)
+        self.assertGreaterEqual(self.size, 0)
 
     def test_pt_stage_1_met(self):
         logger.info("*** Test: distributed tuning testing test_pt_stage_1_met start.")
@@ -307,26 +313,33 @@ class TestDistributedTuning(unittest.TestCase):
     @unittest.skipIf(CONDITION, "missing the mpi4py package")
     def test_distributed_tuning(self):
         distributed_cmds = [
+        'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_mpi4py_installation', \
         'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_1_met', \
         'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_3_fp32_met', \
         'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_4_fp32_met', \
         'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_not_met', \
         'mpirun -np 18 python fake_ut.py TestDistributedTuning.test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met',
         ]
+
         for i, distributed_cmd in enumerate(distributed_cmds):
             p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,
                                 stderr = subprocess.PIPE, shell=True) # nosec
             try:
                 out, error = p.communicate()
-                print("Test command:", distributed_cmd)
-                print(out.decode('utf-8'))
-                print(error.decode('utf-8'))
+                logger.info(f"Test command: {distributed_cmd}")
+                logger.info(out.decode('utf-8'))
+                logger.info(error.decode('utf-8'))
                 matches = re.findall(r'FAILED', error.decode('utf-8'))
                 self.assertEqual(matches, [])
 
                 matches = re.findall(r'OK', error.decode('utf-8'))
                 if i == len(distributed_cmds) - 1:
                     self.assertTrue(len(matches) == 18)
+                elif i == 0:
+                    rank_match = re.findall("rank (\d+) of", error.decode('utf-8'))
+                    size_match = re.findall("of (\d+) processes", error.decode('utf-8'))
+                    self.assertEqual(sorted(rank_match), ['0', '1', '2'])
+                    self.assertEqual(size_match, ['3'] * 3)
                 else:
                     self.assertTrue(len(matches) == 3)
 
