@@ -837,8 +837,7 @@ class TestTuneSqAlpha(unittest.TestCase):
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
                      "smooth_quant_args": {'folding': False,
-                                           "alpha_list": np.arange(0.1, 0.2, 0.05).tolist(),
-                                           }
+                                           "alpha": np.arange(0.1, 0.4, 0.05).tolist()}
                      }
         )
         

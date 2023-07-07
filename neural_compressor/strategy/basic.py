@@ -364,7 +364,8 @@ class BasicTuneStrategy(TuneStrategy):
 
                         
     def _should_tuning_sq_alpha(self, recipes):
-        return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha_list", [])) > 0
+        # Only tune sq'alpha only if there are more than one alpha
+        return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha", [])) > 1
     
     def tuning_sq_alpha(self, tuning_cfg):
         # TODO generate tuning config
