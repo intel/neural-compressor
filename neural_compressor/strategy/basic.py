@@ -382,7 +382,7 @@ class BasicTuneStrategy(TuneStrategy):
         Yields:
             tuning config
         """
-        sq_alpha_list = recipes.get("smooth_quant_args", {}).get("alpha_list", [])
+        sq_alpha_list = recipes.get("smooth_quant_args", {}).get("alpha", [])
         assert len(sq_alpha_list) > 0, "Only tune the smooth quant's alpha when user provide the alpha list,\
             but got alpha_list: {alpha_list}"
         sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
