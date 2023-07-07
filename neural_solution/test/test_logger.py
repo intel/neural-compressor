@@ -1,6 +1,8 @@
 """Tests for logging utilities."""
-from neural_solution.utils import logger
 import unittest
+
+from neural_solution.utils import logger
+
 
 class TestLogger(unittest.TestCase):
     def test_logger(self):
@@ -20,14 +22,12 @@ class TestLogger(unittest.TestCase):
         logger.warning({"msg": "call logger warning function"})
         logger.warning(["call logger warning function", "done"])
         logger.warning(("call logger warning function", "done"))
-        logger.warning({"msg": {('bert', "embedding"): {'weight': {'dtype': ['unint8', 'int8']}}}})
-        logger.warning({"msg": {('bert', "embedding"): {'op': ('a', 'b')}}})
+        logger.warning({"msg": {("bert", "embedding"): {"weight": {"dtype": ["unint8", "int8"]}}}})
+        logger.warning({"msg": {("bert", "embedding"): {"op": ("a", "b")}}})
         # the following log will not be prettified
         logger.warning([{"msg": "call logger warning function"}, {"msg2": "done"}])
         logger.warning(({"msg": "call logger warning function"}, {"msg2": "done"}))
-        logger.warning(({"msg": [{"sub_msg":"call logger"},
-                                 {"sub_msg2":"call warning function"}]},
-                        {"msg2": "done"}))
+        logger.warning(({"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]}, {"msg2": "done"}))
 
 
 if __name__ == "__main__":

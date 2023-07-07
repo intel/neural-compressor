@@ -1,8 +1,10 @@
-import unittest
-from unittest.mock import Mock, patch, MagicMock
-from neural_solution.backend.task_monitor import TaskMonitor
-from neural_solution.backend.task import Task
 import threading
+import unittest
+from unittest.mock import MagicMock, Mock, patch
+
+from neural_solution.backend.task import Task
+from neural_solution.backend.task_monitor import TaskMonitor
+
 
 class TestTaskMonitor(unittest.TestCase):
     def setUp(self):
@@ -18,37 +20,66 @@ class TestTaskMonitor(unittest.TestCase):
             mock_socket.return_value.bind = mock_bind
             mock_socket.return_value.listen = mock_listen
             self.task_monitor._start_listening("localhost", 8888, 10)
-    
+
     def test_receive_task(self):
-        self.mock_socket.accept.return_value = (Mock(), b'{"task_id": 123, "arguments": {}, "workers": 1, \
+        self.mock_socket.accept.return_value = (
+            Mock(),
+            b'{"task_id": 123, "arguments": {}, "workers": 1, \
             "status": "pending", "script_url": "http://example.com", "optimized": True, \
-            "approach": "static", "requirement": "neural_solution", "result": "", "q_model_path": ""}')
+            "approach": "static", "requirement": "neural_solution", "result": "", "q_model_path": ""}',
+        )
         self.mock_task_db.get_task_by_id.return_value = Task(
-            task_id=123, arguments={}, workers=1, 
-            status="pending", script_url="http://example.com", optimized=True,
-            approach="static", requirement="neural_solution", result="", q_model_path="")
-        
+            task_id=123,
+            arguments={},
+            workers=1,
+            status="pending",
+            script_url="http://example.com",
+            optimized=True,
+            approach="static",
+            requirement="neural_solution",
+            result="",
+            q_model_path="",
+        )
+
         # Test normal task case
-        with patch('neural_solution.backend.task_monitor.deserialize', return_value={
-            "task_id": 123, "arguments": {}, "workers": 1, 
-            "status": "pending", "script_url": "http://example.com", 
-            "optimized": True, "approach": "static",
-            "requirement": "neural_solution", "result": "", "q_model_path": ""}):
+        with patch(
+            "neural_solution.backend.task_monitor.deserialize",
+            return_value={
+                "task_id": 123,
+                "arguments": {},
+                "workers": 1,
+                "status": "pending",
+                "script_url": "http://example.com",
+                "optimized": True,
+                "approach": "static",
+                "requirement": "neural_solution",
+                "result": "",
+                "q_model_path": "",
+            },
+        ):
             task = self.task_monitor._receive_task()
             self.assertEqual(task.task_id, 123)
             self.mock_task_db.get_task_by_id.assert_called_once_with(123)
-        
+
         # Test ping case
-        with patch('neural_solution.backend.task_monitor.deserialize', return_value={"ping": "test"}):
+        with patch("neural_solution.backend.task_monitor.deserialize", return_value={"ping": "test"}):
             response = self.task_monitor._receive_task()
             self.assertEqual(response, False)
             self.mock_task_db.get_task_by_id.assert_called_once_with(123)
 
     def test_append_task(self):
         task = Task(
-            task_id=123, arguments={}, workers=1, 
-            status="pending", script_url="http://example.com", optimized=True, 
-            approach="static", requirement="neural_solution", result="", q_model_path="")
+            task_id=123,
+            arguments={},
+            workers=1,
+            status="pending",
+            script_url="http://example.com",
+            optimized=True,
+            approach="static",
+            requirement="neural_solution",
+            result="",
+            q_model_path="",
+        )
         self.task_monitor._append_task(task)
         self.mock_task_db.append_task.assert_called_once_with(task)
 
@@ -61,7 +92,7 @@ class TestTaskMonitor(unittest.TestCase):
         self.task_monitor._receive_task = mock_receive_task
         self.task_monitor._append_task = mock_append_task
         self.task_monitor._start_listening = MagicMock()
-        
+
         # Call the function to be tested
         adding_abort = threading.Thread(
             target=self.task_monitor.wait_new_task,
@@ -70,13 +101,14 @@ class TestTaskMonitor(unittest.TestCase):
         )
         adding_abort.start()
         adding_abort.join(timeout=1)
-        
+
         # Test task is False
         mock_receive_task = MagicMock(return_value=False)
         mock_append_task = MagicMock()
         self.task_monitor._receive_task = mock_receive_task
-        
+
         adding_abort.join(timeout=1)
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()
