@@ -44,7 +44,7 @@ from ..objective import MultiObjective
 from ..utils import logger
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils.utility import Statistics, fault_tolerant_file, GLOBAL_STATE, MODE, LazyImport, \
-    DotDict, print_table, get_weights_details, dump_table, print_op_list
+    DotDict, print_table, get_weights_details, dump_table, print_op_list, equal_dicts
 from ..utils.weights_details import WeightsDetails
 from ..version import __version__
 
@@ -1335,7 +1335,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def _same_conf(self, src_conf, dst_conf):
         """Check if the two configs are the same."""
         from ..utils.utility import compare_objects
-        return compare_objects(src_conf, dst_conf, {'_options', '_tuning', '_accuracy'})
+        return compare_objects(src_conf, dst_conf, {'_options', '_tuning', '_accuracy', 'trial_number'})
 
     def update_best_op_tuning_cfg(self, op_tuning_cfg):
         """Track and update the best tuning config with correspondence accuracy result.
@@ -1655,7 +1655,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             # some fields in tuning section of config, such as tensorboard, snapshot, resume.
             if self._same_conf(tuning_history['cfg'], self.conf):
                 for history in tuning_history['history']:
-                    if history and history['tune_cfg'] == tune_cfg:
+                    if history and equal_dicts(history['tune_cfg'], tune_cfg, ignore_keys=['trial_number']):
                         return tuning_history
 
         return None
