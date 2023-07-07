@@ -1194,10 +1194,13 @@ class SparseGPTPruner(BasePruner):
         self.model_dev = model.device
         if torch.cuda.is_available():
             self.dev = torch.device(type='cuda')
+        # self.update_masks()
+        # self.model = self.model.to(self.model_dev)
+	# del self.dev
+	# del self.model_dev
+    
+    def on_step_begin(self, local_step):
         self.update_masks()
-        self.model = self.model.to(self.model_dev)
-        del self.dev
-        del self.model_dev
         
     @torch.no_grad()
     def update_masks(self):

@@ -65,6 +65,56 @@ LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable
 RANK = int(os.getenv('RANK', -1))
 WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
+def train(model, optimizer, lr_scheduler, train_dataloader, device='cpu', gradient_accumulation_steps=1, training_step=1000):
+    for n, m in model.named_parameters():
+        m.requires_grad = True if 'layer_norm' in n else False
+    model.train()
+    model = model.to(device)
+
+    cnt = 1
+    import time
+
+    results = {}
+    start_time = time.time()
+    model.train()
+    print("start training", flush=True)
+    while 1:
+        for inputs in train_dataloader:
+            if cnt % 100 == 0:
+                end_time = time.time() - start_time
+                print(cnt, end_time, flush=True)
+            if isinstance(inputs, dict):
+                input_id = inputs["input_ids"]
+            else:
+                input_id = inputs[0]
+            ##print(input_id.shape)
+
+            input_id = input_id.to(device)
+            output = model(input_id, labels=input_id)
+            loss = output[0] / gradient_accumulation_steps
+            loss.requires_grad_(True)
+
+            # if args.layer_wise_training:
+            #     loss.to("cpu")
+            # model.to("cpu")
+            loss.backward()
+            # print(output[0])
+            ##print(f"{cnt}/{len(calib_dataloader)}, {output.loss}")
+            if cnt % gradient_accumulation_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+                lr_scheduler.step()
+            if cnt == training_step:
+                break
+            cnt += 1
+        if cnt == training_step:
+            break
+    model.eval()
+    torch.cuda.empty_cache()
+    torch.save(model, "sparsegpt-prune.pt")
+    # print("training acc")
+    # os.system("python3 eval.py --model_name /models/gpt-j-6B")
+
 class Evaluator:
     def __init__(self, dataset, tokenizer, device, batch_size=16):
         self.dataset = dataset
@@ -160,6 +210,8 @@ class INCDataloader():
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Finetune a transformers model on a causal language modeling task")
+    parser.add_argument("--device", default=0, type=str,
+                        help="device gpu int number, or 'cpu' ")
     parser.add_argument(
         "--calibration_dataset_name",
         type=str,
@@ -393,8 +445,15 @@ def parse_args():
 
     return args
 
+
+
 def main():
     args = parse_args()
+    if args.device == "cpu":
+        device_str = "cpu"
+    else:
+        device_str = f"cuda:{int(args.device)}"
+    device = torch.device(device_str)
 
     # DDP Mode
     local_rank = args.local_rank
@@ -647,7 +706,29 @@ def main():
         compression_manager = prepare_compression(model=model, confs=configs)
         model = compression_manager.model.model
         compression_manager.callbacks.on_train_begin(dataloader=train_dataloader, model=model)
-        compression_manager.callbacks.on_train_end()
+        # training
+        for n, m in model.named_parameters():
+            m.requires_grad = True if 'layer_norm' in n else False
+        parameters = filter(lambda p: p.requires_grad, model.parameters()) 
+        optimizer = torch.optim.Adam(parameters, lr=1e-3, weight_decay=0)
+        from transformers import get_scheduler
+        training_step = 1000
+        prune_cnt = 1
+        gradient_accumulation_steps = 1
+        total_training_step = ((prune_cnt - 1)+prune_cnt) *training_step
+        lr_scheduler = get_scheduler(
+            name="linear",
+            optimizer=optimizer,
+            num_warmup_steps=int(total_training_step * 0.05) // gradient_accumulation_steps,
+            num_training_steps=total_training_step // gradient_accumulation_steps,
+        )
+
+        for i in range(1, prune_cnt + 1):
+            compression_manager.callbacks.on_step_begin(i)
+            train(model, optimizer, lr_scheduler, train_dataloader, device=device)
+            # eval(model, args.model_name_or_path, device)
+
+        # compression_manager.callbacks.on_train_end()
         model.config.use_cache = use_cache
         
     if torch.cuda.is_available():
