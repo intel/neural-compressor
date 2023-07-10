@@ -674,6 +674,7 @@ def _save(obj, zip_file, pickle_module, pickle_protocol):
 def load(
     f: FILE_LIKE,
     tensor_name: str = None,
+    prefix: str = None,
     map_location: MAP_LOCATION = None,
     pickle_module: Any = None,
     *,
@@ -810,7 +811,7 @@ def load(
                         return _load(opened_zipfile, map_location, _weights_only_unpickler, **pickle_load_args)
                     except RuntimeError as e:
                         raise pickle.UnpicklingError(UNSAFE_MESSAGE + str(e)) from None
-                return _load(opened_zipfile, tensor_name, map_location, pickle_module, **pickle_load_args)
+                return _load(opened_zipfile, tensor_name, prefix, map_location, pickle_module, **pickle_load_args)
         if weights_only:
             try:
                 return _legacy_load(opened_file, map_location, _weights_only_unpickler, **pickle_load_args)
@@ -1120,7 +1121,7 @@ class StorageType():
 
 import gc
 
-def _load(zip_file, tensor_name, map_location, pickle_module, pickle_file='data.pkl', **pickle_load_args):
+def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_file='data.pkl', **pickle_load_args):
     restore_location = _get_restore_location(map_location)
 
     loaded_storages = {}
@@ -1211,7 +1212,10 @@ def _load(zip_file, tensor_name, map_location, pickle_module, pickle_file='data.
             if key in loaded_storages:
                 typed_storage = loaded_storages[key]
             else:
-                if self.tensor_name and self.metastack[-1][-2] != self.tensor_name:
+                no_prefix_name = self.tensor_name.split('.')
+                no_prefix_name.remove(prefix)
+                no_prefix_name = '.'.join(no_prefix_name)
+                if self.tensor_name and self.metastack[-1][-2] not in [self.tensor_name, no_prefix_name]:
                     # typed_storage = None
                     # loaded_storages[key] = typed_storage
                     # nbytes = numel * torch._utils._element_size(dtype)

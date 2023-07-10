@@ -78,18 +78,24 @@ def load_from_shard(path, tensor_name):
     return state_dict[tensor_name]
 
 
-def load_tensor_from_shard(path, tensor_name):
+def load_tensor_from_shard(path, tensor_name, prefix=None):
     idx_dict = json.load(open(os.path.join(path, 'pytorch_model.bin.index.json'), 'r'))['weight_map']
     assert tensor_name in idx_dict.keys(), '{} not the index.json'.format(tensor_name)
-    return load_tensor(os.path.join(path, idx_dict[tensor_name]), tensor_name)
+    return load_tensor(os.path.join(path, idx_dict[tensor_name]), tensor_name, prefix)
 
 
-def load_tensor(path, tensor_name=None):
-    if 'lm_head' in tensor_name:
-        tensor_name = 'model.decoder.embed_tokens.weight'
-    state_dict = load(path, tensor_name)
-    # return state_dict
-    return state_dict[tensor_name]
+def load_tensor(path, tensor_name=None, prefix=None):
+    # transformers.modeling_utils
+    if "gamma" in tensor_name:
+        tensor_name = tensor_name.replace("gamma", "weight")
+    if "beta" in tensor_name:
+        tensor_name = tensor_name.replace("beta", "bias")
+
+    state_dict = load(path, tensor_name, prefix)
+    if tensor_name in state_dict:
+        return state_dict[tensor_name]
+    else:
+        return state_dict[tensor_name.replace(f'{prefix}.', '')]
 
 
 def get_memo():

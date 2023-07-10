@@ -5,7 +5,6 @@ from copy import deepcopy
 from tqdm import tqdm
 from collections import OrderedDict
 
-# import torch
 from .utils import torch
 from torch.quantization import prepare, convert, get_default_qconfig
 # from torch.ao.quantization import swap_module, get_default_custom_config_dict, get_default_static_quant_module_mappings
@@ -17,7 +16,6 @@ else:
 from accelerate.utils import set_module_tensor_to_device
 from .utils import load_shell, get_named_children, update_module, load_tensor_from_shard, load_tensor
 
-from .utils import get_memo
 
 TMP_DIR = './layer_wise_quant_tmp_dir'
 QCONFIG = [
@@ -58,7 +56,7 @@ class QDQLayer(torch.nn.Module):
         self.quant = torch.ao.quantization.QuantStub()
         self.module = module
         self.dequant = torch.ao.quantization.DeQuantStub()
-    
+ 
     def forward(self, X):
         X = self.quant(X)
         X = self.module(X)
@@ -67,8 +65,10 @@ class QDQLayer(torch.nn.Module):
 
 
 class NormalQuant:
-    def __init__(self, model, qconfig=0, output_dir='saved_results'):
+    def __init__(self, model, qconfig=0, output_dir='saved_results', device='cpu'):
+        model.to(device)
         self.q_model = model
+        qconfig = 1
         if isinstance(qconfig, (int, float)):
             self.qconfig = QCONFIG[int(qconfig)]
         else:
@@ -115,7 +115,7 @@ class LayerWiseQuant:
         # self.qconfig = torch.quantization.float_qparams_weight_only_qconfig
         self.device = device
         self._handle = {}
-    
+
     def quantize(self, calib_data):
         mk_tmp_dir()
         self._layer_wise_quantize(calib_data)
@@ -168,10 +168,16 @@ class LayerWiseQuant:
     def _regist_hooks(self):
         def forward_pre_hook(name):
             def load_value(param_name):
+                if 'lm_head' in param_name and getattr(self.config, "tie_word_embeddings", True):
+                    input_embeddings = self.q_model.get_input_embeddings()
+                    for name, module in self.modules:
+                        if module == input_embeddings:
+                            param_name = name + '.' + param_name.split('.')[-1]
+                prefix = self.q_model.base_model_prefix
                 if 'pytorch_model.bin.index.json' in os.listdir(self.path):
-                    value = load_tensor_from_shard(self.path, param_name)
+                    value = load_tensor_from_shard(self.path, param_name, prefix)
                 else:
-                    value = load_tensor(os.path.join(self.path, 'pytorch_model.bin'), param_name)
+                    value = load_tensor(os.path.join(self.path, 'pytorch_model.bin'), param_name, prefix)
                 return value
 
             def hook(module, input):
@@ -230,9 +236,12 @@ class LayerWiseQuant:
                     new_value = torch.zeros([0], device="meta")
                     new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
                     submodule._parameters[n] = new_value
-        gc.collect()
+        if self.device == 'cpu':
+            gc.collect()
+        else:
+            torch.cuda.empty_cache()
 
-    
+
     def _load_state_dict(self,  module_name):
         file_path = os.path.join(TMP_DIR, f'{module_name}.pt')
         state_dict = torch.load(file_path)
