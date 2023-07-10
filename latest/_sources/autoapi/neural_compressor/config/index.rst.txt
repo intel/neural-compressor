@@ -597,7 +597,7 @@ Classes
        model = compression_manager.model
 
 
-.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[], op_name_dict={}, op_type_dict={}, example_inputs=None)
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], quant_level='auto', tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[], op_name_dict={}, op_type_dict={}, example_inputs=None)
 
 
 
@@ -620,6 +620,8 @@ Classes
    :type inputs: list, optional
    :param outputs: Outputs of model, default is [].
    :type outputs: list, optional
+   :param quant_level: Support auto, 0 and 1, 0 is conservative(fallback in op type wise),
+                       1(fallback in op wise), auto (default) is the combination of 0 and 1.
    :param tuning_criterion: Accuracy tuning settings,
                             it won't work if there is no accuracy tuning process.
    :type tuning_criterion: TuningCriterion object, optional
