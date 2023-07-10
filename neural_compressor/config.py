@@ -626,8 +626,11 @@ class TuningCriterion:
 
     @objective.setter
     def objective(self, objective):
-        # TODO objective can also be a list of str, such as ['performance', 'modelsize']
-        """
+        """Set objective.
+
+        Args:
+            objective: objective name or list of objective names
+            
         Examples:
             objective = "performance"
             objective = ["performance"]
