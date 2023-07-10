@@ -71,7 +71,7 @@ from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node
 from .graph_util import GraphRewriterHelper as Helper
 
 
-TF_SUPPORTED_MAX_VERSION = '2.11.0'
+TF_SUPPORTED_MAX_VERSION = '2.12.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger("neural_compressor")

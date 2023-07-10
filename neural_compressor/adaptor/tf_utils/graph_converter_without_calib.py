@@ -45,10 +45,11 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
-from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2,version1_lt_version2
+from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2
+from .util import version1_lt_version2, version1_lte_version2
 from .util import TF_SPR_BASE_VERSIONS
 
-TF_SUPPORTED_MAX_VERSION = '2.11.0'
+TF_SUPPORTED_MAX_VERSION = '2.12.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger("neural_compressor")
@@ -112,7 +113,7 @@ class GraphConverterWithoutCalib:
                 from tensorflow.python.util._pywrap_util_port import IsMklEnabled
             else:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
-            if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
+            if IsMklEnabled() and (version1_lte_version2(TF_SUPPORTED_MIN_VERSION, tf.version.VERSION)):
                 is_supported_version = True
                 
             if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
@@ -121,7 +122,7 @@ class GraphConverterWithoutCalib:
             if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
 
-            if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            if tf.version.VERSION == '1.15.0-up3':
                 is_supported_version = True
 
             if tf.version.VERSION in TF_SPR_BASE_VERSIONS:

@@ -190,7 +190,7 @@ class ModelArguments:
         default="fp32", metadata={"help": "choose the data type [fp32/int8] of PyTorch model to be exported."}
     )
     quant_format: str = field(
-        default="QDQ", metadata={"help": "choose the format [QDQ/QLinear] of int8 ONNX model exported."}
+        default="QDQ", metadata={"help": "choose the format [QDQ/QOperator] of int8 ONNX model exported."}
     )
     output_model: str = field(
         default="model.onnx", metadata={"help": "the name of exported model."}
@@ -208,6 +208,12 @@ class ModelArguments:
         default=100,
         metadata={
             "help": "The inference iterations to run for benchmark."
+        },
+    )
+    approach: str = field(
+        default='static',
+        metadata={
+            "help": "Post-Training Quantization method."
         },
     )
 
@@ -541,13 +547,18 @@ def main():
             strategy_kwargs={"confidence_batches": 1},
             max_trials=600,
         )
-        conf = PostTrainingQuantConfig(
-            approach="static", 
-            quant_level=1,
-            tuning_criterion=tuning_criterion,
-            op_type_dict={"Embedding":FP32},
-            calibration_sampling_size=[300],
-        )
+        if model_args.approach == "static":
+            conf = PostTrainingQuantConfig(
+                approach=model_args.approach, 
+                quant_level=1,
+                tuning_criterion=tuning_criterion,
+                op_type_dict={"Embedding":FP32},
+                calibration_sampling_size=[300],
+            )
+        elif model_args.approach == "dynamic":
+            conf = PostTrainingQuantConfig(
+                approach=model_args.approach,
+            )
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
