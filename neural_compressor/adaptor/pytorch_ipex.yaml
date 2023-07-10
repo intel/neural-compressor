@@ -39,6 +39,15 @@
           'Conv1d': *cap_s8_1_12_Conv2d,
           'Conv3d': *cap_s8_1_12_Conv2d,
           'Linear': *cap_s8_1_12_Conv2d,
+          # Fallback add to fp32 by default, to avoid accuracy issue happening on LLMs.
+          'add': &cap_s8_1_12_add {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
           'default': {
             'weight': {
                         'dtype': ['int8'],
