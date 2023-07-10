@@ -263,13 +263,6 @@
       "main_script": "dlrm_s_pytorch.py",
       "batch_size": 16384
     },
-    "blendcnn": {
-      "model_src_dir": "nlp/blendcnn/quantization/ptq/fx",
-      "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",
-      "input_model": "/tf_dataset/pytorch/blendcnn/models/",
-      "main_script": "classify.py",
-      "batch_size": 32
-    },
     "blendcnn_ipex": {
       "model_src_dir": "nlp/blendcnn/quantization/ptq/ipex",
       "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",
