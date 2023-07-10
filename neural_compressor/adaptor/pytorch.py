@@ -4540,10 +4540,23 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
         logger.debug("quantizing with the GPTQ algorithm")
+        from .torch_utils.weight_only import gptq_quantize
         if 'gptq_args' in self.recipes:
             percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
+        # implementation of gptq
         # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
-        # TODO: implementation
+        weight_config = {
+            'wbits': args.wbits, 
+            'group_size': args.group_size, 
+            'sym': args.sym,
+            'percdamp': args.percdamp
+        }
+        model = gptq_quantize(
+            model, 
+            weight_config,
+            dataloader,
+            self.device
+        )
         return model
 
     def awq_quantize(self, model, tune_cfg, dataloader):

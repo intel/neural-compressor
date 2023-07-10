@@ -8,44 +8,37 @@ import torch.nn as nn
 import transformers
 
 from neural_compressor.adaptor.torch_utils import gptq
-from transformers import AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from evaluation import evaluate as lm_evaluate
 
-def get_bloom(model):
-    import torch
-    def skip(*args, **kwargs):
-        pass
-    torch.nn.init.kaiming_uniform_ = skip
-    torch.nn.init.uniform_ = skip
-    torch.nn.init.normal_ = skip
-    from transformers import BloomForCausalLM
-    model = BloomForCausalLM.from_pretrained(model, torch_dtype='auto')
-    model.seqlen = 2048
-    return model
+@torch.no_grad()
+def eval_ppl_with_gptq(model, test_dataloader, dev):
+    print('Evaluating ...', flush=True)
+    # model.eval()
+    model.to(dev)
 
-def get_opt(model):
-    import torch
-    def skip(*args, **kwargs):
-        pass
-    torch.nn.init.kaiming_uniform_ = skip
-    torch.nn.init.uniform_ = skip
-    torch.nn.init.normal_ = skip
-    from transformers import OPTForCausalLM
-    model = OPTForCausalLM.from_pretrained(model, torch_dtype='auto')
-    model.seqlen = model.config.max_position_embeddings
-    return model
+    testenc = test_dataloader.input_ids
+    nsamples = test_dataloader.numel() // model.seqlen
 
-def get_llama(model):
-    import torch
-    def skip(*args, **kwargs):
-        pass
-    torch.nn.init.kaiming_uniform_ = skip
-    torch.nn.init.uniform_ = skip
-    torch.nn.init.normal_ = skip
-    from transformers import LlamaForCausalLM
-    model = LlamaForCausalLM.from_pretrained(model, torch_dtype='auto')
-    model.seqlen = 2048
-    return model
+    use_cache = model.config.use_cache
+    model.config.use_cache = False
+
+    test_dataloader = test_dataloader.to(dev)
+    nlls = []
+    for i in range(nsamples):
+        batch = test_dataloader[:, (i * model.seqlen):((i + 1) * model.seqlen)].to(dev)
+        lm_logits = model(batch).logits
+        shift_logits = lm_logits[:, :-1, :].contiguous()
+        shift_labels = test_dataloader[:, (i * model.seqlen):((i + 1) * model.seqlen)][:, 1:]
+        loss_fct = nn.CrossEntropyLoss()
+        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        neg_log_likelihood = loss.float() * model.seqlen
+        nlls.append(neg_log_likelihood)
+    ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * model.seqlen))
+    print(ppl.item())
+
+    model.config.use_cache = use_cache
+    return ppl.item()
 
 if __name__ == '__main__':
     import argparse
@@ -54,19 +47,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        'model', type=str,
+        '--model_name_or_path', type=str,
         help='BLOOM model to load; pass `bigscience/bloom-X`.'
     )
     parser.add_argument(
-        'dataset', type=str, choices=['wikitext2', 'ptb', 'c4', 'pile'],
+        '--dataset', type=str, choices=['wikitext2', 'ptb', 'c4', 'pile'],
         help='Where to extract calibration data from.'
     )
-    #----------generalized into one code and control gptq behavior with this argument.---------
-    parser.add_argument(
-        '--arch', type=str, choices=['bloom', 'opt', 'llama'],
-        help='Supported different llm architectures within one general code set'
-    )
-    #------------------------------------------------------------------------------------------
     parser.add_argument(
         '--seed',
         type=int, default=0, help='Seed for sampling the calibration data.'
@@ -88,7 +75,7 @@ if __name__ == '__main__':
         help='#bits to use for quantization; use 16 for evaluating base model.'
     )
     parser.add_argument(
-        '--groupsize', type=int, default=-1,
+        '--group_size', type=int, default=-1,
         help='Groupsize to use for quantization; default uses full row.'
     )
     parser.add_argument(
@@ -100,16 +87,28 @@ if __name__ == '__main__':
         help='Whether to use the new PTB and C4 eval'
     )
 
-
     args = parser.parse_args()
 
-    model = AutoModelForCausalLM.from_pretrained(args.model, low_cpu_mem_usage=True)
+    def skip(*args, **kwargs):
+        pass
+    torch.nn.init.kaiming_uniform_ = skip
+    torch.nn.init.uniform_ = skip
+    torch.nn.init.normal_ = skip
+    import pdb;pdb.set_trace()
+    # method 1: directly import AutoModelForCausalLM
+    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True)
     model.seqlen = 2048
+    # method 2:
+    # model = get_llama(args.model)
 
     model.eval()
-
+    # load data from users
+    # tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False,)
+    # pile_data = datasets.load_from_disk('./pile-10k')
+    # gloader = gptq.GPTQLoader(pile_data['text'], tokenizer)
+    # dataloader = gloader.get_gptq_inps()
     dataloader, testloader = get_loaders(
-        args.dataset, nsamples=args.nsamples, seed=args.seed, model=args.model, seqlen=model.seqlen
+        args.dataset, nsamples=args.nsamples, seed=args.seed, model=args.model_name_or_path, seqlen=model.seqlen
     )
 
     DEV = torch.device('cuda:0')
@@ -117,14 +116,32 @@ if __name__ == '__main__':
     print('Starting ...')
 
     # import pdb;pdb.set_trace()
-    bloom_quantizer = gptq.GPTQuantizer(model, dataloader, DEV, args)
-    bloom_quantizer.execute_quantization() # do quantization
+    weight_config = {
+        'wbits': args.wbits, 
+        'group_size': args.group_size, 
+        'sym': args.sym,
+        'percdamp': args.percdamp
+    }
+    print(weight_config)
+    gptq_quantizer = gptq.GPTQuantizer(model, weight_config, dataloader, DEV)
+    quantization_data = gptq_quantizer.execute_quantization() # do quantization
 
     results = lm_evaluate(
         model="hf-causal",
-        model_args=f'pretrained="{args.model}",tokenizer="{args.model}",dtype=float32',
+        model_args=f'pretrained="{args.model_name_or_path}",tokenizer="{args.model_name_or_path}",dtype=float32',
         user_model=model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
         batch_size=4
     )
-    # post quantization 
+
+    # datasets = ['wikitext2']
+
+    # for dataset in datasets:
+    #     dataloader, testloader = get_loaders(
+    #         dataset, seed=0, model=args.model_name_or_path, seqlen=model.seqlen
+    #     )
+    #     print(dataset, flush=True)
+    #     ppl = eval_ppl_with_gptq(model, testloader, device)
+    #     results.update({dataset: ppl})
+
+    # save the model TODO with xin

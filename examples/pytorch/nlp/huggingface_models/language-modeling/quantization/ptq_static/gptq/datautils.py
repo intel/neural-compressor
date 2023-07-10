@@ -3,10 +3,10 @@ import torch
 import datasets
 
 cache_dir = "/home/wenhuach/.cache/"
+
 def set_seed(seed):
     np.random.seed(seed)
     torch.random.manual_seed(seed)
-
 
 def get_wikitext2(nsamples, seed, seqlen, model):
     from datasets import load_dataset
@@ -121,9 +121,7 @@ def get_pile(nsamples, seed, seqlen, model):
         cache_dir=cache_dir
     )
     """
-    valdata = load_dataset(
-                    '/data1/lkk/llm_inference/gptq/c4/', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation'
-                        )
+    valdata = load_dataset('/data1/lkk/llm_inference/gptq/c4/', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation')
 
 
     from transformers import AutoTokenizer
@@ -189,16 +187,6 @@ def get_ptb_new(nsamples, seed, seqlen, model):
 
 def get_c4_new(nsamples, seed, seqlen, model):
     from datasets import load_dataset
-    """
-    traindata = load_dataset(
-        'allenai/c4', 'allenai--c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train',
-        cache_dir=cache_dir
-    )
-    valdata = load_dataset(
-        'allenai/c4', 'allenai--c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation',
-        cache_dir=cache_dir
-    )
-    """
     traindata = load_dataset(
         '/data1/lkk/llm_inference/gptq/c4/', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train'
     )

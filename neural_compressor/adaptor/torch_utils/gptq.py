@@ -1,3 +1,4 @@
+
 import math
 import time
 
@@ -6,15 +7,10 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 from functools import partial
-# different models may have different input structures. 
-# arch_inputs = {
-#     'opt': ['attention_mask'],
-#     'bloom': ['attention_mask', 'alibi'],
-#     'llama': ['attention_mask', 'position_ids']
-# }
 
 DEBUG = False 
 
+# ==============model structure related==============
 def is_leaf(module):
     children_cnt = 0
     for n in module.children():
@@ -53,51 +49,56 @@ def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
             child, layers=layers, name=name + '.' + name1 if name != '' else name1
         ))
     return res
+#===========================================
 
+#===============quantization related============================
 def quantize(x, scale, zero, maxq):
     if maxq < 0:
         return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
     q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
     return scale * (q - zero)
-    
-class InputHooker(nn.Module):
-    def __init__(self, module, arch, inp, cache):
-        super().__init__()
-        self.module = module
-        self.inp = inp
-        self.cache = cache
-        # self.input_args = arch_inputs[arch]
-    def forward(self, inp, **kwargs):
-        # import pdb;pdb.set_trace()
-        self.inp[self.cache['i']] = inp
-        self.cache['i'] += 1
-        for arg in kwargs:
-            if isinstance(kwargs[arg], torch.Tensor):
-                self.cache[arg] = kwargs[arg]
-            else:
-                continue
-        print("input hooked successfully")
-        raise ValueError
 
 class GPTQuantizer(object):
     """Main API"""
-    def __init__(self, model, dataloader, device, args):
-        # find the stacked transformers module
-        # generally, an llm models follows such structure:
-        # embeddings => [transformer_block_1, transformer_block_2, ...] => lm_head
+    def __init__(self, model, weight_config={}, dataloader=None, device=None):
+        """
+        Args:
+            model: the fp32 model to quantize
+            weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}.
+                For example, 
+                    weight_config={
+                        'bits': 4, 
+                        'group_size': 32, 
+                        'sym': True,
+                        'percdamp': .01
+                    }
+            dataloader: an iterable containing calibration datasets
+            device: cpu or cuda
+        """
+        # model
         self.model = model
+        # weight config related
+        self.weight_config = weight_config
+        self.wbits = 4
+        self.percdamp = 0.01
+        self.sym = True
+        self.group_size = 128
+        self.process_config()
+        # data & device
+        self.dataloader = dataloader
+        self.nsamples = len(dataloader)
+        self.device = device
+        self.is_ready = False
+
         self.use_cache = model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(model) # get the transformer block list above
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
-        self.dataloader = dataloader
-        self.device = device
-        self.is_ready = False
+
         # import pdb;pdb.set_trace()
-        # args parameters can be passed via kwargs
+        # initialize buffers which are essential for gptq computation. 
         try:
-            self.args = args
             self.dtype = next(iter(self.model.parameters())).dtype
-            self.inp = torch.zeros((args.nsamples, model.seqlen, model.config.hidden_size), dtype=self.dtype, device=self.device)
+            self.inp = torch.zeros((self.nsamples, model.seqlen, model.config.hidden_size), dtype=self.dtype, device=self.device)
             self.cache = {'i': 0}
             # for opt, bloom, llama, etc, their inputs are different thus their cache structures vary
             # initialization
@@ -107,6 +108,12 @@ class GPTQuantizer(object):
             self.is_ready = True
         except:
             pass
+
+    def process_config(self):
+        self.wbits = self.weight_config.get('wbits', self.wbits)
+        self.percdamp = self.weight_config.get('perdamo', self.percdamp)
+        self.sym = self.weight_config.get('sym', self.sym)
+        self.group_size = self.weight_config.get('group_size', self.sym)
     
     @torch.no_grad()
     def pre_quantization(self):
@@ -158,20 +165,6 @@ class GPTQuantizer(object):
             embedding_layer.to(self.device)
         torch.cuda.empty_cache()
         print('Quantization prepared.')
-    
-    # def perform_transformer_forward(self, module, inp):
-    #     assert self.is_ready, "calibration datasets are not prepared!"
-    #     if self.args.arch == "bloom":
-    #         return module(inp, attention_mask=self.cache['attention_mask'], alibi=self.cache['alibi'], )[0]
-    #     elif self.args.arch == "opt":
-    #         return module(inp, attention_mask=self.cache['attention_mask'], )[0]
-    #     elif self.args.arch == 'llama':
-    #         return module(inp, attention_mask=self.cache['attention_mask'], position_ids=self.cache['position_ids'])[0]
-    #     else:
-    #         raise NotImplementedError
-    
-    # def perform_transformer_forward_v2(self, module, inp, args, **kwargs):
-    #     pass
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
@@ -179,7 +172,7 @@ class GPTQuantizer(object):
         # import pdb;pdb.set_trace()
         self.pre_quantization()
 
-        # quantizers = {}
+        quantizers = {}
         # Triggle GPTQ algorithm block by block.
         for block_idx in range(len(self.gptq_related_blocks['transformers'])):
             transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
@@ -190,7 +183,7 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(self.args.wbits, perchannel=True, sym=self.args.sym, mse=False)
+                gptq_for_this_block[layer_name].quantizer.configure(self.wbits, perchannel=True, sym=self.sym, mse=False)
 
             def add_batch(_name):
                 def tmp(_, inp, out):
@@ -204,7 +197,7 @@ class GPTQuantizer(object):
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             # import pdb;pdb.set_trace()
             idx = self.cache.pop('i')
-            for j in range(self.args.nsamples):
+            for j in range(self.nsamples):
                 # during the forward process, the batch data has been registered into gptq object, which contributes to quantization process.
                 # self.out[j] = transformer_block(self.inp[j].unsqueeze(0), attention_mask=attention_mask, alibi=alibi)[0]
                 # method 1: use pre-defined methods
@@ -218,15 +211,13 @@ class GPTQuantizer(object):
             # import pdb;pdb.set_trace()
             for layer_name in sub_layers:
                 print(f"Quantizing layer {layer_name}")
-                gptq_for_this_block[layer_name].fasterquant(percdamp=self.args.percdamp, groupsize=self.args.groupsize)
+                gptq_for_this_block[layer_name].fasterquant(percdamp=self.percdamp, groupsize=self.group_size)
+                quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
+                gptq_for_this_block[layer_name].free()
+
             # import pdb;pdb.set_trace()
             idx = self.cache.pop('i')
-            for j in range(self.args.nsamples):
-                # out should be quantized results
-                # idx = self.cache.pop('i')
-                # self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
-                # self.cache[i] = idx
-                # idx = self.cache.pop('i')
+            for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
                 # self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
             self.cache['i'] = idx
@@ -237,94 +228,12 @@ class GPTQuantizer(object):
             self.inp, self.out = self.out, self.inp
         # import pdb;pdb.set_trace()
         self.model.config.use_cache = self.use_cache
+
+        return quantizers
     
     @torch.no_grad()
     def post_quantization(self, test_dataloader):
-        print("Evaluation...")
-
-        test_dataloader = test_dataloader.input_ids
-        nsamples = test_dataloader.numel() // self.model.seqlen
-        try:
-            del self.inp
-        except:
-            pass
-        self.inp = torch.zeros((nsamples, self.model.seqlen, self.model.config.hidden_size), dtype=self.dtype, device=self.device)
-
-        try:
-            del self.out
-        except:
-            pass
-        self.out = torch.zeros_like(self.inp)
-        
-        use_cache = self.use_cache
-        self.model.config.use_cache = False
-
-        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
-            embedding_layer = embedding_layer.to(self.device)
-
-        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
-        # layer_0_handle = self.gptq_related_blocks['transformers'][0].register_forward_hook(input_hook)
-        self.gptq_related_blocks['transformers'][0] = InputHooker(self.gptq_related_blocks['transformers'][0], self.args.arch, self.inp, self.cache)
-        for i in range(nsamples):
-            batch = test_dataloader[:, (i * self.model.seqlen):((i + 1) * self.model.seqlen)].to(self.device)
-            try:
-                self.model(batch[0].to(self.device))
-            except ValueError:
-                pass
-
-        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].module
-        # t_layer = t_layer.cpu()
-        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
-        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
-            embedding_layer.to(self.device)
-        torch.cuda.empty_cache()
-        print('Evaluation dataset prepared. Begin evaluation...')
-
-        # begin evaluation
-        for block_idx in tqdm(range(len(self.gptq_related_blocks['transformers']))):
-            transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
-            # if args.nearest:
-            #     subset = find_layers(layer)
-            #     for name in subset:
-            #         quantizer = Quantizer()
-            #         quantizer.configure(
-            #             args.wbits, perchannel=True, sym=args.sym, mse=False
-            #         )
-            #         W = subset[name].weight.data
-            #         quantizer.find_params(W, weight=True)
-            #         subset[name].weight.data = quantize(
-            #             W, quantizer.scale, quantizer.zero, quantizer.maxq
-            #         ).to(next(iter(layer.parameters())).dtype)
-
-            idx = self.cache.pop('i')
-            for j in range(nsamples):
-                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
-            self.cache['i'] = idx
-            self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
-            del transformer_block
-            torch.cuda.empty_cache()
-            self.inp, self.out = self.out, self.inp
-
-        # to be modified
-        self.model.transformer.ln_f = self.model.transformer.ln_f.to(self.device)
-        self.model.lm_head = self.model.lm_head.to(self.device)
-
-        test_dataloader = test_dataloader.to(self.device)
-        nlls = []
-        for i in range(nsamples):
-            hidden_states = self.inp[i].unsqueeze(0)
-            hidden_states = self.model.transformer.ln_f(hidden_states)
-            lm_logits = self.model.lm_head(hidden_states)
-            shift_logits = lm_logits[:, :-1, :].contiguous()
-            shift_labels = test_dataloader[:, (i * self.model.seqlen):((i + 1) * self.model.seqlen)][:, 1:]
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            neg_log_likelihood = loss.float() * self.model.seqlen
-            nlls.append(neg_log_likelihood)
-        ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * self.model.seqlen))
-        print(ppl.item())
-
-#------------------------gptq source codes---------------------------------
+        pass # gptq model can be evaluate using itrex optimized lm_eval
 
 class GPTQ:
     def __init__(self, layer):
@@ -369,7 +278,6 @@ class GPTQ:
         self.H += inp.matmul(inp.t()) # H = X*X, which should be a sysm matrix
 
     def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, actorder=False):
-        # import pdb;pdb.set_trace()
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -584,3 +492,55 @@ class Quantizer(nn.Module):
 
     def ready(self):
         return torch.all(self.scale != 0)
+#======================================================
+
+#==================dataloader related==========================
+DEFAULT_PAD_TOKEN = "[PAD]"
+DEFAULT_EOS_TOKEN = "</s>"
+DEFAULT_BOS_TOKEN = "</s>"
+DEFAULT_UNK_TOKEN = "</s>"
+PROMPT_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
+    ),
+    "prompt_no_input": (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Response:"
+    ),
+}
+
+class GPTQLoader(object):
+    def __init__(self, dataset, tokenizer, nsamples = 128, seqlen = 2048):
+        self.dataset = dataset # dataloader should be a iterable of text (to support more items)
+        self.tokenizer = tokenizer # transformer_tokenizers
+        self.nsamples = nsamples
+        self.seqlen = seqlen
+    
+    def get_gptq_dataloader(self, seed = 0):
+        # import pdb;pdb.set_trace()
+        import random
+        random.seed(seed)
+        gptq_loader = []
+        tokenizer_config = {
+            "truncation": True,
+            "max_length": self.seqlen,
+            "return_tensors": "pt",
+            "padding": "max_length",
+        }
+        for _ in range(self.nsamples):
+            i = random.randint(0, len(self.dataset) - 1)
+            try:
+                data = self.tokenizer(self.dataset[i], **tokenizer_config).input_ids
+            except:
+                raise NotImplementedError
+            if data.shape[-1] > self.seqlen:
+                j = random.randint(0, data.shape[-1] - self.seqlen - 1)
+                k = j + self.seqlen
+                data = data[:, j:k]
+            tar = data.clone()
+            tar[:, :-1] = -100
+            gptq_loader.append((data, tar))
+        return gptq_loader 

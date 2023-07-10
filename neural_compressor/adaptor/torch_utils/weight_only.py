@@ -128,3 +128,13 @@ def rtn_quantize(model, num_bits, group_size=-1, scheme="asym", w_layers_config=
             q_weight = q_weight.permute(1, 0, 2, 3)
         m.weight.data.copy_(q_weight)
     return model
+
+def gptq_quantize(model, weight_config = {}, dataloader = None):
+    """
+    weight_config
+    """
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    from .gptq import GPTQuantizer
+    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
+    quantization_data = gptq_quantizer.execute_quantization() #
+    return model # 
