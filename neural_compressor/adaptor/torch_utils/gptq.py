@@ -1,4 +1,21 @@
 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import math
 import time
 
@@ -12,16 +29,19 @@ DEBUG = False
 
 # ==============model structure related==============
 def is_leaf(module):
+    """Judge if module has no child-modules.
+    module: torch.nn.Module
+    """
     children_cnt = 0
     for n in module.children():
         children_cnt += 1
     return True if children_cnt == 0 else False
 
 def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
-    """
-    seperately trace two parts related to gptq:
-    1. embedding layers (layers before transformer stacks)
-    2. transformer stacks
+    """Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
+    Args:
+        module: torch.nn.Module
+        module_types: List of torch.nn.Module
     """
     gptq_related_blocks = {
         "embeddings": {},
