@@ -4545,7 +4545,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
             wbits = self.recipes.get('wbits', 4)
             group_size = self.recipes.get('group_size', 128)
-            sym = self.recipe.get('scheme', False)
+            sym = self.recipes.get('scheme', False)
         # implementation of gptq
         # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
         weight_config = {

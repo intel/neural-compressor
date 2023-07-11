@@ -148,7 +148,11 @@ class GPTQuantizer(object):
         # initialize buffers which are essential for gptq computation. 
         try:
             self.dtype = next(iter(self.model.parameters())).dtype
-            self.inp = torch.zeros((self.nsamples, model.seqlen, model.config.hidden_size), dtype=self.dtype, device=self.device)
+            self.inp = torch.zeros(
+                (self.nsamples, model.seqlen, model.config.hidden_size), 
+                dtype=self.dtype, 
+                device=self.device
+            )
             self.cache = {'i': 0}
             # for opt, bloom, llama, etc, their inputs are different thus their cache structures vary
             # initialization
@@ -191,7 +195,8 @@ class GPTQuantizer(object):
 
         # Step 2: use partial to modify original forward function
         forward_cache = self.gptq_related_blocks['transformers'][0].forward
-        self.gptq_related_blocks['transformers'][0].forward = partial(forward, self.gptq_related_blocks['transformers'][0])
+        self.gptq_related_blocks['transformers'][0].forward = \
+            partial(forward, self.gptq_related_blocks['transformers'][0])
 
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
@@ -228,7 +233,7 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(self.wbits, perchannel=True, sym=self.sym, mse=False)
+                gptq_for_this_block[layer_name].quantizer.configure(self.wbits,perchannel=True,sym=self.sym,mse=False)
 
             def add_batch(_name):
                 def tmp(_, inp, out):
@@ -243,7 +248,7 @@ class GPTQuantizer(object):
 
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
-                # during the forward process, the batch data has been registered into gptq object, which contributes to quantization process.
+                # during the forward process, the batch data has been registered into gptq object.
                 # use dict passing
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
