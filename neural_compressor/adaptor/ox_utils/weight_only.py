@@ -28,7 +28,17 @@ from onnx import numpy_helper, helper
 
 logger = logging.getLogger("neural_compressor")
 
-def qdq_tensor(data, config, ratio=1):
+def qdq_tensor(data, config, ratio=1.):
+    """Quant and dequant tensor per group.
+
+    Args:
+        data : input weight
+        config (dict): quantization config
+        ratio (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: qdq weight
+    """
     bit = config["bits"]
     scheme = config["scheme"]
     if scheme == "sym":
@@ -55,6 +65,26 @@ def qdq_tensor(data, config, ratio=1):
     return scale * (np.clip((data / scale + zero_point).round(), minq, maxq) - zero_point)
 
 def rtn_quantize(model, tune_cfg, ratios={}):
+    """Quant the model with round to nearst method.
+
+    Args:
+        model (ModelProto or ONNXModel): onnx model
+        tune_cfg (dict): quantization config
+                For example, 
+                tune_cfg={
+                    'fc2':
+                        {
+                            'bits': 4, 
+                            'group_size': 32, 
+                            'scheme': 'sym',
+                            'algorithm': 'RTN'
+                        }
+                }
+        ratios (dict, optional): percentile of clip. Defaults to {}.
+
+    Returns:
+        model: fake quantized ONNXModel
+    """
     model = model if isinstance(model, BaseModel) else ONNXModel(model) 
     for node in model.nodes():
         if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
@@ -248,8 +278,29 @@ def awq_quantize(model,
                  n_samples=128,
                  auto_scale=True,
                  mse_range=True,
-                 calib_func=None,
-                 n_blocks=5):
+                 ):
+    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+    Args:
+        model (ModelProto or ONNXModel): onnx model
+        tune_cfg (dict): quantization config
+                For example, 
+                tune_cfg={
+                    'fc2':
+                        {
+                            'bits': 4, 
+                            'group_size': 32, 
+                            'scheme': 'sym',
+                            'algorithm': 'AWQ'
+                        }
+                }
+        n_samples: calibration sample number.
+        auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
+        mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+
+    Returns:
+        model: fake quantized ONNXModel
+    """
     from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
 
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
