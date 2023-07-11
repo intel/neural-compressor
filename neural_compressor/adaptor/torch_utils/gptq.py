@@ -18,19 +18,24 @@
 
 import math
 import time
-
 import torch
 import torch.nn as nn
 import transformers
 from tqdm import tqdm
 from functools import partial
+from ...utils import logger
 
 DEBUG = False 
 
 # ==============model structure related==============
 def is_leaf(module):
-    """Judge if module has no child-modules.
-    module: torch.nn.Module
+    """Judge whether a module has no child-modules.
+
+    Args:
+        module: torch.nn.Module
+
+    Returns:
+        a bool: whether a module has no child-modules.
     """
     children_cnt = 0
     for n in module.children():
@@ -39,9 +44,19 @@ def is_leaf(module):
 
 def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
     """Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
+
     Args:
         module: torch.nn.Module
-        module_types: List of torch.nn.Module
+        module_types: List of torch.nn.Module.
+
+    Returns:
+        gptq_related_blocks = {
+            "embeddings": {}, # Dict embedding layers before transfromer stack module, 
+            "transformers_pre": {}, # TODO
+            "transformers_name": string. LLMs' transformer stack module name ,
+            "transformers": torch.nn.ModuleList. LLMs' transformer stack module,
+            "transformers": {}, Dict# TODO
+        }
     """
     gptq_related_blocks = {
         "embeddings": {},
@@ -61,6 +76,9 @@ def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
     return gptq_related_blocks
 
 def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
+    """
+
+    """
     if type(module) in layers:
         return {name: module}
     res = {}
@@ -73,14 +91,26 @@ def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
 
 #===============quantization related============================
 def quantize(x, scale, zero, maxq):
+    """Do quantization."""
     if maxq < 0:
         return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
     q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
     return scale * (q - zero)
 
 class GPTQuantizer(object):
-    """Main API"""
-    def __init__(self, model, weight_config={}, dataloader=None, device=None):
+    """Main API for GPTQ algorithm.
+    Please refer to: 
+    GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers
+    url: https://arxiv.org/abs/2210.17323
+    """
+    
+    def __init__(
+        self, 
+        model, 
+        weight_config={}, 
+        dataloader=None, 
+        device=None
+    ):
         """
         Args:
             model: the fp32 model to quantize
@@ -92,7 +122,7 @@ class GPTQuantizer(object):
                         'sym': True,
                         'percdamp': .01
                     }
-            dataloader: an iterable containing calibration datasets
+            dataloader: an iterable containing calibration datasets, contains (inputs, targets)
             device: cpu or cuda
         """
         # model
@@ -130,6 +160,7 @@ class GPTQuantizer(object):
             pass
 
     def process_config(self):
+        """Copy arguments from weight_config to build-in attributes."""
         self.wbits = self.weight_config.get('wbits', self.wbits)
         self.percdamp = self.weight_config.get('perdamo', self.percdamp)
         self.sym = self.weight_config.get('sym', self.sym)
@@ -137,7 +168,8 @@ class GPTQuantizer(object):
     
     @torch.no_grad()
     def pre_quantization(self):
-        # hooker function which collects inputs
+        """Prepare input calibration data and other attributes which are critical for gptq execution."""
+        # critical: hooker function which collects inputs
         def forward(layer, hidden_states, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
             self.inp[self.cache['i']] = hidden_states
@@ -147,38 +179,31 @@ class GPTQuantizer(object):
                     self.cache[arg] = kwargs[arg]
                 else:
                     continue
-            print("input hooked successfully")
+            #print("input hooked successfully")
             raise ValueError
 
-        # import pdb;pdb.set_trace()
-        # by executing forward process, collect inputs of transformer blocks
-        # process the embedding related layers, set devices
+        # Step1: fetch the embeddings and other layers before the transformer stack.
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
             embedding_layer = embedding_layer.to(self.device)
-        # hook inputs of transformer blocks
-        # hook the first transformer block to obtain initial inputs
 
         # obtain the first layer inputs and registered to inputs
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
-        # method 1: use original Catcher/InputHooker to collect inputs
-        # self.gptq_related_blocks['transformers'][0] = InputHooker(self.gptq_related_blocks['transformers'][0], self.args.arch, self.inp, self.cache)
-        # method 2: use partial to modify original forward function
+
+        # Step 2: use partial to modify original forward function
         forward_cache = self.gptq_related_blocks['transformers'][0].forward
         self.gptq_related_blocks['transformers'][0].forward = partial(forward, self.gptq_related_blocks['transformers'][0])
 
-        for batch in self.dataloader:
+        logger.info("Collecting calibration inputs...")
+        for batch in tqdm(self.dataloader):
             try:
                 self.model(batch[0].to(self.device))
             except ValueError:
                 pass
+        logger.info("Done.")
 
-        # copy data from hookers
-        # method 1: use catcher to do this
-        # self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].module
-        # method 2: use partial
+        # restore original forward function
         self.gptq_related_blocks['transformers'][0].forward = forward_cache
 
-        # t_layer = t_layer.cpu()
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
         # after store inputs, locate embedding layers and transformer[0] back to cpu
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
@@ -188,6 +213,7 @@ class GPTQuantizer(object):
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
+        """Run quantization."""
         print("Begin ====>")
         # import pdb;pdb.set_trace()
         self.pre_quantization()
@@ -199,7 +225,6 @@ class GPTQuantizer(object):
             # trace all layers which can be quantized (Linear, Conv2d, etc.)
             sub_layers = find_layers(transformer_block)
             gptq_for_this_block = {}
-            # import pdb;pdb.set_trace()
             for layer_name in sub_layers:
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 gptq_for_this_block[layer_name].quantizer = Quantizer()
@@ -215,27 +240,22 @@ class GPTQuantizer(object):
             
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-            # import pdb;pdb.set_trace()
+
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
                 # during the forward process, the batch data has been registered into gptq object, which contributes to quantization process.
-                # self.out[j] = transformer_block(self.inp[j].unsqueeze(0), attention_mask=attention_mask, alibi=alibi)[0]
-                # method 1: use pre-defined methods
-                # self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
-                # method 2: use dict passing
+                # use dict passing
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
             
-            # import pdb;pdb.set_trace()
             for layer_name in sub_layers:
                 print(f"Quantizing layer {layer_name}")
                 gptq_for_this_block[layer_name].fasterquant(percdamp=self.percdamp, groupsize=self.group_size)
                 quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
 
-            # import pdb;pdb.set_trace()
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
@@ -246,7 +266,6 @@ class GPTQuantizer(object):
             torch.cuda.empty_cache()
             # iteratively replace the input with output (next block)
             self.inp, self.out = self.out, self.inp
-        # import pdb;pdb.set_trace()
         self.model.config.use_cache = self.use_cache
 
         return quantizers
@@ -256,6 +275,10 @@ class GPTQuantizer(object):
         pass # gptq model can be evaluate using itrex optimized lm_eval
 
 class GPTQ:
+    """
+    Please refer to: 
+    GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
+    """
     def __init__(self, layer):
         self.layer = layer
         self.device = self.layer.weight.device
@@ -533,6 +556,8 @@ PROMPT_DICT = {
 }
 
 class GPTQLoader(object):
+    """Generate a dataloader which fits gptq inputs from user's own datasets and models (tokenizers)."""
+
     def __init__(self, dataset, tokenizer, nsamples = 128, seqlen = 2048):
         self.dataset = dataset # dataloader should be a iterable of text (to support more items)
         self.tokenizer = tokenizer # transformer_tokenizers
@@ -540,7 +565,7 @@ class GPTQLoader(object):
         self.seqlen = seqlen
     
     def get_gptq_dataloader(self, seed = 0):
-        # import pdb;pdb.set_trace()
+        """Generate the datasets."""
         import random
         random.seed(seed)
         gptq_loader = []

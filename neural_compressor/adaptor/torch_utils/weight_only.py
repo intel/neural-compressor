@@ -130,9 +130,7 @@ def rtn_quantize(model, num_bits, group_size=-1, scheme="asym", w_layers_config=
     return model
 
 def gptq_quantize(model, weight_config = {}, dataloader = None, device = None):
-    """
-    weight_config
-    """
+    """Run weight-only quantization with """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
     gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
