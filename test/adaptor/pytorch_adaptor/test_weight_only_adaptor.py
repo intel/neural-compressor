@@ -3,6 +3,7 @@ import torch
 import unittest
 import transformers
 from neural_compressor import quantization, PostTrainingQuantConfig
+from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 
 
 class Model(torch.nn.Module):
@@ -182,6 +183,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             conf, 
             calib_dataloader=self.llm_dataloader,
         )
+        self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
+        self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 
 
 if __name__ == "__main__":

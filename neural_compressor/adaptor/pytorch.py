@@ -24,6 +24,7 @@ from collections import OrderedDict, UserDict, namedtuple
 from packaging.version import Version
 import yaml
 from functools import partial
+from neural_compressor.adaptor.torch_utils.util import set_module
 from neural_compressor.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
@@ -4548,7 +4549,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if algorithm != 'RTN':
                     continue
                 m = fetch_module(model, op_name)
-                rtn_quantize(m, num_bits, group_size, scheme)
+                m = rtn_quantize(m, num_bits, group_size, scheme, return_int=True)
+                set_module(model, op_name, m)
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
@@ -4641,6 +4643,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             mse_range=mse_range,
             calib_func=calib_func,
             n_blocks=n_blocks,
+            return_int=True,
         )
         return model
 
