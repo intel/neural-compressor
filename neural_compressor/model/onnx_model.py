@@ -139,11 +139,15 @@ class ONNXModel(BaseModel):
             from onnx.external_data_helper import convert_model_to_external_data, \
                 load_external_data_for_model
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
-            convert_model_to_external_data(self._model,
-                                           all_tensors_to_one_file=True,
-                                           location="int8_weights.pb",
-                                           convert_attribute=False)
-        onnx.save(self._model, root)
+            onnx.save_model(self._model,
+                            root,
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            location="int8_weights.pb",
+                            size_threshold=1024,
+                            convert_attribute=False)
+        else:
+            onnx.save(self._model, root)
 
     def nodes(self):
         """Return model nodes."""
@@ -217,13 +221,14 @@ class ONNXModel(BaseModel):
         for initializer in init_to_remove:
             self.remove_initializer(initializer)
 
-    def set_initializer(self, tensor, array):
+    def set_initializer(self, tensor, array, raw=False):
         """Update initializer."""
         old_tensor = self.get_initializer(tensor)
         self.remove_initializer(old_tensor)
         dims = old_tensor.dims
         data_type = old_tensor.data_type
-        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist())
+        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist()) if not raw \
+                else onnx.helper.make_tensor(tensor, data_type, dims, array.tostring(), raw=raw)
         self.add_initializer(new_tensor)
     
     @property

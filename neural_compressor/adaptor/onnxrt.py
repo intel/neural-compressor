@@ -1460,12 +1460,14 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
         quant_config = self._cfg_to_quantize_config(tune_cfg)
         algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
-        if "GPTQ" in algos:
-            model = gptq_quantize(model, quant_config, data_loader)
-        if "AWQ" in algos:
-            model = awq_quantize(model, quant_config, data_loader)
-        elif "RTN" in algos:
-            model = rtn_quantize(model, quant_config)
+        #if "GPTQ" in algos:
+        #    model = gptq_quantize(model, quant_config, data_loader)
+        #if "AWQ" in algos:
+        #    model = awq_quantize(model, quant_config, data_loader)
+        #elif "RTN" in algos:
+        #    model = rtn_quantize(model, quant_config)
+        model = awq_quantize(model, quant_config, data_loader)
+        #model = rtn_quantize(model, quant_config)
         
         #model = rtn_quantize(model, quant_config)
         #model.q_config = copy.deepcopy(self.tune_cfg)
