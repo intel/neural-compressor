@@ -167,7 +167,7 @@ class WeightOnlyLinear(torch.nn.Module):
             )
         )
         self.register_buffer(
-            'scales', 
+            'scale', 
             torch.zeros(
                 (out_features, math.ceil(in_features / self.groupsize)), 
                 dtype=torch.float,
@@ -179,6 +179,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer('bias', torch.zeros(self.out_features, dtype=torch.float))
         else:
             self.bias = None
+        assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale
         origin_shape = int_weight.shape
         target_shape = self.packed_weight.shape
@@ -237,8 +238,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     weight[i][index] = tmp.type(weight_dtype)
         # unpack zero_point
         if hasattr(self, 'packed_zp'):
-            zp = torch.zeros((self.out_features, math.ceil(
-                    self.in_features / self.groupsize)), dtype=weight_dtype)
+            zp = torch.zeros(self.scale.shape, dtype=weight_dtype)
             origin_shape = zp.shape
             target_shape = self.packed_zp.shape
             for i in range(target_shape[0]):
@@ -254,19 +254,18 @@ class WeightOnlyLinear(torch.nn.Module):
             # recover fp32 weight with int_weight, scale, and zero_point
             left_element = self.in_features % self.groupsize 
             if left_element != 0:
-                weight1 = weight[:][:-left_element].reshape(-1, self.groupsize)
-                scale1 = self.scale[:-origin_shape[0]]
-                zp1 = zp[:-origin_shape[0]]
+                weight1 = weight[:, :-left_element].reshape(-1, self.groupsize)
+                scale1 = self.scale[:, :-1].reshape(-1, 1)
+                zp1 = zp[:, :-1].reshape(-1, 1)
                 weight1 = ((weight1 - zp1) * scale1).reshape(self.out_features, -1)
-                weight2 = weight[:][-left_element:]
-                scale2 = self.scale[-origin_shape[0]:]
-                zp2 = zp[-origin_shape[0]:]
+                weight2 = weight[:, -left_element:]
+                scale2 = self.scale[:, -1].reshape(-1, 1)
+                zp2 = zp[:, -1].reshape(-1, 1)
                 weight2 = ((weight2 - zp2) * scale2)
                 fp32_weight = torch.cat((weight1, weight2), dim=1)
             else:
                 weight = weight.reshape(-1, self.groupsize)
                 fp32_weight = ((weight - zp) * self.scale).reshape(self.out_features, -1)
-            return (weight - zp) * self.scale
         else:
             # recover fp32 weight with int_weight, scale
             left_element = self.in_features % self.groupsize 
@@ -282,7 +281,7 @@ class WeightOnlyLinear(torch.nn.Module):
             else:
                 weight = weight.reshape(-1, self.groupsize)
                 fp32_weight = (weight * self.scale).reshape(self.out_features, -1)
-            return fp32_weight
+        return fp32_weight
 
     def forward(self, input):
         weight = self.recover()

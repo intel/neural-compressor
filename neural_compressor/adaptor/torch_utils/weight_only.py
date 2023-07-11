@@ -137,6 +137,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             weight, scale, zp = qdq_weight_actor(
                                 weight, num_bits, scheme=scheme, quantile=quantile, return_int=True)
             weight = weight.reshape(orig_shape)
+            scale = scale.reshape(orig_shape[0], -1)
+            zp = zp.reshape(orig_shape[0], -1)
             return weight, scale, zp
         else:
             weight = qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile)
@@ -161,6 +163,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
                 zp = torch.cat([zp1, zp2], dim=0)
             else:
                 zp = None
+            scale = scale.reshape(orig_shape[0], -1)
+            zp = zp.reshape(orig_shape[0], -1)
             return weight, scale, zp
         else:
             weight2 = qdq_weight_actor(weight2, num_bits, scheme=scheme, quantile=quantile)
@@ -206,7 +210,9 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             scheme = weight_config[n]['scheme']
             quantile = weight_config[n].get('quantile', 1.0)
         else:
-            continue
+            # skip when n is not in weight_config
+            if weight_config != {}:
+                continue
         logger.debug(f"RTN quantized module:{n, m}")
         logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                                                 f"scheme={scheme}, quantile={quantile}")
