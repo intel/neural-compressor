@@ -20,52 +20,153 @@ Functions
    neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_actor
    neural_compressor.adaptor.torch_utils.weight_only.quant_weight
    neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize
+   neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output
+   neural_compressor.adaptor.torch_utils.weight_only.awq_quantize
 
 
 
-.. py:function:: qdq_weight_asym(weight, num_bits=4)
+.. py:function:: qdq_weight_asym(weight, num_bits=4, quantile=1.0)
 
-   quant and dequant tensor with asym schema
-   :param weight:  input weight
-   :param num_bits:  num_bits
-   :return: qdq weight
+   Quant and dequant tensor with asym schema.
 
-
-.. py:function:: qdq_weight_sym(weight, num_bits=4)
-
-   quant and dequant tensor with sym schema
-   :param weight:  input weight
-   :param num_bits:  num_bits
-   :return: qdq weight
-
-
-.. py:function:: qdq_weight_actor(weight, num_bits, scheme)
-
-   quant and dequant tensor per channel
    :param weight: input weight
-   :param num_bits: num_bits
-   :param scheme: sym or asym
-   :return: qdq weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+
+   :returns: qdq weight
+   :rtype: output
 
 
-.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym')
+.. py:function:: qdq_weight_sym(weight, num_bits=4, quantile=1.0)
 
-   quant and dequant tensor with group size
+   Quant and dequant tensor with sym schema.
+
    :param weight: input weight
-   :param num_bits: num_bits
-   :param group_size: how many elements share one scale/zp
-   :param scheme:  sym or asym
-   :return: qdq weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+
+   :returns: qdq weight
+   :rtype: output
 
 
-.. py:function:: rtn_quantize(model, num_bits, group_size=-1, scheme='asym', w_layers_config={})
+.. py:function:: qdq_weight_actor(weight, num_bits, scheme, quantile=1.0)
 
-   quant the model with round to nearst method
+   Quant and dequant tensor per channel.
+
+   :param weight: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0)
+
+   Quant and dequant tensor with group size.
+
+   :param weight: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Defaults to -1.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+
+   :returns: qdq weight.
+   :rtype: output
+
+
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={})
+
+   Quant the model with round to nearst method.
+
    :param model: torch module
-   :param num_bits:  num bits
-   :param group_size: how many elements share one scale/zp
-   :param scheme: sym or asym
-   :param w_layers_config:  specific layer wise configirations {"layer_name":[num_bits,group_size,schema]}
-   :return:
+   :param num_bits: num bits. Defaults to 4.
+   :param group_size: how many elements share one scale/zp. Defaults to 32.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param weight_config: specific layer wise configirations. Defaults to {}.
+                         For example,
+                         weight_config={
+                             'fc2':
+                                 {
+                                     'bits': 4,
+                                     'group_size': 32,
+                                     'scheme': 'sym'
+                                 }
+                         }
+   :type weight_config: dict, optional
+
+   :returns: fake quantized torch module
+   :rtype: model
+
+
+.. py:function:: get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, calib_func=None)
+
+   A help function to get input and output tensor of modules in module_name_list.
+
+   :param model: torch model.
+   :param module_hook_config: required module name for input/output. Defaults to {}.
+                              For example:
+                                  module_hook_config = {
+                                      'fc1': ['output'],
+                                      'fc2': ['input', 'output']
+                                  }
+   :type module_hook_config: dict, optional
+   :param dataloader: dataloader for model input.
+   :param iters: iterations for inference.
+   :param calib_func: a custom inference function to replace dataloader and iters.
+
+   :returns: recorded input_values, output_values.
+   :rtype: input_values, output_values
+
+
+.. py:function:: awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, auto_scale=True, mse_range=True, calib_func=None, n_blocks=5)
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param model: torch model.
+   :type model: torch.nn.Module
+   :param weight_config: contains all info required by AWQ. Defaults to {}.
+                         For example,
+                             weight_config={
+                                 'fc2':
+                                     {
+                                         # 'absorb_layer': 'fc1',
+                                         'bits': 4,
+                                         'group_size': 32,
+                                         'scheme': 'sym'
+                                     }
+                             }
+   :type weight_config: dict, optional
+   :param absorb_dict: contains all absorb info required by AWQ.. Defaults to {}.
+                       For example,
+                           absorb_dict = {
+                               # 'absorb_layer': absorbed_layer
+                               'fc1': ['fc2', 'fc3']
+                           } # in this case, fc2 and fc3 need to share the same scale.
+   :type absorb_dict: dict, optional
+   :param n_samples: calibration sample number.
+   :param auto_scale: whether enable scale for salient weight. Defaults to True.
+   :type auto_scale: bool, optional
+   :param mse_range: whether enable clip for weight by checking mse. Defaults to True.
+   :type mse_range: bool, optional
+   :param calib_func: a custom inference function to replace dataloader and iters.
+   :param n_blocks: split model into block number to avoid OOM.
+
+   :returns: fake quantized model
+   :rtype: model
 
 

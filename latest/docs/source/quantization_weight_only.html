@@ -95,38 +95,57 @@
 <p>Model inference: Roughly speaking , two key steps are required to get the model’s result. The first one is moving the model from the memory to the cache piece by piece, in which, memory bandwidth $B$ and parameter count $P$ are the key factors, theoretically the time cost is  $P*4 /B$. The second one is  computation, in which, the device’s computation capacity  $C$  measured in FLOPS and the forward FLOPs $F$ play the key roles, theoretically the cost is $F/C$.</p>
 <p>Text generation:  The most famous application of LLMs is text generation, which predicts the next token/word  based on the inputs/context. To generate a sequence of texts, we need to predict them one by one. In this scenario,  $F\approx P$  if some operations like bmm are ignored and past key values have been saved. However, the  $C/B$ of the modern device could be to <strong>100X,</strong> that makes the memory bandwidth as the bottleneck in this scenario.</p>
 <p>Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.</p>
+<p>Theoretically, round-to-nearest (RTN) is the mose straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.</p>
+<p>There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.</p>
 </section>
 <section id="supported-framework-model-matrix">
 <h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h2>
 <table border="1" class="docutils">
 <thead>
 <tr>
-<th style="text-align: center;">Framework</th>
-<th style="text-align: center;">Weight-only</th>
+<th style="text-align: center;">Algorithms/Framework</th>
+<th style="text-align: center;">PyTorch</th>
+<th style="text-align: center;">ONNX</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">PyTorch</td>
+<td style="text-align: center;">RTN</td>
+<td style="text-align: center;">&#10004;</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
-<td style="text-align: center;">ONNX</td>
-<td style="text-align: center;">WIP</td>
+<td style="text-align: center;">AWQ</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">stay tuned</td>
+</tr>
+<tr>
+<td style="text-align: center;">GPTQ</td>
+<td style="text-align: center;">stay tuned</td>
+<td style="text-align: center;">stay tuned</td>
 </tr>
 </tbody>
 </table></section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
-<p>The quantization capability of weight-only approach is as follows:
-| Config | Capability |
+<section id="quantization-capability">
+<h3><strong>Quantization Capability</strong>:<a class="headerlink" href="#quantization-capability" title="Permalink to this heading"></a></h3>
+<p>| Config | Capability |
 | :—: | :—:|
 | bits | [1-8] |
 | group_size | [-1, 1-N] |
 | scheme | [’asym’, ‘sym’] |
-| algorithm | [’RTN’, ] |</p>
+| algorithm | [’RTN’, ‘AWQ’] |</p>
+<p><strong>AWQ arguments</strong>:
+|  awq_args  | default value |                               comments                              |
+|:———-:|:————-:|:——————————————————————-:|
+| auto_scale |      True     |   Whether search for best scales based on activation distribution   |
+|  mse_range |      True     | Whether search for the best clip range from range [0.89, 1.0, 0.01] |
+|  n_blocks  |       5       |   Split the model into n blocks for AWQ search to avoid out-of-memory   |</p>
 <p><strong>Note</strong>: <code class="docutils literal notranslate"><span class="pre">group_size=-1</span></code> indicates the per-channel quantization per output channel. <code class="docutils literal notranslate"><span class="pre">group_size=[1-N]</span></code> indicates splitting the input channel elements per group_size.</p>
-<p>The use case code is as follows:</p>
+</section>
+<section id="user-code">
+<h3><strong>User code</strong>:<a class="headerlink" href="#user-code" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">approach</span><span class="o">=</span><span class="s1">&#39;weight_only&#39;</span><span class="p">,</span>
     <span class="n">op_type_dict</span><span class="o">=</span><span class="p">{</span>
@@ -139,11 +158,11 @@
             <span class="p">},</span>
         <span class="p">},</span>
     <span class="p">},</span>
-    <span class="c1">### AWQ and GPTQ is WIP</span>
-    <span class="c1"># recipes={</span>
-    <span class="c1">#     &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01},</span>
-    <span class="c1">#     &#39;awq_args&#39;:{&#39;alpha&#39;: &#39;auto&#39;, &#39;clip&#39;: True},</span>
-    <span class="c1"># },</span>
+    <span class="c1">### GPTQ is WIP</span>
+    <span class="n">recipes</span><span class="o">=</span><span class="p">{</span>
+        <span class="c1"># &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01},</span>
+        <span class="s1">&#39;awq_args&#39;</span><span class="p">:{</span><span class="s1">&#39;auto_scale&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;mse_range&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;n_blocks&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">},</span>
 <span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;saved_results&#39;</span><span class="p">)</span>
@@ -151,10 +170,13 @@
 </div>
 <p>The saved_results folder contains two files: <code class="docutils literal notranslate"><span class="pre">best_model.pt</span></code> and <code class="docutils literal notranslate"><span class="pre">weight_config.json</span></code>, and the generated q_model is a fake quantized model.</p>
 </section>
+</section>
 <section id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
-<p>[1]Xiao, Guangxuan, et al. “Smoothquant: Accurate and efficient post-training quantization for large language models.” arXiv preprint arXiv:2211.10438 (2022).</p>
-<p>[2]Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
+<p>[1]. Xiao, Guangxuan, et al. “Smoothquant: Accurate and efficient post-training quantization for large language models.” arXiv preprint arXiv:2211.10438 (2022).</p>
+<p>[2]. Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
+<p>[3]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
+<p>[4]. Frantar, Elias, et al. “Gptq: Accurate post-training quantization for generative pre-trained transformers.” arXiv preprint arXiv:2210.17323 (2022).</p>
 </section>
 </section>
 
