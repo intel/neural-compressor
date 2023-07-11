@@ -18,7 +18,7 @@
     "react-cytoscapejs": "^2.0.0",
     "react-dom": "^18.2.0",
     "react-plotly.js": "^2.6.0",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "sass": "^1.63.6",
     "socket.io": "^4.6.2",
     "socket.io-client": "^4.6.2",

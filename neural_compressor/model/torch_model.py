@@ -369,6 +369,7 @@ class PyTorchModel(PyTorchBaseModel):
 
         if conf.dtype == 'int8':
             torch_to_int8_onnx(
+                self.fp32_model,
                 self.model,
                 save_path,
                 conf.example_inputs,

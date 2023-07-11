@@ -18,46 +18,56 @@ Text generation:  The most famous application of LLMs is text generation, which 
 
 Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.
 
+Theoretically, round-to-nearest (RTN) is the mose straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.
+
+There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.
 
 ## Supported Framework Model Matrix
 
-| Framework | Weight-only |
-| :---: | :---:|
-| PyTorch | &#10004; |
-| ONNX | WIP |
-
+| Algorithms/Framework |   PyTorch  |    ONNX    |
+|:--------------:|:----------:|:----------:|
+|       RTN      |  &#10004;  |  &#10004;  |
+|       AWQ      |  &#10004;  | stay tuned |
+|      GPTQ      | stay tuned | stay tuned |
 
 ## Examples
-
-The quantization capability of weight-only approach is as follows:
+### **Quantization Capability**:
 | Config | Capability |
 | :---: | :---:|
 | bits | [1-8] |
 | group_size | [-1, 1-N] | 
 | scheme | ['asym', 'sym'] |
-| algorithm | ['RTN', ] |
+| algorithm | ['RTN', 'AWQ'] |
+
+**AWQ arguments**:
+|  awq_args  | default value |                               comments                              |
+|:----------:|:-------------:|:-------------------------------------------------------------------:|
+| auto_scale |      True     |   Whether search for best scales based on activation distribution   |
+|  mse_range |      True     | Whether search for the best clip range from range [0.89, 1.0, 0.01] |
+|  n_blocks  |       5       |   Split the model into n blocks for AWQ search to avoid out-of-memory   |
+
 
 **Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
 
-The use case code is as follows:
+### **User code**:
 ```python
 conf = PostTrainingQuantConfig(
     approach='weight_only',
     op_type_dict={
         '.*':{ 	# re.match
             "weight": {
-                'bit': 8, # 1-8 bit 
+                'bits': 8, # 1-8 bit 
                 'group_size': -1,  # -1 (per-channel)
                 'scheme': 'sym', 
                 'algorithm': 'RTN', 
             },
         },
     },
-    ### AWQ and GPTQ is WIP
-    # recipes={
-    #     'gptq_args':{'percdamp': 0.01},
-    #     'awq_args':{'alpha': 'auto', 'clip': True},
-    # },
+    ### GPTQ is WIP
+    recipes={
+        # 'gptq_args':{'percdamp': 0.01},
+        'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
+    },
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)
 q_model.save('saved_results')
@@ -67,6 +77,10 @@ The saved_results folder contains two files: `best_model.pt` and `weight_config.
 
 ## Reference
 
-[1]Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
+[1]. Xiao, Guangxuan, et al. "Smoothquant: Accurate and efficient post-training quantization for large language models." arXiv preprint arXiv:2211.10438 (2022).
 
-[2]Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+[2]. Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+
+[3]. Lin, Ji, et al. "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration." arXiv preprint arXiv:2306.00978 (2023).
+
+[4]. Frantar, Elias, et al. "Gptq: Accurate post-training quantization for generative pre-trained transformers." arXiv preprint arXiv:2210.17323 (2022).
