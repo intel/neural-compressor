@@ -1,3 +1,4 @@
+import os
 import shutil
 import torch
 import unittest
@@ -11,7 +12,7 @@ class Model(torch.nn.Module):
         super(Model, self).__init__()
         self.fc1 = torch.nn.Linear(30, 40)
         self.fc2 = torch.nn.Linear(40, 30)
-        self.fc3 = torch.nn.Linear(30, 10)
+        self.fc3 = torch.nn.Linear(30, 5)
 
     def forward(self, x):
         out = self.fc1(x)
@@ -149,6 +150,16 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         new_model = load('saved', model)
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
+        model_size1 = os.path.getsize('saved/best_model.pt')/1024
+        print("FP32 Model size:{:.3f}M".format(model_size1))
+        from neural_compressor.model import Model as INCModel
+        inc_model = INCModel(new_model)
+        inc_model.convert(weight_only=True, weight_config_path = 'saved/weight_config.json')
+        torch.save(inc_model.state_dict(), 'saved/tmp.pt')
+        model_size2 = os.path.getsize('saved/tmp.pt')/1024
+        print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
+        self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
+        self.assertTrue(model_size1 / model_size2 > 2)
 
     def test_AWQ_quant(self):
         input = torch.randn(3,30)
@@ -183,6 +194,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             conf, 
             calib_dataloader=self.llm_dataloader,
         )
+        q_model.convert(weight_only=True)
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
         self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 

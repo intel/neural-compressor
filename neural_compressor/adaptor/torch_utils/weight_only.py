@@ -138,7 +138,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
                                 weight, num_bits, scheme=scheme, quantile=quantile, return_int=True)
             weight = weight.reshape(orig_shape)
             scale = scale.reshape(orig_shape[0], -1)
-            zp = zp.reshape(orig_shape[0], -1)
+            if zp is not None:
+                zp = zp.reshape(orig_shape[0], -1)
             return weight, scale, zp
         else:
             weight = qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile)
@@ -164,7 +165,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             else:
                 zp = None
             scale = scale.reshape(orig_shape[0], -1)
-            zp = zp.reshape(orig_shape[0], -1)
+            if zp is not None:
+                zp = zp.reshape(orig_shape[0], -1)
             return weight, scale, zp
         else:
             weight2 = qdq_weight_actor(weight2, num_bits, scheme=scheme, quantile=quantile)
