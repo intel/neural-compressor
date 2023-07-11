@@ -1,6 +1,8 @@
-Full Publications/Events (66)
+Full Publications/Events (68)
 ==========
-## 2023 (13)
+## 2023 (15)
+* Blog on Medium: [Model quantization diagnosis with Neural Insights](https://medium.com/@NeuralCompressor/model-quantization-diagnosis-with-neural-insights-8117033fba43) (July 2023)
+* Blog on Medium: [Simplify Your Custom Chatbot Deployment](https://medium.com/intel-analytics-software/simplify-your-custom-chatbot-deployment-on-intel-platforms-c8a911d906cf) (June 2023)
 * Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
 * Blog by MSFT: [Automate optimization techniques for transformer models](https://cloudblogs.microsoft.com/opensource/2023/06/26/automate-optimization-techniques-for-transformer-models/) (June 2023)
 * Post on Social Media: [Get Started Post-Training Dynamic Quantization | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=5xHKe4wWLes&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=4) (June 2023)

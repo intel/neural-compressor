@@ -1,6 +1,7 @@
 import shutil
 import torch
 import unittest
+import transformers
 from neural_compressor import quantization, PostTrainingQuantConfig
 
 
@@ -27,18 +28,41 @@ def eval_func(model):
         output = model(input)
     return 0.0
 
+class SimpleDataLoader():
+    def __init__(self):
+        self.batch_size = 1
+
+    def __iter__(self):
+        for i in range(2):
+            yield torch.randn([1, 30])
+
+
+class LLMDataLoader():
+    def __init__(self):
+        self.batch_size = 1
+
+    def __iter__(self):
+        for i in range(2):
+            yield torch.ones([1, 10], dtype=torch.long)
+
 
 class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
     approach = 'weight_only'
 
     @classmethod
+    def setUpClass(self):
+        self.dataloader = SimpleDataLoader()
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            torchscript=True,
+        )
+        self.llm_dataloader = LLMDataLoader()
+        self.lm_input = torch.ones([1, 10], dtype=torch.long)
+
+    @classmethod
     def tearDownClass(self):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
-
-    def test_RTN_func(self):
-        # TODO
-        pass
 
     def test_RTN_quant(self):
         input = torch.randn(3,30)
@@ -65,10 +89,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     },
                 },
             },
-            recipes={
-                'gptq_args':{'percdamp': 0.01},
-                'awq_args':{'alpha': 'auto', 'clip': True},
-            },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
@@ -86,10 +106,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                         'algorithm': 'RTN', 
                     },
                 },
-            },
-            recipes={
-                'gptq_args':{'percdamp': 0.01},
-                'awq_args':{'alpha': 'auto', 'clip': True},
             },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
@@ -122,10 +138,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     },
                 },
             },
-            recipes={
-                'gptq_args':{'percdamp': 0.01},
-                'awq_args':{'alpha': 'auto', 'clip': True},
-            },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
@@ -136,6 +148,40 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         new_model = load('saved', model)
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
+
+    def test_AWQ_quant(self):
+        input = torch.randn(3,30)
+        model = Model()
+        out1 = model(input)
+
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_type_dict={
+                '.*':{ 	# re.match
+                    "weight": {
+                        'bits': 4, # 1-8 bits 
+                        'group_size': 32,  # -1 (per-channel)
+                        'scheme': 'sym', 
+                        'algorithm': 'AWQ', 
+                    },
+                },
+            },
+            op_name_dict={
+                '.*lm_head':{ 	# re.match
+                    "weight": {
+                        'dtype': 'fp32'
+                    },
+                },
+            },
+            recipes={
+                'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 2},
+            },
+        )
+        q_model = quantization.fit(
+            self.gptj, 
+            conf, 
+            calib_dataloader=self.llm_dataloader,
+        )
 
 
 if __name__ == "__main__":

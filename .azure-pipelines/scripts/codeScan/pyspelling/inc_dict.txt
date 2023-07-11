@@ -2658,6 +2658,9 @@ RTN
 awq
 gptq
 percdamp
+Frantar
+Ji
+mose
 DeQuantize
 FakeQuant
 FrameworkModel
@@ -2677,3 +2680,7 @@ jJA
 wWLes
 xHKe
 PR
+Chatbot
+chatbot
+fba
+hostname
