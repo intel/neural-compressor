@@ -4549,7 +4549,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if algorithm != 'RTN':
                     continue
                 m = fetch_module(model, op_name)
-                m = rtn_quantize(m, num_bits, group_size, scheme, return_int=True)
+                m = rtn_quantize(m, num_bits, group_size, scheme, return_int=False)
                 set_module(model, op_name, m)
         return model
 
@@ -4643,7 +4643,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             mse_range=mse_range,
             calib_func=calib_func,
             n_blocks=n_blocks,
-            return_int=True,
+            return_int=False,
         )
         return model
 
