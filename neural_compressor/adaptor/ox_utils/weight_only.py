@@ -57,7 +57,7 @@ def qdq_tensor(data, config, ratio=1):
 def rtn_quantize(model, tune_cfg, ratios={}):
     model = model if isinstance(model, BaseModel) else ONNXModel(model) 
     for node in model.nodes():
-        if node.name in tune_cfg and tune_cfg[node.name]["weight"]["dtype"] != "fp32":
+        if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
             if model.get_initializer(node.input[1]) is None:
                 continue
             weight = numpy_helper.to_array(
@@ -136,25 +136,29 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
                 best_scale = scales
 
         for node in nodes:
-            tensor = numpy_helper.to_array(model.get_initializer(node.input[1]))
-            new_tensor = tensor * best_scale
-            model.set_initializer(node.input[1], new_tensor.astype(tensor.dtype), raw=True)
-            output_dicts[node.input[0]] = output_dicts[node.input[0]] / np.reshape(best_scale, (1, -1))
+            if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
+                tensor = numpy_helper.to_array(model.get_initializer(node.input[1]))
+                new_tensor = tensor * best_scale
+                model.set_initializer(node.input[1], new_tensor.astype(tensor.dtype), raw=True)
+                output_dicts[node.input[0]] = output_dicts[node.input[0]] / np.reshape(best_scale, (1, -1))
 
         parent = model.get_node(parent)
         if parent.name in updated_nodes:
             continue
 
-        if parent.op_type in ["LayerNormalization", "BatchNormalization", "InstanceNormalization"]:
+        if parent.op_type in ["LayerNormalization", "BatchNormalization", "InstanceNormalization"] and \
+                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):
             for idx in [1, 2]:
                 tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]),
                                                 os.path.dirname(model.model_path))
-                new_tensor = tensor / best_scale
+                new_tensor = tensor / np.reshape(best_scale, (1, -1))
                 model.set_initializer(parent.input[idx], new_tensor.astype(tensor.dtype), raw=True)
                 updated_nodes.append(parent.name)
+            output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
         elif parent.op_type in ["SimplifiedLayerNormalization", "MatMul", "Gemm", "Mul"] and \
-            not all([model.get_initializer(inp) is None for inp in parent.input]):
+                not all([model.get_initializer(inp) is None for inp in parent.input]) and \
+                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):
             for inp in parent.input:
                 if model.get_initializer(inp) is not None:
                     tensor = numpy_helper.to_array(model.get_initializer(inp),
@@ -162,33 +166,39 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
                     new_tensor = tensor / np.reshape(best_scale, (1, -1))
                     model.set_initializer(inp, new_tensor.astype(tensor.dtype), raw=True)
             updated_nodes.append(parent.name)
+            output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
-        elif parent.op_type in ["Conv", "FusedConv"]:
+        elif parent.op_type in ["Conv", "FusedConv"] and \
+                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):
             tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]),
                                             os.path.dirname(model.model_path))
-            new_tensor = tensor / best_scale
+            new_tensor = tensor / np.reshape(best_scale, (1, -1))
             model.set_initializer(parent.input[2], new_tensor.astype(tensor.dtype), raw=True)
             updated_nodes.append(parent.name)
+            output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
         else:
             # insert mul
-            scale_tensor = helper.make_tensor(
-                name=parent.output[0] + "_weight_only_scale",
-                data_type=onnx_proto.TensorProto.FLOAT,
-                dims=best_scale.shape,
-                vals=best_scale.flatten().tolist())
-            new_init_tensors.append(scale_tensor)
-            mul_output_name = parent.output[0] + "_weight_only_out"
-            mul_node = helper.make_node(
-                "Mul",
-                inputs=[node.input[0], scale_tensor.name],
-                outputs=[mul_output_name],
-                name=node.input[0] + "_weight_only_mul"
-            )
-            new_added_mul_nodes.append(mul_node)
-            replace_input.append([node, node.input[0], mul_node.output[0]])
-            updated_nodes.append(parent.name)
-            output_dicts[mul_node.output[0]] = output_dicts[mul_node.input[0]]
+            q_nodes = [node for node in nodes if node.name in tune_cfg and tune_cfg[node.name] != "fp32"]
+            if len(q_nodes) > 0:
+                scale_tensor = helper.make_tensor(
+                    name=parent.output[0] + "_weight_only_scale",
+                    data_type=onnx_proto.TensorProto.FLOAT,
+                    dims=best_scale.shape,
+                    vals=(1. / best_scale).flatten().tolist())
+                new_init_tensors.append(scale_tensor)
+                mul_output_name = parent.output[0] + "_weight_only_out"
+                mul_node = helper.make_node(
+                    "Mul",
+                    inputs=[q_nodes[0].input[0], scale_tensor.name],
+                    outputs=[mul_output_name],
+                    name=q_nodes[0].input[0] + "_weight_only_mul"
+                )
+                new_added_mul_nodes.append(mul_node)
+                for node in q_nodes:
+                    replace_input.append([node, node.input[0], mul_node.output[0]])
+                updated_nodes.append(parent.name)
+                output_dicts[mul_node.output[0]] = output_dicts[mul_node.input[0]] / np.reshape(best_scale, (1, -1))
  
     model.add_nodes(new_added_mul_nodes)
     model.add_initializers(new_init_tensors)
@@ -207,7 +217,7 @@ def apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts):
         inp = np.concatenate(output_dicts[nodes[0].input[0]], axis=0)
 
         for node in nodes:
-            if node.name in tune_cfg and tune_cfg[node.name]["weight"]["dtype"] != "fp32":
+            if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
  
                 group_size = tune_cfg[node.name]["weight"]["group_size"]
                 config = tune_cfg[node.name]
@@ -255,7 +265,7 @@ def awq_quantize(model,
                                 dataloader,
                                 [],
                                 white_nodes=white_nodes,
-                                iterations=list(range(0, n_samples)))
+                                iterations=list(range(0, math.ceil(n_samples / dataloader.batch_size))))
 
         augment.augment_graph(activation_only=True, weight_only=False)
 

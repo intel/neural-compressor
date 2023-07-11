@@ -1460,18 +1460,12 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
         quant_config = self._cfg_to_quantize_config(tune_cfg)
         algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
-        #if "GPTQ" in algos:
-        #    model = gptq_quantize(model, quant_config, data_loader)
-        #if "AWQ" in algos:
-        #    model = awq_quantize(model, quant_config, data_loader)
-        #elif "RTN" in algos:
-        #    model = rtn_quantize(model, quant_config)
-        model = awq_quantize(model, quant_config, data_loader)
-        #model = rtn_quantize(model, quant_config)
-        
-        #model = rtn_quantize(model, quant_config)
-        #model.q_config = copy.deepcopy(self.tune_cfg)
-        #self._dump_model_op_stats(model, self.tune_cfg)
+        if "AWQ" in algos:
+            model = awq_quantize(model, quant_config, data_loader)
+        elif "RTN" in algos:
+            model = rtn_quantize(model, quant_config)
+        model.q_config = copy.deepcopy(quant_config)
+        self._dump_model_op_stats(model, tune_cfg)
         model.topological_sort()
         return model
 
@@ -1482,7 +1476,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         for op, config in tune_cfg['op'].items():
             op_type = op[1]
             if not config['weight']['dtype'] == 'fp32':
-                num_bits = config['weight']['bit']
+                num_bits = config['weight']['bits']
                 group_size = config['weight']['group_size']
                 dtype_str = "A32W{}G{}".format(num_bits, group_size)
                 dtype_set.add(dtype_str)
@@ -1499,7 +1493,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 res[op_type]['FP32'] += 1
             else:
-                num_bits = config['weight']['bit']
+                num_bits = config['weight']['bits']
                 group_size = config['weight']['group_size']
                 dtype_str = "A32W{}G{}".format(num_bits, group_size)
                 res[op_type][dtype_str] += 1
@@ -1546,20 +1540,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
-        recipes_ops = {}
-        recipes_ops['first_conv_or_matmul_quantization'] = []
-        recipes_ops['last_conv_or_matmul_quantization'] = []
-        recipes_ops['pre_post_process_quantization'] = []
-        exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
-            self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
-            else False
-        exclude_last_quantizable_op = True if 'last_conv_or_matmul_quantization' in \
-            self.recipes and not self.recipes['last_conv_or_matmul_quantization'] \
-            else False
-        exclude_pre_post_process = True if 'pre_post_process_quantization' in \
-            self.recipes and not self.recipes['pre_post_process_quantization'] \
-            else False
- 
+
         quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
         optype_wise = OrderedDict()
         op_wise = OrderedDict()
@@ -1596,140 +1577,15 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                     elif op_capability not in optype_wise[op]:
                         optype_wise[op].append(op_capability)
 
-        first_quantizable_node = []
-        last_quantizable_node = []
-        all_conv_matmul = []
-        attention_matmul = []
-        for _, node in enumerate(self.pre_optimized_model.nodes()):
-            if node.op_type in ['Conv', 'MatMul', 'Attention']:
-                # get first Conv or MatMul node
-                if len(first_quantizable_node) == 0:
-                    first_quantizable_node.append(node)
+        for node in self.pre_optimized_model.nodes():
+            if node.op_type in ['MatMul', 'Attention'] and model.get_initializer(node.input[1]) is None:
+                op_wise.update(
+                    {(node.name, node.op_type): [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
+            if node.op_type in optype_wise:
+                op_wise.update(
+                    {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
-                # get last Conv or MatMul node
-                if len(last_quantizable_node) != 0:
-                    last_quantizable_node.pop()
-                last_quantizable_node.append(node)
-
-                all_conv_matmul.append(node)
-                if node.op_type != 'Conv':
-                    attention_matmul.append(node)
-        
-        if len(first_quantizable_node) != 0:
-            recipes_ops['first_conv_or_matmul_quantization'] = [(first_quantizable_node[0].name, 
-                                                                first_quantizable_node[0].op_type)]
-        if len(last_quantizable_node) != 0:
-            recipes_ops['last_conv_or_matmul_quantization'] = [(last_quantizable_node[0].name, 
-                                                                last_quantizable_node[0].op_type)]
-        
-        
-        ffn_matmul = []
-        attention_matmul_optype = [node.op_type for node in attention_matmul]
-        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
-        if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
-            # model is optimized and Attention is fused,
-            # index of Attention is used as split to find FFN MatMul
-            first_attention_index = attention_matmul_optype.index('Attention')
-            attention_matmul_optype = attention_matmul_optype[first_attention_index:]
-            attention_matmul = attention_matmul[first_attention_index:]
-            attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
-            block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-            for idx in range(len(attention_index)):
-                if idx != len(attention_index) - 1:
-                    index = attention_index[idx + 1]
-                    if index - 2 >= 0 and index - 1 >= 0:
-                        ffn_matmul.append([attention_matmul[index - 2], 
-                                           attention_matmul[index - 1]])
-                else:
-                    index = attention_index[idx]
-                    if index + block_len - 2 < len(attention_matmul) and \
-                        index + block_len - 1 < len(attention_matmul):
-                        ffn_matmul.append([attention_matmul[index + block_len - 2], 
-                                        attention_matmul[index + block_len - 1]])
-        else:
-            # model is not optimized or Attention isn't fused, 
-            # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
-            qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
-            if len(qkv) != 0:
-                attention_starts = [nodes[0] for nodes in qkv]
-                attention_index = [np.where(np.array([n.name for n in attention_matmul]) \
-                                            == attention_start)[0].tolist()[0] \
-                                                for attention_start in attention_starts]
-                block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-                for idx in range(len(attention_index)):
-                    if idx != len(attention_index) - 1:
-                        index = attention_index[idx + 1]
-                        if index - 2 >= 0 and index - 1 >= 0:
-                            ffn_matmul.append([attention_matmul[index - 2],
-                                            attention_matmul[index - 1]])
-                    else:
-                        index = attention_index[idx]
-                        if index + block_len - 2 < len(attention_matmul) and \
-                            index + block_len - 1 < len(attention_matmul):
-                            ffn_matmul.append([attention_matmul[index + block_len - 2],
-                                            attention_matmul[index + block_len - 1]])
-
-        block_wise = []
-        for block in reversed(ffn_matmul):
-            node_info = []
-            for node in block:
-                node_info.append((node.name, node.op_type))
-            if len(node_info) != 0:
-                block_wise.append(node_info)
-
-        for parent, nodes in self.pre_optimized_model.get_absorb_pairs(["MatMul", "Attention"]).items():
-            for node in nodes:
-                if node.op_type in optype_wise:
-                    if (exclude_first_quantizable_op and node in first_quantizable_node) \
-                         or (exclude_last_quantizable_op and node in last_quantizable_node):
-                        tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
-                        tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
-                        op_wise.update({(node.name, node.op_type): tmp_cfg})
-                        continue
-                    op_wise.update(
-                        {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-
-        # only when first and last quantizable nodes are found and they are not the same,
-        # fallback pre/postprocess ops
-        if len(first_quantizable_node) != 0 and \
-           len(last_quantizable_node) != 0 and \
-           first_quantizable_node[0].name != last_quantizable_node[0].name:
-            # get backbone nodes
-            from collections import deque
-            
-            # get nodes between first quantizable node and last quantizable node
-            backbone_queue = deque(last_quantizable_node)
-            backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
-
-            # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
-            backbone_queue_extra = deque()
-            for conv_or_matmul in all_conv_matmul:
-                if conv_or_matmul.name not in backbone_nodes:
-                    backbone_queue_extra.append(conv_or_matmul)
-                    backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
-                                                    first_quantizable_node, backbone_nodes)
-            backbone_nodes += [i.name for i in first_quantizable_node]
-            
-            for _, node in enumerate(self.pre_optimized_model.nodes()):
-                if node.name not in backbone_nodes and node.op_type in optype_wise:
-                    recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
-            if exclude_pre_post_process:
-                for _, node in enumerate(self.pre_optimized_model.nodes()):
-                    if node.op_type in optype_wise:
-                        # nodes not in backbone are not quantized
-                        if node.name not in backbone_nodes:
-                            tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
-                            tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
-                            op_wise.update({(node.name, node.op_type): tmp_cfg})
-                            continue
-                        if (node.name, node.op_type) in op_wise:
-                            op_wise.update(
-                                {(node.name, node.op_type): copy.deepcopy(op_wise[(node.name, node.op_type)])})
-                        else: # pragma: no cover
-                            op_wise.update(
-                                {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-
-        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops, 'block_wise': block_wise}
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': {}, 'block_wise': []}
 
 
 @adaptor_registry
