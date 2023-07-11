@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """Neural Solution task."""
+
+
 class Task:
     """A Task is an abstraction of a user tuning request that is handled in neural solution service.
 
@@ -24,8 +26,19 @@ class Task:
         result: The result of the task, which is only value-assigned when the task is done
     """
 
-    def __init__(self, task_id, arguments, workers, status,  script_url, \
-        optimized, approach, requirement, result="", q_model_path=""):
+    def __init__(
+        self,
+        task_id,
+        arguments,
+        workers,
+        status,
+        script_url,
+        optimized,
+        approach,
+        requirement,
+        result="",
+        q_model_path="",
+    ):
         """Init task.
 
         Args:

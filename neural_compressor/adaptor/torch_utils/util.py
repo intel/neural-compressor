@@ -250,7 +250,7 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                                 if pre_op_output['id'] == input_tensor_id:
                                     pre_op_output_infos[index]['inf_dtype'] = input_tensor_dtype
                                 else:
-                                    print('Do not find the input id', input_tensor_id)
+                                    pass
                             pre_op_infos['output_tensor_infos'] = pre_op_output_infos
                             cfgs[pre_op_module][pre_op_state][pre_op_index] = pre_op_infos
                         else:

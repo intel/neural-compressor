@@ -1416,7 +1416,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(len(q_capability['block_wise']), 6)
 
     def test_dataloader_input(self):
-        cv_dataloader = DataLoader(framework='onnxrt', dataset=DummyCVDataset_list(shape=(3, 224, 224)))
+        cv_dataloader = DataLoader(framework='onnxruntime', dataset=DummyCVDataset_list(shape=(3, 224, 224)))
         quantizer = Quantization('qlinear.yaml')
         quantizer.calib_dataloader = cv_dataloader
         quantizer.eval_dataloader = cv_dataloader
