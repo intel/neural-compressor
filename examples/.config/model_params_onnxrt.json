@@ -798,6 +798,13 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "hf_layoutlmftv2": {
+        "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmftv2/quantization/ptq_static",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/hf_layoutlmft/layoutlmftv2-model.onnx",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
     "hf_layoutlmft_dynamic": {
       "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_dynamic",
       "dataset_location": "",
