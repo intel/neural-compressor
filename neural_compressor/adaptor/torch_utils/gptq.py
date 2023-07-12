@@ -76,9 +76,7 @@ def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
     return gptq_related_blocks
 
 def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=''):
-    """
-
-    """
+    """Get all layers with target types."""
     if type(module) in layers:
         return {name: module}
     res = {}
@@ -89,9 +87,7 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
     return res
 
 def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=''):
-    """
-
-    """
+    """Get all layers with target types."""
     if type(module) in layers:
         return [name]
     res = []
