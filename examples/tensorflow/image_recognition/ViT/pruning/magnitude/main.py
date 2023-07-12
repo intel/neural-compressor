@@ -111,10 +111,10 @@ def evaluate(model, adaptor, eval_dataloader):
 
 if __name__ == '__main__':
     training_set, test_set = prepare_dataset()
-    train_dataloader = DataLoader(dataset=training_set, batch_size=128,
-                                        framework='tensorflow', distributed=FLAGS.train_distributed)
-    eval_dataloader = DataLoader(dataset=test_set, batch_size=256,
-                                        framework='tensorflow', distributed=FLAGS.evaluation_distributed)
+    train_dataloader = DataLoader(framework='tensorflow', dataset=training_set,
+                                        batch_size=128, distributed=FLAGS.train_distributed)
+    eval_dataloader = DataLoader(framework='tensorflow', dataset=test_set,
+                                        batch_size=256, distributed=FLAGS.evaluation_distributed)
 
     framework_specific_info = {
         'device': 'cpu', 'random_seed': 9527, 
