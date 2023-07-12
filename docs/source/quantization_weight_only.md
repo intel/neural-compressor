@@ -24,10 +24,10 @@ There are many excellent works for weight only quantization to improve its accur
 
 ## Supported Framework Model Matrix
 
-| Algorithms/Framework |   PyTorch  |    ONNX    |
+| Algorithms/Framework |   PyTorch  |    ONNX Runtime    |
 |:--------------:|:----------:|:----------:|
 |       RTN      |  &#10004;  |  &#10004;  |
-|       AWQ      |  &#10004;  | stay tuned |
+|       AWQ      |  &#10004;  |  &#10004;  |
 |      GPTQ      | stay tuned | stay tuned |
 
 ## Examples
@@ -47,7 +47,11 @@ There are many excellent works for weight only quantization to improve its accur
 |  n_blocks  |       5       |   Split the model into n blocks for AWQ search to avoid out-of-memory   |
 
 
-**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
+**Note**: 
+
+1. `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
+
+2. ONNXRT adaptor does AWQ search for one block at a time, so n_blocks doesn't work for ONNXRT adaptor.
 
 ### **User code**:
 ```python
