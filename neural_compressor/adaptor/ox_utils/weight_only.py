@@ -17,6 +17,7 @@
 """WeightOnly for onnxrt adaptor."""
 
 import os
+import math
 import copy
 import onnx
 import logging
@@ -114,6 +115,7 @@ def rtn_quantize(model, tune_cfg, ratios={}):
     return model
 
 def get_weight_scale(weight, group_size):
+    """Get the scale of weight."""
     org_shape = weight.shape
     weight = np.reshape(weight, (group_size, -1)) if group_size != -1 else weight
     scale = np.mean(
@@ -122,6 +124,7 @@ def get_weight_scale(weight, group_size):
     return scale
 
 def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
+    """Apply scale for salient weight."""
     best_scales = {}
     new_init_tensors = []
     new_added_mul_nodes = []
@@ -238,6 +241,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
     return model, output_dicts
 
 def apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts):
+    """Apply clip for weight by checking mse."""
     ratios = {}
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
