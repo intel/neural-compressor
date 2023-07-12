@@ -4518,7 +4518,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             else:
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
-
         if 'GPTQ' in all_algo:
             q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
 

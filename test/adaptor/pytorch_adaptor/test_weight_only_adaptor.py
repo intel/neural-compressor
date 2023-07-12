@@ -1,3 +1,5 @@
+import sys
+sys.path.append("./")
 import shutil
 import torch
 import unittest
@@ -149,45 +151,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
     
-    # def test_GPTQ_quant(self):
-    #     def generate_random_corpus(self, nsamples = 32):
-    #         meta_data = []
-    #         for _ in range(nsamples):
-    #             inp = torch.ones([1, 512], dtype=torch.long)
-    #             tar = torch.ones([1, 512], dtype=torch.long)
-    #             meta_data.append((inp, tar))
-    #         return meta_data
-
-    #     conf = PostTrainingQuantConfig(
-    #         approach='weight_only',
-    #         op_type_dict={
-    #             '.*':{ 	# re.match
-    #                 "weight": {
-    #                     'bits': 4, # 1-8 bits 
-    #                     'group_size': 128,  # -1 (per-channel)
-    #                     'scheme': False, 
-    #                     'algorithm': 'GPTQ', 
-    #                 },
-    #             },
-    #         },
-    #         op_name_dict={
-    #             '.*lm_head':{ 	# re.match
-    #                 "weight": {
-    #                     'dtype': 'fp32'
-    #                 },
-    #             },
-    #         },
-    #         recipes={
-    #             'gptq_args':{'percdamp': 0.01},
-    #         },
-    #     )
-    #     dataloader = generate_random_corpus()
-    #     q_model = quantization.fit(
-    #         self.gptj, 
-    #         conf, 
-    #         calib_dataloader=dataloader,
-    #     )
-
     def test_AWQ_quant(self):
         input = torch.randn(3,30)
         model = Model()
@@ -221,6 +184,47 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             conf, 
             calib_dataloader=self.llm_dataloader,
         )
+
+    def test_GPTQ_quant(self):
+        class gptq_inc_loader(object):
+            def __init__(self, nsamples=32):
+                self.batch_size = 1
+                self.nsamples = nsamples
+            
+            def __len__(self):
+                return self.nsamples // self.batch_size
+
+            def __iter__(self):
+                for i in range(self.nsamples):
+                    yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
+
+        
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_type_dict={
+                '.*':{ 	# re.match
+                    "weight": {
+                        'bits': 4, # 1-8 bits 
+                        'group_size': 128,  # -1 (per-channel)
+                        'scheme': 'sym', 
+                        'algorithm': 'GPTQ', 
+                    },
+                },
+            },
+            op_name_dict={
+                '.*lm_head':{ 	# re.match
+                    "weight": {
+                        'dtype': 'fp32'
+                    },
+                },
+            },
+            recipes={
+                'gptq_args':{'percdamp': 0.01},
+            },
+        )
+        dataloader = gptq_inc_loader()
+        # import pdb;pdb.set_trace()
+        q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
 
 
 if __name__ == "__main__":

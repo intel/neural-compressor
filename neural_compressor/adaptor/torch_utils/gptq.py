@@ -75,7 +75,7 @@ def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
                 gptq_related_blocks["embeddings"][n] = m
     return gptq_related_blocks
 
-def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
+def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=''):
     """
 
     """
@@ -87,6 +87,29 @@ def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
             child, layers=layers, name=name + '.' + name1 if name != '' else name1
         ))
     return res
+
+def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=''):
+    """
+
+    """
+    if type(module) in layers:
+        return [name]
+    res = []
+    for name1, child in module.named_children():
+        res += find_layers_name(child, layers=layers, name = name + '.' + name1 if name != '' else name1)
+    return res
+
+def log_quantizable_layers_per_transformer(transformer_blocks, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]):
+    """Print all layers which will be quantized in GPTQ algorithm."""
+    logger.info("* * Layer to be quantized * *")
+
+    for block_id in range(len(transformer_blocks['transformers'])):
+        transformer_block = transformer_blocks['transformers'][block_id]
+        layers_for_this_tblock = find_layers_name(transformer_block)
+        layer_names = [(transformer_blocks['transformers_name'] + "." + str(block_id) + '.' + layer_name) for layer_name in layers_for_this_tblock]
+        for name in layer_names:
+            logger.info(name)
+
 #===========================================
 
 #===============quantization related============================
@@ -142,6 +165,7 @@ class GPTQuantizer(object):
 
         self.use_cache = model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(model) # get the transformer block list above
+        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
         # import pdb;pdb.set_trace()
@@ -183,7 +207,6 @@ class GPTQuantizer(object):
                     self.cache[arg] = kwargs[arg]
                 else:
                     continue
-            #print("input hooked successfully")
             raise ValueError
 
         # Step1: fetch the embeddings and other layers before the transformer stack.
@@ -214,12 +237,12 @@ class GPTQuantizer(object):
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
             embedding_layer.to(self.device)
         torch.cuda.empty_cache()
-        print('Quantization prepared.')
+        logger.info('GPTQ quantization prepared.')
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
-        print("Begin ====>")
+        logger.info("Begin ====>")
         # import pdb;pdb.set_trace()
         self.pre_quantization()
 
@@ -256,7 +279,7 @@ class GPTQuantizer(object):
                 h.remove()
             
             for layer_name in sub_layers:
-                print(f"Quantizing layer {layer_name}")
+                logger.info(f"Quantizing layer {layer_name}")
                 gptq_for_this_block[layer_name].fasterquant(percdamp=self.percdamp, groupsize=self.group_size)
                 quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
@@ -288,7 +311,7 @@ class GPTQ:
         self.layer = layer
         self.device = self.layer.weight.device
         W = layer.weight.data.clone()
-        if isinstance(self.layer, nn.Conv2d):
+        if isinstance(self.layer, nn.Conv2d) or isinstance(self.layer, nn.Conv1d):
             W = W.flatten(1)
         if isinstance(self.layer, transformers.Conv1D):
             W = W.t()
@@ -397,12 +420,12 @@ class GPTQ:
             if DEBUG:
                 self.layer.weight.data[:, :i2] = Q[:, :i2]
                 self.layer.weight.data[:, i2:] = W[:, i2:]
-                print(torch.sum((self.layer(self.inp1) - self.out1) ** 2))
-                print(torch.sum(Losses))
+                logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+                logger.info(f"{torch.sum(Losses)}")
 
         torch.cuda.synchronize()
-        print('time %.2f' % (time.time() - tick))
-        print('error', torch.sum(Losses).item())
+        logger.info(f'time {(time.time() - tick)}')
+        logger.info(f'error {torch.sum(Losses).item()}')
 
         if actorder:
             invperm = torch.argsort(perm)
@@ -412,7 +435,7 @@ class GPTQ:
             Q = Q.t()
         self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
         if DEBUG:
-            print(torch.sum((self.layer(self.inp1) - self.out1) ** 2))
+            logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
 
     def free(self):
         if DEBUG:
