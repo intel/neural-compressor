@@ -78,7 +78,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
+        q_model.convert(weight_only=True)
+        out3 = q_model(input)
+        # sym has clip issue for [-8, 7], set a big atol.
+        self.assertTrue(torch.all(torch.isclose(out3, out2, atol=1e-1)))
 
+        model = Model()
+        out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
@@ -97,6 +103,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
 
+        model = Model()
+        out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
@@ -115,6 +123,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
 
+        model = Model()
+        out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_name_dict={

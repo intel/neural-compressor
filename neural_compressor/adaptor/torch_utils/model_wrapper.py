@@ -301,4 +301,3 @@ class WeightOnlyLinear(torch.nn.Module):
         return 'in_features={}, out_features={}, bits={}, group_size={}, bias={}'.format(
             self.in_features, self.out_features, self.bits, self.groupsize, self.bias is not None
         )
-torch.nn.Linear
