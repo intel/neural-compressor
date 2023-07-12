@@ -219,10 +219,8 @@ class WeightOnlyLinear(torch.nn.Module):
                         self.packed_zp[i][j] |= tmp[e]
 
     def recover(self):
-        if hasattr(self, 'packed_zp'):
-            weight_dtype = torch.uint8
-        else:
-            weight_dtype = torch.int8
+        mask = torch.tensor(2**self.bits - 1, dtype=torch.int32)
+        weight_dtype = torch.int32
         # unpack weight
         weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype)
         origin_shape = weight.shape
@@ -236,6 +234,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp = self.packed_weight[i][j]
                     tmp = tmp << 32 - self.bits * (self.n_pack - e)
                     tmp = tmp >> 32 - self.bits
+                    tmp &= mask
                     weight[i][index] = tmp.type(weight_dtype)
         # unpack zero_point
         if hasattr(self, 'packed_zp'):
@@ -251,6 +250,7 @@ class WeightOnlyLinear(torch.nn.Module):
                         tmp = self.packed_zp[i][j]
                         tmp = tmp << 32 - self.bits * (self.n_pack - e)
                         tmp = tmp >> 32 - self.bits
+                        tmp &= mask
                         zp[i][index] = tmp.type(weight_dtype)
             # recover fp32 weight with int_weight, scale, and zero_point
             left_element = self.in_features % self.groupsize 

@@ -162,10 +162,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(model_size1 / model_size2 > 2)
 
     def test_AWQ_quant(self):
-        input = torch.randn(3,30)
-        model = Model()
-        out1 = model(input)
-
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
@@ -173,7 +169,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "weight": {
                         'bits': 4, # 1-8 bits 
                         'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'sym', 
+                        'scheme': 'asym', 
                         'algorithm': 'AWQ', 
                     },
                 },
@@ -194,7 +190,12 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             conf, 
             calib_dataloader=self.llm_dataloader,
         )
+        input = torch.ones([1, 10], dtype=torch.long)
+        out1 = q_model(input)
         q_model.convert(weight_only=True)
+        out2 = q_model(input)
+        # no idea about the gap at 1e-08, use allclose instead of out1==out2
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05)) # sym has clip issue for [-8, 7]
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
         self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 
