@@ -179,6 +179,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer('bias', torch.zeros(self.out_features, dtype=torch.float))
         else:
             self.bias = None
+        self.bias = bias
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale
         origin_shape = int_weight.shape
@@ -254,33 +255,37 @@ class WeightOnlyLinear(torch.nn.Module):
             # recover fp32 weight with int_weight, scale, and zero_point
             left_element = self.in_features % self.groupsize 
             if left_element != 0:
-                weight1 = weight[:, :-left_element].reshape(-1, self.groupsize)
+                split_index = self.in_features // self.groupsize  * self.groupsize
+                weight1 = weight[:, :-split_index].reshape(-1, self.groupsize)
                 scale1 = self.scale[:, :-1].reshape(-1, 1)
                 zp1 = zp[:, :-1].reshape(-1, 1)
                 weight1 = ((weight1 - zp1) * scale1).reshape(self.out_features, -1)
-                weight2 = weight[:, -left_element:]
-                scale2 = self.scale[:, -1].reshape(-1, 1)
+                weight2 = weight[:, -split_index:]
+                scale2 = self.scale[:, -1:]
                 zp2 = zp[:, -1].reshape(-1, 1)
                 weight2 = ((weight2 - zp2) * scale2)
                 fp32_weight = torch.cat((weight1, weight2), dim=1)
             else:
                 weight = weight.reshape(-1, self.groupsize)
-                fp32_weight = ((weight - zp) * self.scale).reshape(self.out_features, -1)
+                scale = self.scale.reshape(-1, 1)
+                zp = zp.reshape(-1, 1)
+                fp32_weight = ((weight - zp) * scale).reshape(self.out_features, -1)
         else:
             # recover fp32 weight with int_weight, scale
             left_element = self.in_features % self.groupsize 
             if left_element != 0:
                 split_index = self.in_features // self.groupsize  * self.groupsize
                 weight1 = weight[:, :split_index].reshape(-1, self.groupsize)
-                scale1 = self.scale[:-origin_shape[0]]
+                scale1 = self.scale[:, :-1].reshape(-1, 1)
                 weight1 = (weight1 * scale1).reshape(self.out_features, -1)
                 weight2 = weight[:, split_index:]
-                scale2 = self.scale[-origin_shape[0]:]
+                scale2 = self.scale[:, -1:]
                 weight2 = (weight2 * scale2)
                 fp32_weight = torch.cat((weight1, weight2), dim=1)
             else:
                 weight = weight.reshape(-1, self.groupsize)
-                fp32_weight = (weight * self.scale).reshape(self.out_features, -1)
+                scale = self.scale.reshape(-1, 1)
+                fp32_weight = (weight * scale).reshape(self.out_features, -1)
         return fp32_weight
 
     def forward(self, input):
@@ -291,3 +296,4 @@ class WeightOnlyLinear(torch.nn.Module):
         return 'in_features={}, out_features={}, bits={}, group_size={}, bias={}'.format(
             self.in_features, self.out_features, self.bits, self.groupsize, self.bias is not None
         )
+torch.nn.Linear
