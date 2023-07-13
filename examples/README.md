@@ -1141,7 +1141,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic">integerops</a> </td>
   </tr>
   <tr>
