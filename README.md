@@ -45,10 +45,11 @@ pip install tensorflow
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 ```python
+from neural_compressor import METRICS
+from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.data import DataLoader
-from neural_compressor.data import Datasets
 
+metric = METRICS('tensorflow')['topk']()
 dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
 dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 
@@ -57,7 +58,8 @@ q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
     conf=PostTrainingQuantConfig(),
     calib_dataloader=dataloader,
-    eval_dataloader=dataloader)
+    eval_dataloader=dataloader,
+    eval_metric=metric)
 ```
 
 ## Documentation
