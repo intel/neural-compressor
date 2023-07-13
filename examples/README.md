@@ -498,6 +498,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
+    <td>BlendCNN</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/ipex">ipex</a></td>
+  </tr>
+  <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>

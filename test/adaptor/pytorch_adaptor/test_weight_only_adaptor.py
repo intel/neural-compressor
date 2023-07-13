@@ -1,7 +1,10 @@
+import os
 import shutil
 import torch
 import unittest
+import transformers
 from neural_compressor import quantization, PostTrainingQuantConfig
+from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 
 
 class Model(torch.nn.Module):
@@ -9,7 +12,7 @@ class Model(torch.nn.Module):
         super(Model, self).__init__()
         self.fc1 = torch.nn.Linear(30, 40)
         self.fc2 = torch.nn.Linear(40, 30)
-        self.fc3 = torch.nn.Linear(30, 10)
+        self.fc3 = torch.nn.Linear(30, 5)
 
     def forward(self, x):
         out = self.fc1(x)
@@ -27,18 +30,41 @@ def eval_func(model):
         output = model(input)
     return 0.0
 
+class SimpleDataLoader():
+    def __init__(self):
+        self.batch_size = 1
+
+    def __iter__(self):
+        for i in range(2):
+            yield torch.randn([1, 30])
+
+
+class LLMDataLoader():
+    def __init__(self):
+        self.batch_size = 1
+
+    def __iter__(self):
+        for i in range(2):
+            yield torch.ones([1, 10], dtype=torch.long)
+
 
 class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
     approach = 'weight_only'
 
     @classmethod
+    def setUpClass(self):
+        self.dataloader = SimpleDataLoader()
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            torchscript=True,
+        )
+        self.llm_dataloader = LLMDataLoader()
+        self.lm_input = torch.ones([1, 10], dtype=torch.long)
+
+    @classmethod
     def tearDownClass(self):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
-
-    def test_RTN_func(self):
-        # TODO
-        pass
 
     def test_RTN_quant(self):
         input = torch.randn(3,30)
@@ -52,7 +78,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
+        q_model.convert(weight_only=True)
+        out3 = q_model(input)
+        # sym has clip issue for [-8, 7], set a big atol.
+        self.assertTrue(torch.all(torch.isclose(out3, out2, atol=1e-1)))
 
+        model = Model()
+        out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
@@ -65,16 +97,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     },
                 },
             },
-            recipes={
-                'gptq_args':{'percdamp': 0.01},
-                'awq_args':{'alpha': 'auto', 'clip': True},
-            },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
 
+        model = Model()
+        out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
@@ -87,16 +117,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     },
                 },
             },
-            recipes={
-                'gptq_args':{'percdamp': 0.01},
-                'awq_args':{'alpha': 'auto', 'clip': True},
-            },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
 
+        model = Model()
+        out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_name_dict={
@@ -122,10 +150,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     },
                 },
             },
-            recipes={
-                'gptq_args':{'percdamp': 0.01},
-                'awq_args':{'alpha': 'auto', 'clip': True},
-            },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
@@ -136,6 +160,54 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         new_model = load('saved', model)
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
+        model_size1 = os.path.getsize('saved/best_model.pt')/1024
+        print("FP32 Model size:{:.3f}M".format(model_size1))
+        from neural_compressor.model import Model as INCModel
+        inc_model = INCModel(new_model)
+        inc_model.convert(weight_only=True, weight_config_path = 'saved/weight_config.json')
+        torch.save(inc_model.state_dict(), 'saved/tmp.pt')
+        model_size2 = os.path.getsize('saved/tmp.pt')/1024
+        print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
+        self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
+        self.assertTrue(model_size1 / model_size2 > 2)
+
+    def test_AWQ_quant(self):
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_type_dict={
+                '.*':{ 	# re.match
+                    "weight": {
+                        'bits': 4, # 1-8 bits 
+                        'group_size': 32,  # -1 (per-channel)
+                        'scheme': 'asym', 
+                        'algorithm': 'AWQ', 
+                    },
+                },
+            },
+            op_name_dict={
+                '.*lm_head':{ 	# re.match
+                    "weight": {
+                        'dtype': 'fp32'
+                    },
+                },
+            },
+            recipes={
+                'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 2},
+            },
+        )
+        q_model = quantization.fit(
+            self.gptj, 
+            conf, 
+            calib_dataloader=self.llm_dataloader,
+        )
+        input = torch.ones([1, 10], dtype=torch.long)
+        out1 = q_model(input)
+        q_model.convert(weight_only=True)
+        out2 = q_model(input)
+        # no idea about the gap at 1e-08, use allclose instead of out1==out2
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05)) # sym has clip issue for [-8, 7]
+        self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
+        self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 
 
 if __name__ == "__main__":
