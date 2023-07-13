@@ -71,7 +71,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
                                      Defaults to False.
         full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                 For example: 4 bit
-                    scale = amax / 7.5 if full_range else amax / 7
+                    scale = amax / 8 if full_range else amax / 7
                     If True, scale = -scale if abs(min)> abs(max) else scale
                     Defaults to False.
 
@@ -92,7 +92,8 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     tmp = (wmax == 0)
     wmax[tmp] = +1
     if full_range:
-        scale = wmax / ((maxq - minq) / 2)
+        # use -8, 8 to make sure amax is not changed after fake quant
+        scale = wmax / (-minq)
         scale = -scale if flip_flag else scale
     else:
         scale = wmax / maxq
