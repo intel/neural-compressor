@@ -328,10 +328,14 @@ class TestMixedPrecision(unittest.TestCase):
         def eval(model):
             return 0.5
 
-        result = [0., 0.1, 0.102, 0.009, 0.1005, 0.1004, 0.1002]
+        result = [0., 0.1, 0.102, 0.1003, 0.1005, 0.1004, 0.1002]
+        perf =   [0.1, 0.5,  0.6,    0.7,    0.5,    0.4, 0.5 ]
+        import time
 
         def eval2(model):
+            del perf[0]
             del result[0]
+            time.sleep(perf[0])
             return result[0]
 
         conf = MixedPrecisionConfig(
