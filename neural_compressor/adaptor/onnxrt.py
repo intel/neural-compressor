@@ -1581,6 +1581,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             if node.op_type in ['MatMul', 'Attention'] and model.get_initializer(node.input[1]) is None:
                 op_wise.update(
                     {(node.name, node.op_type): [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
+                continue
             if node.op_type in optype_wise:
                 op_wise.update(
                     {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
