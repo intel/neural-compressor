@@ -80,7 +80,8 @@ def load_from_shard(path, tensor_name):
 
 def load_tensor_from_shard(path, tensor_name, prefix=None):
     idx_dict = json.load(open(os.path.join(path, 'pytorch_model.bin.index.json'), 'r'))['weight_map']
-    assert tensor_name in idx_dict.keys(), '{} not the index.json'.format(tensor_name)
+    assert tensor_name in idx_dict.keys() or tensor_name.replace(f'{prefix}.', '') in idx_dict.keys(), \
+        '{} not in the index.json'.format(tensor_name)
     return load_tensor(os.path.join(path, idx_dict[tensor_name]), tensor_name, prefix)
 
 
