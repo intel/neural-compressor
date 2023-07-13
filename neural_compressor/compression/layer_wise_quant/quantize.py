@@ -168,7 +168,7 @@ class LayerWiseQuant:
     def _regist_hooks(self):
         def forward_pre_hook(name):
             def load_value(param_name):
-                if 'lm_head' in param_name and getattr(self.config, "tie_word_embeddings", True):
+                if 'lm_head' in param_name and getattr(self.q_model.config, "tie_word_embeddings", True):
                     input_embeddings = self.q_model.get_input_embeddings()
                     for name, module in self.modules:
                         if module == input_embeddings:
