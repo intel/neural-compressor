@@ -1212,10 +1212,13 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
             if key in loaded_storages:
                 typed_storage = loaded_storages[key]
             else:
-                no_prefix_name = self.tensor_name.split('.')
-                no_prefix_name.remove(prefix)
-                no_prefix_name = '.'.join(no_prefix_name)
-                if self.tensor_name and self.metastack[-1][-2] not in [self.tensor_name, no_prefix_name]:
+                name_list = [self.tensor_name]
+                if prefix:
+                    no_prefix_name = self.tensor_name.split('.')
+                    no_prefix_name.remove(prefix)
+                    no_prefix_name = '.'.join(no_prefix_name)
+                    name_list.append(no_prefix_name)
+                if self.tensor_name and self.metastack[-1][-2] not in name_list:
                     # typed_storage = None
                     # loaded_storages[key] = typed_storage
                     # nbytes = numel * torch._utils._element_size(dtype)

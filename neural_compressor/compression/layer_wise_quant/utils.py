@@ -85,7 +85,7 @@ def load_tensor_from_shard(path, tensor_name, prefix=None):
             tensor_name = tensor_name.replace(f'{prefix}.', '')
         else:
             assert False, '{} not in the index.json'.format(tensor_name)
-    return load_tensor(os.path.join(path, idx_dict[tensor_name]), tensor_name, prefix)
+    return load_tensor(os.path.join(path, idx_dict[tensor_name]), tensor_name, None)
 
 
 def load_tensor(path, tensor_name=None, prefix=None):
