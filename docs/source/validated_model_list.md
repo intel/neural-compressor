@@ -5,16 +5,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-    1.1. [TensorFlow Models with Intel TensorFlow 2.11.0](#tensorflow-models-with-Intel-tensorflow-2110)
+    1.1. [TensorFlow Models with Intel TensorFlow 2.12.0](#tensorflow-models-with-Intel-tensorflow-2120)
 
-    1.2. [PyTorch Models with Torch 1.13.0+cpu in PTQ Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
+    1.2. [TensorFlow Models with Intel® Extension for TensorFlow* 1.2.0](#tensorflow-models-with-intel-extension-for-tensorflow-120)
 
-    1.3. [PyTorch Models with Torch 1.13.0+cpu in QAT Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
+    1.3. [PyTorch Models with Torch 2.0.1+cpu in PTQ Mode](#pytorch-models-with-torch-201cpu-in-ptq-mode)
 
-    1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.13.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1130cpu)
+    1.4. [PyTorch Models with Torch 2.0.1+cpu in QAT Mode](#pytorch-models-with-torch-201cpu-in-qat-mode)
+
+    1.5. [PyTorch Models with Intel® Extension for PyTorch* 2.0.1+cpu](#pytorch-models-with-intel-extension-for-pytorch-201cpu)
     
-    1.5. [ONNX Models with ONNX Runtime 1.13.1](#onnx-models-with-onnx-runtime-1131)
-
+    1.6. [ONNX Models with ONNX Runtime 1.15.0](#onnx-models-with-onnx-runtime-1150)
 
 2. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
