@@ -2414,7 +2414,7 @@ For more complete information about performance and benchmark results, visit www
 <tbody align="center">
   <tr>
     <td>Faster R-CNN (ONNX Model Zoo)</td>
-    <td><a href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qlinearops</a></td>
+    <td>qlinearops</td>
     <td>34.06%</td>
     <td>34.37%</td>
     <td>-0.88%</td>
@@ -2434,7 +2434,7 @@ For more complete information about performance and benchmark results, visit www
   </tr>
   <tr>
     <td>Mask R-CNN (ONNX Model Zoo)</td>
-    <td><a href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qlinearops</a></td>
+    <td>qlinearops</td>
     <td>33.13%</td>
     <td>33.72%</td>
     <td>-1.74%</td>
@@ -2454,7 +2454,7 @@ For more complete information about performance and benchmark results, visit www
   </tr>
   <tr>
     <td>FCN (ONNX Model Zoo)</td>
-    <td><a href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qlinearops</a></td>
+    <td>qlinearops</td>
     <td>64.54%</td>
     <td>64.98%</td>
     <td>-0.67%</td>
