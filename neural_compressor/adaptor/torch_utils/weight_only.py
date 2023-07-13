@@ -60,7 +60,7 @@ def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     return scale * (q - zp)
 
 
-def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False):
+def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_range=False):
     """Quant and dequant tensor with sym schema.
 
     Args:
@@ -69,6 +69,11 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False):
         quantile (float, optional): percentile of clip. Defaults to 1.0.
         return_int (bool, optional): Choose return fp32 or int8/uint8 data.
                                      Defaults to False.
+        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+                For example: 4 bit
+                    scale = amax / 7.5 if full_range else amax / 7
+                    If True, scale = -scale if abs(min)> abs(max) else scale
+                    Defaults to False.
 
     Returns:
         output: qdq weight
@@ -79,12 +84,18 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False):
     if num_bits == 1:
         maxq = torch.tensor(2 ** (num_bits - 1))
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
-
-    wmax = torch.abs(weight).max(1)[0]
+    max_val = torch.max(weight, 1)[0]
+    min_val = torch.min(weight, 1)[0]
+    flip_flag = torch.abs(min_val) > torch.abs(max_val)
+    wmax = torch.max(torch.abs(max_val), torch.abs(min_val))
     wmax = wmax * quantile
     tmp = (wmax == 0)
     wmax[tmp] = +1
-    scale = wmax / ((maxq - minq) / 2)
+    if full_range:
+        scale = wmax / ((maxq - minq) / 2)
+        scale = -scale if flip_flag else scale
+    else:
+        scale = wmax / maxq
     scale.unsqueeze_(dim=-1)
     q = torch.clamp(torch.round(weight / scale), minq, maxq)
     if return_int:
