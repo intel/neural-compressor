@@ -25,12 +25,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 ## Validated Quantization Examples
 
-Performance varies by use, configuration and other factors.  
 System summary: Test by Intel on 06/19/2023. 1-node, 1x Intel(R) Xeon(R) Platinum 8480+ @3.8GHz, 56 cores/socket, HT On, Turbo On, Total Memory 256GB (16x16GB DDR5 4800 MT/s [4800 MT/s]), BIOS 3A14.TEL2P1, microcode 0x2b0001b0, 
-CentOS Stream 8, gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-10), DL Models, Frameworks: Tensorflow/ONNXRT/PyTorch, Datatype: FP32/INT8/BF16.  
+CentOS Stream 8, gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-10), DL Models, Frameworks: TensorFlow/ONNXRT/PyTorch, Datatype: FP32/INT8/BF16.  
 Using 1 socket, 4 cores/instance, 14 instances and batch size 1 to benchmark most of the model.  
 Using 1 socket, 56 cores/instance, 1 instance and batch size 1 for some large models performance measurement.   
 
+Performance varies by use, configuration and other factors.  
 For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
 ### TensorFlow Models with Intel TensorFlow 2.12.0
@@ -1126,7 +1126,7 @@ For more complete information about performance and benchmark results, visit www
     <td>static</td>
     <td>4.30</td>
     <td>3.52</td>
-    <td>NA</td>
+    <td>22.06%</td>
     <td>1.03</td>
     <td>0.56</td>
     <td>1.84x</td>
@@ -1902,7 +1902,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.96x</td>
   </tr>
   <tr>
-    <td>MobileBERT SQuAD MLPerf</td>
+    <td>MobileBERT SQuAD MLPerf (ONNX Model Zoo)</td>
     <td>integerops</td>
     <td>89.87</td>
     <td>90.03</td>
@@ -1922,7 +1922,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.21x</td>
   </tr>
   <tr>
-    <td>GPT2 WikiText (HuggingFace)</td>
+    <td>GPT2 lm head WikiText (ONNX Model Zoo)</td>
     <td>integerops</td>
     <td>31.98</td>
     <td>29.00</td>
