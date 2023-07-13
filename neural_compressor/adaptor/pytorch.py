@@ -2534,6 +2534,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        ## fallback add when smoothquant is True
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
+            for k, v in tune_cfg['op'].items():
+                if k[1] == 'add':
+                    tune_cfg['op'][k] = {
+                        "weight": {"dtype": "fp32"}, 
+                        "activation": {"dtype": "fp32"}
+                    }
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and self.version.release >= Version("2.1").release \
           and not recipe_cfgs['smooth_quant_args']['folding'] \

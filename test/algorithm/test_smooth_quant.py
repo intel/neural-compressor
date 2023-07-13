@@ -657,6 +657,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 self.fc2 = torch.nn.Linear(4, 3)
 
             def forward(self, x):
+                x = x + x
                 out = self.fc1(x)
                 out = self.fc2(out)
                 return out
