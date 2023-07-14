@@ -5,6 +5,7 @@ seqeval
 tensorboard
 sentencepiece
 timm
+fvcore
 Pillow
 einops
 textdistance
