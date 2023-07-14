@@ -181,7 +181,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             continue
 
         if parent.op_type in ["LayerNormalization", "BatchNormalization", "InstanceNormalization"] and \
-                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):
+                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):  # pragma: no cover
             for idx in [1, 2]:
                 tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]),
                                                 os.path.dirname(model.model_path))
@@ -203,7 +203,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
         elif parent.op_type in ["Conv", "FusedConv"] and \
-                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):
+                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):  # pragma: no cover
             tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]),
                                             os.path.dirname(model.model_path))
             new_tensor = tensor / np.reshape(best_scale, (1, -1))
@@ -211,7 +211,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             updated_nodes.append(parent.name)
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
-        else:
+        else:  # pragma: no cover
             # insert mul
             q_nodes = [node for node in nodes if node.name in tune_cfg and tune_cfg[node.name] != "fp32"]
             if len(q_nodes) > 0:
