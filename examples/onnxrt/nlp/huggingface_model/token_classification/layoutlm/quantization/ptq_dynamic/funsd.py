@@ -5,7 +5,7 @@ import os
 
 import datasets
 
-from data_utils import load_image, normalize_bbox
+from utils import load_image, normalize_bbox
 
 
 logger = datasets.logging.get_logger(__name__)
