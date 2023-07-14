@@ -215,6 +215,10 @@ class PytorchPatternNxM(PytorchBasePattern):
         Returns:
             Data of its original shape.
         """
+        if key in self.invalid_layers:
+            return data
+        if self.keep_mask_layers.get(key, False):
+            return data
         block_size = self.block_size[key]
         data = data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
         data = self._reshape_2dims_to_orig(data, orig_shape)
@@ -258,6 +262,8 @@ class PytorchPatternNxM(PytorchBasePattern):
             current_score = scores[key]
             current_score = self.reshape_orig_to_pattern(current_score, key)
             # sum or mean is quite different for per channel pruning
+            if current_score.dtype == torch.bool:
+                current_score = current_score.float()
             current_score_sum = self.reduce_tensor(self.reduce_tensor(current_score, dim=-1), dim=1)
             new_scores[key] = current_score_sum
         return new_scores
@@ -340,9 +346,10 @@ class PytorchPatternNxM(PytorchBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            if len(scores[key].shape) == 4:  # need to permute
+            orig_shape = self.modules[key].weight.shape
+            if len(orig_shape) == 4:  # need to permute
                 mask = masks[key]
-                orig_shape = scores[key].shape
+                # orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
             layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
@@ -430,6 +437,8 @@ class PytorchPatternNxM(PytorchBasePattern):
             A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
         """
         score_or_linear = progressive_configs['progressive_type']  # "scores" or "linear"
+        for key in scores.keys():
+            scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
         if score_or_linear == "scores":
             return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores,
                                                                                  progressive_step, progressive_configs)
@@ -625,6 +634,10 @@ class KerasPatternNxM(KerasBasePattern):
         Returns:
             Data of its original shape.
         """
+        if key in self.invalid_layers:
+            return data
+        if self.keep_mask_layers.get(key, False):
+            return data
         block_size = self.block_size[key]
         data = data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
         data = self._reshape_2dims_to_orig(data, orig_shape)

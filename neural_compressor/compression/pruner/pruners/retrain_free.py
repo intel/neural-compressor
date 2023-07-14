@@ -63,7 +63,7 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
         self.masks = self.pattern.register_block_masks(self.modules)
         self.rewrite_forward()
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules, self.pattern, self.pattern)
+        self.criterion = get_criterion(self.config, self.modules, self.pattern)
         self.reg = get_reg(self.config, self.modules, self.pattern)
 
         logger.warning("Retrain-free pruner fixed the weights, please DO NOT turn on gradient update.")
@@ -142,7 +142,7 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
         with torch.no_grad():
             for key in self.masks.keys():
                 module = self.modules[key]
-                module.block_mask.data = masks[key].data
+                module.block_mask.data = masks[key].float().data
 
     def rearrange_masks(self, masks):
         """Rearrange the masks of each layer with constant sparsity."""

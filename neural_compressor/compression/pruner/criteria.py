@@ -201,8 +201,7 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 tmp = torch.abs(p * p.grad)
-                tmp = self.pattern.reshape_orig_to_pattern(tmp, key)
-                tmp = self.pattern.reduce_tensor(self.pattern.reduce_tensor(tmp, dim=-1), dim=1)
+                tmp = self.pattern.reduce_score(tmp, key)
                 if self.low_memory_usage:
                     tmp = tmp.bfloat16() if p.device.type == 'cpu' else tmp.half()
                 self.scores[key] += self.beta * tmp
@@ -236,9 +235,9 @@ class SnipMomentumBlockCriterion(PruningCriterion):
             dtype = torch.float32
             if self.low_memory_usage:
                 dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
-            # self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
-            score = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
-            self.scores[key] = self.pattern.reduce_score(score, key)
+            self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
+            # score = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
+            # self.scores[key] = self.pattern.reduce_score(score, key)
         self.alpha = alpha
         self.beta = beta
 
@@ -249,8 +248,8 @@ class SnipMomentumBlockCriterion(PruningCriterion):
                 if not hasattr(self.modules[key], 'block_mask'):
                     continue # No corresponding block mask, skip.
                 grad = self.modules[key].block_mask.grad
-                grad = self.pattern.reshape_orig_to_pattern(grad, key)
-                grad = self.pattern.reduce_tensor(self.pattern.reduce_tensor(grad, dim=-1), dim=1)
+                # grad = self.pattern.reshape_orig_to_pattern(grad, key)
+                # grad = self.pattern.reduce_tensor(self.pattern.reduce_tensor(grad, dim=-1), dim=1)
                 if self.low_memory_usage:
                     grad = grad.bfloat16() if grad.device.type == 'cpu' else grad.half()
                 self.scores[key] *= self.alpha
@@ -290,9 +289,9 @@ class RetrainFreeCriterion(PruningCriterion):
             dtype = torch.float32
             if self.low_memory_usage:
                 dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
-            # self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
-            score = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
-            self.scores[key] = self.pattern.reduce_score(score, key)
+            self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
+            # score = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
+            # self.scores[key] = self.pattern.reduce_score(score, key)
             self.collected_grads[key] = []
 
     def on_before_optimizer_step(self):
@@ -302,8 +301,8 @@ class RetrainFreeCriterion(PruningCriterion):
                 if not hasattr(self.modules[key], 'block_mask'):
                     continue # No corresponding block mask, skip.
                 mask_grad = self.modules[key].block_mask.grad.clone()
-                mask_grad = self.pattern.reshape_orig_to_pattern(mask_grad, key)
-                mask_grad = self.pattern.reduce_tensor(self.pattern.reduce_tensor(mask_grad, dim=-1), dim=1)
+                # mask_grad = self.pattern.reshape_orig_to_pattern(mask_grad, key)
+                # mask_grad = self.pattern.reduce_tensor(self.pattern.reduce_tensor(mask_grad, dim=-1), dim=1)
                 if self.low_memory_usage:
                     mask_grad = mask_grad.bfloat16() if mask_grad.device.type == 'cpu' else mask_grad.half()
                 self.collected_grads[key].append(mask_grad)

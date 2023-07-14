@@ -19,8 +19,7 @@
 import copy
 
 from neural_compressor.utils.utility import LazyImport
-from .base import (register_pruner,
-                   PytorchBasePruner)
+from .base import register_pruner, PytorchBasePruner
 from ..schedulers import get_scheduler
 from ..patterns import get_pattern
 from ..criteria import get_criterion
@@ -109,7 +108,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
         # check some problematic settings
         if self.progressive_type == "linear":
             # linear based progressive pruning, only valid for NxM pattern
-            assert type(self.pattern).__name__ == "PatternNxM", "Progressive linear pruning only support NxM."
+            assert type(self.pattern).__name__ == "PytorchPatternNxM", "Progressive linear pruning only support NxM."
             if self.use_global:
                 # when global progressive is applied, linear type is contradict.
                 raise NotImplementedError("Global progressive pruning do not support linear pattern")
@@ -123,7 +122,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
                         f"while progressive steps {self.progressive_steps} is indivisible.")
         else:
             # score based progressive pruning, support both NxM and N:M patterns
-            if type(self.pattern).__name__ == "PatternNxM":
+            if type(self.pattern).__name__ == "PytorchPatternNxM":
                 for key in self.pattern.block_size.keys():
                     block_size = self.pattern.block_size[key]
                     total_block_size = block_size[0] * block_size[1]
@@ -131,12 +130,13 @@ class PytorchProgressivePruner(PytorchBasePruner):
                         raise ValueError(
                             f"In layer {key}, its pruning pattern is {block_size}, "
                             f"while progressive steps {self.progressive_steps} is overflowing.")
-            elif type(self.pattern).__name__ == "PatternNInM":
+            elif type(self.pattern).__name__ == "PytorchPatternNInM":
                 if self.pattern.N < self.progressive_steps:
                     raise ValueError(
                         f"Pruning pattern is {self.pattern.N} in {self.pattern.M}, "
                         f"while progressive steps {self.progressive_steps} is overflowing.")
             else:
+                breakpoint()
                 raise NotImplementedError
 
     def check_is_pruned_progressive_step(self, step):
@@ -185,7 +185,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
                 # in the end, directly use new masks.
                 for n in self.masks.keys():
                     self.progressive_masks[n] = self.masks[n].clone()
-            self.mask_weights(self.progressive_masks)
+            self.mask_weights_general(self.progressive_masks)
             if self.progressive_logger:
                 self.print_progressive_sparsity()
             return
@@ -208,7 +208,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
         self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks,
                                                                        self.criterion.scores, 1,
                                                                        self.progressive_configs)
-        self.mask_weights(self.progressive_masks)
+        self.mask_weights_general(self.progressive_masks)
         if self.progressive_logger:
             self.print_progressive_sparsity()
         return
@@ -242,9 +242,22 @@ class PytorchProgressivePruner(PytorchBasePruner):
         if not self.use_progressive:
             self.mask_weights()
         else:
-            self.mask_weights(self.progressive_masks)
+            self.mask_weights_general(self.progressive_masks)
 
         self.global_step += 1
+    
+    def mask_weights_general(self, input_masks):
+        """Apply input masks to corresponding modules' weights.
+
+        Weights are multipled with input_masks.
+
+        Args:
+            input_masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
+        """
+        with torch.no_grad():
+            for key in self.modules.keys():
+                module = self.modules[key]
+                module.weight.data = module.weight.data * input_masks[key]
 
     def print_progressive_sparsity(self):
         """Output the progressive sparsity."""

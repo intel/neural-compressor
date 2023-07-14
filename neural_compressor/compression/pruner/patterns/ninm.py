@@ -209,10 +209,11 @@ class PytorchPatternNInM(PytorchBasePattern):
                 continue
             if self.keep_mask_layers.get(key, False):
                 continue
-            current_score = scores[key]
+            current_score = self.reshape_reduced_to_orig(scores[key], key, self.modules[key].weight.shape)
             mask = self.get_least_ninm_mask_from_data(current_score)
             least_ninm_masks[key] = mask
         return least_ninm_masks
+    
 
     def reduce_score(self, score, key):
         if key in self.invalid_layers:
@@ -225,7 +226,8 @@ class PytorchPatternNInM(PytorchBasePattern):
         shape = current_score_new.shape
         current_score_new = current_score_new.reshape((shape[0], shape[1]))
         # to get the sum of N scores in each block with M
-        current_score_new = current_score_new * (1.0 - mask)
+        # current_score_new = current_score_new * (1.0 - mask)
+        current_score_new = current_score_new * ~mask
         current_score_new = current_score_new.reshape(shape[0], shape[1] // M, M)
         score_sum = self.reduce_tensor(current_score_new, dim=-1)
         return score_sum
@@ -353,12 +355,12 @@ class PytorchPatternNInM(PytorchBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            if len(scores[key].shape) == 4:  # need to permute
+            orig_shape = self.modules[key].weight.grad.shape
+            if len(orig_shape) == 4:  # need to permute
                 mask = masks[key]
-                orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
-            layer_ratio = torch.sum(masks[key] is False).data.item() / masks[key].numel()
+            layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
             logger.info(f'layer {key} sparsity_ratio is {layer_ratio}')
         return masks
 
