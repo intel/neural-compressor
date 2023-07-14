@@ -77,8 +77,17 @@ class ConservativeTuneStrategy(TuneStrategy):
         logger.info(f"*** Initialize conservative tuning")
         self.acc_meet_flag = False
         self.quant_op_type_lst = ['conv', 'matmul', 'linear']
+        extend_op_type_lst = self._get_extend_op_type_lst()
+        self.quant_op_type_lst += extend_op_type_lst
         res_lst = [None] * len(self.quant_op_type_lst)
         self.quant_status = {k : v for k, v in zip(self.quant_op_type_lst, res_lst)}
+        
+    def _get_extend_op_type_lst(self):
+        extend_lst = []
+        # add 'add' to op type list when sq is on
+        if self.config.recipes.get('smooth_quant', False):
+            extend_lst.append('add')
+        return extend_lst
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
