@@ -394,7 +394,7 @@ def awq_quantize(model,
                 del output_dicts
                 dump_pairs = {}
             else:
-                dump_pairs.update(parent, absorb_pairs[parent])
+                dump_pairs.update({parent, absorb_pairs[parent]})
 
         model.add_tensors_to_outputs(org_output)
     return model
