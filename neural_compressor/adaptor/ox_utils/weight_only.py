@@ -359,7 +359,7 @@ def awq_quantize(model,
             del dataloader
 
         num_block = math.ceil(len(absorb_pairs) / n_blocks)
-        for idx, parent in absorb_pairs:
+        for idx, parent in enumerate(absorb_pairs):
             if (idx + 1) % num_block == 0 or (idx + 1) == len(absorb_pairs):
                 dump_pairs.update(parent, absorb_pairs[parent])
                 output_dicts = {}
