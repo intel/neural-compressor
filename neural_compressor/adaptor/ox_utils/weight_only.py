@@ -303,18 +303,18 @@ def awq_quantize(model,
         n_samples: calibration sample number.
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
-        n_blocks (int, optional): split model into block number to avoid OOM
+        n_blocks (int, optional): split model into block number to avoid OOM.
 
     Returns:
         model: fake quantized ONNXModel
     """
-
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     white_nodes = []
     output_dicts = {}
 
     if mse_range or mse_range:
         import onnxruntime
+        from importlib.util import find_spec
         from neural_compressor.adaptor.ox_utils.util import to_numpy
         
         so = onnxruntime.SessionOptions()
