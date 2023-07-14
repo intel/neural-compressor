@@ -1081,6 +1081,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             '1.11.0': ['Conv', 'Gather', 'MatMul', 'Gemm'],
             '1.12.0': ['Conv', 'Gather', 'MatMul', 'Gemm']}
         specific_cfg_version = self.query_handler.get_specific_cfg_version()
+        if Version(specific_cfg_version) > ONNXRT112_VERSION:
+            specific_cfg_version = '1.12.0'
         for optype, caps in optype_wise.items():
             if optype not in supported_perchannel_optypes[specific_cfg_version]:
                 for cap in caps:
