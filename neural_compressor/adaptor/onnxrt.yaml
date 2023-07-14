@@ -22,16 +22,15 @@
         'weight': {
                     'dtype': ['int'], # no need to care uint
                     'bits': [4, 3, 8], # [1-8]
-                    'granularity':['per_group', 'per_channel'],
                     'group_size': [32, -1, 1, 16, 64, 128, 256, 512, 1024], # [1-inf]
                     'scheme': ['sym', 'asym'], # sym, no ZP
-                    'algorithm': ['RTN'], # RTN, [RTN, GPTQ, AWQ,] RTN+AWQ+TEQ order
+                    'algorithm': ['RTN', 'AWQ'], # RTN, [RTN, GPTQ, AWQ,] RTN+AWQ+TEQ order
         },
         'activation': {
                     'dtype': ['fp32']
         }
     },
-    'Attention':         *cap_weight_only_matmul
+    'Attention':    *cap_weight_only_matmul
   }
   int8: &ref_1_6 {
     'static': &ref_1_6_static {
