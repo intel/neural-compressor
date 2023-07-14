@@ -16,6 +16,7 @@
 # limitations under the License.
 """WeightOnly for onnxrt adaptor."""
 
+import sys
 import os
 import math
 import copy
@@ -282,6 +283,7 @@ def awq_quantize(model,
                  n_samples=128,
                  auto_scale=True,
                  mse_range=True,
+                 n_blocks=5
                  ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -301,32 +303,98 @@ def awq_quantize(model,
         n_samples: calibration sample number.
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        n_blocks (int, optional): split model into block number to avoid OOM
 
     Returns:
         model: fake quantized ONNXModel
     """
-    from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
 
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     white_nodes = []
     output_dicts = {}
 
     if mse_range or mse_range:
+        import onnxruntime
+        from neural_compressor.adaptor.ox_utils.util import to_numpy
+        
+        so = onnxruntime.SessionOptions()
+        if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            so.register_custom_ops_library(get_library_path())
+        if model.is_large_model:
+            onnx.save_model(model.model,
+                            model.model_path + '_augment.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            convert_attribute=False)
+
+        session = onnxruntime.InferenceSession(
+                    model.model.SerializeToString(),
+                    so,
+                    providers=["CPUExecutionProvider"]) if not model.is_large_model else \
+                  onnxruntime.InferenceSession(
+                    model.model_path,
+                    so,
+                    providers=["CPUExecutionProvider"])
+        inputs_names = [i.name for i in session.get_inputs()]
+        del session
+
+        org_output = model.output()
+        model.remove_tensors_from_outputs(org_output)
+        block_num = 0
         absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
-        for parent, nodes in absorb_pairs.items():
-            white_nodes.extend([i.name for i in nodes])
+        dump_pairs = {}
+        inputs = []
+        for i, data in enumerate(dataloader):
+            if ((i + 1) * dataloader.batch_size) >= n_samples:
+                break
+            if len(inputs_names) != 1 or isinstance(data[0], dict):
+                assert len(data[0]) == len(inputs_names), "Input number mismatch, " \
+                        "require {} but get {}".format(len(inputs_names), len(data[0]))
+                
+            if isinstance(data[0], dict):
+                inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
+            else:
+                inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
+            del dataloader
 
-        augment = ONNXRTAugment(model,
-                                dataloader,
-                                [],
-                                white_nodes=white_nodes,
-                                iterations=list(range(0, math.ceil(n_samples / dataloader.batch_size))))
+        num_block = math.ceil(len(absorb_pairs) / n_blocks)
+        for idx, parent in absorb_pairs:
+            if (idx + 1) % num_block == 0 or (idx + 1) == len(absorb_pairs):
+                dump_pairs.update(parent, absorb_pairs[parent])
+                output_dicts = {}
+                dump_tensor = list(set([i.input[0] for nodes in dump_pairs.values() for i in nodes]))
+                model.add_tensors_to_outputs(dump_tensor)
 
-        augment.augment_graph(activation_only=True, weight_only=False)
+                if model.is_large_model:
+                    onnx.save_model(model.model,
+                                    model.model_path + '_augment.onnx',
+                                    save_as_external_data=True,
+                                    all_tensors_to_one_file=True,
+                                    convert_attribute=False)
 
-        _, output_dicts = augment.get_intermediate_outputs()
-        if auto_scale:
-            model, output_dicts = apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts)
-        if mse_range:
-            model = apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts)
+                session = onnxruntime.InferenceSession(
+                            model.model.SerializeToString(),
+                            so,
+                            providers=["CPUExecutionProvider"]) if not model.is_large_model else \
+                          onnxruntime.InferenceSession(
+                            model.model_path,
+                            so,
+                            providers=["CPUExecutionProvider"])
+
+                for inp in inputs:
+                    for output_idx, output in enumerate(session.run(None, inp)):
+                        output_dicts.setdefault(dump_tensor[output_idx], []).append(output)
+
+                model.remove_tensors_from_outputs(dump_tensor)
+                if auto_scale:
+                    model, output_dicts = apply_awq_scale(model, tune_cfg, dump_pairs, output_dicts)
+                if mse_range:
+                    model = apply_awq_clip(model, tune_cfg, dump_pairs, output_dicts)
+                del output_dicts
+                dump_pairs = {}
+            else:
+                dump_pairs.update(parent, absorb_pairs[parent])
+
+        model.add_tensors_to_outputs(org_output)
     return model
