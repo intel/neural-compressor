@@ -39,7 +39,7 @@ formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     '--model_path',
     type=str,
-    help="Folder path of pre-trained onnx model "
+    help="Folder path of pre-trained onnx model"
 )
 parser.add_argument(
     '--benchmark',
@@ -67,12 +67,6 @@ parser.add_argument(
     '--batch_size',
     default=1,
     type=int,
-)
-parser.add_argument(
-    '--model_name_or_path',
-    type=str,
-    help="pretrained model name or path",
-    default="decapoda-research/llama-7b-hf"
 )
 parser.add_argument(
     '--tokenizer',
@@ -125,7 +119,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 # load model
-tokenizer = LlamaTokenizer.from_pretrained(args.model_name_or_path)
+tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
 
 def tokenize_function(examples):
     example = tokenizer(examples['text'])
@@ -134,7 +128,7 @@ def tokenize_function(examples):
 def benchmark(model):
     import json
     import time
-    config = LlamaConfig.from_pretrained(args.model_name_or_path)
+    config = LlamaConfig.from_pretrained(args.model_path)
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
     sessions = ORTModelForCausalLM.load_model(
