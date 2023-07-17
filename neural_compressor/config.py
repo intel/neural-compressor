@@ -626,9 +626,29 @@ class TuningCriterion:
 
     @objective.setter
     def objective(self, objective):
+        """Set objective.
+
+        Args:
+            objective: objective name or list of objective names
+            
+        Examples:
+            objective = "performance"
+            objective = ["performance"]
+            objective = ["performance", "modelsize"]
+            objective = {
+                "objective": ["performance", "modelsize"]
+                "weight": [0.1, 0.9]
+                }
+        """
+        if isinstance(objective, list):
+            for val in objective:
+                assert _check_value('objective', val, str, ['performance', 'accuracy', 'modelsize', 'footprint'])
+            self._objective = objective
+            return
+
         if _check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
-            self._objective = objective
+            self._objective = [objective]
             return
 
         if _check_value('objective', objective, dict):
