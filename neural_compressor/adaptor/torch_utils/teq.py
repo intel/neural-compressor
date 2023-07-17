@@ -19,6 +19,7 @@
 
 from .smooth_quant import GraphTrace, get_module, set_module
 from .weight_only import quant_weight
+from .model_wrapper import TEQLinearFakeQuant, TEQMulLinear
 import torch
 from torch.functional import F
 from torch.autograd import Function
@@ -67,61 +68,6 @@ class FakeAffineTensorQuantFunction(Function):
         """
         return grad_outputs, None, None
 
-
-class WrapperLinear(torch.nn.Module):
-    """
-    wrapper quantization linear
-    """
-
-    def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1):
-        """
-        A forward hook to linear module
-        :param orig_layer: the original module
-        :param alpha: trainable alpha/scale
-        :param num_bits: quantization level
-        :param group_size: for fine-grained quantization
-        """
-        super(WrapperLinear, self).__init__()
-        self.orig_layer = orig_layer
-        self.alpha = alpha
-
-        self.num_bits = num_bits
-        self.group_size = group_size
-
-    def forward(self, x):
-        alpha = torch.clip(self.alpha, 1e-5)
-        shape_len = len(x.shape) - 1
-        shape = (1,) * shape_len + (-1,)
-        x = x / alpha.view(shape)
-        weight = self.orig_layer.weight
-        weight = weight * alpha.unsqueeze(dim=0)
-        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size)
-        return F.linear(x, weight_q, self.orig_layer.bias)
-
-class TEQLinearWrapper(torch.nn.Module):
-    """
-    Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
-    """
-
-    def __init__(self, module, input_scale):
-        """
-        A forward hook to save input max of a module
-        :param module: the linear module
-        :param input_scale: scale for input
-        """
-
-        super().__init__()
-        self.register_buffer('input_scale', input_scale)
-        self.add_module('sq_linear', module)
-
-    @property
-    def weight(self):
-        return self.sq_linear.weight
-
-    def forward(self, X):
-        X = torch.mul(X, self.input_scale)
-        X = self.sq_linear(X)
-        return X
 
 class TorchTEQ:
     """
@@ -239,7 +185,7 @@ class TorchTEQ:
             self.trained_alphas[layer_norm] = alpha
             for layer_name in self.absorb_to_layer[layer_norm]:
                 module = get_module(self.model, layer_name)
-                wrapper_module = WrapperLinear(orig_layer=module, alpha=alpha,
+                wrapper_module = TEQLinearFakeQuant(orig_layer=module, alpha=alpha,
                         num_bits=self.num_bits, group_size=self.group_size)
                 set_module(self.model, layer_name, wrapper_module)
 
@@ -247,7 +193,7 @@ class TorchTEQ:
             if isinstance(m, torch.nn.Linear) and excluded_name not in n and "orig_layer" not in n:
                 alpha = torch.nn.Parameter(torch.ones(m.weight.shape[1], device=self.device))
                 alpha.requires_grad_(False)
-                wrapper_module = WrapperLinear(orig_layer=m, alpha=alpha,
+                wrapper_module = TEQLinearFakeQuant(orig_layer=m, alpha=alpha,
                         num_bits=self.num_bits, group_size=self.group_size)
                 set_module(self.model, n, wrapper_module)
 
@@ -285,10 +231,10 @@ class TorchTEQ:
         """
         # for insert mul
         if self.insert_mul:
-            if isinstance(layer, TEQLinearWrapper):
+            if isinstance(layer, TEQMulLinear):
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
-                new_module = TEQLinearWrapper(layer, scale)
+                new_module = TEQMulLinear(layer, scale)
                 set_module(self.model, layer_name, new_module)
             return
 
@@ -352,10 +298,10 @@ class TorchTEQ:
         :param scale: The scale to be multiplied
         :return:
         """
-        if layer.__class__.__name__ == "TEQLinearWrapper":
+        if layer.__class__.__name__ == "TEQMulLinear":
             layer = layer.sq_linear
 
-        if layer.__class__.__name__ == "WrapperLinear":
+        if layer.__class__.__name__ == "TEQLinearFakeQuant":
             layer = layer.orig_layer
 
         scale = scale.view(1, scale.shape[0])
@@ -383,7 +329,7 @@ class TorchTEQ:
 
         # for insert_mul = False
         for n, m in self.model.named_modules():
-            if isinstance(m, WrapperLinear):
+            if isinstance(m, TEQLinearFakeQuant):
                 set_module(self.model, n, m.orig_layer)
 
     def _trace(self, op_types):

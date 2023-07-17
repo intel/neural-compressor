@@ -146,3 +146,60 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
         new_module = QDQLinear(module)
         set_module(tmp_model, name, new_module)
     return tmp_model
+
+
+class TEQLinearFakeQuant(torch.nn.Module):
+    """
+    wrapper quantization linear
+    """
+
+    def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1):
+        """
+        A forward hook to linear module
+        :param orig_layer: the original module
+        :param alpha: trainable alpha/scale
+        :param num_bits: quantization level
+        :param group_size: for fine-grained quantization
+        """
+        super(TEQLinearQuant, self).__init__()
+        self.orig_layer = orig_layer
+        self.alpha = alpha
+
+        self.num_bits = num_bits
+        self.group_size = group_size
+
+    def forward(self, x):
+        alpha = torch.clip(self.alpha, 1e-5)
+        shape_len = len(x.shape) - 1
+        shape = (1,) * shape_len + (-1,)
+        x = x / alpha.view(shape)
+        weight = self.orig_layer.weight
+        weight = weight * alpha.unsqueeze(dim=0)
+        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size)
+        return F.linear(x, weight_q, self.orig_layer.bias)
+
+
+class TEQMulLinear(torch.nn.Module):
+    """
+    Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
+    """
+
+    def __init__(self, module, input_scale):
+        """
+        A forward hook to save input max of a module
+        :param module: the linear module
+        :param input_scale: scale for input
+        """
+
+        super().__init__()
+        self.register_buffer('input_scale', input_scale)
+        self.add_module('sq_linear', module)
+
+    @property
+    def weight(self):
+        return self.sq_linear.weight
+
+    def forward(self, X):
+        X = torch.mul(X, self.input_scale)
+        X = self.sq_linear(X)
+        return X
