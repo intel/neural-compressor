@@ -37,7 +37,7 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |            Intel/bart-large-mrpc                |
 
 ```bash
-python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc # or other supported model identifier
+optimum-cli export onnx --model Intel/bert-base-uncased-mrpc --task text-classification <path to export onnx model>
 ```
 
 ## 3. Prepare Dataset
