@@ -139,6 +139,7 @@ class GPTQuantizer(object):
                         'bits': 4, 
                         'group_size': 32, 
                         'sym': True,
+                        'actorder': False
                         'percdamp': .01
                     }
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
@@ -151,6 +152,7 @@ class GPTQuantizer(object):
         self.wbits = 4
         self.percdamp = 0.01
         self.sym = True
+        self.actorder = False
         self.group_size = 128
         self.process_config()
         # data & device
@@ -189,6 +191,7 @@ class GPTQuantizer(object):
         self.percdamp = self.weight_config.get('perdamo', self.percdamp)
         self.sym = self.weight_config.get('sym', self.sym)
         self.group_size = self.weight_config.get('group_size', self.sym)
+        self.actorder = self.weight_config.get('actorder', self.sym)
     
     @torch.no_grad()
     def pre_quantization(self):
@@ -218,13 +221,14 @@ class GPTQuantizer(object):
             partial(forward, self.gptq_related_blocks['transformers'][0])
 
         logger.info("Collecting calibration inputs...")
+        # import pdb;pdb.set_trace()
         for batch in tqdm(self.dataloader):
             try:
                 self.model(batch[0].to(self.device))
             except ValueError:
                 pass
         logger.info("Done.")
-
+        # import pdb;pdb.set_trace()
         # restore original forward function
         self.gptq_related_blocks['transformers'][0].forward = forward_cache
 
@@ -243,8 +247,12 @@ class GPTQuantizer(object):
         self.pre_quantization()
 
         quantizers = {}
+
+        # import pdb;pdb.set_trace()
+        tblock_length = len(self.gptq_related_blocks['transformers'])
         # Triggle GPTQ algorithm block by block.
-        for block_idx in range(len(self.gptq_related_blocks['transformers'])):
+        for block_idx in range(tblock_length):
+            logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
             transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
             # trace all layers which can be quantized (Linear, Conv2d, etc.)
             sub_layers = find_layers(transformer_block)
@@ -276,7 +284,7 @@ class GPTQuantizer(object):
             
             for layer_name in sub_layers:
                 logger.info(f"Quantizing layer {layer_name}")
-                gptq_for_this_block[layer_name].fasterquant(percdamp=self.percdamp, groupsize=self.group_size)
+                gptq_for_this_block[layer_name].fasterquant(percdamp=self.percdamp, groupsize=self.group_size, actorder=self.actorder)
                 quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
 
@@ -290,6 +298,11 @@ class GPTQuantizer(object):
             torch.cuda.empty_cache()
             # iteratively replace the input with output (next block)
             self.inp, self.out = self.out, self.inp
+            print('+------------------+--------------+------------+-----------+-------+')
+            print('\n')
+        
+        # import pdb;pdb.set_trace()
+        logger.info("Quantization done")
         self.model.config.use_cache = self.use_cache
 
         return quantizers
@@ -345,6 +358,7 @@ class GPTQ:
         self.H += inp.matmul(inp.t()) # H = X*X, which should be a sysm matrix
 
     def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, actorder=False):
+        # import pdb;pdb.set_trace()
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -419,7 +433,8 @@ class GPTQ:
                 logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
                 logger.info(f"{torch.sum(Losses)}")
 
-        torch.cuda.synchronize()
+        if self.device != torch.device('cpu'):
+            torch.cuda.synchronize()
         logger.info(f'time {(time.time() - tick)}')
         logger.info(f'error {torch.sum(Losses).item()}')
 

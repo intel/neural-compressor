@@ -100,7 +100,6 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             mse_range=True, 
         )
 
-
 class TestGPTQWeightOnlyQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
