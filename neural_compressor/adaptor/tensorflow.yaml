@@ -87,7 +87,7 @@
           'weight': {
                       'dtype': ['int8'],
                       'scheme': ['sym'],
-                      'granularity': ['per_tensor', 'per_channel'],
+                      'granularity': ['per_channel'],
                       'algorithm': ['minmax']
                       },
           'activation': {
