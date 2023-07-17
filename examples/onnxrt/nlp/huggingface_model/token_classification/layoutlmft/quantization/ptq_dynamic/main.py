@@ -10,11 +10,10 @@ from typing import Optional
 import numpy as np
 from datasets import ClassLabel, load_dataset, load_metric
 
-import layoutlmft.data.datasets.funsd
+import funsd
 import transformers
-from layoutlmft.data import DataCollatorForKeyValueExtraction
-from layoutlmft.data.data_args import DataTrainingArguments
-from layoutlmft.trainers import FunsdTrainer as Trainer
+from data_utils import DataCollatorForKeyValueExtraction, DataTrainingArguments
+from trainer import FunsdTrainer as Trainer
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
@@ -28,7 +27,7 @@ from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
 import onnxruntime
 import onnx
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -184,7 +183,7 @@ def main():
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
-    datasets = load_dataset(os.path.abspath(layoutlmft.data.datasets.funsd.__file__))
+    datasets = load_dataset(os.path.abspath(funsd.__file__))
     if training_args.do_train:
         column_names = datasets["train"].column_names
         features = datasets["train"].features
@@ -456,7 +455,7 @@ def main():
                 conf = BenchmarkConfig(iteration=100,
                                         cores_per_instance=28,
                                         num_of_instance=1)
-                b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
+                b_dataloader = DataLoader(framework='onnxruntime', dataset=b_dataset, batch_size=model_args.batch_size)
                 fit(onnx_model, conf, b_dataloader=b_dataloader)
             elif model_args.mode == 'accuracy':
                 eval_f1 = eval_func(onnx_model)

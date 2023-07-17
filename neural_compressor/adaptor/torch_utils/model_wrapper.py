@@ -18,7 +18,9 @@
 """Torch.nn.Module Class Defination."""
 # Note: Do not import this file unless you have already imported torch, 
 # since the model classes inherit torch.nn.Module.
+import math
 import torch
+from torch.nn import functional as F
 from packaging.version import Version
 
 
@@ -146,3 +148,156 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
         new_module = QDQLinear(module)
         set_module(tmp_model, name, new_module)
     return tmp_model
+
+
+class WeightOnlyLinear(torch.nn.Module):
+    def __init__(self, in_features, out_features, bits, groupsize):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.bits = bits
+        self.groupsize = groupsize if groupsize != -1 else in_features
+        self.n_pack = 32 // self.bits
+
+        self.register_buffer(
+            'packed_weight', 
+            torch.zeros(
+                (out_features, math.ceil(in_features / self.n_pack)), 
+                dtype=torch.int32,
+            )
+        )
+        self.register_buffer(
+            'scale', 
+            torch.zeros(
+                (out_features, math.ceil(in_features / self.groupsize)), 
+                dtype=torch.float,
+            )
+        )
+
+    def pack(self, int_weight, scale, zp, bias):
+        if bias is not None:
+            self.register_buffer('bias', torch.zeros(self.out_features, dtype=torch.float))
+        else:
+            self.bias = None
+        self.bias = bias
+        assert scale.shape == self.scale.shape, "Scale shape is mismatched."
+        self.scale = scale
+        origin_shape = int_weight.shape
+        target_shape = self.packed_weight.shape
+        assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
+        mask = torch.tensor(2**self.bits - 1, dtype=torch.int32)
+
+        # pack weight
+        for i in range(target_shape[0]):
+            for j in range(target_shape[1]):
+                start = self.n_pack * j
+                end = self.n_pack * (j + 1)
+                tmp = int_weight[i][start: end].type(torch.int32)
+                for e in range(len(tmp)):
+                    tmp[e] &= mask
+                    tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
+                    self.packed_weight[i][j] |= tmp[e]
+
+        if zp is not None:
+            # pack zero_points
+            self.register_buffer(
+                'packed_zp', 
+                torch.zeros(
+                    (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)), 
+                    dtype=torch.int32,
+                )
+            )
+            target_shape = self.packed_zp.shape
+            for i in range(target_shape[0]):
+                for j in range(target_shape[1]):
+                    start = self.n_pack * j
+                    end = self.n_pack * (j + 1)
+                    tmp = zp[i][start: end].type(torch.int32)
+                    for e in range(len(tmp)):
+                        tmp[e] &= mask
+                        tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
+                        self.packed_zp[i][j] |= tmp[e]
+
+    def recover(self):
+        mask = torch.tensor(2**self.bits - 1, dtype=torch.int32)
+        if hasattr(self, 'packed_zp'):
+            weight_dtype = torch.uint8
+        else:
+            weight_dtype = torch.int8
+        # unpack weight
+        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype)
+        origin_shape = weight.shape
+        target_shape = self.packed_weight.shape
+        for i in range(target_shape[0]):
+            for j in range(target_shape[1]):
+                for e in range(self.n_pack):
+                    index = j * self.n_pack + e
+                    if index >= origin_shape[1]:
+                        continue
+                    tmp = self.packed_weight[i][j]
+                    tmp = tmp << 32 - self.bits * (self.n_pack - e)
+                    tmp = tmp >> 32 - self.bits
+                    if weight_dtype == torch.uint8:
+                        tmp &= mask # remove sign bit
+                    weight[i][index] = tmp.type(weight_dtype)
+        # unpack zero_point
+        if hasattr(self, 'packed_zp'):
+            zp_dtype = torch.int32 # to avoid overflow when weight-zp
+            zp = torch.zeros(self.scale.shape, dtype=zp_dtype)
+            origin_shape = zp.shape
+            target_shape = self.packed_zp.shape
+            for i in range(target_shape[0]):
+                for j in range(target_shape[1]):
+                    for e in range(self.n_pack):
+                        index = j * self.n_pack + e
+                        if index >= origin_shape[1]:
+                            continue
+                        tmp = self.packed_zp[i][j]
+                        tmp = tmp << 32 - self.bits * (self.n_pack - e)
+                        tmp = tmp >> 32 - self.bits
+                        tmp &= mask
+                        zp[i][index] = tmp.type(zp_dtype)
+            # recover fp32 weight with int_weight, scale, and zero_point
+            left_element = self.in_features % self.groupsize 
+            if left_element != 0:
+                split_index = self.in_features // self.groupsize  * self.groupsize
+                weight1 = weight[:, :-split_index].reshape(-1, self.groupsize)
+                scale1 = self.scale[:, :-1].reshape(-1, 1)
+                zp1 = zp[:, :-1].reshape(-1, 1)
+                weight1 = ((weight1 - zp1) * scale1).reshape(self.out_features, -1)
+                weight2 = weight[:, -split_index:]
+                scale2 = self.scale[:, -1:]
+                zp2 = zp[:, -1].reshape(-1, 1)
+                weight2 = ((weight2 - zp2) * scale2)
+                fp32_weight = torch.cat((weight1, weight2), dim=1)
+            else:
+                weight = weight.reshape(-1, self.groupsize)
+                scale = self.scale.reshape(-1, 1)
+                zp = zp.reshape(-1, 1)
+                fp32_weight = ((weight - zp) * scale).reshape(self.out_features, -1)
+        else:
+            # recover fp32 weight with int_weight, scale
+            left_element = self.in_features % self.groupsize 
+            if left_element != 0:
+                split_index = self.in_features // self.groupsize  * self.groupsize
+                weight1 = weight[:, :split_index].reshape(-1, self.groupsize)
+                scale1 = self.scale[:, :-1].reshape(-1, 1)
+                weight1 = (weight1 * scale1).reshape(self.out_features, -1)
+                weight2 = weight[:, split_index:]
+                scale2 = self.scale[:, -1:]
+                weight2 = (weight2 * scale2)
+                fp32_weight = torch.cat((weight1, weight2), dim=1)
+            else:
+                weight = weight.reshape(-1, self.groupsize)
+                scale = self.scale.reshape(-1, 1)
+                fp32_weight = (weight * scale).reshape(self.out_features, -1)
+        return fp32_weight
+
+    def forward(self, input):
+        weight = self.recover()
+        return F.linear(input, weight, self.bias)
+
+    def extra_repr(self) -> str:
+        return 'in_features={}, out_features={}, bits={}, group_size={}, bias={}'.format(
+            self.in_features, self.out_features, self.bits, self.groupsize, self.bias is not None
+        )

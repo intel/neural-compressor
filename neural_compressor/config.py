@@ -17,7 +17,7 @@
 """Configs for Neural Compressor 2.x."""
 import datetime
 import logging
-from schema import Schema, And, Optional
+from schema import Schema, And, Optional, Or
 from .utils import alias_param
 
 logger = logging.getLogger("neural_compressor")
@@ -28,7 +28,7 @@ QUANTMAPPING = {
     "auto": "post_training_auto_quant",
     "dynamic": "post_training_dynamic_quant",
     "static": "post_training_static_quant",
-    "qat": "quant_aware_training",
+    "weight_only": "post_training_weight_only",
 }
 
 
@@ -44,8 +44,15 @@ ops_schema = Schema({
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
+            list, # TODO: allow AWQ+GPTQ algo
+            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ',] for i in s)),
+        Optional('bits'):  And(
             list,
-            lambda s: all(i in ['minmax'] for i in s))},
+            lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
+        Optional('group_size'):  And(
+            list,
+            lambda s: all(i >= -1 and i != 0 and type(i)==int for i in s)),
+    },
     Optional('activation', default=None): {
         Optional('granularity'): And(
             list,
@@ -58,7 +65,9 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
-            lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s))}})
+            lambda s: all(i in ['minmax', 'kl', 'placeholder', 'percentile'] for i in s))
+    }
+})
 
 
 def _check_value(name, src, supported_type, supported_value=[]):
@@ -91,8 +100,28 @@ def _check_value(name, src, supported_type, supported_value=[]):
     return True
 
 
+def _list_wrapper(config):
+    """A help function to wrapper custom op_type_dict and op_name_dict items with list.
+
+    Args:
+        config (dict): op_type_dict/op_name_dict.
+            for example: {'weight': {'dtype': 'fp32'}, ...}
+
+    Returns:
+        config: new_config wrapped with list
+            for example: {'weight': {'dtype': ['fp32']}, ...}
+    """
+    for k, v in config.items():
+        # k = weight/activation
+        for m, n in v.items():
+            # m = dtype, bits, etc.
+            if not isinstance(n, list):
+                v[m] = [n]
+    return config
+
+
 class DotDict(dict):
-    """access yaml using attributes instead of using the dictionary notation.
+    """Access yaml using attributes instead of using the dictionary notation.
 
     Args:
         value (dict): The dict object to access.
@@ -254,8 +283,8 @@ class BenchmarkConfig:
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend='default',
-                 device='cpu',
+                 backend="default",
+                 device="cpu",
                  warmup=5,
                  iteration=-1,
                  model_name="",
@@ -268,7 +297,7 @@ class BenchmarkConfig:
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
-        self.device=device
+        self.device = device
         self.warmup = warmup
         self.iteration = iteration
         self.model_name = model_name
@@ -281,9 +310,9 @@ class BenchmarkConfig:
 
     def keys(self):
         """Returns keys of the dict."""
-        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration', \
-                'model_name', 'cores_per_instance', 'num_of_instance', 'framework', \
-                'inter_num_of_threads','intra_num_of_threads')
+        return ('inputs', 'outputs', 'backend', 'device', 'warmup', 'iteration',
+                'model_name', 'cores_per_instance', 'num_of_instance', 'framework',
+                'inter_num_of_threads', 'intra_num_of_threads')
 
     def __getitem__(self, item):
         """Get the dict."""
@@ -692,7 +721,7 @@ class _BaseQuantizationConfig:
                               }
                           },
                       }
-        reduce_range: Whether use 7 bit to quantization.
+        reduce_range: Whether use 7 bits to quantization.
         example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
@@ -796,6 +825,18 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def awq_args(val=None):
+            if val is not None:
+                return _check_value("awq_args", val, dict)
+            else:
+                return {}
+
+        def gptq_args(val=None):
+            if val is not None:
+                return _check_value("gptq_args", val, dict)
+            else:
+                return {}
+
         def fast_bias_correction(val=None):
             if val is not None:
                 return _check_value("fast_bias_correction", val, bool)
@@ -868,7 +909,9 @@ class _BaseQuantizationConfig:
                    "pre_post_process_quantization": pre_post_process_quantization,
                    "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
                    "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
-                   "dedicated_qdq_pair": dedicated_qdq_pair
+                   "dedicated_qdq_pair": dedicated_qdq_pair,
+                   "awq_args": awq_args,
+                   "gptq_args": gptq_args,
                    }
         self._recipes = {}
         for k in RECIPES.keys():
@@ -934,6 +977,7 @@ class _BaseQuantizationConfig:
             self._op_name_dict = op_name_dict
         elif isinstance(op_name_dict, dict):
             for k, v in op_name_dict.items():
+                v = _list_wrapper(v)
                 ops_schema.validate(v)
             self._op_name_dict = op_name_dict
         else:
@@ -950,6 +994,7 @@ class _BaseQuantizationConfig:
             self._op_type_dict = op_type_dict
         elif isinstance(op_type_dict, dict):
             for k, v in op_type_dict.items():
+                v = _list_wrapper(v)
                 ops_schema.validate(v)
             self._op_type_dict = op_type_dict
         else:
@@ -1060,7 +1105,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
-        approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic' and 'auto' method.
+        approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic', 
+                      'weight_only' and 'auto' method.
                   Default value is 'static'.
                   For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
                       or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
@@ -1097,7 +1143,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                               }
                           },
                       }
-        reduce_range: Whether use 7 bit to quantization.
+        reduce_range: Whether use 7 bits to quantization.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
@@ -1176,7 +1222,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             approach = 'static'
         if 'dynamic' in approach:
             approach = 'dynamic'
-        if _check_value("approach", approach, str, ["static", "dynamic", "auto"]):
+        if _check_value("approach", approach, str, ["static", "dynamic", "auto", "weight_only"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
@@ -1225,7 +1271,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                               }
                           },
                       }
-        reduce_range: Whether use 7 bit to quantization.
+        reduce_range: Whether use 7 bits to quantization.
         model_name: The name of the model. Default value is empty.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
@@ -1645,6 +1691,8 @@ class MixedPrecisionConfig(object):
         model_name (str, optional): The name of the model. Default value is empty.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
+        quant_level: Support auto, 0 and 1, 0 is conservative(fallback in op type wise),
+                    1(fallback in op wise), auto (default) is the combination of 0 and 1.
         tuning_criterion (TuningCriterion object, optional): Accuracy tuning settings,
                                                              it won't work if there is no accuracy tuning process.
         accuracy_criterion (AccuracyCriterion object, optional): Accuracy constraint settings,
@@ -1693,6 +1741,7 @@ class MixedPrecisionConfig(object):
                  model_name="",
                  inputs=[],
                  outputs=[],
+                 quant_level="auto",
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[],
@@ -1704,6 +1753,7 @@ class MixedPrecisionConfig(object):
         self.outputs = outputs
         self.backend = backend
         self.device = device
+        self.quant_level = quant_level
         self.excluded_precisions = excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.tuning_criterion = tuning_criterion
@@ -1741,6 +1791,16 @@ class MixedPrecisionConfig(object):
         """Set model name."""
         if _check_value("model_name", model_name, str):
             self._model_name = model_name
+
+    @property
+    def quant_level(self):
+        """Get the quantization level."""
+        return self._quant_level
+
+    @quant_level.setter
+    def quant_level(self, quant_level):
+        """Set the quantization level."""
+        self._quant_level = quant_level
 
     @property
     def accuracy_criterion(self):

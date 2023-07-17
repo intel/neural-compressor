@@ -15,13 +15,16 @@
 """Common utilities for all frontend components."""
 
 import json
-import sqlite3
 import os
 import re
-import uuid
-import pandas as pd
 import socket
-from neural_solution.utils.utility import get_task_log_workspace, dict_to_str
+import sqlite3
+import uuid
+
+import pandas as pd
+
+from neural_solution.utils.utility import dict_to_str, get_task_log_workspace
+
 
 def query_task_status(task_id, db_path):
     """Query task status according to id.
@@ -41,9 +44,12 @@ def query_task_status(task_id, db_path):
         res = cursor.fetchone()
         cursor.close()
         conn.close()
-    return {"status": res[0],
-            'optimized_result': dict_to_str(deserialize(res[1]) if res[1] else res[1]),
-            "result_path": res[2]}
+    return {
+        "status": res[0],
+        "optimized_result": dict_to_str(deserialize(res[1]) if res[1] else res[1]),
+        "result_path": res[2],
+    }
+
 
 def query_task_result(task_id, db_path, workspace):
     """Query the task result according id.
@@ -64,13 +70,13 @@ def query_task_result(task_id, db_path, workspace):
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id,))
         res = cursor.fetchone()
         cursor.close()
         conn.close()
     print(f"in query")
     if not res:
-        status  = "Please check url."
+        status = "Please check url."
     elif res[0] == "done":
         status = res[0]
         optimization_result = deserialize(res[1]) if res[1] else res[1]
@@ -84,6 +90,7 @@ def query_task_result(task_id, db_path, workspace):
         tuning_info = {"baseline": baseline, "message": tuning_result}
     result = {"status": status, "tuning_information": tuning_info, "optimization_result": optimization_result}
     return result
+
 
 def check_service_status(port_lst, service_address):
     """Check server status.
@@ -109,8 +116,8 @@ def check_service_status(port_lst, service_address):
                 sock.close()
                 continue
         except ConnectionRefusedError:
-             msg = "Ping fail! Make sure Neural Solution runner is running!"
-             break
+            msg = "Ping fail! Make sure Neural Solution runner is running!"
+            break
         except Exception as e:
             msg = "Ping fail! {}".format(e)
             break
@@ -136,16 +143,19 @@ def submit_task_to_db(task, task_submitter, db_path):
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        task_id = str(uuid.uuid4()).replace('-','')
-        sql = r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)" +\
-         r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
-             task_id,
-             task.script_url,
-             task.optimized,
-             list_to_string(task.arguments),
-             task.approach,
-             list_to_string(task.requirements),
-             task.workers)
+        task_id = str(uuid.uuid4()).replace("-", "")
+        sql = (
+            r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)"
+            + r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
+                task_id,
+                task.script_url,
+                task.optimized,
+                list_to_string(task.arguments),
+                task.approach,
+                list_to_string(task.requirements),
+                task.workers,
+            )
+        )
         cursor.execute(sql)
         conn.commit()
         try:
@@ -161,18 +171,21 @@ def submit_task_to_db(task, task_submitter, db_path):
         msg = "Task Submitted fail! db not found!"
     result["status"] = status
     result["task_id"] = task_id
-    result["msg"]=msg
+    result["msg"] = msg
     return result
+
 
 def serialize(request: dict) -> bytes:
     """Serialize a dict object to bytes for inter-process communication."""
     return json.dumps(request).encode()
 
+
 def deserialize(request: bytes) -> dict:
     """Deserialize the received bytes to a dict object."""
     return json.loads(request)
 
-def get_cluster_info(db_path:str):
+
+def get_cluster_info(db_path: str):
     """Get cluster information from database.
 
     Returns:
@@ -186,7 +199,8 @@ def get_cluster_info(db_path:str):
     conn.close()
     return {"Cluster info": rows}
 
-def get_cluster_table(db_path:str):
+
+def get_cluster_table(db_path: str):
     """Get cluster table from database.
 
     Returns:
@@ -197,10 +211,13 @@ def get_cluster_table(db_path:str):
     cursor.execute(r"select * from cluster")
     conn.commit()
     rows = cursor.fetchall()
-    df = pd.DataFrame(rows, columns=["Node", "Node info", "status","free workers", "busy workers", "total workers"])
-    html_table = df.to_html(index=False, )
+    df = pd.DataFrame(rows, columns=["Node", "Node info", "status", "free workers", "busy workers", "total workers"])
+    html_table = df.to_html(
+        index=False,
+    )
     conn.close()
     return html_table
+
 
 def get_res_during_tuning(task_id: str, task_log_path):
     """Get result during tuning.
@@ -214,8 +231,8 @@ def get_res_during_tuning(task_id: str, task_log_path):
     results = {}
     log_path = "{}/task_{}.txt".format(task_log_path, task_id)
     for line in reversed(open(log_path).readlines()):
-        res_pattern = r'Tune (\d+) result is: '
-        res_pattern = r'Tune (\d+) result is:\s.*?\(int8\|fp32\):\s+(\d+\.\d+).*?\(int8\|fp32\):\s+(\d+\.\d+).*?'
+        res_pattern = r"Tune (\d+) result is: "
+        res_pattern = r"Tune (\d+) result is:\s.*?\(int8\|fp32\):\s+(\d+\.\d+).*?\(int8\|fp32\):\s+(\d+\.\d+).*?"
         res_matches = re.findall(res_pattern, line)
         if res_matches:
             results["Tuning count"] = res_matches[0][0]
@@ -225,7 +242,8 @@ def get_res_during_tuning(task_id: str, task_log_path):
             break
 
     print("Query results: {}".format(results))
-    return  results if results else "Tune 1 running..."
+    return results if results else "Tune 1 running..."
+
 
 def get_baseline_during_tuning(task_id: str, task_log_path):
     """Get result during tuning.
@@ -248,7 +266,8 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
             break
 
     print("FP32 baseline: {}".format(results))
-    return  results if results else "Getting FP32 baseline..."
+    return results if results else "Getting FP32 baseline..."
+
 
 def check_log_exists(task_id: str, task_log_path):
     """Check whether the log file exists.
@@ -264,6 +283,7 @@ def check_log_exists(task_id: str, task_log_path):
         return True
     else:
         return False
+
 
 def list_to_string(lst: list):
     """Convert the list to a space concatenated string.

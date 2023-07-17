@@ -14,8 +14,9 @@
 
 """Neural Solution utility."""
 
-import os
 import json
+import os
+
 
 def get_db_path(workspace="./"):
     """Get the database path.
@@ -29,6 +30,7 @@ def get_db_path(workspace="./"):
     db_path = os.path.join(workspace, "db", "task.db")
     return os.path.abspath(db_path)
 
+
 def get_task_workspace(workspace="./"):
     """Get the workspace of task.
 
@@ -39,6 +41,7 @@ def get_task_workspace(workspace="./"):
         str: the workspace of task
     """
     return os.path.join(workspace, "task_workspace")
+
 
 def get_task_log_workspace(workspace="./"):
     """Get the log workspace for task.
@@ -51,6 +54,7 @@ def get_task_log_workspace(workspace="./"):
     """
     return os.path.join(workspace, "task_log")
 
+
 def get_serve_log_workspace(workspace="./"):
     """Get log workspace for service.
 
@@ -61,6 +65,7 @@ def get_serve_log_workspace(workspace="./"):
         str: the log workspace for service
     """
     return os.path.join(workspace, "serve_log")
+
 
 def dict_to_str(d):
     """Covert a dict object to a string object.

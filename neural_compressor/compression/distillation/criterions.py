@@ -881,13 +881,14 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         """
         from neural_compressor.experimental.common import torch_utils
         def register_model_forward_hook(model, path, output_process='', student=False):
-            nodes = path.split('.')
             module = model
-            for node in nodes:
-                try:
-                    module = module.__getattr__(node)
-                except:
-                    raise AttributeError('There is no path {} in the model.'.format(path))
+            if path != '':
+                nodes = path.split('.')
+                for node in nodes:
+                    try:
+                        module = module.__getattr__(node)
+                    except:
+                        raise AttributeError('There is no path {} in the model.'.format(path))
             return module.register_forward_hook(
                 torch_utils.get_activation(path, output_process, student)
             )

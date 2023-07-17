@@ -313,7 +313,15 @@ class PyTorchModel(PyTorchBaseModel):
         try:
             stat_dict = self._model.state_dict()
             if self.q_config:
-                stat_dict['best_configure'] = self.q_config
+                if self.q_config['approach'] == 'post_training_weight_only':
+                    from ..adaptor.torch_utils.util import collect_weight_info
+                    weight_config_path = os.path.join(root, "weight_config.json")
+                    weight_config = collect_weight_info(self.q_config)
+                    with open(weight_config_path, 'w') as f:
+                        json.dump(weight_config, f, indent = 4)
+                        f.close()
+                else:
+                    stat_dict['best_configure'] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
             logger.info("Save config file and weights of quantized model to {}.".format(root))
         except IOError as e:   # pragma: no cover
@@ -361,6 +369,7 @@ class PyTorchModel(PyTorchBaseModel):
 
         if conf.dtype == 'int8':
             torch_to_int8_onnx(
+                self.fp32_model,
                 self.model,
                 save_path,
                 conf.example_inputs,
@@ -384,6 +393,29 @@ class PyTorchModel(PyTorchBaseModel):
                 verbose=True,)
         else:   # pragma: no cover
             assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
+
+    def convert(self, weight_only=True, weight_config_path=None):
+        """Convert Lineat to WeightOnlyLinear for low memory inference."""
+        if weight_only:
+            from ..adaptor.torch_utils.util import fetch_module, set_module
+            from ..adaptor.torch_utils.weight_only import rtn_quantize
+            from ..adaptor.torch_utils.util import collect_weight_info
+            if weight_config_path is not None:
+                with open(weight_config_path, 'r') as f:
+                    weight_config = json.load(f)
+                f.close()
+            else:
+                weight_config = collect_weight_info(self.q_config)
+            for k, v in weight_config.items():
+                if v['dtype'] == 'fp32':
+                    continue
+                else:
+                    num_bits = v['bits']
+                    group_size = v['group_size']
+                    scheme = v['scheme']
+                mod = fetch_module(self.model, k)
+                mod = rtn_quantize(mod, num_bits, group_size, scheme, return_int=True)
+                set_module(self.model, k, mod)
 
 
 class PyTorchFXModel(PyTorchModel):
