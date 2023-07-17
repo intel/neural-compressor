@@ -98,7 +98,7 @@
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
-<p>In terms of evaluating the status of a specific model during tuning, we should have general objectives. Intel® Neural Compressor Objective supports code-free configuration through a yaml file. With built-in objectives, users can compress models with different objectives easily. In special cases, users can also register their own objective classes.</p>
+<p>In terms of evaluating the status of a specific model during tuning, we should have general objectives. Intel® Neural Compressor Objective supports code-free configuration through <code class="docutils literal notranslate"><span class="pre">neural_compressor.config.TuningCriterion</span></code>. With built-in objectives, users can compress models with different objectives easily. In special cases, users can also register their own objective classes.</p>
 <section id="single-objective">
 <h3>Single Objective<a class="headerlink" href="#single-objective" title="Permalink to this heading"></a></h3>
 <p>The objective supported by Intel® Neural Compressor is driven by accuracy. If users want to evaluate a specific model with other objectives, they can realize it with <code class="docutils literal notranslate"><span class="pre">objective</span></code> in a yaml file. Default value for <code class="docutils literal notranslate"><span class="pre">objective</span></code> is <code class="docutils literal notranslate"><span class="pre">performance</span></code>, and the other values are <code class="docutils literal notranslate"><span class="pre">modelsize</span></code> and <code class="docutils literal notranslate"><span class="pre">footprint</span></code>.</p>
