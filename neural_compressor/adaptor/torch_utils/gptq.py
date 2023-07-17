@@ -267,7 +267,7 @@ class GPTQuantizer(object):
             gptq_for_this_block = {}
             for layer_name in sub_layers:
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
-                gptq_for_this_block[layer_name].quantizer = Quantizer()
+                #gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(self.wbits,perchannel=True,sym=self.sym,mse=False)
 
             def add_batch(_name):
@@ -340,6 +340,7 @@ class GPTQ:
         self.columns = W.shape[1] # input channels
         self.H = torch.zeros((self.columns, self.columns), device=self.device)
         self.nsamples = 0
+        self.quantizer = Quantizer()
 
     def add_batch(self, inp, out):
         if DEBUG:
