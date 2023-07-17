@@ -151,7 +151,7 @@ if args.int8:
     if args.fallback_add:
         op_type_dict["add"] = {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
 
-    conf = PostTrainingQuantConfig(quant_level=0, backend='ipex', excluded_precisions=["bf16"],##use basic tuning
+    conf = PostTrainingQuantConfig(quant_level=1, backend='ipex', excluded_precisions=["bf16"],##use basic tuning
                                    recipes=recipes,
                                    op_type_dict=op_type_dict)
 

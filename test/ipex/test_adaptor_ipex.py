@@ -281,7 +281,6 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         )
         
     def test_tune_add(self):
-        # TODO move it out of 1.12
         class M(torch.nn.Module):
             def __init__(self):
                 super().__init__()
@@ -318,7 +317,6 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         )
 
     def test_tune_add_with_recipe(self):
-        # TODO move it out of 1.12
         class M(torch.nn.Module):
             def __init__(self):
                 super().__init__()
