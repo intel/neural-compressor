@@ -159,8 +159,10 @@ class GPTQuantizer(object):
         self.weight_config = weight_config
         self.wbits = 4
         self.percdamp = 0.01
-        self.sym = True
-        self.actorder = False
+        self.sym = False
+        self.actorder = True
+        self.perchannel = True
+        self.mse = False
         self.group_size = 128
         self.process_config()
         # data & device
@@ -174,7 +176,6 @@ class GPTQuantizer(object):
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
-        # import pdb;pdb.set_trace()
         # initialize buffers which are essential for gptq computation. 
         try:
             self.dtype = next(iter(self.model.parameters())).dtype
@@ -196,10 +197,12 @@ class GPTQuantizer(object):
     def process_config(self):
         """Copy arguments from weight_config to build-in attributes."""
         self.wbits = self.weight_config.get('wbits', self.wbits)
-        self.percdamp = self.weight_config.get('perdamo', self.percdamp)
+        self.percdamp = self.weight_config.get('perdamp', self.percdamp)
         self.sym = self.weight_config.get('sym', self.sym)
-        self.group_size = self.weight_config.get('group_size', self.sym)
-        self.actorder = self.weight_config.get('actorder', self.sym)
+        self.group_size = self.weight_config.get('group_size', self.group_size)
+        self.actorder = self.weight_config.get('actorder', self.actorder)
+        self.perchannel = self.weight_config.get('perchannel', self.perchannel)
+        self.mse = self.weight_config.get('mse', self.mse)
     
     @torch.no_grad()
     def pre_quantization(self):
@@ -229,14 +232,12 @@ class GPTQuantizer(object):
             partial(forward, self.gptq_related_blocks['transformers'][0])
 
         logger.info("Collecting calibration inputs...")
-        # import pdb;pdb.set_trace()
         for batch in tqdm(self.dataloader):
             try:
                 self.model(batch[0].to(self.device))
             except ValueError:
                 pass
         logger.info("Done.")
-        # import pdb;pdb.set_trace()
         # restore original forward function
         self.gptq_related_blocks['transformers'][0].forward = forward_cache
 
@@ -251,12 +252,10 @@ class GPTQuantizer(object):
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
         logger.info("Begin ====>")
-        # import pdb;pdb.set_trace()
         self.pre_quantization()
 
         quantizers = {}
 
-        # import pdb;pdb.set_trace()
         tblock_length = len(self.gptq_related_blocks['transformers'])
         # Triggle GPTQ algorithm block by block.
         for block_idx in range(tblock_length):
@@ -268,7 +267,12 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 #gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(self.wbits,perchannel=True,sym=self.sym,mse=False)
+                gptq_for_this_block[layer_name].quantizer.configure(
+                    self.wbits,
+                    perchannel=self.perchannel,
+                    sym=self.sym,
+                    mse=self.mse
+                )
 
             def add_batch(_name):
                 def tmp(_, inp, out):
@@ -313,7 +317,6 @@ class GPTQuantizer(object):
             print('+------------------+--------------+------------+-----------+-------+')
             print('\n')
         
-        # import pdb;pdb.set_trace()
         logger.info("Quantization done")
         self.model.config.use_cache = self.use_cache
 
@@ -371,7 +374,6 @@ class GPTQ:
         self.H += inp.matmul(inp.t()) # H = X*X, which should be a sysm matrix
 
     def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, actorder=False):
-        # import pdb;pdb.set_trace()
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -577,67 +579,13 @@ class Quantizer(nn.Module):
             self.scale = self.scale.unsqueeze(0)
             self.zero = self.zero.unsqueeze(0)
 
-    def quantize(self, x):
-        if self.ready():
-            return quantize(x, self.scale, self.zero, self.maxq)
-        return x
+    # def quantize(self, x):
+    #     if self.ready():
+    #         return quantize(x, self.scale, self.zero, self.maxq)
+    #     return x
 
-    def enabled(self):
-        return self.maxq > 0
+    # def enabled(self):
+    #     return self.maxq > 0
 
     def ready(self):
         return torch.all(self.scale != 0)
-#======================================================
-
-#==================dataloader related==========================
-DEFAULT_PAD_TOKEN = "[PAD]"
-DEFAULT_EOS_TOKEN = "</s>"
-DEFAULT_BOS_TOKEN = "</s>"
-DEFAULT_UNK_TOKEN = "</s>"
-PROMPT_DICT = {
-    "prompt_input": (
-        "Below is an instruction that describes a task, paired with an input that provides further context. "
-        "Write a response that appropriately completes the request.\n\n"
-        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
-    ),
-    "prompt_no_input": (
-        "Below is an instruction that describes a task. "
-        "Write a response that appropriately completes the request.\n\n"
-        "### Instruction:\n{instruction}\n\n### Response:"
-    ),
-}
-
-class GPTQLoader(object):
-    """Generate a dataloader which fits gptq inputs from user's own datasets and models (tokenizers)."""
-
-    def __init__(self, dataset, tokenizer, nsamples = 128, seqlen = 2048):
-        self.dataset = dataset # dataloader should be a iterable of text (to support more items)
-        self.tokenizer = tokenizer # transformer_tokenizers
-        self.nsamples = nsamples
-        self.seqlen = seqlen
-    
-    def get_gptq_dataloader(self, seed = 0):
-        """Generate the datasets."""
-        import random
-        random.seed(seed)
-        gptq_loader = []
-        tokenizer_config = {
-            "truncation": True,
-            "max_length": self.seqlen,
-            "return_tensors": "pt",
-            "padding": "max_length",
-        }
-        for _ in range(self.nsamples):
-            i = random.randint(0, len(self.dataset) - 1)
-            try:
-                data = self.tokenizer(self.dataset[i], **tokenizer_config).input_ids
-            except:
-                raise NotImplementedError
-            if data.shape[-1] > self.seqlen:
-                j = random.randint(0, data.shape[-1] - self.seqlen - 1)
-                k = j + self.seqlen
-                data = data[:, j:k]
-            tar = data.clone()
-            tar[:, :-1] = -100
-            gptq_loader.append((data, tar))
-        return gptq_loader 

@@ -140,8 +140,24 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         weight_config = {
             'wbits': 4,
             'group_size': 128,
+            'perchannel': True, 
+            'sym': True,
+            'percdamp': 0.01,
+            'mse': True
+        }
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        self.assertTrue(isinstance(model, torch.nn.Module))
+
+        del model
+
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            'wbits': 4,
+            'group_size': 128,
+            'perchannel': False, 
             'sym': False,
             'percdamp': 0.01,
+            'mse': False
         }
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
         self.assertTrue(isinstance(model, torch.nn.Module))
