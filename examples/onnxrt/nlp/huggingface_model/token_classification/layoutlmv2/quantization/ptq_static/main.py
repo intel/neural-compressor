@@ -634,7 +634,6 @@ def main():
         # TODO double check it for better perf
         fp32_op_names = [
             "/layoutlmv2/encoder/layer.\\d+/output/dense/MatMul",
-            "/layoutlmv2/encoder/layer.\\d+/intermediate/dense/MatMul",
         ]
         config = PostTrainingQuantConfig(
             approach="static",
@@ -649,7 +648,7 @@ def main():
             config,
             eval_func=eval_func,
             calib_dataloader=DataLoader(
-                framework="onnxruntime", dataset=calib_dataset, batch_size=32
+                framework="onnxruntime", dataset=calib_dataset, batch_size=1
             ),
         )
         q_model.save(model_args.save_path)

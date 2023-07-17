@@ -16,4 +16,6 @@ setuptools
 onnx
 onnxruntime
 onnxruntime-extensions
-detectron2
+pytesseract
+#detectron2  # TODO export require it, resolve it later
+# git+https://github.com/facebookresearch/detectron2.git
