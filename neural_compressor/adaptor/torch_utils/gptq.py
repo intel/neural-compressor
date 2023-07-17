@@ -61,9 +61,11 @@ def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
     gptq_related_blocks = {
         "embeddings": {},
         "transformers_pre": {}, # todo
-        "transformers_name": None,
-        "transformers": None,
-        "transformers": {}, # todo
+        #"transformers_name": None, # None
+        #"transformers": None, # None
+        "transformers_name": "", # None
+        "transformers": [], # None
+        "transformers_post": {}, # todo
     }
     for n, m in module.named_modules():
         if type(m) in module_types:
