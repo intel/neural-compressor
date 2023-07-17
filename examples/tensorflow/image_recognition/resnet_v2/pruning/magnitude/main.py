@@ -409,10 +409,10 @@ def evaluate(model, adaptor, eval_dataloader):
     return eval_func(model)
 
 if __name__ == '__main__':
-    train_dataloader = DataLoader(dataset=TrainDataset(), batch_size=32, 
-                                    framework='tensorflow', distributed=FLAGS.train_distributed)
-    eval_dataloader = DataLoader(dataset=EvalDataset(), batch_size=32, 
-                                    framework='tensorflow', distributed=FLAGS.evaluation_distributed)
+    train_dataloader = DataLoader(framework='tensorflow', dataset=TrainDataset(), 
+                                    batch_size=32, distributed=FLAGS.train_distributed)
+    eval_dataloader = DataLoader(framework='tensorflow', dataset=EvalDataset(), 
+                                    batch_size=32, distributed=FLAGS.evaluation_distributed)
 
     if FLAGS.prune:
         generate_pretrained_model()

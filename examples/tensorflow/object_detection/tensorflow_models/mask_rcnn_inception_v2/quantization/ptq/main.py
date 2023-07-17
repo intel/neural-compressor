@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import time
 import numpy as np
 import tensorflow as tf
 from argparse import ArgumentParser
+from neural_compressor.data import DataLoader
 from neural_compressor.metric import COCOmAPv2
-from neural_compressor.data import COCORecordDataset,ComposeTransform, \
-                LabelBalanceCOCORecordFilter,TensorflowResizeWithRatio,DataLoader
+from neural_compressor.data import COCORecordDataset,ComposeTransform
+from neural_compressor.data import LabelBalanceCOCORecordFilter,TensorflowResizeWithRatio
 
 arg_parser = ArgumentParser(description='Parse args')
 
