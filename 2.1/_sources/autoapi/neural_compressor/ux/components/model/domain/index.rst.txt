@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.domain`
+======================================================
+
+.. py:module:: neural_compressor.ux.components.model.domain
+
+.. autoapi-nested-parse::
+
+   Model domain class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.domain.Domain
+
+
+
+
+.. py:class:: Domain(domain: str = '', domain_flavour: str = '')
+
+
+
+
+   Model domain definition.
+
+

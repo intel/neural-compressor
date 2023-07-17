@@ -1,0 +1,24 @@
+:py:mod:`neural_compressor.ux.components.configuration_wizard`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.configuration_wizard
+
+.. autoapi-nested-parse::
+
+   Package contains all packages required in configuration creation process.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   configuration_parser/index.rst
+   get_boundary_nodes/index.rst
+   get_configuration/index.rst
+   params_feeder/index.rst
+   pruning_config_parser/index.rst
+
+

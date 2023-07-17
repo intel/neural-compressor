@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.utils.github_info`
+================================================
+
+.. py:module:: neural_compressor.ux.utils.github_info
+
+.. autoapi-nested-parse::
+
+   Interface for Neural Compressor github repository information.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.github_info.GithubInfo
+
+
+
+
+.. py:class:: GithubInfo
+
+
+   Class with details about Neural Compressor github repository.
+
+

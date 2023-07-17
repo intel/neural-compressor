@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.config_generator.quantization_config_generator`
+========================================================================================
+
+.. py:module:: neural_compressor.ux.components.config_generator.quantization_config_generator
+
+.. autoapi-nested-parse::
+
+   Configuration generator class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.config_generator.quantization_config_generator.QuantizationConfigGenerator
+
+
+
+
+.. py:class:: QuantizationConfigGenerator(*args: Any, **kwargs: Any)
+
+
+
+
+   Configuration generator class.
+
+

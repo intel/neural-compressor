@@ -1,0 +1,65 @@
+:py:mod:`neural_compressor.compression.pruner.model_slim.auto_slim`
+===================================================================
+
+.. py:module:: neural_compressor.compression.pruner.model_slim.auto_slim
+
+.. autoapi-nested-parse::
+
+   Auto slim.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.model_slim.auto_slim.model_slim
+   neural_compressor.compression.pruner.model_slim.auto_slim.model_slim_ffn2
+   neural_compressor.compression.pruner.model_slim.auto_slim.model_slim_mha
+   neural_compressor.compression.pruner.model_slim.auto_slim.parse_auto_slim_config
+   neural_compressor.compression.pruner.model_slim.auto_slim.generate_ffn2_pruning_config
+   neural_compressor.compression.pruner.model_slim.auto_slim.generate_mha_pruning_config
+
+
+
+.. py:function:: model_slim(model, dataloader=None, round_multiplier=32)
+
+   Slim the sparse model automatically.
+
+
+.. py:function:: model_slim_ffn2(model, dataloader=None, round_multiplier=32)
+
+   Remove some sparse part in the model permanently and obtain acceleration directly.
+
+   :param model: a sprase model.
+   :param round_multiplier: the channel number after slimming should be multiple of this number.
+   :type round_multiplier: int
+
+
+.. py:function:: model_slim_mha(model, dataloader=None)
+
+   Remove some sparse part in the model permanently and obtain acceleration directly.
+
+   :param model: a sprase model.
+
+
+.. py:function:: parse_auto_slim_config(model, dataloader=None, ffn2_sparsity=0.0, mha_sparsity=0.0, **kwargs)
+
+   Get model slim pruning configs.
+
+
+.. py:function:: generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs)
+
+   Get consecutive linear layers pruning configs.
+
+
+.. py:function:: generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs)
+
+   Get multi-head attention layers pruning configs.
+
+

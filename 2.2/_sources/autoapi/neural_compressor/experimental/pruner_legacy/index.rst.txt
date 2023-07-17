@@ -1,0 +1,28 @@
+:py:mod:`neural_compressor.experimental.pruner_legacy`
+======================================================
+
+.. py:module:: neural_compressor.experimental.pruner_legacy
+
+.. autoapi-nested-parse::
+
+   Legacy pruner module.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   gradient_sensitivity/index.rst
+   group_lasso/index.rst
+   magnitude/index.rst
+   pattern_lock/index.rst
+   pruner/index.rst
+
+
+Package Contents
+----------------
+
+

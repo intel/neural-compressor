@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.graph.node`
+====================================================
+
+.. py:module:: neural_compressor.ux.components.graph.node
+
+.. autoapi-nested-parse::
+
+   Node class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.node.Node
+   neural_compressor.ux.components.graph.node.GroupNode
+
+
+
+
+.. py:class:: Node(id: str, label: str, highlight: bool = False, properties: Dict[str, Any] = {}, attributes: List[neural_compressor.ux.components.graph.attribute.Attribute] = [], groups: List[str] = [])
+
+
+
+
+   Single Node in graph.
+
+
+.. py:class:: GroupNode(id: str, group_name: str)
+
+
+
+
+   Node being a group of Nodes in Graph.
+
+

@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.optimization.factory`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.factory
+
+.. autoapi-nested-parse::
+
+   Optimization class factory.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.factory.OptimizationFactory
+
+
+
+
+.. py:class:: OptimizationFactory
+
+
+   Optimization factory.
+
+

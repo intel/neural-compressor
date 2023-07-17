@@ -1,0 +1,73 @@
+:py:mod:`neural_compressor.experimental.data.dataloaders.tensorflow_dataloader`
+===============================================================================
+
+.. py:module:: neural_compressor.experimental.data.dataloaders.tensorflow_dataloader
+
+.. autoapi-nested-parse::
+
+   TensorFlow Dataloader implementation.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.dataloaders.tensorflow_dataloader.TFDataDataLoader
+   neural_compressor.experimental.data.dataloaders.tensorflow_dataloader.TensorflowBertDataLoader
+   neural_compressor.experimental.data.dataloaders.tensorflow_dataloader.TensorflowModelZooBertDataLoader
+   neural_compressor.experimental.data.dataloaders.tensorflow_dataloader.TensorflowDataLoader
+
+
+
+
+.. py:class:: TFDataDataLoader(dataset, batch_size=1, last_batch='rollover')
+
+
+
+
+   Tensorflow dataloader class.
+
+   In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
+   method to do session run, this dataloader is designed to satisfy the usage of feed dict
+   in tf1.x. Although it's a general dataloader and can be used in MXNet and PyTorch.
+
+   :param dataset: obj. wrapper of needed data.
+   :param batch_size: int. batch size
+
+
+.. py:class:: TensorflowBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+
+
+
+   Subclass of DefaultDataLoader.
+
+   this dataloader is designed to satisfy the usage of Bert models.
+
+
+.. py:class:: TensorflowModelZooBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+
+
+
+   Subclass of DefaultDataLoader.
+
+   this dataloader is designed to satisfy the usage of Model Zoo Bert models.
+
+
+.. py:class:: TensorflowDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+
+
+
+   DataLoader for framework Tensorflow.
+
+   if it's a tf.data.Dataset we will directly use the dataloader in the other case
+   will use DefaultDataLoader instead.
+
+

@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.gather`
+=============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.gather
+
+.. autoapi-nested-parse::
+
+   Gather Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.gather.GatherOperator
+   neural_compressor.adaptor.ox_utils.operators.gather.QGatherOperator
+
+
+
+
+.. py:class:: GatherOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Gather Operator.
+
+
+.. py:class:: QGatherOperator(onnx_node, children, initializers)
+
+
+
+
+   QGather Operator.
+
+

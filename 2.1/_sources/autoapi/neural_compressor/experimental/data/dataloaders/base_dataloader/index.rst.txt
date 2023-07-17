@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.experimental.data.dataloaders.base_dataloader`
+=========================================================================
+
+.. py:module:: neural_compressor.experimental.data.dataloaders.base_dataloader
+
+.. autoapi-nested-parse::
+
+   BaseDataloder of all dataloaders.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.dataloaders.base_dataloader.BaseDataLoader
+
+
+
+
+.. py:class:: BaseDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+
+   Base class for all DataLoaders.
+
+   _generate_dataloader is needed to create a dataloader object
+   from the general params like batch_size and sampler. The dynamic batching is just to
+   generate a new dataloader by setting batch_size and last_batch.
+
+
+

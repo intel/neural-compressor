@@ -1,0 +1,168 @@
+:py:mod:`neural_compressor.ux.utils.workload.pruning`
+=====================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.pruning
+
+.. autoapi-nested-parse::
+
+   Configuration pruning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.pruning.SGDOptimizer
+   neural_compressor.ux.utils.workload.pruning.AdamWOptimizer
+   neural_compressor.ux.utils.workload.pruning.AdamOptimizer
+   neural_compressor.ux.utils.workload.pruning.Optimizer
+   neural_compressor.ux.utils.workload.pruning.CrossEntropyLossCriterion
+   neural_compressor.ux.utils.workload.pruning.SparseCategoricalCrossentropyCriterion
+   neural_compressor.ux.utils.workload.pruning.KnowledgeDistillationLossCriterion
+   neural_compressor.ux.utils.workload.pruning.IntermediateLayersKnowledgeDistillationLoss
+   neural_compressor.ux.utils.workload.pruning.SelfKnowledgeDistillationLoss
+   neural_compressor.ux.utils.workload.pruning.Criterion
+   neural_compressor.ux.utils.workload.pruning.Train
+   neural_compressor.ux.utils.workload.pruning.WeightCompressionApproach
+   neural_compressor.ux.utils.workload.pruning.Approach
+   neural_compressor.ux.utils.workload.pruning.Pruning
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.pruning.parse_dict_value_to_float
+   neural_compressor.ux.utils.workload.pruning.parse_dict_value_to_int
+
+
+
+.. py:class:: SGDOptimizer(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration SGDOptimizer class.
+
+
+.. py:class:: AdamWOptimizer(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration AdamWOptimizer class.
+
+
+.. py:class:: AdamOptimizer(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration AdamOptimizer class.
+
+
+.. py:class:: Optimizer(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Optimizer class.
+
+
+.. py:class:: CrossEntropyLossCriterion(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration CrossEntropyLossCriterion class.
+
+
+.. py:class:: SparseCategoricalCrossentropyCriterion(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration SparseCategoricalCrossentropyCriterion class.
+
+
+.. py:class:: KnowledgeDistillationLossCriterion(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration KnowledgeDistillationLossCriterion class.
+
+
+.. py:class:: IntermediateLayersKnowledgeDistillationLoss(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration IntermediateLayersKnowledgeDistillationLoss class.
+
+
+.. py:class:: SelfKnowledgeDistillationLoss(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration SelfKnowledgeDistillationLoss class.
+
+
+.. py:class:: Criterion(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Criterion class.
+
+
+.. py:class:: Train(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Train class.
+
+
+.. py:class:: WeightCompressionApproach(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration WeightCompressionApproach class.
+
+
+.. py:class:: Approach(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Approach class.
+
+
+.. py:class:: Pruning(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Pruning class.
+
+
+.. py:function:: parse_dict_value_to_float(data: dict, key: str) -> Optional[float]
+
+   Parse value to float or None if value is None.
+
+
+.. py:function:: parse_dict_value_to_int(data: dict, key: str) -> Optional[int]
+
+   Parse value to float or None if value is None.
+
+

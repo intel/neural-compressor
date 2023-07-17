@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_conv`
+======================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_conv
+
+.. autoapi-nested-parse::
+
+   Fuse Pad into Conv Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_conv.FusePadWithConv2DOptimizer
+
+
+
+
+.. py:class:: FusePadWithConv2DOptimizer(model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False)
+
+
+
+
+   Fuse Pad op into Conv2D/DepthwiseConv2dNative/Conv3D.
+
+

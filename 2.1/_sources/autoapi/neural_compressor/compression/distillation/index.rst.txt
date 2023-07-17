@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.compression.distillation`
+====================================================
+
+.. py:module:: neural_compressor.compression.distillation
+
+.. autoapi-nested-parse::
+
+   distillation init.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   criterions/index.rst
+
+

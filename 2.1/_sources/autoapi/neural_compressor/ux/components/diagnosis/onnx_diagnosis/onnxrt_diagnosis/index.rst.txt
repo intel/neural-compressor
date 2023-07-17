@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.onnx_diagnosis.onnxrt_diagnosis`
+===================================================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.onnx_diagnosis.onnxrt_diagnosis
+
+.. autoapi-nested-parse::
+
+   The OnnxRT diagnosis class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.onnx_diagnosis.onnxrt_diagnosis.OnnxRtDiagnosis
+
+
+
+
+.. py:class:: OnnxRtDiagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
+
+
+
+
+   OnnxRuntime diagnosis class.
+
+

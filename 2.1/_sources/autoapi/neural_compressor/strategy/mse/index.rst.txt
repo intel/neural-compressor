@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.strategy.mse`
+========================================
+
+.. py:module:: neural_compressor.strategy.mse
+
+.. autoapi-nested-parse::
+
+   MSE tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.mse.MSETuneStrategy
+
+
+
+
+.. py:class:: MSETuneStrategy(model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None)
+
+
+
+
+   The tuning strategy using MSE policy in tuning space.
+
+   The MSE strategy needs to get the tensors for each OP of raw FP32 models and the quantized model based on
+   the best model-wise tuning configuration. It then calculates the MSE (Mean Squared Error) for each OP, sorts
+   those OPs according to the MSE value, and performs the op-wise fallback in this order.
+
+

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.ox_utils.util &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.util</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/ox_utils/util/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.ox_utils.util">
+<span id="neural-compressor-adaptor-ox-utils-util"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.ox_utils.util" title="neural_compressor.adaptor.ox_utils.util"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.util</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.ox_utils.util" title="Permalink to this heading"></a></h1>
+<p>Helper classes or functions for onnxrt adaptor.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantType" title="neural_compressor.adaptor.ox_utils.util.QuantType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantType</span></code></a></p></td>
+<td><p>Represent QuantType value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.ValueInfo" title="neural_compressor.adaptor.ox_utils.util.ValueInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ValueInfo</span></code></a></p></td>
+<td><p>Represents a casted tensor info.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantizedValue" title="neural_compressor.adaptor.ox_utils.util.QuantizedValue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedValue</span></code></a></p></td>
+<td><p>Represents a linearly quantized value (input/output/intializer).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantizedInitializer" title="neural_compressor.adaptor.ox_utils.util.QuantizedInitializer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedInitializer</span></code></a></p></td>
+<td><p>Represents a linearly quantized weight input from ONNX operators.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantizationMode" title="neural_compressor.adaptor.ox_utils.util.QuantizationMode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizationMode</span></code></a></p></td>
+<td><p>Represent QuantizationMode value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantizedValueType" title="neural_compressor.adaptor.ox_utils.util.QuantizedValueType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedValueType</span></code></a></p></td>
+<td><p>Represent QuantizedValueType value.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantFormat" title="neural_compressor.adaptor.ox_utils.util.QuantFormat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantFormat</span></code></a></p></td>
+<td><p>Represent QuantFormat value.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.dtype_to_name" title="neural_compressor.adaptor.ox_utils.util.dtype_to_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtype_to_name</span></code></a>(dtype_mapping, dtype)</p></td>
+<td><p>Map data type and its string representation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.make_quant_node" title="neural_compressor.adaptor.ox_utils.util.make_quant_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_quant_node</span></code></a>(name, inputs, outputs)</p></td>
+<td><p>Make a QuantizeLinear node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.make_dquant_node" title="neural_compressor.adaptor.ox_utils.util.make_dquant_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_dquant_node</span></code></a>(name, inputs, outputs[, axis])</p></td>
+<td><p>Make a DequantizeLinear node.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.is_B_transposed" title="neural_compressor.adaptor.ox_utils.util.is_B_transposed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_B_transposed</span></code></a>(node)</p></td>
+<td><p>Wheter inuput B is transposed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.split_shared_bias" title="neural_compressor.adaptor.ox_utils.util.split_shared_bias"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_shared_bias</span></code></a>(model)</p></td>
+<td><p>Split shared tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.float_to_float16" title="neural_compressor.adaptor.ox_utils.util.float_to_float16"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float_to_float16</span></code></a>(tensor)</p></td>
+<td><p>Convert float to float16.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.float_to_bfloat16" title="neural_compressor.adaptor.ox_utils.util.float_to_bfloat16"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float_to_bfloat16</span></code></a>(tensor)</p></td>
+<td><p>Convert float to bfloat16.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.cast_tensor" title="neural_compressor.adaptor.ox_utils.util.cast_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cast_tensor</span></code></a>(tensor, dtype)</p></td>
+<td><p>Convert tensor float to target dtype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input" title="neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_init_from_model_input</span></code></a>(model)</p></td>
+<td><p>Remove initializer from model input.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.collate_preds" title="neural_compressor.adaptor.ox_utils.util.collate_preds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collate_preds</span></code></a>(results)</p></td>
+<td><p>Collect model outputs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_with_scale_zero" title="neural_compressor.adaptor.ox_utils.util.quantize_data_with_scale_zero"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data_with_scale_zero</span></code></a>(data, qType, scheme, ...)</p></td>
+<td><p>Quantize data with scale and zero point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.calculate_scale_zp" title="neural_compressor.adaptor.ox_utils.util.calculate_scale_zp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_scale_zp</span></code></a>(rmin, rmax, quantize_range, qType, ...)</p></td>
+<td><p>Calculate scale and zero point.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_data" title="neural_compressor.adaptor.ox_utils.util.quantize_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data</span></code></a>(data, quantize_range, qType, scheme)</p></td>
+<td><p>Quantize data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel" title="neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data_per_channel</span></code></a>(data, axis, quantize_range, ...)</p></td>
+<td><p>Quantize tensor per-channel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero" title="neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_data_with_scale_zero</span></code></a>(tensor_value, ...)</p></td>
+<td><p>Dequantize tensor with sacale and zero point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.dequantize_data" title="neural_compressor.adaptor.ox_utils.util.dequantize_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_data</span></code></a>(tensor_value, scale_value, zo_value[, ...])</p></td>
+<td><p>Dequantize tensor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_nparray" title="neural_compressor.adaptor.ox_utils.util.quantize_nparray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_nparray</span></code></a>(qtype, arr, scale, zero_point[, low, ...])</p></td>
+<td><p>Quantize numpy array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg" title="neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attribute_to_kwarg</span></code></a>(attribute)</p></td>
+<td><p>Convert attribute to kwarg format for use with onnx.helper.make_node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.find_by_name" title="neural_compressor.adaptor.ox_utils.util.find_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_by_name</span></code></a>(name, item_list)</p></td>
+<td><p>Helper function to find item by name in a list.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.trt_env_setup" title="neural_compressor.adaptor.ox_utils.util.trt_env_setup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trt_env_setup</span></code></a>(model)</p></td>
+<td><p>Set environment variable for Tensorrt Execution Provider.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.dtype_to_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">dtype_to_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.dtype_to_name" title="Permalink to this definition"></a></dt>
+<dd><p>Map data type and its string representation.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantType</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantType" title="Permalink to this definition"></a></dt>
+<dd><p>Represent QuantType value.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.make_quant_node">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_quant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.make_quant_node" title="Permalink to this definition"></a></dt>
+<dd><p>Make a QuantizeLinear node.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.make_dquant_node">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_dquant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.make_dquant_node" title="Permalink to this definition"></a></dt>
+<dd><p>Make a DequantizeLinear node.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.is_B_transposed">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">is_B_transposed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.is_B_transposed" title="Permalink to this definition"></a></dt>
+<dd><p>Wheter inuput B is transposed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.split_shared_bias">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">split_shared_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.split_shared_bias" title="Permalink to this definition"></a></dt>
+<dd><p>Split shared tensor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.float_to_float16">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">float_to_float16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.float_to_float16" title="Permalink to this definition"></a></dt>
+<dd><p>Convert float to float16.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.float_to_bfloat16">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">float_to_bfloat16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.float_to_bfloat16" title="Permalink to this definition"></a></dt>
+<dd><p>Convert float to bfloat16.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.cast_tensor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">cast_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.cast_tensor" title="Permalink to this definition"></a></dt>
+<dd><p>Convert tensor float to target dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> (<em>TensorProto</em>) – TensorProto object</p></li>
+<li><p><strong>dtype</strong> (<em>int</em>) – target data type</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">remove_init_from_model_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input" title="Permalink to this definition"></a></dt>
+<dd><p>Remove initializer from model input.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.collate_preds">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">collate_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.collate_preds" title="Permalink to this definition"></a></dt>
+<dd><p>Collect model outputs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.quantize_data_with_scale_zero">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_data_with_scale_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_with_scale_zero" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize data with scale and zero point.</p>
+<dl class="simple">
+<dt>To pack weights, we compute a linear transformation</dt><dd><ul class="simple">
+<li><p>when data type == uint8 mode, from [rmin, rmax] -&gt; [0, 2^{b-1}] and</p></li>
+<li><dl class="simple">
+<dt>when data type == int8, from [-m , m] -&gt; [-(2^{b-1}-1), 2^{b-1}-1] where</dt><dd><p>m = max(abs(rmin), abs(rmax))</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>np.array</em>) – data to quantize</p></li>
+<li><p><strong>qType</strong> (<em>int</em>) – data type to quantize to. Supported types UINT8 and INT8</p></li>
+<li><p><strong>scheme</strong> (<em>string</em>) – sym or asym quantization.</p></li>
+<li><p><strong>scale</strong> (<em>float</em>) – computed scale of quantized data</p></li>
+<li><p><strong>zero_point</strong> (<em>uint8</em><em> or </em><em>int8</em>) – computed zero point of quantized data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.calculate_scale_zp">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">calculate_scale_zp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.calculate_scale_zp" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate scale and zero point.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.quantize_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.quantize_data" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize data.</p>
+<dl class="simple">
+<dt>To pack weights, we compute a linear transformation</dt><dd><ul class="simple">
+<li><p>when data type == uint8 mode, from [rmin, rmax] -&gt; [0, 2^{b-1}] and</p></li>
+<li><dl class="simple">
+<dt>when data type == int8, from [-m , m] -&gt; [-(2^{b-1}-1), 2^{b-1}-1] where</dt><dd><p>m = max(abs(rmin), abs(rmax))</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<p>and add necessary intermediate nodes to trasnform quantized weight to full weight
+using the equation r = S(q-z), where</p>
+<blockquote>
+<div><p>r: real original value
+q: quantized value
+S: scale
+z: zero point</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>array</em>) – data to quantize</p></li>
+<li><p><strong>quantize_range</strong> (<em>list</em>) – list of data to weight pack.</p></li>
+<li><p><strong>qType</strong> (<em>int</em>) – data type to quantize to. Supported types UINT8 and INT8</p></li>
+<li><p><strong>scheme</strong> (<em>string</em>) – sym or asym quantization.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_data_per_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize tensor per-channel.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">dequantize_data_with_scale_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zo_value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero" title="Permalink to this definition"></a></dt>
+<dd><p>Dequantize tensor with sacale and zero point.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.dequantize_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">dequantize_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zo_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.dequantize_data" title="Permalink to this definition"></a></dt>
+<dd><p>Dequantize tensor.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.ValueInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">ValueInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.ValueInfo" title="Permalink to this definition"></a></dt>
+<dd><p>Represents a casted tensor info.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantizedValue">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantizedValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_quantized_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_value_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">QuantType.QUInt8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantizedValue" title="Permalink to this definition"></a></dt>
+<dd><p>Represents a linearly quantized value (input/output/intializer).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantizedInitializer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantizedInitializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initializer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmaxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">QuantType.QUInt8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantizedInitializer" title="Permalink to this definition"></a></dt>
+<dd><p>Represents a linearly quantized weight input from ONNX operators.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantizationMode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantizationMode</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantizationMode" title="Permalink to this definition"></a></dt>
+<dd><p>Represent QuantizationMode value.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantizedValueType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantizedValueType</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantizedValueType" title="Permalink to this definition"></a></dt>
+<dd><p>Represent QuantizedValueType value.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantFormat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantFormat</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantFormat" title="Permalink to this definition"></a></dt>
+<dd><p>Represent QuantFormat value.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.quantize_nparray">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_nparray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.quantize_nparray" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize numpy array.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">attribute_to_kwarg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg" title="Permalink to this definition"></a></dt>
+<dd><p>Convert attribute to kwarg format for use with onnx.helper.make_node.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.find_by_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">find_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.find_by_name" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function to find item by name in a list.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.trt_env_setup">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">trt_env_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.2/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.trt_env_setup" title="Permalink to this definition"></a></dt>
+<dd><p>Set environment variable for Tensorrt Execution Provider.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

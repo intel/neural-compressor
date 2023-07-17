@@ -1,0 +1,11 @@
+:py:mod:`neural_compressor.strategy.utils.constant`
+===================================================
+
+.. py:module:: neural_compressor.strategy.utils.constant
+
+.. autoapi-nested-parse::
+
+   Strategy constant.
+
+
+

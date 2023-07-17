@@ -1,0 +1,47 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.adaptor`
+===========================================
+
+.. py:module:: neural_compressor.adaptor.adaptor
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.adaptor.Adaptor
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.adaptor.adaptor_registry
+
+
+
+.. py:function:: adaptor_registry(cls)
+
+   The class decorator used to register all Adaptor subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+
+
+.. py:class:: Adaptor(framework_specific_info)
+
+
+
+
+   The base class of framework adaptor layer.
+
+
+
+

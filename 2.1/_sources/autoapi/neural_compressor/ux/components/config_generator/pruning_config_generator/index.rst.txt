@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.config_generator.pruning_config_generator`
+===================================================================================
+
+.. py:module:: neural_compressor.ux.components.config_generator.pruning_config_generator
+
+.. autoapi-nested-parse::
+
+   Pruning configuration generator class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.config_generator.pruning_config_generator.PruningConfigGenerator
+
+
+
+
+.. py:class:: PruningConfigGenerator(*args: Any, **kwargs: Any)
+
+
+
+
+   PruningConfigGenerator class.
+
+

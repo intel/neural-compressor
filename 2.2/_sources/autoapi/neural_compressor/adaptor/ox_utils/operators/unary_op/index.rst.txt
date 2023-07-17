@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.unary_op`
+===============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.unary_op
+
+.. autoapi-nested-parse::
+
+   Unary operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.unary_op.UnaryOperator
+
+
+
+
+.. py:class:: UnaryOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Unary operator.
+
+

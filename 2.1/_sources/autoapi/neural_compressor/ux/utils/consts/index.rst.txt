@@ -1,0 +1,86 @@
+:py:mod:`neural_compressor.ux.utils.consts`
+===========================================
+
+.. py:module:: neural_compressor.ux.utils.consts
+
+.. autoapi-nested-parse::
+
+   Constant values.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.consts.Domains
+   neural_compressor.ux.utils.consts.DomainFlavours
+   neural_compressor.ux.utils.consts.Frameworks
+   neural_compressor.ux.utils.consts.OptimizationTypes
+   neural_compressor.ux.utils.consts.ExecutionStatus
+   neural_compressor.ux.utils.consts.Precisions
+   neural_compressor.ux.utils.consts.Strategies
+
+
+
+
+.. py:class:: Domains
+
+
+
+
+   Model domains enumeration.
+
+
+.. py:class:: DomainFlavours
+
+
+
+
+   Domain flavours enumeration.
+
+
+.. py:class:: Frameworks
+
+
+
+
+   Supported frameworks enumeration.
+
+
+.. py:class:: OptimizationTypes
+
+
+
+
+   OptimizationTypes enumeration.
+
+
+.. py:class:: ExecutionStatus
+
+
+
+
+   Executions statuses for optimizations, benchmarks and profilings.
+
+
+.. py:class:: Precisions
+
+
+
+
+   Precisions enumeration.
+
+
+.. py:class:: Strategies
+
+
+
+
+   Strategies enumeration.
+
+

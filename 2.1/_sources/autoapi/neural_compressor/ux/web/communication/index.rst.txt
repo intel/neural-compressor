@@ -1,0 +1,64 @@
+:py:mod:`neural_compressor.ux.web.communication`
+================================================
+
+.. py:module:: neural_compressor.ux.web.communication
+
+.. autoapi-nested-parse::
+
+   Objects to communicate between domain logic and outside layers.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.communication.Request
+   neural_compressor.ux.web.communication.Response
+   neural_compressor.ux.web.communication.Message
+   neural_compressor.ux.web.communication.MessageQueue
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.communication.create_simple_response
+
+
+
+.. py:class:: Request(method: str, operation: str, data: dict)
+
+
+   Domain defined parameters.
+
+
+.. py:class:: Response
+
+
+   Domain defined response.
+
+
+.. py:function:: create_simple_response(data: Union[Dict[str, Any], List[Dict[str, Any]]]) -> Response
+
+   Create new Response object with only data set.
+
+
+.. py:class:: Message(status: str, subject: str, data: Any)
+
+
+   Message used to send data to GUI.
+
+
+.. py:class:: MessageQueue
+
+
+   Queue for passing messages to GUI.
+
+

@@ -1,0 +1,37 @@
+:py:mod:`neural_compressor.ux.components.benchmark.benchmark`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.benchmark.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.benchmark.benchmark.Benchmark
+   neural_compressor.ux.components.benchmark.benchmark.DataloaderInterface
+
+
+
+
+.. py:class:: Benchmark(project_data: dict, benchmark_data: dict)
+
+
+   Benchmark class.
+
+
+.. py:class:: DataloaderInterface(dataloader_data: dict)
+
+
+   Interface for dataloader.
+
+

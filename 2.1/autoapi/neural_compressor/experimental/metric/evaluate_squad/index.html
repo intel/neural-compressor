@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.metric.evaluate_squad &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.evaluate_squad</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/metric/evaluate_squad/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.metric.evaluate_squad">
+<span id="neural-compressor-experimental-metric-evaluate-squad"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.metric.evaluate_squad" title="neural_compressor.experimental.metric.evaluate_squad"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.evaluate_squad</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.metric.evaluate_squad" title="Permalink to this heading"></a></h1>
+<p>Official evaluation script for v1.1 of the SQuAD dataset.</p>
+<p>From <a class="reference external" href="https://github.com/allenai/bi-att-flow/blob/master/squad/evaluate-v1.1.py">https://github.com/allenai/bi-att-flow/blob/master/squad/evaluate-v1.1.py</a></p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.evaluate_squad.f1_score" title="neural_compressor.experimental.metric.evaluate_squad.f1_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">f1_score</span></code></a>(prediction, ground_truth)</p></td>
+<td><p>Calculate the F1 score of the prediction and the ground_truth.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.evaluate_squad.metric_max_over_ground_truths" title="neural_compressor.experimental.metric.evaluate_squad.metric_max_over_ground_truths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metric_max_over_ground_truths</span></code></a>(metric_fn, prediction, ...)</p></td>
+<td><p>Calculate the max metric for each ground truth.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.evaluate_squad.exact_match_score" title="neural_compressor.experimental.metric.evaluate_squad.exact_match_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exact_match_score</span></code></a>(prediction, ground_truth)</p></td>
+<td><p>Compute the exact match score between prediction and ground truth.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.evaluate_squad.evaluate" title="neural_compressor.experimental.metric.evaluate_squad.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>(dataset, predictions)</p></td>
+<td><p>Evaluate the average F1 score and the exact match score for Question-Answering results.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.evaluate_squad.f1_score">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.evaluate_squad.</span></span><span class="sig-name descname"><span class="pre">f1_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prediction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/experimental/metric/evaluate_squad.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.evaluate_squad.f1_score" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the F1 score of the prediction and the ground_truth.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prediction</strong> – The predicted result.</p></li>
+<li><p><strong>ground_truth</strong> – The ground truth.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The F1 score of prediction. Float point number.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.evaluate_squad.metric_max_over_ground_truths">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.evaluate_squad.</span></span><span class="sig-name descname"><span class="pre">metric_max_over_ground_truths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truths</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/experimental/metric/evaluate_squad.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.evaluate_squad.metric_max_over_ground_truths" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the max metric for each ground truth.</p>
+<p>For each answer in ground_truths, evaluate the metric of prediction with
+this answer, and return the max metric.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metric_fn</strong> – The function to calculate the metric.</p></li>
+<li><p><strong>prediction</strong> – The prediction result.</p></li>
+<li><p><strong>ground_truths</strong> – A list of correct answers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The max metric. Float point number.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.evaluate_squad.exact_match_score">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.evaluate_squad.</span></span><span class="sig-name descname"><span class="pre">exact_match_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prediction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/experimental/metric/evaluate_squad.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.evaluate_squad.exact_match_score" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the exact match score between prediction and ground truth.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prediction</strong> – The result of predictions to be evaluated.</p></li>
+<li><p><strong>ground_truth</strong> – The ground truth.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The exact match score.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.evaluate_squad.evaluate">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.evaluate_squad.</span></span><span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/experimental/metric/evaluate_squad.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.evaluate_squad.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate the average F1 score and the exact match score for Question-Answering results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> – The dataset to evaluate the prediction. A list instance of articles.
+An article contains a list of paragraphs, a paragraph contains a list of
+question-and-answers (qas), and a question-and-answer cantains an id, a question,
+and a list of correct answers. For example:</p></li>
+<li><p><strong>predictions</strong> – The result of predictions to be evaluated. A dict mapping the id of
+a question to the predicted answer of the question.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The F1 score and the exact match score.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

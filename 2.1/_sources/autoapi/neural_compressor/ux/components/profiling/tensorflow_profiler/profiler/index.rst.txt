@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.profiling.tensorflow_profiler.profiler`
+================================================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.tensorflow_profiler.profiler
+
+.. autoapi-nested-parse::
+
+   Tensorflow profiler.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.tensorflow_profiler.profiler.Profiler
+
+
+
+
+.. py:class:: Profiler(profiling_data: dict)
+
+
+
+
+   Tensorflow profiler class.
+
+

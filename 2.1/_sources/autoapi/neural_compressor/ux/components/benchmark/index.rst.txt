@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.benchmark`
+===================================================
+
+.. py:module:: neural_compressor.ux.components.benchmark
+
+.. autoapi-nested-parse::
+
+   Package benchmark contains all packages required to benchmark model.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark/index.rst
+   benchmark_model/index.rst
+   execute_benchmark/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.benchmark.Benchmarks
+
+
+
+
+.. py:class:: Benchmarks
+
+
+   Benchmarks enumeration.
+
+

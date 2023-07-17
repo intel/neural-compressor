@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.project`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.project
+
+.. autoapi-nested-parse::
+
+   Project package contains project class representing single project.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.project.Project
+
+
+
+
+.. py:class:: Project
+
+
+
+
+   INC Bench Project class.
+
+

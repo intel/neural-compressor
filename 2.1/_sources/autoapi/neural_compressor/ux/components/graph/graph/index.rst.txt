@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.graph.graph`
+=====================================================
+
+.. py:module:: neural_compressor.ux.components.graph.graph
+
+.. autoapi-nested-parse::
+
+   Graph class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.graph.Graph
+
+
+
+
+.. py:class:: Graph
+
+
+
+
+   Model graph definition.
+
+

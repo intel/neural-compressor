@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.web.service.response_generator`
+=============================================================
+
+.. py:module:: neural_compressor.ux.web.service.response_generator
+
+.. autoapi-nested-parse::
+
+   Response generator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.response_generator.ResponseGenerator
+
+
+
+
+.. py:class:: ResponseGenerator
+
+
+   Response generator class.
+
+

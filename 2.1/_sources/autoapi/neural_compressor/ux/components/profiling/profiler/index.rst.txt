@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.profiling.profiler`
+============================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.profiler
+
+.. autoapi-nested-parse::
+
+   Generic profiler.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.profiler.Profiler
+
+
+
+
+.. py:class:: Profiler(input_graph: str)
+
+
+   Profiler class.
+
+

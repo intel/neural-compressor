@@ -1,0 +1,72 @@
+:py:mod:`neural_compressor.experimental.scheduler`
+==================================================
+
+.. py:module:: neural_compressor.experimental.scheduler
+
+.. autoapi-nested-parse::
+
+   Scheduler class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.scheduler.Scheduler
+
+
+
+
+.. py:class:: Scheduler
+
+
+
+
+   Scheduler for neural_compressor component pipeline execution.
+
+   Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.
+   This scheduler will sequentially execute specified components by the order of
+   appending. This interface provids an unique entry to pipeline execute all supported
+   components.
+
+   There are two typical usages:
+   1) if all informations are set in user configuration yaml files by using neural_compressor built-in
+      dataloaders/datasets/metrics, the code usage is like below:
+
+      prune = Pruning('/path/to/pruning.yaml')
+      quantizer = Quantization('/path/to/quantization.yaml')
+      scheduler = Scheduler()
+      scheduler.model('/path/to/model')
+      scheduler.append(prune)
+      scheduler.append(quantizer)
+      opt_model = scheduler()
+      opt_model.save()
+
+
+   2) if neural_compressor built-in dataloaders/datasets/metrics could not fully meet user requirements,
+      customized dataloaders/datasets/metrics are needed, the code usage is like below:
+
+      prune = Pruning('/path/to/pruning.yaml')
+      prune.train_func = ...                   # optional if it is configured in user yaml.
+      prune.eval_dataloader = ...                # optional if it is configured in user yaml.
+      prune.eval_func = ...                      # optional if it is configured in user yaml.
+
+      quantizer = Quantization('/path/to/quantization.yaml')
+      quantizer.metric = ...                     # optional if it is configured in user yaml.
+      quantizer.calib_dataloader = ...           # optional if it is configured in user yaml.
+      quantizer.eval_dataloader = ...            # optional if it is configured in user yaml.
+
+      scheduler = Scheduler()
+      scheduler.model('/path/to/model')
+      scheduler.append(prune)
+      scheduler.append(quantizer)
+      opt_model = scheduler()
+      opt_model.save()
+
+
+

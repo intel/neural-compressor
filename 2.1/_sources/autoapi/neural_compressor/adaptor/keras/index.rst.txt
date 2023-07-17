@@ -1,0 +1,31 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.keras`
+=========================================
+
+.. py:module:: neural_compressor.adaptor.keras
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.keras.KerasAdaptor
+
+
+
+
+.. py:class:: KerasAdaptor(framework_specific_info)
+
+
+
+
+   The keras class of framework adaptor layer.
+
+
+
+

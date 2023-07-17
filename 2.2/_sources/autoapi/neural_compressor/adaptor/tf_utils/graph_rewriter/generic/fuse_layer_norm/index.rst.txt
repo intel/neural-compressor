@@ -1,0 +1,71 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm`
+===================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm
+
+.. autoapi-nested-parse::
+
+   Fuse samll ops to LayerNorm Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.FuseLayerNormOptimizer
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.node_name_from_input
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.node_from_map
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.values_from_const
+
+
+
+.. py:class:: FuseLayerNormOptimizer(input_graph_def)
+
+
+   Remap smaller ops into fused LayerNorm.
+
+   Current fusion is only for the case, when LayerNormalization uses FusedBatcNormV3.
+   And further restrict it to only 2D or 3D tensor inputs to keras LayerNormalization api.
+
+
+.. py:function:: node_name_from_input(node_name)
+
+   Strips off ports and other decorations to get the underlying node name.
+
+
+.. py:function:: node_from_map(node_map, name)
+
+   Pulls a node def from a dictionary for a given name.
+
+   :param node_map: Dictionary containing an entry indexed by name for every node.
+   :param name: Identifies the node we want to find.
+
+   :returns: NodeDef of the node with the given name.
+
+   :raises ValueError: If the node isn't present in the dictionary.
+
+
+.. py:function:: values_from_const(node_def)
+
+   Extracts the values from a const NodeDef as a numpy ndarray.
+
+   :param node_def: Const NodeDef that has the values we want to access.
+
+   :returns: Numpy ndarray containing the values.
+
+   :raises ValueError: If the node isn't a Const.
+
+

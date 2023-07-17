@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.optimization.pruning.pruning`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.pruning.pruning
+
+.. autoapi-nested-parse::
+
+   Pruning optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.pruning.pruning.Pruning
+
+
+
+
+.. py:class:: Pruning(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+
+
+
+   Pruning optimization class.
+
+

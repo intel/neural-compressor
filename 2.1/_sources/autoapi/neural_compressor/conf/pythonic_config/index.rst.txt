@@ -1,0 +1,97 @@
+:orphan:
+
+:py:mod:`neural_compressor.conf.pythonic_config`
+================================================
+
+.. py:module:: neural_compressor.conf.pythonic_config
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.conf.pythonic_config.QuantizationConfig
+
+
+
+
+.. py:class:: QuantizationConfig(inputs=[], outputs=[], backend='default', device='cpu', approach='post_training_static_quant', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, strategy='basic', strategy_kwargs=None, objective='performance', timeout=0, max_trials=100, performance_only=False, reduce_range=None, use_bf16=True, quant_level='auto', accuracy_criterion=accuracy_criterion, use_distributed_tuning=False)
+
+
+
+
+   Basic class for quantization config. Inherited by PostTrainingQuantConfig and QuantizationAwareTrainingConfig.
+
+   :param inputs: Inputs of model, only required in tensorflow.
+   :param outputs: Outputs of model, only required in tensorflow.
+   :param backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+   :param domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                  Adaptor will use specific quantization settings for different domains automatically, and
+                  explicitly specified quantization settings will override the automatic setting.
+                  If users set domain as auto, automatic detection for domain will be executed.
+   :param recipes: Recipes for quantiztaion, support list is as below.
+                   'smooth_quant': whether do smooth quant
+                   'smooth_quant_args': parameters for smooth_quant
+                   'fast_bias_correction': whether do fast bias correction
+                   'weight_correction': whether do weight correction
+                   'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                   'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                             only valid for onnx models
+                   'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                   'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                   'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                   'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                   'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                   'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+   :param quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
+   :param device: Support 'cpu' and 'gpu'.
+   :param calibration_sampling_size: Number of calibration sample.
+   :param op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                        User can specify the quantization config by op type:
+                        example:
+                        {
+                            'Conv': {
+                                'weight': {
+                                    'dtype': ['fp32']
+                                },
+                                'activation': {
+                                    'dtype': ['fp32']
+                                }
+                            }
+                        }
+   :param op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                        User can specify the quantization config by op name:
+                        example:
+                        {
+                            "layer1.0.conv1": {
+                                "activation": {
+                                    "dtype": ["fp32"]
+                                },
+                                "weight": {
+                                    "dtype": ["fp32"]
+                                }
+                            },
+                        }
+   :param strategy: Strategy name used in tuning, Please refer to docs/source/tuning_strategies.md.
+   :param strategy_kwargs: Parameters for strategy, Please refer to docs/source/tuning_strategies.md.
+   :param objective: Objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'.
+                     Please refer to docs/source/objective.md.
+                     Default value is 'performance'.
+   :param timeout: Tuning timeout (seconds). default value is 0 which means early stop
+   :param max_trials: Max tune times. default value is 100. Combine with timeout field to decide when to exit
+   :param performance_only: Whether do evaluation
+   :param reduce_range: Whether use 7 bit to quantization.
+   :param example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
+   :param excluded_precisions: Precisions to be excluded, Default value is empty list.
+                               Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                               If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+   :param quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
+                       strategy, auto (default) is the combination of 0 and 1.
+   :param accuracy_criterion: Accuracy constraint settings.
+   :param use_distributed_tuning: Whether use distributed tuning or not.
+
+

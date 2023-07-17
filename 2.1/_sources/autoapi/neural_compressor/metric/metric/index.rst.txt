@@ -1,0 +1,429 @@
+:py:mod:`neural_compressor.metric.metric`
+=========================================
+
+.. py:module:: neural_compressor.metric.metric
+
+.. autoapi-nested-parse::
+
+   Neural Compressor metrics.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.metric.metric.Metric
+   neural_compressor.metric.metric.TensorflowMetrics
+   neural_compressor.metric.metric.PyTorchMetrics
+   neural_compressor.metric.metric.MXNetMetrics
+   neural_compressor.metric.metric.ONNXRTQLMetrics
+   neural_compressor.metric.metric.ONNXRTITMetrics
+   neural_compressor.metric.metric.METRICS
+   neural_compressor.metric.metric.BaseMetric
+   neural_compressor.metric.metric.WrapPyTorchMetric
+   neural_compressor.metric.metric.WrapMXNetMetric
+   neural_compressor.metric.metric.WrapONNXRTMetric
+   neural_compressor.metric.metric.F1
+   neural_compressor.metric.metric.Accuracy
+   neural_compressor.metric.metric.PyTorchLoss
+   neural_compressor.metric.metric.Loss
+   neural_compressor.metric.metric.MAE
+   neural_compressor.metric.metric.RMSE
+   neural_compressor.metric.metric.MSE
+   neural_compressor.metric.metric.TensorflowTopK
+   neural_compressor.metric.metric.GeneralTopK
+   neural_compressor.metric.metric.COCOmAPv2
+   neural_compressor.metric.metric.TensorflowMAP
+   neural_compressor.metric.metric.TensorflowCOCOMAP
+   neural_compressor.metric.metric.TensorflowVOCMAP
+   neural_compressor.metric.metric.SquadF1
+   neural_compressor.metric.metric.mIOU
+   neural_compressor.metric.metric.ONNXRTGLUE
+   neural_compressor.metric.metric.ROC
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.metric.metric.metric_registry
+
+
+
+.. py:class:: Metric(metric_cls, name='user_metric', **kwargs)
+
+
+
+
+   A wrapper of the information needed to construct a Metric.
+
+   The metric class should take the outputs of the model as the metric's inputs,
+   neural_compressor built-in metric always take (predictions, labels) as inputs, it's
+   recommended to design metric_cls to take (predictions, labels) as inputs.
+
+
+.. py:class:: TensorflowMetrics
+
+
+
+
+   Tensorflow metrics collection.
+
+   .. attribute:: metrics
+
+      A dict to maintain all metrics for Tensorflow model.
+
+
+.. py:class:: PyTorchMetrics
+
+
+
+
+   PyTorch metrics collection.
+
+   .. attribute:: metrics
+
+      A dict to maintain all metrics for PyTorch model.
+
+
+.. py:class:: MXNetMetrics
+
+
+
+
+   MXNet metrics collection.
+
+   .. attribute:: metrics
+
+      A dict to maintain all metrics for MXNet model.
+
+
+.. py:class:: ONNXRTQLMetrics
+
+
+
+
+   ONNXRT QLinear metrics collection.
+
+   .. attribute:: metrics
+
+      A dict to maintain all metrics for ONNXRT QLinear model.
+
+
+.. py:class:: ONNXRTITMetrics
+
+
+
+
+   ONNXRT Integer metrics collection.
+
+   .. attribute:: metrics
+
+      A dict to maintain all metrics for ONNXRT Integer model.
+
+
+.. py:class:: METRICS(framework: str)
+
+
+
+
+   Intel Neural Compressor Metrics.
+
+   .. attribute:: metrics
+
+      The collection of registered metrics for the specified framework.
+
+
+.. py:function:: metric_registry(metric_type: str, framework: str)
+
+   Decorate for registering all Metric subclasses.
+
+   The cross-framework metric is supported by specifying the framework param
+   as one of tensorflow, pytorch, mxnet, onnxrt.
+
+   :param metric_type: The metric type.
+   :param framework: The framework name.
+
+   :returns: The function to register metric class.
+   :rtype: decorator_metric
+
+
+.. py:class:: BaseMetric(metric, single_output=False, hvd=None)
+
+
+
+
+   The base class of Metric.
+
+
+.. py:class:: WrapPyTorchMetric(metric, single_output=False, hvd=None)
+
+
+
+
+   The wrapper of Metric class for PyTorch.
+
+
+.. py:class:: WrapMXNetMetric(metric, single_output=False, hvd=None)
+
+
+
+
+   The wrapper of Metric class for MXNet.
+
+
+.. py:class:: WrapONNXRTMetric(metric, single_output=False, hvd=None)
+
+
+
+
+   The wrapper of Metric class for ONNXRT.
+
+
+.. py:class:: F1
+
+
+
+
+   F1 score of a binary classification problem.
+
+   The F1 score is the harmonic mean of the precision and recall.
+   It can be computed with the equation:
+   F1 = 2 * (precision * recall) / (precision + recall)
+
+
+.. py:class:: Accuracy
+
+
+
+
+   The Accuracy for the classification tasks.
+
+   The accuracy score is the proportion of the total number of predictions
+   that were correct classified.
+
+   .. attribute:: pred_list
+
+      List of prediction to score.
+
+   .. attribute:: label_list
+
+      List of labels to score.
+
+   .. attribute:: sample
+
+      The total number of samples.
+
+
+.. py:class:: PyTorchLoss
+
+
+   A dummy PyTorch Metric.
+
+   A dummy metric that computes the average of predictions and prints it directly.
+
+
+.. py:class:: Loss
+
+
+
+
+   A dummy Metric.
+
+   A dummy metric that computes the average of predictions and prints it directly.
+
+   .. attribute:: sample
+
+      The number of samples.
+
+   .. attribute:: sum
+
+      The sum of prediction.
+
+
+.. py:class:: MAE(compare_label=True)
+
+
+
+
+   Computes Mean Absolute Error (MAE) loss.
+
+   Mean Absolute Error (MAE) is the mean of the magnitude of
+   difference between the predicted and actual numeric values.
+
+   .. attribute:: pred_list
+
+      List of prediction to score.
+
+   .. attribute:: label_list
+
+      List of references corresponding to the prediction result.
+
+   .. attribute:: compare_label
+
+      Whether to compare label. False if there are no
+      labels and will use FP32 preds as labels.
+
+      :type: bool
+
+
+.. py:class:: RMSE(compare_label=True)
+
+
+
+
+   Computes Root Mean Squared Error (RMSE) loss.
+
+   .. attribute:: mse
+
+      The instance of MSE Metric.
+
+
+.. py:class:: MSE(compare_label=True)
+
+
+
+
+   Computes Mean Squared Error (MSE) loss.
+
+   Mean Squared Error(MSE) represents the average of the squares of errors.
+   For example, the average squared difference between the estimated values
+   and the actual values.
+
+   .. attribute:: pred_list
+
+      List of prediction to score.
+
+   .. attribute:: label_list
+
+      List of references corresponding to the prediction result.
+
+   .. attribute:: compare_label
+
+      Whether to compare label. False if there are no labels
+      and will use FP32 preds as labels.
+
+      :type: bool
+
+
+.. py:class:: TensorflowTopK(k=1)
+
+
+
+
+   Compute Top-k Accuracy classification score for Tensorflow model.
+
+   This metric computes the number of times where the correct label is among
+   the top k labels predicted.
+
+   .. attribute:: k
+
+      The number of most likely outcomes considered to find the correct label.
+
+      :type: int
+
+   .. attribute:: num_correct
+
+      The number of predictions that were correct classified.
+
+   .. attribute:: num_sample
+
+      The total number of predictions.
+
+
+.. py:class:: GeneralTopK(k=1)
+
+
+
+
+   Compute Top-k Accuracy classification score.
+
+   This metric computes the number of times where the correct label is among
+   the top k labels predicted.
+
+   .. attribute:: k
+
+      The number of most likely outcomes considered to find the correct label.
+
+      :type: int
+
+   .. attribute:: num_correct
+
+      The number of predictions that were correct classified.
+
+   .. attribute:: num_sample
+
+      The total number of predictions.
+
+
+.. py:class:: COCOmAPv2(anno_path=None, iou_thrs='0.5:0.05:0.95', map_points=101, map_key='DetectionBoxes_Precision/mAP', output_index_mapping={'num_detections': -1, 'boxes': 0, 'scores': 1, 'classes': 2})
+
+
+
+
+   Compute mean average precision of the detection task.
+
+
+.. py:class:: TensorflowMAP(anno_path=None, iou_thrs=0.5, map_points=0, map_key='DetectionBoxes_Precision/mAP')
+
+
+
+
+   Computes mean average precision.
+
+
+.. py:class:: TensorflowCOCOMAP(anno_path=None, iou_thrs=None, map_points=None, map_key='DetectionBoxes_Precision/mAP')
+
+
+
+
+   Computes mean average precision using algorithm in COCO.
+
+
+.. py:class:: TensorflowVOCMAP(anno_path=None, iou_thrs=None, map_points=None, map_key='DetectionBoxes_Precision/mAP')
+
+
+
+
+   Computes mean average precision using algorithm in VOC.
+
+
+.. py:class:: SquadF1
+
+
+
+
+   Evaluate for v1.1 of the SQuAD dataset.
+
+
+.. py:class:: mIOU(num_classes=21)
+
+
+
+
+   Compute the mean IOU(Intersection over Union) score.
+
+
+.. py:class:: ONNXRTGLUE(task='mrpc')
+
+
+
+
+   Compute the GLUE score.
+
+
+.. py:class:: ROC(task='dlrm')
+
+
+
+
+   Computes ROC score.
+
+

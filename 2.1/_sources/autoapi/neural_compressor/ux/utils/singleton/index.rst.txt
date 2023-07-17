@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.utils.singleton`
+==============================================
+
+.. py:module:: neural_compressor.ux.utils.singleton
+
+.. autoapi-nested-parse::
+
+   Singleton decorator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.singleton.Singleton
+
+
+
+
+.. py:class:: Singleton
+
+
+
+
+   Singleton class.
+
+

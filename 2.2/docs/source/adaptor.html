@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adaptor &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Adaptor</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/adaptor.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="adaptor">
+<h1>Adaptor<a class="headerlink" href="#adaptor" title="Permalink to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#adaptor-support-matrix">Adaptor Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#working-flow">Working Flow</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-adaptor-api">Get Started with Adaptor API</a></p>
+<p>4.1 <a class="reference external" href="#query-api">Query API</a></p>
+</li>
+<li><p><a class="reference external" href="#example-of-adding-a-new-backend-support">Example of adding a new backend support</a></p>
+<p>5.1 <a class="reference external" href="#capability">Capability</a></p>
+<p>5.2 <a class="reference external" href="#implement-onnxrtadaptor-class">Implement ONNXRTAdaptor Class</a></p>
+</li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Intel® Neural Compressor builds the low-precision inference
+solution on popular deep learning frameworks such as TensorFlow, PyTorch,
+MXNet, and ONNX Runtime. The adaptor layer is the bridge between the
+tuning strategy and vanilla framework quantization APIs.</p>
+</section>
+<section id="adaptor-support-matrix">
+<h2>Adaptor Support Matrix<a class="headerlink" href="#adaptor-support-matrix" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Framework</th>
+<th style="text-align: center;">Adaptor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TensorFlow</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>ONNX</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>MXNet</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="working-flow">
+<h2>Working Flow<a class="headerlink" href="#working-flow" title="Permalink to this heading"></a></h2>
+<p>Adaptor only provide framework API for tuning strategy. So we can find complete working flow in <a class="reference internal" href="tuning_strategies.html"><span class="doc">tuning strategy working flow</span></a>.</p>
+</section>
+<section id="get-started-with-adaptor-api">
+<h2>Get Started with Adaptor API<a class="headerlink" href="#get-started-with-adaptor-api" title="Permalink to this heading"></a></h2>
+<p>Neural Compressor supports a new adaptor extension by
+implementing a subclass <code class="docutils literal notranslate"><span class="pre">Adaptor</span></code> class in the neural_compressor.adaptor package
+and registering this adaptor by the <code class="docutils literal notranslate"><span class="pre">adaptor_registry</span></code> decorator.</p>
+<p>For example, a user can implement an <code class="docutils literal notranslate"><span class="pre">Abc</span></code> adaptor like below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@adaptor_registry</span>
+<span class="k">class</span> <span class="nc">AbcAdaptor</span><span class="p">(</span><span class="n">Adaptor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">framework_specific_info</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">query_fused_patterns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">quantize</span></code> function is used to perform quantization for post-training quantization and quantization-aware training. Quantization processing includes calibration and conversion processing for post-training quantization, while for quantization-aware training, it includes training and conversion processing.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function is used to run an evaluation on a validation dataset. It is a built-in function, if user wants to use specific evaluation function, he can pass the evaluation function to quantizer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">query_fw_capability</span></code> function is used to run a query framework quantization capability and intersects with the user yaml configuration.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">query_fused_patterns</span></code> function is used to run a query framework graph fusion capability and decide the fusion tuning space.</p></li>
+</ul>
+<section id="query-api">
+<h3>Query API<a class="headerlink" href="#query-api" title="Permalink to this heading"></a></h3>
+<section id="background">
+<h4>Background<a class="headerlink" href="#background" title="Permalink to this heading"></a></h4>
+<p>Besides the adaptor API, we also introduced the Query API which describes the
+behavior of a specific framework. With this API, Neural Compressor can easily query the
+following information on the current runtime framework.</p>
+<ul class="simple">
+<li><p>The runtime version information.</p></li>
+<li><p>The Quantizable ops type.</p></li>
+<li><p>The supported sequence of each quantizable op.</p></li>
+<li><p>The instance of each sequence.</p></li>
+</ul>
+<p>In the past, the above information was generally defined and hidden in every corner of the code which made effective maintenance difficult. With the Query API, we only need to create one unified yaml file and call the corresponding API to get the information. For example, the <a class="reference external" href="../neural_compressor/adaptor/tensorflow.yaml">tensorflow.yaml</a> keeps the current Tensorflow framework ability. We recommend that the end user not make modifications if requirements are not clear.</p>
+<p>Below is a fragment of the Tensorflow configuration file.</p>
+<ul class="simple">
+<li><p><strong>precisions</strong> field defines the supported precision for Neural Compressor.</p>
+<ul>
+<li><p>valid_mixed_precision enumerates all supported precision combinations for specific scenario. For example, if one hardware doesn’t support bf16， it should be <code class="docutils literal notranslate"><span class="pre">int8</span> <span class="pre">+</span> <span class="pre">fp32</span></code>.</p></li>
+</ul>
+</li>
+<li><p><strong>ops</strong> field defines the valid OP type list for each precision.</p></li>
+<li><p><strong>capabilities</strong> field focuses on the quantization ability of specific ops such as granularity, scheme, and algorithm. The activation assumes the same data type for both input and output activation by default based on op semantics defined by frameworks.</p></li>
+<li><p><strong>patterns</strong> field defines the supported fusion sequence of each op.</p></li>
+</ul>
+</section>
+<section id="query-api-introduction">
+<h4>Query API Introduction<a class="headerlink" href="#query-api-introduction" title="Permalink to this heading"></a></h4>
+<p>The abstract class <code class="docutils literal notranslate"><span class="pre">QueryBackendCapability</span></code> is defined in <a class="reference external" href="../neural_compressor/adaptor/query.py#L21">query.py</a>. Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation <a class="reference external" href="../neural_compressor/adaptor/tensorflow.py#L628">TensorflowQuery</a>.</p>
+</section>
+</section>
+</section>
+<section id="example-of-adding-a-new-backend-support">
+<h2>Example of Adding a New Backend Support<a class="headerlink" href="#example-of-adding-a-new-backend-support" title="Permalink to this heading"></a></h2>
+<p>Look at onnxruntime as an example. ONNX Runtime is a backend proposed by Microsoft, and is based on the MLAS kernel by default.
+Onnxruntime already has <a class="reference external" href="https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/python/tools/quantization">quantization tools</a>, so the question becomes how to integrate onnxruntime quantization tools into Neural Compressor.</p>
+<section id="capability">
+<h3>Capability<a class="headerlink" href="#capability" title="Permalink to this heading"></a></h3>
+<p>The user should explore quantization capability first. According to <a class="reference external" href="https://github.com/microsoft/onnxruntime/blob/503b61d897074a494f5798069308ee67d8fb9ace/onnxruntime/python/tools/quantization/onnx_quantizer.py#L76">onnx_quantizer</a>, the quantization tools support the following attributes:</p>
+<ul class="simple">
+<li><p>whether per_channel</p></li>
+<li><p>whether reduce_range</p></li>
+<li><p>QLinear mode, QDQ mode or Integer mode (which is only seen in onnxruntime)</p></li>
+<li><p>whether static (static quantization or dynamic quantization)</p></li>
+<li><p>weight_qtype (choices are float32, int8 and uint8)</p></li>
+<li><p>input_qtype (choices are float32, int8 and uint8)</p></li>
+<li><p>quantization_params (None if dynamic quantization)</p></li>
+<li><p>nodes_to_quantize, nodes_to_exclude</p></li>
+<li><p>op_types_to_quantize</p></li>
+</ul>
+<p>We define three configuration files to describe the capability of ONNXRT. Please refer to <a class="reference external" href="../neural_compressor/adaptor/onnxrt_qlinear.yaml">onnxrt_qlinear.yaml</a>, <a class="reference external" href="../neural_compressor/adaptor/onnxrt_integer.yaml">onnxrt_integer.yaml</a> and <a class="reference external" href="../neural_compressor/adaptor/onnxrt_qdq.yaml">onnxrt_qdq.yaml</a>.</p>
+</section>
+<section id="implement-onnxrtadaptor-class">
+<h3>Implement ONNXRTAdaptor Class<a class="headerlink" href="#implement-onnxrtadaptor-class" title="Permalink to this heading"></a></h3>
+<p>The base class ONNXRTAdaptor inherits from the Adaptor class. Please refer to <a class="reference external" href="../neural_compressor/adaptor/onnxrt.py">onnxrt.py</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="nd">@adaptor_registry</span>
+ <span class="k">class</span> <span class="nc">ONNXRT_QLinearOpsAdaptor</span><span class="p">(</span><span class="n">ONNXRTAdaptor</span><span class="p">):</span>
+   <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass quantize model&quot;</span><span class="p">)</span>
+   <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass recover model&quot;</span><span class="p">)</span>
+   <span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">q_config</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="k">def</span> <span class="nf">inspect_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">op_list</span><span class="o">=</span><span class="p">[],</span>
+                    <span class="n">iteration_list</span><span class="o">=</span><span class="p">[],</span>
+                    <span class="n">inspect_type</span><span class="o">=</span><span class="s1">&#39;activation&#39;</span><span class="p">,</span>
+                    <span class="n">save_to_disk</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">quantization_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="k">def</span> <span class="nf">set_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">tensor_dict</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_graph</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+              <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fp32_baseline</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="k">def</span> <span class="nf">diagnosis_helper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp32_model</span><span class="p">,</span> <span class="n">int8_model</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+     <span class="o">......</span>
+
+   <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+     <span class="o">......</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

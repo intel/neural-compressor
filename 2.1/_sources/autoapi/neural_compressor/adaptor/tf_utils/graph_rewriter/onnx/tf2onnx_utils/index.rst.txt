@@ -1,0 +1,187 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils`
+==============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils
+
+.. autoapi-nested-parse::
+
+   Utils for Tensorflow model converting to ONNX model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.SeqType
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.set_name
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.find_opset
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.assert_error
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.map_numpy_to_onnx_dtype
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.map_onnx_to_numpy_type
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.add_port_to_name
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.get_tensorflow_node_attr
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.get_tensorflow_tensor_shape
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.get_tensorflow_node_shape_attr
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.map_tensorflow_dtype
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.get_tensorflow_tensor_data
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.convert_tensorflow_tensor_to_onnx
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.read_tensorflow_node_attrs
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.infer_onnx_shape_dtype
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.make_onnx_shape
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.make_onnx_inputs_outputs
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.save_protobuf
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.is_onnx_domain
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.is_list_or_tuple
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.are_shapes_equal
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.get_subgraphs_from_onnx
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.initialize_name_counter
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.get_index_from_strided_slice_of_shape
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.compute_const_folding_using_tf
+
+
+
+.. py:function:: set_name(name)
+
+   Set op name for inserted ops.
+
+
+.. py:function:: find_opset(opset)
+
+   Find opset.
+
+
+.. py:function:: assert_error(bool_val, error_msg, *args)
+
+   Raise error message.
+
+
+.. py:function:: map_numpy_to_onnx_dtype(np_dtype)
+
+   Map numpy dtype to ONNX dtype.
+
+
+.. py:function:: map_onnx_to_numpy_type(onnx_type)
+
+   Map ONNX dtype to numpy dtype.
+
+
+.. py:function:: add_port_to_name(name, nr=0)
+
+   Map node output number to name.
+
+
+.. py:function:: get_tensorflow_node_attr(node, name)
+
+   Parse tensorflow node attribute.
+
+
+.. py:function:: get_tensorflow_tensor_shape(tensor)
+
+   Get shape from tensorflow tensor.
+
+
+.. py:function:: get_tensorflow_node_shape_attr(node)
+
+   Get shape from tensorflow attr "shape".
+
+
+.. py:function:: map_tensorflow_dtype(dtype)
+
+   Convert tensorflow dtype to ONNX.
+
+
+.. py:function:: get_tensorflow_tensor_data(tensor)
+
+   Get data from tensorflow tensor.
+
+
+.. py:function:: convert_tensorflow_tensor_to_onnx(tensor, name='')
+
+   Convert tensorflow tensor to onnx tensor.
+
+
+.. py:function:: read_tensorflow_node_attrs(node)
+
+   Read tensorflow node attribute names.
+
+
+.. py:function:: infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, initializers=None)
+
+   Infer shapes and dtypes for outputs of the node.
+
+   Sometimes, shape inference needs the values of node's inputs, so initializers are used.
+
+
+.. py:function:: make_onnx_shape(shape)
+
+   Shape with -1 is not valid in onnx ... make it a name.
+
+
+.. py:class:: SeqType(tensor_dtype)
+
+
+   Wrap around TensorProto.* to signify a tensor sequence of a given type.
+
+
+.. py:function:: make_onnx_inputs_outputs(name, elem_type, shape, **kwargs)
+
+   Wrapper for creating onnx graph inputs or outputs.
+
+   :param name: Text
+   :param elem_type: TensorProto.DataType
+   :param shape: Optional[Sequence[int]]
+
+
+.. py:function:: save_protobuf(path, message, as_text=False)
+
+   Save ONNX protobuf file.
+
+
+.. py:function:: is_onnx_domain(domain)
+
+   Check if it's onnx domain.
+
+
+.. py:function:: is_list_or_tuple(obj)
+
+   Check the object is list or tuple.
+
+
+.. py:function:: are_shapes_equal(src, dest)
+
+   Check whether 2 shapes are equal.
+
+
+.. py:function:: get_subgraphs_from_onnx(model_proto)
+
+   Returns an iterator over the graphs/subgraphs of a model (using dfs).
+
+
+.. py:function:: initialize_name_counter(model_proto)
+
+   Avoid name conflicts by initializing the counter used by make_name based on the provided model.
+
+
+.. py:function:: get_index_from_strided_slice_of_shape(node, outputs_to_values)
+
+   Returns the index of the dimension that the strided slice is reading from the shape node or None.
+
+
+.. py:function:: compute_const_folding_using_tf(g, const_node_values, graph_outputs)
+
+   Find nodes with constant inputs and compute their values using TF.
+
+

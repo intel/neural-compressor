@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.profiling.profile_model`
+=================================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.profile_model
+
+.. autoapi-nested-parse::
+
+   Generic profiling script.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.profile_model.parse_args
+   neural_compressor.ux.components.profiling.profile_model.load_profiling_details
+
+
+
+.. py:function:: parse_args() -> Any
+
+   Parse input arguments.
+
+
+.. py:function:: load_profiling_details(json_path: str) -> dict
+
+   Load profiling details from json.
+
+

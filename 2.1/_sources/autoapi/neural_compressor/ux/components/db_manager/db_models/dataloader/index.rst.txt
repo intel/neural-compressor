@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.dataloader`
+=========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.dataloader
+
+.. autoapi-nested-parse::
+
+   Dataloader package contains dataloader class representing dataloader table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.dataloader.Dataloader
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.dataloader.fill_dictionary
+
+
+
+.. py:class:: Dataloader
+
+
+
+
+   INC Bench Dataloader table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

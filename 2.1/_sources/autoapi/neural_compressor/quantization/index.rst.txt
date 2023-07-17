@@ -1,0 +1,107 @@
+:py:mod:`neural_compressor.quantization`
+========================================
+
+.. py:module:: neural_compressor.quantization
+
+.. autoapi-nested-parse::
+
+   Neural Compressor Quantization API.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.quantization.fit
+
+
+
+.. py:function:: fit(model, conf, calib_dataloader=None, calib_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
+
+   Quantize the model with a given configure.
+
+   :param model: For Tensorflow model, it could be a path
+                 to frozen pb,loaded graph_def object or
+                 a path to ckpt/savedmodel folder.
+                 For PyTorch model, it's torch.nn.model
+                 instance.
+                 For MXNet model, it's mxnet.symbol.Symbol
+                 or gluon.HybirdBlock instance.
+   :type model: torch.nn.Module
+   :param conf: The class of QuantizationAwareTrainingConfig
+                and PostTrainingQuantConfig containing accuracy goal,
+                tuning objective and preferred calibration &
+                quantization tuning space etc.
+   :type conf: QuantizationAwareTrainingConfig or PostTrainingQuantConfig
+   :param calib_dataloader: Data loader for calibration, mandatory for
+                            post-training quantization. It is iterable
+                            and should yield a tuple (input, label) for
+                            calibration dataset containing label,
+                            or yield (input, _) for label-free calibration
+                            dataset. The input could be a object, list,
+                            tuple or dict, depending on user implementation,
+                            as well as it can be taken as model input.
+   :type calib_dataloader: generator
+   :param calib_func: Calibration function for post-training static
+                      quantization. It is optional.
+                      This function takes "model" as input parameter
+                      and executes entire inference process. If this
+                      parameter specified, calib_dataloader is also needed
+                      for FX trace if PyTorch >= 1.13.
+   :type calib_func: function, optional
+   :param eval_func: The evaluation function provided by user.
+                     This function takes model as parameter,
+                     and evaluation dataset and metrics should be
+                     encapsulated in this function implementation
+                     and outputs a higher-is-better accuracy scalar
+                     value.
+                     The pseudo code should be something like:
+                     def eval_func(model):
+                          input, label = dataloader()
+                          output = model(input)
+                          accuracy = metric(output, label)
+                          return accuracy
+   :type eval_func: function, optional
+   :param eval_dataloader: Data loader for evaluation. It is iterable
+                           and should yield a tuple of (input, label).
+                           The input could be a object, list, tuple or
+                           dict, depending on user implementation,
+                           as well as it can be taken as model input.
+                           The label should be able to take as input of
+                           supported metrics. If this parameter is
+                           not None, user needs to specify pre-defined
+                           evaluation metrics through configuration file
+                           and should set "eval_func" parameter as None.
+                           Tuner will combine model, eval_dataloader
+                           and pre-defined metrics to run evaluation
+                           process.
+   :type eval_dataloader: generator, optional
+   :param eval_metric: Set metric class or a dict of built-in metric configures,
+                       and neural_compressor will initialize this class when evaluation.
+   :type eval_metric: dict or obj
+
+   Example::
+
+       # Quantization code for PTQ
+       from neural_compressor import PostTrainingQuantConfig, set_workspace
+       from neural_compressor import quantization
+       conf = PostTrainingQuantConfig()
+
+       # saved intermediate files in ./saved folder
+       set_workspace("./saved")
+
+       q_model = quantization.fit(model_origin,
+                                  conf,
+                                  calib_dataloader=dataloader,
+                                  calib_func=eval_func)
+
+       # Saved quantized model in ./saved folder
+       q_model.save("./saved")
+
+

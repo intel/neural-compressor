@@ -1,0 +1,52 @@
+:py:mod:`neural_compressor.experimental.pytorch_pruner.pruning`
+===============================================================
+
+.. py:module:: neural_compressor.experimental.pytorch_pruner.pruning
+
+.. autoapi-nested-parse::
+
+   pruning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pytorch_pruner.pruning.Pruning
+
+
+
+
+.. py:class:: Pruning(config)
+
+
+   Pruning.
+
+   The main class that users will used in codes to do pruning.
+   Contain at least one Pruner object.
+
+   :param config: a string. The path to a config file. For config file template, please refer to
+                  https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
+
+   .. attribute:: model
+
+      The model object to prune.
+
+   .. attribute:: config_file_path
+
+      A string. The path to a config file.
+
+   .. attribute:: pruners
+
+      A list. A list of Pruner objects.
+
+   .. attribute:: pruner_info
+
+      A config dict object. Contains pruners' information.
+
+

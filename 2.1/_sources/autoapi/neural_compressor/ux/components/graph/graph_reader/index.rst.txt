@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.graph.graph_reader`
+============================================================
+
+.. py:module:: neural_compressor.ux.components.graph.graph_reader
+
+.. autoapi-nested-parse::
+
+   Graph reader.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.graph_reader.GraphReader
+
+
+
+
+.. py:class:: GraphReader
+
+
+   Model graph reader.
+
+

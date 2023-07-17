@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.adaptor.tensorflow`
+==============================================
+
+.. py:module:: neural_compressor.adaptor.tensorflow
+
+.. autoapi-nested-parse::
+
+   Tensorflow Adaptor Classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tensorflow.TensorFlowAdaptor
+   neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor
+   neural_compressor.adaptor.tensorflow.TensorflowQuery
+
+
+
+
+.. py:class:: TensorFlowAdaptor(framework_specific_info)
+
+
+
+
+   Adaptor Layer for stock tensorflow and spr-base.
+
+
+.. py:class:: Tensorflow_ITEXAdaptor(framework_specific_info)
+
+
+
+
+   Tensorflow ITEX Adaptor Class.
+
+
+.. py:class:: TensorflowQuery(local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static')
+
+
+
+
+   Tensorflow Query Capability Class.
+
+

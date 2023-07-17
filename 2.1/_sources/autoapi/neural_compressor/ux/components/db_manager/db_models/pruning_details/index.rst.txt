@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.pruning_details`
+==============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.pruning_details
+
+.. autoapi-nested-parse::
+
+   The PruningDetails class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.pruning_details.PruningDetails
+
+
+
+
+.. py:class:: PruningDetails
+
+
+
+
+   INC Bench pruning details' table representation.
+
+

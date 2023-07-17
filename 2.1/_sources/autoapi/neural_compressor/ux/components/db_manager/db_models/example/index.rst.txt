@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.example`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.example
+
+.. autoapi-nested-parse::
+
+   The Example class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.example.Example
+
+
+
+
+.. py:class:: Example
+
+
+
+
+   INC Bench examples' table representation.
+
+

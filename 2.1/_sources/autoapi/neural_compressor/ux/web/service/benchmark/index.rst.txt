@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.web.service.benchmark`
+====================================================
+
+.. py:module:: neural_compressor.ux.web.service.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.benchmark.BenchmarkService
+
+
+
+
+.. py:class:: BenchmarkService
+
+
+
+
+   Benchmark related services.
+
+

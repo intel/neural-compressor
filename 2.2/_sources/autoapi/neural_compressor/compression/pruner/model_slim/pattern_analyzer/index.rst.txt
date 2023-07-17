@@ -1,0 +1,277 @@
+:py:mod:`neural_compressor.compression.pruner.model_slim.pattern_analyzer`
+==========================================================================
+
+.. py:module:: neural_compressor.compression.pruner.model_slim.pattern_analyzer
+
+.. autoapi-nested-parse::
+
+   Analyze.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module
+   neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables
+
+
+
+.. py:function:: get_attributes(module, attrs: str)
+
+   Get a multi-level descent module of module.
+
+   :param module: The torch module.
+   :type module: torch.nn.Module
+   :param attrs: The attributes' calling path.
+   :type attrs: str
+
+   :returns: The target attribute of the module.
+   :rtype: attr
+
+
+.. py:function:: get_common_module(layer1: str, layer2: str)
+
+   Get the module which contains layer1 and layer2 (nearest father nodes)
+
+
+
+.. py:function:: print_iterables(data_iters)
+
+   Print the auto slim logs.
+
+
+.. py:class:: RecipeSearcher(model, recipe: dict)
+
+
+
+
+   Searcher class which searches patterns with a pre-defined recipe.
+
+   A Recipe is a dict type data which contains the root module's name and
+   its sub-modules' levelwise calling way.
+   For example, for the self-attention module in Huggingface bert-model,
+   if we want to obtain its linear ops (query, key, value and output),
+   the recipe should be like:
+   recipe_samples = {
+       'BertAttention': ["self.query", "self.key", "self.value", "output.dense"]
+   }
+
+   :param model: The PyTorch model for searching.
+   :type model: torch.nn.Module
+   :param recipe: A dict containing infomation of the searching pattern.
+   :type recipe: dict
+
+   .. attribute:: model
+
+      The PyTorch model for searching.
+
+   .. attribute:: recipe
+
+      A dict containing infomation of the searching pattern.
+
+   .. attribute:: targets
+
+      The basic module's name which contains searching pattern.
+
+   .. attribute:: searching_results
+
+      The list/dict which store matched patterns.
+
+
+.. py:class:: JitBasicSearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+
+
+
+
+   Static graph searcher class which searches patterns with PyTorch static graph and its input/output information.
+
+   By converting a PyTorch Model into a static version using torch.jit.trace()/script(),
+   we can trace some special pattern in the model and optimize them automatically.
+   This class provide some basic functions for jit searcher
+   Including generating dummy inputs, generating static graph, analyzing static graph.
+
+   :param model: The PyTorch model for searching.
+   :type model: torch.nn.Module
+
+   .. attribute:: model
+
+      The PyTorch model for searching.
+
+   .. attribute:: device
+
+      The model's current device type.
+
+   .. attribute:: static_graph
+
+      The static graph of original model.
+
+   .. attribute:: flatten_static_graph
+
+      A list of string with the model's static graph inference details.
+
+   .. attribute:: target_layers
+
+      The layer types the searcher will extract.
+
+   .. attribute:: searching_results
+
+      The list/dict which store matched patterns.
+
+
+.. py:class:: Linear2LinearSearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+
+
+
+
+   Static graph searcher for consecutive linear layers.
+
+   Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+   Automatically search linear layers which can be optimized.
+
+   :param model: The PyTorch model for searching.
+   :type model: torch.nn.Module
+
+   .. attribute:: model
+
+      The PyTorch model for searching.
+
+   .. attribute:: device
+
+      The model's current device type.
+
+   .. attribute:: static_graph
+
+      The static graph of original model.
+
+   .. attribute:: flatten_static_graph
+
+      A list of string with the model's static graph inference details.
+
+   .. attribute:: target_layers
+
+      The layer types the searcher will extract.
+
+   .. attribute:: searching_results
+
+      The list/dict which store matched patterns.
+
+   .. attribute:: target_op_lut
+
+      a lookup table for target operators and their corresponding jit codes.
+
+   .. attribute:: current_pattern
+
+      a searching path to store searching status.
+
+
+.. py:class:: SelfMHASearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
+
+
+
+
+   Static graph searcher for multi-head attention modules.
+
+   Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+   Automatically search multi-head attention modules which can be optimized.
+
+   :param model: The PyTorch model for searching.
+   :type model: torch.nn.Module
+
+   .. attribute:: model
+
+      The PyTorch model for searching.
+
+   .. attribute:: device
+
+      The model's current device type.
+
+   .. attribute:: static_graph
+
+      The static graph of original model.
+
+   .. attribute:: flatten_static_graph
+
+      A list of string with the model's static graph inference details.
+
+
+.. py:class:: ClassifierHeadSearcher(model)
+
+
+
+
+   Static graph searcher for multi-head attention modules.
+
+   Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+   Automatically search multi-head attention modules which can be optimized.
+
+   :param model: The PyTorch model for searching.
+   :type model: torch.nn.Module
+
+   .. attribute:: model
+
+      The PyTorch model for searching.
+
+   .. attribute:: device
+
+      The model's current device type.
+
+   .. attribute:: static_graph
+
+      The static graph of original model.
+
+   .. attribute:: flatten_static_graph
+
+      A list of string with the model's static graph inference details.
+
+
+.. py:class:: ClassifierHeadSearcherTF(model)
+
+
+
+
+   Static graph searcher for multi-head attention modules.
+
+   Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+   Automatically search multi-head attention modules which can be optimized.
+
+   :param model: The Keras model for searching.
+   :type model: tf.keras.Model
+
+   .. attribute:: model
+
+      The Keras model for searching.
+
+   .. attribute:: device
+
+      The model's current device type.
+
+   .. attribute:: static_graph
+
+      The static graph of original model.
+
+   .. attribute:: flatten_static_graph
+
+      A list of string with the model's static graph inference details.
+
+

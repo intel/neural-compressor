@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Optimization Orchestration &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Optimization Orchestration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/orchestration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="optimization-orchestration">
+<h1>Optimization Orchestration<a class="headerlink" href="#optimization-orchestration" title="Permalink to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<p>1.1. <a class="reference external" href="#one-shot">One-shot</a></p>
+</li>
+<li><p><a class="reference external" href="#orchestration-support-matrix">Orchestration Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-orchestration-api">Get Started with Orchestration API </a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Orchestration is the combination of multiple optimization techniques, either applied simultaneously (one-shot). Intel Neural Compressor supports arbitrary meaningful combinations of supported optimization methods under one-shot, such as pruning during quantization-aware training.</p>
+<section id="one-shot">
+<h3>One-shot<a class="headerlink" href="#one-shot" title="Permalink to this heading"></a></h3>
+<p>Since quantization-aware training, pruning and distillation all leverage training process for optimization, we can achieve the goal of optimization through one shot training with arbitrary meaningful combinations of these methods, which often gain more benefits in terms of performance and accuracy than just one compression technique applied, and usually are as efficient as applying just one compression technique. The three possible combinations are shown below.</p>
+<ul class="simple">
+<li><p>Pruning during quantization-aware training</p></li>
+<li><p>Distillation with pattern lock pruning</p></li>
+<li><p>Distillation with pattern lock pruning and quantization-aware training</p></li>
+</ul>
+</section>
+</section>
+<section id="orchestration-support-matrix">
+<h2>Orchestration Support Matrix<a class="headerlink" href="#orchestration-support-matrix" title="Permalink to this heading"></a></h2>
+<table>
+    <thead>
+        <tr>
+            <th>Orchestration</th>
+            <th>Combinations</th>
+            <th>Supported</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=4>One-shot</td>
+            <td>Pruning + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Pruning</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Pruning + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+    </tbody>
+</table></section>
+<section id="get-started-with-orchestration-api">
+<h2>Get Started with Orchestration API<a class="headerlink" href="#get-started-with-orchestration-api" title="Permalink to this heading"></a></h2>
+<p>Neural Compressor defines <code class="docutils literal notranslate"><span class="pre">Scheduler</span></code> class to automatically pipeline execute model optimization with one shot way.</p>
+<p>User instantiates model optimization components, such as quantization, pruning, distillation, separately. After that, user could append
+those separate optimization objects into scheduler’s pipeline, the scheduler API executes them one by one.</p>
+<p>In following example it execute the distillation and pruning with one-shot way, the code is like below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">,</span> <span class="n">WeightPruningConfig</span>
+<span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">distillation_criterion</span><span class="p">)</span>
+<span class="n">p_conf</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">()</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">confs</span><span class="o">=</span><span class="p">[</span><span class="n">d_conf</span><span class="p">,</span> <span class="n">p_conf</span><span class="p">])</span>
+
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+<span class="n">train_loop</span><span class="p">:</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">......</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+    
+<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./path/to/save&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p><a class="reference external" href="../../examples/README.md#orchestration">Orchestration Examples</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

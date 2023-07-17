@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.calibration`
+========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.calibration
+
+.. autoapi-nested-parse::
+
+   Calibration for onnx models.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.calibration.ONNXRTAugment
+
+
+
+
+.. py:class:: ONNXRTAugment(model_wrapper, dataloader, dump_op_types, black_nodes=[], white_nodes=[], iterations=[], backend='CPUExecutionProvider', reduce_range=False)
+
+
+   augment input model to dump tensor or for calibration.
+
+

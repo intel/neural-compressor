@@ -1,0 +1,37 @@
+:py:mod:`neural_compressor.ux.components.profiling.profiling`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.profiling
+
+.. autoapi-nested-parse::
+
+   Profiling class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.profiling.Profiling
+   neural_compressor.ux.components.profiling.profiling.DataloaderInterface
+
+
+
+
+.. py:class:: Profiling(project_data: dict, profiling_data: dict)
+
+
+   Profiling class.
+
+
+.. py:class:: DataloaderInterface(dataloader_data: dict)
+
+
+   Interface for dataloader.
+
+

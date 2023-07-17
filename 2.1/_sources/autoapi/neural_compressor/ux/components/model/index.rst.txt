@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.model`
+===============================================
+
+.. py:module:: neural_compressor.ux.components.model
+
+.. autoapi-nested-parse::
+
+   The model package contains all model related code used in UX server.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   onnxrt/index.rst
+   pytorch/index.rst
+   tensorflow/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   domain/index.rst
+   model/index.rst
+   model_type_getter/index.rst
+   repository/index.rst
+   shape/index.rst
+
+

@@ -1,0 +1,34 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer`
+==================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer
+
+.. autoapi-nested-parse::
+
+   Meta OP Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer.MetaInfoChangingMemOpOptimizer
+
+
+
+
+.. py:class:: MetaInfoChangingMemOpOptimizer(model)
+
+
+
+
+   Fuse the pattern like Dequantize + MetaOp + Quantize into MetaOp(set its type to int8).
+
+   With such changes, the Quantize and Dequantize OP will removed for better performance.
+
+

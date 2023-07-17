@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.saved_model`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.saved_model
+
+.. autoapi-nested-parse::
+
+   Tensorflow saved_model model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.saved_model.SavedModelModel
+
+
+
+
+.. py:class:: SavedModelModel
+
+
+
+
+   Saved_model model.
+
+

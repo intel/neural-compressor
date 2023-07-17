@@ -1,0 +1,23 @@
+:py:mod:`neural_compressor.adaptor.torch_utils`
+===============================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils
+
+.. autoapi-nested-parse::
+
+   Torch utils module.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   bf16_convert/index.rst
+   hawq_metric/index.rst
+   symbolic_trace/index.rst
+   util/index.rst
+
+

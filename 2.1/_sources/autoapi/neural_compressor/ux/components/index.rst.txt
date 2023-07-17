@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components`
+=========================================
+
+.. py:module:: neural_compressor.ux.components
+
+.. autoapi-nested-parse::
+
+   The components package contains all components used in UX server.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   benchmark/index.rst
+   config_generator/index.rst
+   configuration_wizard/index.rst
+   db_manager/index.rst
+   diagnosis/index.rst
+   file_browser/index.rst
+   graph/index.rst
+   jobs_management/index.rst
+   model/index.rst
+   model_zoo/index.rst
+   names_mapper/index.rst
+   optimization/index.rst
+   profiling/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   manage_workspace/index.rst
+
+

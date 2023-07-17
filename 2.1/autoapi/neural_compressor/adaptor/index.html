@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/neural_compressor/adaptor/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor">
+<span id="neural-compressor-adaptor"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor" title="neural_compressor.adaptor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mxnet_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.mxnet_utils</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mxnet_utils/util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.mxnet_utils.util</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ox_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ox_utils/operators/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/activation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.activation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/argmax/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.argmax</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/attention/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.attention</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/binary_op/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.binary_op</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/concat/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.concat</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/conv/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.conv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/direct_q8/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.direct_q8</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/embed_layernorm/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.embed_layernorm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/gather/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.gather</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/gavgpool/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.gavgpool</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/gemm/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.gemm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/lstm/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.lstm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/matmul/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.matmul</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/maxpool/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.maxpool</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/ops/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.ops</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/pad/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.pad</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/pooling/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.pooling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/resize/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.resize</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ox_utils/operators/split/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.operators.split</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ox_utils/calibration/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.calibration</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ox_utils/quantizer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.quantizer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="ox_utils/util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.ox_utils.util</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tf_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/graph_rewriter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/graph_rewriter/bf16/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.bf16</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/graph_rewriter/generic/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/graph_rewriter/int8/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/graph_rewriter/onnx/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.onnx</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/graph_rewriter/qdq/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.qdq</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/graph_rewriter/graph_base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/quantize_graph/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/qat/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/qdq/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_bn/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_bn</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_concatv2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_concatv2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_conv/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_conv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_for_intel_cpu/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_matmul/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/quantize_graph/quantize_graph_pooling/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_pooling</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/transform_graph/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/transform_graph/bias_correction/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.bias_correction</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/transform_graph/graph_transform_base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/transform_graph/insert_logging/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.insert_logging</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tf_utils/transform_graph/rerange_quantized_concat/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/graph_converter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_converter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/graph_converter_without_calib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_converter_without_calib</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/graph_util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_util</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/quantize_graph_common/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph_common</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/tf2onnx_converter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.tf2onnx_converter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_utils/util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.util</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="torch_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="torch_utils/bf16_convert/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.bf16_convert</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="torch_utils/hawq_metric/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.hawq_metric</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="torch_utils/symbolic_trace/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.symbolic_trace</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="torch_utils/util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.util</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tensorflow/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tensorflow</span></code></a></li>
+</ul>
+</div>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

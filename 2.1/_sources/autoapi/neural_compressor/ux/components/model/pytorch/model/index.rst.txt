@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.pytorch.model`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.model.pytorch.model
+
+.. autoapi-nested-parse::
+
+   PyTorch model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.pytorch.model.PyTorchScriptModel
+
+
+
+
+.. py:class:: PyTorchScriptModel(path: str)
+
+
+
+
+   PyTorch Script Model class.
+
+

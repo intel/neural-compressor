@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.graph.collapser`
+=========================================================
+
+.. py:module:: neural_compressor.ux.components.graph.collapser
+
+.. autoapi-nested-parse::
+
+   Graph collapser.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.collapser.Collapser
+
+
+
+
+.. py:class:: Collapser(expanded_groups: List[str] = [])
+
+
+   Graph collapser.
+
+

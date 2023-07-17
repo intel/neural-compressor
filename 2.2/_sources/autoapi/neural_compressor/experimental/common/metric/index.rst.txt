@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.experimental.common.metric`
+======================================================
+
+.. py:module:: neural_compressor.experimental.common.metric
+
+.. autoapi-nested-parse::
+
+   common Metric just collects the information to construct a Metric.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.metric.Metric
+
+
+
+
+.. py:class:: Metric(metric_cls, name='user_metric', **kwargs)
+
+
+
+
+   A wrapper of the information needed to construct a Metric.
+
+   The metric class should take the outputs of the model as the metric's inputs,
+   neural_compressor built-in metric always take (predictions, labels) as inputs, it's
+   recommended to design metric_cls to take (predictions, labels) as inputs.
+
+

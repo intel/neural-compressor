@@ -1,0 +1,91 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.pytorch`
+===========================================
+
+.. py:module:: neural_compressor.adaptor.pytorch
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.pytorch.TemplateAdaptor
+   neural_compressor.adaptor.pytorch.PyTorchAdaptor
+   neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor
+   neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.pytorch.get_ops_recursively
+
+
+
+.. py:function:: get_ops_recursively(model, prefix, ops={})
+
+   This is a helper function for `graph_info`,
+       and it will get all ops from model.
+   :param model: input model
+   :type model: object
+   :param prefix: prefix of op name
+   :type prefix: string
+   :param ops: dict of ops from model {op name: type}.
+   :type ops: dict
+
+   :returns: None
+
+
+.. py:class:: TemplateAdaptor(framework_specific_info)
+
+
+
+
+   Tample adaptor of PyTorch framework.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+
+.. py:class:: PyTorchAdaptor(framework_specific_info)
+
+
+
+
+   Adaptor of PyTorch framework, all PyTorch API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+
+.. py:class:: PyTorch_IPEXAdaptor(framework_specific_info)
+
+
+
+
+   Adaptor of PyTorch framework with Intel PyTorch Extension,
+      all PyTorch IPEX API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+
+.. py:class:: PyTorch_FXAdaptor(framework_specific_info)
+
+
+
+
+   Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+

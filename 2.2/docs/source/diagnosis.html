@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagnosis &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Diagnosis</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/diagnosis.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="diagnosis">
+<h1>Diagnosis<a class="headerlink" href="#diagnosis" title="Permalink to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#diagnosis-introduction">Diagnosis introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started">Get started</a></p></li>
+<li><p><a class="reference external" href="#example">Example</a></p></li>
+</ol>
+</section>
+<section id="diagnosis-introduction">
+<h1>Diagnosis introduction<a class="headerlink" href="#diagnosis-introduction" title="Permalink to this heading"></a></h1>
+<p>The diagnosis feature provides methods to debug the accuracy loss during quantization and profile the performance gap during benchmark.
+There are 2 ways to diagnose a model with Intel® Neural Compressor. First is non-GUI mode that is described below and second is GUI mode with <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_insights">Neural Insights</a> component.</p>
+<p>The workflow is described in the diagram below. First we have to configure scripts with diagnosis, then run them and check diagnosis info in the terminal. Test if the result is satisfying and repeat the steps if needed.
+<img alt="workflow" src="../../_images/workflow.jpg" /></p>
+</section>
+<section id="supported-feature-matrix">
+<h1>Supported feature matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading"></a></h1>
+<table class="center">
+    <thead>
+        <tr>
+            <th>Types</th>
+            <th>Diagnosis data</th>
+            <th>Framework</th>
+            <th>Backend</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2" align="center">Post-Training Static Quantization (PTQ)</td>
+            <td rowspan="2" align="center">weights and activations</td>
+            <td align="center">TensorFlow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td align="center">ONNX Runtime</td>
+            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
+        </tr>
+        <tr>
+            <td rowspan="2" align="center">Benchmark Profiling</td>
+            <td rowspan="2" align="center">OP execute duration</td>
+            <td align="center">TensorFlow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td align="center">ONNX Runtime</td>
+            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
+        </tr>
+    </tbody>
+</table></section>
+<section id="get-started">
+<h1>Get started<a class="headerlink" href="#get-started" title="Permalink to this heading"></a></h1>
+<section id="install-intel-neural-compressor">
+<h2>Install Intel® Neural Compressor<a class="headerlink" href="#install-intel-neural-compressor" title="Permalink to this heading"></a></h2>
+<p>First you need to install Intel® Neural Compressor.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor<span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+<section id="modify-script">
+<h2>Modify script<a class="headerlink" href="#modify-script" title="Permalink to this heading"></a></h2>
+<p>Modify quantization/benchmark script to run diagnosis by adding argument <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code>/<code class="docutils literal notranslate"><span class="pre">BenchmarkConfig</span></code> as shown below.</p>
+<section id="quantization-diagnosis">
+<h3>Quantization diagnosis<a class="headerlink" href="#quantization-diagnosis" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark-diagnosis">
+<h3>Benchmark diagnosis<a class="headerlink" href="#benchmark-diagnosis" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span>
+    <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="example">
+<h1>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h1>
+<p>Below it is explained how to run diagnosis for ONNX ResNet50 model.</p>
+<section id="prepare-dataset">
+<h2>Prepare dataset<a class="headerlink" href="#prepare-dataset" title="Permalink to this heading"></a></h2>
+<p>Download dataset <a class="reference external" href="http://www.image-net.org/challenges/LSVRC/2012/downloads">ILSVR2012 validation Imagenet dataset</a>.</p>
+<p>Download label:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz
+tar<span class="w"> </span>-xvzf<span class="w"> </span>caffe_ilsvrc12.tar.gz<span class="w"> </span>val.txt
+</pre></div>
+</div>
+</section>
+<section id="run-quantization-script">
+<h2>Run quantization script<a class="headerlink" href="#run-quantization-script" title="Permalink to this heading"></a></h2>
+<p>Then execute script with quantization API in another terminal with –diagnose flag.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>examples/onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static/main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_path<span class="o">=</span>/path/to/resnet50_v1.onnx/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataset_location<span class="o">=</span>/path/to/ImageNet/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--label_path<span class="o">=</span>/path/to/val.txt/
+<span class="w">  </span>--tune<span class="w"> </span>
+<span class="w">  </span>--diagnose<span class="w"> </span>
+</pre></div>
+</div>
+</section>
+<section id="run-benchmark-script">
+<h2>Run benchmark script<a class="headerlink" href="#run-benchmark-script" title="Permalink to this heading"></a></h2>
+<p>To run profiling execute script with parameters shown in the command below.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>examples/onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static/main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_path<span class="o">=</span>/path/to/resnet50_v1.onnx/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataset_location<span class="o">=</span>/path/to/ImageNet/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--label_path<span class="o">=</span>/path/to/val.txt/
+<span class="w">  </span>--mode<span class="o">=</span>performance<span class="w"> </span><span class="se">\​</span>
+<span class="w">  </span>--benchmark<span class="w"> </span><span class="se">\​</span>
+<span class="w">  </span>--diagnose
+</pre></div>
+</div>
+</section>
+<section id="see-quantization-data">
+<h2>See quantization data<a class="headerlink" href="#see-quantization-data" title="Permalink to this heading"></a></h2>
+<p>After script’s execution you will see the results in your terminal.
+In the activations summary you can see a table with OP name, MSE (mean squared error), activation minimum and maximum sorted by MSE.</p>
+<p><img alt="activations" src="../../_images/terminal-ops.jpg" /></p>
+<p>In the weights summary table there are parameters like minimum, maximum, mean, standard deviation and variance for input model. The table is also sorted by MSE.</p>
+<p><img alt="weights" src="../../_images/terminal-weights.jpg" /></p>
+</section>
+<section id="how-to-do-diagnosis">
+<h2>How to do diagnosis<a class="headerlink" href="#how-to-do-diagnosis" title="Permalink to this heading"></a></h2>
+<p>Neural Compressor diagnosis mode provides weights and activation data that includes several useful metrics for diagnosing potential losses of model accuracy.</p>
+<section id="parameter-description">
+<h3>Parameter description<a class="headerlink" href="#parameter-description" title="Permalink to this heading"></a></h3>
+<p>Data is presented in the terminal in form of table where each row describes single OP in the model. We present such quantities measures like:</p>
+<p><strong>MSE - Mean Squared Error</strong> - it is a metric that measures how big is the difference between input and optimized model’s weights for specific OP.</p>
+<p>$$
+MSE = \sum_{i=1}^{n}(x_i-y_i)^2
+$$</p>
+<p><strong>Input model min</strong> - minimum value of the input OP tensor data</p>
+<p>$$
+\min{\vec{x}}
+$$</p>
+<p><strong>Input model max</strong> - maximum value of the input OP tensor data</p>
+<p>$$
+\max{\vec{x}}
+$$</p>
+<p><strong>Input model mean</strong> - mean value of the input OP tensor data</p>
+<p>$$
+\mu =\frac{1}{n} \sum_{i=1}^{n} x_{i}
+$$</p>
+<p><strong>Input model standard deviation</strong> - standard deviation of the input OP tensor data</p>
+<p>$$
+\sigma =\sqrt{\frac{1}{n}\sum\limits_{i=1}^n (x_i - \mu)}
+$$</p>
+<p><strong>Input model variance</strong> - variance of the input OP tensor data</p>
+<p>$$
+Var = \sigma^2
+$$</p>
+<p>where, </br>
+$x_i$ - input OP tensor data, </br>
+$y_i$ - optimized OP tensor data, </br>
+$\mu_x$ - input model mean, </br>
+$\sigma_x$ - input model variance</p>
+</section>
+<section id="diagnosis-suggestions">
+<h3>Diagnosis suggestions<a class="headerlink" href="#diagnosis-suggestions" title="Permalink to this heading"></a></h3>
+<ol class="simple">
+<li><p>Check the nodes with MSE order. High MSE usually means higher possibility of accuracy loss happened during the quantization, so fallback those Ops may get some accuracy back.</p></li>
+<li><p>Check the Min-Max data range. An dispersed data range usually means higher accuracy loss, so we can also try to full back those Ops.</p></li>
+<li><p>Check with the other data and find some outliers, and try to fallback some Ops and test for the quantization accuracy.</p></li>
+</ol>
+<p><em>Note: We can’t always trust the debug rules, it’s only a reference, sometimes the accuracy regression is hard to explain.</em></p>
+</section>
+<section id="fallback-setting-example">
+<h3>Fallback setting example<a class="headerlink" href="#fallback-setting-example" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span> 
+<span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v0/cg/conv0/conv2d/Conv2D&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;activation&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]}}}</span> 
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span> 
+       <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  
+       <span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span> 
+<span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span> 
+</pre></div>
+</div>
+</section>
+</section>
+<section id="see-profiling-data">
+<h2>See profiling data<a class="headerlink" href="#see-profiling-data" title="Permalink to this heading"></a></h2>
+<p>In profiling section there is a table with nodes sorted by total execution time. It is possible to check which operations take the most time.</p>
+<p><img alt="profiling" src="../../_images/terminal-profiling.jpg" /></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

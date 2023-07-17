@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.web.service.history_snapshot_parser`
+==================================================================
+
+.. py:module:: neural_compressor.ux.web.service.history_snapshot_parser
+
+.. autoapi-nested-parse::
+
+   History Snapshot Parser Service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser
+
+
+
+
+.. py:class:: HistorySnapshotParser(history_snapshot: list, provide_performance: bool = False)
+
+
+   History Snapshot Parser.
+
+

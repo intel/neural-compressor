@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.model`
+=====================================================
+
+.. py:module:: neural_compressor.ux.components.model.model
+
+.. autoapi-nested-parse::
+
+   The abstract model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.model.Model
+
+
+
+
+.. py:class:: Model(path: str)
+
+
+
+
+   Abstract model class.
+
+

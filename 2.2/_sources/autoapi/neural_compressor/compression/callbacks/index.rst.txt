@@ -1,0 +1,95 @@
+:py:mod:`neural_compressor.compression.callbacks`
+=================================================
+
+.. py:module:: neural_compressor.compression.callbacks
+
+.. autoapi-nested-parse::
+
+   This is a module for Component class.
+
+   The Component class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
+   'PruningCallbacks' and 'DistillationCallbacks'.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.callbacks.BaseCallbacks
+   neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks
+   neural_compressor.compression.callbacks.PruningCallbacks
+   neural_compressor.compression.callbacks.DistillationCallbacks
+
+
+
+
+.. py:class:: BaseCallbacks(conf=None, model=None)
+
+
+
+
+   This is base class of Neural Compressor Callbacks.
+
+   This class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
+   'PruningCallbacks' and 'DistillationCallbacks'.
+   This design is mainly for pruning/distillation/quantization-aware training.
+   In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
+
+
+.. py:class:: QuantizationAwareTrainingCallbacks(conf=None, model=None, adaptor=None)
+
+
+
+
+   This is the class for callbacks of quantization aware training.
+
+   This design is mainly for Quantization-Aware Training.
+   In this class will apply all hooks for Quantization-Aware Training.
+
+
+.. py:class:: PruningCallbacks(conf=None, model=None)
+
+
+
+
+   This is the class for callbacks of pruning object.
+
+   In this class will apply all hooks for Pruning.
+
+
+.. py:class:: DistillationCallbacks(conf=None, model=None)
+
+
+
+
+   Distillation class derived from Component class.
+
+   Distillation class abstracted the pipeline of knowledge distillation,
+   transfer the knowledge of the teacher model to the student model.
+
+   :param conf: Distillation_Conf containing teacher model, distillation criterion etc.
+   :param model: Student model. It should be neural compressor model.
+
+   .. attribute:: _epoch_ran
+
+      A integer indicating how much epochs ran.
+
+   .. attribute:: eval_frequency
+
+      The frequency for doing evaluation of the student model
+      in terms of epoch.
+
+   .. attribute:: best_score
+
+      The best metric of the student model in the training.
+
+   .. attribute:: best_model
+
+      The best student model found in the training.
+
+

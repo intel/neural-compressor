@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.ux.components.model.onnxrt`
+======================================================
+
+.. py:module:: neural_compressor.ux.components.model.onnxrt
+
+.. autoapi-nested-parse::
+
+   OnnxRt related models.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   model/index.rst
+
+

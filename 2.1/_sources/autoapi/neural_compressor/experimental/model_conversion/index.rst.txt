@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.experimental.model_conversion`
+=========================================================
+
+.. py:module:: neural_compressor.experimental.model_conversion
+
+.. autoapi-nested-parse::
+
+   Helps convert one model format to another.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.model_conversion.ModelConversion
+
+
+
+
+.. py:class:: ModelConversion(conf_fname_or_obj=None)
+
+
+   ModelConversion class is used to convert one model format to another.
+
+      Currently Neural Compressor only supports Quantization-aware training TensorFlow model to Default
+      quantized model.
+
+      The typical usage is:
+        from neural_compressor.experimental import ModelConversion, common
+        conversion = ModelConversion()
+        conversion.source = 'QAT'
+        conversion.destination = 'default'
+        conversion.model = '/path/to/saved_model'
+        q_model = conversion()
+
+   :param conf_fname_or_obj: Optional. The path to the YAML configuration file or
+                             Conf class containing model conversion and evaluation setting if not specifed by code.
+   :type conf_fname_or_obj: string or obj
+
+

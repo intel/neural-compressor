@@ -1,0 +1,112 @@
+:py:mod:`neural_compressor.utils.create_obj_from_config`
+========================================================
+
+.. py:module:: neural_compressor.utils.create_obj_from_config
+
+.. autoapi-nested-parse::
+
+   Utility methods to create corresponding objects from configuration.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.create_obj_from_config.get_func_from_config
+   neural_compressor.utils.create_obj_from_config.get_preprocess
+   neural_compressor.utils.create_obj_from_config.get_metrics
+   neural_compressor.utils.create_obj_from_config.get_postprocess
+   neural_compressor.utils.create_obj_from_config.get_algorithm
+   neural_compressor.utils.create_obj_from_config.create_dataset
+   neural_compressor.utils.create_obj_from_config.create_dataloader
+   neural_compressor.utils.create_obj_from_config.create_eval_func
+   neural_compressor.utils.create_obj_from_config.create_train_func
+
+
+
+.. py:function:: get_func_from_config(func_dict, cfg, compose=True)
+
+   Get the function or the composed function from configuration.
+
+
+.. py:function:: get_preprocess(preprocesses, cfg, compose=True)
+
+   Get the preprocess function from configuration.
+
+
+.. py:function:: get_metrics(metrics, cfg, compose=True)
+
+   Get the metrics function from configuration.
+
+
+.. py:function:: get_postprocess(postprocesses, cfg, compose=True)
+
+   Get the postprocess function from configuration.
+
+
+.. py:function:: get_algorithm(algorithms, cfg, compose=False)
+
+   Get the algorithms from configuration.
+
+   :param algorithms: the algorithm management.
+   :param cfg: a dict contain the algo name and use it or not.
+   :param compose: compose all algo or not. Defaults to False.
+
+   :returns: All open algos.
+
+
+.. py:function:: create_dataset(framework, data_source, cfg_preprocess, cfg_filter)
+
+   Create the dataset from the data source.
+
+
+.. py:function:: create_dataloader(framework, dataloader_cfg)
+
+   Create the dataloader according to the framework.
+
+
+.. py:function:: create_eval_func(framework, dataloader, adaptor, metric, postprocess_cfg=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+   The interface to create evaluate function from config.
+
+   :param framework: The string of framework.
+   :type framework: str
+   :param dataloader: The object of common.DataLoader.
+   :type dataloader: common.DataLoader
+   :param adaptor: The object of adaptor.
+   :type adaptor: obj
+   :param metric: The evaluation metric.
+   :param postprocess_cfg: The postprocess configuration.
+   :param iteration: The number of iterations to evaluate.
+   :param tensorboard: Whether to use tensorboard.
+   :param fp32_baseline: The fp32 baseline score.
+
+   :returns: The constructed evaluation function
+
+
+.. py:function:: create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, callbacks=None)
+
+   The interface to create train function from config.
+
+   :param framework: The string of framework.
+   :type framework: str
+   :param dataloader: The object of common.DataLoader.
+   :type dataloader: common.DataLoader
+   :param adaptor: The object of adaptor.
+   :type adaptor: obj
+   :param train_cfg: The dict of training related config.
+   :type train_cfg: dict
+   :param hooks: The dict of training hooks, supported keys are:
+                 on_epoch_begin, on_epoch_end, on_step_begin, on_step_end.
+                 Their values are functions to be executed in adaptor layer.
+   :type hooks: dict
+
+   :returns: The constructed train function
+
+

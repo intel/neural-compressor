@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.web.configuration`
+================================================
+
+.. py:module:: neural_compressor.ux.web.configuration
+
+.. autoapi-nested-parse::
+
+   Configuration module for UX server.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.configuration.Configuration
+
+
+
+
+.. py:class:: Configuration
+
+
+   Configuration object for UX server.
+
+

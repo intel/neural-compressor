@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node`
+==========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node
+
+.. autoapi-nested-parse::
+
+   ONNX Node wrapper for Tensorflow model converting to ONNX model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode
+
+
+
+
+.. py:class:: OnnxNode(node, graph, skip_conversion=False)
+
+
+   A ONNX Node Wrapper used for graph manipulations.
+
+

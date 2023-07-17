@@ -1,0 +1,56 @@
+:py:mod:`neural_compressor.ux.components.optimization.tuning_history`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.tuning_history
+
+.. autoapi-nested-parse::
+
+   Tuning history.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tuning_history.Watcher
+   neural_compressor.ux.components.optimization.tuning_history.TuningHistory
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tuning_history.tuning_history
+   neural_compressor.ux.components.optimization.tuning_history.tuning_history_path
+
+
+
+.. py:function:: tuning_history(optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> dict
+
+   Get tuning history for requested Tuning.
+
+
+.. py:function:: tuning_history_path(optimization_workdir: str) -> str
+
+   Build path to tuning history filename.
+
+
+.. py:class:: Watcher(request_id: str, optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
+
+
+   Tuning history watcher that sends update on file change.
+
+
+.. py:class:: TuningHistory
+
+
+   Tuning history class.
+
+

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.web.service.profiling`
+====================================================
+
+.. py:module:: neural_compressor.ux.web.service.profiling
+
+.. autoapi-nested-parse::
+
+   Profiling service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.profiling.ProfilingService
+
+
+
+
+.. py:class:: ProfilingService
+
+
+
+
+   Profiling related services.
+
+

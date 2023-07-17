@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metrics &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Metrics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/metric.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="metrics">
+<h1>Metrics<a class="headerlink" href="#metrics" title="Permalink to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-built-in-metric-matrix">Supported Built-in Metric Matrix</a></p>
+<p>2.1. <a class="reference external" href="#tensorflow">TensorFlow</a></p>
+<p>2.2. <a class="reference external" href="#pytorch">PyTorch</a></p>
+<p>2.3. <a class="reference external" href="#mxnet">MxNet</a></p>
+<p>2.4. <a class="reference external" href="#onnxrt">ONNXRT</a></p>
+</li>
+<li><p><a class="reference external" href="#get-start-with-metric">Get Started with Metric</a></p>
+<p>3.1. <a class="reference external" href="#use-intel%C2%AE-neural-compressor-metric-api">Use Intel® Neural Compressor Metric API</a></p>
+<p>3.2. <a class="reference external" href="#build-custom-metric-with-python-api">Build Custom Metric with Python API</a></p>
+</li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>In terms of evaluating the performance of a specific model, we should have general metrics to measure the performance of different models. Different frameworks always have their own Metric module but with different APIs and parameters. As for Intel® Neural Compressor, it implements an internal metric and provides a unified <code class="docutils literal notranslate"><span class="pre">Metric</span></code> API. In special cases, users can also register their own metric classes through <a class="reference external" href="#build-custom-metric-with-python-api">Build Custom Metric with Python API</a>.</p>
+</section>
+<section id="supported-built-in-metric-matrix">
+<h2>Supported Built-in Metric Matrix<a class="headerlink" href="#supported-built-in-metric-matrix" title="Permalink to this heading"></a></h2>
+<p>Neural Compressor supports some built-in metrics that are popularly used in industry.</p>
+<section id="tensorflow">
+<h3>TensorFlow<a class="headerlink" href="#tensorflow" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Inputs</th>
+<th style="text-align: left;">Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">topk(k)</td>
+<td style="text-align: left;"><strong>k</strong> (int, default=1): Number of top elements to look at for computing accuracy</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes top k predictions accuracy.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes accuracy classification score.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Loss()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">A dummy metric for directly printing loss, it calculates the average of predictions. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/_modules/mxnet/metric.html#Loss">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MAE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Absolute Error (MAE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">RMSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Root Mean Square Error (RMSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Squared Error (MSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">F1()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes the F1 score of a binary classification problem.</td>
+</tr>
+<tr>
+<td style="text-align: left;">mAP(anno_path, iou_thrs, map_points)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str, default=0.5): Minimal value for intersection over union that allows to make decision that prediction bounding box is true positive. You can specify one float value between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int, default=0): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 11-point interpolated AP, 0 for area under PR curve.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCOmAP(anno_path, iou_thrs, map_points)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">VOCmAP(anno_path, iou_thrs, map_points)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong>(float or str): Intersection over union threshold. Set to 0.5.<br> <strong>map_points</strong>(int): The way to calculate mAP. The way to calculate mAP. Set to 0 for area under PR curve.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCOmAPv2(anno_path, iou_thrs, map_points, output_index_mapping)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br><strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP. <br> <strong>output_index_mapping</strong> (dict, default={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}): Specifies the index of outputs in model raw prediction, -1 means this output does not exist.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">BLEU()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">BLEU score computation between labels and predictions. An approximate BLEU scoring method since we do not glue word pieces or decode the ids and tokenize the output. By default, we use ngram order of 4 and use brevity penalty. Also, this does not have beam search</td>
+</tr>
+<tr>
+<td style="text-align: left;">SquadF1()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Evaluate v1.1 of the SQuAD dataset</td>
+</tr>
+</tbody>
+</table></section>
+<section id="pytorch">
+<h3>PyTorch<a class="headerlink" href="#pytorch" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Inputs</th>
+<th style="text-align: left;">Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">topk(k)</td>
+<td style="text-align: left;"><strong>k</strong> (int, default=1): Number of top elements to look at for computing accuracy</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Calculates the top-k categorical accuracy.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Calculates the accuracy for binary, multiclass and multilabel data. <br> Please refer <a href="https://pytorch.org/ignite/metrics.html#ignite.metrics.Accuracy">Pytorch docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Loss()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">A dummy metric for directly printing loss, it calculates the average of predictions. <br> Please refer <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/_modules/mxnet/metric.html#Loss">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MAE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Absolute Error (MAE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">RMSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Root Mean Squared Error (RMSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Squared Error (MSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">F1()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes the F1 score of a binary classification problem.</td>
+</tr>
+</tbody>
+</table></section>
+<section id="mxnet">
+<h3>MXNet<a class="headerlink" href="#mxnet" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Inputs</th>
+<th style="text-align: left;">Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">topk(k)</td>
+<td style="text-align: left;"><strong>k</strong> (int, default=1): Number of top elements to look at for computing accuracy</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes top k predictions accuracy.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes accuracy classification score. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.Accuracy">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Loss()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">A dummy metric for directly printing loss, it calculates the average of predictions. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/_modules/mxnet/metric.html#Loss">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MAE()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Absolute Error (MAE) loss. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.MAE">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">RMSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Root Mean Squared Error (RMSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MSE()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Squared Error (MSE) loss. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.MSE">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">F1()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes the F1 score of a binary classification problem. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.F1">MXNet docs</a> for details.</td>
+</tr>
+</tbody>
+</table></section>
+<section id="onnxrt">
+<h3>ONNXRT<a class="headerlink" href="#onnxrt" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Inputs</th>
+<th style="text-align: left;">Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">topk(k)</td>
+<td style="text-align: left;"><strong>k</strong> (int, default=1): Number of top elements to look at for computing accuracy</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes top k predictions accuracy.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes accuracy classification score.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Loss()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">A dummy metric for directly printing loss, it calculates the average of predictions. <br> Please refer to <a href="https://mxnet.apache.org/versions/1.7.0/api/python/docs/_modules/mxnet/metric.html#Loss">MXNet docs</a> for details.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MAE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Absolute Error (MAE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">RMSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Root Mean Squared Error (RMSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">MSE(compare_label)</td>
+<td style="text-align: left;"><strong>compare_label</strong> (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes Mean Squared Error (MSE) loss.</td>
+</tr>
+<tr>
+<td style="text-align: left;">F1()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes the F1 score of a binary classification problem.</td>
+</tr>
+<tr>
+<td style="text-align: left;">mAP(anno_path, iou_thrs, map_points)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str, default=0.5): Minimal value for intersection over union that allows to make decision that prediction bounding box is true positive. You can specify one float value between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int, default=0): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 11-point interpolated AP, 0 for area under PR curve.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCOmAP(anno_path, iou_thrs, map_points)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">VOCmAP(anno_path, iou_thrs, map_points)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format .<br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to 0.5.<br> <strong>map_points</strong>  (int): The way to calculate mAP. The way to calculate mAP. Set to 0 for area under PR curve.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCOmAPv2(anno_path, iou_thrs, map_points, output_index_mapping)</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br><strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.<br> <strong>output_index_mapping</strong> (dict, default={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}): Specifies the index of outputs in model raw prediction, -1 means this output does not exist.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">GLUE(task)</td>
+<td style="text-align: left;"><strong>task</strong> (str, default=mrpc): The name of the task. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli.</td>
+<td style="text-align: left;">preds, labels</td>
+<td style="text-align: left;">Computes GLUE score for bert model.</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-started-with-metric">
+<h2>Get Started with Metric<a class="headerlink" href="#get-started-with-metric" title="Permalink to this heading"></a></h2>
+<section id="use-intel-neural-compressor-metric-api">
+<h3>Use Intel® Neural Compressor Metric API<a class="headerlink" href="#use-intel-neural-compressor-metric-api" title="Permalink to this heading"></a></h3>
+<p>Users can specify a Neural Compressor built-in metric such as shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">Metric</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">top1</span> <span class="o">=</span> <span class="n">Metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;topk&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span><span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-custom-metric-with-python-api">
+<h3>Build Custom Metric with Python API<a class="headerlink" href="#build-custom-metric-with-python-api" title="Permalink to this heading"></a></h3>
+<p>Please refer to <a class="reference external" href="../neural_compressor/metric">Metrics code</a>, users can also register their own metric as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewMetric</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># init code here</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+        <span class="c1"># add preds and labels to storage</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># clear preds and labels storage</span>
+
+    <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># calculate metric result</span>
+        <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+<p>The result() function returns a higher-is-better scalar to reflect model accuracy on an evaluation dataset.</p>
+<p>After defining the metric class, users can initialize it and pass it to quantizer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">new_metric</span> <span class="o">=</span> <span class="n">NewMetric</span><span class="p">()</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span><span class="n">eval_metric</span><span class="o">=</span><span class="n">new_metric</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">example</a> for how to define a customised metric.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq">example</a> for how to use internal metric.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

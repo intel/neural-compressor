@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.graph.reader.tensorflow_reader`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.graph.reader.tensorflow_reader
+
+.. autoapi-nested-parse::
+
+   Tensorflow Graph reader.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.reader.tensorflow_reader.TensorflowReader
+
+
+
+
+.. py:class:: TensorflowReader(model: neural_compressor.ux.components.model.model.Model)
+
+
+   Graph Reader for Tensorflow.
+
+

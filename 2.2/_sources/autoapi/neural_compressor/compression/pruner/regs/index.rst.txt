@@ -1,0 +1,96 @@
+:py:mod:`neural_compressor.compression.pruner.regs`
+===================================================
+
+.. py:module:: neural_compressor.compression.pruner.regs
+
+.. autoapi-nested-parse::
+
+   Regularizer.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.regs.BaseReg
+   neural_compressor.compression.pruner.regs.GroupLasso
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.regs.register_reg
+   neural_compressor.compression.pruner.regs.get_reg_type
+   neural_compressor.compression.pruner.regs.get_reg
+
+
+
+.. py:function:: register_reg(name)
+
+   Register a regularizator to the registry.
+
+   :param name: A string that defines the scheduler type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: get_reg_type(config)
+
+   Obtain the regularizer type.
+
+   :param config: A config dict object that includes information of the regularizer.
+
+
+.. py:function:: get_reg(config, modules, pattern)
+
+   Get registered regularizator class.
+
+   :param config: A config dict object that includes information of the regularizer.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param pattern: A config dict object that includes information of the pattern.
+
+
+.. py:class:: BaseReg(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern)
+
+
+   Regularizer.
+
+   The class that performs regularization.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that includes information of the regularizer.
+   :param pattern: A config dict object that includes information of the pattern.
+
+
+.. py:class:: GroupLasso(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern, coeff)
+
+
+
+
+   Regularizer.
+
+   A regularizer class derived from BaseReg. In this class, the Group-lasso regularization will be performed.
+   Group-lasso is a variable-selection and regularization method.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that includes information of the regularizer.
+   :param pattern: A config dict object that includes information of the pattern.
+
+   .. attribute:: reg_terms
+
+      A dict {"module_name": Tensor} of regularization terms.
+
+   .. attribute:: alpha
+
+      A float representing the coeffient related to group lasso.
+
+

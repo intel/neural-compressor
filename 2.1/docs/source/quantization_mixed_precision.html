@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turn OFF Auto Mixed Precision during Quantization &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Turn OFF Auto Mixed Precision during Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/quantization_mixed_precision.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="turn-off-auto-mixed-precision-during-quantization">
+<h1>Turn OFF Auto Mixed Precision during Quantization<a class="headerlink" href="#turn-off-auto-mixed-precision-during-quantization" title="Permalink to this heading"></a></h1>
+<p>BF16 conversion during quantization is default ON. To force disable it, users need to exclude “bf16” in PostTrainingQuantConfig and QuantizationAwareTrainingConfig:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostPostTrainingQuantConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">excluded_precisions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bf16&#39;</span><span class="p">])</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model_origin</span><span class="p">,</span>
+                           <span class="n">conf</span><span class="p">,</span>
+                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                           <span class="n">calib_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="tensorflow">
+<h1>Tensorflow<a class="headerlink" href="#tensorflow" title="Permalink to this heading"></a></h1>
+<p>Intel has worked with the TensorFlow development team to enhance TensorFlow to include bfloat16 data support for CPUs. For more information about BF16 in TensorFlow, please read <a class="reference external" href="https://blog.tensorflow.org/2020/06/accelerating-ai-performance-on-3rd-gen-processors-with-tensorflow-bfloat16.html">Accelerating AI performance on 3rd Gen Intel® Xeon® Scalable processors with TensorFlow and Bfloat16</a>.</p>
+<ul class="simple">
+<li><p>BF16 conversion during quantization in TensorFlow</p></li>
+</ul>
+<a target="_blank" href="./imgs/bf16_convert_tf.png" text-align:center>
+    <center> 
+        <img src="./imgs/bf16_convert_tf.png" alt="Architecture" height=200> 
+    </center>
+</a><ul class="simple">
+<li><p>Three steps</p></li>
+</ul>
+<ol>
+<li><p>Convert to a <code class="docutils literal notranslate"><span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph</p>
+<p>In this steps, TF adaptor will regard all fallback datatype as <code class="docutils literal notranslate"><span class="pre">FP32</span></code>. According to the per op datatype in tuning config passed by strategy, TF adaptor will generate a <code class="docutils literal notranslate"><span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision graph.</p>
+</li>
+<li><p>Convert to a <code class="docutils literal notranslate"><span class="pre">BF16</span> <span class="pre">+</span> <span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph</p>
+<p>In this phase, adaptor will convert some <code class="docutils literal notranslate"><span class="pre">FP32</span></code> ops to <code class="docutils literal notranslate"><span class="pre">BF16</span></code> according to <code class="docutils literal notranslate"><span class="pre">bf16_ops</span></code> list in tuning config.</p>
+</li>
+<li><p>Optimize the <code class="docutils literal notranslate"><span class="pre">BF16</span> <span class="pre">+</span> <span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph</p>
+<p>After the mixed precision graph generated, there are still some optimization need to be applied to improved the performance, for example <code class="docutils literal notranslate"><span class="pre">Cast</span> <span class="pre">+</span> <span class="pre">Cast</span></code> and so on. The <code class="docutils literal notranslate"><span class="pre">BF16Convert</span></code> transformer also apply a depth-first method to make it possible to take the ops use <code class="docutils literal notranslate"><span class="pre">BF16</span></code> which can support <code class="docutils literal notranslate"><span class="pre">BF16</span></code> datatype to reduce the insertion of <code class="docutils literal notranslate"><span class="pre">Cast</span></code> op.</p>
+</li>
+</ol>
+</section>
+<section id="pytorch">
+<h1>PyTorch<a class="headerlink" href="#pytorch" title="Permalink to this heading"></a></h1>
+<p>Intel has also worked with the PyTorch development team to enhance PyTorch to include bfloat16 data support for CPUs.</p>
+<ul class="simple">
+<li><p>BF16 conversion during quantization in PyTorch</p></li>
+</ul>
+<a target="_blank" href="./imgs/bf16_convert_pt.png" text-align:center>
+    <center> 
+        <img src="./imgs/bf16_convert_pt.png" alt="Architecture" height=200> 
+    </center>
+</a><ul class="simple">
+<li><p>Two steps</p></li>
+</ul>
+<ol>
+<li><p>Convert to a <code class="docutils literal notranslate"><span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph or Module</p>
+<p>In this steps, PT adaptor will combine the <code class="docutils literal notranslate"><span class="pre">INT8</span></code> ops and all fallback ops to <code class="docutils literal notranslate"><span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph or Module no matter in Eager mode or Fx Graph mode.</p>
+</li>
+<li><p>Convert to a <code class="docutils literal notranslate"><span class="pre">BF16</span> <span class="pre">+</span> <span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph or Module</p>
+<p>In this phase, adaptor will according to <code class="docutils literal notranslate"><span class="pre">BF16</span></code> op list from strategy tune config to wrapper the <code class="docutils literal notranslate"><span class="pre">FP32</span></code> module with <code class="docutils literal notranslate"><span class="pre">BF16Wrapper</span></code> to realize the <code class="docutils literal notranslate"><span class="pre">BF16</span> <span class="pre">+</span> <span class="pre">FP32</span> <span class="pre">+</span> <span class="pre">INT8</span></code> mixed precision Graph or Module. adaptor will do retrace the <code class="docutils literal notranslate"><span class="pre">GraphModule</span></code> again if using Fx Graph mode.</p>
+</li>
+</ol>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

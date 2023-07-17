@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.utils.templates.workdir`
+======================================================
+
+.. py:module:: neural_compressor.ux.utils.templates.workdir
+
+.. autoapi-nested-parse::
+
+   Workdir class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.templates.workdir.Workdir
+
+
+
+
+.. py:class:: Workdir
+
+
+   Class responsible for workspace management.
+
+

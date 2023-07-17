@@ -1,0 +1,220 @@
+:py:mod:`neural_compressor.experimental.common.criterion`
+=========================================================
+
+.. py:module:: neural_compressor.experimental.common.criterion
+
+.. autoapi-nested-parse::
+
+   Initialize critetion classes.
+
+   Classes includes:
+       TensorFlowCrossEntropyLoss, PyTorchCrossEntropyLoss,
+       TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss,
+       PyTorchIntermediateLayersKnowledgeDistillationLoss.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.criterion.TensorflowCriterions
+   neural_compressor.experimental.common.criterion.PyTorchCriterions
+   neural_compressor.experimental.common.criterion.Criterions
+   neural_compressor.experimental.common.criterion.TensorFlowCrossEntropyLoss
+   neural_compressor.experimental.common.criterion.TensorFlowSparseCategoricalCrossentropy
+   neural_compressor.experimental.common.criterion.PyTorchCrossEntropyLoss
+   neural_compressor.experimental.common.criterion.KnowledgeDistillationFramework
+   neural_compressor.experimental.common.criterion.KnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.PyTorchKnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.PyTorchKnowledgeDistillationLossWrapper
+   neural_compressor.experimental.common.criterion.TensorflowKnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.TensorflowKnowledgeDistillationLossWrapper
+   neural_compressor.experimental.common.criterion.TensorflowKnowledgeDistillationLossExternal
+   neural_compressor.experimental.common.criterion.IntermediateLayersKnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.PyTorchIntermediateLayersKnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.PyTorchIntermediateLayersKnowledgeDistillationLossWrapper
+   neural_compressor.experimental.common.criterion.SelfKnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.PyTorchSelfKnowledgeDistillationLoss
+   neural_compressor.experimental.common.criterion.PyTorchSelfKnowledgeDistillationLossWrapper
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.criterion.criterion_registry
+
+
+
+.. py:class:: TensorflowCriterions
+
+
+
+
+   Record criterions in TensorflowCriterions class.
+
+
+.. py:class:: PyTorchCriterions
+
+
+
+
+   Record criterions in PyTorchCriterions class.
+
+
+.. py:class:: Criterions(framework)
+
+
+
+
+   Integrate criterions of different framework.
+
+
+.. py:function:: criterion_registry(criterion_type, framework)
+
+   Use to register criterion classes in registry_criterions.
+
+   :param criterion_type: The string of supported criterion.
+   :type criterion_type: str
+   :param framework: The string of supported framework.
+   :type framework: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: TensorFlowCrossEntropyLoss(param_dict)
+
+
+
+
+   TensorFlow CrossEntropyLoss criterion.
+
+
+.. py:class:: TensorFlowSparseCategoricalCrossentropy(param_dict)
+
+
+
+
+   TensorFlow SparseCategoricalCrossentropyLoss criterion.
+
+
+.. py:class:: PyTorchCrossEntropyLoss(param_dict)
+
+
+
+
+   PyTorch CrossEntropyLoss criterion.
+
+
+.. py:class:: KnowledgeDistillationFramework(student_model=None, teacher_model=None)
+
+
+
+
+   Knowledge Distillation Framework.
+
+
+.. py:class:: KnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   Initialize the KnowledgeDistillationLoss class.
+
+
+.. py:class:: PyTorchKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: PyTorchKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss.
+
+
+.. py:class:: TensorflowKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   The TensorflowKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: TensorflowKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   TensorflowKnowledgeDistillationLossWrapper wraps TensorflowKnowledgeDistillationLoss.
+
+
+.. py:class:: TensorflowKnowledgeDistillationLossExternal(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: IntermediateLayersKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: PyTorchIntermediateLayersKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   PyTorch Intermediate Layers Knowledge Distillation Loss.
+
+
+.. py:class:: PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper.
+
+
+.. py:class:: SelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   SelfKnowledge Distillation Loss.
+
+
+.. py:class:: PyTorchSelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   PyTorch SelfKnowledge Distillation Loss.
+
+
+.. py:class:: PyTorchSelfKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   PyTorch SelfKnowledge Distillation Loss Wrapper.
+
+

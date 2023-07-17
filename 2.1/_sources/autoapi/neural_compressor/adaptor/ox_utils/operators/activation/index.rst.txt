@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.activation`
+=================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.activation
+
+.. autoapi-nested-parse::
+
+   Activation operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.activation.ActivationOperator
+   neural_compressor.adaptor.ox_utils.operators.activation.RemovableActivationOperator
+   neural_compressor.adaptor.ox_utils.operators.activation.QActivationOperator
+
+
+
+
+.. py:class:: ActivationOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Activation operator.
+
+
+.. py:class:: RemovableActivationOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Removable activation operator.
+
+
+.. py:class:: QActivationOperator(onnx_node, children, initializers)
+
+
+
+
+   INT8 activation operator in QOperator format.
+
+

@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.diagnosis`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.diagnosis
+
+.. autoapi-nested-parse::
+
+   The diagnosis class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis
+
+
+
+
+.. py:class:: Diagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
+
+
+   Diagnosis class.
+
+

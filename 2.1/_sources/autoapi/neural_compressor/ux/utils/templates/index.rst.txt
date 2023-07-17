@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.ux.utils.templates`
+==============================================
+
+.. py:module:: neural_compressor.ux.utils.templates
+
+.. autoapi-nested-parse::
+
+   UX server templates module.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   metric/index.rst
+   workdir/index.rst
+
+

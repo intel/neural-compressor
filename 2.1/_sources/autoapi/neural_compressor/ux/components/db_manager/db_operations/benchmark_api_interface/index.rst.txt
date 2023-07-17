@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.benchmark_api_interface`
+==========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.benchmark_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Benchmark API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.benchmark_api_interface.BenchmarkAPIInterface
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.benchmark_api_interface.before_delete_benchmark_entry
+
+
+
+.. py:class:: BenchmarkAPIInterface
+
+
+   Interface for queries connected with benchmark.
+
+
+.. py:function:: before_delete_benchmark_entry(mapper: sqlalchemy.orm.Mapper, connection: sqlite3.Connection, benchmark: neural_compressor.ux.components.db_manager.db_models.benchmark.Benchmark) -> None
+
+   Clean up benchmark data before remove.
+
+

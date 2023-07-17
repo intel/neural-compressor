@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.domain`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.domain
+
+.. autoapi-nested-parse::
+
+   Domain package contains domain class representing domain table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.domain.Domain
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.domain.fill_dictionary
+
+
+
+.. py:class:: Domain
+
+
+
+
+   INC Bench Domain table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

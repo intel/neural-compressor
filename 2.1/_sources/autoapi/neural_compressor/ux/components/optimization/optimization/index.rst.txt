@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.ux.components.optimization.optimization`
+===================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.optimization
+
+.. autoapi-nested-parse::
+
+   Optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.optimization.Optimization
+   neural_compressor.ux.components.optimization.optimization.OptimizationInterface
+   neural_compressor.ux.components.optimization.optimization.DataloaderInterface
+
+
+
+
+.. py:class:: Optimization(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+
+
+
+   Optimization class.
+
+
+.. py:class:: OptimizationInterface(optimization_data: dict)
+
+
+   Interface for optimization.
+
+
+.. py:class:: DataloaderInterface(dataloader_data: dict)
+
+
+   Interface for dataloader.
+
+

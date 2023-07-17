@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.web.service.optimization`
+=======================================================
+
+.. py:module:: neural_compressor.ux.web.service.optimization
+
+.. autoapi-nested-parse::
+
+   Optimization service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.optimization.OptimizationService
+
+
+
+
+.. py:class:: OptimizationService
+
+
+
+
+   Optimization related services.
+
+

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.utils.templates.metric`
+=====================================================
+
+.. py:module:: neural_compressor.ux.utils.templates.metric
+
+.. autoapi-nested-parse::
+
+   Metric class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.templates.metric.Metric
+
+
+
+
+.. py:class:: Metric
+
+
+
+
+   Metric represents data which is sent from Optimization and Benchmark.
+
+

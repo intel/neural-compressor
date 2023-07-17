@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.utils.load_huggingface`
+==================================================
+
+.. py:module:: neural_compressor.utils.load_huggingface
+
+.. autoapi-nested-parse::
+
+   Huggingface Loader: provides access to Huggingface pretrained models.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.load_huggingface.OptimizedModel
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.load_huggingface.save_for_huggingface_upstream
+
+
+
+.. py:class:: OptimizedModel(*args, **kwargs)
+
+
+   The class provides a method from_pretrained to access Huggingface models.
+
+
+.. py:function:: save_for_huggingface_upstream(model, tokenizer, output_dir)
+
+   Save the model and tokenizer in the output directory.
+
+

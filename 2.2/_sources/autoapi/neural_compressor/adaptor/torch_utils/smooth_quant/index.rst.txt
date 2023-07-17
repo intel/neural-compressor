@@ -1,0 +1,71 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.smooth_quant`
+============================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.smooth_quant
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.smooth_quant.TorchSmoothQuant
+   neural_compressor.adaptor.torch_utils.smooth_quant.GraphTrace
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.smooth_quant.get_module
+   neural_compressor.adaptor.torch_utils.smooth_quant.set_module
+
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: set_module(model, key, new_module)
+
+   Set new module into model by key name
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+   :param new_module: new module to be inserted
+   :type new_module: torch.nn.Module
+
+
+.. py:class:: TorchSmoothQuant(model, dataloader, example_inputs=None, q_func=None, traced_model=None)
+
+
+   Fake input channel quantization, for more details please refer to
+   [1] SmoothQuant: Accurate and Efficient
+   Post-Training Quantization for Large Language Models
+   [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+   Currently, we only handle the layers whose smooth scale could be absorbed, we will support other layers later.
+   We only support inplace mode which means the model weights will be changed, you can call recover function
+   to recover the weights if needed
+
+
+.. py:class:: GraphTrace
+
+
+   
+
+

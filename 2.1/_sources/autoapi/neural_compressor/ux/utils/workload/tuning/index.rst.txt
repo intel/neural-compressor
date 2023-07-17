@@ -1,0 +1,86 @@
+:py:mod:`neural_compressor.ux.utils.workload.tuning`
+====================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.tuning
+
+.. autoapi-nested-parse::
+
+   Configuration tuning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.tuning.Strategy
+   neural_compressor.ux.utils.workload.tuning.MultiObjectives
+   neural_compressor.ux.utils.workload.tuning.AccCriterion
+   neural_compressor.ux.utils.workload.tuning.ExitPolicy
+   neural_compressor.ux.utils.workload.tuning.Workspace
+   neural_compressor.ux.utils.workload.tuning.Diagnosis
+   neural_compressor.ux.utils.workload.tuning.Tuning
+
+
+
+
+.. py:class:: Strategy(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Strategy class.
+
+
+.. py:class:: MultiObjectives(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration MultiObjectives class.
+
+
+.. py:class:: AccCriterion(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration AccCriterion class.
+
+
+.. py:class:: ExitPolicy(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration ExitPolicy class.
+
+
+.. py:class:: Workspace(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Workspace class.
+
+
+.. py:class:: Diagnosis(data: Optional[Dict[str, Any]] = None)
+
+
+
+
+   Configuration Diagnosis class.
+
+
+.. py:class:: Tuning(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Tuning class.
+
+

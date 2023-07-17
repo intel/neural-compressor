@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.optimization`
+===========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.optimization
+
+.. autoapi-nested-parse::
+
+   The Optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.optimization.Optimization
+
+
+
+
+.. py:class:: Optimization
+
+
+
+
+   INC Bench optimizations' table representation.
+
+

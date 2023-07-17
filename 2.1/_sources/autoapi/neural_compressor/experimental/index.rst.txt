@@ -1,0 +1,85 @@
+:py:mod:`neural_compressor.experimental`
+========================================
+
+.. py:module:: neural_compressor.experimental
+
+.. autoapi-nested-parse::
+
+   Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   common/index.rst
+   compression/index.rst
+   data/index.rst
+   export/index.rst
+   metric/index.rst
+   nas/index.rst
+   pruner_legacy/index.rst
+   pruning_recipes/index.rst
+   pytorch_pruner/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark/index.rst
+   component/index.rst
+   distillation/index.rst
+   graph_optimization/index.rst
+   mixed_precision/index.rst
+   model_conversion/index.rst
+   pruning/index.rst
+   pruning_v2/index.rst
+   quantization/index.rst
+   scheduler/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.Component
+   neural_compressor.experimental.Quantization
+   neural_compressor.experimental.Pruning
+   neural_compressor.experimental.Benchmark
+   neural_compressor.experimental.Graph_Optimization
+   neural_compressor.experimental.MixedPrecision
+   neural_compressor.experimental.ModelConversion
+   neural_compressor.experimental.Distillation
+   neural_compressor.experimental.NAS
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.GraphOptimization
+
+
+
+
+
+
+
+
+
+
+
+

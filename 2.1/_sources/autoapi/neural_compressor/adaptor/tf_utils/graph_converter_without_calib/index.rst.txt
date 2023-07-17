@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_converter_without_calib`
+==========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_converter_without_calib
+
+.. autoapi-nested-parse::
+
+   Without calibration Graph Converter Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib
+
+
+
+
+.. py:class:: GraphConverterWithoutCalib(model, data_loader=None, recover_config=None, new_api=False, performance_only=False, use_bf16=False)
+
+
+   Graph Converter without calibration Class is used to generate the quantization graph without calibration.
+
+

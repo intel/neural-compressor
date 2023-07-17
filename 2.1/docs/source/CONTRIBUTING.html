@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contribution Guidelines &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Contribution Guidelines</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/CONTRIBUTING.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="contribution-guidelines">
+<h1>Contribution Guidelines<a class="headerlink" href="#contribution-guidelines" title="Permalink to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#pull-request-checklist">Pull Request Checklist</a></p></li>
+<li><p><a class="reference external" href="#distillation-support-matrix">Pull Request Template</a></p></li>
+<li><p><a class="reference external" href="#support">Support</a></p></li>
+<li><p><a class="reference external" href="#contributor-covenant-code-of-conduct">Contributor Covenant Code of Conduct</a></p></li>
+</ol>
+<p>If you have improvements to Intel® Neural Compressor, send your pull requests for
+<a class="reference external" href="https://github.com/intel/neural-compressor/pulls">review</a>. If you are new to Github, view the pull request <a class="reference external" href="https://help.github.com/articles/using-pull-requests/">How To</a>.</p>
+<section id="pull-request-checklist">
+<h2>Pull Request Checklist<a class="headerlink" href="#pull-request-checklist" title="Permalink to this heading"></a></h2>
+<p>Before sending your pull requests, follow the information below:</p>
+<ul class="simple">
+<li><p>Changes are consistent with the Python <a class="reference external" href="https://github.com/google/styleguide/blob/gh-pages/pyguide.md">Coding Style</a>.</p></li>
+<li><p>Use pylint to check your Python code.</p></li>
+<li><p>Use flake8 and autopep8 to make Python code clean.</p></li>
+<li><p>Add unit tests in <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/test">Unit Tests</a> to cover the code you would like to contribute.</p></li>
+<li><p>Run <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/test">Unit Tests</a>.</p></li>
+<li><p>Intel® Neural Compressor has adopted the <a class="reference external" href="https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin">Developer Certificate of Origin</a>, you must agree to the terms of Developer Certificate of Origin by signing off each of your commits.<code class="docutils literal notranslate"><span class="pre">Signed-off-by:</span> <span class="pre">Random</span> <span class="pre">J</span> <span class="pre">Developer</span> <span class="pre">&lt;random&#64;developer.example.org&gt;</span></code></p></li>
+</ul>
+</section>
+<section id="pull-request-template">
+<h2>Pull Request Template<a class="headerlink" href="#pull-request-template" title="Permalink to this heading"></a></h2>
+<p><strong>Type of Change</strong>
+feature or bug fix or documentation or validation or others
+API changed or not</p>
+<p><strong>Description</strong>
+detail description
+JIRA ticket: xxx</p>
+<p><strong>Expected Behavior &amp; Potential Risk</strong>
+the expected behavior that triggered by this PR</p>
+<p><strong>How has this PR been tested?</strong>
+how to reproduce the test (including hardware information)</p>
+<p><strong>Dependency Change?</strong>
+any library dependency introduced or removed</p>
+</section>
+<section id="support">
+<h2>Support<a class="headerlink" href="#support" title="Permalink to this heading"></a></h2>
+<p>Submit your questions, feature requests, and bug reports to the
+<a class="reference external" href="https://github.com/intel/neural-compressor/issues">GitHub issues</a> page. You may also reach out to <a class="reference external" href="inc.maintainers&#64;intel.com">Maintainers</a>.</p>
+</section>
+<section id="contributor-covenant-code-of-conduct">
+<h2>Contributor Covenant Code of Conduct<a class="headerlink" href="#contributor-covenant-code-of-conduct" title="Permalink to this heading"></a></h2>
+<p>This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the <a class="reference internal" href="CODE_OF_CONDUCT.html"><span class="doc">Contributor Covenant Code of Conduct</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

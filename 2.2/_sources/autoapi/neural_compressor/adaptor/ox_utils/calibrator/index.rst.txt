@@ -1,0 +1,111 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.calibrator`
+=======================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.calibrator
+
+.. autoapi-nested-parse::
+
+   Calibrator for onnx models.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.calibrator.CalibratorBase
+   neural_compressor.adaptor.ox_utils.calibrator.MinMaxCalibrator
+   neural_compressor.adaptor.ox_utils.calibrator.PercentileCalibrator
+   neural_compressor.adaptor.ox_utils.calibrator.KLCalibrator
+   neural_compressor.adaptor.ox_utils.calibrator.HistogramCollector
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.calibrator.calib_registry
+   neural_compressor.adaptor.ox_utils.calibrator.smooth_distribution
+
+
+
+.. py:function:: calib_registry(calib_method)
+
+   The class decorator used to register all Calibrator subclasses.
+
+
+.. py:class:: CalibratorBase
+
+
+   Base calibrator class.
+
+
+.. py:class:: MinMaxCalibrator
+
+
+
+
+   MinMax calibrator class.
+
+
+.. py:class:: PercentileCalibrator(num_bins=2048, percentile=99.999)
+
+
+
+
+   Percentile calibrator class.
+
+   :param num_bins: number of bins to create a new histogram
+                    for collecting tensor values. Defaults to 2048.
+   :type num_bins: int, optional
+   :param percentile: A float number between [0, 100]. Defaults to 99.999.
+   :type percentile: float, optional
+
+
+.. py:class:: KLCalibrator(num_bins=128, num_quantized_bins=128)
+
+
+
+
+   KL calibrator class.
+
+   :param num_bins: number of bins to create a new histogram
+                    for collecting tensor values. Defaults to 128.
+   :type num_bins: int, optional
+   :param num_quantized_bins: number of quantized bins. Defaults to 128.
+   :type num_quantized_bins: int, optional
+
+
+.. py:class:: HistogramCollector(num_bins=2048)
+
+
+   Histogram collctor class.
+
+
+.. py:function:: smooth_distribution(p, eps=0.0001)
+
+   Smooth distribution.
+
+   Given a discrete distribution (may have not been normalized to 1),
+   smooth it by replacing zeros with eps multiplied by a scaling factor
+   and taking the corresponding amount off the non-zero values.
+   Ref:
+   http://hanj.cs.illinois.edu/cs412/bk3/KL-divergence.pdf
+   https://github.com//apache/incubator-mxnet/blob/master/python/mxnet/contrib/quantization.py
+   https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py
+
+   :param p: distribution array
+   :type p: array
+   :param eps: a small probability. Defaults to 0.0001.
+   :type eps: float, optional
+
+   :returns: smoothed distribution
+   :rtype: array
+
+

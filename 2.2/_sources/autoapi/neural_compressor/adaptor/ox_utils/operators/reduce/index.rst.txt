@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.reduce`
+=============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.reduce
+
+.. autoapi-nested-parse::
+
+   Reduce Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.reduce.ReduceOperator
+
+
+
+
+.. py:class:: ReduceOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Reduce Operator.
+
+

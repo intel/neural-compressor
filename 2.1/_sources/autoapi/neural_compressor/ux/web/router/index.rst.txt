@@ -1,0 +1,89 @@
+:py:mod:`neural_compressor.ux.web.router`
+=========================================
+
+.. py:module:: neural_compressor.ux.web.router
+
+.. autoapi-nested-parse::
+
+   Connector between api.py and components.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.router.RoutingDefinition
+   neural_compressor.ux.web.router.RealtimeRoutingDefinition
+   neural_compressor.ux.web.router.DeferredRoutingDefinition
+   neural_compressor.ux.web.router.DeferredSubprocessRoutingDefinition
+   neural_compressor.ux.web.router.Router
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.router.get_model_graph
+   neural_compressor.ux.web.router.find_pattern_in_graph
+   neural_compressor.ux.web.router.get_system_info
+
+
+
+.. py:class:: RoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
+
+
+   Abstract routing definition.
+
+
+.. py:class:: RealtimeRoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
+
+
+
+
+   Routing executed in realtime.
+
+
+.. py:class:: DeferredRoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
+
+
+
+
+   Routing executed in separate thread.
+
+
+.. py:class:: DeferredSubprocessRoutingDefinition(callback: Callable[[Dict[str, Any]], Any])
+
+
+
+
+   Routing executed in separate thread and it spawns subprocess.
+
+
+.. py:class:: Router
+
+
+   Connector between api.py and components.
+
+
+.. py:function:: get_model_graph(data: Dict[str, Any]) -> neural_compressor.ux.components.graph.graph.Graph
+
+   Get model graph.
+
+
+.. py:function:: find_pattern_in_graph(data: Dict[str, Any]) -> dict
+
+   Find OP pattern in graph for diagnosis tab.
+
+
+.. py:function:: get_system_info(data: Dict[str, Any]) -> dict
+
+   Get system info.
+
+

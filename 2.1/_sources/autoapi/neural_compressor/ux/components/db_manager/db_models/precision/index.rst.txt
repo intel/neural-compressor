@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.precision`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.precision
+
+.. autoapi-nested-parse::
+
+   Precision package contains precision class representing precision table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.precision.Precision
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.precision.fill_dictionary
+
+
+
+.. py:class:: Precision
+
+
+
+
+   INC Bench Precision table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

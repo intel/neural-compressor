@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter`
+=========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter
+
+.. autoapi-nested-parse::
+
+   Post HostConst Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter
+
+
+
+
+.. py:class:: PostHostConstConverter(model)
+
+
+
+
+   Support HostConst as default for all devices, not just for GPU.
+
+

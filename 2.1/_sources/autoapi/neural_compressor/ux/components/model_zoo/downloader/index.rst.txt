@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.model_zoo.downloader`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.model_zoo.downloader
+
+.. autoapi-nested-parse::
+
+   Download model from Examples.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model_zoo.downloader.Downloader
+
+
+
+
+.. py:class:: Downloader(data: Dict[str, Any])
+
+
+   UX model downloader class.
+
+

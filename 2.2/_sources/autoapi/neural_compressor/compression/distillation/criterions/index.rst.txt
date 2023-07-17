@@ -1,0 +1,192 @@
+:py:mod:`neural_compressor.compression.distillation.criterions`
+===============================================================
+
+.. py:module:: neural_compressor.compression.distillation.criterions
+
+.. autoapi-nested-parse::
+
+   Initialize critetion classes.
+
+   Classes includes:
+       TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss,
+       PyTorchIntermediateLayersKnowledgeDistillationLoss.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.distillation.criterions.TensorflowCriterions
+   neural_compressor.compression.distillation.criterions.PyTorchCriterions
+   neural_compressor.compression.distillation.criterions.Criterions
+   neural_compressor.compression.distillation.criterions.KnowledgeDistillationFramework
+   neural_compressor.compression.distillation.criterions.KnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLossWrapper
+   neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossWrapper
+   neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossExternal
+   neural_compressor.compression.distillation.criterions.IntermediateLayersKnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLossWrapper
+   neural_compressor.compression.distillation.criterions.SelfKnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLoss
+   neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLossWrapper
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.distillation.criterions.criterion_registry
+
+
+
+.. py:class:: TensorflowCriterions
+
+
+
+
+   Record criterions in TensorflowCriterions class.
+
+
+.. py:class:: PyTorchCriterions
+
+
+
+
+   Record criterions in PyTorchCriterions class.
+
+
+.. py:class:: Criterions(framework)
+
+
+
+
+   Integrate criterions of different framework.
+
+
+.. py:function:: criterion_registry(criterion_type, framework)
+
+   Use to register criterion classes in registry_criterions.
+
+   :param criterion_type: The string of supported criterion.
+   :type criterion_type: str
+   :param framework: The string of supported framework.
+   :type framework: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: KnowledgeDistillationFramework(student_model=None, teacher_model=None)
+
+
+
+
+   Knowledge Distillation Framework.
+
+
+.. py:class:: KnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   Initialize the KnowledgeDistillationLoss class.
+
+
+.. py:class:: PyTorchKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: PyTorchKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss.
+
+
+.. py:class:: TensorflowKnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   The TensorflowKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: TensorflowKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   TensorflowKnowledgeDistillationLossWrapper wraps TensorflowKnowledgeDistillationLoss.
+
+
+.. py:class:: TensorflowKnowledgeDistillationLossExternal(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
+
+
+
+
+   TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: IntermediateLayersKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
+
+
+.. py:class:: PyTorchIntermediateLayersKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   PyTorch Intermediate Layers Knowledge Distillation Loss.
+
+
+.. py:class:: PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper.
+
+
+.. py:class:: SelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   SelfKnowledge Distillation Loss.
+
+
+.. py:class:: PyTorchSelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
+
+
+
+
+   PyTorch SelfKnowledge Distillation Loss.
+
+
+.. py:class:: PyTorchSelfKnowledgeDistillationLossWrapper(param_dict)
+
+
+
+
+   PyTorch SelfKnowledge Distillation Loss Wrapper.
+
+

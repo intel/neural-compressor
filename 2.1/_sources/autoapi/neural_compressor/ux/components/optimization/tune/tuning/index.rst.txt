@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.ux.components.optimization.tune.tuning`
+==================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.tune.tuning
+
+.. autoapi-nested-parse::
+
+   Tuning class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tune.tuning.Tuning
+   neural_compressor.ux.components.optimization.tune.tuning.AccuracyCriterion
+   neural_compressor.ux.components.optimization.tune.tuning.TuningDetails
+
+
+
+
+.. py:class:: Tuning(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+
+
+
+   Tuning class.
+
+
+.. py:class:: AccuracyCriterion
+
+
+
+
+   Interface for accuracy criterion.
+
+
+.. py:class:: TuningDetails(data: Optional[dict] = None)
+
+
+
+
+   Interface for tuning details.
+
+

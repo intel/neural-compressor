@@ -1,0 +1,55 @@
+:py:mod:`neural_compressor.ux.components.optimization`
+======================================================
+
+.. py:module:: neural_compressor.ux.components.optimization
+
+.. autoapi-nested-parse::
+
+   Package optimization contains all packages required to optimize model.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   graph_optimizer/index.rst
+   mixed_precision/index.rst
+   neural_coder_optimization/index.rst
+   pruning/index.rst
+   tune/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   execute_optimization/index.rst
+   factory/index.rst
+   optimization/index.rst
+   tuning_history/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.Optimizations
+
+
+
+
+.. py:class:: Optimizations
+
+
+   Optimizations enumeration.
+
+

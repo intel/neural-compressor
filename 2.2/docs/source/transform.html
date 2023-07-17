@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transform &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Transform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/transform.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="transform">
+<h1>Transform<a class="headerlink" href="#transform" title="Permalink to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#transform-support-list">Transform support list</a></p>
+<p>2.1 <a class="reference external" href="#tensorflow">Tensorflow</a></p>
+<p>2.2 <a class="reference external" href="#pytorch">Pytorch</a></p>
+<p>2.3 <a class="reference external" href="#mxnet">MXNet</a></p>
+<p>2.4 <a class="reference external" href="#onnxrt">ONNXRT</a></p>
+</li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Neural Compressor supports built-in preprocessing methods on different framework backends. Refer to <a class="reference external" href="/examples/helloworld/tf_example1">this HelloWorld example</a> on how to configure a transform in a dataloader.</p>
+</section>
+<section id="transform-support-list">
+<h2>Transform Support List<a class="headerlink" href="#transform-support-list" title="Permalink to this heading"></a></h2>
+<section id="tensorflow">
+<h3>TensorFlow<a class="headerlink" href="#tensorflow" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Transform</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage(In yaml file)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Resize(size, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Resize the input image to the given size</td>
+<td style="text-align: left;">Resize: <br> &ensp;&ensp; size: 256 <br> &ensp;&ensp;  interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">CenterCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the given image at the center to the given size</td>
+<td style="text-align: left;">CenterCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomResizedCrop(size, scale, ratio, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>scale</strong> (tuple or list, default=(0.08, 1.0)): range of the size of the origin size cropped <br> <strong>ratio</strong> (tuple or list, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest'</td>
+<td style="text-align: left;">Crop the given image to random size and aspect ratio</td>
+<td style="text-align: left;">RandomResizedCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10 <br> &ensp;&ensp; scale: [0.08, 1.0] <br> &ensp;&ensp; ratio: [3. / 4., 4. / 3.] <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">Normalize(mean, std)</td>
+<td style="text-align: left;"><strong>mean</strong> (list, default=[0.0]): means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> <strong>std</strong> (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape</td>
+<td style="text-align: left;">Normalize a image with mean and standard deviation</td>
+<td style="text-align: left;">Normalize: <br> &ensp;&ensp; mean: [0.0, 0.0, 0.0] <br> &ensp;&ensp; std: [1.0, 1.0, 1.0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the image at a random location to the given size</td>
+<td style="text-align: left;">RandomCrop: <br> &ensp;&ensp; size: [10, 10] # size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">Compose(transform_list)</td>
+<td style="text-align: left;"><strong>transform_list</strong> (list of Transform objects):  list of transforms to compose</td>
+<td style="text-align: left;">Compose several transforms together</td>
+<td style="text-align: left;">If user uses yaml file to configure transforms, Neural Compressor will automatic call Compose to group other transforms. <br> <strong>In user code:</strong> <br> from neural_compressor.experimental.data  import TRANSFORMS <br> preprocess = TRANSFORMS(framework, 'preprocess') <br> resize = preprocess["Resize"] (*<em>args) <br> normalize = preprocess["Normalize"] (*</em>args) <br> compose = preprocess["Compose"] ([resize, normalize]) <br> sample = compose(sample) <br> # sample: image, label</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropResize(x, y, width, height, size, interpolation)</td>
+<td style="text-align: left;"><strong>x</strong> (int): Left boundary of the cropping area <br> <strong>y</strong> (int): Top boundary of the cropping area <br> <strong>width</strong> (int): Width of the cropping area <br> <strong>height</strong> (int): Height of the cropping area <br> <strong>size</strong> (list or int): resize to new size after cropping <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest' and 'bicubic'</td>
+<td style="text-align: left;">Crop the input image with given location and resize it</td>
+<td style="text-align: left;">CropResize: <br> &ensp;&ensp; x: 0 <br> &ensp;&ensp; y: 5 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; size: [100, 100] # or size: 100 <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomHorizontalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Horizontally flip the given image randomly</td>
+<td style="text-align: left;">RandomHorizontalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomVerticalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Vertically flip the given image randomly</td>
+<td style="text-align: left;">RandomVerticalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">DecodeImage()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Decode a JPEG-encoded image to a uint8 tensor</td>
+<td style="text-align: left;">DecodeImage: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">EncodeJped()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Encode image to a  Tensor of type string</td>
+<td style="text-align: left;">EncodeJped: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">Transpose(perm)</td>
+<td style="text-align: left;"><strong>perm</strong> (list): A permutation of the dimensions of input image</td>
+<td style="text-align: left;">Transpose image according perm</td>
+<td style="text-align: left;">Transpose: <br> &ensp;&ensp; perm: [1, 2, 0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ResizeWithRatio(min_dim, max_dim, padding)</td>
+<td style="text-align: left;"><strong>min_dim</strong> (int, default=800): Resizes the image such that its smaller dimension == min_dim <br> <strong>max_dim</strong> (int, default=1365): Ensures that the image longest side does not exceed this value <br> <strong>padding</strong> (bool, default=False): If true, pads image with zeros so its size is max_dim x max_dim</td>
+<td style="text-align: left;">Resize image with aspect ratio and pad it to max shape(optional). If the image is padded, the label will be processed at the same time. The input image should be np.array or tf.Tensor.</td>
+<td style="text-align: left;">ResizeWithRatio: <br> &ensp;&ensp; min_dim: 800 <br> &ensp;&ensp; max_dim: 1365 <br> &ensp;&ensp; padding: True</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropToBoundingBox(offset_height, offset_width, target_height, target_width)</td>
+<td style="text-align: left;"><strong>offset_height</strong> (int): Vertical coordinate of the top-left corner of the result in the input <br> <strong>offset_width</strong> (int): Horizontal coordinate of the top-left corner of the result in the input <br> <strong>target_height</strong> (int): Height of the result <br> <strong>target_width</strong> (int): Width of the result</td>
+<td style="text-align: left;">Crop an image to a specified bounding box</td>
+<td style="text-align: left;">CropToBoundingBox: <br> &ensp;&ensp; offset_height: 10 <br> &ensp;&ensp; offset_width: 10 <br> &ensp;&ensp; target_height: 224 <br> &ensp;&ensp; 224</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cast(dtype)</td>
+<td style="text-align: left;"><strong>dtype</strong> (str, default='float32'): A dtype to convert image to</td>
+<td style="text-align: left;">Convert image to given dtype</td>
+<td style="text-align: left;">Cast: <br> &ensp;&ensp; dtype: float32</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToArray()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert PIL Image to numpy array</td>
+<td style="text-align: left;">ToArray: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">Rescale()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Scale the values of image to [0,1]</td>
+<td style="text-align: left;">Rescale: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">AlignImageChannel(dim)</td>
+<td style="text-align: left;"><strong>dim</strong> (int): The channel number of result image</td>
+<td style="text-align: left;">Align image channel, now just support [H,W]-&gt;[H,W,dim], [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W]. <br> This transform is going to be deprecated.</td>
+<td style="text-align: left;">AlignImageChannel: <br> &ensp;&ensp; dim: 3</td>
+</tr>
+<tr>
+<td style="text-align: left;">ParseDecodeImagenet()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Parse features in Example proto</td>
+<td style="text-align: left;">ParseDecodeImagenet: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">ResizeCropImagenet(height, width, random_crop, resize_side, random_flip_left_right, mean_value, scale)</td>
+<td style="text-align: left;"><strong>height</strong> (int): Height of the result <br> <strong>width</strong> (int): Width of the result <br> <strong>random_crop</strong> (bool, default=False): whether to random crop <br> <strong>resize_side</strong> (int, default=256):desired shape after resize operation <br> <strong>random_flip_left_right</strong> (bool, default=False): whether to random flip left and right <br> <strong>mean_value</strong> (list, default=[0.0,0.0,0.0]):means for each channel <br> <strong>scale</strong> (float, default=1.0):std value</td>
+<td style="text-align: left;">Combination of a series of transforms which is applicable to images in Imagenet</td>
+<td style="text-align: left;">ResizeCropImagenet: <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; random_crop: False <br> &ensp;&ensp; resize_side: 256 <br> &ensp;&ensp; random_flip_left_right: False <br> &ensp;&ensp; mean_value: [123.68, 116.78, 103.94] <br> &ensp;&ensp; scale: 0.017</td>
+</tr>
+<tr>
+<td style="text-align: left;">QuantizedInput(dtype, scale)</td>
+<td style="text-align: left;"><strong>dtype</strong>(str): desired image dtype, support 'uint8', 'int8' <br> <strong>scale</strong>(float, default=None):scaling ratio of each point in image</td>
+<td style="text-align: left;">Convert the dtype of input to quantize it</td>
+<td style="text-align: left;">QuantizedInput: <br> &ensp;&ensp; dtype: 'uint8'</td>
+</tr>
+<tr>
+<td style="text-align: left;">LabelShift(label_shift)</td>
+<td style="text-align: left;"><strong>label_shift</strong>(int, default=0): number of label shift</td>
+<td style="text-align: left;">Convert label to label - label_shift</td>
+<td style="text-align: left;">LabelShift: <br> &ensp;&ensp; label_shift: 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">BilinearImagenet(height, width, central_fraction, mean_value, scale)</td>
+<td style="text-align: left;"><strong>height</strong>(int): Height of the result <br> <strong>width</strong>(int):Width of the result <br> <strong>central_fraction</strong>(float, default=0.875):fraction of size to crop <br> <strong>mean_value</strong>(list, default=[0.0,0.0,0.0]):means for each channel <br> <strong>scale</strong>(float, default=1.0):std value</td>
+<td style="text-align: left;">Combination of a series of transforms which is applicable to images in Imagenet</td>
+<td style="text-align: left;">BilinearImagenet: <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; central_fraction: 0.875 <br> &ensp;&ensp; mean_value: [0.0,0.0,0.0] <br> &ensp;&ensp; scale: 1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;">SquadV1(label_file, n_best_size, max_seq_length, max_query_length, max_answer_length, do_lower_case, doc_stride)</td>
+<td style="text-align: left;"><strong>label_file</strong> (str): path of label file <br> <strong>vocab_file</strong>(str): path of vocabulary file <br> <strong>n_best_size</strong> (int, default=20): The total number of n-best predictions to generate in the nbest_predictions.json output file <br> <strong>max_seq_length</strong> (int, default=384): The maximum total input sequence length after WordPiece tokenization. Sequences longer than this will be truncated, and sequences shorter, than this will be padded <br> <strong>max_query_length</strong> (int, default=64): The maximum number of tokens for the question. Questions longer than this will be truncated to this length <br> <strong>max_answer_length</strong> (int, default=30): The maximum length of an answer that can be generated. This is needed because the start and end predictions are not conditioned on one another <br> <strong>do_lower_case</strong> (bool, default=True): Whether to lower case the input text. Should be True for uncased models and False for cased models <br> <strong>doc_stride</strong> (int, default=128): When splitting up a long document into chunks, how much stride to take between chunks</td>
+<td style="text-align: left;">Postprocess the predictions of bert on SQuAD</td>
+<td style="text-align: left;">SquadV1 <br> &ensp;&ensp; label_file: /path/to/label_file <br> &ensp;&ensp; n_best_size: 20 <br> &ensp;&ensp; max_seq_length: 384 <br> &ensp;&ensp; max_query_length: 64 <br> &ensp;&ensp; max_answer_length: 30 <br> &ensp;&ensp; do_lower_case: True <br> &ensp;&ensp; doc_stride: True</td>
+</tr>
+</tbody>
+</table></section>
+<section id="pytorch">
+<h3>Pytorch<a class="headerlink" href="#pytorch" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Transform</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage(In yaml file)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Resize(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> interpolation(str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Resize the input image to the given size</td>
+<td style="text-align: left;">Resize: <br> &ensp;&ensp; size: 256 <br> &ensp;&ensp;  interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">CenterCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the given image at the center to the given size</td>
+<td style="text-align: left;">CenterCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomResizedCrop(size, scale, ratio, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>scale</strong> (tuple or list, default=(0.08, 1.0)): range of size of the origin size cropped <br> <strong>ratio</strong> (tuple or list, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Crop the given image to random size and aspect ratio</td>
+<td style="text-align: left;">RandomResizedCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10 <br> &ensp;&ensp; scale: [0.08, 1.0] <br> &ensp;&ensp; ratio: [3. / 4., 4. / 3.] <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">Normalize(mean, std)</td>
+<td style="text-align: left;"><strong>mean</strong> (list, default=[0.0]): means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> <strong>std</strong> (list, default=[1.0]): stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape</td>
+<td style="text-align: left;">Normalize a image with mean and standard deviation</td>
+<td style="text-align: left;">Normalize: <br> &ensp;&ensp; mean: [0.0, 0.0, 0.0] <br> &ensp;&ensp; std: [1.0, 1.0, 1.0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the image at a random location to the given size</td>
+<td style="text-align: left;">RandomCrop: <br> &ensp;&ensp; size: [10, 10] # size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">Compose(transform_list)</td>
+<td style="text-align: left;"><strong>transform_list</strong> (list of Transform objects):  list of transforms to compose</td>
+<td style="text-align: left;">Compose several transforms together</td>
+<td style="text-align: left;">If user uses yaml file to configure transforms, Neural Compressor will automatic call Compose to group other transforms. <br> <strong>In user code:</strong> <br> from neural_compressor.experimental.data  import TRANSFORMS <br> preprocess = TRANSFORMS(framework, 'preprocess') <br> resize = preprocess["Resize"] (*<em>args) <br> normalize = preprocess["Normalize"] (*</em>args) <br> compose = preprocess["Compose"] ([resize, normalize]) <br> sample = compose(sample) <br> # sample: image, label</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomHorizontalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Horizontally flip the given image randomly</td>
+<td style="text-align: left;">RandomHorizontalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomVerticalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Vertically flip the given image randomly</td>
+<td style="text-align: left;">RandomVerticalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">Transpose(perm)</td>
+<td style="text-align: left;"><strong>perm</strong> (list): A permutation of the dimensions of input image</td>
+<td style="text-align: left;">Transpose image according perm</td>
+<td style="text-align: left;">Transpose: <br> &ensp;&ensp; perm: [1, 2, 0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropToBoundingBox(offset_height, offset_width, target_height, target_width)</td>
+<td style="text-align: left;"><strong>offset_height</strong> (int): Vertical coordinate of the top-left corner of the result in the input <br> <strong>offset_width</strong> (int): Horizontal coordinate of the top-left corner of the result in the input <br> <strong>target_height</strong> (int): Height of the result <br> <strong>target_width</strong> (int): Width of the result</td>
+<td style="text-align: left;">Crop an image to a specified bounding box</td>
+<td style="text-align: left;">CropToBoundingBox: <br> &ensp;&ensp; offset_height: 10 <br> &ensp;&ensp; offset_width: 10 <br> &ensp;&ensp; target_height: 224 <br> &ensp;&ensp; 224</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToTensor()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert a PIL Image or numpy.ndarray to tensor</td>
+<td style="text-align: left;">ToTensor: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToPILImage()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert a tensor or an ndarray to PIL Image</td>
+<td style="text-align: left;">ToPILImage: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">Pad(padding, fill, padding_mode)</td>
+<td style="text-align: left;"><strong>padding</strong> (int or tuple or list): Padding on each border <br> <strong>fill</strong> (int or str or tuple): Pixel fill value for constant fill. Default is 0 <br> <strong>padding_mode</strong> (str): Type of padding. Should be: constant, edge, reflect or symmetric. Default is constant</td>
+<td style="text-align: left;">Pad the given image on all sides with the given “pad” value</td>
+<td style="text-align: left;">Pad: <br> &ensp;&ensp; padding: 0 <br> &ensp;&ensp; fill: 0 <br> &ensp;&ensp; padding_mode: constant</td>
+</tr>
+<tr>
+<td style="text-align: left;">ColorJitter(brightness, contrast, saturation, hue)</td>
+<td style="text-align: left;"><strong>brightness</strong> (float or tuple of python:float (min, max)): How much to jitter brightness. Default is 0 <br> <strong>contrast</strong> (float or tuple of python:float (min, max)): How much to jitter contrast. Default is 0 <br> <strong>saturation</strong> (float or tuple of python:float (min, max)): How much to jitter saturation. Default is 0 <br> <strong>hue</strong> (float or tuple of python:float (min, max)): How much to jitter hue. Default is 0</td>
+<td style="text-align: left;">Randomly change the brightness, contrast, saturation and hue of an image</td>
+<td style="text-align: left;">ColorJitter: <br> &ensp;&ensp; brightness: 0 <br> &ensp;&ensp; contrast: 0 <br> &ensp;&ensp; saturation: 0 <br> &ensp;&ensp; hue: 0</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToArray()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert PIL Image to numpy array</td>
+<td style="text-align: left;">ToArray: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropResize(x, y, width, height, size, interpolation)</td>
+<td style="text-align: left;"><strong>x</strong> (int):Left boundary of the cropping area <br> <strong>y</strong> (int):Top boundary of the cropping area <br> <strong>width</strong> (int):Width of the cropping area <br> <strong>height</strong> (int):Height of the cropping area <br> <strong>size</strong> (list or int): resize to new size after cropping <br> <strong>interpolation</strong> (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Crop the input image with given location and resize it</td>
+<td style="text-align: left;">CropResize: <br> &ensp;&ensp; x: 0 <br> &ensp;&ensp; y: 5 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; size: [100, 100] # or size: 100 <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cast(dtype)</td>
+<td style="text-align: left;"><strong>dtype</strong> (str, default ='float32'): The target data type</td>
+<td style="text-align: left;">Convert image to given dtype</td>
+<td style="text-align: left;">Cast: <br> &ensp;&ensp; dtype: float32</td>
+</tr>
+<tr>
+<td style="text-align: left;">AlignImageChannel(dim)</td>
+<td style="text-align: left;"><strong>dim</strong> (int): The channel number of result image</td>
+<td style="text-align: left;">Align image channel, now just support [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W], input image must be PIL Image. <br> This transform is going to be deprecated.</td>
+<td style="text-align: left;">AlignImageChannel: <br> &ensp;&ensp; dim: 3</td>
+</tr>
+<tr>
+<td style="text-align: left;">ResizeWithRatio(min_dim, max_dim, padding)</td>
+<td style="text-align: left;"><strong>min_dim</strong> (int, default=800): Resizes the image such that its smaller dimension == min_dim <br> <strong>max_dim</strong> (int, default=1365): Ensures that the image longest side does not exceed this value <br> <strong>padding</strong> (bool, default=False): If true, pads image with zeros so its size is max_dim x max_dim</td>
+<td style="text-align: left;">Resize image with aspect ratio and pad it to max shape(optional). If the image is padded, the label will be processed at the same time. The input image should be np.array.</td>
+<td style="text-align: left;">ResizeWithRatio: <br> &ensp;&ensp; min_dim: 800 <br> &ensp;&ensp; max_dim: 1365 <br> &ensp;&ensp; padding: True</td>
+</tr>
+<tr>
+<td style="text-align: left;">LabelShift(label_shift)</td>
+<td style="text-align: left;"><strong>label_shift</strong>(int, default=0): number of label shift</td>
+<td style="text-align: left;">Convert label to label - label_shift</td>
+<td style="text-align: left;">LabelShift: <br> &ensp;&ensp; label_shift: 0</td>
+</tr>
+</tbody>
+</table></section>
+<section id="mxnet">
+<h3>MXNet<a class="headerlink" href="#mxnet" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Transform</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage(In yaml file)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Resize(size, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>interpolation</strong> (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Resize the input image to the given size</td>
+<td style="text-align: left;">Resize: <br> &ensp;&ensp; size: 256 <br> &ensp;&ensp;  interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">CenterCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the given image at the center to the given size</td>
+<td style="text-align: left;">CenterCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomResizedCrop(size, scale, ratio, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>scale</strong> (tuple or list, default=(0.08, 1.0)):range of size of the origin size cropped <br> <strong>ratio</strong> (tuple or list, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> <strong>interpolation</strong> (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Crop the given image to random size and aspect ratio</td>
+<td style="text-align: left;">RandomResizedCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10 <br> &ensp;&ensp; scale: [0.08, 1.0] <br> &ensp;&ensp; ratio: [3. / 4., 4. / 3.] <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">Normalize(mean, std)</td>
+<td style="text-align: left;"><strong>mean</strong> (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> <strong>std</strong> (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape</td>
+<td style="text-align: left;">Normalize a image with mean and standard deviation</td>
+<td style="text-align: left;">Normalize: <br> &ensp;&ensp; mean: [0.0, 0.0, 0.0] <br> &ensp;&ensp; std: [1.0, 1.0, 1.0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the image at a random location to the given size</td>
+<td style="text-align: left;">RandomCrop: <br> &ensp;&ensp; size: [10, 10] # size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">Compose(transform_list)</td>
+<td style="text-align: left;"><strong>transform_list</strong> (list of Transform objects):  list of transforms to compose</td>
+<td style="text-align: left;">Compose several transforms together</td>
+<td style="text-align: left;">If user uses yaml file to configure transforms, Neural Compressor will automatic call Compose to group other transforms. <br> <strong>In user code:</strong> <br> from neural_compressor.experimental.data  import TRANSFORMS <br> preprocess = TRANSFORMS(framework, 'preprocess') <br> resize = preprocess["Resize"] (*<em>args) <br> normalize = preprocess["Normalize"] (*</em>args) <br> compose = preprocess["Compose"] ([resize, normalize]) <br> sample = compose(sample) <br> # sample: image, label</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropResize(x, y, width, height, size, interpolation)</td>
+<td style="text-align: left;"><strong>x</strong> (int): Left boundary of the cropping area <br> <strong>y</strong> (int): Top boundary of the cropping area <br> <strong>width</strong> (int): Width of the cropping area <br> <strong>height</strong> (int): Height of the cropping area <br> <strong>size</strong> (list or int): resize to new size after cropping <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Crop the input image with given location and resize it</td>
+<td style="text-align: left;">CropResize: <br> &ensp;&ensp; x: 0 <br> &ensp;&ensp; y: 5 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; size: [100, 100] # or size: 100 <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomHorizontalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Horizontally flip the given image randomly</td>
+<td style="text-align: left;">RandomHorizontalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomVerticalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Vertically flip the given image randomly</td>
+<td style="text-align: left;">RandomVerticalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropToBoundingBox(offset_height, offset_width, target_height, target_width)</td>
+<td style="text-align: left;"><strong>offset_height</strong> (int): Vertical coordinate of the top-left corner of the result in the input <br> <strong>offset_width</strong> (int): Horizontal coordinate of the top-left corner of the result in the input <br> <strong>target_height</strong> (int): Height of the result <br> <strong>target_width</strong> (int): Width of the result</td>
+<td style="text-align: left;">Crop an image to a specified bounding box</td>
+<td style="text-align: left;">CropToBoundingBox: <br> &ensp;&ensp; offset_height: 10 <br> &ensp;&ensp; offset_width: 10 <br> &ensp;&ensp; target_height: 224 <br> &ensp;&ensp; 224</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToArray()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert NDArray to numpy array</td>
+<td style="text-align: left;">ToArray: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToTensor()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert an image NDArray or batch of image NDArray to a tensor NDArray</td>
+<td style="text-align: left;">ToTensor: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cast(dtype)</td>
+<td style="text-align: left;"><strong>dtype</strong> (str, default ='float32'): The target data type</td>
+<td style="text-align: left;">Convert image to given dtype</td>
+<td style="text-align: left;">Cast: <br> &ensp;&ensp; dtype: float32</td>
+</tr>
+<tr>
+<td style="text-align: left;">Transpose(perm)</td>
+<td style="text-align: left;"><strong>perm</strong> (list): A permutation of the dimensions of input image</td>
+<td style="text-align: left;">Transpose image according perm</td>
+<td style="text-align: left;">Transpose: <br> &ensp;&ensp; perm: [1, 2, 0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">AlignImageChannel(dim)</td>
+<td style="text-align: left;"><strong>dim</strong> (int): The channel number of result image</td>
+<td style="text-align: left;">Align image channel, now just support [H,W]-&gt;[H,W,dim], [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W]. <br> This transform is going to be deprecated.</td>
+<td style="text-align: left;">AlignImageChannel: <br> &ensp;&ensp; dim: 3</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToNDArray()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert np.array to NDArray</td>
+<td style="text-align: left;">ToNDArray: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">ResizeWithRatio(min_dim, max_dim, padding)</td>
+<td style="text-align: left;"><strong>min_dim</strong> (int, default=800): Resizes the image such that its smaller dimension == min_dim <br> <strong>max_dim</strong> (int, default=1365): Ensures that the image longest side does not exceed this value <br> <strong>padding</strong> (bool, default=False): If true, pads image with zeros so its size is max_dim x max_dim</td>
+<td style="text-align: left;">Resize image with aspect ratio and pad it to max shape(optional). If the image is padded, the label will be processed at the same time. The input image should be np.array.</td>
+<td style="text-align: left;">ResizeWithRatio: <br> &ensp;&ensp; min_dim: 800 <br> &ensp;&ensp; max_dim: 1365 <br> &ensp;&ensp; padding: True</td>
+</tr>
+</tbody>
+</table></section>
+<section id="onnxrt">
+<h3>ONNXRT<a class="headerlink" href="#onnxrt" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage(In yaml file)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Resize(size, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'</td>
+<td style="text-align: left;">Resize the input image to the given size</td>
+<td style="text-align: left;">Resize: <br> &ensp;&ensp; size: 256 <br> &ensp;&ensp;  interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">CenterCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the given image at the center to the given size</td>
+<td style="text-align: left;">CenterCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomResizedCrop(size, scale, ratio, interpolation)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result <br> <strong>scale</strong> (tuple or list, default=(0.08, 1.0)): range of size of the origin size cropped <br> <strong>ratio</strong> (tuple or list, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest'</td>
+<td style="text-align: left;">Crop the given image to random size and aspect ratio</td>
+<td style="text-align: left;">RandomResizedCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10 <br> &ensp;&ensp; scale: [0.08, 1.0] <br> &ensp;&ensp; ratio: [3. / 4., 4. / 3.] <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">Normalize(mean, std)</td>
+<td style="text-align: left;"><strong>mean</strong> (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> <strong>std</strong> (list, default=[1.0]): stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape</td>
+<td style="text-align: left;">Normalize a image with mean and standard deviation</td>
+<td style="text-align: left;">Normalize: <br> &ensp;&ensp; mean: [0.0, 0.0, 0.0] <br> &ensp;&ensp; std: [1.0, 1.0, 1.0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomCrop(size)</td>
+<td style="text-align: left;"><strong>size</strong> (list or int): Size of the result</td>
+<td style="text-align: left;">Crop the image at a random location to the given size</td>
+<td style="text-align: left;">RandomCrop: <br> &ensp;&ensp; size: [10, 10] # size: 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">Compose(transform_list)</td>
+<td style="text-align: left;"><strong>transform_list</strong> (list of Transform objects): list of transforms to compose</td>
+<td style="text-align: left;">Compose several transforms together</td>
+<td style="text-align: left;">If user uses yaml file to configure transforms, Neural Compressor will automatic call Compose to group other transforms. <br> <strong>In user code:</strong> <br> from neural_compressor.experimental.data  import TRANSFORMS <br> preprocess = TRANSFORMS(framework, 'preprocess') <br> resize = preprocess["Resize"] (*<em>args) <br> normalize = preprocess["Normalize"] (*</em>args) <br> compose = preprocess["Compose"] ([resize, normalize]) <br> sample = compose(sample) <br> # sample: image, label</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropResize(x, y, width, height, size, interpolation)</td>
+<td style="text-align: left;"><strong>x</strong> (int): Left boundary of the cropping area <br> <strong>y</strong> (int): Top boundary of the cropping area <br> <strong>width</strong> (int): Width of the cropping area <br> <strong>height</strong> (int): Height of the cropping area <br> <strong>size</strong> (list or int): resize to new size after cropping <br> <strong>interpolation</strong> (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest'</td>
+<td style="text-align: left;">Crop the input image with given location and resize it</td>
+<td style="text-align: left;">CropResize: <br> &ensp;&ensp; x: 0 <br> &ensp;&ensp; y: 5 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; size: [100, 100] # or size: 100 <br> &ensp;&ensp; interpolation: bilinear</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomHorizontalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Horizontally flip the given image randomly</td>
+<td style="text-align: left;">RandomHorizontalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">RandomVerticalFlip()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Vertically flip the given image randomly</td>
+<td style="text-align: left;">RandomVerticalFlip: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">CropToBoundingBox(offset_height, offset_width, target_height, target_width)</td>
+<td style="text-align: left;"><strong>offset_height</strong> (int): Vertical coordinate of the top-left corner of the result in the input <br> <strong>offset_width</strong> (int): Horizontal coordinate of the top-left corner of the result in the input <br> <strong>target_height</strong> (int): Height of the result <br> <strong>target_width</strong> (int): Width of the result</td>
+<td style="text-align: left;">Crop an image to a specified bounding box</td>
+<td style="text-align: left;">CropToBoundingBox: <br> &ensp;&ensp; offset_height: 10 <br> &ensp;&ensp; offset_width: 10 <br> &ensp;&ensp; target_height: 224 <br> &ensp;&ensp; 224</td>
+</tr>
+<tr>
+<td style="text-align: left;">ToArray()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Convert PIL Image to numpy array</td>
+<td style="text-align: left;">ToArray: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">Rescale()</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Scale the values of image to [0,1]</td>
+<td style="text-align: left;">Rescale: {}</td>
+</tr>
+<tr>
+<td style="text-align: left;">AlignImageChannel(dim)</td>
+<td style="text-align: left;"><strong>dim</strong> (int): The channel number of result image</td>
+<td style="text-align: left;">Align image channel, now just support [H,W]-&gt;[H,W,dim], [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W]. <br> This transform is going to be deprecated.</td>
+<td style="text-align: left;">AlignImageChannel: <br> &ensp;&ensp; dim: 3</td>
+</tr>
+<tr>
+<td style="text-align: left;">ResizeCropImagenet(height, width, random_crop, resize_side, random_flip_left_right, mean_value, scale)</td>
+<td style="text-align: left;"><strong>height</strong> (int): Height of the result <br> <strong>width</strong> (int): Width of the result <br> <strong>random_crop</strong> (bool, default=False): whether to random crop <br> <strong>resize_side</strong> (int, default=256): desired shape after resize operation <br> <strong>random_flip_left_right</strong> (bool, default=False): whether to random flip left and right <br> <strong>mean_value</strong> (list, default=[0.0,0.0,0.0]): mean for each channel <br> <strong>scale</strong> (float, default=1.0): std value</td>
+<td style="text-align: left;">Combination of a series of transforms which is applicable to images in Imagenet</td>
+<td style="text-align: left;">ResizeCropImagenet: <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; random_crop: False <br> &ensp;&ensp; resize_side: 256 <br> &ensp;&ensp; random_flip_left_right: False <br> &ensp;&ensp; mean_value: [123.68, 116.78, 103.94] <br> &ensp;&ensp; scale: 0.017</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cast(dtype)</td>
+<td style="text-align: left;"><strong>dtype</strong> (str, default ='float32'): The target data type</td>
+<td style="text-align: left;">Convert image to given dtype</td>
+<td style="text-align: left;">Cast: <br> &ensp;&ensp; dtype: float32</td>
+</tr>
+<tr>
+<td style="text-align: left;">ResizeWithRatio(min_dim, max_dim, padding)</td>
+<td style="text-align: left;"><strong>min_dim</strong> (int, default=800): Resizes the image such that its smaller dimension == min_dim <br> <strong>max_dim</strong> (int, default=1365): Ensures that the image longest side does not exceed this value <br> <strong>padding</strong> (bool, default=False): If true, pads image with zeros so its size is max_dim x max_dim</td>
+<td style="text-align: left;">Resize image with aspect ratio and pad it to max shape(optional). If the image is padded, the label will be processed at the same time. The input image should be np.array.</td>
+<td style="text-align: left;">ResizeWithRatio: <br> &ensp;&ensp; min_dim: 800 <br> &ensp;&ensp; max_dim: 1365 <br> &ensp;&ensp; padding: True</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

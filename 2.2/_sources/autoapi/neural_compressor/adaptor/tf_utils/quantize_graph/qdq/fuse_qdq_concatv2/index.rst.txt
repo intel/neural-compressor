@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_concatv2`
+=================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_concatv2
+
+.. autoapi-nested-parse::
+
+   Quantize ConcatV2 to int8 op.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_concatv2.FuseNodeStartWithConcatV2
+
+
+
+
+.. py:class:: FuseNodeStartWithConcatV2(**kwargs)
+
+
+
+
+   Quantize ConcatV2 to int8 op QuantizedConcatV2.
+
+

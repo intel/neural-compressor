@@ -1,0 +1,11 @@
+:py:mod:`neural_compressor.metric.coco_label_map`
+=================================================
+
+.. py:module:: neural_compressor.metric.coco_label_map
+
+.. autoapi-nested-parse::
+
+   The dict mapping category IDs to its names of labels.
+
+
+

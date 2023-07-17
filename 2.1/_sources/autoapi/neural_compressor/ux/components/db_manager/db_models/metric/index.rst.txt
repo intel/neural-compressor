@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.metric`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.metric
+
+.. autoapi-nested-parse::
+
+   Metric package contains metric class representing metric table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.metric.Metric
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.metric.fill_dictionary
+
+
+
+.. py:class:: Metric
+
+
+
+
+   INC Bench Metric table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

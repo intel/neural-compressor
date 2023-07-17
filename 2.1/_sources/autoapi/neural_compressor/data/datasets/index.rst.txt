@@ -1,0 +1,57 @@
+:py:mod:`neural_compressor.data.datasets`
+=========================================
+
+.. py:module:: neural_compressor.data.datasets
+
+.. autoapi-nested-parse::
+
+   Built-in datasets class for multiple framework backends.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   bert_dataset/index.rst
+   coco_dataset/index.rst
+   dataset/index.rst
+   dummy_dataset/index.rst
+   dummy_dataset_v2/index.rst
+   imagenet_dataset/index.rst
+   style_transfer_dataset/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.COCORecordDataset
+   neural_compressor.data.datasets.Datasets
+   neural_compressor.data.datasets.Dataset
+   neural_compressor.data.datasets.IterableDataset
+   neural_compressor.data.datasets.TensorflowImageRecord
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.dataset_registry
+
+
+
+
+
+
+
+
+

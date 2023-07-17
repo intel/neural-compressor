@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.model_zoo.download_config`
+===================================================================
+
+.. py:module:: neural_compressor.ux.components.model_zoo.download_config
+
+.. autoapi-nested-parse::
+
+   Download yaml config from GitHub.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model_zoo.download_config.download_config
+
+
+
+.. py:function:: download_config(data: dict) -> str
+
+   Process config download request.
+
+

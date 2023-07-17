@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel® Neural Compressor Bench &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel® Neural Compressor Bench</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/bench.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-neural-compressor-bench">
+<h1>Intel® Neural Compressor Bench<a class="headerlink" href="#intel-neural-compressor-bench" title="Permalink to this heading"></a></h1>
+<p>Intel® Neural Compressor Bench is a web application for easier use of Intel® Neural Compressor.</p>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this heading"></a></h2>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#home-screen">Home Screen</a></p></li>
+<li><p><a class="reference external" href="#create-new-project">Create New Project</a></p>
+<p>3.1. <a class="reference external" href="#optimization-tab">Optimization Tab</a></p>
+<p>3.2. <a class="reference external" href="#benchmark-tab">Benchmark Tab</a></p>
+<p>3.3. <a class="reference external" href="#profiling-tab">Profiling Tab</a></p>
+<p>3.4. <a class="reference external" href="#diagnosis-tab">Diagnosis Tab</a></p>
+<p>3.5. <a class="reference external" href="#dataset-tab">Dataset Tab</a></p>
+<p>3.6. <a class="reference external" href="#project-information-tab">Project Information</a></p>
+</li>
+<li><p><a class="reference external" href="#nas-demo">NAS demo</a></p></li>
+<li><p><a class="reference external" href="#system-information">System Information</a></p></li>
+<li><p><a class="reference external" href="#security">Security</a></p></li>
+</ol>
+</section>
+</section>
+<section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h1>
+<section id="install-intel-neural-compressor-with-bench">
+<h2>Install Intel® Neural Compressor with Bench<a class="headerlink" href="#install-intel-neural-compressor-with-bench" title="Permalink to this heading"></a></h2>
+<p>To install Install Intel® Neural Compressor with GUI install full version of Intel® Neural Compressor in one of following ways:</p>
+<section id="option-1-install-from-binary">
+<h3>Option 1: Install from Binary<a class="headerlink" href="#option-1-install-from-binary" title="Permalink to this heading"></a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable full version from pip (including GUI)</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-full
+
+<span class="c1"># install nightly full version from pip (including GUI)</span>
+pip<span class="w"> </span>install<span class="w"> </span>-i<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span>neural-compressor-full
+
+<span class="c1"># install stable full version from from conda (including GUI)</span>
+conda<span class="w"> </span>install<span class="w"> </span>neural-compressor-full<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>intel<span class="w">  </span>
+</pre></div>
+</div>
+</section>
+<section id="option-2-install-from-source">
+<h3>Option 2: Install from Source<a class="headerlink" href="#option-2-install-from-source" title="Permalink to this heading"></a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<span class="c1"># build with full functionality (including GUI)</span>
+python<span class="w"> </span>setup.py<span class="w"> </span>--full<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+</section>
+<section id="start-the-intel-neural-compressor-bench">
+<h2>Start the Intel® Neural Compressor Bench<a class="headerlink" href="#start-the-intel-neural-compressor-bench" title="Permalink to this heading"></a></h2>
+<p>To start the Intel® Neural Compressor Bench server execute <code class="docutils literal notranslate"><span class="pre">inc_bench</span></code> command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench
+</pre></div>
+</div>
+<p>The server generates a self-signed TLS certificate and prints instruction how to access the Web UI.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Intel(r) Neural Compressor Bench Server started.
+
+Open address https://10.11.12.13:5000/?token=338174d13706855fc6924cec7b3a8ae8
+</pre></div>
+</div>
+<p>Server generated certificate is not trusted by your web browser, you will need to accept usage of such certificate.</p>
+<p>You might also use additional parameters and settings:</p>
+<ul>
+<li><p>Intel® Neural Compressor Bench listens on port 5000.
+Make sure that port 5000 is accessible to your browser (you might need to open it in your firewall),
+or specify different port that is already opened, for example 8080:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>
+</pre></div>
+</div>
+</li>
+<li><p>When using official TF&gt;=2.6.0, set environment variable <code class="docutils literal notranslate"><span class="pre">TF_ENABLE_ONEDNN_OPTS=1</span></code> for INT8 tuning:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">TF_ENABLE_ONEDNN_OPTS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>inc_bench
+</pre></div>
+</div>
+</li>
+<li><p>To start the Intel® Neural Compressor Bench server with your own TLS certificate add <code class="docutils literal notranslate"><span class="pre">--cert</span></code> and <code class="docutils literal notranslate"><span class="pre">--key</span></code> parameters:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench<span class="w"> </span>--cert<span class="w"> </span>path_to_cert.crt<span class="w"> </span>--key<span class="w"> </span>path_to_private_key.key
+</pre></div>
+</div>
+</li>
+<li><p>To start the Intel® Neural Compressor Bench server without TLS encryption use <code class="docutils literal notranslate"><span class="pre">--allow-insecure-connections</span></code> parameter:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench<span class="w"> </span>--allow-insecure-connections
+</pre></div>
+</div>
+<p>This enables access to the server from any machine in your local network (or the whole Internet if your server is exposed to it).</p>
+<p>You are forfeiting security, confidentiality and integrity of all client-server communication. Your server is exposed to external threats.</p>
+</li>
+</ul>
+</section>
+<section id="home-screen">
+<h2>Home Screen<a class="headerlink" href="#home-screen" title="Permalink to this heading"></a></h2>
+<p>This view shows introduction to Intel® Neural Compressor Bench and a button for creating new project. After clicking this button, pop-up with project wizard will be shown.</p>
+<p><img alt="Home" src="../../_images/home.png" /></p>
+</section>
+</section>
+<section id="create-new-project">
+<h1>Create New Project<a class="headerlink" href="#create-new-project" title="Permalink to this heading"></a></h1>
+<p>To create a new project, in first step you need to choose its name.</p>
+<p><img alt="Project1" src="../../_images/project1.png" /></p>
+<p>In second step there are 2 possible options to choose from:</p>
+<ul class="simple">
+<li><p><em>predefined model</em> - you choose model from predefined examples list, you don’t need to set any additional parameters,</p></li>
+<li><p><em>custom model</em> - in this scenario you can set more parameters and customize your model.</p></li>
+</ul>
+<p><img alt="Project2" src="../../_images/project2.png" /></p>
+<section id="predefined-model">
+<h2>Predefined Model<a class="headerlink" href="#predefined-model" title="Permalink to this heading"></a></h2>
+<p>First you need to choose domain for the model (image recognition or object detection). For each domain there are few available models to choose from. When you click <em>Finish</em> the chosen model will be downloaded.</p>
+<p><img alt="Project3-predefined" src="../../_images/project3-predefined.png" /></p>
+</section>
+<section id="custom-model">
+<h2>Custom Model<a class="headerlink" href="#custom-model" title="Permalink to this heading"></a></h2>
+<p>First you have to choose the model path. When it is chosen, in most cases all other fields will be completed automatically. You can edit its input and output nodes, see the model graph (if it is available for this model) and set shape for synthetic dataset. If model domain was not detected, you need to choose it from the list. Model domain is used to set some default parameters for the model.</p>
+<p><img alt="Project3-custom" src="../../_images/project3-custom.png" /></p>
+</section>
+<section id="display-model-graph">
+<h2>Display Model Graph<a class="headerlink" href="#display-model-graph" title="Permalink to this heading"></a></h2>
+<p>For several model types there will be a button available <img alt="Show graph" src="../../_images/show_graph_button.png" /> in the project wizard. It is also possible to see the graph in Diagnosis tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.</p>
+<p><img alt="Resnet model graph" src="../../_images/graph-resnet.jpg" />.</p>
+</section>
+</section>
+<section id="project-list">
+<h1>Project List<a class="headerlink" href="#project-list" title="Permalink to this heading"></a></h1>
+<p>On the left hand side there is a panel with list of created projects. When you click on the project name, you can see its details. “Create new project” button navigates to new project wizard pop-up described in previous section.</p>
+<p><img alt="Menu" src="../../_images/menu.png" /></p>
+<section id="remove-project">
+<h2>Remove Project<a class="headerlink" href="#remove-project" title="Permalink to this heading"></a></h2>
+<p>If you want to remove project, you have to click the trash icon next to project name (it is visible when the cursor is on the project name).</p>
+<p><img alt="Remove1" src="../../_images/remove1.png" /></p>
+<p>Then you will be prompted to confirm your choice by typing the project name. Project removal is not reversible.</p>
+<p><img alt="Remove2" src="../../_images/remove2.png" /></p>
+</section>
+</section>
+<section id="develop-project">
+<h1>Develop Project<a class="headerlink" href="#develop-project" title="Permalink to this heading"></a></h1>
+<section id="optimization-tab">
+<h2>Optimization Tab<a class="headerlink" href="#optimization-tab" title="Permalink to this heading"></a></h2>
+<section id="optimization-table">
+<h3>Optimization Table<a class="headerlink" href="#optimization-table" title="Permalink to this heading"></a></h3>
+<p>In Optimizations tab you can see list of optimizations in the project. Currently UI supports three optimization precisions and two types of optimization.
+<img alt="Optimizations-table" src="../../_images/optimizations-table.png" /></p>
+</section>
+<section id="optimization-wizard">
+<h3>Optimization Wizard<a class="headerlink" href="#optimization-wizard" title="Permalink to this heading"></a></h3>
+<p>To add new optimization, click “Add new optimization” button at the bottom of the table and follow the steps.
+<img alt="Optimizations-wizard" src="../../_images/optimizations-wizard.png" /></p>
+</section>
+<section id="editing-optimization-entries">
+<h3>Editing Optimization Entries<a class="headerlink" href="#editing-optimization-entries" title="Permalink to this heading"></a></h3>
+<p>There is a possibility to modify some optimization parameters even after exit from Wizard.
+If optimization has not been run yet, the pencil icon on the right hand side should be in light blue color. That indicates that it can be modified. After click on that pencil icon you can select different precision or dataset.</p>
+<p>For Quantization you can also modify Tuning details before optimizing model.
+<img alt="Optimization-tuning-details" src="../../_images/optimization-tuning-details.png" /></p>
+</section>
+<section id="optimization-details">
+<h3>Optimization Details<a class="headerlink" href="#optimization-details" title="Permalink to this heading"></a></h3>
+<p>To perform optimization click “Run” button. Once process is finished you can click on row with specific optimization to display details about optimization parameters and optimized model. When you click on blue arrow icon in model path line, you can download optimized model.
+<img alt="Optimization-details" src="../../_images/optimization-details.png" /></p>
+</section>
+<section id="pruning">
+<h3>Pruning<a class="headerlink" href="#pruning" title="Permalink to this heading"></a></h3>
+<p>To add pruning, click “Add new optimization” and in the <em>Precision</em> step choose <em>fp32</em> and then check the <em>pruning</em> option. Choose the dataset and click <em>Finish</em>.
+<img alt="Pruning-wizard" src="../../_images/pruning-wizard.png" />
+Pruning parameters are visible after in <em>Optimization details</em> section described before.
+<img alt="Pruning-details" src="../../_images/pruning-details.png" />
+Click <em>Run</em> button in the optimization table to execute the pruning. When the pruning is finished, path to the optimized model can be found in the details section.</p>
+</section>
+</section>
+<section id="benchmark-tab">
+<h2>Benchmark Tab<a class="headerlink" href="#benchmark-tab" title="Permalink to this heading"></a></h2>
+<section id="benchmark-table">
+<h3>Benchmark Table<a class="headerlink" href="#benchmark-table" title="Permalink to this heading"></a></h3>
+<p>For each optimization and input model you can add benchmark. Benchmark have 2 modes: accuracy and performance. In benchmark tab you can see all your benchmarks. When you check checkboxes in the last column you can choose benchmark you want to compare in the chart (visible after clicking “Compare selected”).</p>
+<p><img alt="Benchmarks-table" src="../../_images/benchmarks-table.png" /></p>
+</section>
+<section id="benchmark-wizard">
+<h3>Benchmark Wizard<a class="headerlink" href="#benchmark-wizard" title="Permalink to this heading"></a></h3>
+<p>To add new benchmark, click “Add new benchmark” button at the bottom of the table and follow the steps.</p>
+<p><img alt="Benchmarks-wizard" src="../../_images/benchmarks-wizard.png" /></p>
+</section>
+<section id="editing-benchmark-entries">
+<h3>Editing Benchmark Entries<a class="headerlink" href="#editing-benchmark-entries" title="Permalink to this heading"></a></h3>
+<p>As for optimizations you can also modify benchmark parameters. You can modify benchmark mode, dataset and benchmark parameters like batch size, number of instances and number of cores per instance.
+<img alt="Benchmark-edit-wizard" src="../../_images/benchmark-edit-wizard.png" /></p>
+</section>
+<section id="benchmark-details">
+<h3>Benchmark Details<a class="headerlink" href="#benchmark-details" title="Permalink to this heading"></a></h3>
+<p>When the benchmark is added, you can click “Run” button to execute it. Results will be filled in the table and in details view visible after clicking row in the table. You can also see config and output logs when clicking links highlighted in blue.</p>
+<p><img alt="Benchmark-details" src="../../_images/benchmark-details.png" /></p>
+</section>
+</section>
+<section id="profiling-tab">
+<h2>Profiling Tab<a class="headerlink" href="#profiling-tab" title="Permalink to this heading"></a></h2>
+<section id="profiling-table">
+<h3>Profiling Table<a class="headerlink" href="#profiling-table" title="Permalink to this heading"></a></h3>
+<p>It is also possible to do profiling of all Tensorflow frozen models in project.
+<img alt="Profiling-table" src="../../_images/profiling-table.png" /></p>
+</section>
+<section id="profiling-wizard">
+<h3>Profiling Wizard<a class="headerlink" href="#profiling-wizard" title="Permalink to this heading"></a></h3>
+<p>To profile model, click “Add new profiling” button at the bottom of the table and follow the steps.
+<img alt="Profiling-wizard" src="../../_images/profiling-wizard.png" /></p>
+</section>
+<section id="editing-profiling-entries">
+<h3>Editing Profiling Entries<a class="headerlink" href="#editing-profiling-entries" title="Permalink to this heading"></a></h3>
+<p>In Profiling tab you can edit dataset and number or threads.
+<img alt="Profiling-edit-wizard" src="../../_images/profiling-edit-wizard.png" /></p>
+</section>
+<section id="profiling-details">
+<h3>Profiling Details<a class="headerlink" href="#profiling-details" title="Permalink to this heading"></a></h3>
+<p>Once profiling entry is added, you can click “Run” button to execute it. After completing the process, the results will appear in the form of a bar chart and a table with full profiling data. The table is also used to control which operations are included in the chart. Check the box next to the selected row and click “Update chart” button to include it in the bar chart.
+Click “Download .csv file” button to get profiling data in .csv file.
+<img alt="Profiling-details" src="../../_images/profiling-details.png" /></p>
+</section>
+</section>
+</section>
+<section id="diagnosis-tab">
+<h1>Diagnosis Tab<a class="headerlink" href="#diagnosis-tab" title="Permalink to this heading"></a></h1>
+<p>Diagnosis tab offers convenient debug information for optimizations with easy way for generating new one with requested variations.</p>
+<p>To get OP list you need to execute quantization optimization and select optimized model on left hand side. In OP table you can see list of OPs with MSE and min/max activation values. Selecting one of OP in table highlights its position in graph.</p>
+<p><img alt="Diagnosis-tab" src="../../_images/diagnosis-tab.jpg" /></p>
+<p>Configuration for currently selected OP can be set in section under graph and OP table. Activation and weights histograms can be generated in this section as shown in the picture below.
+<img alt="Diagnosis-histogram" src="../../_images/histogram.jpg" /></p>
+<p>You can set model wise parameters that apply to whole model by clicking button with “Model wise”. When you set specific configuration you can view summary and generate new optimization config.</p>
+<p><img alt="Diagnosis-actions" src="../../_images/diagnosis-actions.png" /></p>
+<p>Model wise configuration provides separate settings for weights and activations.
+<img alt="Diagnosis-model-wise-wizard" src="../../_images/diagnosis-model-wise-wizard.png" /></p>
+<section id="dataset-tab">
+<h2>Dataset Tab<a class="headerlink" href="#dataset-tab" title="Permalink to this heading"></a></h2>
+<section id="dataset-list">
+<h3>Dataset List<a class="headerlink" href="#dataset-list" title="Permalink to this heading"></a></h3>
+<p>Dataset tab presents list of datasets assigned to a project. In most cases the “dummy” dataset consisting of synthetic data should be automatically added while creating a project.
+<img alt="Datasets-table" src="../../_images/datasets-table.png" /></p>
+</section>
+<section id="dataset-wizard">
+<h3>Dataset Wizard<a class="headerlink" href="#dataset-wizard" title="Permalink to this heading"></a></h3>
+<p>New dataset can be defined by clicking “Add new profiling” button at the bottom of the table and follow the steps.
+<img alt="Datasets-wizard" src="../../_images/datasets-wizard.png" /></p>
+</section>
+<section id="dataset-details">
+<h3>Dataset Details<a class="headerlink" href="#dataset-details" title="Permalink to this heading"></a></h3>
+<p>Dataset details can be inspected by clicking specific row.
+<img alt="Dataset-details" src="../../_images/dataset-details.png" /></p>
+</section>
+<section id="custom-dataset">
+<h3>Custom Dataset<a class="headerlink" href="#custom-dataset" title="Permalink to this heading"></a></h3>
+<p>When adding the dataset, you can choose <em>custom</em> in dataloader and metric field. In that case a template file will be created. The path to the template file will be available in dataset details. You should edit this file to add your custom configuration before using this dataset in optimizations or benchmarks. Small yellow warning will remind about it.</p>
+<p><img alt="Custom dataset" src="../../_images/custom-dataset.png" /></p>
+</section>
+</section>
+<section id="project-information">
+<h2>Project Information<a class="headerlink" href="#project-information" title="Permalink to this heading"></a></h2>
+<p>Last tab is called “Project info”. You can find here details about the project, when it was created and modified, what is the framework and some details about input model. It is also possible to add some notes about the project.</p>
+<p><img alt="Project info" src="../../_images/project-info.png" /></p>
+</section>
+<section id="nas-demo">
+<h2>NAS demo<a class="headerlink" href="#nas-demo" title="Permalink to this heading"></a></h2>
+<p>Neural architecture search (NAS) example can be created from branch called <a class="reference external" href="https://github.com/intel/neural-compressor/tree/NAS_demo">NAS_demo</a>. The following dependencies must be installed before running the code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">ofa</span> <span class="n">fvcore</span> <span class="n">torchvision</span> <span class="n">autograd</span> <span class="n">pymoo</span> <span class="n">numba</span>
+</pre></div>
+</div>
+<p>Then follow the instructions from <a class="reference external" href="#introduction">introduction</a>.</p>
+<p>To create new NAS example, click the <code class="docutils literal notranslate"><span class="pre">Create</span> <span class="pre">new</span> <span class="pre">project</span></code> button and in the second step called <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">type</span></code> choose <code class="docutils literal notranslate"><span class="pre">NAS</span> <span class="pre">example</span></code> like in the picture below.</p>
+<p><img alt="Project wizard2" src="../../_images/wizard2.png" /></p>
+<p>In third step called <code class="docutils literal notranslate"><span class="pre">Details</span></code> choose path to the <a class="reference external" href="https://www.image-net.org/">ImageNet ILSVRC dataset</a>.</p>
+<p><img alt="Project wizard3" src="../../_images/wizard3.png" /></p>
+<p>Details of the demo can be found in the initial view before running the demo:
+<img alt="New NAS" src="../../_images/new-nas.png" /></p>
+<p>To run the demo click <code class="docutils literal notranslate"><span class="pre">Run</span></code> button. The process may take several hours. The results are shown in the chart:</p>
+<p><img alt="Executed NAS" src="../../_images/executed-nas.png" /></p>
+</section>
+<section id="system-information">
+<h2>System Information<a class="headerlink" href="#system-information" title="Permalink to this heading"></a></h2>
+<p>One can see system information by clicking <img alt="System info" src="../../_images/system_info.png" /> button. The result is details dialog:</p>
+<p><img alt="System info table" src="../../_images/system_info_table.png" /></p>
+</section>
+<section id="security">
+<h2>Security<a class="headerlink" href="#security" title="Permalink to this heading"></a></h2>
+<p>Intel® Neural Compressor Bench uses encrypted connections to ensure security, confidentiality and integrity of all client-server communication.</p>
+<p>You can use automatically generated self-signed certificate or provide your own trusted certificate.</p>
+<p>You can also choose to start the server without encryption exposing it to threats from network.</p>
+<p>Intel® Neural Compressor Bench uses external packages to run the web-server and provide encryption. Please report any security issues to correct organizations:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://cryptography.io/en/latest/security/">Cryptography module</a></p></li>
+<li><p><a class="reference external" href="https://flask.palletsprojects.com/en/2.0.x/contributing/#reporting-issues">Flask</a></p></li>
+<li><p><a class="reference external" href="https://github.com/miguelgrinberg/Flask-SocketIO/blob/main/SECURITY.md">Flask-SocketIO</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

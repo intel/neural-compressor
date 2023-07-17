@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.model.repository`
+==========================================================
+
+.. py:module:: neural_compressor.ux.components.model.repository
+
+.. autoapi-nested-parse::
+
+   Model repository.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.repository.ModelRepository
+
+
+
+
+.. py:class:: ModelRepository
+
+
+   Model repository.
+
+

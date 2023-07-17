@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.profiling_result`
+===============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.profiling_result
+
+.. autoapi-nested-parse::
+
+   The ProfilingResults class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.profiling_result.ProfilingResult
+
+
+
+
+.. py:class:: ProfilingResult
+
+
+
+
+   INC Bench profiling results' table representation.
+
+

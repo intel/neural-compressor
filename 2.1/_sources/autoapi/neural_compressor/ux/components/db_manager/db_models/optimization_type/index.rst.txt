@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.optimization_type`
+================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.optimization_type
+
+.. autoapi-nested-parse::
+
+   Optimization_type package contains class representing optimization_type table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.optimization_type.OptimizationType
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.optimization_type.fill_dictionary
+
+
+
+.. py:class:: OptimizationType
+
+
+
+
+   INC Bench OptimizationType table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

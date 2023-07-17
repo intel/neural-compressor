@@ -1,0 +1,25 @@
+v0.4
+=====
+
+## Highlights
+- **Visual Studio Code extension**: We are delighted to announce the release of Neural Coder's [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=IntelNeuralCompressor.neural-coder-ext-vscode). VS Code programmers can enjoy one-click automatic enabling of Deep Learning optimization API and accelerate their Deep Learning models without manual coding.
+
+- **HuggingFace Transformers**:
+  - We supported **all** HuggingFace Transformers [examples](https://github.com/huggingface/transformers/tree/main/examples/pytorch) that calls ```Trainer``` class, and validated over **500** models from HuggingFace Transformers [model hub](https://huggingface.co/models). The models are able to be accelerated automatically with Neural Coder with minimum loss of prediction accuracy.
+  - We enabled the support of [HuggingFace Optimum-Intel](https://huggingface.co/docs/optimum/intel/index). User scripts of HuggingFace Transformers models will by default be optimized with Optimum-Intel API to enjoy performance speed-up brought by INT8 quantization.
+  - We enabled the support of [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), an innovative toolkit to accelerate Transformer-based models on Intel platforms. For more details, please refer to the updated [support matrix](../SupportMatrix.md).
+
+- **Support of BigDL Nano**: We are delighted to announce the collaboration between Neural Coder and [BigDL Nano](https://bigdl.readthedocs.io/en/latest/doc/Nano/index.html). Users can now one-click enable BigDL Nano optimizations for PyTorch in Neural Coder. For detailed support matrix for BigDL Nano features, please refer to this [guide](../BigDLNanoSupport.md).
+
+- **Amazon AWS SageMaker**: We provided a user [tutorial](../AWSSageMakerSupport.md) for installing Neural Coder's JupyterLab extension in AWS SageMaker platform. Users are able to one-click install the extension in Amazon AWS SageMaker with Jupyter 3 and enjoy Neural Coder's functionalities.
+
+- **Python Launcher**: We added the implementation of [Python Launcher](../PythonLauncher.md) usage for Neural Coder, which will be one of the recommended user interfaces in the future as a replacement of Python API. Users can run the Python model code as it is with automatic enabling of Deep Learning optimizations by using Neural Coder's inline Python Launcher design: ```-m neural_coder```.
+
+- **Device Detection**: We enabled the capability of detecting running device and its ISA automatically and adjusting applied optimization features accordingly. For instance, when running Neural Coder on Intel GPU instead of Intel CPU, the PyTorch Mixed Precision optimization feature will adapt ```xpu``` instead of ```cpu```, and ```torch.half``` instead of ```torch.bfloat16```.
+
+## Others
+- **INT8 Accuracy Evaluation**: We enabled accuracy evaluation for INT8 quantizations in Neural Coder. Users are able to view the accuracy delta for each quantization optimization in Neural Coder's auto-benchmark output log. The calculation is ```acc_delta = (int8_acc - fp32_acc)/(fp32_acc)```.
+
+- **Auto-quantize TensorFlow/Keras scripts**: We enabled the support of auto-quantizing TensorFlow/Keras script-based models with Intel® Neural Compressor. The default quantization scheme will be applied. For more details, please refer to the updated [support matrix](../SupportMatrix.md).
+
+- **Auto-quantize ONNX Runtime scripts**: We enabled the support of auto-quantizing ONNX Runtime script-based models with Intel® Neural Compressor. We support [dynamic quantization](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt#dynamic-quantization), static quantization ([QDQ](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt#tensor-oriented-qdq-format)), and static quantization ([QLinearOps](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt#operator-oriented-with-qlinearops)). For more details, please refer to the updated [support matrix](../SupportMatrix.md).

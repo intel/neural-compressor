@@ -1,0 +1,22 @@
+:py:mod:`neural_compressor.compression.pruner.model_slim`
+=========================================================
+
+.. py:module:: neural_compressor.compression.pruner.model_slim
+
+.. autoapi-nested-parse::
+
+   Slim init.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   auto_slim/index.rst
+   pattern_analyzer/index.rst
+   weight_slim/index.rst
+
+

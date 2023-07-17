@@ -1,0 +1,88 @@
+:py:mod:`neural_compressor.ux.utils.hw_info`
+============================================
+
+.. py:module:: neural_compressor.ux.utils.hw_info
+
+.. autoapi-nested-parse::
+
+   UX server HW info module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.hw_info.HWInfo
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.hw_info.get_number_of_sockets
+   neural_compressor.ux.utils.hw_info.get_distribution
+   neural_compressor.ux.utils.hw_info.get_bios_version
+   neural_compressor.ux.utils.hw_info.is_turbo_boost_enabled
+   neural_compressor.ux.utils.hw_info.get_kernel_version
+   neural_compressor.ux.utils.hw_info.get_framework_info
+   neural_compressor.ux.utils.hw_info.get_framework_dependency_info
+
+
+
+.. py:class:: HWInfo
+
+
+
+
+   Class responsible for gathering information about platform hardware.
+
+
+.. py:function:: get_number_of_sockets() -> int
+
+   Get number of sockets in platform.
+
+
+.. py:function:: get_distribution() -> str
+
+   Return system distibution.
+
+   :return: distribution name
+   :rtype: str
+
+
+.. py:function:: get_bios_version() -> str
+
+   Return bios version.
+
+
+.. py:function:: is_turbo_boost_enabled() -> Union[str, bool]
+
+   Check if turbo boost is enabled.
+
+   Return True if enabled, False if disabled, None if cannot collect info.
+
+
+.. py:function:: get_kernel_version() -> str
+
+   Return kernel version.
+
+
+.. py:function:: get_framework_info(framework_name: str) -> str
+
+   Check framework version.
+
+   Return version if enabled, n/a if disabled.
+
+
+.. py:function:: get_framework_dependency_info() -> Dict[str, Any]
+
+   Return framework subdependencies version.
+
+

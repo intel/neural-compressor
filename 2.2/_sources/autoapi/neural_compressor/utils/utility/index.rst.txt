@@ -1,0 +1,455 @@
+:py:mod:`neural_compressor.utils.utility`
+=========================================
+
+.. py:module:: neural_compressor.utils.utility
+
+.. autoapi-nested-parse::
+
+   quantization auto-tuning config system.
+
+   This file specifies default config options for quantization auto-tuning tool.
+   User should not change values in this file. Instead, user should write a config
+   file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
+   options.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.utility.LazyImport
+   neural_compressor.utils.utility.CpuInfo
+   neural_compressor.utils.utility.CaptureOutputToFile
+   neural_compressor.utils.utility.Statistics
+   neural_compressor.utils.utility.MODE
+   neural_compressor.utils.utility.GLOBAL_STATE
+   neural_compressor.utils.utility.DotDict
+   neural_compressor.utils.utility.OpEntry
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.utility.version1_lt_version2
+   neural_compressor.utils.utility.version1_gt_version2
+   neural_compressor.utils.utility.version1_eq_version2
+   neural_compressor.utils.utility.version1_gte_version2
+   neural_compressor.utils.utility.version1_lte_version2
+   neural_compressor.utils.utility.singleton
+   neural_compressor.utils.utility.time_limit
+   neural_compressor.utils.utility.get_size
+   neural_compressor.utils.utility.compute_sparsity
+   neural_compressor.utils.utility.fault_tolerant_file
+   neural_compressor.utils.utility.equal_dicts
+   neural_compressor.utils.utility.dump_elapsed_time
+   neural_compressor.utils.utility.combine_histogram
+   neural_compressor.utils.utility.get_tensor_histogram
+   neural_compressor.utils.utility.get_all_fp32_data
+   neural_compressor.utils.utility.get_tuning_history
+   neural_compressor.utils.utility.recover
+   neural_compressor.utils.utility.str2array
+   neural_compressor.utils.utility.dequantize_weight
+   neural_compressor.utils.utility.Dequantize
+   neural_compressor.utils.utility.load_data_from_pkl
+   neural_compressor.utils.utility.dump_data_to_local
+   neural_compressor.utils.utility.set_random_seed
+   neural_compressor.utils.utility.set_workspace
+   neural_compressor.utils.utility.set_resume_from
+   neural_compressor.utils.utility.set_tensorboard
+   neural_compressor.utils.utility.show_memory_info
+   neural_compressor.utils.utility.dump_class_attrs
+   neural_compressor.utils.utility.compare_objects
+   neural_compressor.utils.utility.alias_param
+   neural_compressor.utils.utility.print_table
+   neural_compressor.utils.utility.get_tensors_info
+   neural_compressor.utils.utility.get_weights_details
+   neural_compressor.utils.utility.dump_table
+   neural_compressor.utils.utility.dump_table_to_csv
+   neural_compressor.utils.utility.get_number_of_sockets
+   neural_compressor.utils.utility.print_op_list
+   neural_compressor.utils.utility.get_op_list
+   neural_compressor.utils.utility.calculate_mse
+   neural_compressor.utils.utility.mse_metric_gap
+
+
+
+.. py:function:: version1_lt_version2(version1, version2)
+
+   Check whether version1 is less than version2.
+
+
+.. py:function:: version1_gt_version2(version1, version2)
+
+   Check whether version1 is greater than version2.
+
+
+.. py:function:: version1_eq_version2(version1, version2)
+
+   Check whether version1 is equal to version2.
+
+
+.. py:function:: version1_gte_version2(version1, version2)
+
+   Check whether version1 is greater than version2 or is equal to it.
+
+
+.. py:function:: version1_lte_version2(version1, version2)
+
+   Check whether version1 is less than version2 or is equal to it.
+
+
+.. py:class:: LazyImport(module_name)
+
+
+
+
+   Lazy import python module till use.
+
+
+.. py:function:: singleton(cls)
+
+   Not displayed in API Docs.
+
+   Singleton decorater.
+
+
+.. py:function:: time_limit(seconds)
+
+   Limit the time for context execution.
+
+
+.. py:function:: get_size(obj, seen=None)
+
+   Recursively finds size of objects.
+
+
+.. py:function:: compute_sparsity(tensor)
+
+   Compute the sparsity.
+
+   :param tensor: Tensorflow or Pytorch tensor
+
+   :returns: (the original tensor size, number of zero elements, number of non-zero elements)
+
+
+.. py:function:: fault_tolerant_file(name)
+
+   Make another temporary copy of the file.
+
+
+.. py:function:: equal_dicts(d1, d2, compare_keys=None, ignore_keys=None)
+
+   Check whether two dicts are same except for those ignored keys.
+
+
+.. py:class:: CpuInfo
+
+
+
+
+   Get CPU Info.
+
+
+.. py:function:: dump_elapsed_time(customized_msg='')
+
+   Get the elapsed time for decorated functions.
+
+   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :type customized_msg: string, optional
+
+
+.. py:function:: combine_histogram(old_hist, arr)
+
+   Collect layer histogram for arr and combine it with old histogram.
+
+
+.. py:function:: get_tensor_histogram(tensor_data, bins=2048)
+
+   Get the histogram of the tensor data.
+
+
+.. py:function:: get_all_fp32_data(data)
+
+   Get all the fp32 data.
+
+
+.. py:function:: get_tuning_history(tuning_history_path)
+
+   Get tuning history.
+
+   :param tuning_history_path: The tuning history path, which need users to assign
+
+
+.. py:function:: recover(fp32_model, tuning_history_path, num, **kwargs)
+
+   Get offline recover tuned model.
+
+   :param fp32_model: Input model path
+   :param tuning_history_path: The tuning history path, which needs user to assign
+   :param num: tune index
+
+
+.. py:function:: str2array(s)
+
+   Get the array of the string.
+
+
+.. py:function:: dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor)
+
+   Dequantize the weight with min-max filter tensors.
+
+
+.. py:function:: Dequantize(data, scale_info)
+
+   Dequantize the data with the scale_info.
+
+
+.. py:class:: CaptureOutputToFile(tmp_file_path, stream=sys.stderr)
+
+
+
+
+   Not displayed in API Docs.
+
+   Capture the output to file.
+
+
+.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
+
+
+   The statistics printer.
+
+
+.. py:class:: MODE
+
+
+
+
+   Mode: Quantization, Benchmark or Pruning.
+
+
+.. py:class:: GLOBAL_STATE
+
+
+   Access the global model.
+
+
+.. py:function:: load_data_from_pkl(path, filename)
+
+   Load data from local pkl file.
+
+   :param path: The directory to load data
+   :param filename: The filename to load
+
+
+.. py:function:: dump_data_to_local(data, path, filename)
+
+   Dump data to local as pkl file.
+
+   :param data: Data used to dump
+   :param path: The directory to save data
+   :param filename: The filename to dump
+
+   :returns: loaded data
+
+
+.. py:function:: set_random_seed(seed: int)
+
+   Set the random seed in config.
+
+
+.. py:function:: set_workspace(workspace: str)
+
+   Set the workspace in config.
+
+
+.. py:function:: set_resume_from(resume_from: str)
+
+   Set the resume_from in config.
+
+
+.. py:function:: set_tensorboard(tensorboard: bool)
+
+   Set the tensorboard in config.
+
+
+.. py:function:: show_memory_info(hint)
+
+   Show process full memory.
+
+
+.. py:function:: dump_class_attrs(obj, result={})
+
+   Dump the attributes and values of a config class.
+
+   :param obj: An instance of a config class.
+   :param result: An dict for recording attributes and values.
+
+
+.. py:class:: DotDict(value=None)
+
+
+
+
+   access yaml using attributes instead of using the dictionary notation.
+
+   :param value: The dict object to access.
+   :type value: dict
+
+
+.. py:function:: compare_objects(obj1, obj2, ignore_attrs)
+
+   Compare two objects and ignore the specified attributes.
+
+   :param obj1: The first object to compare.
+   :param obj2: The second object to compare.
+   :param ignore_attrs: A list of attribute names to ignore during the comparison.
+
+   :returns: True if the objects are equal ignoring the specified attributes, False otherwise.
+
+
+.. py:function:: alias_param(param_name: str, param_alias: str)
+
+   Decorator for aliasing a param in a function.
+
+   :param param_name: Name of param in function to alias.
+   :param param_alias: Alias that can be used for this param.
+
+
+.. py:function:: print_table(column_mapping: Dict[str, str], table_entries: List[Any], output_handler=logger.info, title: Optional[str] = None, insert_newlines=False, precision: Optional[int] = None) -> None
+
+   Print table with prettytable.
+
+   :param :
+   :param column_mapping: Dictionary where key is a column header and value corresponds
+                          to object's attribute.
+   :type column_mapping: dict
+   :param table_entries: List of objects to be included in the table.
+   :type table_entries: list
+   :param output_handler: Output handler function.
+   :type output_handler: func, optional
+   :param title: Title for the table
+   :type title: str
+   :param insert_newlines: Add newlines to each row
+   :type insert_newlines: bool
+   :param precision: Number of digits after the decimal point
+   :type precision: int
+
+   :returns: None
+
+
+.. py:function:: get_tensors_info(workload_location, model_type: str = 'optimized') -> dict
+
+   Get information about tensors.
+
+   :param workload_location: path to workload directory
+   :param model_type: type of model. Supported model types: "input", "optimized"
+
+   :returns: dictionary with tensors info
+
+
+.. py:function:: get_weights_details(workload_location: str) -> list
+
+   Get weights details for model.
+
+   :param workload_location: path to workload directory
+
+   :returns: list of WeightDetails objects
+
+
+.. py:function:: dump_table(filepath: str, column_mapping: Dict[str, str], table_entries: List[Any], file_type: str = 'csv') -> None
+
+   Dump table data to file.
+
+   :param :
+   :param filepath: The path of the file to which the data is to be dumped.
+   :type filepath: str
+   :param column_mapping: Dictionary where key is a column header and value corresponds
+                          to object's attribute.
+   :type column_mapping: dict
+   :param table_entries: List of objects to be included in the table.
+   :type table_entries: list
+   :param file_type: name of the file extension. Currently only csv is supported.
+   :type file_type: str
+
+   :returns: None
+
+
+.. py:function:: dump_table_to_csv(filepath: str, column_mapping: Dict[str, str], table_entries: List[Any])
+
+   Dump table data to csv file.
+
+   :param :
+   :param filepath: The path of the file to which the data is to be dumped.
+   :type filepath: str
+   :param column_mapping: Dictionary where key is a column header and value corresponds
+                          to object's attribute.
+   :type column_mapping: dict
+   :param table_entries: List of objects to be included in the table.
+   :type table_entries: list
+
+   :returns: None
+
+
+.. py:function:: get_number_of_sockets() -> int
+
+   Get number of sockets in platform.
+
+
+.. py:class:: OpEntry(op_name: str, mse: float, activation_min: float, activation_max: float)
+
+
+   OP entry class.
+
+
+.. py:function:: print_op_list(workload_location: str)
+
+   Print OP table and dump it to CSV.
+
+   :param workload_location: path to workload directory
+
+   :returns: None
+
+
+.. py:function:: get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) -> List[OpEntry]
+
+   Get OP list for model.
+
+   :param minmax_file_path: path to activation_min_max.pkl
+   :param input_model_tensors: dict with input tensors details
+   :param optimized_model_tensors: dict with optimized tensors details
+
+   :returns: list of OpEntry elements
+
+
+.. py:function:: calculate_mse(op_name: str, input_model_tensors: dict, optimized_model_tensors: dict) -> Optional[float]
+
+   Calculate MSE for specified OP.
+
+   :param op_name: name of the OP
+   :param input_model_tensors: dict with input tensors details
+   :param optimized_model_tensors: dict with optimized tensors details
+
+   :returns: MSE value for specified op_name
+
+
+.. py:function:: mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float
+
+   Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+
+   :param fp32_tensor: The FP32 tensor.
+   :type fp32_tensor: tensor
+   :param dequantize_tensor: The INT8 dequantize tensor.
+   :type dequantize_tensor: tensor
+
+   :returns: MSE value
+
+

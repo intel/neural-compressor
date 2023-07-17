@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.meta_graph`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.meta_graph
+
+.. autoapi-nested-parse::
+
+   Tensorflow frozen pb model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.meta_graph.MetaGraphModel
+
+
+
+
+.. py:class:: MetaGraphModel
+
+
+
+
+   MetaGraph model.
+
+

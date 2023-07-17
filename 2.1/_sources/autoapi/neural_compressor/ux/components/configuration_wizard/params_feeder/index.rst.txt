@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.ux.components.configuration_wizard.params_feeder`
+============================================================================
+
+.. py:module:: neural_compressor.ux.components.configuration_wizard.params_feeder
+
+.. autoapi-nested-parse::
+
+   Parameters feeder module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.params_feeder.get_possible_values
+
+
+
+.. py:class:: Feeder(data: Dict[str, Any])
+
+
+   Parameters feeder class.
+
+
+.. py:function:: get_possible_values(data: dict) -> Dict[str, List[Any]]
+
+   Get list of possible values for specified scenario with "help" information.
+
+

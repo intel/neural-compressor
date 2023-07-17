@@ -1,0 +1,68 @@
+:py:mod:`neural_compressor.ux.utils.workload.dataloader`
+========================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.dataloader
+
+.. autoapi-nested-parse::
+
+   Configuration dataloader module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.dataloader.Dataset
+   neural_compressor.ux.utils.workload.dataloader.LabelBalance
+   neural_compressor.ux.utils.workload.dataloader.Filter
+   neural_compressor.ux.utils.workload.dataloader.Transform
+   neural_compressor.ux.utils.workload.dataloader.Dataloader
+
+
+
+
+.. py:class:: Dataset(name: str, data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Dataset class.
+
+
+.. py:class:: LabelBalance(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration LabelBalance class.
+
+
+.. py:class:: Filter(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Filter class.
+
+
+.. py:class:: Transform(name: str, parameters: Dict[str, Any] = {})
+
+
+
+
+   Configuration Transform class.
+
+
+.. py:class:: Dataloader(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Dataloader class.
+
+

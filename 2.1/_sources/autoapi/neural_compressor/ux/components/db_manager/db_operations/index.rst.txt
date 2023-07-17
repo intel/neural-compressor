@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations`
+==================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations
+
+.. autoapi-nested-parse::
+
+   The db_operation package contains interfaces used to control local database.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark_api_interface/index.rst
+   dataset_api_interface/index.rst
+   db_operations/index.rst
+   diagnosis_api_interface/index.rst
+   dictionaries_api_interface/index.rst
+   examples_api_interface/index.rst
+   model_api_interface/index.rst
+   optimization_api_interface/index.rst
+   profiling_api_interface/index.rst
+   project_api_interface/index.rst
+
+

@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.utils.logger`
+===========================================
+
+.. py:module:: neural_compressor.ux.utils.logger
+
+.. autoapi-nested-parse::
+
+   Ux Logger module.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.logger.change_log_level
+
+
+
+.. py:function:: change_log_level(log_level: int) -> None
+
+   Change log level.
+
+

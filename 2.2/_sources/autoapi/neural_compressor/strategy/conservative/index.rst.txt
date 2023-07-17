@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.strategy.conservative`
+=================================================
+
+.. py:module:: neural_compressor.strategy.conservative
+
+.. autoapi-nested-parse::
+
+   The conservative tuning strategy for quantization level 0.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.conservative.ConservativeTuneStrategy
+
+
+
+
+.. py:class:: ConservativeTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
+
+
+
+
+   Tuning strategy with accuracy first, performance second.
+
+   The quantization level O0 is designed for user who want to keep the accuracy
+   of the model after quantization. It starts with the original(fp32) model,
+   and then quantize the OPs to lower precision OP type wisely and OP wisely.
+
+

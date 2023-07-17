@@ -1,0 +1,155 @@
+:py:mod:`neural_compressor.compression.pruner.patterns`
+=======================================================
+
+.. py:module:: neural_compressor.compression.pruner.patterns
+
+.. autoapi-nested-parse::
+
+   pruning patterns.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.patterns.BasePattern
+   neural_compressor.compression.pruner.patterns.PatternNxM
+   neural_compressor.compression.pruner.patterns.PatternNInM
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.patterns.register_pattern
+   neural_compressor.compression.pruner.patterns.get_pattern
+
+
+
+.. py:function:: register_pattern(name)
+
+   Class decorator used to register a Pattern subclass to the registry.
+
+   Decorator function used before a Pattern subclasses.
+   Make sure that this Pattern class can be registered in PATTERNS.
+
+   :param name: A string defining the pattern type name to be used in a pruning process.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: get_pattern(config, modules)
+
+   Get registered pattern class.
+
+   Get a Pattern object from PATTERNS.
+
+   :param config: A config dict object that contains the pattern information.
+   :param modules: Torch neural network modules to be pruned with the pattern.
+
+   :returns: A Pattern object.
+
+   :raises AssertionError: Currently only support patterns which have been registered in PATTERNS.
+
+
+.. py:class:: BasePattern(config, modules)
+
+
+   Pruning Pattern.
+
+   It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4.
+
+   :param config: A config dict object that contains the pattern information.
+   :param modules: Torch neural network modules to be pruned with the pattern.
+
+   .. attribute:: pattern
+
+      A config dict object that includes information of the pattern.
+
+   .. attribute:: is_global
+
+      A bool determining whether the pruning takes global pruning option.
+      Global pruning means that pruning scores by a pruning criterion are evaluated in all layers.
+      Local pruning, by contrast, means that pruning scores by the pruning criterion are evaluated
+          in every layer individually.
+
+   .. attribute:: keep_mask_layers
+
+      A dict that includes the layers whose mask will not be updated.
+
+   .. attribute:: invalid_layers
+
+      The layers whose shapes don't fit the pattern.
+
+   .. attribute:: modules
+
+      Torch neural network modules to be pruned with the pattern.
+
+   .. attribute:: config
+
+      A config dict object that contains all the information including the pattern's.
+
+   .. attribute:: max_sparsity_ratio_per_op
+
+      A float representing the maximum sparsity that one layer could reach.
+
+   .. attribute:: min_sparsity_ratio_per_op
+
+      A float representing the minimum sparsity that one layer could reach.
+
+   .. attribute:: target_sparsity
+
+      A float representing the sparsity ratio of the modules after pruning.
+
+
+.. py:class:: PatternNxM(config, modules)
+
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from BasePattern. In this pattern, the weights in a NxM block will be pruned or kept
+   during one pruning step.
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: block_size
+
+      A list of two integers representing the height and width of the block.
+
+   .. attribute:: Please note that the vertical direction of a Linear layer's weight refers to the output channel.
+
+      because PyTorch's tensor matmul has a hidden transpose operation.
+
+
+.. py:class:: PatternNInM(config, modules)
+
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+   For more info of this pattern, please refer to :
+   https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: N
+
+      The number of elements to be pruned in a weight sequence.
+
+   .. attribute:: M
+
+      The size of the weight sequence.
+
+

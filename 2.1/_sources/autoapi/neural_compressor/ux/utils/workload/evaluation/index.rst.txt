@@ -1,0 +1,86 @@
+:py:mod:`neural_compressor.ux.utils.workload.evaluation`
+========================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.evaluation
+
+.. autoapi-nested-parse::
+
+   Configuration evaluation module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.evaluation.Metric
+   neural_compressor.ux.utils.workload.evaluation.Configs
+   neural_compressor.ux.utils.workload.evaluation.PostprocessSchema
+   neural_compressor.ux.utils.workload.evaluation.Postprocess
+   neural_compressor.ux.utils.workload.evaluation.Accuracy
+   neural_compressor.ux.utils.workload.evaluation.Performance
+   neural_compressor.ux.utils.workload.evaluation.Evaluation
+
+
+
+
+.. py:class:: Metric(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Metric class.
+
+
+.. py:class:: Configs(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Configs class.
+
+
+.. py:class:: PostprocessSchema(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration PostprocessSchema class.
+
+
+.. py:class:: Postprocess(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Postprocess class.
+
+
+.. py:class:: Accuracy(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Accuracy class.
+
+
+.. py:class:: Performance(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Performance class.
+
+
+.. py:class:: Evaluation(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Evaluation class.
+
+

@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.utils.executor`
+=============================================
+
+.. py:module:: neural_compressor.ux.utils.executor
+
+.. autoapi-nested-parse::
+
+   Definition of executor.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.executor.Executor
+
+
+
+
+.. py:class:: Executor(workspace_path: str, subject: str, data: Optional[dict] = None, send_response: bool = True, log_name: Optional[str] = None, additional_log_names: List[str] = [])
+
+
+   Executor class provide execute shell command.
+
+

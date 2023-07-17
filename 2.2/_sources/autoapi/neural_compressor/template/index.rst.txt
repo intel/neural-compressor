@@ -1,0 +1,17 @@
+:orphan:
+
+:py:mod:`neural_compressor.template`
+====================================
+
+.. py:module:: neural_compressor.template
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   api_doc_example/index.rst
+
+

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.benchmark`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.benchmark
+
+.. autoapi-nested-parse::
+
+   The Benchmark class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.benchmark.Benchmark
+
+
+
+
+.. py:class:: Benchmark
+
+
+
+
+   INC Bench benchmarks' table representation.
+
+

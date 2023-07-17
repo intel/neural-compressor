@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.diagnosis_api_interface`
+==========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.diagnosis_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Diagnosis API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.diagnosis_api_interface.DiagnosisAPIInterface
+
+
+
+
+.. py:class:: DiagnosisAPIInterface
+
+
+   Interface for queries connected with diagnosis of models.
+
+

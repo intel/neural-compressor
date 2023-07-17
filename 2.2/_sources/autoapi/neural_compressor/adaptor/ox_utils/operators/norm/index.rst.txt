@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.norm`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.norm
+
+.. autoapi-nested-parse::
+
+   Normalization Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.norm.BatchNormalizationOperator
+   neural_compressor.adaptor.ox_utils.operators.norm.NormalizationOperator
+
+
+
+
+.. py:class:: BatchNormalizationOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   BatchNormalization Operator.
+
+
+.. py:class:: NormalizationOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Normalization Operator.
+
+

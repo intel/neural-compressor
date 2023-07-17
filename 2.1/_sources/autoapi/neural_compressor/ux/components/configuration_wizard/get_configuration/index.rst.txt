@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.configuration_wizard.get_configuration`
+================================================================================
+
+.. py:module:: neural_compressor.ux.components.configuration_wizard.get_configuration
+
+.. autoapi-nested-parse::
+
+   Configuration to yaml.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.get_configuration.get_predefined_configuration
+   neural_compressor.ux.components.configuration_wizard.get_configuration.update_config_to_machine_specification
+
+
+
+.. py:function:: get_predefined_configuration(data: Dict[str, Any]) -> Union[Dict[str, Any], List[Dict[str, Any]]]
+
+   Get configuration.
+
+
+.. py:function:: update_config_to_machine_specification(config: neural_compressor.ux.utils.workload.config.Config) -> None
+
+   Change Config values based on local machine.
+
+

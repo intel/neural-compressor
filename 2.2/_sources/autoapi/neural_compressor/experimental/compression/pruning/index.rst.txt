@@ -1,0 +1,47 @@
+:py:mod:`neural_compressor.experimental.compression.pruning`
+============================================================
+
+.. py:module:: neural_compressor.experimental.compression.pruning
+
+.. autoapi-nested-parse::
+
+   Pruning.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.compression.pruning.save
+   neural_compressor.experimental.compression.pruning.prepare_pruning
+
+
+
+.. py:function:: save(obj: object, f, pickle_module=None, pickle_protocol=None, _use_new_zipfile_serialization=None)
+
+   A rewrite function for torch save.
+
+   :param obj:
+   :param f:
+   :param pickle_module:
+   :param pickle_protocol:
+   :param _use_new_zipfile_serialization:
+   :return:
+
+
+.. py:function:: prepare_pruning(config, model: torch.nn.Module, opt: torch.optim.Optimizer)
+
+   Wrapper the model and optimizer to support all the pruning functionality.
+
+   :param config: WeightPruningConfig
+   :param model: The user's model, a torch.nn.Module object
+   :param opt: The user's optimizer, a torch.optim object
+   :return: The modified model and optimizer
+
+

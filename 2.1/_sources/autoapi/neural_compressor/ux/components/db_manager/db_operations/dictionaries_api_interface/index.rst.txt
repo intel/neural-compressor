@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.dictionaries_api_interface`
+=============================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.dictionaries_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Dictionaries API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.dictionaries_api_interface.DictionariesAPIInterface
+
+
+
+
+.. py:class:: DictionariesAPIInterface
+
+
+   Interface for queries connected with dictonaries.
+
+

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.tuning_details`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.tuning_details
+
+.. autoapi-nested-parse::
+
+   The TuningDetails class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.tuning_details.TuningDetails
+
+
+
+
+.. py:class:: TuningDetails
+
+
+
+
+   INC Bench tuning details' table representation.
+
+

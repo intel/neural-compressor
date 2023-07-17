@@ -1,0 +1,27 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression`
+=======================================
+
+.. py:module:: neural_compressor.compression
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   distillation/index.rst
+   pruner/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   callbacks/index.rst
+
+

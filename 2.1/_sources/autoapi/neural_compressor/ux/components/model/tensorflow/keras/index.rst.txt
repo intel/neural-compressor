@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.keras`
+================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.keras
+
+.. autoapi-nested-parse::
+
+   Tensorflow keras model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.keras.KerasModel
+
+
+
+
+.. py:class:: KerasModel
+
+
+
+
+   Keras model.
+
+

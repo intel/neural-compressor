@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.utils.proc`
+=========================================
+
+.. py:module:: neural_compressor.ux.utils.proc
+
+.. autoapi-nested-parse::
+
+   Execution common proc module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.proc.Proc
+
+
+
+
+.. py:class:: Proc(output_dir: str = '.', pid: Optional[str] = None, request_id: Optional[str] = None, filename: Optional[Union[str, List[str]]] = None, additional_log_names: List[str] = [])
+
+
+
+
+   Process class that runs commands from shell.
+
+

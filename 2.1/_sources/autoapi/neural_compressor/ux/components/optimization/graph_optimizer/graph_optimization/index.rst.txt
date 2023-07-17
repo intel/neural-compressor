@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization`
+=========================================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization
+
+.. autoapi-nested-parse::
+
+   Optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization.GraphOptimization
+
+
+
+
+.. py:class:: GraphOptimization(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+
+
+
+   Optimization class.
+
+

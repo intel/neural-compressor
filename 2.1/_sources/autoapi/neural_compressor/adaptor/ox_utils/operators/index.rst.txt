@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators`
+======================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators
+
+.. autoapi-nested-parse::
+
+   Operators for onnx model.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   activation/index.rst
+   argmax/index.rst
+   attention/index.rst
+   binary_op/index.rst
+   concat/index.rst
+   conv/index.rst
+   direct_q8/index.rst
+   embed_layernorm/index.rst
+   gather/index.rst
+   gavgpool/index.rst
+   gemm/index.rst
+   lstm/index.rst
+   matmul/index.rst
+   maxpool/index.rst
+   ops/index.rst
+   pad/index.rst
+   pooling/index.rst
+   resize/index.rst
+   split/index.rst
+
+
+Package Contents
+----------------
+
+
+

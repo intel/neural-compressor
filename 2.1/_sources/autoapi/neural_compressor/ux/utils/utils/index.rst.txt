@@ -1,0 +1,271 @@
+:py:mod:`neural_compressor.ux.utils.utils`
+==========================================
+
+.. py:module:: neural_compressor.ux.utils.utils
+
+.. autoapi-nested-parse::
+
+   UX server utils module.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.utils.deprecated
+   neural_compressor.ux.utils.utils.is_hidden
+   neural_compressor.ux.utils.utils.get_dataset_path
+   neural_compressor.ux.utils.utils.get_framework_from_path
+   neural_compressor.ux.utils.utils.get_file_extension
+   neural_compressor.ux.utils.utils.is_dataset_file
+   neural_compressor.ux.utils.utils.get_predefined_config_path
+   neural_compressor.ux.utils.utils.normalize_domain
+   neural_compressor.ux.utils.utils.normalize_framework
+   neural_compressor.ux.utils.utils.normalize_string
+   neural_compressor.ux.utils.utils.get_model_zoo_config_path
+   neural_compressor.ux.utils.utils.get_model_zoo_model_path
+   neural_compressor.ux.utils.utils.check_module
+   neural_compressor.ux.utils.utils.get_module_version
+   neural_compressor.ux.utils.utils.get_size
+   neural_compressor.ux.utils.utils.load_model_config
+   neural_compressor.ux.utils.utils.load_dataloader_config
+   neural_compressor.ux.utils.utils.load_transforms_config
+   neural_compressor.ux.utils.utils.load_transforms_filter_config
+   neural_compressor.ux.utils.utils.load_precisions_config
+   neural_compressor.ux.utils.utils.load_pruning_details_config
+   neural_compressor.ux.utils.utils.get_default_pruning_config_path
+   neural_compressor.ux.utils.utils.load_model_wise_params
+   neural_compressor.ux.utils.utils.load_metrics_config
+   neural_compressor.ux.utils.utils.get_metrics_dict
+   neural_compressor.ux.utils.utils.load_help_nc_params
+   neural_compressor.ux.utils.utils.replace_with_values
+   neural_compressor.ux.utils.utils.verify_file_path
+   neural_compressor.ux.utils.utils.determine_ip
+   neural_compressor.ux.utils.utils.is_development_env
+   neural_compressor.ux.utils.utils.filter_transforms
+   neural_compressor.ux.utils.utils.parse_bool_value
+   neural_compressor.ux.utils.utils.release_tag
+   neural_compressor.ux.utils.utils.get_shape_from_transforms
+   neural_compressor.ux.utils.utils.get_height_width_from_size
+   neural_compressor.ux.utils.utils.parse_to_string_list
+   neural_compressor.ux.utils.utils.parse_to_float_list
+   neural_compressor.ux.utils.utils.export_to_csv
+   neural_compressor.ux.utils.utils.parse_version
+   neural_compressor.ux.utils.utils.are_archive_filenames_valid
+   neural_compressor.ux.utils.utils.safe_extract_archive
+
+
+
+.. py:function:: deprecated(func: Callable) -> Any
+
+   Signal deprecated function.
+
+
+.. py:function:: is_hidden(path: str) -> bool
+
+   Check if path is for hidden filesystem entry.
+
+
+.. py:function:: get_dataset_path(framework: str, domain: str) -> str
+
+   Get dataset path for specified framework and domain.
+
+
+.. py:function:: get_framework_from_path(model_path: str) -> Optional[str]
+
+   Get framework name from model extension.
+
+   :param model_path: Path to model.
+
+
+.. py:function:: get_file_extension(path: str) -> str
+
+   Get file extension without leading dot.
+
+
+.. py:function:: is_dataset_file(path: str) -> bool
+
+   Check if given path is for a dataset of supported framework.
+
+
+.. py:function:: get_predefined_config_path(framework: str, domain: str, domain_flavour: str = '') -> str
+
+   Get predefined config for specified model domain.
+
+
+.. py:function:: normalize_domain(domain: str) -> str
+
+   Normalize domain strings by replacing spaces to underscores and lowering case.
+
+
+.. py:function:: normalize_framework(framework: str) -> str
+
+   Normalize framework strings by lowering case.
+
+
+.. py:function:: normalize_string(string_to_normalize: str) -> str
+
+   Normalize string for usage in path.
+
+
+.. py:function:: get_model_zoo_config_path(workspace_path: Optional[str], framework: str, domain: str, model_name: str, model_dict: Dict[str, Any]) -> str
+
+   Get predefined config for model from Examples.
+
+
+.. py:function:: get_model_zoo_model_path(workspace_path: Optional[str], framework: str, domain: str, model_name: str, model_dict: Dict[str, Any]) -> str
+
+   Get path for model from Examples.
+
+
+.. py:function:: check_module(module_name: str) -> None
+
+   Check if module exists. Raise exception when not found.
+
+
+.. py:function:: get_module_version(module_name: str) -> str
+
+   Check module version. Raise exception when not found.
+
+
+.. py:function:: get_size(path: str, unit: str = 'MB', add_unit: bool = False) -> Union[str, int]
+
+   Check file or directory size.
+
+
+.. py:function:: load_model_config() -> Dict[str, Any]
+
+   Load model configs from json.
+
+
+.. py:function:: load_dataloader_config() -> List[Dict[str, Any]]
+
+   Load dataloader configs from json.
+
+
+.. py:function:: load_transforms_config() -> List[Dict[str, Any]]
+
+   Load transforms configs from json.
+
+
+.. py:function:: load_transforms_filter_config() -> Dict[str, Any]
+
+   Load meaningful transforms configs from json.
+
+
+.. py:function:: load_precisions_config() -> dict
+
+   Load transforms configs from json.
+
+
+.. py:function:: load_pruning_details_config() -> List[Dict[str, Any]]
+
+   Load pruning details config from json.
+
+
+.. py:function:: get_default_pruning_config_path() -> str
+
+   Get path to yaml config with default pruning config.
+
+
+.. py:function:: load_model_wise_params(framework: str) -> dict
+
+   Load model wise parameters for specified framework.
+
+
+.. py:function:: load_metrics_config() -> List[dict]
+
+   Load transforms configs from json.
+
+
+.. py:function:: get_metrics_dict() -> dict
+
+   Get metrics list from Neural Compressor and add help messages.
+
+
+.. py:function:: load_help_nc_params(parameter: str) -> Dict[str, Any]
+
+   Load help info from json for metrics, objectives and strategies.
+
+
+.. py:function:: replace_with_values(param: dict, file_path: str) -> None
+
+   Replace parameters with value.
+
+
+.. py:function:: verify_file_path(path: str) -> None
+
+   Check if path can be accessed.
+
+
+.. py:function:: determine_ip() -> str
+
+   Return IP to be used by server.
+
+
+.. py:function:: is_development_env() -> bool
+
+   Return true if NC_MODE is development else false.
+
+
+.. py:function:: filter_transforms(transforms: List[dict], framework: str, domain: str) -> List[dict]
+
+   Collect only meaningful transform for specified framework and domain.
+
+
+.. py:function:: parse_bool_value(value: Any) -> bool
+
+   Parse value to boolean.
+
+
+.. py:function:: release_tag() -> str
+
+   Build tag based on release version.
+
+
+.. py:function:: get_shape_from_transforms(transforms: List[neural_compressor.ux.utils.workload.dataloader.Transform], shape_elements_order: List[str]) -> list
+
+   Detect dataset sizes based on configured transforms.
+
+
+.. py:function:: get_height_width_from_size(size: Any) -> Tuple[Optional[int], Optional[int]]
+
+   Detect dataset sizes based on size param common in some Transforms.
+
+
+.. py:function:: parse_to_string_list(values: Union[None, str, List[str]]) -> List[str]
+
+   Parse to string list.
+
+
+.. py:function:: parse_to_float_list(values: Union[None, float, List[float]]) -> List[float]
+
+   Parse to float list.
+
+
+.. py:function:: export_to_csv(data: List[dict], file: str) -> None
+
+   Export list of dicts to csv file.
+
+
+.. py:function:: parse_version(string_version: Optional[str]) -> str
+
+   Parse module version.
+
+
+.. py:function:: are_archive_filenames_valid(filenames: list) -> bool
+
+   Validate if archive filenames are not malicious.
+
+
+.. py:function:: safe_extract_archive(file: Union[zipfile.ZipFile, tarfile.TarFile], destination_dir: str, members: list) -> None
+
+   Extract archive in safe way.
+
+

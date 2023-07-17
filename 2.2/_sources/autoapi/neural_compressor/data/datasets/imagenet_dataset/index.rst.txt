@@ -1,0 +1,85 @@
+:py:mod:`neural_compressor.data.datasets.imagenet_dataset`
+==========================================================
+
+.. py:module:: neural_compressor.data.datasets.imagenet_dataset
+
+.. autoapi-nested-parse::
+
+   Dataset for ImageNet data generation on multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.imagenet_dataset.ImagenetRaw
+   neural_compressor.data.datasets.imagenet_dataset.PytorchImagenetRaw
+   neural_compressor.data.datasets.imagenet_dataset.MXNetImagenetRaw
+   neural_compressor.data.datasets.imagenet_dataset.TensorflowImagenetRaw
+   neural_compressor.data.datasets.imagenet_dataset.TensorflowImagenetDataset
+   neural_compressor.data.datasets.imagenet_dataset.ONNXRTImagenetDataset
+
+
+
+
+.. py:class:: ImagenetRaw(data_path, image_list, transform=None, filter=None)
+
+
+
+
+   Configuration for ImageNet raw dataset.
+
+   Please arrange data in this way:
+       data_path/img1.jpg
+       data_path/img2.jpg
+       ...
+       data_path/imgx.jpg
+   dataset will read name and label of each image from image_list file,
+   if user set image_list to None, it will read from data_path/val_map.txt automatically.
+
+
+.. py:class:: PytorchImagenetRaw(data_path, image_list, transform=None, filter=None)
+
+
+
+
+   Dataset for ImageNet data generation on pytorch backend.
+
+
+.. py:class:: MXNetImagenetRaw(data_path, image_list, transform=None, filter=None)
+
+
+
+
+   Dataset for ImageNet data generation on mxnet backend.
+
+
+.. py:class:: TensorflowImagenetRaw(data_path, image_list, transform=None, filter=None)
+
+
+
+
+   Dataset for ImageNet data generation on tensorflow/inteltensorflow/tensorflow_itex backend.
+
+
+.. py:class:: TensorflowImagenetDataset
+
+
+
+
+   Configuration for Imagenet dataset.
+
+
+.. py:class:: ONNXRTImagenetDataset(root, subset='val', num_cores=28, transform=None, filter=None)
+
+
+
+
+   Configuration for Imagenet dataset.
+
+

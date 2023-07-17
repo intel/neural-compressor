@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.op_details`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.op_details
+
+.. autoapi-nested-parse::
+
+   The OpDetails class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.op_details.OpDetails
+   neural_compressor.ux.components.diagnosis.op_details.OpPattern
+   neural_compressor.ux.components.diagnosis.op_details.OpWeights
+   neural_compressor.ux.components.diagnosis.op_details.OpActivation
+
+
+
+
+.. py:class:: OpDetails(op_name: str, op_details: dict)
+
+
+
+
+   OP details class.
+
+
+.. py:class:: OpPattern(pattern_data: dict)
+
+
+
+
+   OP pattern class.
+
+
+.. py:class:: OpWeights(weights_data: dict)
+
+
+
+
+   OP weights class.
+
+
+.. py:class:: OpActivation(op_activation: dict)
+
+
+
+
+   OP activation class.
+
+

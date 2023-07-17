@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.utils.json_serializer`
+====================================================
+
+.. py:module:: neural_compressor.ux.utils.json_serializer
+
+.. autoapi-nested-parse::
+
+   JsonSerializer module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.json_serializer.JsonSerializer
+
+
+
+
+.. py:class:: JsonSerializer
+
+
+   Dict serializable class.
+
+

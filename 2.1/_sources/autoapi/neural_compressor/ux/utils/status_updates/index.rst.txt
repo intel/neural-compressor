@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.utils.status_updates`
+===================================================
+
+.. py:module:: neural_compressor.ux.utils.status_updates
+
+.. autoapi-nested-parse::
+
+   Status update function factory.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.status_updates.get_status_update_function
+
+
+
+.. py:function:: get_status_update_function(job_type: str) -> Callable[[dict], dict]
+
+   Get update status function for specified job type.
+
+

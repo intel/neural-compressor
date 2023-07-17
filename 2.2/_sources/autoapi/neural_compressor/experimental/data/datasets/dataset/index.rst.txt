@@ -1,0 +1,576 @@
+:py:mod:`neural_compressor.experimental.data.datasets.dataset`
+==============================================================
+
+.. py:module:: neural_compressor.experimental.data.datasets.dataset
+
+.. autoapi-nested-parse::
+
+   This is the base class for each framework.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.dataset.TensorflowDatasets
+   neural_compressor.experimental.data.datasets.dataset.PyTorchDatasets
+   neural_compressor.experimental.data.datasets.dataset.MXNetDatasets
+   neural_compressor.experimental.data.datasets.dataset.ONNXRTQLDatasets
+   neural_compressor.experimental.data.datasets.dataset.ONNXRTITDatasets
+   neural_compressor.experimental.data.datasets.dataset.PytorchMxnetWrapDataset
+   neural_compressor.experimental.data.datasets.dataset.PytorchMxnetWrapFunction
+   neural_compressor.experimental.data.datasets.dataset.Datasets
+   neural_compressor.experimental.data.datasets.dataset.Dataset
+   neural_compressor.experimental.data.datasets.dataset.IterableDataset
+   neural_compressor.experimental.data.datasets.dataset.CIFAR10
+   neural_compressor.experimental.data.datasets.dataset.PytorchCIFAR10
+   neural_compressor.experimental.data.datasets.dataset.MXNetCIFAR10
+   neural_compressor.experimental.data.datasets.dataset.TensorflowCIFAR10
+   neural_compressor.experimental.data.datasets.dataset.CIFAR100
+   neural_compressor.experimental.data.datasets.dataset.PytorchCIFAR100
+   neural_compressor.experimental.data.datasets.dataset.MXNetCIFAR100
+   neural_compressor.experimental.data.datasets.dataset.TensorflowCIFAR100
+   neural_compressor.experimental.data.datasets.dataset.MNIST
+   neural_compressor.experimental.data.datasets.dataset.PytorchMNIST
+   neural_compressor.experimental.data.datasets.dataset.MXNetMNIST
+   neural_compressor.experimental.data.datasets.dataset.TensorflowMNIST
+   neural_compressor.experimental.data.datasets.dataset.FashionMNIST
+   neural_compressor.experimental.data.datasets.dataset.PytorchFashionMNIST
+   neural_compressor.experimental.data.datasets.dataset.MXNetFashionMNIST
+   neural_compressor.experimental.data.datasets.dataset.TensorflowFashionMNIST
+   neural_compressor.experimental.data.datasets.dataset.ImageFolder
+   neural_compressor.experimental.data.datasets.dataset.MXNetImageFolder
+   neural_compressor.experimental.data.datasets.dataset.TensorflowImageFolder
+   neural_compressor.experimental.data.datasets.dataset.TensorflowTFRecordDataset
+   neural_compressor.experimental.data.datasets.dataset.TensorflowImageRecord
+   neural_compressor.experimental.data.datasets.dataset.TensorflowVOCRecord
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.dataset.dataset_registry
+   neural_compressor.experimental.data.datasets.dataset.download_url
+   neural_compressor.experimental.data.datasets.dataset.gen_bar_updater
+   neural_compressor.experimental.data.datasets.dataset.check_integrity
+   neural_compressor.experimental.data.datasets.dataset.calculate_md5
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.dataset.framework_datasets
+
+
+.. py:class:: TensorflowDatasets
+
+
+
+
+   The base class of Tensorflow datasets class.
+
+
+.. py:class:: PyTorchDatasets
+
+
+
+
+   The base class of PyTorch datasets class.
+
+
+.. py:class:: MXNetDatasets
+
+
+
+
+   The base class of MXNet datasets class.
+
+
+.. py:class:: ONNXRTQLDatasets
+
+
+
+
+   The base class of ONNXRT QLinear datasets class.
+
+
+.. py:class:: ONNXRTITDatasets
+
+
+
+
+   The base class of ONNXRT IT datasets class.
+
+
+.. py:class:: PytorchMxnetWrapDataset(datafunc)
+
+
+   The base class for PyTorch and MXNet frameworks.
+
+   :param datafunc: The datasets class of PyTorch or MXNet.
+
+
+.. py:class:: PytorchMxnetWrapFunction(dataset, transform, filter, *args, **kwargs)
+
+
+   The Helper class for PytorchMxnetWrapDataset.
+
+   :param dataset: The datasets class of PyTorch or MXNet.
+   :type dataset: datasets class
+   :param transform: transform to process input data.
+   :type transform: transform object
+   :param filter: filter out examples according to specific
+                  conditions.
+   :type filter: Filter objects
+
+
+.. py:data:: framework_datasets
+
+   The datasets supported by neural_compressor, it's model specific and can be configured by yaml file.
+
+   User could add new datasets by implementing new Dataset subclass under this directory.
+   The naming convention of new dataset subclass should be something like ImageClassifier, user
+   could choose this dataset by setting "imageclassifier" string in tuning.strategy field of yaml.
+
+   Datasets variable is used to store all implemented Dataset subclasses to support
+   model specific dataset.
+
+.. py:class:: Datasets(framework)
+
+
+
+
+   A base class for all framework datasets.
+
+   :param framework: framework name, like:"tensorflow", "tensorflow_itex", "keras",
+                     "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
+                     "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
+   :type framework: str
+
+
+.. py:function:: dataset_registry(dataset_type, framework, dataset_format='')
+
+   Register dataset subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param dataset_type: The dataset registration name
+   :type dataset_type: str
+   :param framework: support 3 framework including 'tensorflow', 'pytorch', 'mxnet'
+   :type framework: str
+   :param data_format: The format dataset saved, eg 'raw_image', 'tfrecord'
+   :type data_format: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Dataset
+
+
+
+
+   The base class of dataset.
+
+   Subclass datasets should overwrite two methods:
+   `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
+
+
+.. py:class:: IterableDataset
+
+
+
+
+   An iterable Dataset.
+
+   Subclass iterable dataset should also implement a method:
+   `__iter__` for interating over the samples of the dataset.
+
+
+.. py:function:: download_url(url, root, filename=None, md5=None)
+
+   Download from url.
+
+   :param url: the address to download from.
+   :type url: str
+   :param root: the path for saving.
+   :type root: str
+   :param filename: the file name for saving.
+   :type filename: str
+   :param md5: the md5 string.
+   :type md5: str
+
+
+.. py:function:: gen_bar_updater()
+
+   Generate progress bar.
+
+
+.. py:function:: check_integrity(fpath, md5)
+
+   Check MD5 checksum.
+
+
+.. py:function:: calculate_md5(fpath, chunk_size=1024 * 1024)
+
+   Generate MD5 checksum for a file.
+
+
+.. py:class:: CIFAR10(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The CIFAR10 and CIFAR100 database.
+
+   For CIFAR10: If download is True, it will download dataset to root/ and extract it
+                automatically, otherwise user can download file from
+                https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to
+                root/ and extract it.
+   For CIFAR100: If download is True, it will download dataset to root/ and extract it
+                 automatically, otherwise user can download file from
+                 https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to
+                 root/ and extract it.
+
+   :param root: Root directory of dataset.
+   :type root: str
+   :param train: If True, creates dataset from train subset,
+                 otherwise from validation subset.
+   :type train: bool, default=False
+   :param transform: transform to process input data.
+   :type transform: transform object, default=None
+   :param filter: filter out examples according to specific
+                  conditions.
+   :type filter: Filter objects, default=None
+   :param download: If true, downloads the dataset from the internet
+                    and puts it in root directory. If dataset is already
+                    downloaded, it is not downloaded again.
+   :type download: bool, default=True
+
+
+.. py:class:: PytorchCIFAR10(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The PyTorch datasets for CIFAR10.
+
+
+.. py:class:: MXNetCIFAR10(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The MXNet datasets for CIFAR10.
+
+
+.. py:class:: TensorflowCIFAR10(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The Tensorflow datasets for CIFAR10.
+
+
+.. py:class:: CIFAR100(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   CIFAR100 database.
+
+   For CIFAR100: If download is True, it will download dataset to root/ and extract it
+                 automatically, otherwise user can download file from
+                 https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to
+                 root/ and extract it.
+
+   :param root: Root directory of dataset.
+   :type root: str
+   :param train: If True, creates dataset from train subset,
+                 otherwise from validation subset.
+   :type train: bool, default=False
+   :param transform: transform to process input data.
+   :type transform: transform object, default=None
+   :param filter: filter out examples according to specific
+                  conditions.
+   :type filter: Filter objects, default=None
+   :param download: If true, downloads the dataset from the internet
+                    and puts it in root directory. If dataset is already
+                    downloaded, it is not downloaded again.
+   :type download: bool, default=True
+
+
+.. py:class:: PytorchCIFAR100(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The PyTorch datasets for CIFAR100.
+
+
+.. py:class:: MXNetCIFAR100(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The MXNet datasets for CIFAR100.
+
+
+.. py:class:: TensorflowCIFAR100(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The Tensorflow datasets for CIFAR100.
+
+
+.. py:class:: MNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   Modified National Institute of Standards and Technology database and FashionMNIST database.
+
+   For MNIST: If download is True, it will download dataset to root/MNIST/, otherwise user
+              should put mnist.npz under root/MNIST/ manually.
+   For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,
+                     otherwise user should put train-labels-idx1-ubyte.gz,
+                     train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
+                     and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.
+
+   :param root: Root directory of dataset.
+   :type root: str
+   :param train: If True, creates dataset from train subset,
+                 otherwise from validation subset.
+   :type train: bool, default=False
+   :param transform: transform to process input data.
+   :type transform: transform object, default=None
+   :param filter: filter out examples according to specific
+                  conditions.
+   :type filter: Filter objects, default=None
+   :param download: If true, downloads the dataset from the internet
+                    and puts it in root directory. If dataset is already
+                    downloaded, it is not downloaded again.
+   :type download: bool, default=True
+
+
+.. py:class:: PytorchMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The PyTorch datasets for MNIST.
+
+
+.. py:class:: MXNetMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The MXNet datasets for MNIST.
+
+
+.. py:class:: TensorflowMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The Tensorflow datasets for MNIST.
+
+
+.. py:class:: FashionMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   FashionMNIST database.
+
+   For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,
+                     otherwise user should put train-labels-idx1-ubyte.gz,
+                     train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
+                     and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.
+
+   :param root: Root directory of dataset.
+   :type root: str
+   :param train: If True, creates dataset from train subset,
+                 otherwise from validation subset.
+   :type train: bool, default=False
+   :param transform: transform to process input data.
+   :type transform: transform object, default=None
+   :param filter: filter out examples according to specific
+                  conditions.
+   :type filter: Filter objects, default=None
+   :param download: If true, downloads the dataset from the internet
+                    and puts it in root directory. If dataset is already
+                    downloaded, it is not downloaded again.
+   :type download: bool, default=True
+
+
+.. py:class:: PytorchFashionMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The PyTorch datasets for FashionMNIST.
+
+
+.. py:class:: MXNetFashionMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The MXNet Dataset for FashionMNIST.
+
+
+.. py:class:: TensorflowFashionMNIST(root, train=False, transform=None, filter=None, download=True)
+
+
+
+
+   The Tensorflow Dataset for FashionMNIST.
+
+
+.. py:class:: ImageFolder(root, transform=None, filter=None)
+
+
+
+
+   The base class for ImageFolder.
+
+   Expects the data folder to contain subfolders representing the classes to which
+   its images belong.
+
+   Please arrange data in this way:
+       root/class_1/xxx.png
+       root/class_1/xxy.png
+       root/class_1/xxz.png
+       ...
+       root/class_n/123.png
+       root/class_n/nsdf3.png
+       root/class_n/asd932_.png
+   Please put images of different categories into different folders.
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according to specific
+                                                conditions.
+
+
+.. py:class:: MXNetImageFolder(root, transform=None, filter=None)
+
+
+
+
+   The MXNet Dataset for image folder.
+
+   Expects the data folder to contain subfolders representing the classes to which
+   its images belong.
+
+   Please arrange data in this way:
+       root/class_1/xxx.png
+       root/class_1/xxy.png
+       root/class_1/xxz.png
+       ...
+       root/class_n/123.png
+       root/class_n/nsdf3.png
+       root/class_n/asd932_.png
+   Please put images of different categories into different folders.
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according to specific
+                                                conditions.
+
+
+.. py:class:: TensorflowImageFolder(root, transform=None, filter=None)
+
+
+
+
+   The Tensorflow Dataset for image folder.
+
+   Expects the data folder to contain subfolders representing the classes to which
+   its images belong.
+
+   Please arrange data in this way:
+       root/class_1/xxx.png
+       root/class_1/xxy.png
+       root/class_1/xxz.png
+       ...
+       root/class_n/123.png
+       root/class_n/nsdf3.png
+       root/class_n/asd932_.png
+   Please put images of different categories into different folders.
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according to specific
+                                                conditions.
+
+
+.. py:class:: TensorflowTFRecordDataset
+
+
+
+
+   The Tensorflow TFRecord Dataset.
+
+   Root is a full path to tfrecord file, which contains the file name.
+
+   Args: root (str): filename of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+
+.. py:class:: TensorflowImageRecord
+
+
+
+
+   Tensorflow imageNet database in tf record format.
+
+   Please arrange data in this way:
+       root/validation-000-of-100
+       root/validation-001-of-100
+       ...
+       root/validation-099-of-100
+   The file name needs to follow this pattern: '* - * -of- *'
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+
+.. py:class:: TensorflowVOCRecord
+
+
+
+
+   The Tensorflow PASCAL VOC 2012 database in tf record format.
+
+   Please arrange data in this way:
+       root/val-00000-of-00004.tfrecord
+       root/val-00001-of-00004.tfrecord
+       ...
+       root/val-00003-of-00004.tfrecord
+   The file name needs to follow this pattern: 'val-*-of-*'
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+

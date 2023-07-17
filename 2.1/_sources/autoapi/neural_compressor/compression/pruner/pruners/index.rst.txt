@@ -1,0 +1,205 @@
+:py:mod:`neural_compressor.compression.pruner.pruners`
+======================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners
+
+.. autoapi-nested-parse::
+
+   Pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.BasePruner
+   neural_compressor.compression.pruner.pruners.BasicPruner
+   neural_compressor.compression.pruner.pruners.PatternLockPruner
+   neural_compressor.compression.pruner.pruners.ProgressivePruner
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.register_pruner
+   neural_compressor.compression.pruner.pruners.parse_valid_pruner_types
+   neural_compressor.compression.pruner.pruners.get_pruner
+
+
+
+.. py:function:: register_pruner(name)
+
+   Class decorator to register a Pruner subclass to the registry.
+
+   Decorator function used before a Pattern subclass.
+   Make sure that the Pruner class decorated by this function can be registered in PRUNERS.
+
+   :param cls: The subclass of register.
+   :type cls: class
+   :param name: A string. Define the pruner type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: parse_valid_pruner_types()
+
+   Get all valid pruner names.
+
+
+.. py:function:: get_pruner(config, modules)
+
+   Get registered pruner class.
+
+   Get a Pruner object from PRUNERS.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   :returns: A Pruner object.
+
+   Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
+
+
+.. py:class:: BasePruner(config, modules)
+
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: modules
+
+      A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: config
+
+      A config dict object that contains the pruner information.
+
+   .. attribute:: masks
+
+      A dict {"module_name": Tensor} that stores the masks for modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the score for modules' weights,
+      which are used to determine what parts to be pruned by a criterion.
+
+   .. attribute:: pattern
+
+      A Pattern object defined in ./patterns.py
+
+   .. attribute:: scheduler
+
+      A scheduler object defined in ./scheduler.py
+
+   .. attribute:: current_sparsity_ratio
+
+      A float representing the current model's sparsity ratio; it is initialized to be zero.
+
+   .. attribute:: global_step
+
+      An integer representing the total steps the model has run.
+
+   .. attribute:: start_step
+
+      An integer representing when to trigger pruning process.
+
+   .. attribute:: end_step
+
+      An integer representing when to end pruning process.
+
+   .. attribute:: pruning_frequency
+
+      An integer representing the pruning frequency; it is valid when iterative
+      pruning is enabled.
+
+   .. attribute:: target_sparsity_ratio
+
+      A float showing the final sparsity after pruning.
+
+   .. attribute:: max_sparsity_ratio_per_op
+
+      A float showing the maximum sparsity ratio for every module.
+
+
+.. py:class:: BasicPruner(config, modules)
+
+
+
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+   1. Defines pruning functions called at step begin/end, epoch begin/end.
+   2. Defines the pruning criterion.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: pattern
+
+      A Pattern object that defines pruning weights' arrangements within space.
+
+   .. attribute:: criterion
+
+      A Criterion Object that defines which weights are to be pruned
+
+   .. attribute:: scheduler
+
+      A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+
+   .. attribute:: reg
+
+      A Reg object that defines regulization terms.
+
+
+.. py:class:: PatternLockPruner(config, modules)
+
+
+
+
+   Pruning Pruner.
+
+   A Pruner class derived from BasePruner.
+   In this pruner, original model's sparsity pattern will be fixed while training.
+   This pruner is useful when a user trains a sparse model without changing its original structure.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: Inherit from parent class Pruner.
+
+      
+
+
+.. py:class:: ProgressivePruner(config, modules)
+
+
+
+
+   Pruning Pruner.
+
+   A Pruner class derived from BasePruner. In this pruner, mask interpolation will be applied.
+   Mask interpolation is a fine-grained improvement for NxM structured pruning by adding interval
+       masks between masks of two pruning steps.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: Inherit from parent class Pruner.
+
+      
+
+

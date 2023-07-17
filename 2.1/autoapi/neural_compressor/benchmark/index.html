@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.benchmark &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.benchmark</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/neural_compressor/benchmark/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.benchmark">
+<span id="neural-compressor-benchmark"></span><h1><a class="reference internal" href="#module-neural_compressor.benchmark" title="neural_compressor.benchmark"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.benchmark</span></code></a><a class="headerlink" href="#module-neural_compressor.benchmark" title="Permalink to this heading"></a></h1>
+<p>Benchmark is used for evaluating the model performance.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.set_env_var" title="neural_compressor.benchmark.set_env_var"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_env_var</span></code></a>(env_var, value[, overwrite_existing])</p></td>
+<td><p>Set the specified environment variable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.set_all_env_var" title="neural_compressor.benchmark.set_all_env_var"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_all_env_var</span></code></a>(conf[, overwrite_existing])</p></td>
+<td><p>Set all the environment variables with the configuration dict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.get_architecture" title="neural_compressor.benchmark.get_architecture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_architecture</span></code></a>()</p></td>
+<td><p>Get the architecture name of the system.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.get_threads_per_core" title="neural_compressor.benchmark.get_threads_per_core"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_threads_per_core</span></code></a>()</p></td>
+<td><p>Get the threads per core.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.get_threads" title="neural_compressor.benchmark.get_threads"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_threads</span></code></a>()</p></td>
+<td><p>Get the list of threads.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.get_physical_ids" title="neural_compressor.benchmark.get_physical_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_physical_ids</span></code></a>()</p></td>
+<td><p>Get the list of sockets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.get_core_ids" title="neural_compressor.benchmark.get_core_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_core_ids</span></code></a>()</p></td>
+<td><p>Get the ids list of the cores.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.benchmark.get_bounded_threads" title="neural_compressor.benchmark.get_bounded_threads"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bounded_threads</span></code></a>(core_ids, threads, sockets)</p></td>
+<td><p>Return the threads id list that we will bind instances to.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.fit" title="neural_compressor.benchmark.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model[, config, b_dataloader, b_func])</p></td>
+<td><p>Benchmark the model performance with the configure.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.set_env_var">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">set_env_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.set_env_var" title="Permalink to this definition"></a></dt>
+<dd><p>Set the specified environment variable.</p>
+<p>Only set new env in two cases:
+1. env not exists
+2. env already exists but overwrite_existing params set True</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.set_all_env_var">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">set_all_env_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.set_all_env_var" title="Permalink to this definition"></a></dt>
+<dd><p>Set all the environment variables with the configuration dict.</p>
+<p>Neural Compressor only uses physical cores</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.get_architecture">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_architecture</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_architecture" title="Permalink to this definition"></a></dt>
+<dd><p>Get the architecture name of the system.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.get_threads_per_core">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_threads_per_core</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_threads_per_core" title="Permalink to this definition"></a></dt>
+<dd><p>Get the threads per core.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.get_threads">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_threads</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_threads" title="Permalink to this definition"></a></dt>
+<dd><p>Get the list of threads.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.get_physical_ids">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_physical_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_physical_ids" title="Permalink to this definition"></a></dt>
+<dd><p>Get the list of sockets.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.get_core_ids">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_core_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_core_ids" title="Permalink to this definition"></a></dt>
+<dd><p>Get the ids list of the cores.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.get_bounded_threads">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_bounded_threads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sockets</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.get_bounded_threads" title="Permalink to this definition"></a></dt>
+<dd><p>Return the threads id list that we will bind instances to.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.fit">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.benchmark.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Benchmark the model performance with the configure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to be benchmarked.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.BenchmarkConfig" title="neural_compressor.config.BenchmarkConfig"><em>BenchmarkConfig</em></a>) – The configuration for benchmark containing accuracy goal,
+tuning objective and preferred calibration &amp; quantization
+tuning space etc.</p></li>
+<li><p><strong>b_dataloader</strong> – The dataloader for frameworks.</p></li>
+<li><p><strong>b_func</strong> – Customized benchmark function. If user passes the dataloader,
+then b_func is not needed.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run benchmark according to config</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;./int8.pb&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

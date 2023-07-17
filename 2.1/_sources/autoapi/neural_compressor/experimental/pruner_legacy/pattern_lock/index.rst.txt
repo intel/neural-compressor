@@ -1,0 +1,39 @@
+:py:mod:`neural_compressor.experimental.pruner_legacy.pattern_lock`
+===================================================================
+
+.. py:module:: neural_compressor.experimental.pruner_legacy.pattern_lock
+
+.. autoapi-nested-parse::
+
+   Pattern lock pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner
+
+
+
+
+.. py:class:: PatternLockPruner(model, local_config, global_config)
+
+
+
+
+   Pattern lock pruner class.
+
+   :param model: The original model (currently PyTorchModel instance).
+   :type model: object
+   :param local_config: configs specific for this pruning instance.
+   :type local_config: Conf
+   :param global_config: global configs which may be overwritten by local_config.
+   :type global_config: Conf
+
+

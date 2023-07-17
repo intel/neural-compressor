@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.config_generator.graph_optimization_config_generator`
+==============================================================================================
+
+.. py:module:: neural_compressor.ux.components.config_generator.graph_optimization_config_generator
+
+.. autoapi-nested-parse::
+
+   Configuration generator class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.config_generator.graph_optimization_config_generator.GraphOptimizationConfigGenerator
+
+
+
+
+.. py:class:: GraphOptimizationConfigGenerator(*args: Any, **kwargs: Any)
+
+
+
+
+   Configuration generator class.
+
+

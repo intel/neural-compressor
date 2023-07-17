@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.data.datasets.coco_dataset &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.coco_dataset</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/data/datasets/coco_dataset/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.data.datasets.coco_dataset">
+<span id="neural-compressor-data-datasets-coco-dataset"></span><h1><a class="reference internal" href="#module-neural_compressor.data.datasets.coco_dataset" title="neural_compressor.data.datasets.coco_dataset"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.coco_dataset</span></code></a><a class="headerlink" href="#module-neural_compressor.data.datasets.coco_dataset" title="Permalink to this heading"></a></h1>
+<p>Built-in COCO datasets class for multiple framework backends.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.coco_dataset.ParseDecodeCoco" title="neural_compressor.data.datasets.coco_dataset.ParseDecodeCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParseDecodeCoco</span></code></a></p></td>
+<td><p>Helper function for TensorflowModelZooBertDataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.coco_dataset.COCORecordDataset" title="neural_compressor.data.datasets.coco_dataset.COCORecordDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCORecordDataset</span></code></a></p></td>
+<td><p>Tensorflow COCO dataset in tf record format.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.coco_dataset.COCORaw" title="neural_compressor.data.datasets.coco_dataset.COCORaw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCORaw</span></code></a></p></td>
+<td><p>Coco raw dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.coco_dataset.COCONpy" title="neural_compressor.data.datasets.coco_dataset.COCONpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCONpy</span></code></a></p></td>
+<td><p>COCO npy dataset.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.coco_dataset.ParseDecodeCoco">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.coco_dataset.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeCoco</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/data/datasets/coco_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.coco_dataset.ParseDecodeCoco" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function for TensorflowModelZooBertDataset.</p>
+<p>Parse the features from sample.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.coco_dataset.COCORecordDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.coco_dataset.</span></span><span class="sig-name descname"><span class="pre">COCORecordDataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/data/datasets/coco_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.coco_dataset.COCORecordDataset" title="Permalink to this definition"></a></dt>
+<dd><p>Tensorflow COCO dataset in tf record format.</p>
+<p>Root is a full path to tfrecord file, which contains the file name.
+Please use Resize transform when batch_size &gt; 1</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>num_cores (int, default=28):The number of input Datasets to interleave from in parallel.
+transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.coco_dataset.COCORaw">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.coco_dataset.</span></span><span class="sig-name descname"><span class="pre">COCORaw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'val2017'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anno_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'annotations/instances_val2017.json'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">filter</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/data/datasets/coco_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.coco_dataset.COCORaw" title="Permalink to this definition"></a></dt>
+<dd><p>Coco raw dataset.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>/root/img_dir/1.jpg
+/root/img_dir/2.jpg
+…
+/root/img_dir/n.jpg
+/root/anno_dir</p>
+</dd>
+</dl>
+<p>Please use Resize transform when batch_size &gt; 1</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>img_dir (str, default=’val2017’): image file directory.
+anno_dir (str, default=’annotations/instances_val2017.json’): annotation file directory.
+transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.coco_dataset.COCONpy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.coco_dataset.</span></span><span class="sig-name descname"><span class="pre">COCONpy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">npy_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'val2017'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anno_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'annotations/instances_val2017.json'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.1/neural_compressor/data/datasets/coco_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.coco_dataset.COCONpy" title="Permalink to this definition"></a></dt>
+<dd><p>COCO npy dataset.</p>
+<dl>
+<dt>Please arrange data in this way:</dt><dd><p>/root/npy_dir/1.jpg.npy
+/root/npy_dir/2.jpg.npy
+…
+/root/npy_dir/n.jpg.npy
+/root/anno_dir</p>
+</dd>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>npy_dir (str, default=’val2017’): npy file directory.
+anno_dir (str, default=’annotations/instances_val2017.json’): annotation file directory.
+transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

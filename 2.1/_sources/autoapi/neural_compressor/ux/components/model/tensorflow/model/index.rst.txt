@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.model`
+================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.model
+
+.. autoapi-nested-parse::
+
+   Abstract Tensorflow model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.model.TensorflowModel
+
+
+
+
+.. py:class:: TensorflowModel(path: str)
+
+
+
+
+   Abstract TensorFlow Model class.
+
+

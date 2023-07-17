@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper`
+================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper
+
+.. autoapi-nested-parse::
+
+   QAT Quantize Wrapper Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapperBase
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper
+
+
+
+
+.. py:class:: QuantizeWrapperBase(layer, **kwargs)
+
+
+
+
+   Base class for quantize wrapper.
+
+
+.. py:class:: QuantizeWrapper(layer, **kwargs)
+
+
+
+
+   General QuantizeWrapper for quantizable layers.
+
+   Weights and inputs will be quantized according to the layer type and quantize config.
+
+

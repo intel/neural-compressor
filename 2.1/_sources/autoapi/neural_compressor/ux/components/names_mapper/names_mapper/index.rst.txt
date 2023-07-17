@@ -1,0 +1,39 @@
+:py:mod:`neural_compressor.ux.components.names_mapper.names_mapper`
+===================================================================
+
+.. py:module:: neural_compressor.ux.components.names_mapper.names_mapper
+
+.. autoapi-nested-parse::
+
+   Names mapper.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection
+   neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper
+
+
+
+
+.. py:class:: MappingDirection
+
+
+
+
+   Mapping directions enumeration.
+
+
+.. py:class:: NamesMapper(direction: MappingDirection)
+
+
+   Names Mapper class.
+
+

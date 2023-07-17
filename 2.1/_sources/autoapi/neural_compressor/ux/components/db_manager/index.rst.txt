@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager`
+====================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager
+
+.. autoapi-nested-parse::
+
+   The db_manager package contains all components used to control local database.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   db_models/index.rst
+   db_operations/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   db_manager/index.rst
+   params_interfaces/index.rst
+   utils/index.rst
+
+

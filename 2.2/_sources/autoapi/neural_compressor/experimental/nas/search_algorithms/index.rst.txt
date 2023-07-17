@@ -1,0 +1,77 @@
+:py:mod:`neural_compressor.experimental.nas.search_algorithms`
+==============================================================
+
+.. py:module:: neural_compressor.experimental.nas.search_algorithms
+
+.. autoapi-nested-parse::
+
+   Search algorithms for NAS.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.search_algorithms.Searcher
+   neural_compressor.experimental.nas.search_algorithms.GridSearcher
+   neural_compressor.experimental.nas.search_algorithms.RandomSearcher
+   neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher
+
+
+
+
+.. py:class:: Searcher(search_space)
+
+
+
+
+   Base class for defining the common methods of different search algorithms.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: GridSearcher(search_space)
+
+
+
+
+   Grid search.
+
+   Search the whole search space exhaustively.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: RandomSearcher(search_space, seed=42)
+
+
+
+
+   Random search.
+
+   Search the whole search space randomly.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: BayesianOptimizationSearcher(search_space, seed=42)
+
+
+
+
+   Bayesian Optimization.
+
+   Search the search space with Bayesian Optimization.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+

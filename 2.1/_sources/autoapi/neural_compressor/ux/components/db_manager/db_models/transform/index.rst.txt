@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.transform`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.transform
+
+.. autoapi-nested-parse::
+
+   Transform package contains transform class representing transform table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.transform.Transform
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.transform.fill_dictionary
+
+
+
+.. py:class:: Transform
+
+
+
+
+   INC Bench Transform table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

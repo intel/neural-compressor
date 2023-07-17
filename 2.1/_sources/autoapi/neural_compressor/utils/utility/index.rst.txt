@@ -1,0 +1,273 @@
+:py:mod:`neural_compressor.utils.utility`
+=========================================
+
+.. py:module:: neural_compressor.utils.utility
+
+.. autoapi-nested-parse::
+
+   quantization auto-tuning config system.
+
+   This file specifies default config options for quantization auto-tuning tool.
+   User should not change values in this file. Instead, user should write a config
+   file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
+   options.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.utility.LazyImport
+   neural_compressor.utils.utility.CpuInfo
+   neural_compressor.utils.utility.CaptureOutputToFile
+   neural_compressor.utils.utility.Statistics
+   neural_compressor.utils.utility.MODE
+   neural_compressor.utils.utility.GLOBAL_STATE
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.utility.version1_lt_version2
+   neural_compressor.utils.utility.version1_gt_version2
+   neural_compressor.utils.utility.version1_eq_version2
+   neural_compressor.utils.utility.version1_gte_version2
+   neural_compressor.utils.utility.version1_lte_version2
+   neural_compressor.utils.utility.singleton
+   neural_compressor.utils.utility.time_limit
+   neural_compressor.utils.utility.get_size
+   neural_compressor.utils.utility.compute_sparsity
+   neural_compressor.utils.utility.fault_tolerant_file
+   neural_compressor.utils.utility.equal_dicts
+   neural_compressor.utils.utility.dump_elapsed_time
+   neural_compressor.utils.utility.combine_histogram
+   neural_compressor.utils.utility.get_tensor_histogram
+   neural_compressor.utils.utility.get_all_fp32_data
+   neural_compressor.utils.utility.get_tuning_history
+   neural_compressor.utils.utility.recover
+   neural_compressor.utils.utility.str2array
+   neural_compressor.utils.utility.DequantizeWeight
+   neural_compressor.utils.utility.Dequantize
+   neural_compressor.utils.utility.load_data_from_pkl
+   neural_compressor.utils.utility.dump_data_to_local
+   neural_compressor.utils.utility.set_random_seed
+   neural_compressor.utils.utility.set_workspace
+   neural_compressor.utils.utility.set_resume_from
+   neural_compressor.utils.utility.set_tensorboard
+   neural_compressor.utils.utility.show_memory_info
+
+
+
+.. py:function:: version1_lt_version2(version1, version2)
+
+   Check whether version1 is less than version2.
+
+
+.. py:function:: version1_gt_version2(version1, version2)
+
+   Check whether version1 is greater than version2.
+
+
+.. py:function:: version1_eq_version2(version1, version2)
+
+   Check whether version1 is equal to version2.
+
+
+.. py:function:: version1_gte_version2(version1, version2)
+
+   Check whether version1 is greater than version2 or is equal to it.
+
+
+.. py:function:: version1_lte_version2(version1, version2)
+
+   Check whether version1 is less than version2 or is equal to it.
+
+
+.. py:class:: LazyImport(module_name)
+
+
+
+
+   Lazy import python module till use.
+
+
+.. py:function:: singleton(cls)
+
+   Not displayed in API Docs.
+
+   Singleton decorater.
+
+
+.. py:function:: time_limit(seconds)
+
+   Limit the time for context execution.
+
+
+.. py:function:: get_size(obj, seen=None)
+
+   Recursively finds size of objects.
+
+
+.. py:function:: compute_sparsity(tensor)
+
+   Compute the sparsity.
+
+   :param tensor: Tensorflow or Pytorch tensor
+
+   :returns: (the original tensor size, number of zero elements, number of non-zero elements)
+
+
+.. py:function:: fault_tolerant_file(name)
+
+   Make another temporary copy of the file.
+
+
+.. py:function:: equal_dicts(d1, d2, compare_keys=None, ignore_keys=None)
+
+   Check whether two dicts are same except for those ignored keys.
+
+
+.. py:class:: CpuInfo
+
+
+
+
+   Get CPU Info.
+
+
+.. py:function:: dump_elapsed_time(customized_msg='')
+
+   Get the elapsed time for decorated functions.
+
+   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :type customized_msg: string, optional
+
+
+.. py:function:: combine_histogram(old_hist, arr)
+
+   Collect layer histogram for arr and combine it with old histogram.
+
+
+.. py:function:: get_tensor_histogram(tensor_data, bins=2048)
+
+   Get the histogram of the tensor data.
+
+
+.. py:function:: get_all_fp32_data(data)
+
+   Get all the fp32 data.
+
+
+.. py:function:: get_tuning_history(tuning_history_path)
+
+   Get tuning history.
+
+   :param tuning_history_path: The tuning history path, which need users to assign
+
+
+.. py:function:: recover(fp32_model, tuning_history_path, num, **kwargs)
+
+   Get offline recover tuned model.
+
+   :param fp32_model: Input model path
+   :param tuning_history_path: The tuning history path, which needs user to assign
+   :param num: tune index
+
+
+.. py:function:: str2array(s)
+
+   Get the array of the string.
+
+
+.. py:function:: DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor)
+
+   Dequantize the weight with min-max filter tensors.
+
+
+.. py:function:: Dequantize(data, scale_info)
+
+   Dequantize the data with the scale_info.
+
+
+.. py:class:: CaptureOutputToFile(tmp_file_path, stream=sys.stderr)
+
+
+
+
+   Not displayed in API Docs.
+
+   Capture the output to file.
+
+
+.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
+
+
+   The statistics printer.
+
+
+.. py:class:: MODE
+
+
+
+
+   Mode: Quantization, Benchmark or Pruning.
+
+
+.. py:class:: GLOBAL_STATE
+
+
+   Access the global model.
+
+
+.. py:function:: load_data_from_pkl(path, filename)
+
+   Load data from local pkl file.
+
+   :param path: The directory to load data
+   :param filename: The filename to load
+
+
+.. py:function:: dump_data_to_local(data, path, filename)
+
+   Dump data to local as pkl file.
+
+   :param data: Data used to dump
+   :param path: The directory to save data
+   :param filename: The filename to dump
+
+   :returns: loaded data
+
+
+.. py:function:: set_random_seed(seed: int)
+
+   Set the random seed in config.
+
+
+.. py:function:: set_workspace(workspace: str)
+
+   Set the workspace in config.
+
+
+.. py:function:: set_resume_from(resume_from: str)
+
+   Set the resume_from in config.
+
+
+.. py:function:: set_tensorboard(tensorboard: bool)
+
+   Set the tensorboard in config.
+
+
+.. py:function:: show_memory_info(hint)
+
+   Show process full memory.
+
+

@@ -1,0 +1,101 @@
+:py:mod:`neural_compressor.benchmark`
+=====================================
+
+.. py:module:: neural_compressor.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark is used for evaluating the model performance.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.benchmark.set_env_var
+   neural_compressor.benchmark.set_all_env_var
+   neural_compressor.benchmark.get_architecture
+   neural_compressor.benchmark.get_threads_per_core
+   neural_compressor.benchmark.get_threads
+   neural_compressor.benchmark.get_physical_ids
+   neural_compressor.benchmark.get_core_ids
+   neural_compressor.benchmark.get_bounded_threads
+   neural_compressor.benchmark.fit
+
+
+
+.. py:function:: set_env_var(env_var, value, overwrite_existing=False)
+
+   Set the specified environment variable.
+
+   Only set new env in two cases:
+   1. env not exists
+   2. env already exists but overwrite_existing params set True
+
+
+.. py:function:: set_all_env_var(conf, overwrite_existing=False)
+
+   Set all the environment variables with the configuration dict.
+
+   Neural Compressor only uses physical cores
+
+
+.. py:function:: get_architecture()
+
+   Get the architecture name of the system.
+
+
+.. py:function:: get_threads_per_core()
+
+   Get the threads per core.
+
+
+.. py:function:: get_threads()
+
+   Get the list of threads.
+
+
+.. py:function:: get_physical_ids()
+
+   Get the list of sockets.
+
+
+.. py:function:: get_core_ids()
+
+   Get the ids list of the cores.
+
+
+.. py:function:: get_bounded_threads(core_ids, threads, sockets)
+
+   Return the threads id list that we will bind instances to.
+
+
+.. py:function:: fit(model, config=None, b_dataloader=None, b_func=None)
+
+   Benchmark the model performance with the configure.
+
+   :param model: The model to be benchmarked.
+   :type model: object
+   :param config: The configuration for benchmark containing accuracy goal,
+                  tuning objective and preferred calibration & quantization
+                  tuning space etc.
+   :type config: BenchmarkConfig
+   :param b_dataloader: The dataloader for frameworks.
+   :param b_func: Customized benchmark function. If user passes the dataloader,
+                  then b_func is not needed.
+
+   Example::
+
+       # Run benchmark according to config
+       from neural_compressor.benchmark import fit
+
+       conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+       fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+
+

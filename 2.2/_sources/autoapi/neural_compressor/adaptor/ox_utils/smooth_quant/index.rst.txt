@@ -1,0 +1,97 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.smooth_quant`
+=========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.smooth_quant
+
+.. autoapi-nested-parse::
+
+   SmoothQuant for onnxrt adaptor.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.smooth_quant.ORTSmoothQuant
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.smooth_quant.get_quant_dequant_output
+   neural_compressor.adaptor.ox_utils.smooth_quant.make_sub_graph
+   neural_compressor.adaptor.ox_utils.smooth_quant.quant_dequant_data
+
+
+
+.. py:function:: get_quant_dequant_output(model, input_data, output_data, reduce_range, backend)
+
+   Get loss between fp32 output and QDQ output.
+
+   :param model: model
+   :type model: object
+   :param input_data: fp32 input
+   :type input_data: numpy.ndarray
+   :param output_data: fp32 output
+   :type output_data: numpy.ndarray
+   :param reduce_range: use 7 bit or not
+   :type reduce_range: bool
+   :param backend: execution provider
+   :type backend: str
+
+
+.. py:function:: make_sub_graph(node, inits, input_data, output_data, reduce_range, opset, ir_version)
+
+   Build a model with the specific node.
+
+   :param node: node
+   :type node: object
+   :param inits: initializer inputs of this node
+   :type inits: list
+   :param input_data: fp32 input
+   :type input_data: numpy.ndarray
+   :param output_data: fp32 output
+   :type output_data: numpy.ndarray
+   :param reduce_range: use 7 bit or not
+   :type reduce_range: bool
+   :param opset: opset of the model
+   :type opset: object
+   :param ir_version: ir_version of the model
+   :type ir_version: object
+
+
+.. py:function:: quant_dequant_data(data, reduce_range=False, qType=3, scheme='sym')
+
+   Quantize and then dequantize data.
+
+   :param data: target data
+   :type data: numpy.ndarray
+   :param reduce_range: use 7 bit or not
+   :type reduce_range: bool
+   :param qType: data type
+   :type qType: int
+   :param scheme: sym or asym quantization
+   :type scheme: str
+
+
+.. py:class:: ORTSmoothQuant(model, dataloader, reduce_range=False, backend='CPUExecutionProvider')
+
+
+   Fake input channel quantization.
+
+   For more details please refer to:
+   [1] SmoothQuant: Accurate and Efficient
+   Post-Training Quantization for Large Language Models
+   [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+   We only support inplace mode which means the model weights will be changed,
+   you can call recover function to recover the weights if needed.
+
+

@@ -1,0 +1,62 @@
+:py:mod:`neural_compressor.experimental.pruning`
+================================================
+
+.. py:module:: neural_compressor.experimental.pruning
+
+.. autoapi-nested-parse::
+
+   pruning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning.Pruning
+   neural_compressor.experimental.pruning.TfPruningCallback
+
+
+
+
+.. py:class:: Pruning(conf_fname_or_obj=None)
+
+
+
+
+   This is base class of pruning object.
+
+      Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+      (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.).
+      Pruning class provides a flexible configuration interface via YAML for users to specify
+      these parameters.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             PruningConf class containing accuracy goal, pruning objective and related
+                             dataloaders etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. attribute:: conf
+
+      A config dict object. Contains pruning setting parameters.
+
+   .. attribute:: pruners
+
+      A list of Pruner object.
+
+
+.. py:class:: TfPruningCallback(nc_model, input_model, hooks)
+
+
+
+
+   Class that contains callback functions.
+
+   :param nc_model: A neural compression model object.
+   :param hooks: A dict. Contains pure-defined hooks.
+
+

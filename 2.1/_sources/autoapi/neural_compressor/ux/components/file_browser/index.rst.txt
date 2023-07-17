@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.ux.components.file_browser`
+======================================================
+
+.. py:module:: neural_compressor.ux.components.file_browser
+
+.. autoapi-nested-parse::
+
+   Package file_browser contains code for browsing local filesystem.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   file_browser/index.rst
+
+

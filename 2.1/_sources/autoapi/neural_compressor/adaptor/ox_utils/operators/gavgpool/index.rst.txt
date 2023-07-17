@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.gavgpool`
+===============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.gavgpool
+
+.. autoapi-nested-parse::
+
+   GlobalAveragePool Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.gavgpool.GlobalAveragePoolOperator
+   neural_compressor.adaptor.ox_utils.operators.gavgpool.QGlobalAveragePoolOperator
+
+
+
+
+.. py:class:: GlobalAveragePoolOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   GlobalAveragePool Operator.
+
+
+.. py:class:: QGlobalAveragePoolOperator(onnx_node, children, initializers)
+
+
+
+
+   QLinearGlobalAveragePool Operator.
+
+

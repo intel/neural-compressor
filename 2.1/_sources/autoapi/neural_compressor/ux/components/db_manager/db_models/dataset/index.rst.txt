@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.dataset`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.dataset
+
+.. autoapi-nested-parse::
+
+   The Dataset class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.dataset.Dataset
+
+
+
+
+.. py:class:: Dataset
+
+
+
+
+   INC Bench datasets' table representation.
+
+

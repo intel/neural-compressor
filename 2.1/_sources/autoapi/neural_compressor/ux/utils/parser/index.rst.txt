@@ -1,0 +1,75 @@
+:py:mod:`neural_compressor.ux.utils.parser`
+===========================================
+
+.. py:module:: neural_compressor.ux.utils.parser
+
+.. autoapi-nested-parse::
+
+   Parsers for log files.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.parser.Parser
+   neural_compressor.ux.utils.parser.OptimizationParser
+   neural_compressor.ux.utils.parser.PerformanceParser
+   neural_compressor.ux.utils.parser.AccuracyParser
+   neural_compressor.ux.utils.parser.BenchmarkParserFactory
+   neural_compressor.ux.utils.parser.ProfilingParser
+
+
+
+
+.. py:class:: Parser(logs: list)
+
+
+
+
+   Parser abstract class.
+
+
+.. py:class:: OptimizationParser(logs: list)
+
+
+
+
+   Parser class is responsible for parsing optimization log files.
+
+
+.. py:class:: PerformanceParser(logs: list)
+
+
+
+
+   Parser class is responsible for parsing performance benchmark log files.
+
+
+.. py:class:: AccuracyParser(logs: list)
+
+
+
+
+   Parser class is responsible for parsing accuracy benchmark log files.
+
+
+.. py:class:: BenchmarkParserFactory
+
+
+   Benchmark parser factory.
+
+
+.. py:class:: ProfilingParser(logs: list)
+
+
+
+
+   Parser class is responsible for parsing profiling log files.
+
+

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.utils.workload.graph_optimization`
+================================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.graph_optimization
+
+.. autoapi-nested-parse::
+
+   Configuration graph_optimization module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.graph_optimization.GraphOptimization
+
+
+
+
+.. py:class:: GraphOptimization(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Graph Optimization class.
+
+

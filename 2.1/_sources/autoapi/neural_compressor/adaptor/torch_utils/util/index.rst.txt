@@ -1,0 +1,264 @@
+:py:mod:`neural_compressor.adaptor.torch_utils.util`
+====================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.util
+
+.. autoapi-nested-parse::
+
+   Util Class and Functions.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.util.get_embedding_contiguous
+   neural_compressor.adaptor.torch_utils.util.is_fused_module
+   neural_compressor.adaptor.torch_utils.util.collate_torch_preds
+   neural_compressor.adaptor.torch_utils.util.input2tuple
+   neural_compressor.adaptor.torch_utils.util.append_attr
+   neural_compressor.adaptor.torch_utils.util.generate_activation_observer
+   neural_compressor.adaptor.torch_utils.util.check_cfg_and_qconfig
+   neural_compressor.adaptor.torch_utils.util.paser_cfgs
+   neural_compressor.adaptor.torch_utils.util.get_quantizable_ops_from_cfgs
+   neural_compressor.adaptor.torch_utils.util.auto_copy
+   neural_compressor.adaptor.torch_utils.util.fetch_module
+   neural_compressor.adaptor.torch_utils.util.set_module
+   neural_compressor.adaptor.torch_utils.util.simple_inference
+   neural_compressor.adaptor.torch_utils.util.get_example_input
+   neural_compressor.adaptor.torch_utils.util.get_fallback_order
+   neural_compressor.adaptor.torch_utils.util.get_mse_order_per_fp32
+   neural_compressor.adaptor.torch_utils.util.get_mse_order_per_int8
+   neural_compressor.adaptor.torch_utils.util.get_torch_version
+
+
+
+.. py:function:: get_embedding_contiguous(model)
+
+   This is a helper function for nn.Embedding, and it will get input contiguous.
+
+   :param model: the input model
+   :type model: object
+
+   :returns: None
+
+
+.. py:function:: is_fused_module(module)
+
+   This is a helper function for `_propagate_qconfig_helper` to detect if this module is fused.
+
+   :param module: the input module
+   :type module: object
+
+   :returns: is fused or not
+   :rtype: (bool)
+
+
+.. py:function:: collate_torch_preds(results)
+
+   Fetch collated results.
+
+   :param result: input result
+   :type result: list
+
+   :returns: collated results
+   :rtype: collate_results (list)
+
+
+.. py:function:: input2tuple(input)
+
+   This is a helper function to converting a inputting dict values or a list to a tuple.
+
+   :param input:
+   :type input: list or dict
+
+   :returns: A tuple.
+
+
+.. py:function:: append_attr(fx_model, model, fx_white_list=[])
+
+   This is a helper method to append attributes for the symbolic traced model.
+
+   :param fx_model: The symbolic traced model.
+   :type fx_model: torch.fx.GraphModule
+   :param model: The original model.
+   :type model: torch.nn.Module
+
+   :returns: The symbolic traced model with additional attributes.
+   :rtype: fx_model (dir)
+
+
+.. py:function:: generate_activation_observer(scheme, algorithm)
+
+   This is a helper method to generate an activation observer.
+
+   :param scheme: Quantization scheme to be used.
+   :type scheme: str
+   :param algorithm: What algorithm for computing the quantization parameters based on.
+   :type algorithm: str
+
+   :returns: An observer.
+
+
+.. py:function:: check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name)
+
+   Check configs and quantization configs.
+
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+   :param cfgs: the input configs.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: op infos from configs.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dictionary of output tensor op names.
+   :type output_tensor_ids_op_name: dict
+
+   :returns: cfgs (dict).
+
+
+.. py:function:: paser_cfgs(cfgs)
+
+   Parse configs.
+
+   :param cfgs: the input configs.
+   :type cfgs: dict
+
+   :returns: list of op names.
+             tune_cfg (dict): dictionary of quantization configuration.
+             op_infos_from_cfgs (dict): op infos from configs.
+             output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+   :rtype: ops_name (list)
+
+
+.. py:function:: get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids_op_name)
+
+   Get quantizable ops from configs, combine fused ops as one op.
+
+   :param ops_name: list of op names.
+   :type ops_name: list
+   :param op_infos_from_cfgs: op infos from configs.
+   :type op_infos_from_cfgs: dict
+   :param input_tensor_ids_op_name: dictionary of input tensor op names.
+   :type input_tensor_ids_op_name: dict
+
+   :returns: cfgs (dict).
+
+
+.. py:function:: auto_copy(module)
+
+   Get an IPEX prepared model and return a fp32 model.
+
+   :param module: IPEX prepared model.
+   :type module: object
+
+   :returns: fp32 model.
+
+
+.. py:function:: fetch_module(model, op_name)
+
+   Get module with a given op name.
+
+   :param model: the input model.
+   :type model: object
+   :param op_name: name of op.
+   :type op_name: str
+
+   :returns: module (object).
+
+
+.. py:function:: set_module(model, op_name, new_module)
+
+   Set module with a given op name.
+
+   :param model: the input model.
+   :type model: object
+   :param op_name: name of op.
+   :type op_name: str
+   :param new_module: the input model.
+   :type new_module: object
+
+   :returns: module (object).
+
+
+.. py:function:: simple_inference(model, input)
+
+   Record model output tensor.
+
+   :param model: the input model.
+   :type model: object
+   :param input:
+   :type input: object
+
+   :returns: output (object).
+
+
+.. py:function:: get_example_input(dataloader, i=1)
+
+   Get the example input.
+
+   :param dataloader: calibration dataset.
+   :type dataloader: object
+
+   :returns: example_inp (object).
+
+
+.. py:function:: get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, confidence_batches, fallback=False, requantize_cfgs=None)
+
+   Get the fall back order for strategy.
+
+   :param fp32_model: the input model.
+   :type fp32_model: object
+   :param dataloader: The calibration dataloader.
+   :type dataloader: torch.utils.data.DataLoader
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+   :param confidence_batches: number of confidence batches.
+   :type confidence_batches: int
+   :param fallback: if the order is fallback.
+   :type fallback: bool
+
+   :returns: The fallback order for strategy.
+   :rtype: ordered_ops (dict/list)
+
+
+.. py:function:: get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg)
+
+   This is a helper method to check the mse influence to last module after QDQ(quant/dequant).
+
+   :param model: A torch model.
+   :type model: torch.fx.GraphModule/torch.nn.Module
+   :param example_inp: example inputs.
+   :type example_inp: object
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+
+   :returns: The fallback order for strategy.
+   :rtype: fallback_order (dict/list)
+
+
+.. py:function:: get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg)
+
+   This is a helper method to check the mse influence to last module after QDQ(quant/dequant).
+
+   :param model: A torch model.
+   :type model: torch.fx.GraphModule/torch.nn.Module
+   :param example_inp: example inputs.
+   :type example_inp: object
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+
+   :returns: The fallback order for strategy.
+   :rtype: fallback_order (dict/list)
+
+
+.. py:function:: get_torch_version()
+
+   Get torch version.
+
+

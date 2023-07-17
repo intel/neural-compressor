@@ -1,0 +1,34 @@
+:py:mod:`neural_compressor.ux.utils.processes`
+==============================================
+
+.. py:module:: neural_compressor.ux.utils.processes
+
+.. autoapi-nested-parse::
+
+   Execution common process module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.processes.NCProcesses
+
+
+
+
+.. py:class:: NCProcesses
+
+
+
+
+   Processes class aggregates Process list.
+
+   Provide helper methods to retrieve information about all executed processes.
+
+

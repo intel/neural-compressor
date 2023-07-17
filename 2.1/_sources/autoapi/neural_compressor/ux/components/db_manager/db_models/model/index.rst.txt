@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.model`
+====================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.model
+
+.. autoapi-nested-parse::
+
+   The Model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.model.Model
+
+
+
+
+.. py:class:: Model
+
+
+
+
+   INC Bench models' table representation.
+
+

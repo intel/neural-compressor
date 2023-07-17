@@ -1,0 +1,72 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer`
+=======================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer
+
+.. autoapi-nested-parse::
+
+   CSE Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer.GraphCseOptimizer
+
+
+
+
+.. py:class:: GraphCseOptimizer(model)
+
+
+
+
+   We introduce the CSE optimizer to optimize the nodes that contains identical op type.
+
+   Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs
+           (B1/C1C2/D1).
+           Node A
+           x    x    x
+           x    x     x
+   NODE B   NODE C  NODE D
+   x        x   x     x
+   B1       C1  C2    D1
+   If Node B/C/D have the identical memory-bound op, like relu/relu6. The graph will be
+   converted as below.
+   We removed the Node C & Node D, updated the B as the input of C1/C2/D1.
+           Node A
+           x
+           Node B
+           x x  x  x
+           x  x   x  x
+       x   x    x  x
+       B1  C1   C2  D1
+   Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs
+           (B1/C1C2/D1).
+           Node A
+           x   x    x
+           x    x     x
+   NODE B   NODE C  NODE D
+       x      x   x     x
+       B1     C1  C2    D1
+   If Node B and C have the identical memory-bound op, like relu/relu6. The graph will be
+   converted as below.
+   We removed the Node C, updated the B as the input of C1/C2.
+               Node A
+               x     x
+           Node B  Node D
+           x   x  x    x
+           x   |   x    x
+           x   |    x    x
+           B1   C1    C2   D1
+
+   :returns: A optimized graphdef object.
+   :rtype: [graphdef]
+
+

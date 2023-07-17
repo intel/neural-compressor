@@ -1,0 +1,67 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface`
+========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Dataset API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.DatasetAPIInterface
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.set_database_version
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.initialize_associations
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.initialize_precision_optimization_types_association
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.search_in_list_of_dict_for_unique_value
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.search_in_list_of_dict
+
+
+
+.. py:class:: DatasetAPIInterface
+
+
+   Interface for queries connected with datasets.
+
+
+.. py:function:: set_database_version() -> None
+
+   Set version_num in alembic_version table.
+
+
+.. py:function:: initialize_associations() -> None
+
+   Initialize association tables in database.
+
+
+.. py:function:: initialize_precision_optimization_types_association() -> None
+
+   Initialize precision and optimization types association table.
+
+
+.. py:function:: search_in_list_of_dict_for_unique_value(list_of_dicts: List[Dict[str, Any]], parameter: str, value: Any) -> Dict[str, Any]
+
+   Search for dictionaries with specific unique parameter value.
+
+
+.. py:function:: search_in_list_of_dict(list_of_dicts: List[Dict[str, Any]], parameter: str, value: Any) -> List[Dict[str, Any]]
+
+   Search for dictionaries with specific parameter value.
+
+

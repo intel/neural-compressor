@@ -1,0 +1,37 @@
+:py:mod:`neural_compressor.experimental.nas.dynas`
+==================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynas
+
+.. autoapi-nested-parse::
+
+   DyNAS approach class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynas.DyNAS
+
+
+
+
+.. py:class:: DyNAS(conf_fname_or_obj)
+
+
+
+
+   DyNAS approach.
+
+   Defining the pipeline for DyNAS approach.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
+   :type conf_fname_or_obj: string or obj
+
+

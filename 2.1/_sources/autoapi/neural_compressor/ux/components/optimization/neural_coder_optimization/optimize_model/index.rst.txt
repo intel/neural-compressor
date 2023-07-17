@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.optimization.neural_coder_optimization.optimize_model`
+===============================================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.neural_coder_optimization.optimize_model
+
+.. autoapi-nested-parse::
+
+   Package graph_optimizer contains all packages required to optimize model graph.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.neural_coder_optimization.optimize_model.optimize_pt_script
+
+
+
+.. py:function:: optimize_pt_script(optimization: Any) -> float
+
+   Optimization of PyTorch scripted models.
+
+

@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.manage_workspace`
+==========================================================
+
+.. py:module:: neural_compressor.ux.components.manage_workspace
+
+.. autoapi-nested-parse::
+
+   Get path to default repository or workspace.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.manage_workspace.get_default_path
+
+
+
+.. py:function:: get_default_path(data: Dict[str, Any]) -> Dict[str, Any]
+
+   Get paths repository or workspace.
+
+

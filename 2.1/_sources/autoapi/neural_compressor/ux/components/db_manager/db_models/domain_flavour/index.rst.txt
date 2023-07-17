@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.domain_flavour`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.domain_flavour
+
+.. autoapi-nested-parse::
+
+   DomainFlavour package contains DomainFlavour class representing domain_flavour table in db.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.domain_flavour.DomainFlavour
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.domain_flavour.fill_dictionary
+
+
+
+.. py:class:: DomainFlavour
+
+
+
+
+   INC Bench DomainFlavour table class.
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

@@ -1,0 +1,81 @@
+:py:mod:`neural_compressor.experimental.data.transforms.tokenization`
+=====================================================================
+
+.. py:module:: neural_compressor.experimental.data.transforms.tokenization
+
+.. autoapi-nested-parse::
+
+   Tokenization helper classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.transforms.tokenization.FullTokenizer
+   neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer
+   neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode
+   neural_compressor.experimental.data.transforms.tokenization.load_vocab
+   neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab
+   neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize
+
+
+
+.. py:function:: convert_to_unicode(text)
+
+   Convert `text` to Unicode (if it's not already), assuming utf-8 input.
+
+
+.. py:function:: load_vocab(vocab_file)
+
+   Load a vocabulary file into a dictionary.
+
+
+.. py:function:: convert_by_vocab(vocab, items)
+
+   Convert a sequence of [tokens|ids] using the vocab.
+
+
+.. py:function:: whitespace_tokenize(text)
+
+   Run basic whitespace cleaning and splitting on a piece of text.
+
+
+.. py:class:: FullTokenizer(vocab_file, do_lower_case=True)
+
+
+
+
+   Run end-to-end tokenziation.
+
+
+.. py:class:: BasicTokenizer(do_lower_case=True)
+
+
+
+
+   Run basic tokenization (punctuation splitting, lower casing, etc.).
+
+
+.. py:class:: WordpieceTokenizer(vocab, unk_token='[UNK]', max_input_chars_per_word=200)
+
+
+
+
+   Run WordPiece tokenziation.
+
+

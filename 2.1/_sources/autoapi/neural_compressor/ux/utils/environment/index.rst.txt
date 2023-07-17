@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.ux.utils.environment`
+================================================
+
+.. py:module:: neural_compressor.ux.utils.environment
+
+.. autoapi-nested-parse::
+
+   Environment manager class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.environment.Environment
+
+
+
+
+.. py:class:: Environment
+
+
+   Environment manager class.
+
+

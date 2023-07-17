@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.benchmark.benchmark_model`
+===================================================================
+
+.. py:module:: neural_compressor.ux.components.benchmark.benchmark_model
+
+.. autoapi-nested-parse::
+
+   Generic benchmark script.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.benchmark.benchmark_model.parse_args
+   neural_compressor.ux.components.benchmark.benchmark_model.benchmark_model
+   neural_compressor.ux.components.benchmark.benchmark_model.set_eager_execution
+
+
+
+.. py:function:: parse_args() -> Any
+
+   Parse input arguments.
+
+
+.. py:function:: benchmark_model(input_graph: str, config: str, benchmark_mode: str, framework: str) -> None
+
+   Execute benchmark.
+
+
+.. py:function:: set_eager_execution(input_graph: str) -> None
+
+   Set eager execution as required by model.
+
+

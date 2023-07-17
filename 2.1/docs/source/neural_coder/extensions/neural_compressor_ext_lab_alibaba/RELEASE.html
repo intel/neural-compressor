@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Making a new release of neural_compressor_ext_lab_alibaba &mdash; Intel® Neural Compressor 2.1 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.1▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Making a new release of neural_compressor_ext_lab_alibaba</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_coder/extensions/neural_compressor_ext_lab_alibaba/RELEASE.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="making-a-new-release-of-neural-compressor-ext-lab-alibaba">
+<h1>Making a new release of neural_compressor_ext_lab_alibaba<a class="headerlink" href="#making-a-new-release-of-neural-compressor-ext-lab-alibaba" title="Permalink to this heading"></a></h1>
+<p>The extension can be published to <code class="docutils literal notranslate"><span class="pre">PyPI</span></code> and <code class="docutils literal notranslate"><span class="pre">npm</span></code> manually or using the <a class="reference external" href="https://github.com/jupyter-server/jupyter_releaser">Jupyter Releaser</a>.</p>
+<section id="manual-release">
+<h2>Manual release<a class="headerlink" href="#manual-release" title="Permalink to this heading"></a></h2>
+<section id="python-package">
+<h3>Python package<a class="headerlink" href="#python-package" title="Permalink to this heading"></a></h3>
+<p>This extension can be distributed as Python
+packages. All of the Python
+packaging instructions in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file to wrap your extension in a
+Python package. Before generating a package, we first need to install <code class="docutils literal notranslate"><span class="pre">build</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>build<span class="w"> </span>twine<span class="w"> </span>hatch
+</pre></div>
+</div>
+<p>To create a Python source package (<code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code>) and the binary package (<code class="docutils literal notranslate"><span class="pre">.whl</span></code>) in the <code class="docutils literal notranslate"><span class="pre">dist/</span></code> directory, do:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>build
+</pre></div>
+</div>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">sdist</span> <span class="pre">bdist_wheel</span></code> is deprecated and will not work for this package.</p>
+</div></blockquote>
+<p>Then to upload the package to PyPI, do:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>twine<span class="w"> </span>upload<span class="w"> </span>dist/*
+</pre></div>
+</div>
+</section>
+<section id="npm-package">
+<h3>NPM package<a class="headerlink" href="#npm-package" title="Permalink to this heading"></a></h3>
+<p>To publish the frontend part of the extension as a NPM package, do:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>npm<span class="w"> </span>login
+npm<span class="w"> </span>publish<span class="w"> </span>--access<span class="w"> </span>public
+</pre></div>
+</div>
+</section>
+</section>
+<section id="automated-releases-with-the-jupyter-releaser">
+<h2>Automated releases with the Jupyter Releaser<a class="headerlink" href="#automated-releases-with-the-jupyter-releaser" title="Permalink to this heading"></a></h2>
+<p>The extension repository should already be compatible with the Jupyter Releaser.</p>
+<p>Check out the <a class="reference external" href="https://github.com/jupyter-server/jupyter_releaser#typical-workflow">workflow documentation</a> for more information.</p>
+<p>Here is a summary of the steps to cut a new release:</p>
+<ul class="simple">
+<li><p>Fork the <a class="reference external" href="https://github.com/jupyter-server/jupyter_releaser"><code class="docutils literal notranslate"><span class="pre">jupyter-releaser</span></code> repo</a></p></li>
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">ADMIN_GITHUB_TOKEN</span></code>, <code class="docutils literal notranslate"><span class="pre">PYPI_TOKEN</span></code> and <code class="docutils literal notranslate"><span class="pre">NPM_TOKEN</span></code> to the Github Secrets in the fork</p></li>
+<li><p>Go to the Actions panel</p></li>
+<li><p>Run the “Draft Changelog” workflow</p></li>
+<li><p>Merge the Changelog PR</p></li>
+<li><p>Run the “Draft Release” workflow</p></li>
+<li><p>Run the “Publish Release” workflow</p></li>
+</ul>
+</section>
+<section id="publishing-to-conda-forge">
+<h2>Publishing to <code class="docutils literal notranslate"><span class="pre">conda-forge</span></code><a class="headerlink" href="#publishing-to-conda-forge" title="Permalink to this heading"></a></h2>
+<p>If the package is not on conda forge yet, check the documentation to learn how to add it: https://conda-forge.org/docs/maintainer/adding_pkgs.html</p>
+<p>Otherwise a bot should pick up the new version publish to PyPI, and open a new PR on the feedstock repository automatically.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

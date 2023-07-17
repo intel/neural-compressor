@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel® Neural Compressor as JupyterLab Extension &mdash; Intel® Neural Compressor 2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel® Neural Compressor as JupyterLab Extension</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_coder/extensions/neural_compressor_ext_lab/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-neural-compressor-as-jupyterlab-extension">
+<h1>Intel® Neural Compressor as JupyterLab Extension<a class="headerlink" href="#intel-neural-compressor-as-jupyterlab-extension" title="Permalink to this heading"></a></h1>
+<p>A JupyterLab Extension library supporting Neural Coder, a novel feature powered by Intel® Neural Compressor providing automatic quantization to further simplify computing performance optimizations of Deep Learning models.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p><strong>By Extension Manager in JupyterLab (Recommended)</strong></p>
+<p>Search for <code class="docutils literal notranslate"><span class="pre">jupyter-lab-neural-compressor</span></code> in the Extension Manager in JupyterLab.</p>
+<p><strong>By Linux Terminal</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>npm<span class="w"> </span>i<span class="w"> </span>jupyter-lab-neural-compressor
+jupyter<span class="w"> </span>labextension<span class="w"> </span>install<span class="w"> </span>jupyter-lab-neural-compressor
+</pre></div>
+</div>
+</section>
+<section id="getting-started">
+<h2>Getting Started!<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h2>
+<p>As shown in the drop-down list, the supported features include “INT8 (Static Quantization)”, “INT8 (Dynamic Quantization)”, “BF16”, and “Auto Enable &amp; Benchmark”. Each of the first three options enables a specific quantization feature into your Deep Learning scripts. The last option automatically enables all quantization features on a Deep Learning script and automatically evaluates the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a Deep Learning model with no manual coding needed.</p>
+<img src="../screenshots/1.png" alt="Architecture" width="75%" height="75%"><section id="auto-enable-a-feature">
+<h3>Auto-enable a feature<a class="headerlink" href="#auto-enable-a-feature" title="Permalink to this heading"></a></h3>
+<p>Click the run button on the left side of the drop-down list to start. After finishing, you can see the code changes for the specific optimization enabling as shown in the figure below:</p>
+<img src="../screenshots/2.png" alt="Architecture" width="75%" height="75%"></section>
+<section id="or-let-us-help-you-auto-select-the-best-feature">
+<h3>Or let us help you auto-select the best feature<a class="headerlink" href="#or-let-us-help-you-auto-select-the-best-feature" title="Permalink to this heading"></a></h3>
+<p>The last option automatically enables each quantization feature on your Deep Learning script and automatically evaluates for the best performance among all features on your Deep Learning model. Since it will automatically run the Python script for benchmark, it requires you to enter additional parameters needed to run your Python script. If there is no additional parameter needed, you can just leave it blank:</p>
+<img src="../screenshots/3.png" alt="Architecture" width="35%" height="35%"><p>In the new cell box appeared below your Code cell boxes, you can see the execution progress, and at the end you can see which one turns out to be the best optimization and how much performance gain can it bring to your Deep Learning model:</p>
+<img src="../screenshots/4.png" alt="Architecture" width="55%" height="55%"><p>When it is finished, you can also see that the code changes for the best optimization are automatically enabled into your script:</p>
+<img src="../screenshots/5.png" alt="Architecture" width="55%" height="55%"></section>
+</section>
+<section id="pre-requisites">
+<h2>Pre-requisites<a class="headerlink" href="#pre-requisites" title="Permalink to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>bc<span class="w"> </span>numactl
+conda<span class="w"> </span>install<span class="w"> </span>mkl<span class="w"> </span>mkl-include<span class="w"> </span>jemalloc
+pip3<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="w"> </span>opencv-python-headless
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.utils.workload.model`
+===================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.model
+
+.. autoapi-nested-parse::
+
+   Configuration model module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.model.Model
+
+
+
+
+.. py:class:: Model(data: Dict[str, Any] = {})
+
+
+
+
+   Configuration Model class.
+
+

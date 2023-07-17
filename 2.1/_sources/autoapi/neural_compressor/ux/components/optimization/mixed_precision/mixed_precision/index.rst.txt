@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.ux.components.optimization.mixed_precision.mixed_precision`
+======================================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.mixed_precision.mixed_precision
+
+.. autoapi-nested-parse::
+
+   Optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.mixed_precision.mixed_precision.MixedPrecision
+
+
+
+
+.. py:class:: MixedPrecision(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+
+
+
+   Mixed precision optimization class.
+
+

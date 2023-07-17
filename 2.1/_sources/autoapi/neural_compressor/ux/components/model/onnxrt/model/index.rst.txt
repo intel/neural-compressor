@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.model.onnxrt.model`
+============================================================
+
+.. py:module:: neural_compressor.ux.components.model.onnxrt.model
+
+.. autoapi-nested-parse::
+
+   Onnxrt model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.onnxrt.model.OnnxrtModel
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.onnxrt.model.remove_number_of_samples_from_shape
+
+
+
+.. py:class:: OnnxrtModel(path: str)
+
+
+
+
+   Onnxrt Model class.
+
+
+.. py:function:: remove_number_of_samples_from_shape(shape: str) -> str
+
+   Remove number of samples from shape if exists.
+
+

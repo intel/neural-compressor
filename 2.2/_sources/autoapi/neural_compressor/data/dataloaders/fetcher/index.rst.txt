@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.data.dataloaders.fetcher`
+====================================================
+
+.. py:module:: neural_compressor.data.dataloaders.fetcher
+
+.. autoapi-nested-parse::
+
+   Definitions of the methods to fetch data from an iterable-style or list-style dataset.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.dataloaders.fetcher.Fetcher
+   neural_compressor.data.dataloaders.fetcher.IterableFetcher
+   neural_compressor.data.dataloaders.fetcher.IndexFetcher
+
+
+
+
+.. py:class:: Fetcher(dataset, collate_fn, drop_last)
+
+
+
+
+   Base class for different fetchers.
+
+
+.. py:class:: IterableFetcher(dataset, collate_fn, drop_last, distributed)
+
+
+
+
+   Iterate to get next batch-size samples as a batch.
+
+
+.. py:class:: IndexFetcher(dataset, collate_fn, drop_last, distributed)
+
+
+
+
+   Take single index or a batch of indices to fetch samples as a batch.
+
+

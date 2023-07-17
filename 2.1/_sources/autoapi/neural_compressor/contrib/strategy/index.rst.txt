@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.contrib.strategy`
+============================================
+
+.. py:module:: neural_compressor.contrib.strategy
+
+.. autoapi-nested-parse::
+
+   Built-in strategy for multiple framework backends.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   sigopt/index.rst
+   tpe/index.rst
+
+
