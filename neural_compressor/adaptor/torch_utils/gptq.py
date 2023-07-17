@@ -95,14 +95,20 @@ def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transforme
         res += find_layers_name(child, layers=layers, name = name + '.' + name1 if name != '' else name1)
     return res
 
-def log_quantizable_layers_per_transformer(transformer_blocks, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]):
+def log_quantizable_layers_per_transformer(
+        transformer_blocks, 
+        layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
+    ):
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
 
     for block_id in range(len(transformer_blocks['transformers'])):
         transformer_block = transformer_blocks['transformers'][block_id]
         layers_for_this_tblock = find_layers_name(transformer_block)
-        layer_names = [(transformer_blocks['transformers_name'] + "." + str(block_id) + '.' + layer_name) for layer_name in layers_for_this_tblock]
+        layer_names = [
+            (transformer_blocks['transformers_name'] + "." + str(block_id) + '.' + layer_name) \
+            for layer_name in layers_for_this_tblock
+        ]
         for name in layer_names:
             logger.info(name)
 
@@ -284,7 +290,11 @@ class GPTQuantizer(object):
             
             for layer_name in sub_layers:
                 logger.info(f"Quantizing layer {layer_name}")
-                gptq_for_this_block[layer_name].fasterquant(percdamp=self.percdamp, groupsize=self.group_size, actorder=self.actorder)
+                gptq_for_this_block[layer_name].fasterquant(
+                    percdamp=self.percdamp, 
+                    groupsize=self.group_size, 
+                    actorder=self.actorder
+                )
                 quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
 
