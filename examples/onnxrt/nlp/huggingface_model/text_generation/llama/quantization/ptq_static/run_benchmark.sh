@@ -49,7 +49,7 @@ function run_benchmark {
             --model_path ${input_model} \
             --mode=${mode} \
             --batch_size=${batch_size-1} \
-            --tokenizer=${tokenizer-input_model} \
+            --tokenizer=${tokenizer-${input_model}} \
             --tasks=${tasks-lambada_openai} \
             --intra_op_num_threads=${intra_op_num_threads-4} \
             --benchmark
