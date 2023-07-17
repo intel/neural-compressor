@@ -50,6 +50,11 @@ class ONNXModel(BaseModel):
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model object to quantize')
 
+        self._config = None
+        if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath('config.json').as_posix()):
+            from transformers import PretrainedConfig
+            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
+
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -131,7 +136,7 @@ class ONNXModel(BaseModel):
         for node in self._model.graph.node:
             self.graph_info.update({node.name: node.op_type})
 
-    def save(self, root):
+    def save(self, root, save_as_huggingface_format=False):
         """Save ONNX model."""
         if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
@@ -144,6 +149,11 @@ class ONNXModel(BaseModel):
                                            location="int8_weights.pb",
                                            convert_attribute=False)
         onnx.save(self._model, root)
+        
+        if save_as_huggingface_format:
+            if self._config is None:
+                raise ValueError('There is no existing config.json in the same folder of fp32 model.')
+            self._config.save_pretrained(Path(root).parent.as_posix())
 
     def nodes(self):
         """Return model nodes."""
