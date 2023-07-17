@@ -6,6 +6,7 @@ import torch
 
 from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize, gptq_quantize
 from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
+from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 import transformers
 
 
@@ -55,6 +56,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
     def test_rtn(self):
         fp32_model = copy.deepcopy(self.model)
         model1 = rtn_quantize(fp32_model, num_bits=3, group_size=-1)
+        self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
         weight_config = {
             # 'op_name': (bit, group_size, sheme)
             'fc1': {
@@ -70,6 +72,8 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             },
         }
         model2 = rtn_quantize(fp32_model, weight_config=weight_config)
+        model2 = rtn_quantize(fp32_model, weight_config=weight_config, return_int=True)
+        self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
 
     def test_awq(self):
@@ -99,6 +103,19 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             auto_scale=True, 
             mse_range=True, 
         )
+        self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
+
+        model2 = awq_quantize(
+            fp32_model, 
+            weight_config=weight_config, 
+            absorb_dict=absorb_dict, 
+            dataloader=self.dataloader, 
+            n_samples=128, 
+            auto_scale=True, 
+            mse_range=True, 
+            return_int=True
+        )
+        self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
 class TestGPTQWeightOnlyQuant(unittest.TestCase):
     @classmethod

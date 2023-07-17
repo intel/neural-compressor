@@ -492,6 +492,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
+    <td>BlendCNN</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/ipex">ipex</a></td>
+  </tr>
+  <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -1135,17 +1141,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic">integerops</a> </td>
   </tr>
   <tr>
-    <td>GPT2 lm head WikiText</td>
+    <td>GPT2 lm head WikiText (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/gpt2/quantization/ptq_dynamic">integerops</a></td>
   </tr>
   <tr>
-    <td>MobileBERT SQuAD MLPerf</td>
+    <td>MobileBERT SQuAD MLPerf (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_static">qdq</a></td>

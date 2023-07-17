@@ -24,6 +24,7 @@ from collections import OrderedDict, UserDict, namedtuple
 from packaging.version import Version
 import yaml
 from functools import partial
+from neural_compressor.adaptor.torch_utils.util import set_module
 from neural_compressor.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
@@ -4547,7 +4548,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if algorithm != 'RTN':
                     continue
                 m = fetch_module(model, op_name)
-                rtn_quantize(m, num_bits, group_size, scheme)
+                m = rtn_quantize(m, num_bits, group_size, scheme, return_int=False)
+                set_module(model, op_name, m)
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
@@ -4606,6 +4608,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 flipped_dict[m] = {'absorb_layer': k}
 
         # check tune_cfg to skip layers without AWQ config
+        weight_config = {}
         skipped_op_name_set = set()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
@@ -4614,29 +4617,26 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
                 continue
             else:
+                weight_config[op_name] = {}
+                weight_config[op_name]['bits'] = config['weight']['bits']
+                weight_config[op_name]['group_size'] = config['weight']['group_size']
+                weight_config[op_name]['scheme'] = config['weight']['scheme']
                 if op_name in flipped_dict:
-                    flipped_dict[op_name]['bits'] = config['weight']['bits']
-                    flipped_dict[op_name]['group_size'] = config['weight']['group_size']
-                    flipped_dict[op_name]['scheme'] = config['weight']['scheme']
                     algorithm = config['weight']['algorithm']
                     if algorithm != 'AWQ':
-                        if op_name in flipped_dict:
-                            absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
+                        absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
                 else:
                     skipped_op_name_set.add(op_name)
         if skipped_op_name_set:
             logger.info("{} is skipped by AWQ algorithm".format(skipped_op_name_set))
 
         # collect AWQ config from tune_cfg for quantization.
-        weight_config = {}
         if len(absorb_to_layer) == 0:
             logger.warning('No absorb layer needs AWQ algorithim, skip it')
         else:
             logger.debug("**absorb layer**: **absorbed layers**")
         for k, v in absorb_to_layer.items():
             logger.debug(f"{k}: {v}")
-            for m in v:
-                weight_config[m] = flipped_dict[m]
         logger.info("Absorbed layers with the same absorb layer use the same config")
 
         if 'awq_args' in self.recipes:
@@ -4656,6 +4656,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             mse_range=mse_range,
             calib_func=calib_func,
             n_blocks=n_blocks,
+            return_int=False,
         )
         return model
 
