@@ -136,15 +136,15 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
 
     def test_gptq(self):
         dataloader = self.generate_random_corpus()
-        fp32_model = copy.deepcopy(self.gptj)
+        model = copy.deepcopy(self.gptj)
         weight_config = {
             'wbits': 4,
             'group_size': 128,
             'sym': False,
             'percdamp': 0.01,
         }
-        # import pdb;pdb.set_trace()
-        model = gptq_quantize(fp32_model, weight_config=weight_config, dataloader=dataloader, )
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        self.assertTrue(isinstance(model, torch.nn.Module))
 
 if __name__ == "__main__":
     unittest.main()
