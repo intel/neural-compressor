@@ -59,6 +59,7 @@ function run_tuning {
     python main.py \
             --quant_format ${quant_format-QOperator} \
             --model_path ${input_model} \
+	    --tokenizer ${input_model} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
             --smooth_quant_alpha ${alpha-0.5} \
