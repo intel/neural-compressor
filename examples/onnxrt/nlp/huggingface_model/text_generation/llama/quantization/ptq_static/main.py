@@ -75,6 +75,12 @@ parser.add_argument(
     default="decapoda-research/llama-7b-hf"
 )
 parser.add_argument(
+    '--tokenizer',
+    type=str,
+    help="pretrained model name or path of tokenizer files",
+    default="decapoda-research/llama-7b-hf"
+)
+parser.add_argument(
     '--workspace',
     type=str,
     help="workspace to save intermediate files",
@@ -178,12 +184,12 @@ def benchmark(model):
     print("Inference latency: %.3f sec." % latency)
 
 def eval_func(model):
-    from Llama_wrapper import LlamaLM
-    lm_model = LlamaLM(device='cpu', pretrained=args.model_name_or_path, user_model=model)
     results = evaluate(
-        model=lm_model,
+        model="hf-causal",
+        model_args='pretrained=' + model + ',tokenizer='+ args.tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
+        model_format="onnx"
     )
     for task_name in args.tasks:
         if task_name == "wikitext":
@@ -269,4 +275,4 @@ if __name__ == "__main__":
                     os.path.join(args.model_path, model),
                     config,
                     calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
-            q_model.save(os.path.join(args.output_model, model))
+            q_model.save(os.path.join(args.output_model, model), save_as_huggingface_format=True)
