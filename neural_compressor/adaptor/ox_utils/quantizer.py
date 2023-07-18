@@ -246,8 +246,11 @@ class Quantizer:
     def should_cast(self, node):
         """Check if node should be casted."""
         if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
-            return True
-        else:
+            parent = self.model.get_parent(node, 0)
+            if parent is not None and (parent.op_type != 'Cast' or parent.attribute[0].i in [1, 10, 16]):
+                return True
+            elif parent is None and node.input[0] in self.model.input():
+                return True
             return False
 
     def insert_qdq(self):
