@@ -646,4 +646,4 @@ def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, exa
 
     #quantization_data = gptq_quantizer.execute_quantization()
     logger.info("TEQ quantizing done.")
-    return teq_quantizer
+    return teq_quantizer.model

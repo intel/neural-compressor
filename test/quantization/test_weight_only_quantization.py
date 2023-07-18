@@ -193,7 +193,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             'folding': True
         }
 
-        quantizer = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
+        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
         self.assertTrue(isinstance(model, torch.nn.Module))
 
         del model
@@ -205,7 +205,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             'sym': True,
             'folding': False
         }
-        quantizer = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
+        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
         self.assertTrue(isinstance(model, torch.nn.Module))
 
 if __name__ == "__main__":

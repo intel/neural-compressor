@@ -16,20 +16,20 @@
 # limitations under the License.
 #
 
+try:
+    from neural_compressor.utils.utility import LazyImport
+
+    torch = LazyImport('torch')
+    from ...utils import logger
+except:
+    import torch
+    import logging
+    logger = logging.getLogger()
 
 from .smooth_quant import GraphTrace, get_module, set_module
 from .weight_only import quant_weight
 from .model_wrapper import TEQLinearFakeQuant, TEQMulLinear
-import torch
-import logging
 from transformers import get_scheduler
-
-logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-        level=logging.INFO)
-
-logger = logging.getLogger(__name__)
 
 
 class TEQuantizer:
@@ -68,7 +68,7 @@ class TEQuantizer:
         for _, p in self.model.named_parameters():
             return p.data.device, p.data.dtype
 
-    def add_tuning_scale(self, op_types=['Linear', 'Conv2d'], excluded_name="lm_head",
+    def add_tuning_scale(self, op_types=['Linear'], excluded_name="lm_head",
             excluded_key=None, sqrt_w_init=False):
         """
         The main entry of smooth quant

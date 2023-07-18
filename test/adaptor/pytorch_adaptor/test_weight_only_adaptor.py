@@ -291,7 +291,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
 
         dataloader = teq_inc_loader()
-        # import pdb;pdb.set_trace()
+
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
 
 
