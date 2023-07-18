@@ -2,7 +2,7 @@ CALIBRATION_DATA=/path/to/your/data/calibration-data/cnn_dailymail_calibration.j
 VALIDATION_DATA=/path/to/your/data/validation-data/cnn_dailymail_validation.json
 MODEL_DIR=/path/to/finetuned-gptj/
 
-python -u main.py \
+python -u run_gptj_mlperf_int4.py \
     --model_name_or_path ${MODEL_DIR} \
     --wbits 4 \
     --act-order \

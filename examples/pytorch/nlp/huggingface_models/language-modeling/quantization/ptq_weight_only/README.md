@@ -41,6 +41,16 @@ sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path --wei
 >
 > `weight_only_bits`, `weight_only_group`, `weight_only_scheme`, and `weight_only_algorithm` can be modified by user. For details, please refer to [README](../../../../../../../docs/source/quantization_weight_only.md).
 
+### Run MLPerf on GPT-J-6B
+Use the following link to get
+[**CNN Daily Mail** datasets](https://github.com/intel-innersource/frameworks.ai.benchmarking.mlperf.submission.inference-submission-v3-1/tree/master/closed/Intel/code/gpt-j/pytorch-cpu#download-and-prepare-dataset)
+and [gpt-j-6B mlperf model](https://github.com/mlcommons/inference/tree/master/language/gpt-j#download-gpt-j-model)
+
+Then run following command to do quantization
+```shell
+sh run_gptj_mlperf_int4.sh
+```
+
 ## 2. Benchmark
 ```bash
 # int8
