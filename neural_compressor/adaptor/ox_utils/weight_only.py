@@ -353,7 +353,7 @@ def awq_quantize(model,
                 inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
             else:
                 inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
-            del dataloader
+        del dataloader
 
         absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
         num_block = math.ceil(len(absorb_pairs) / n_blocks)
