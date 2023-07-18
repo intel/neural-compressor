@@ -847,6 +847,12 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def rtn_args(val=None):
+            if val is not None:
+                return _check_value("rtn_args", val, dict)
+            else:
+                return {}
+
         def awq_args(val=None):
             if val is not None:
                 return _check_value("awq_args", val, dict)
@@ -932,6 +938,7 @@ class _BaseQuantizationConfig:
                    "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
                    "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
                    "dedicated_qdq_pair": dedicated_qdq_pair,
+                   "rtn_args": rtn_args,
                    "awq_args": awq_args,
                    "gptq_args": gptq_args,
                    }
