@@ -1,7 +1,10 @@
+import sys
+sys.path.append("./")
 import unittest
 import copy
 import torch
-from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize
+
+from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize, gptq_quantize
 from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
 from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 import transformers
@@ -114,6 +117,50 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
+class TestGPTQWeightOnlyQuant(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            torchscript=True,
+        )
+        self.gptj.seqlen = 512
+    
+    def generate_random_corpus(self, nsamples = 32):
+        meta_data = []
+        for _ in range(nsamples):
+            inp = torch.ones([1, 512], dtype=torch.long)
+            tar = torch.ones([1, 512], dtype=torch.long)
+            meta_data.append((inp, tar))
+        return meta_data
+
+    def test_gptq(self):
+        dataloader = self.generate_random_corpus()
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            'wbits': 4,
+            'group_size': 128,
+            'perchannel': True, 
+            'sym': True,
+            'percdamp': 0.01,
+            'mse': True
+        }
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        self.assertTrue(isinstance(model, torch.nn.Module))
+
+        del model
+
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            'wbits': 4,
+            'group_size': 128,
+            'perchannel': False, 
+            'sym': False,
+            'percdamp': 0.01,
+            'mse': False
+        }
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        self.assertTrue(isinstance(model, torch.nn.Module))
 
 if __name__ == "__main__":
     unittest.main()
