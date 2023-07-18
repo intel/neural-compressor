@@ -4523,7 +4523,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
 
         if 'TEQ' in all_algo:
-            q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader)
+            q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
 
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
@@ -4611,7 +4611,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             model,
             weight_config,
             dataloader,
-            example_inputs=example_inputs
+            example_inputs=self.example_inputs,
+            calib_func=calib_func
         )
         return quantizer.model
 
