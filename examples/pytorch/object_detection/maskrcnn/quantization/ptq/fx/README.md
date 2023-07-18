@@ -7,12 +7,54 @@ This document describes the step-by-step instructions for reproducing PyTorch MA
 
 ### 1. Installation
 
+#### Environment
+
 PyTorch >=1.8 version is required with pytorch_fx backend.
+
 
 ```shell
 cd examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx
 pip install -r requirements.txt
-bash install.sh
+```
+
+#### Maskrcnn_benchmark and Dependencies Installation
+
+Make sure that your conda is setup properly with the right environment. Check that `which conda`, `which pip` and `which python` points to the right path from a clean conda env.
+```shell
+# this installs the right pip and dependencies for the fresh python
+conda install ipython pip
+# maskrcnn_benchmark and coco api dependencies
+pip install ninja yacs cython matplotlib tqdm opencv-python
+
+cd examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx/pytorch
+export INSTALL_DIR=$PWD
+
+# install pycocotools
+cd $INSTALL_DIR
+git clone https://github.com/cocodataset/cocoapi.git
+cd cocoapi/PythonAPI
+git checkout 8c9bcc3cf640524c4c20a9c40e89cb6a2f2fa0e9
+python setup.py build_ext install
+
+# install cityscapesScripts
+cd $INSTALL_DIR
+git clone https://github.com/mcordts/cityscapesScripts.git
+cd cityscapesScripts/
+git checkout a7ac7b4062d1a80ed5e22d2ea2179c886801c77d
+python setup.py build_ext install
+
+# install PyTorch Detection
+# some modifications have been made according to this example
+# please apply the patch provided before installing
+cd $INSTALL_DIR
+git clone https://github.com/facebookresearch/maskrcnn-benchmark.git
+cd maskrcnn-benchmark
+git checkout 57eec25b75144d9fb1a6857f32553e1574177daf
+git apply ./maskrnn.patch
+python setup.py build develop
+
+cd ../..
+unset INSTALL_DIR
 ```
 
 ### 2. Prepare Dataset
