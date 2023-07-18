@@ -1,6 +1,6 @@
 CALIBRATION_DATA=/path/to/your/data/calibration-data/cnn_dailymail_calibration.json
 VALIDATION_DATA=/path/to/your/data/validation-data/cnn_dailymail_validation.json
-MODEL_DIR=/data4/cyy/gptq_inc/mlperf/gpt-j-mlperf/finetuned-gptj/
+MODEL_DIR=/path/to/finetuned-gptj/
 
 python -u main.py \
     --model_name_or_path ${MODEL_DIR} \
