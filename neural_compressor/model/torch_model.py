@@ -404,13 +404,9 @@ class PyTorchModel(PyTorchBaseModel):
                 weight_config_path (str, optional): Path of weight_config.json. Defaults to None.
                 full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
                                             Defaults to False.
-                full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
-                                            Defaults to False.
-                full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
-                                            Defaults to False.
-                compression_factor (str, optional): Path of weight_config.json. Defaults to None.
-                compression_dim (str, optional): Path of weight_config.json. Defaults to None.
-                to_half (bool, optional): Set float32 args to float16. Defaults to None.
+                compression_factor (str, optional): Path of weight_config.json. Defaults to 32.
+                compression_dim (str, optional): Path of weight_config.json. Defaults to 'K'.
+                to_half (bool, optional): Set float32 tensor to float16. Defaults to False.
         """
         if weight_only:
             weight_config_path = kwargs.get("weight_config_path", None)
@@ -443,7 +439,6 @@ class PyTorchModel(PyTorchBaseModel):
                     compress_dim=compress_dim, 
                 )
                 set_module(self.model, k, mod)
-
 
 
 class PyTorchFXModel(PyTorchModel):
