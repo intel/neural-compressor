@@ -294,18 +294,16 @@ class TEQuantizer:
 
     def train(self, dataloader, train_steps=100, lr=1e-3, warmup_ratio=0.05,
             gradient_accumulation_steps=1, logging_steps=10,
-            betas=[0.9, 0.9], weight_decay=0, optimizer=None, lr_scheduler=None, lr_scheduler_type="linear"):
+            betas=[0.9, 0.9], weight_decay=0, lr_scheduler_type="linear"):
         """
         train function
         """
-        if optimizer is None:
-            trained_alphas_list = []
-            for item in self.trained_alphas.items():
-                trained_alphas_list.append(item[1])
-            optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
+        trained_alphas_list = []
+        for item in self.trained_alphas.items():
+            trained_alphas_list.append(item[1])
+        optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
 
-        if lr_scheduler is None:
-            lr_scheduler = get_scheduler(
+        lr_scheduler = get_scheduler(
                     name=lr_scheduler_type,
                     optimizer=optimizer,
                     num_warmup_steps=int(train_steps * warmup_ratio) // gradient_accumulation_steps,
