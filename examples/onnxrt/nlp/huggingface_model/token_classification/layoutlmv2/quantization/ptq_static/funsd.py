@@ -24,10 +24,12 @@ _DESCRIPTION = """\
 https://guillaumejaume.github.io/FUNSD/
 """
 
+
 def load_image(image_path):
     image = Image.open(image_path).convert("RGB")
     w, h = image.size
     return image, (w, h)
+
 
 def normalize_bbox(bbox, size):
     return [
@@ -36,6 +38,7 @@ def normalize_bbox(bbox, size):
         int(1000 * bbox[2] / size[0]),
         int(1000 * bbox[3] / size[1]),
     ]
+
 
 class FunsdConfig(datasets.BuilderConfig):
     """BuilderConfig for FUNSD"""
@@ -47,6 +50,7 @@ class FunsdConfig(datasets.BuilderConfig):
           **kwargs: keyword arguments forwarded to super.
         """
         super(FunsdConfig, self).__init__(**kwargs)
+
 
 class Funsd(datasets.GeneratorBasedBuilder):
     """FUNSD dataset."""
@@ -120,4 +124,10 @@ class Funsd(datasets.GeneratorBasedBuilder):
                         words.append(w["text"])
                         ner_tags.append("I-" + label.upper())
                         bboxes.append(normalize_bbox(w["box"], size))
-            yield guid, {"id": str(guid), "words": words, "bboxes": bboxes, "ner_tags": ner_tags, "image_path": image_path}
+            yield guid, {
+                "id": str(guid),
+                "words": words,
+                "bboxes": bboxes,
+                "ner_tags": ner_tags,
+                "image_path": image_path,
+            }

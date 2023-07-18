@@ -50,10 +50,7 @@ class ORTModel:
         self.session = onnxruntime.InferenceSession(
             model.SerializeToString(), providers=onnxruntime.get_available_providers()
         )
-        self.onnx_input_names = {
-            input_key.name: idx
-            for idx, input_key in enumerate(self.session.get_inputs())
-        }
+        self.onnx_input_names = {input_key.name: idx for idx, input_key in enumerate(self.session.get_inputs())}
 
     def evaluation_loop(self, dataset: Dataset):
         """
@@ -70,9 +67,7 @@ class ORTModel:
         for step, inputs in enumerate(dataset):
             has_labels = all(inputs.get(k) is not None for k in self.label_names)
             if has_labels:
-                labels = tuple(
-                    np.array([inputs.get(name)]) for name in self.label_names
-                )
+                labels = tuple(np.array([inputs.get(name)]) for name in self.label_names)
                 if len(labels) == 1:
                     labels = labels[0]
             else:
@@ -94,24 +89,10 @@ class ORTModel:
             preds = self.session.run(None, onnx_inputs)
             if len(preds) == 1:
                 preds = preds[0]
-            all_preds = (
-                preds
-                if all_preds is None
-                else nested_concat(all_preds, preds, padding_index=-100)
-            )
-            all_labels = (
-                labels
-                if all_labels is None
-                else nested_concat(all_labels, labels, padding_index=-100)
-            )
-        if (
-            self.compute_metrics is not None
-            and all_preds is not None
-            and all_labels is not None
-        ):
-            metrics = self.compute_metrics(
-                EvalPrediction(predictions=all_preds, label_ids=all_labels)
-            )
+            all_preds = preds if all_preds is None else nested_concat(all_preds, preds, padding_index=-100)
+            all_labels = labels if all_labels is None else nested_concat(all_labels, labels, padding_index=-100)
+        if self.compute_metrics is not None and all_preds is not None and all_labels is not None:
+            metrics = self.compute_metrics(EvalPrediction(predictions=all_preds, label_ids=all_labels))
         else:
             metrics = {}
         return EvalLoopOutput(

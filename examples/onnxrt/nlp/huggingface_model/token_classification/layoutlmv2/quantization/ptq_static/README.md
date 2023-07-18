@@ -16,10 +16,10 @@ pip install -r requirements.txt
 Export the PyTorch model to ONNX.
 
 ```bash
-# TODO replace it with custom export as the optimum not support export layoutlmv2
 # fine-tuned model https://huggingface.co/nielsr/layoutlmv2-finetuned-funsd
  python export.py --torch_model_name_or_path=/fine-tuned/torch/model/name/or/path
 ```
+> Note: To export LayoutLMv2, please install [detectron2](https://github.com/facebookresearch/detectron2) first.
 
 # Run
 

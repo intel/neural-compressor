@@ -53,33 +53,23 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        }
+        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
     )
     config_name: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Pretrained config name or path if not the same as model_name"
-        },
+        metadata={"help": "Pretrained config name or path if not the same as model_name"},
     )
     tokenizer_name: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Pretrained tokenizer name or path if not the same as model_name"
-        },
+        metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"},
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Where do you want to store the pretrained models downloaded from huggingface.co"
-        },
+        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
     )
     model_revision: str = field(
         default="main",
-        metadata={
-            "help": "The specific model version to use (can be a branch name, tag name or commit id)."
-        },
+        metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
     )
     use_auth_token: bool = field(
         default=False,
@@ -88,9 +78,7 @@ class ModelArguments:
             "with private models)."
         },
     )
-    input_model: str = field(
-        default=None, metadata={"help": "Path to onnx model"}
-    )
+    input_model: str = field(default=None, metadata={"help": "Path to onnx model"})
     tune: bool = field(
         default=False,
         metadata={"help": ("INC tune")},
@@ -123,20 +111,14 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
-    task_name: Optional[str] = field(
-        default="ner", metadata={"help": "The name of the task (ner, pos...)."}
-    )
+    task_name: Optional[str] = field(default="ner", metadata={"help": "The name of the task (ner, pos...)."})
     dataset_name: Optional[str] = field(
         default="funsd",
-        metadata={
-            "help": "The name of the dataset to use (via the datasets library)."
-        },
+        metadata={"help": "The name of the dataset to use (via the datasets library)."},
     )
     dataset_config_name: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "The configuration name of the dataset to use (via the datasets library)."
-        },
+        metadata={"help": "The configuration name of the dataset to use (via the datasets library)."},
     )
     train_file: Optional[str] = field(
         default=None,
@@ -144,15 +126,11 @@ class DataTrainingArguments:
     )
     validation_file: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "An optional input evaluation data file to evaluate on (a csv or JSON file)."
-        },
+        metadata={"help": "An optional input evaluation data file to evaluate on (a csv or JSON file)."},
     )
     test_file: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "An optional input test data file to predict on (a csv or JSON file)."
-        },
+        metadata={"help": "An optional input test data file to predict on (a csv or JSON file)."},
     )
     overwrite_cache: bool = field(
         default=False,
@@ -160,9 +138,7 @@ class DataTrainingArguments:
     )
     preprocessing_num_workers: Optional[int] = field(
         default=None,
-        metadata={
-            "help": "The number of processes to use for the preprocessing."
-        },
+        metadata={"help": "The number of processes to use for the preprocessing."},
     )
     pad_to_max_length: bool = field(
         default=True,
@@ -202,32 +178,22 @@ class DataTrainingArguments:
     )
     return_entity_level_metrics: bool = field(
         default=False,
-        metadata={
-            "help": "Whether to return all the entity levels during evaluation or just the overall ones."
-        },
+        metadata={"help": "Whether to return all the entity levels during evaluation or just the overall ones."},
     )
     segment_level_layout: bool = field(default=True)
     visual_embed: bool = field(default=True)
     data_dir: Optional[str] = field(default=None)
-    input_size: int = field(
-        default=224, metadata={"help": "images input size for backbone"}
-    )
-    second_input_size: int = field(
-        default=112, metadata={"help": "images input size for discrete vae"}
-    )
+    input_size: int = field(default=224, metadata={"help": "images input size for backbone"})
+    second_input_size: int = field(default=112, metadata={"help": "images input size for discrete vae"})
     train_interpolation: str = field(
         default="bicubic",
         metadata={"help": "Training interpolation (random, bilinear, bicubic)"},
     )
     second_interpolation: str = field(
         default="lanczos",
-        metadata={
-            "help": "Interpolation for discrete vae (random, bilinear, bicubic)"
-        },
+        metadata={"help": "Interpolation for discrete vae (random, bilinear, bicubic)"},
     )
-    imagenet_default_mean_and_std: bool = field(
-        default=False, metadata={"help": ""}
-    )
+    imagenet_default_mean_and_std: bool = field(default=False, metadata={"help": ""})
 
 
 class IncDataset:
@@ -243,10 +209,7 @@ class IncDataset:
             model.SerializeToString(),
             providers=onnxruntime.get_available_providers(),
         )
-        self.onnx_input_names = {
-            input_key.name: idx
-            for idx, input_key in enumerate(self.session.get_inputs())
-        }
+        self.onnx_input_names = {input_key.name: idx for idx, input_key in enumerate(self.session.get_inputs())}
         self._process_dataset()
 
     def _process_dataset(self):
@@ -256,13 +219,9 @@ class IncDataset:
             # import pdb;
             # pdb.set_trace()
             onnx_inputs = []
-            has_labels = all(
-                inputs.get(k) is not None for k in self.label_names
-            )
+            has_labels = all(inputs.get(k) is not None for k in self.label_names)
             if has_labels:
-                labels = tuple(
-                    np.array([inputs.get(name)]) for name in self.label_names
-                )
+                labels = tuple(np.array([inputs.get(name)]) for name in self.label_names)
                 if len(labels) == 1:
                     labels = labels[0]
             else:
@@ -286,9 +245,7 @@ class IncDataset:
                     # self.onnx_inputs.append([np.array(inputs[key])])
                 elif key == "image":
                     # onnx_inputs[key] = np.array([inputs['images']], dtype=np.float32)
-                    onnx_inputs.append(
-                        np.array(inputs["images"], dtype=np.int64)
-                    )
+                    onnx_inputs.append(np.array(inputs["images"], dtype=np.int64))
                     # self.onnx_inputs.append([np.array(inputs['images'], dtype=np.float32)])
 
             self.onnx_inputs.append(onnx_inputs)
@@ -307,15 +264,11 @@ def main():
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
-    parser = HfArgumentParser(
-        (ModelArguments, DataTrainingArguments, TrainingArguments)
-    )
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
-        model_args, data_args = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+        model_args, data_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
         (
             model_args,
@@ -329,11 +282,7 @@ def main():
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
-    logger.setLevel(
-        logging.INFO
-        if is_main_process(training_args.local_rank)
-        else logging.WARN
-    )
+    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank) else logging.WARN)
 
     # Log on each process the small summary:
     logger.warning(
@@ -354,9 +303,7 @@ def main():
         # datasets = load_dataset("nielsr/funsd")
         import funsd
 
-        datasets = load_dataset(
-            os.path.abspath(funsd.__file__), cache_dir=model_args.cache_dir
-        )
+        datasets = load_dataset(os.path.abspath(funsd.__file__), cache_dir=model_args.cache_dir)
     else:
         raise NotImplementedError()
 
@@ -367,9 +314,7 @@ def main():
     boxes_column_name = "bboxes"
 
     label_column_name = (
-        f"{data_args.task_name}_tags"
-        if f"{data_args.task_name}_tags" in column_names
-        else column_names[1]
+        f"{data_args.task_name}_tags" if f"{data_args.task_name}_tags" in column_names else column_names[1]
     )
 
     remove_columns = column_names
@@ -398,9 +343,7 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name
-        if model_args.config_name
-        else model_args.model_name_or_path,
+        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
         num_labels=num_labels,
         finetuning_task=data_args.task_name,
         cache_dir=model_args.cache_dir,
@@ -409,9 +352,7 @@ def main():
         use_auth_token=True if model_args.use_auth_token else None,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name
-        if model_args.tokenizer_name
-        else model_args.model_name_or_path,
+        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
         tokenizer_file=None,
         # avoid loading from a cached file of the pre-trained model in another
         # machine
@@ -436,16 +377,8 @@ def main():
 
     if data_args.visual_embed:
         imagenet_default_mean_and_std = data_args.imagenet_default_mean_and_std
-        mean = (
-            IMAGENET_INCEPTION_MEAN
-            if not imagenet_default_mean_and_std
-            else IMAGENET_DEFAULT_MEAN
-        )
-        std = (
-            IMAGENET_INCEPTION_STD
-            if not imagenet_default_mean_and_std
-            else IMAGENET_DEFAULT_STD
-        )
+        mean = IMAGENET_INCEPTION_MEAN if not imagenet_default_mean_and_std else IMAGENET_DEFAULT_MEAN
+        std = IMAGENET_INCEPTION_STD if not imagenet_default_mean_and_std else IMAGENET_DEFAULT_STD
         common_transform = Compose(
             [
                 # transforms.ColorJitter(0.4, 0.4, 0.4),
@@ -460,9 +393,7 @@ def main():
         patch_transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=torch.tensor(mean), std=torch.tensor(std)
-                ),
+                transforms.Normalize(mean=torch.tensor(mean), std=torch.tensor(std)),
             ]
         )
 
@@ -481,9 +412,7 @@ def main():
         images = []
         for batch_index in range(len(tokenized_inputs["input_ids"])):
             word_ids = tokenized_inputs.word_ids(batch_index=batch_index)
-            org_batch_index = tokenized_inputs["overflow_to_sample_mapping"][
-                batch_index
-            ]
+            org_batch_index = tokenized_inputs["overflow_to_sample_mapping"][batch_index]
 
             label = examples[label_column_name][org_batch_index]
             bbox = examples["bboxes"][org_batch_index]
@@ -503,11 +432,7 @@ def main():
                 # For the other tokens in a word, we set the label to either the current label or -100, depending on
                 # the label_all_tokens flag.
                 else:
-                    label_ids.append(
-                        label_to_id[label[word_idx]]
-                        if data_args.label_all_tokens
-                        else -100
-                    )
+                    label_ids.append(label_to_id[label[word_idx]] if data_args.label_all_tokens else -100)
                     bbox_inputs.append(bbox[word_idx])
                 previous_word_idx = word_idx
             labels.append(label_ids)
@@ -516,9 +441,7 @@ def main():
             if data_args.visual_embed:
                 ipath = examples["image_path"][org_batch_index]
                 img = pil_loader(ipath)
-                for_patches, _ = common_transform(
-                    img, augmentation=augmentation
-                )
+                for_patches, _ = common_transform(img, augmentation=augmentation)
                 patch = patch_transform(for_patches)
                 images.append(patch)
 
@@ -560,9 +483,7 @@ def main():
             for prediction, label in zip(predictions, labels)
         ]
 
-        results = metric.compute(
-            predictions=true_predictions, references=true_labels
-        )
+        results = metric.compute(predictions=true_predictions, references=true_labels)
         if data_args.return_entity_level_metrics:
             # Unpack nested dictionaries
             final_results = {}
@@ -594,42 +515,11 @@ def main():
         return outputs.metrics["f1"]
 
     if model_args.tune:
-        # optimize model
-        import onnxruntime as ort
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.fusion_options import FusionOptions
-
-        # TODO remove it as the layoutlmv2 is not bert-like model
-        model_type = "bert"
-        opt_options = FusionOptions(model_type)
-        opt_options.enable_embed_layer_norm = False
-        model_optimizer = optimizer.optimize_model(
-            model_args.input_model,
-            model_type,
-            num_heads=12,
-            hidden_size=768,
-            optimization_options=opt_options,
-        )
-        model = model_optimizer.model
-
-        # check the optimized model is valid
-        try:
-            ort.InferenceSession(
-                model.SerializeToString(),
-                providers=ort.get_available_providers(),
-            )
-        except Exception as e:
-            logger.warning("Optimized model is invalid: {}. ".format(e))
-            logger.warning(
-                "Model optimizer will be skipped. "
-                "Try to upgrade onnxruntime to avoid this error"
-            )
-            model = onnx.load(model_args.input_model)
-
-        onnx_model = model
         from neural_compressor import PostTrainingQuantConfig, quantization
         from neural_compressor.utils.constant import FP32
+        import onnx
 
+        onnx_model = onnx.load(model_args.input_model)
         calib_dataset = IncDataset(eval_dataset, onnx_model)
         # TODO double check it for better perf
         fp32_op_names = [
@@ -647,9 +537,7 @@ def main():
             onnx_model,
             config,
             eval_func=eval_func,
-            calib_dataloader=DataLoader(
-                framework="onnxruntime", dataset=calib_dataset, batch_size=1
-            ),
+            calib_dataloader=DataLoader(framework="onnxruntime", dataset=calib_dataset, batch_size=1),
         )
         q_model.save(model_args.save_path)
 

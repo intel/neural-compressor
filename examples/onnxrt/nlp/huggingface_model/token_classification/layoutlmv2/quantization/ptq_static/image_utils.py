@@ -31,15 +31,11 @@ def resize(image, size, interpolation, boxes=None):
     if boxes is None:
         return rescaled_image, None
 
-    ratios = tuple(
-        float(s) / float(s_orig) for s, s_orig in zip(rescaled_image.size, image.size)
-    )
+    ratios = tuple(float(s) / float(s_orig) for s, s_orig in zip(rescaled_image.size, image.size))
     ratio_width, ratio_height = ratios
 
     # boxes = boxes.copy()
-    scaled_boxes = boxes * torch.as_tensor(
-        [ratio_width, ratio_height, ratio_width, ratio_height]
-    )
+    scaled_boxes = boxes * torch.as_tensor([ratio_width, ratio_height, ratio_width, ratio_height])
 
     return rescaled_image, scaled_boxes
 
@@ -247,17 +243,13 @@ class RandomResizedCropAndInterpolationWithTwoPic:
             # img, box = crop(img, i, j, h, w, box)
         img = F.resize(img, self.size, self.interpolation)
         second_img = (
-            F.resize(img, self.second_size, self.second_interpolation)
-            if self.second_size is not None
-            else None
+            F.resize(img, self.second_size, self.second_interpolation) if self.second_size is not None else None
         )
         return img, second_img
 
     def __repr__(self):
         if isinstance(self.interpolation, (tuple, list)):
-            interpolate_str = " ".join(
-                [_pil_interpolation_to_str[x] for x in self.interpolation]
-            )
+            interpolate_str = " ".join([_pil_interpolation_to_str[x] for x in self.interpolation])
         else:
             interpolate_str = _pil_interpolation_to_str[self.interpolation]
         format_string = self.__class__.__name__ + "(size={0}".format(self.size)
@@ -266,9 +258,7 @@ class RandomResizedCropAndInterpolationWithTwoPic:
         format_string += ", interpolation={0}".format(interpolate_str)
         if self.second_size is not None:
             format_string += ", second_size={0}".format(self.second_size)
-            format_string += ", second_interpolation={0}".format(
-                _pil_interpolation_to_str[self.second_interpolation]
-            )
+            format_string += ", second_interpolation={0}".format(_pil_interpolation_to_str[self.second_interpolation])
         format_string += ")"
         return format_string
 

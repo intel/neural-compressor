@@ -2,6 +2,7 @@
 # coding=utf-8
 # export pytorch model into onnx model
 
+
 def get_dummy_input(model_name_or_path):
     import torch
     from transformers import LayoutLMv2Processor
@@ -51,8 +52,7 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     from itertools import chain
     from transformers import LayoutLMv2ForTokenClassification
 
-    # model_path = "./layoutlmv2-finetuned-funsd-v2/checkpoint-1000"
-    # TODO,double check it
+    # TODO double-check the num_labels
     # labels = datasets['train'].features['ner_tags'].feature.names
     # id2label = {v: k for v, k in enumerate(labels)}
     # label2id = {k: v for v, k in enumerate(labels)}
@@ -68,7 +68,7 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     )
     assert len(inputs.keys()) == len(dummy_input.keys())
     outputs = OrderedDict({"logits": {0: "batch_size", 1: "sequence_length"}})
-    # import pdb; pdb.set_trace()
+
     onnx_export(
         model=model,
         args=(dummy_input,),
@@ -94,6 +94,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.output_model = args.torch_model_name_or_path.split("/")[-1] + "-exported.onnx"
     export_model_to_onnx(model_name_or_path=args.torch_model_name_or_path, export_model_path=args.output_model)
-
-# TODO remove it before merge 
-# python export.py --torch_model_name_or_path=/home/st_liu/workspace/inc_examples/microsoft/layoutlmv2-finetuned-funsd
