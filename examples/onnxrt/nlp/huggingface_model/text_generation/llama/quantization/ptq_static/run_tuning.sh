@@ -62,7 +62,7 @@ function run_tuning {
 	    --tokenizer ${input_model} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
-            --smooth_quant_alpha ${alpha-0.5} \
+            --smooth_quant_alpha ${alpha-0.6} \
             --dataset ${dataset-NeelNanda/pile-10k} \
             --tune
 }
