@@ -606,3 +606,44 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     model = rtn_quantize(model, weight_config=weight_config, return_int=return_int)
     logger.info("AWQ quantization is done.")
     return model
+
+def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, example_inputs=None):
+    """Run weight-only quantization with """
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    logger.info("TEQ quantizing start.")
+    if example_inputs is None:
+        if dataloader is None:
+            assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
+        try:
+            for idx, (input, label) in enumerate(dataloader):
+                example_inputs = input
+                break
+        except:
+            for idx, input in enumerate(dataloader):
+                example_inputs = input
+                break
+
+    from .teq import TEQuantizer
+    teq_quantizer = TEQuantizer(model, weight_config, example_inputs)
+
+    # 1. wrapper tuning scale to model
+    teq_quantizer.add_tuning_scale()
+
+    # 2. tuning
+    # custom train function, there calls calib_func
+    if calib_func:
+        calib_func(teq_quantizer.model)
+    else:
+        if dataloader is None:
+            assert False, "Please provide dataloader to train."
+        teq_quantizer.train(dataloader)
+
+    # 3. apply scale to model
+    teq_quantizer.transform()
+
+    # 4. get quantized model
+    teq_quantizer.quantize()
+
+    #quantization_data = gptq_quantizer.execute_quantization()
+    logger.info("TEQ quantizing done.")
+    return teq_quantizer

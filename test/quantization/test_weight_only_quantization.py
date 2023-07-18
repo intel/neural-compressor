@@ -162,5 +162,51 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
         self.assertTrue(isinstance(model, torch.nn.Module))
 
+
+class TestTEQWeightOnlyQuant(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            torchscript=True,
+        )
+        self.gptj.seqlen = 512
+
+    def generate_random_corpus(self, nsamples = 32):
+        meta_data = []
+        for _ in range(nsamples):
+            inp = torch.ones([1, 512], dtype=torch.long)
+            tar = torch.ones([1, 512], dtype=torch.long)
+            meta_data.append((inp, tar))
+        return meta_data
+
+    def train_func(self):
+        pass
+
+    def test_teq(self):
+        dataloader = self.generate_random_corpus()
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            'wbits': 4,
+            'group_size': 128,
+            'sym': True,
+            'folding': True
+        }
+
+        quantizer = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
+        self.assertTrue(isinstance(model, torch.nn.Module))
+
+        del model
+
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            'wbits': 4,
+            'group_size': 128,
+            'sym': True,
+            'folding': False
+        }
+        quantizer = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
+        self.assertTrue(isinstance(model, torch.nn.Module))
+
 if __name__ == "__main__":
     unittest.main()

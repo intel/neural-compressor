@@ -4522,6 +4522,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         if 'GPTQ' in all_algo:
             q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
 
+        if 'TEQ' in all_algo:
+            q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader)
+
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         elif 'RTN' in all_algo:
@@ -4575,6 +4578,42 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             self.device
         )
         return model
+
+    def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
+        logger.debug("quantizing with the TEQ algorithm")
+        from .torch_utils.weight_only import teq_quantize
+        # get example inputs if not provided.
+        if self.example_inputs is None:
+            if dataloader is None:
+                assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
+            try:
+                for idx, (input, label) in enumerate(dataloader):
+                    self.example_inputs = input
+                    break
+            except:
+                for idx, input in enumerate(dataloader):
+                    self.example_inputs = input
+                    break
+
+        if 'teq_args' in self.recipes:
+            wbits = self.recipes.get('wbits', 4)
+            group_size = self.recipes.get('group_size', 128)
+            sym = self.recipes.get('scheme', False)
+            folding = self.recipes.get('folding', True)
+
+        weight_config = {
+            'wbits': wbits,
+            'group_size': group_size,
+            'sym': sym,
+            'folding': folding
+        }
+        quantizer = teq_quantize(
+            model,
+            weight_config,
+            dataloader,
+            example_inputs=example_inputs
+        )
+        return quantizer.model
 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the AWQ algorithm")
