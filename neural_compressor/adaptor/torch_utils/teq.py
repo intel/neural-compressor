@@ -29,7 +29,7 @@ except:
 from .smooth_quant import GraphTrace, get_module, set_module
 from .weight_only import quant_weight
 from .model_wrapper import TEQLinearFakeQuant, TEQMulLinear
-from transformers import get_scheduler
+import transformers
 
 
 class TEQuantizer:
@@ -303,7 +303,7 @@ class TEQuantizer:
             trained_alphas_list.append(item[1])
         optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
 
-        lr_scheduler = get_scheduler(
+        lr_scheduler = transformers.get_scheduler(
                     name=lr_scheduler_type,
                     optimizer=optimizer,
                     num_warmup_steps=int(train_steps * warmup_ratio) // gradient_accumulation_steps,
