@@ -50,7 +50,7 @@ cd $INSTALL_DIR
 git clone https://github.com/facebookresearch/maskrcnn-benchmark.git
 cd maskrcnn-benchmark
 git checkout 57eec25b75144d9fb1a6857f32553e1574177daf
-git apply ./maskrnn.patch
+git apply ../maskrnn.patch
 python setup.py build develop
 
 cd ../..
