@@ -8,3 +8,6 @@ Use the following link to get
 and [gpt-j-6B mlperf model](https://github.com/mlcommons/inference/tree/master/language/gpt-j#download-gpt-j-model)
 
 ## Step 2 Run GPTQ quantization
+```shell
+sh run-gptq-gptj-sym.sh
+```
