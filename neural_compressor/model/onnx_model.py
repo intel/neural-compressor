@@ -753,19 +753,13 @@ class ONNXModel(BaseModel):
         return None
 
     def get_absorb_pairs(self, target_optype):
-        """Find a sequence of input edges based on constraints on parent op_type and index.
+        """Find absorbable nodes based on parent op_type and their own input status.
 
         Args:
-            node (str): current node name.
-            parent_op_types (str): constraint of parent node op_type of each input edge.
-            parent_input_index (list): constraint of input index of each input edge. 
-                                       None means no constraint.
-            output_name_to_node (dict): dictionary with output name as key, and node as value.
-            return_indice (list): a list to append the input index when there is 
-                                  no constraint on input index of an edge.
+            target_optype (list): target absorbable optype.
 
         Returns:
-            parents: a list of matched parent node.
+            absorb_pairs (dict): a dict of absorb pairs {parent: list of absorbable children}.
         """
         absorbable_optypes = ["LayerNormalization", "BatchNormalization", "InstanceNormalization", "Conv",
                               "SimplifiedLayerNormalization", "MatMul", "Gemm", "Mul", "FusedConv"]
