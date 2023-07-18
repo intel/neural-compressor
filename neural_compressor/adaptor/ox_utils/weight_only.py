@@ -341,9 +341,6 @@ def awq_quantize(model,
 
         org_output = model.output()
         model.remove_tensors_from_outputs(org_output)
-        block_num = 0
-        absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
-        dump_pairs = {}
         inputs = []
         for i, data in enumerate(dataloader):
             if ((i + 1) * dataloader.batch_size) >= n_samples:
@@ -358,10 +355,12 @@ def awq_quantize(model,
                 inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
             del dataloader
 
+        absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
         num_block = math.ceil(len(absorb_pairs) / n_blocks)
+        dump_pairs = {}
         for idx, parent in enumerate(absorb_pairs):
             if (idx + 1) % num_block == 0 or (idx + 1) == len(absorb_pairs):
-                dump_pairs.update({parent, absorb_pairs[parent]})
+                dump_pairs[parent] = absorb_pairs[parent]
                 output_dicts = {}
                 dump_tensor = list(set([i.input[0] for nodes in dump_pairs.values() for i in nodes]))
                 model.add_tensors_to_outputs(dump_tensor)
@@ -394,7 +393,7 @@ def awq_quantize(model,
                 del output_dicts
                 dump_pairs = {}
             else:
-                dump_pairs.update({parent, absorb_pairs[parent]})
+                dump_pairs[parent] = absorb_pairs[parent]
 
         model.add_tensors_to_outputs(org_output)
     return model
