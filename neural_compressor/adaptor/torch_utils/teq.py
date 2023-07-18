@@ -169,17 +169,6 @@ class TEQuantizer:
                     self_absorb_layer[name] = [name]
         return self_absorb_layer
 
-    def _get_example_input(self):
-        if self.dataloader == None and self.example_inputs == None:
-            return None
-        if self.example_inputs is None:
-            ##assert self.dataloader, "Please provide dataloader or example_inputs"
-            for idx, x in enumerate(self.dataloader):
-                self.example_inputs = x
-                break
-
-        return self.example_inputs
-
     @torch.no_grad()
     def _absorb_scales(self, layer, scale, layer_name=""):
         """
@@ -300,7 +289,6 @@ class TEQuantizer:
         no_absorb_layers: A list saving the layers which could not find the absorb layer
         """
         tg = GraphTrace()
-        # self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.model, self.example_inputs, op_types)
         return absorb_to_layer, no_absorb_layers
 
@@ -329,7 +317,7 @@ class TEQuantizer:
         self.model.train()
         global_steps = 0
 
-        while True:
+        while global_steps <= train_steps:
             for inputs in dataloader:
                 if isinstance(inputs, dict):
                     input_id = inputs["input_ids"]
@@ -352,11 +340,10 @@ class TEQuantizer:
 
                 if global_steps == train_steps:
                     break
-            if global_steps == train_steps:
-                break
 
         logger.info("finish training")
         self.model.eval()
+        return None
 
     @torch.no_grad()
     def quantize(self, scheme=None, quant_lm_head=False):
@@ -378,7 +365,7 @@ class TEQuantizer:
                             quant_weight(m.weight, num_bits=self.num_bits,
                                 group_size=self.group_size, scheme=scheme))
 
-    def save(save_scale_file="", save_state_dict_file=""):
+    def save(self, save_scale_file="", save_state_dict_file=""):
         """
         save alpha/scale or model weight
         :param save_scale_file: save alpha/scale with torch.save
