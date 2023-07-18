@@ -32,8 +32,7 @@ function run_benchmark {
     # TODO remove it before merge /home/st_liu/workspace/inc_examples/microsoft/layoutlmv2-finetuned-funsd \
     python main.py \
            --input_model ${input_model} \
-           --model_name_or_path nielsr/layoutlmv2-finetuned-funsd \  
-           --dataset_name funsd \
+           --model_name_or_path nielsr/layoutlmv2-finetuned-funsd \
            --output_dir ./output_dir \
            --overwrite_output_dir \
            --batch_size=${batch_size} \
