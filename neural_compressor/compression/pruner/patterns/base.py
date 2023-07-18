@@ -19,10 +19,8 @@
 from collections import namedtuple
 
 import numpy as np
-from neural_compressor.utils.utility import LazyImport
 
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
+from ..utils import torch, tf
 
 PATTERNS = {}
 

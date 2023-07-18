@@ -19,11 +19,9 @@
 from functools import partial
 
 import numpy as np
-from neural_compressor.utils.utility import LazyImport
 
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
-F = LazyImport('torch.nn.functional')
+from ..utils import torch, tf, F
+
 
 PRUNERS = {}
 

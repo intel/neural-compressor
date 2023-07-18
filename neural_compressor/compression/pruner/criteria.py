@@ -16,8 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ...utils.utility import LazyImport
-torch = LazyImport('torch')
+
+from .utils import torch
 
 
 CRITERIA = {}

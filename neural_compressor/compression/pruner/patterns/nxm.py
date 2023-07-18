@@ -23,11 +23,8 @@ from .base import (register_pattern,
                    SparsityInfo,
                    ProgressivePatternUtils)
 from ..utils import logger
-from neural_compressor.utils.utility import LazyImport
 
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
-
+from ..utils import torch, tf
 
 @register_pattern('ptNxM')
 class PytorchPatternNxM(PytorchBasePattern):

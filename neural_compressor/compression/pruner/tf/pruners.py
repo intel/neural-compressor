@@ -28,9 +28,7 @@ from .utils import logger
 
 from ...utils.utility import LazyImport
 
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
-F = LazyImport('torch.nn.functional')
+from ..utils import torch, tf, F
 
 PRUNERS = {}
 
