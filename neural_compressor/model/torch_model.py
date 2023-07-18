@@ -394,9 +394,30 @@ class PyTorchModel(PyTorchBaseModel):
         else:   # pragma: no cover
             assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
 
-    def convert(self, weight_only=True, weight_config_path=None):
-        """Convert Lineat to WeightOnlyLinear for low memory inference."""
+    def convert(self, weight_only=True, **kwargs):
+        """Convert Lineat to WeightOnlyLinear for low memory inference.
+
+        Args:
+            weight_only (bool, optional): Whether convert model to WeightOnlyLinear. 
+                                          Defaults to True.
+            if weight_only, kwargs includes:
+                weight_config_path (str, optional): Path of weight_config.json. Defaults to None.
+                full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
+                                            Defaults to False.
+                full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
+                                            Defaults to False.
+                full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
+                                            Defaults to False.
+                compression_factor (str, optional): Path of weight_config.json. Defaults to None.
+                compression_dim (str, optional): Path of weight_config.json. Defaults to None.
+                to_half (bool, optional): Set float32 args to float16. Defaults to None.
+        """
         if weight_only:
+            weight_config_path = kwargs.get("weight_config_path", None)
+            full_range = kwargs.get("full_range", False)
+            compress_bits = kwargs.get("compress_bits", 32)
+            compress_dim = kwargs.get("compress_dim", 'K')
+            to_half = kwargs.get("to_half", False)
             from ..adaptor.torch_utils.util import fetch_module, set_module
             from ..adaptor.torch_utils.weight_only import rtn_quantize
             from ..adaptor.torch_utils.util import collect_weight_info
@@ -414,8 +435,15 @@ class PyTorchModel(PyTorchBaseModel):
                     group_size = v['group_size']
                     scheme = v['scheme']
                 mod = fetch_module(self.model, k)
-                mod = rtn_quantize(mod, num_bits, group_size, scheme, return_int=True)
+                mod = rtn_quantize(
+                    mod, num_bits, group_size, scheme, 
+                    return_int=True, full_range=full_range,
+                    to_half=to_half, 
+                    compress_bits=compress_bits, 
+                    compress_dim=compress_dim, 
+                )
                 set_module(self.model, k, mod)
+
 
 
 class PyTorchFXModel(PyTorchModel):

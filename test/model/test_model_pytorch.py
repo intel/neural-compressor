@@ -1,10 +1,14 @@
+import os
 import torch
 import torchvision
 import unittest
 import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.model import MODELS, Model
+from neural_compressor.model import MODELS
+from neural_compressor.model import Model as INCModel
 from neural_compressor.model.torch_model import PyTorchModel
 from packaging.version import Version
+from neural_compressor import quantization, PostTrainingQuantConfig
+from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 
 try:
     import intel_pytorch_extension as ipex
@@ -19,6 +23,20 @@ else:
     FX_MODE = False
 
 
+class Model(torch.nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.fc1 = torch.nn.Linear(30, 40)
+        self.fc2 = torch.nn.Linear(40, 30)
+        self.fc3 = torch.nn.Linear(30, 5)
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        out = self.fc3(out)
+        return out
+
+
 class TestPytorchModel(unittest.TestCase):
     framework = "pytorch"
     model = torchvision.models.quantization.resnet18()
@@ -26,7 +44,7 @@ class TestPytorchModel(unittest.TestCase):
 
     def test_Model(self):
         model = torchvision.models.quantization.resnet18()
-        inc_model = Model(model)
+        inc_model = INCModel(model)
         self.assertTrue(isinstance(inc_model, PyTorchModel))
 
     def test_get_all_weight_name(self):
@@ -80,6 +98,80 @@ class TestPytorchModel(unittest.TestCase):
         df, total_sparsity = self.lpot_model.report_sparsity()
         self.assertTrue(total_sparsity > 0)
         self.assertTrue(len(df) == 22)
+
+    def test_WeightOnlyLinear(self):
+        model = Model()
+        input = torch.randn(1, 30)
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+        )
+        q_model = quantization.fit(model, conf)
+        out1 = q_model(input)
+        q_model.save('saved')
+        model_size1 = os.path.getsize('saved/best_model.pt')/1024
+        print("FP32 Model size:{:.3f}M".format(model_size1))
+        # test compress_bits = [8, 16, 32, 64]
+        compress_bits = [8, 16, 32, 64]
+        for bits in compress_bits:
+            new_model = Model()
+            inc_model = INCModel(new_model)
+            inc_model.convert(
+                weight_only=True, 
+                weight_config_path='saved/weight_config.json',
+                compress_bits=bits,
+            )
+            out2 = q_model(input)
+            torch.save(inc_model.state_dict(), 'saved/tmp.pt')
+            model_size2 = os.path.getsize('saved/tmp.pt')/1024
+            print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
+            self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
+            self.assertTrue(inc_model.model.fc1.packed_weight.dtype==eval(f'torch.int{bits}'))
+            self.assertTrue(inc_model.model.fc1.scale.dtype==torch.float32)
+            self.assertTrue(model_size1 / model_size2 > 2)
+            self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+
+        # test compress_bits = [8, 16, 32, 64]
+        compress_dims = ['K', 'N']
+        for dim in compress_dims:
+            new_model = Model()
+            inc_model = INCModel(new_model)
+            inc_model.convert(
+                weight_only=True, 
+                weight_config_path='saved/weight_config.json',
+                compress_dim=dim,
+            )
+            out2 = q_model(input)
+            torch.save(inc_model.state_dict(), 'saved/tmp.pt')
+            model_size2 = os.path.getsize('saved/tmp.pt')/1024
+            print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
+            self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
+            if dim == 'K':
+                self.assertTrue(
+                    inc_model.model.fc1.packed_weight.shape[0] == inc_model.model.fc1.out_features
+                )
+            else:
+                self.assertTrue(
+                    inc_model.model.fc1.packed_weight.shape[1] == inc_model.model.fc1.in_features
+                )
+            self.assertTrue(model_size1 / model_size2 > 2)
+            self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+
+        # test half dtype
+        new_model = Model()
+        inc_model = INCModel(new_model)
+        inc_model.convert(
+            weight_only=True, 
+            weight_config_path='saved/weight_config.json',
+            to_half=True,
+        )
+        out2 = q_model(input)
+        torch.save(inc_model.state_dict(), 'saved/tmp.pt')
+        model_size2 = os.path.getsize('saved/tmp.pt')/1024
+        print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
+        self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
+        self.assertTrue(inc_model.model.fc1.scale.dtype==torch.float16)
+        self.assertTrue(model_size1 / model_size2 > 2)
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
 
 
 if __name__ == "__main__":

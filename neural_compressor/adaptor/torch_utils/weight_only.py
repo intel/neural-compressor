@@ -206,7 +206,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
 
 
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
-                 quantile=1.0, weight_config={}, return_int=False, full_range=False):
+                 quantile=1.0, weight_config={}, return_int=False, 
+                 full_range=False, **kwargs):
     """Quant the model with round to nearst method.
 
     Args:
@@ -234,6 +235,10 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     supported_layers = ['Linear']
+    if return_int:
+        compress_bits = kwargs.get("compress_bits", 32)
+        compress_dim = kwargs.get("compress_dim", 'K')
+        to_half = kwargs.get("to_half", False)
     for n, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
@@ -260,7 +265,9 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 quantile, return_int=True, full_range=full_range
             )
             new_module = WeightOnlyLinear(
-                m.in_features, m.out_features, num_bits, group_size
+                m.in_features, m.out_features, num_bits, group_size,
+                zp=zp is not None, bias=m.bias is not None, to_half=to_half,
+                compress_bits=compress_bits, compress_dim=compress_dim
             )
             new_module.pack(int_weight, scale, zp, m.bias)
             if n == '':
