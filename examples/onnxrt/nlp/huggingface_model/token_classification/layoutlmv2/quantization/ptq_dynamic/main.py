@@ -538,6 +538,7 @@ def main():
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:
+        import onnx
         onnx_model = onnx.load(model_args.input_model)
         if model_args.mode == "performance":
             from neural_compressor.benchmark import fit
