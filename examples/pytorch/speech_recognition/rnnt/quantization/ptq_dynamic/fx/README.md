@@ -45,11 +45,9 @@ Our example comes from MLPerf Inference Benchmark Suite.
 ## 1. Enable RNNT example with the auto dynamic quantization strategy of Neural Compressor.
 
   The changes made are as follows:
-  1. run.py->run_tune.py:
-    We added neural_compressor support in order to do quantization.
-  2. pytorch_SUT.py:
+  1. pytorch_SUT.py:
     Removed jit script convertion.
-  3. pytorch/decoders.py:
+  2. pytorch/decoders.py:
     Removed assertion of torch.jit.ScriptModule.
 
 ## 2. Tuning command: 
@@ -61,7 +59,7 @@ bash run_tuning.sh --dataset_location=convert_dataset --input_model=./rnnt.pt --
 # fp32
 bash run_benchmark.sh --dataset_location=convert_dataset --input_model=./rnnt.pt --mode=performance/accuracy --int8=false
 # int8
-bash run_benchmark.sh --dataset_location=convert_dataset --input_model=./saved_results/best_model.pt --mode=performance/accuracy --int8=true
+bash run_benchmark.sh --dataset_location=convert_dataset --input_model=./rnnt.pt --mode=performance/accuracy --int8=true
 ```
 ## 4. Brief output information:
 
