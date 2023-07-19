@@ -401,8 +401,8 @@ class PyTorchModel(PyTorchBaseModel):
 
         Args:
             qweight_config_path (str, optional): Path of qweight_config.json. Defaults to None.
-            sym_full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
-                                        Defaults to False.
+            sym_full_range (bool, optional): Whether to leverage the full compression range
+                                             under symmetric quantization. Defaults to False.
             compression_dtype (torch.Tensor, optional): The target dtype after comoression. 
                                                         Defaults to torch.int32.
             compression_dim (int, optional): Select from [0, 1], 0 is output channel, 

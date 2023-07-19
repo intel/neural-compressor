@@ -91,7 +91,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             recipes={
-                # By default, sym_full range is False and 4 bit sym will only use range [-7,7].
+                # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
                 'rtn_args': {'sym_full_range': True}
             }
         )
@@ -227,7 +227,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model.export_compressed_model()
         out2 = q_model(input)
         # no idea about the gap at 1e-08, use allclose instead of out1==out2
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05)) # sym has clip issue for [-8, 7]
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
         self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 
