@@ -216,6 +216,8 @@ class WeightOnlyLinear(torch.nn.Module):
                 )
         if bias:
             self.register_buffer('bias', torch.zeros(self.out_features, dtype=self.float_type))
+        else:
+            self.bias = None
 
     def pack(self, int_weight, scale, zp, bias):
         if bias is not None:
