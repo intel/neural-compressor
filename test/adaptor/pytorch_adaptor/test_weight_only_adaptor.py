@@ -81,10 +81,9 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
-        q_model.convert(weight_only=True)
-        out3 = q_model(input)
-        # sym has clip issue for [-8, 7], set a big atol.
-        self.assertTrue(torch.all(torch.isclose(out3, out2, atol=1e-1)))
+        compressed_model = q_model.export_compressed_model()
+        out3 = compressed_model(input)
+        self.assertTrue(torch.all(out3==out2))
 
         model = Model()
         out1 = model(input)
@@ -92,18 +91,17 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             recipes={
-                # By default, full range is False and 4 bit sym will only use range [-7,7].
-                'rtn_args': {'full_range': True}
+                # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
+                'rtn_args': {'sym_full_range': True}
             }
         )
         q_model = quantization.fit(model, conf)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
-        q_model.convert(weight_only=True)
-        out3 = q_model(input)
-        # sym has clip issue for [-8, 7], set a big atol.
-        self.assertTrue(torch.all(torch.isclose(out3, out2, atol=1e-1)))
+        compressed_model = q_model.export_compressed_model(sym_full_range=True)
+        out3 = compressed_model(input)
+        self.assertTrue(torch.all(out3==out2))
 
         model = Model()
         out1 = model(input)
@@ -188,7 +186,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         print("FP32 Model size:{:.3f}M".format(model_size1))
         from neural_compressor.model import Model as INCModel
         inc_model = INCModel(new_model)
-        inc_model.convert(weight_only=True, weight_config_path = 'saved/weight_config.json')
+        inc_model.export_compressed_model(qweight_config_path = 'saved/qconfig.json')
         torch.save(inc_model.state_dict(), 'saved/tmp.pt')
         model_size2 = os.path.getsize('saved/tmp.pt')/1024
         print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
@@ -226,10 +224,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         input = torch.ones([1, 10], dtype=torch.long)
         out1 = q_model(input)
-        q_model.convert(weight_only=True)
+        q_model.export_compressed_model()
         out2 = q_model(input)
         # no idea about the gap at 1e-08, use allclose instead of out1==out2
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05)) # sym has clip issue for [-8, 7]
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
         self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 

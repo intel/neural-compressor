@@ -2686,3 +2686,5 @@ Chatbot
 chatbot
 fba
 hostname
+qweight
+qconfig

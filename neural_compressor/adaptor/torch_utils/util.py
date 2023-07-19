@@ -918,9 +918,9 @@ def get_op_type_by_name(op_name, quantizable_ops):
     return None
 
 def collect_weight_info(q_config):
-    """collect weight info from q_config for dumping into weight_config.json
+    """collect weight info from q_config for dumping into qconfig.json
 
-    weight_config.json example:
+    qconfig.json example:
     ```
     {
         'fc': {

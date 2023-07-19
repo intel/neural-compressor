@@ -4535,9 +4535,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
     def rtn_quantize(self, model, tune_cfg):
         logger.debug("quantizing with the round-to-nearest algorithm")
         if 'rtn_args' in self.recipes:
-            full_range = self.recipes['rtn_args'].get('full_range', False)
+            sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
         else:
-            full_range=False
+            sym_full_range=False
         from .torch_utils.weight_only import rtn_quantize
         from .torch_utils.util import fetch_module
         for key, config in tune_cfg['op'].items():
@@ -4553,7 +4553,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     continue
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
-                                 return_int=False, full_range=full_range)
+                                 return_int=False, 
+                                 sym_full_range=sym_full_range)
                 set_module(model, op_name, m)
         return model
 
@@ -4651,9 +4652,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         else:
             auto_scale, mse_range = True, True
         if 'rtn_args' in self.recipes:
-            full_range = self.recipes['rtn_args'].get('full_range', False)
+            sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
         else:
-            full_range=False
+            sym_full_range=False
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         model = awq_quantize(
             model, 
@@ -4666,7 +4667,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             calib_func=calib_func,
             n_blocks=n_blocks,
             return_int=False,
-            full_range=full_range,
+            sym_full_range=sym_full_range,
         )
         return model
 
