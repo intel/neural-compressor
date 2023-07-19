@@ -317,13 +317,11 @@
       "main_script": "run.py"
     },
     "rnnt": {
-      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/eager",
+      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
       "input_model": "/tf_dataset/pytorch/rnnt/rnnt.pt",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "run_tune.py",
+      "batch_size": 100
     },
     "wav2vec2_dynamic":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
@@ -571,14 +569,12 @@
       "main_script": "ssd/main.py",
       "batch_size": 100
     },
-    "maskrcnn_fx": {
+    "maskrcnn": {
       "model_src_dir": "object_detection/maskrcnn/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/pytorch/maskrcnn_fx/e2e_mask_rcnn_R_50_FPN_1x.pth",
-      "yaml": "pytorch/conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "pytorch/tools/test_net.py",
+      "batch_size": 100
     },
     "bert_base_MRPC_qat": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/qat/fx",
