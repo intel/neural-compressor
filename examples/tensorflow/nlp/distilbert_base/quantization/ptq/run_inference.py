@@ -308,8 +308,7 @@ class Distilbert_base(object):
             else:
                 accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
                 config = PostTrainingQuantConfig(calibration_sampling_size=[500],
-                                                 accuracy_criterion=accuracy_criterion,
-                                                 op_type_dict={'matmul':{'weight':{'granularity':['per_channel']}}})
+                                                 accuracy_criterion=accuracy_criterion)
             q_model = quantization.fit(model=graph, conf=config, calib_dataloader=self.dataloader,
                             eval_func=self.eval_func)
             try:
