@@ -220,7 +220,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack(self, int_weight, scale, zp, bias):
         if bias is not None:
             assert hasattr(self, 'bias'), "bias is not set when initializing."
-        self.bias = bias.type(self.float_type)
+            self.bias = bias.type(self.float_type)
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale.type(self.float_type)
         if self.compress_dim == 'N':
