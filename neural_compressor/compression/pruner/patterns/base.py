@@ -385,6 +385,10 @@ class BasePattern:
     def get_reduced_masks_from_data(self, data, key):
         """Obtain the unpruned weights and reshape according to the block_size."""
         raise NotImplementedError
+    
+    def get_sparsity_ratio_each_layer(self, mask):
+        """Calculate the sparsity ratio of each layer."""
+        raise NotImplementedError
 
     def update_residual_cnt(self, masks, target_sparsity_ratio):
         """Update the number of parameters yet to be pruned.

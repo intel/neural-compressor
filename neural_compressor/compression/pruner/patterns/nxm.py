@@ -134,7 +134,8 @@ class PytorchPatternNxM(PytorchBasePattern):
         for key in pre_masks.keys():
             if key in self.invalid_layers:
                 continue
-            reduced_mask = pre_masks[key].float() if self.block else self.get_reduced_masks_from_data(pre_masks[key].float(), key)
+            reduced_mask = pre_masks[key].float() if self.block \
+                else self.get_reduced_masks_from_data(pre_masks[key].float(), key)
             zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
             total_cnt += int(reduced_mask.numel())
         if total_cnt == 0:
@@ -230,10 +231,10 @@ class PytorchPatternNxM(PytorchBasePattern):
         Returns:
             The reduced pruning score.
         """
-        if key in self.invalid_layers:
-            return score
-        if self.keep_mask_layers.get(key, False):
-            return score
+        # if key in self.invalid_layers:
+        #     return score
+        # if self.keep_mask_layers.get(key, False):
+        #     return score
         self.keep_mask_layers[key] = False
         new_score = self.reshape_orig_to_pattern(score, key)
         # sum or mean is quite different for per channel pruning
@@ -434,13 +435,19 @@ class PytorchPatternNxM(PytorchBasePattern):
             A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
         """
         score_or_linear = progressive_configs['progressive_type']  # "scores" or "linear"
+        new_scores = {}
         for key in scores.keys():
-            scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+            # new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+            data = scores[key]
+            block_size = self.block_size[key]
+            data = data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+            data = self._reshape_2dims_to_orig(data, pre_masks[key].shape)
+            new_scores[key] = data
         if score_or_linear == "scores":
-            return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores,
+            return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, new_scores,
                                                                                  progressive_step, progressive_configs)
         elif score_or_linear == "linear":
-            return ProgressivePatternUtils.update_progressive_masks_linear_order(pre_masks, cur_masks, scores,
+            return ProgressivePatternUtils.update_progressive_masks_linear_order(pre_masks, cur_masks, new_scores,
                                                                                  progressive_step, progressive_configs,
                                                                                  self.block_size)
         else:

@@ -59,7 +59,8 @@ def get_pruner(config, modules, framework='pytorch'):
     """
     # do the ugly work here
     # check if it is doing self-multihead-attention pruning
-    assert framework in FRAMEWORK.keys(), f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
+    assert framework in FRAMEWORK.keys(), \
+        f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
 
     if "mha" in config["pattern"]:
         return PRUNERS["mha"](config, modules)
