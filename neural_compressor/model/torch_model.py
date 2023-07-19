@@ -315,7 +315,7 @@ class PyTorchModel(PyTorchBaseModel):
             if self.q_config:
                 if self.q_config['approach'] == 'post_training_weight_only':
                     from ..adaptor.torch_utils.util import collect_weight_info
-                    weight_config_path = os.path.join(root, "weight_config.json")
+                    weight_config_path = os.path.join(root, "qweight_config.json")
                     weight_config = collect_weight_info(self.q_config)
                     with open(weight_config_path, 'w') as f:
                         json.dump(weight_config, f, indent = 4)
@@ -394,51 +394,49 @@ class PyTorchModel(PyTorchBaseModel):
         else:   # pragma: no cover
             assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
 
-    def convert(self, weight_only=True, **kwargs):
-        """Convert Lineat to WeightOnlyLinear for low memory inference.
+    def export_compressed_model(self, qweight_config_path=None, sym_full_range=False, 
+                                compression_dtype=torch.int32, compression_dim=1, 
+                                scale_dtype=torch.float32):
+        """Convert Linear to WeightOnlyLinear for low memory inference.
 
         Args:
-            weight_only (bool, optional): Whether convert model to WeightOnlyLinear. 
-                                          Defaults to True.
-            if weight_only, kwargs includes:
-                weight_config_path (str, optional): Path of weight_config.json. Defaults to None.
-                full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
-                                            Defaults to False.
-                compression_factor (str, optional): Path of weight_config.json. Defaults to 32.
-                compression_dim (str, optional): Path of weight_config.json. Defaults to 'K'.
-                to_half (bool, optional): Set float32 tensor to float16. Defaults to False.
+            qweight_config_path (str, optional): Path of qweight_config.json. Defaults to None.
+            sym_full_range (bool, optional): Whether leverage the last bit of symmetric dtype. 
+                                        Defaults to False.
+            compression_dtype (torch.Tensor, optional): The target dtype after comoression. 
+                                                        Defaults to torch.int32.
+            compression_dim (int, optional): Select from [0, 1], 0 is output channel, 
+                                                1 is input channel. Defaults to 1.
+            scale_dtype (torch.Tensor, optional): Use float32 or float16. 
+                                                    Defaults to torch.float32.
         """
-        if weight_only:
-            weight_config_path = kwargs.get("weight_config_path", None)
-            full_range = kwargs.get("full_range", False)
-            compress_bits = kwargs.get("compress_bits", 32)
-            compress_dim = kwargs.get("compress_dim", 'K')
-            to_half = kwargs.get("to_half", False)
-            from ..adaptor.torch_utils.util import fetch_module, set_module
-            from ..adaptor.torch_utils.weight_only import rtn_quantize
-            from ..adaptor.torch_utils.util import collect_weight_info
-            if weight_config_path is not None:
-                with open(weight_config_path, 'r') as f:
-                    weight_config = json.load(f)
-                f.close()
+        from ..adaptor.torch_utils.util import fetch_module, set_module
+        from ..adaptor.torch_utils.weight_only import rtn_quantize
+        from ..adaptor.torch_utils.util import collect_weight_info
+        if qweight_config_path is not None:
+            with open(qweight_config_path, 'r') as f:
+                weight_config = json.load(f)
+            f.close()
+        else:
+            weight_config = collect_weight_info(self.q_config)
+        for k, v in weight_config.items():
+            if v['dtype'] == 'fp32':
+                continue
             else:
-                weight_config = collect_weight_info(self.q_config)
-            for k, v in weight_config.items():
-                if v['dtype'] == 'fp32':
-                    continue
-                else:
-                    num_bits = v['bits']
-                    group_size = v['group_size']
-                    scheme = v['scheme']
-                mod = fetch_module(self.model, k)
-                mod = rtn_quantize(
-                    mod, num_bits, group_size, scheme, 
-                    return_int=True, full_range=full_range,
-                    to_half=to_half, 
-                    compress_bits=compress_bits, 
-                    compress_dim=compress_dim, 
-                )
-                set_module(self.model, k, mod)
+                num_bits = v['bits']
+                group_size = v['group_size']
+                scheme = v['scheme']
+            mod = fetch_module(self.model, k)
+            mod = rtn_quantize(
+                mod, num_bits, group_size, scheme, 
+                return_int=True, 
+                sym_full_range=sym_full_range,
+                compression_dtype=compression_dtype, 
+                compression_dim=compression_dim, 
+                scale_dtype=scale_dtype, 
+            )
+            set_module(self.model, k, mod)
+        return self.model
 
 
 class PyTorchFXModel(PyTorchModel):

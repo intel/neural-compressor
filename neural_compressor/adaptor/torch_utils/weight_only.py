@@ -207,7 +207,7 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
 
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
                  quantile=1.0, weight_config={}, return_int=False, 
-                 full_range=False, **kwargs):
+                 sym_full_range=False, **kwargs):
     """Quant the model with round to nearst method.
 
     Args:
@@ -228,7 +228,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 }
         return_int (bool, optional): Choose return fp32 or int32 model.
                                      Defaults to False.
-        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+                                     Defaults to False.
 
     Returns:
         model: fake quantized torch module
@@ -236,9 +237,9 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
     assert isinstance(model, torch.nn.Module), "only support torch module"
     supported_layers = ['Linear']
     if return_int:
-        compress_bits = kwargs.get("compress_bits", 32)
-        compress_dim = kwargs.get("compress_dim", 'K')
-        to_half = kwargs.get("to_half", False)
+        compression_dtype = kwargs.get("compression_dtype", torch.int32)
+        compression_dim = kwargs.get("compression_dim", 1)
+        scale_dtype = kwargs.get("scale_dtype", torch.float32)
     for n, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
@@ -250,7 +251,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         logger.debug(f"RTN quantized module:{n, m}")
         if scheme == 'sym':
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
-                        f"scheme={scheme}, quantile={quantile}, full_range={full_range}")
+                        f"scheme={scheme}, quantile={quantile}, sym_full_range={sym_full_range}")
         else:
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}")
@@ -262,12 +263,14 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
                 weight, num_bits, group_size, scheme, 
-                quantile, return_int=True, full_range=full_range
+                quantile, return_int=True, full_range=sym_full_range
             )
             new_module = WeightOnlyLinear(
                 m.in_features, m.out_features, num_bits, group_size,
-                zp=zp is not None, bias=m.bias is not None, to_half=to_half,
-                compress_bits=compress_bits, compress_dim=compress_dim
+                zp=zp is not None, bias=m.bias is not None, 
+                compression_dtype=compression_dtype, 
+                compression_dim=compression_dim, 
+                scale_dtype=scale_dtype, 
             )
             new_module.pack(int_weight, scale, zp, m.bias)
             if n == '':
@@ -276,7 +279,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 set_module(model, n, new_module)
         else:
             q_weight = quant_weight(
-                weight, num_bits, group_size, scheme, quantile, full_range=full_range
+                weight, num_bits, group_size, scheme, quantile, 
+                full_range=sym_full_range
             )
             m.weight.data.copy_(q_weight)
     return model

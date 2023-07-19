@@ -152,26 +152,24 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
 
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, bits, groupsize, 
-                 zp=False, bias=False, to_half=True, 
-                 compress_bits=32, compress_dim='K'):
+                 zp=False, bias=False, scale_dtype=torch.float32, 
+                 compression_dtype=torch.int32, compression_dim=1):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.bits = bits
         self.groupsize = groupsize if groupsize != -1 else in_features
-        self.to_half = to_half
-        self.compress_bits = compress_bits
-        self.compress_dim = compress_dim
-        assert compress_bits in [8, 16, 32, 64], \
+        self.compression_dim = compression_dim
+        assert compression_dtype in [torch.int8, torch.int16, torch.int32, torch.int64], \
                         "Only support torch.int8|16|32|64 as compressed dtype."
-        self.n_pack = compress_bits // self.bits
-        self.compressed_dtype = eval(f'torch.int{compress_bits}')
-        if to_half:
-            self.float_type = torch.float16
-        else:
-            self.float_type = torch.float
+        dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
+        self.compress_bits = dtype_bits_mapping[compression_dtype]
+        self.n_pack = self.compress_bits // self.bits
+        self.compressed_dtype = compression_dtype
+        self.float_type = scale_dtype
         # K is input channel, N is output channel
-        assert compress_dim in ['K', 'N'], "Only support K or N as compress dimension."
+        assert compression_dim in [0, 1], "Only support 0 or 1 as compression dimension, " +\
+                                          "0 is output channel, 1 is input channel."
         self.register_buffer(
             'scale', 
             torch.zeros(
@@ -179,7 +177,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 dtype=self.float_type,
             )
         )
-        if compress_dim == 'K':
+        if compression_dim == 1:
             self.register_buffer(
                 'packed_weight', 
                 torch.zeros(
@@ -225,7 +223,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.bias = bias.type(self.float_type)
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale.type(self.float_type)
-        if self.compress_dim == 'N':
+        if self.compression_dim == 0:
             int_weight = int_weight.T
             self.packed_weight = self.packed_weight.T
         origin_shape = int_weight.shape
@@ -243,11 +241,11 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp[e] &= mask
                     tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
                     self.packed_weight[i][j] |= tmp[e]
-        if self.compress_dim == 'N':
+        if self.compression_dim == 0:
             self.packed_weight = self.packed_weight.T
 
         if zp is not None:
-            if self.compress_dim == 'N':
+            if self.compression_dim == 0:
                 zp = zp.T
                 self.packed_zp = self.packed_zp.T
             assert hasattr(self, 'packed_zp'), "zp is not set when initializing."
@@ -261,7 +259,7 @@ class WeightOnlyLinear(torch.nn.Module):
                         tmp[e] &= mask
                         tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
                         self.packed_zp[i][j] |= tmp[e]
-            if self.compress_dim == 'N':
+            if self.compression_dim == 0:
                 self.packed_zp = self.packed_zp.T
 
     def recover(self):
@@ -272,7 +270,7 @@ class WeightOnlyLinear(torch.nn.Module):
             weight_dtype = torch.int8
         # unpack weight
         weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype)
-        if self.compress_dim == 'N':
+        if self.compression_dim == 0:
             weight = weight.T
             self.packed_weight = self.packed_weight.T
         origin_shape = weight.shape
@@ -289,11 +287,11 @@ class WeightOnlyLinear(torch.nn.Module):
                     if weight_dtype == torch.uint8:
                         tmp &= mask # remove sign bit
                     weight[i][index] = tmp.type(weight_dtype)
-        if self.compress_dim == 'N':
+        if self.compression_dim == 0:
             weight = weight.T
         # unpack zero_point
         if hasattr(self, 'packed_zp'):
-            if self.compress_dim == 'N':
+            if self.compression_dim == 0:
                 zp = zp.T
                 self.packed_zp = self.packed_zp.T
             zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp
@@ -311,7 +309,7 @@ class WeightOnlyLinear(torch.nn.Module):
                         tmp = tmp >> 32 - self.bits
                         tmp &= mask
                         zp[i][index] = tmp.type(zp_dtype)
-            if self.compress_dim == 'N':
+            if self.compression_dim == 0:
                 zp = zp.T
             # recover fp32 weight with int_weight, scale, and zero_point
             left_element = self.in_features % self.groupsize 
