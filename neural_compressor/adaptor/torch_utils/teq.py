@@ -303,7 +303,7 @@ class TEQuantizer:
             trained_alphas_list.append(item[1])
         optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
 
-        lr_scheduler = transformers.get_scheduler(
+        lr_scheduler = transformers.get_scheduler( # pylint: disable=E1111
                     name=lr_scheduler_type,
                     optimizer=optimizer,
                     num_warmup_steps=int(train_steps * warmup_ratio) // gradient_accumulation_steps,
