@@ -146,10 +146,6 @@ if __name__ == '__main__':
         type=int, default=0, help='Seed for sampling the calibration data.'
     )
     parser.add_argument(
-        '--nsamples', type=int, default=128,
-        help='Number of calibration data samples.'
-    )
-    parser.add_argument(
         '--percdamp', type=float, default=.01,
         help='Percent of the average Hessian diagonal to use for dampening.'
     )
