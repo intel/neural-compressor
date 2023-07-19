@@ -43,7 +43,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False)
+.. py:function:: qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_range=False)
 
    Quant and dequant tensor with sym schema.
 
@@ -55,12 +55,18 @@ Functions
    :param return_int: Choose return fp32 or int8/uint8 data.
                       Defaults to False.
    :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+                      For example: 4 bit
+                          scale = amax / 8 if full_range else amax / 7
+                          If True, scale = -scale if abs(min)> abs(max) else scale
+                          Defaults to False.
+   :type full_range: bool, optional
 
    :returns: qdq weight
    :rtype: output
 
 
-.. py:function:: qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, return_int=False)
+.. py:function:: qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, return_int=False, full_range=False)
 
    Quant and dequant tensor per channel.
 
@@ -72,12 +78,14 @@ Functions
    :param return_int: Choose return fp32 or int8/uint8 data.
                       Defaults to False.
    :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
 
    :returns: qdq weight
    :rtype: output
 
 
-.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0, return_int=False)
+.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0, return_int=False, full_range=False)
 
    Quant and dequant tensor with group size.
 
@@ -93,12 +101,14 @@ Functions
    :param return_int: Choose return fp32 or int8/uint8 data.
                       Defaults to False.
    :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
 
    :returns: qdq weight.
    :rtype: output
 
 
-.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False)
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, full_range=False)
 
    Quant the model with round to nearst method.
 
@@ -124,6 +134,8 @@ Functions
    :param return_int: Choose return fp32 or int32 model.
                       Defaults to False.
    :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
 
    :returns: fake quantized torch module
    :rtype: model
@@ -154,7 +166,7 @@ Functions
    :rtype: input_values, output_values
 
 
-.. py:function:: awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, return_int=False)
+.. py:function:: awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, return_int=False, full_range=False)
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -189,6 +201,8 @@ Functions
    :param return_int: Choose return fp32 or int32 model.
                       Defaults to False.
    :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
 
    :returns: fake quantized model
    :rtype: model
