@@ -116,7 +116,7 @@ class TestPytorchModel(unittest.TestCase):
             new_model = Model()
             inc_model = INCModel(new_model)
             inc_model.export_compressed_model(
-                qweight_config_path='saved/qweight_config.json',
+                qweight_config_path='saved/qconfig.json',
                 compression_dtype=dtype,
             )
             out2 = q_model(input)
@@ -135,7 +135,7 @@ class TestPytorchModel(unittest.TestCase):
             new_model = Model()
             inc_model = INCModel(new_model)
             inc_model.export_compressed_model(
-                qweight_config_path='saved/qweight_config.json',
+                qweight_config_path='saved/qconfig.json',
                 compression_dim=dim,
             )
             out2 = q_model(input)
@@ -158,7 +158,7 @@ class TestPytorchModel(unittest.TestCase):
         new_model = Model()
         inc_model = INCModel(new_model)
         inc_model.export_compressed_model(
-            qweight_config_path='saved/qweight_config.json',
+            qweight_config_path='saved/qconfig.json',
             scale_dtype=torch.float16,
         )
         out2 = q_model(input)

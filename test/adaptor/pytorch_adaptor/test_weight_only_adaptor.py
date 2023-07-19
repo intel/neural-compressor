@@ -186,7 +186,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         print("FP32 Model size:{:.3f}M".format(model_size1))
         from neural_compressor.model import Model as INCModel
         inc_model = INCModel(new_model)
-        inc_model.export_compressed_model(qweight_config_path = 'saved/qweight_config.json')
+        inc_model.export_compressed_model(qweight_config_path = 'saved/qconfig.json')
         torch.save(inc_model.state_dict(), 'saved/tmp.pt')
         model_size2 = os.path.getsize('saved/tmp.pt')/1024
         print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))

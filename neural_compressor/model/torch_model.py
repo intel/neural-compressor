@@ -315,7 +315,7 @@ class PyTorchModel(PyTorchBaseModel):
             if self.q_config:
                 if self.q_config['approach'] == 'post_training_weight_only':
                     from ..adaptor.torch_utils.util import collect_weight_info
-                    weight_config_path = os.path.join(root, "qweight_config.json")
+                    weight_config_path = os.path.join(root, "qconfig.json")
                     weight_config = collect_weight_info(self.q_config)
                     with open(weight_config_path, 'w') as f:
                         json.dump(weight_config, f, indent = 4)
@@ -400,7 +400,7 @@ class PyTorchModel(PyTorchBaseModel):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
         Args:
-            qweight_config_path (str, optional): Path of qweight_config.json. Defaults to None.
+            qweight_config_path (str, optional): Path of qconfig.json. Defaults to None.
             sym_full_range (bool, optional): Whether to leverage the full compression range
                                              under symmetric quantization. Defaults to False.
             compression_dtype (torch.Tensor, optional): The target dtype after comoression. 
