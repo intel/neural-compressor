@@ -12,12 +12,11 @@ Quantization proves beneficial in terms of reducing the memory and computational
 
 There are three main methods of Calibration:
 
-- MinMax: This is the simplest method to get the maximum and minimum of input values as $α$ and $β$ [^1]. This approach maintains the full range but often at the cost of compromising precision.
+- MinMax: This method gets the maximum and minimum of input values as $α$ and $β$ [^1]. It preserves the entire range and is the simplest approach.
 
-- Entropy: This method minimizes the KL divergence to reduce the information loss between the  full-precision and the quantized data [^2]. By focusing on preserving essential information, this approach can better manage precision.
+- Entropy: This method minimizes the KL divergence to reduce the information loss between full-precision and quantized data [^2]. Its primary focus is on preserving essential information.
 
-- Percentile: This approach only considers a specific percentage of values for calculating the range, ignoring the remainder which may contain outliers [^3]. This method enhances resolution by excluding extreme values but still retaining noteworthy data.
-
+- Percentile: This method only considers a specific percentage of values for calculating the range, ignoring the remainder which may contain outliers [^3]. It enhances resolution by excluding extreme values but still retaining noteworthy data.
 
 ## Supported Framework Matrix
 
