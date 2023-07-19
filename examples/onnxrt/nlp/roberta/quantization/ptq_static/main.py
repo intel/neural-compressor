@@ -26,7 +26,7 @@ import torch
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = "%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -359,7 +359,7 @@ if __name__ == "__main__":
                                 task=args.task,
                                 model_type=args.model_type,
                                 dynamic_length=args.dynamic_length)
-    dataloader = DefaultDataLoader(dataset, args.batch_size)
+    dataloader = DataLoader(framework='onnxruntime', dataset=dataset, batch_size=args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model):

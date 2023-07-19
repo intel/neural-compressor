@@ -28,6 +28,7 @@ DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "pytorch": PyTorchDataLoader,
                "pytorch_ipex": PyTorchDataLoader,
                "pytorch_fx": PyTorchDataLoader,
+               "onnxruntime": ONNXRTDataLoader,
                "onnxrt_qlinearops": ONNXRTDataLoader,
                "onnxrt_integerops": ONNXRTDataLoader,
                "onnxrt_qdq": ONNXRTDataLoader,
@@ -66,7 +67,7 @@ class DataLoader(object):
                 Defaults to False.
         """
         assert framework in ('tensorflow', 'tensorflow_itex', 'keras',\
-                             'pytorch', 'pytorch_ipex', 'pytorch_fx', 'onnxrt_qdqops', \
+                             'pytorch', 'pytorch_ipex', 'pytorch_fx', 'onnxruntime', 'onnxrt_qdqops', \
                              'onnxrt_qlinearops', 'onnxrt_integerops', 'mxnet'), \
                              "framework support tensorflow pytorch mxnet onnxruntime"
         return DATALOADERS[framework](dataset=dataset,

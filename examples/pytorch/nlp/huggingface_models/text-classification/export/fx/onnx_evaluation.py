@@ -27,9 +27,6 @@ import torch
 import numpy as np
 from datasets import load_dataset
 from transformers import AutoTokenizer
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-from neural_compressor.data.datasets.dummy_dataset import DummyDataset
-
 
 task_to_keys = {
     "cola": ("sentence", None),

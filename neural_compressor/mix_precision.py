@@ -98,11 +98,14 @@ def fit(model,
 
     precisions = list(set(conf.precisions) - set(conf.excluded_precisions))
     if ('bf16' in precisions or 'fp16' in precisions) and conf.framework == "onnxruntime":  # pragma: no cover
-        if conf.device == "cpu":
-            logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
+        if 'fp16' in precisions and not (conf.device == "gpu" and conf.backend == "onnxrt_cuda_ep"):
+            logger.warning("Mix precision exits due to fp16 for onnx models" \
+                           "needs 'gpu' device and 'onnxrt_cuda_ep' backend.")
             sys.exit(0)
-        elif conf.backend != "onnxrt_cuda_ep":
-            logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
+        elif 'bf16' in precisions and (not (conf.backend == "onnxrt_cuda_ep" and conf.device == "gpu") and \
+                                       not (conf.backend == "onnxrt_dnnl_ep" and conf.device == "cpu")): 
+            logger.warning("Mix precision exits due to bf16 for onnx models needs " \
+                "'gpu' device and 'onnxrt_cuda_ep' backend, or 'cpu' device and 'onnxrt_dnnl_ep' backend.")
             sys.exit(0)
     elif 'bf16' in precisions and not CpuInfo().bf16 and conf.framework != "onnxruntime":  # pragma: no cover
         if os.getenv('FORCE_BF16') == '1':

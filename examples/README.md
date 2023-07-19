@@ -270,6 +270,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">pb (smooth quant)</a></td>
   </tr>
+  <tr>
+    <td>ViT</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vision_transformer/">pb</a></td>
+  </tr>
 </tbody>
 </table>
 
@@ -476,8 +482,20 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>HuBERT</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic /Static Quantization</td>
+    <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>HuBERT</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>BlendCNN</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/ipex">ipex</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
@@ -624,6 +642,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">smooth quant</a></td>
   </tr>
   <tr>
+    <td>EleutherAI/gpt-j-6B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Weight Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only">weight_only</a></td>
+  </tr>
+  <tr>
     <td>abeja/gpt-neox-japanese-2.7b</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -652,6 +676,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./pytorch/speech_recognition/whisper_large/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>torchaudio/wav2vec2</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
 
 </tbody>
@@ -1111,17 +1141,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic">integerops</a> </td>
   </tr>
   <tr>
-    <td>GPT2 lm head WikiText</td>
+    <td>GPT2 lm head WikiText (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/gpt2/quantization/ptq_dynamic">integerops</a></td>
   </tr>
   <tr>
-    <td>MobileBERT SQuAD MLPerf</td>
+    <td>MobileBERT SQuAD MLPerf (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_static">qdq</a></td>

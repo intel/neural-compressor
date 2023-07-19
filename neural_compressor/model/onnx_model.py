@@ -44,7 +44,8 @@ class ONNXModel(BaseModel):
         try:
             ort.InferenceSession(self._model.SerializeToString())
         except Exception as e:  # pragma: no cover
-            if 'maximum protobuf size of 2GB' in str(e) or 'string length exceeds max size' in str(e):
+            if 'maximum protobuf size of 2GB' in str(e) or 'string length exceeds max size' in str(e) or \
+                'protobuf parsing failed' in str(e):
                 self._is_large_model = True
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model object to quantize')
@@ -329,32 +330,45 @@ class ONNXModel(BaseModel):
         if not tensor.endswith('_quantized'):
             logger.debug("Find {} in the quantized graph is not quantized.".format(tensor))
             return None, None
-        node = self._input_name_to_nodes[tensor][0]
-        parent = self._output_name_to_node[tensor] if tensor in self._output_name_to_node else None
-        direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad']
-        if parent is not None and parent.op_type in direct_int8:
-            fp32_tensor_name = \
-                parent.input[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        elif node.op_type in ['Gather']:
-            fp32_tensor_name = \
-                node.output[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        else:
-            fp32_tensor_name = \
-                tensor.replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        scale = fp32_tensor_name + '_scale'
-        scale_tensor = self.get_initializer(scale)
-        zo = fp32_tensor_name + '_zero_point'
-        zo_tensor = self.get_initializer(zo)
+        
+        def _searcher(tensor_name):
+            """Search scale and zero point tensor recursivly."""
+            node = self._input_name_to_nodes[tensor_name][0]
+            parent = self._output_name_to_node[tensor_name] if tensor_name in self._output_name_to_node else None
+            direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad', 'Split']
+            if parent is not None and parent.op_type in direct_int8:
+                fp32_tensor_name = \
+                    parent.input[0].replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+            elif node.op_type in ['Gather']: # pragma: no cover
+                fp32_tensor_name = \
+                    node.output[0].replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+            else:
+                fp32_tensor_name = \
+                    tensor_name.replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+            scale = fp32_tensor_name + '_scale'
+            scale_tensor = self.get_initializer(scale)
+            zo = fp32_tensor_name + '_zero_point'
+            zo_tensor = self.get_initializer(zo)
 
+            if scale_tensor is None or zo_tensor is None:
+                if parent is not None:
+                    scale_tensor, zo_tensor = _searcher(parent.input[0])
+            return scale_tensor, zo_tensor
+        
+        node = self._input_name_to_nodes[tensor][0]
         #TODO check if scale_tensor and zero_point is needed
         # for bias of qlinearconv, scale and zero_point is not needed
         if (node.op_type == 'QLinearConv' and tensor == node.input[-1]) or \
             (node.op_type == 'QGemm' and tensor == node.input[-3]):
-            pass
+            return None, None
         else:
+            scale_tensor, zo_tensor = _searcher(tensor)
             assert scale_tensor, 'missing scale for tensor {}'.format(tensor)
             assert zo_tensor, 'missing zero point for tensor {}'.format(tensor)
-        return scale_tensor, zo_tensor
+            return scale_tensor, zo_tensor
 
     def save_model_to_file(self, output_path, use_external_data_format=False):
         """Save model to external data, which is needed for model size > 2GB."""
@@ -405,8 +419,8 @@ class ONNXModel(BaseModel):
                 if node.op_type not in black_optype:
                     ONNXModel.replace_node_output(node, old_output_name, new_output_name)
 
-    def remove_unused_constant(self):
-        """Remove unused constant."""
+    def remove_unused_nodes(self):
+        """Remove unused nodes."""
         unused_nodes = []
         nodes = self.nodes()
         for node in nodes:
@@ -419,6 +433,23 @@ class ONNXModel(BaseModel):
                 self.get_children(node)[0].output[0] not in self._input_name_to_nodes:
                 unused_nodes.append(node)
                 unused_nodes.extend(self.get_children(node))
+            else:
+                # remove the node if it does not serve as the input or output of any other nodes
+                unused = True
+                for output in node.output:
+                    if output in self._input_name_to_nodes or \
+                    output in self.output():
+                        unused = False
+                        break
+                for input in node.input:
+                    if self.get_initializer(input) is not None:
+                        continue
+                    elif input in self._output_name_to_node or \
+                    input in self.input():
+                        unused = False
+                        break
+                if unused:
+                    unused_nodes.append(node)
         self.remove_nodes(unused_nodes)
 
         ununsed_weights = []
@@ -615,7 +646,7 @@ class ONNXModel(BaseModel):
             self.remove_nodes(remove_nodes)
             self.add_initializers(inits)
             self.update()
-            self.remove_unused_constant()
+            self.remove_unused_nodes()
             self.topological_sort()
             self.save(save_path)
         else:

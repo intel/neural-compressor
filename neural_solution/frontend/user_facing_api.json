@@ -114,6 +114,28 @@
                 }
             }
         },
+        "/download": {
+            "get":{
+                "description": "Download optimized result.",
+                "responses":{
+                    "200": {
+                        "description": "Download quantized model zip file locally.",
+                        "content": "quantized model zip file."
+                    },
+                    "400": {
+                        "description": "User input error.",
+                        "content1": {
+                            "msg": "Please check URL."
+                        }
+                    },
+                    "404": {
+                        "description": "No quantized model when task failed",
+                        "content1": {
+                            "msg": "Task failed, file not found"
+                        }
+                }
+            }
+        },
         "/description":{
             "get":{
                 "description": "Get user facing api.",
@@ -122,6 +144,7 @@
                         "description": "Get user facing api.",
                         "content1": {
                             "msg": "The user facing api."
+                            }
                         }
                     }
                 }

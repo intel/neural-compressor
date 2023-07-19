@@ -44,7 +44,7 @@ from ..objective import MultiObjective
 from ..utils import logger
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils.utility import Statistics, fault_tolerant_file, GLOBAL_STATE, MODE, LazyImport, \
-    DotDict, print_table, get_weights_details, dump_table, print_op_list
+    DotDict, print_table, get_weights_details, dump_table, print_op_list, equal_dicts
 from ..utils.weights_details import WeightsDetails
 from ..version import __version__
 
@@ -53,7 +53,7 @@ from ..algorithm import AlgorithmScheduler, ALGORITHMS
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
-from .utils.utility import build_slave_faker_model
+from .utils.utility import build_slave_faker_model, quant_options
 
 
 
@@ -139,6 +139,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self.model = model
         self.conf = conf
         self.config = self._initialize_config(conf)
+        self._set_quant_type(self.config)
         self.history_path = self._create_path(options.workspace, './history.snapshot')
         self.deploy_path = self._create_path(options.workspace, 'deploy.yaml')
         self.calib_dataloader = q_dataloader
@@ -301,6 +302,11 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         """
         self._algo_scheduler = value
 
+    def _set_quant_type(self, config):
+        if config.approach == 'post_training_weight_only':
+            quant_options.quant_type = 3
+        # TODO for future usage(other quantization type)
+
     def _initialize_algo_scheduler(self):
         algo_scheduler = AlgorithmScheduler(self.config.recipes)
         # reuse the calibration iteration
@@ -406,8 +412,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
             tuning_start_time = time()
-            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             self.trials_count += 1
+            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             tuning_history = self._find_tuning_history(tune_cfg)
             if tuning_history and self.trials_count < self.config.tuning_criterion.max_trials: # pragma: no cover
                 self.last_tune_result = tuning_history['last_tune_result']
@@ -913,6 +919,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def _recover_best_qmodel_from_tuning_cfg(self):
         """Recover the best quantized model from tuning config."""
         if self.best_tuning_cfg and not self.best_qmodel:
+            logger.info(f"[Strategy] Recover the {self.best_tuning_cfg.get('trial_number', 'N/A')}-trial\
+                as the tuning result.")
             self.best_qmodel = self.adaptor.quantize(copy.deepcopy(self.best_tuning_cfg), self.model,
                                                      self.calib_dataloader, self.q_func)
 
@@ -1021,7 +1029,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
             initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
         """
-        from .utils.constant import auto_query_order, static_query_order, dynamic_query_order
+        from .utils.constant import auto_query_order, static_query_order, dynamic_query_order, \
+                                    weight_only_query_order
         from .utils.tuning_space import initial_tuning_cfg_with_quant_mode
         if self.config.approach == 'post_training_auto_quant':
             query_order = auto_query_order
@@ -1029,6 +1038,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             query_order = dynamic_query_order
         elif self.config.approach == 'post_training_static_quant':
             query_order = static_query_order
+        elif self.config.approach == 'post_training_weight_only':
+            query_order = weight_only_query_order
         elif self.config.approach == 'quant_aware_training':
             query_order = auto_query_order
 
@@ -1128,6 +1139,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
         # For not tuning recipe, tune cfg use it directly
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
+        tune_cfg['trial_number'] = deepcopy(self.trials_count)
         # WA for get the smooth quant args
         if 'smooth_quant_args' in self.config.recipes:
             tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.config.recipes['smooth_quant_args']
@@ -1241,6 +1253,11 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 framework_specific_info['backend'] == 'onnxrt_trt_ep':
                 framework_specific_info.update({'format': 'QDQ'})
                 framework = 'onnxrt_qdq'
+            if framework_specific_info['backend'] == 'onnxrt_cuda_ep' and self.config.device =='gpu':
+                framework_specific_info['use_fp16'] = True
+                framework_specific_info['use_bf16'] = True
+            if framework_specific_info['backend'] == 'onnxrt_dnnl_ep' and self.config.device == 'cpu':
+                framework_specific_info['use_bf16'] = True
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.config.backend == 'ipex':
                 framework = 'pytorch_ipex'
@@ -1260,15 +1277,23 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     {"default_qconfig": self.config.op_name_dict['default_qconfig']})
             framework_specific_info.update({"q_func": q_func})
             framework_specific_info.update({"example_inputs": self.config.example_inputs})
+            if self.config.approach =='post_training_weight_only':
+                framework = 'pytorchweightonly'   # use specific adaptor for weight_only approach
         return framework, framework_specific_info
 
     def _set_objectives(self):
         # set objectives
+        def _use_multi_obj_check(obj):
+            if isinstance(obj, list):
+                return len(obj) > 1
+            elif isinstance(obj, dict):
+                return len(obj.get('objective', [])) > 1
+
         self.higher_is_better = bool(self.config.accuracy_criterion.higher_is_better)
         obj_higher_is_better = None
         obj_weight = None
         obj = self.config.tuning_criterion.objective
-        use_multi_objs = isinstance(obj, dict)
+        use_multi_objs = _use_multi_obj_check(obj)
         self.use_multi_objective = False
         if use_multi_objs:
             obj_higher_is_better = obj.get('higher_is_better', None)
@@ -1277,7 +1302,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             objectives = [i.lower() for i in obj_lst]
             self.use_multi_objective = True
         else:
-            objectives = [obj.lower()]
+            objectives = [val.lower() for val in obj]
 
         # set metric
         self.metric_name = ['Accuracy']
@@ -1315,7 +1340,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def _same_conf(self, src_conf, dst_conf):
         """Check if the two configs are the same."""
         from ..utils.utility import compare_objects
-        return compare_objects(src_conf, dst_conf, {'_options', '_tuning', '_accuracy'})
+        return compare_objects(src_conf, dst_conf, {'_options', '_tuning', '_accuracy', 'trial_number'})
 
     def update_best_op_tuning_cfg(self, op_tuning_cfg):
         """Track and update the best tuning config with correspondence accuracy result.
@@ -1584,13 +1609,31 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                    header='Tune Result Statistics',
                    field_names=['Info Type', 'Baseline', 'Tune {} result'.format(self.trials_count), \
                                                                 'Best tune result']).print_stat()
-
-
+        # exit policy
+        # 1. not_tuning(performance_only): only quantize the model without tuning or evaluation.
+        # 2. timeout = 0, exit the tuning process once it is found model meets the accuracy requirement.
+        # 3. max_trials, the number of the actually trials is less or equal to the max_trials
+        # There are two ways to use max_trials to dominate the exit policy.
+        # 1) timeout = 0, the tuning process exit when the actual_trails_count >= max_trials or 
+        #    a quantized model meets the accuracy requirements
+        # 2) timeout = inf, the tuning process exit until the trials_count >= max_trials
+        # Some use case:
+        # 1) Ending tuning process after a quantized model meets the accuracy requirements
+        #    max_trials = inf, timeout = 0 (by default) # the default max_trials is 100
+                                                      # value of timeout. max_trials control the exit policy
+        # 2) Even after finding a model that meets the accuracy goal, we may want to continue the
+        #    tuning process for better performance or other objectives.
+        #    timeout = 100000, max_trials = 10 # Specifics a fairly large timeout, use max_trials
+        #                                      # to control the exit policy.
+        # 3) Only want to try a certain number of trials
+        #    timeout = 100000, max_trials = 3 # only want to try the first 3 trials
         if self._not_tuning:
             need_stop = True
         elif timeout == 0 and self.best_tune_result:
+            logger.info("[Strategy] Found a model that meets the accuracy requirements.")
             need_stop = True
         elif self.trials_count >= self.config.tuning_criterion.max_trials:
+            logger.info("[Strategy] The number of trials is equal to the maximum trials, ending the tuning process.")
             need_stop = True
         else:
             need_stop = False
@@ -1617,7 +1660,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             # some fields in tuning section of config, such as tensorboard, snapshot, resume.
             if self._same_conf(tuning_history['cfg'], self.conf):
                 for history in tuning_history['history']:
-                    if history and history['tune_cfg'] == tune_cfg:
+                    if history and equal_dicts(history['tune_cfg'], tune_cfg, ignore_keys=['trial_number']):
                         return tuning_history
 
         return None

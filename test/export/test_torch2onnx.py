@@ -159,14 +159,8 @@ class TestPytorch2ONNX(unittest.TestCase):
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
             )
-            if fake_yaml == "dynamic":
-                try:
-                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-                except Exception as e:
-                    self.assertIsInstance(e, AssertionError)
-            elif fake_yaml == "static":
-                q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
-                check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
+            q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
+            check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
 
             int8_onnx_config = Torch2ONNXConfig(
                 dtype="int8",
@@ -178,14 +172,8 @@ class TestPytorch2ONNX(unittest.TestCase):
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
             )
-            if fake_yaml == "dynamic":
-                try:
-                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-                except Exception as e:
-                    self.assertIsInstance(e, AssertionError)
-            elif fake_yaml == "static":
-                q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
-                check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
+            q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
+            check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
 
 
     def test_fp32_NLP_models(self):
@@ -252,14 +240,8 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            if fake_yaml == "dynamic":
-                try:
-                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-                except Exception as e:
-                    self.assertIsInstance(e, AssertionError)
-            elif fake_yaml == "static":
-                q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-                check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
+            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+            check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
 
             int8_onnx_config = Torch2ONNXConfig(
                 dtype="int8",
@@ -270,16 +252,9 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            if fake_yaml == "dynamic":
-                try:
-                    q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-                except Exception as e:
-                    self.assertIsInstance(e, AssertionError)
-            elif fake_yaml == "static":
-                q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
-                check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
+            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
+            check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
 
 if __name__ == "__main__":
     unittest.main()
-
 

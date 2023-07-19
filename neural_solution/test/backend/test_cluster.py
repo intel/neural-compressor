@@ -1,16 +1,12 @@
 """Tests for cluster"""
 import importlib
-import shutil
 import os
+import shutil
 import unittest
 
-
-import unittest
 from neural_solution.backend.cluster import Cluster, Node
 from neural_solution.backend.task import Task
-
-
-from neural_solution.utils.utility import get_task_workspace, get_task_log_workspace, get_db_path
+from neural_solution.utils.utility import get_db_path, get_task_log_workspace, get_task_workspace
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 db_path = get_db_path(NEURAL_SOLUTION_WORKSPACE)
@@ -23,16 +19,16 @@ class TestCluster(unittest.TestCase):
         self.cluster = Cluster(node_lst, db_path=db_path)
 
         self.task = Task(
-            task_id = "1",
-            arguments = ["arg1", "arg2"],
-            workers = 2,
-            status = "pending",
-            script_url = "https://example.com",
-            optimized = True,
-            approach = "static",
-            requirement = ["req1", "req2"],
-            result = "",
-            q_model_path = "q_model_path"
+            task_id="1",
+            arguments=["arg1", "arg2"],
+            workers=2,
+            status="pending",
+            script_url="https://example.com",
+            optimized=True,
+            approach="static",
+            requirement=["req1", "req2"],
+            result="",
+            q_model_path="q_model_path",
         )
 
     @classmethod
@@ -49,7 +45,7 @@ class TestCluster(unittest.TestCase):
         task = self.task
         reserved_resource_lst = self.cluster.reserve_resource(task)
         self.cluster.free_resource(reserved_resource_lst)
-        self.assertEqual(self.cluster.socket_queue, ['2 node2', '2 node2', '1 node1', '1 node1'])
+        self.assertEqual(self.cluster.socket_queue, ["2 node2", "2 node2", "1 node1", "1 node1"])
 
     def test_get_free_socket(self):
         free_socket_lst = self.cluster.get_free_socket(4)
@@ -61,5 +57,6 @@ class TestCluster(unittest.TestCase):
         free_socket_lst = self.cluster.get_free_socket(10)
         self.assertEqual(free_socket_lst, 0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -33,7 +33,7 @@ from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 
 tensorflow = LazyImport('tensorflow')
-spr_base_verions = ('2.11.0202242', '2.11.0202250', '2.11.0202317')
+spr_base_verions = ('2.11.0202242', '2.11.0202250', '2.11.0202317', '2.11.0202323')
 
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
@@ -1175,6 +1175,7 @@ class TensorFlowAdaptor(Adaptor):
             for res in iter_res:
                 node_name, val = list(res.keys())[0], list(res.values())[0]
                 val = Dequantize(val[0], (node_name, val[1], val[2])) if len(val) == 3 else val
+                val = val.astype(np.float32)
                 index_postfix = node_name.find(int8_postfix)
                 if index_postfix != -1:
                     node_name = node_name[:index_postfix]
@@ -1887,7 +1888,8 @@ class TensorflowQuery(QueryBackendCapability):
             if self.version in sub_data['version']['name']:
                 return sub_data
             else:
-                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250', '2.11.0202317']:
+                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250', \
+                                                   '2.11.0202317', '2.11.0202323']:
                     continue
                 sorted_list = copy.deepcopy(sub_data['version']['name'])
                 sorted_list.remove('default') if 'default' in sorted_list else None
