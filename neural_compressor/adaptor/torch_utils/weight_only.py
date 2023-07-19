@@ -86,7 +86,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
     max_val = torch.max(weight, 1)[0]
     min_val = torch.min(weight, 1)[0]
-    flip_flag = torch.abs(min_val) > torch.abs(max_val)
+    flip_flag = torch.abs(max_val) > torch.abs(min_val)
     wmax = torch.max(torch.abs(max_val), torch.abs(min_val))
     wmax = wmax * quantile
     tmp = (wmax == 0)
@@ -175,6 +175,9 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
                 weight1, num_bits, scheme=scheme, 
                 quantile=quantile, return_int=True, full_range=full_range
             )
+            scale1 = scale1.reshape(orig_shape[0], -1)
+            if zp1 is not None:
+                zp1 = zp1.reshape(orig_shape[0], -1)
         else:
             weight1 = qdq_weight_actor(
                 weight1, num_bits, scheme=scheme, quantile=quantile, full_range=full_range
@@ -187,14 +190,11 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
                 quantile=quantile, return_int=True, full_range=full_range
             )
             weight = torch.cat([weight1, weight2], dim=1)
-            scale = torch.cat([scale1, scale2], dim=0)
+            scale = torch.cat([scale1, scale2], dim=1)
             if zp2 is not None:
-                zp = torch.cat([zp1, zp2], dim=0)
+                zp = torch.cat([zp1, zp2], dim=1)
             else:
                 zp = None
-            scale = scale.reshape(orig_shape[0], -1)
-            if zp is not None:
-                zp = zp.reshape(orig_shape[0], -1)
             return weight, scale, zp
         else:
             weight2 = qdq_weight_actor(
@@ -400,7 +400,7 @@ def _update_input_with_scale(args, kwargs, scales):
 @torch.no_grad()
 def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
                  auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, 
-                 return_int=False, full_range=False):
+                 return_int=False, sym_full_range=False):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -429,7 +429,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
         n_blocks: split model into block number to avoid OOM.
         return_int (bool, optional): Choose return fp32 or int32 model.
                                      Defaults to False.
-        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
     Returns:
         model: fake quantized model
@@ -656,7 +656,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
         num_bits=-1, 
         weight_config=weight_config, 
         return_int=return_int,
-        full_range=full_range,
+        sym_full_range=sym_full_range,
     )
     logger.info("AWQ quantization is done.")
     return model
