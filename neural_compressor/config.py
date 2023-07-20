@@ -45,7 +45,7 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list, # TODO: allow AWQ+GPTQ algo
-            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ',] for i in s)),
+            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ', 'TEQ'] for i in s)),
         Optional('bits'):  And(
             list,
             lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
@@ -865,6 +865,12 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def teq_args(val=None):
+            if val is not None:
+                return _check_value("teq_args", val, dict)
+            else:
+                return {}
+
         def fast_bias_correction(val=None):
             if val is not None:
                 return _check_value("fast_bias_correction", val, bool)
@@ -941,6 +947,7 @@ class _BaseQuantizationConfig:
                    "rtn_args": rtn_args,
                    "awq_args": awq_args,
                    "gptq_args": gptq_args,
+                   "teq_args": teq_args,
                    }
         self._recipes = {}
         for k in RECIPES.keys():
