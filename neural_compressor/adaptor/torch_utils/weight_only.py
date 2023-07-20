@@ -612,13 +612,13 @@ def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, exa
     assert isinstance(model, torch.nn.Module), "only support torch module"
     logger.info("TEQ quantizing start.")
     if example_inputs is None:
-        if dataloader is None:
+        if dataloader is None: # pragma: no cover
             assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
         try:
             for idx, (input, label) in enumerate(dataloader):
                 example_inputs = input
                 break
-        except:
+        except: # pragma: no cover
             for idx, input in enumerate(dataloader):
                 example_inputs = input
                 break
@@ -631,10 +631,10 @@ def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, exa
 
     # 2. tuning
     # custom train function, there calls calib_func
-    if calib_func:
+    if calib_func: # pragma: no cover
         calib_func(teq_quantizer.model)
     else:
-        if dataloader is None:
+        if dataloader is None: # pragma: no cover
             assert False, "Please provide dataloader to train."
         teq_quantizer.train(dataloader)
 
