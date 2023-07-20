@@ -9,3 +9,43 @@
 
 
 
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.model_wrapper.FakeAffineTensorQuantFunction
+   neural_compressor.adaptor.torch_utils.model_wrapper.TEQLinearFakeQuant
+   neural_compressor.adaptor.torch_utils.model_wrapper.TEQMulLinear
+
+
+
+
+.. py:class:: FakeAffineTensorQuantFunction
+
+
+
+
+   Fake version of affine quantization
+
+
+
+.. py:class:: TEQLinearFakeQuant(orig_layer, alpha=None, num_bits=4, group_size=-1)
+
+
+
+
+   wrapper quantization linear
+
+
+.. py:class:: TEQMulLinear(module, input_scale)
+
+
+
+
+   Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
+
+

@@ -23,6 +23,7 @@ Functions
    neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize
    neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output
    neural_compressor.adaptor.torch_utils.weight_only.awq_quantize
+   neural_compressor.adaptor.torch_utils.weight_only.teq_quantize
 
 
 
@@ -207,5 +208,10 @@ Functions
 
    :returns: fake quantized model
    :rtype: model
+
+
+.. py:function:: teq_quantize(model, weight_config={}, dataloader=None, calib_func=None, example_inputs=None)
+
+   Run weight-only quantization with
 
 
