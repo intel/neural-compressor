@@ -4,7 +4,7 @@ import unittest
 import copy
 import torch
 
-from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize, gptq_quantize
+from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize, gptq_quantize, teq_quantize
 from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
 from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 import transformers
