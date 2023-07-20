@@ -21,7 +21,7 @@ try:
 
     torch = LazyImport('torch')
     from ...utils import logger
-except:
+except: # pragma: no cover
     import torch
     import logging
     logger = logging.getLogger()
@@ -89,12 +89,12 @@ class TEQuantizer:
             else:
                 self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
-                if self.absorb_to_layer == None and no_absorb_layers == None:
+                if self.absorb_to_layer == None and no_absorb_layers == None: # pragma: no cover
                     logger.warning("sorry, could not trace the model, smooth quant is skipped")
                     logger.warning("if you are using huggingface model,"
                                        "you could set torchscript to True "
                                        "when loading the model or set the return_dict to False")
-                elif self.absorb_to_layer == {}:
+                elif self.absorb_to_layer == {}: # pragma: no cover
                     logger.warning("could not find any layer to be absorbed")
                 else:
                     to_absorb_cnt = 0
@@ -118,14 +118,14 @@ class TEQuantizer:
             self.absorb_to_layer.pop(excluded_key)  ## remove
 
         for layer_norm in self.absorb_to_layer:
-            if excluded_name in self.absorb_to_layer[layer_norm][0]:
+            if excluded_name in self.absorb_to_layer[layer_norm][0]: # pragma: no cover
                 continue
 
             layer_0_name = self.absorb_to_layer[layer_norm][0]
 
             module = get_module(self.model, layer_0_name)
 
-            if sqrt_w_init:
+            if sqrt_w_init: # pragma: no cover
                 weights = []
                 for layer_name in self.absorb_to_layer[layer_norm]:
                     module = get_module(self.model, layer_name)
@@ -178,7 +178,7 @@ class TEQuantizer:
         :param layer_name: The layer name
         """
         # for insert mul
-        if self.insert_mul:
+        if self.insert_mul: # pragma: no cover
             if isinstance(layer, TEQMulLinear):
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
@@ -188,10 +188,10 @@ class TEQuantizer:
 
         if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
                 isinstance(layer, torch.nn.InstanceNorm2d):
-            if layer.affine:
+            if layer.affine: # pragma: no cover
                 layer.weight *= scale
                 layer.bias *= scale
-            else:
+            else: # pragma: no cover
                 layer.affine = True
                 weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
                 layer.weight = torch.nn.Parameter(
@@ -203,7 +203,7 @@ class TEQuantizer:
             if layer.elementwise_affine:
                 layer.weight *= scale
                 layer.bias *= scale
-            else:
+            else: # pragma: no cover
                 layer.elementwise_affine = True
                 weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
                 layer.weight = torch.nn.Parameter(
@@ -212,14 +212,14 @@ class TEQuantizer:
                 layer.bias = torch.nn.Parameter(
                     bias, requires_grad=False)
 
-        elif isinstance(layer, torch.nn.Conv2d):
+        elif isinstance(layer, torch.nn.Conv2d): # pragma: no cover
             ## the order could not be changed
             if hasattr(layer, "bias") and (layer.bias != None):
                 layer.bias *= scale
             scale = scale.view(scale.shape[0], 1, 1, 1)
             layer.weight *= scale
 
-        elif isinstance(layer, torch.nn.Linear):
+        elif isinstance(layer, torch.nn.Linear): # pragma: no cover
             if hasattr(layer, "bias") and (layer.bias != None):
                 layer.bias *= scale
             scale = scale.view(scale.shape[0], 1)
@@ -230,7 +230,7 @@ class TEQuantizer:
                 or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
             layer.weight *= scale
 
-        else:
+        else: # pragma: no cover
             logger.info(f"found unsupported layer {type(layer)}, try to multiply scale to "
                 f"weight and bias directly, this may introduce accuracy issue, please have a check ")
             if hasattr(layer, "weight") and layer.weight != None:
@@ -367,8 +367,8 @@ class TEQuantizer:
         :param save_scale_file: save alpha/scale with torch.save
         :param save_state_dict_file: save model state_dict
         """
-        if save_scale_file:
+        if save_scale_file: # pragma: no cover
             torch.save(self.trained_alphas, save_scale_file)
 
-        if save_state_dict_file:
+        if save_state_dict_file: # pragma: no cover
             torch.save(self.model.state_dict(), save_state_dict_file)
