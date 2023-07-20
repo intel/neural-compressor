@@ -1,3 +1,4 @@
+# Adapted from https://github.com/microsoft/unilm/blob/master/layoutlmft/layoutlmft/data/utils.py
 import torchvision.transforms.functional as F
 import warnings
 import math

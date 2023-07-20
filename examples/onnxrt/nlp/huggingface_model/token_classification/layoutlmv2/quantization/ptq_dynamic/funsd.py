@@ -1,4 +1,6 @@
 # coding=utf-8
+# Adapted from https://huggingface.co/datasets/nielsr/funsd/blob/main/funsd.py
+
 import json
 import os
 

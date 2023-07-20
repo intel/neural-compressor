@@ -52,10 +52,6 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     from itertools import chain
     from transformers import LayoutLMv2ForTokenClassification
 
-    # TODO double-check the num_labels
-    # labels = datasets['train'].features['ner_tags'].feature.names
-    # id2label = {v: k for v, k in enumerate(labels)}
-    # label2id = {k: v for v, k in enumerate(labels)}
     model = LayoutLMv2ForTokenClassification.from_pretrained(model_name_or_path, num_labels=7)
     dummy_input = get_dummy_input(model_name_or_path)
     inputs = OrderedDict(
@@ -80,8 +76,6 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     )
     print(f"The model was successfully exported and saved as {export_model_path}.")
 
-
-# export_model_to_onnx("/home/st_liu/workspace/inc_examples/microsoft/layoutlmv2-finetuned-funsd", "exported_model.onnx")
 
 import argparse
 

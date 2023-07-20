@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This example load [LayoutLMv2](https://huggingface.co/microsoft/layoutlmv2-base-uncased) model and confirm its accuracy and speed based on [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
+This example quantizes the [LayoutLMv2](https://huggingface.co/microsoft/layoutlmv2-base-uncased) model that is fine-tuned on the [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
 
 # Prerequisite
 
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare ONNX Model
-Export the PyTorch model to ONNX.
+Export the [nielsr/layoutlmv2-finetuned-funsd](https://huggingface.co/nielsr/layoutlmv2-finetuned-funsd) model to ONNX.
 
 ```bash
 # fine-tuned model https://huggingface.co/nielsr/layoutlmv2-finetuned-funsd

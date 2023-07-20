@@ -26,7 +26,6 @@ def get_dummy_input(model_name_or_path):
 
     image.putdata(pixels)
 
-    # you can also add all tokenizer parameters here such as padding, truncation
     encoding = processor(image, return_tensors="pt", max_length=512, padding="max_length")
     print(encoding.keys())
     # dict_keys(['input_ids', 'token_type_ids', 'attention_mask', 'bbox', 'image'])
@@ -51,8 +50,6 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     from collections import OrderedDict
     from itertools import chain
     from transformers import LayoutLMv2ForTokenClassification
-
-    # TODO double-check the num_labels
     # labels = datasets['train'].features['ner_tags'].feature.names
     # id2label = {v: k for v, k in enumerate(labels)}
     # label2id = {k: v for v, k in enumerate(labels)}
@@ -80,8 +77,6 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     )
     print(f"The model was successfully exported and saved as {export_model_path}.")
 
-
-# export_model_to_onnx("/home/st_liu/workspace/inc_examples/microsoft/layoutlmv2-finetuned-funsd", "exported_model.onnx")
 
 import argparse
 
