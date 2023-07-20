@@ -28,10 +28,6 @@ function run_tuning {
     if [[ ${input_model} == *"gpt-j-6B" ]]; then
         ext_cmd="--alpha auto --fallback_add"
     fi
-    # disable manually  fallback add
-    # if [[ ${input_model} == *"gpt-j-6B" ]]; then
-    #     ext_cmd="--alpha auto"
-    # fi
 
     python eval_lambada.py \
         --model_name_or_path ${input_model} \

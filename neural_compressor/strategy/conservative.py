@@ -134,8 +134,12 @@ class ConservativeTuneStrategy(TuneStrategy):
         self.re_quant = False
 
     def _get_op_type_priority(self):
-        optypewise_cap = self.capability['optypewise']
-        op_type_priority = list(optypewise_cap.keys())
+        cap_op_type_lst = list(self.capability['optypewise'].keys())
+        op_type_priority = []
+        for op_type in self.quant_op_type_lst:
+            for target_op_type in cap_op_type_lst:
+                if target_op_type not in op_type_priority and (target_op_type.lower() in op_type or op_type in target_op_type.lower()):
+                    op_type_priority.append(target_op_type)
         return op_type_priority
 
     def _sorted_item_by_op_type(self,
@@ -163,7 +167,9 @@ class ConservativeTuneStrategy(TuneStrategy):
                     if target_op_type not in sorted_items:
                         sorted_items[target_op_type] = []
                     sorted_items[target_op_type].append((op_item, quant_mode))
-        return sorted_items
+        new_sorted_items = COrderedDict((op_type, sorted_items[op_type]) for op_type \
+            in self.quant_op_type_lst if op_type in sorted_items)
+        return new_sorted_items
 
     def initialize_tune_cfg(self):
         """Init the tuning config.
