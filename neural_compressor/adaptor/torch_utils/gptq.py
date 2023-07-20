@@ -61,8 +61,6 @@ def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
     gptq_related_blocks = {
         "embeddings": {},
         "transformers_pre": {}, # todo
-        #"transformers_name": None, # None
-        #"transformers": None, # None
         "transformers_name": "", # None
         "transformers": [], # None
         "transformers_post": {}, # todo
@@ -141,30 +139,36 @@ class GPTQuantizer(object):
         """
         Args:
             model: the fp32 model to quantize
-            weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}.
-                For example, 
-                    weight_config={
-                        'bits': 4, 
-                        'group_size': 32, 
-                        'sym': True,
-                        'actorder': False
-                        'percdamp': .01
-                    }
+            weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}. For example, 
+            weight_config={
+                'layer1':
+                {
+                    'bits': 4, 
+                    'group_size': 32, 
+                    'sym': False,
+                    'percdamp': .01,
+                    'actorder': False
+                }
+                ...
+            }
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
             device: cpu or cuda
         """
         # model
         self.model = model
+
         # weight config related
         self.weight_config = weight_config
-        self.wbits = 4
-        self.percdamp = 0.01
-        self.sym = False
-        self.actorder = True
-        self.perchannel = True
-        self.mse = False
-        self.group_size = 128
-        self.process_config()
+        # default settings, check configs
+        self.wbits_default = 4
+        self.group_size_default = 128
+        self.percdamp_default = 0.01
+        self.sym_default = False
+        self.actorder_default = True
+        self.perchannel_default = True
+        self.mse_default = False
+        self.check_config()
+
         # data & device
         self.dataloader = dataloader
         self.nsamples = len(dataloader)
@@ -173,7 +177,7 @@ class GPTQuantizer(object):
 
         self.use_cache = model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(model) # get the transformer block list above
-        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
+        # log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
         # initialize buffers which are essential for gptq computation. 
@@ -194,15 +198,16 @@ class GPTQuantizer(object):
         except:
             pass
 
-    def process_config(self):
+    def check_config(self):
         """Copy arguments from weight_config to build-in attributes."""
-        self.wbits = self.weight_config.get('wbits', self.wbits)
-        self.percdamp = self.weight_config.get('perdamp', self.percdamp)
-        self.sym = self.weight_config.get('sym', self.sym)
-        self.group_size = self.weight_config.get('group_size', self.group_size)
-        self.actorder = self.weight_config.get('actorder', self.actorder)
-        self.perchannel = self.weight_config.get('perchannel', self.perchannel)
-        self.mse = self.weight_config.get('mse', self.mse)
+        for layer_name, config in self.weight_config.items():
+            self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
+            self.weight_config[layer_name]['group_size'] = config.get('group_size', self.group_size_default)
+            self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
+            self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
+            self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
+            self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
+            self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
     
     @torch.no_grad()
     def pre_quantization(self):
@@ -320,7 +325,8 @@ class GPTQuantizer(object):
         logger.info("Quantization done")
         self.model.config.use_cache = self.use_cache
 
-        return quantizers
+        # obtain model (all weight only quantization API function should return)
+        return self.model, quantizers
     
     @torch.no_grad()
     def post_quantization(self, test_dataloader):

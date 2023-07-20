@@ -409,6 +409,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 " otherwise, ignore this warning.")
 
         self._prepare_tuning()
+        # import pdb;pdb.set_trace()
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
             tuning_start_time = time()
