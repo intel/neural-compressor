@@ -373,6 +373,13 @@ class BasicTuneStrategy(TuneStrategy):
 
     def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
         """Tuning smooth quant's alpha.
+                        
+    def _should_tuning_sq_alpha(self, recipes):
+        # Only tune sq'alpha only if there are more than one alpha
+        return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha", [])) > 1
+    
+    def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
+        """Tuning smooth quant's alpha.
 
         Args:
             tuning_space: tuning space
