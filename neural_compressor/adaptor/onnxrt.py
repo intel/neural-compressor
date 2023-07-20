@@ -1451,7 +1451,6 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             (dict): quantized model
         """
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
-        from .ox_utils.weight_only import rtn_quantize, awq_quantize
         for precision in self.query_handler.get_precisions():
             if precision == 'weight_only_integer':
                 self.quantizable_op_types += \
@@ -1460,9 +1459,32 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
         quant_config = self._cfg_to_quantize_config(tune_cfg)
         algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
+        if "GPTQ" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
+
+            percdamp = self.recipes.get('gptq_args', {}).get('percdamp', 0.01)
+            calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+            model = gptq_quantize(model,
+                                  quant_config,
+                                  data_loader,
+                                  calib_sampling_size,
+                                  percdamp)
         if "AWQ" in algos:
-            model = awq_quantize(model, quant_config, data_loader)
+            from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
+
+            auto_scale = self.recipes.get('awq_args', {}).get('auto_scale', True)
+            mse_range = self.recipes.get('awq_args', {}).get('mse_range', True)
+            n_blocks = self.recipes.get('awq_args', {}).get('n_blocks', 5)
+            calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+            model = awq_quantize(model,
+                                 quant_config,
+                                 data_loader,
+                                 calib_sampling_size,
+                                 auto_scale,
+                                 mse_range,
+                                 n_blocks)
         elif "RTN" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
             model = rtn_quantize(model, quant_config)
         model.q_config = copy.deepcopy(quant_config)
         self._dump_model_op_stats(model, tune_cfg)

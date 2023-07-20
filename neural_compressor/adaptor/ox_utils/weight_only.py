@@ -277,6 +277,47 @@ def apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts):
     model = rtn_quantize(model, tune_cfg, ratios)        
     return model
 
+def prepare_inputs(model, n_samples, dataloader):
+    import onnxruntime
+    from importlib.util import find_spec
+    from neural_compressor.adaptor.ox_utils.util import to_numpy
+    
+    so = onnxruntime.SessionOptions()
+    if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
+        from onnxruntime_extensions import get_library_path
+        so.register_custom_ops_library(get_library_path())
+    if model.is_large_model:
+        onnx.save_model(model.model,
+                        model.model_path + '_augment.onnx',
+                        save_as_external_data=True,
+                        all_tensors_to_one_file=True,
+                        convert_attribute=False)
+
+    session = onnxruntime.InferenceSession(
+                model.model.SerializeToString(),
+                so,
+                providers=["CPUExecutionProvider"]) if not model.is_large_model else \
+              onnxruntime.InferenceSession(
+                model.model_path,
+                so,
+                providers=["CPUExecutionProvider"])
+    inputs_names = [i.name for i in session.get_inputs()]
+    del session
+
+    inputs = []
+    for i, data in enumerate(dataloader):
+        if ((i + 1) * dataloader.batch_size) >= n_samples:
+            break
+        if len(inputs_names) != 1 or isinstance(data[0], dict):
+            assert len(data[0]) == len(inputs_names), "Input number mismatch, " \
+                    "require {} but get {}".format(len(inputs_names), len(data[0]))
+            
+        if isinstance(data[0], dict):
+            inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
+        else:
+            inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
+    return inputs
+
 def awq_quantize(model,
                  tune_cfg,
                  dataloader,
@@ -309,53 +350,16 @@ def awq_quantize(model,
         model: fake quantized ONNXModel
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
-    white_nodes = []
     output_dicts = {}
 
     if mse_range or mse_range:
-        import onnxruntime
-        from importlib.util import find_spec
-        from neural_compressor.adaptor.ox_utils.util import to_numpy
-        
-        so = onnxruntime.SessionOptions()
-        if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
-            from onnxruntime_extensions import get_library_path
-            so.register_custom_ops_library(get_library_path())
-        if model.is_large_model:
-            onnx.save_model(model.model,
-                            model.model_path + '_augment.onnx',
-                            save_as_external_data=True,
-                            all_tensors_to_one_file=True,
-                            convert_attribute=False)
+        absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
 
-        session = onnxruntime.InferenceSession(
-                    model.model.SerializeToString(),
-                    so,
-                    providers=["CPUExecutionProvider"]) if not model.is_large_model else \
-                  onnxruntime.InferenceSession(
-                    model.model_path,
-                    so,
-                    providers=["CPUExecutionProvider"])
-        inputs_names = [i.name for i in session.get_inputs()]
-        del session
+        inputs = prepare_inputs(model, n_samples, dataloader)
+        del dataloader
 
         org_output = model.output()
         model.remove_tensors_from_outputs(org_output)
-        inputs = []
-        for i, data in enumerate(dataloader):
-            if ((i + 1) * dataloader.batch_size) >= n_samples:
-                break
-            if len(inputs_names) != 1 or isinstance(data[0], dict):
-                assert len(data[0]) == len(inputs_names), "Input number mismatch, " \
-                        "require {} but get {}".format(len(inputs_names), len(data[0]))
-                
-            if isinstance(data[0], dict):
-                inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
-            else:
-                inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
-        del dataloader
-
-        absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
         num_block = math.ceil(len(absorb_pairs) / n_blocks)
         dump_pairs = {}
         for idx, parent in enumerate(absorb_pairs):
@@ -396,4 +400,204 @@ def awq_quantize(model,
                 dump_pairs[parent] = absorb_pairs[parent]
 
         model.add_tensors_to_outputs(org_output)
+    return model
+
+def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False):
+    Qs = []
+    group_size = config["weight"]["group_size"]
+    bits = config["weight"]["bits"]
+    scheme = config["weight"]["scheme"]
+    maxq = 2 ** bits - 1
+
+    def find_params(weight):
+        org_shape = weight.shape
+        # find zp, scale
+        if group_size == -1:
+            W = W.flatten('F')
+        else:
+            W = W.flatten()
+        tmp = np.zeros(W.shape[0])
+        xmin = np.minimum(np.min(W, axis=0)[0], tmp)
+        xmax = np.maximum(np.max(W, axis=0)[0], tmp)
+        if scheme == "sym":
+            xmax = np.maximum(np.abs(xmin), xmax)
+            tmp = xmin < 0
+            if np.any(tmp):
+                xmin[tmp] = -xmax[tmp]
+        tmp = (xmin == 0) & (xmax == 0)
+        xmin[tmp] = -1
+        xmax[tmp] = +1
+
+        scale = (xmax - xmin) / maxq
+        if scheme == "sym":
+            zero = np.ones(scale.shape) * (maq + 1) / 2
+        else:
+            zero = np.round(-xmin / scale)
+        if mse:
+            best = np.ones([W.shape[1]]) * float("inf")
+            for i in range(int(maxshrink * grid)):
+                p = 1 - i / grid
+                xmin1 = p * xmin
+                xmax1 = p * xmax
+                scale1 = (xmax1 - xmin1) / maxq
+                zero1 = np.round(-xmin1 / scale1) if scheme != "sym" else zero
+                q = np.clip(np.round(W / scale1) + zero1, 0, maxq)
+                q -= W
+                q = np.pow(np.abs(q), norm)
+                err = np.sum(q, 1)
+                tmp = err < best
+                if np.any(tmp):
+                    best[tmp] = err[tmp]
+                    scale[tmp] = scale1[tmp]
+                    zero[tmp] = zero1[tmp]
+        if group_size != -1:
+            tmp = org_shape[1]
+            scale = np.repeat(scale, tmp)
+            zero = np.repeat(zero, tmp)
+        shape = [-1] + [1] * (len(org_shape) - 1)
+        scale = np.reshape(scale, org_shape)
+        zero = np.reshape(zero, org_shape)
+        return scale, zero
+
+    for W, H in zip(Ws, Hs):
+        shape = W.shape
+        scale, zp = find_params(W)
+
+        dead = np.diag(H) == 0
+        H[dead, dead] = 1
+        W[:, dead] = 0 # such channel makes no contribution to quantization computation
+
+        # rearrange considering the diag's value
+        if actorder:
+            perm = np.argsort(np.diag(H), descending=True)
+            W = W[:, perm]
+            H = H[perm][:, perm]
+
+        Losses = np.zeros(W.shape)
+        Q = np.zeros(W.shape)
+
+        damp = percdamp * np.mean(np.diag(H))
+        diag = np.arange(shape[0], device=device)
+        H[diag, diag] += damp # add a average value of 
+        H = np.linalg.cholesky(H)
+        H = np.cholesky_inverse(H)
+        H = np.linalg.cholesky(H, upper=True)
+        Hinv = H
+
+        for i1 in range(0, shape[0], blocksize):
+            i2 = min(i1 + blocksize, shape[0])
+            count = i2 - i1
+
+            W1 = W[:, i1:i2].clone()
+            Q1 = np.zeros(W1.shape)
+            Err1 = np.zeros(W1.shape)
+            Losses1 = np.zeros(W1.shape)
+            Hinv1 = Hinv[i1:i2, i1:i2]
+
+            for i in range(count): # within a block, channel wise
+                w = W1[:, i]
+                d = Hinv1[i, i]
+
+                if group_size != -1:
+                    if (i1 + i) % group_size == 0:
+                        scale, zp = find_params(W[:, (i1 + i):(i1 + i + group_size)])
+
+                q = (scale * (np.clip(np.round(w.unsqueeze(1) / scale) + zp, 0, maxq) - zp)).flatten()
+                Q1[:, i] = q
+                Losses1[:, i] = (w - q) ** 2 / d ** 2
+
+                err1 = (w - q) / d
+                W1[:, i:] -= np.matmul(err1.unsqueeze(1), Hinv1[i, i:].unsqueeze(0))
+                Err1[:, i] = err1
+
+            Q[:, i1:i2] = Q1
+            Losses[:, i1:i2] = Losses1 / 2
+
+            W[:, i2:] -= np.matmul(Err1, Hinv[i1:i2, i2:])
+
+        if actorder:
+            invperm = np.argsort(perm)
+            Q = Q[:, invperm]
+
+        Qs.append(np.reshape(Q, W.shape))
+    del Ws
+    return Qs
+
+def gptq_quantize(model,
+                  tune_cfg,
+                  dataloader,
+                  n_samples=128,
+                  percdamp=0.01
+                  ):
+    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+    Args:
+        model (ModelProto or ONNXModel): onnx model
+        tune_cfg (dict): quantization config
+                For example, 
+                tune_cfg={
+                    'fc2':
+                        {
+                            'bits': 4, 
+                            'group_size': 32, 
+                            'scheme': 'sym',
+                            'algorithm': 'GPTQ'
+                        }
+                }
+        n_samples: calibration sample number.
+        percdamp(float, optional): 
+
+    Returns:
+        model: fake quantized ONNXModel
+    """
+    model = model if isinstance(model, BaseModel) else ONNXModel(model)
+    output_dicts = {}
+    absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
+
+    inputs = prepare_inputs(model, n_samples, dataloader)
+    del dataloader
+
+    org_output = model.output()
+    model.remove_tensors_from_outputs(org_output)
+    for parent, nodes in absorb_pairs.items():
+        dump_tensor = list(set([i.input[0] for i in nodes]))
+        model.add_tensors_to_outputs(dump_tensor)
+
+        if model.is_large_model:
+            onnx.save_model(model.model,
+                            model.model_path + '_augment.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            convert_attribute=False)
+
+        session = onnxruntime.InferenceSession(
+                    model.model.SerializeToString(),
+                    so,
+                    providers=["CPUExecutionProvider"]) if not model.is_large_model else \
+                  onnxruntime.InferenceSession(
+                    model.model_path,
+                    so,
+                    providers=["CPUExecutionProvider"])
+
+        weights = [numpy_helper.to_array(model.get_initializer(node.input[1]),
+                    os.path.dirname(model.model_path)) for node in nodes]
+        Hs = [np.zeros((i.shape[0], i.shape[0])) for i in weights]
+        nsamples = 0
+        for inp in inputs:
+            output_dicts = {}
+            for output_idx, output in enumerate(session.run(None, inp)):
+                output_dicts.setdefault(dump_tensor[output_idx], []).append(output)
+
+            inp = output_dicts[node.input[0]]
+            tmp = inp.shape[0]
+            Hs = [i * (nsamples / (nsamples + tmp)) for i in Hs]
+            nsamples += tmp
+            inp = np.sqrt(2 / nsamples) * inp
+            Hs = [i + np.matmul(inp, inp.T) for i in Hs]
+
+        model.remove_tensors_from_outputs(dump_tensor)
+        weights = gptq(weights, inp, Hs, tune_cfg[nodes[0].name])
+        for name, weight in zip([i.input[1] for i in nodes], weights):
+            model.set_initializer(name, weight, raw=True)
+    model.add_tensors_to_outputs(org_output)
     return model
