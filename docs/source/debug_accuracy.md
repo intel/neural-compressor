@@ -54,7 +54,7 @@ bash run_tuning.sh --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb -
 
 The accuracy of this model will decrease a lot if all Ops are quantized to int8 as default strategy:
 
-![accuracy_descrease](./imgs/accuracy_descrease.png)
+![accuracy_decrease](./imgs/accuracy_decrease.png)
 
 # Analyzing the result of quantization
 Then, if you run quantization, you will find the following table:
