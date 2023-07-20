@@ -63,7 +63,8 @@ def get_pruner(config, modules, framework='pytorch'):
         f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
 
     if "mha" in config["pattern"]:
-        return PRUNERS["mha"](config, modules)
+        assert framework == 'pytorch', 'cuurently mha only support pytorch framework.'
+        return PRUNERS[f"{FRAMEWORK[framework]}_mha"](config, modules)
     # if enable progressive pruning or not.
     if "progressive" not in config["pruning_type"]:
         name = config["pruning_type"]
