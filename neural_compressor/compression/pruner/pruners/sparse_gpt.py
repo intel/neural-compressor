@@ -34,6 +34,7 @@ class SparseGPTPruner(PytorchBasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
+        
         # self.criterion = get_criterion(config=self.config, modules=self.modules)
         gc.collect()
         self.gpts = {}
@@ -84,6 +85,6 @@ class SparseGPTPruner(PytorchBasePruner):
     @torch.no_grad()
     def fasterprune(self, op_names):
         for name in op_names:
-            logger.info(f"prune {name}")
+            logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
             module = self.modules[name]
             self.pattern.fasterprune(self.gpts[name]) # is there necessary to add a hyperparameter of blocksize

@@ -272,6 +272,8 @@ class PytorchPatternNxM(PytorchBasePattern):
         mask = torch.where(score <= threshold, zero, one)
         if not self.block:
             mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+        else:
+            mask = mask.to(dtype=score.dtype)# torch.float32
         return mask
 
     def get_masks_global(self, scores, cur_target_sparsity_ratio, pre_masks,
@@ -336,7 +338,9 @@ class PytorchPatternNxM(PytorchBasePattern):
                         residual_k -= zero_cnt
                 else:
                     masks[key] = mask
-                masks[key] = masks[key].bool()
+                    
+                if not self.block:
+                    masks[key] = masks[key].bool()
             if not keep_exact_sparsity_ratio:
                 break
 
@@ -376,7 +380,7 @@ class PytorchPatternNxM(PytorchBasePattern):
 
         return pattern_lock_masks
 
-    def register_block_masks(self, modules):
+    def register_block_masks(self):
         """Register the block mask parameters and get the mask gradients.
 
         Args:
@@ -386,27 +390,20 @@ class PytorchPatternNxM(PytorchBasePattern):
             A dict containing block masks.
         """
         masks = {}
-        for key in modules.keys():
+        for key in self.modules.keys():
             if key in self.invalid_layers:
                 continue  # No corresponding block mask, skip.
-            module = modules[key]
+            module = self.modules[key]
             weight = module.weight
             if type(module).__name__ not in ["Linear"]:
                 logger.warning(f"Currently only support Linear block mask pruning,"
                                f"{type(module).__name__} won't be pruned.")
                 continue
-            block_mask = torch.nn.Parameter(self.get_reduced_masks_from_data(weight, key).to(dtype=weight.dtype))
-            module.register_parameter("block_mask", block_mask)
-            masks[key] = modules[key].block_mask.data.bool()
+            block_mask = self.get_reduced_masks_from_data(weight.detach(), key).to(dtype=weight.dtype)
+            masks[key] = block_mask
 
         return masks
-
-    def remove_block_masks(self):
-        """Remove the block mask parameters."""
-        for key in self.modules.keys():
-            if hasattr(self.modules[key], 'block_mask'):
-                delattr(self.modules[key], 'block_mask')
-
+    
     def mask_block_weights(self, masks):
         """Achieve weight pruning by multiplying the reshaped weights and block masks."""
         for key in masks.keys():
@@ -415,8 +412,8 @@ class PytorchPatternNxM(PytorchBasePattern):
             module = self.modules[key]
             block_size = self.block_size[key]
             org_shape = module.weight.shape
-            mask = masks[key].data.repeat_interleave(
-                block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
+            mask = masks[key].data.repeat_interleave(\
+                    block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1).to(module.weight.device)
             reshaped_weight = self._reshape_orig_to_2dims(module.weight.data) * mask
             module.weight.data = self._reshape_2dims_to_orig(reshaped_weight, org_shape)
 
@@ -446,7 +443,6 @@ class PytorchPatternNxM(PytorchBasePattern):
         else:
             raise NotImplementedError
         
-    # ---------------sparseGPT related--------------------
     def fasterprune(self, gpt, blocksize=128, percdamp=.01):
         sparsity = self.target_sparsity_ratio
         W = gpt.module.weight.data.clone()

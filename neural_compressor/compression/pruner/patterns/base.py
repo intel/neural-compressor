@@ -480,7 +480,8 @@ class BasePattern:
 class PytorchBasePattern(BasePattern):
     def __init__(self, config, modules):
         super().__init__(config, modules)
-        torch.use_deterministic_algorithms(False)
+        # torch.use_deterministic_algorithms(False)
+        # torch.use_deterministic_algorithms(True, warn_only=True)
 
     def reduce_tensor(self, data, dim):
         """Reduce the data along the given dimension.
@@ -692,3 +693,4 @@ class KerasBasePattern(BasePattern):
 
         sparsity_ratio = float(zero_cnts) / total_cnts
         return infos, SparsityInfo(zero_cnts, total_cnts, sparsity_ratio)
+
