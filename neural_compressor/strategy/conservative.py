@@ -134,12 +134,8 @@ class ConservativeTuneStrategy(TuneStrategy):
         self.re_quant = False
 
     def _get_op_type_priority(self):
-        cap_op_type_lst = list(self.capability['optypewise'].keys())
-        op_type_priority = []
-        for op_type in self.quant_op_type_lst:
-            for target_op_type in cap_op_type_lst:
-                if target_op_type not in op_type_priority and (target_op_type.lower() in op_type or op_type in target_op_type.lower()):
-                    op_type_priority.append(target_op_type)
+        optypewise_cap = self.capability['optypewise']
+        op_type_priority = list(optypewise_cap.keys())
         return op_type_priority
 
     def _sorted_item_by_op_type(self,
