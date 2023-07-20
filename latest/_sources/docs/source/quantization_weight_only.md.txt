@@ -73,7 +73,7 @@ q_model = quantization.fit(model, conf, eval_func=eval_func)
 q_model.save('saved_results')
 ```
 
-The saved_results folder contains two files: `best_model.pt` and `weight_config.json`, and the generated q_model is a fake quantized model.
+The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
 
 ## Reference
 
