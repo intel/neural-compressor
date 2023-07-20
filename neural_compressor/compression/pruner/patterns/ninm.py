@@ -213,11 +213,12 @@ class PytorchPatternNInM(PytorchBasePattern):
         return least_ninm_masks
     
 
-    def reduce_score(self, score, key):
-        if key in self.invalid_layers:
-            return score
-        if self.keep_mask_layers.get(key, False):
-            return score
+    def reduce_score(self, score, key, force=False):
+        if not force:
+            if key in self.invalid_layers:
+                return score
+            if self.keep_mask_layers.get(key, False):
+                return score
         M = self.M
         mask = self.get_least_ninm_mask_from_data(score)
         current_score_new = self._reshape_orig_to_2dims(score)

@@ -222,7 +222,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         data = self._reshape_2dims_to_orig(data, orig_shape)
         return data
     
-    def reduce_score(self, score, key):
+    def reduce_score(self, score, key, force=False):
         """Recalculate the pruning score after reducing the data.
 
         Args:
@@ -231,10 +231,11 @@ class PytorchPatternNxM(PytorchBasePattern):
         Returns:
             The reduced pruning score.
         """
-        if key in self.invalid_layers:
-            return score
-        if self.keep_mask_layers.get(key, False):
-            return score
+        if not force:
+            if key in self.invalid_layers:
+                return score
+            if self.keep_mask_layers.get(key, False):
+                return score
         self.keep_mask_layers[key] = False
         new_score = self.reshape_orig_to_pattern(score, key)
         # sum or mean is quite different for per channel pruning

@@ -201,7 +201,7 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 tmp = torch.abs(p * p.grad)
-                tmp = self.pattern.reduce_score(tmp, key)
+                tmp = self.pattern.reduce_score(tmp, key, force=True)
                 if self.low_memory_usage:
                     tmp = tmp.bfloat16() if p.device.type == 'cpu' else tmp.half()
                 self.scores[key] += self.beta * tmp
