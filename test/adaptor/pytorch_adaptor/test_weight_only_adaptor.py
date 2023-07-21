@@ -267,8 +267,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             },
         )
         dataloader = gptq_inc_loader()
-        # import pdb;pdb.set_trace()
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
+        compressed_model = q_model.export_compressed_model(
+            compression_dtype=torch.int32,
+            compression_dim=1,
+            scale_dtype=torch.float16,
+        )
+        q_model.save('saved')
+        torch.save(compressed_model.state_dict(), './saved/compressed_model.pt')
 
     def test_TEQ_quant(self):
         class teq_inc_loader(object):
