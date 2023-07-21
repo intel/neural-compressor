@@ -1,4 +1,4 @@
-# Calibration Algorithm in Quantization
+# Calibration Algorithms in Quantization
 
 1. [Introduction](#introduction)
 2. [Calibration Algorithm](#calibration-algorithm)
@@ -8,9 +8,9 @@
 
 Quantization proves beneficial in terms of reducing the memory and computational requirements of the model. Uniform quantization transforms the input value $x ∈ [β, α]$ to lie within $[−2^{b−1}, 2^{b−1} − 1]$, where $[β, α]$ is the range of real values chosen for quantization and $b$ is the bit-width of the signed integer representation. Calibration is the process of determining the $α$ and $β$ for model weights and activations. Refer to this [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.md#quantization-fundamentals) for more quantization fundamentals
 
-## Calibration Algorithm
+## Calibration Algorithms
 
-There are three main methods of Calibration:
+Currently, Intel® Neural Compressor supports three popular calibration algorithms:
 
 - MinMax: This method gets the maximum and minimum of input values as $α$ and $β$ [^1]. It preserves the entire range and is the simplest approach.
 
@@ -18,7 +18,7 @@ There are three main methods of Calibration:
 
 - Percentile: This method only considers a specific percentage of values for calculating the range, ignoring the remainder which may contain outliers [^3]. It enhances resolution by excluding extreme values but still retaining noteworthy data.
 
-## Supported Framework Matrix
+## Support Matrix
 
 <table>
 <thead>
@@ -57,7 +57,7 @@ There are three main methods of Calibration:
 
 > `kl` is used to represent the Entropy calibration algorithm in Intel® Neural Compressor.
 
-Calibration algorithm is in the tuning space of Intel® Neural Compressor. After tuning, a quantization model with the most suitable calibration algorithm will be returned. Please refer to [tuning_strategies.md](https://github.com/intel/neural-compressor/blob/master/docs/source/tuning_strategies.md#tuning-space) for more details.
+The calibration algorithm is one of the tuning items utilized by Intel® Neural Compressor auto-tuning. The accuracy-aware tuning process will select an appropriate algorithm. Please refer to [tuning_strategies.md](https://github.com/intel/neural-compressor/blob/master/docs/source/tuning_strategies.md#tuning-space) for more details.
 
 ## Reference
 
