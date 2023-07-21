@@ -19,10 +19,7 @@
 from collections import namedtuple
 
 import numpy as np
-from neural_compressor.utils.utility import LazyImport
-
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
+from ..utils import torch, tf
 
 PATTERNS = {}
 
@@ -162,7 +159,7 @@ class ProgressivePatternUtils(object):
             # an empty tensor, at target sparsity is 0 situation
             return pre_masks
         threshold, _ = torch.kthvalue(global_new_added_scores, kth_masked_position, dim=0)
-        for key in scores.keys():
+        for key in scores.keys():  # pragma: no cover
             new_added_mask = new_added_masks[key]
             score = scores[key]
             new_added_filter = 1 - new_added_mask
@@ -174,7 +171,11 @@ class ProgressivePatternUtils(object):
         return progressive_masks
 
     @staticmethod
-    def update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+    def update_progressive_masks_local_scores(pre_masks,
+                                              cur_masks,
+                                              scores,
+                                              progressive_step,
+                                              progressive_configs):  # pragma: no cover
         """Generate the progressive masks.
 
         Args:
@@ -388,6 +389,10 @@ class BasePattern:
         """Obtain the unpruned weights and reshape according to the block_size."""
         raise NotImplementedError
 
+    def get_sparsity_ratio_each_layer(self, mask):
+        """Calculate the sparsity ratio of each layer."""
+        raise NotImplementedError
+
     def update_residual_cnt(self, masks, target_sparsity_ratio):
         """Update the number of parameters yet to be pruned.
 
@@ -480,7 +485,7 @@ class BasePattern:
 class PytorchBasePattern(BasePattern):
     def __init__(self, config, modules):
         super().__init__(config, modules)
-        # torch.use_deterministic_algorithms(False)
+        #  If you need to use it, you can set it in example and start the environment variable: exaport CUBLAS_WORKSPACE_CONFIG=:'4096:8'
         # torch.use_deterministic_algorithms(True, warn_only=True)
 
     def reduce_tensor(self, data, dim):
@@ -695,4 +700,3 @@ class KerasBasePattern(BasePattern):
 
         sparsity_ratio = float(zero_cnts) / total_cnts
         return infos, SparsityInfo(zero_cnts, total_cnts, sparsity_ratio)
-

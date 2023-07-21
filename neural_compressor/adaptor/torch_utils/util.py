@@ -250,7 +250,7 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                                 if pre_op_output['id'] == input_tensor_id:
                                     pre_op_output_infos[index]['inf_dtype'] = input_tensor_dtype
                                 else:
-                                    print('Do not find the input id', input_tensor_id)
+                                    pass
                             pre_op_infos['output_tensor_infos'] = pre_op_output_infos
                             cfgs[pre_op_module][pre_op_state][pre_op_index] = pre_op_infos
                         else:
@@ -916,3 +916,46 @@ def get_op_type_by_name(op_name, quantizable_ops):
         if pair[0] == op_name:
             return pair[1]
     return None
+
+def collect_weight_info(q_config):
+    """collect weight info from q_config for dumping into qconfig.json
+
+    qconfig.json example:
+    ```
+    {
+        'fc': {
+            'bits': 4,
+            'group_size': 128,
+            'scheme': 'asym',
+            'algorithm': 'RTN'
+        }
+        ...
+    }
+    ```
+
+    Args:
+        q_config (_type_): quantization configue
+    """
+    weight_info = {}
+    from neural_compressor.utils.logger import level, DEBUG
+    for op, config in q_config['op'].items():
+        op_name, op_type = op
+        if config['weight']['dtype'] == 'fp32':
+            weight_info[op_name] = {'dtype': 'fp32'}
+        else:
+            if level == DEBUG:
+                weight_info[op_name] = {
+                    'dtype': config['weight']['dtype'],
+                    'bits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'scheme': config['weight']['scheme'],
+                    'algorithm': config['weight']['algorithm']
+                }
+            else:
+                weight_info[op_name] = {
+                    'dtype': config['weight']['dtype'],
+                    'bits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'scheme': config['weight']['scheme'],
+                }
+    return weight_info

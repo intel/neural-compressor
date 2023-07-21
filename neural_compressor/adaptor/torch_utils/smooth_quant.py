@@ -698,21 +698,7 @@ class TorchSmoothQuant:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
-                        logger.warning("sorry, could not trace the model, smooth quant is skipped")
-                        logger.warning("if you are using huggingface model,"
-                                       "you could set torchscript to True "
-                                       "when loading the model or set the return_dict to False")
                         return self.model
-                    elif self.absorb_to_layer == {}:
-                        logger.warning("could not find any layer to be absorbed")
-                    else:
-                        to_absorb_cnt = 0
-                        for key, item in self.absorb_to_layer.items():
-                            to_absorb_cnt += len(item)
-
-                        logger.info(
-                            f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
-                            f"layers could be absorbed in smooth quant")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
@@ -832,20 +818,32 @@ class TorchSmoothQuant:
         tg = GraphTrace()
         self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
+        if absorb_to_layer == None and no_absorb_layers == None:
+            logger.warning("sorry, could not trace the model, smooth quant is skipped")
+            logger.warning("if you are using huggingface model,"
+                            "you could set torchscript to True "
+                            "when loading the model or set the return_dict to False")
+        elif absorb_to_layer == {}:
+            logger.warning("could not find any layer to be absorbed")
+        else:
+            to_absorb_cnt = 0
+            for key, item in absorb_to_layer.items():
+                to_absorb_cnt += len(item)
+            logger.info(
+                f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
+                f"layers could be absorbed in smooth quant")
         return absorb_to_layer, no_absorb_layers
 
 
-def get_parent(node):
-    if node.inputs() == None:
-        return None
-    return list(node.inputs())[0].node()
-
-def get_parents(node):
+def get_parent(node, all_parents=False):
     if node.inputs() == None:
         return None
     elif len(list(node.inputs())) == 0:
         return None
-    return list(node.inputs())
+    if not all_parents:
+        return list(node.inputs())[0].node()
+    else:
+        return list(node.inputs())
 
 
 class GraphTrace:
@@ -884,8 +882,9 @@ class GraphTrace:
             try:
                 traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(e)
+                logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         else:
             try:
                 traced_model = torch.jit.trace(model, dummy_input, strict=False)
@@ -894,8 +893,9 @@ class GraphTrace:
                 try:
                     traced_model = torch.jit.trace(model, dummy_input[0], strict=False)
                     traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(e)
+                    logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         return traced_model
 
     def get_nodes(self, traced_model, op_types=['Linear']):
@@ -910,31 +910,50 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes, dict_parent_kind=None):
+    def get_prev_absorb_layer(self, nodes):
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
-            parent_scopeName = parent.scopeName()
             while 1:
                 if parent.kind() in self.skip_ops_to_find_absorb:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
-                    if dict_parent_kind:
-                        parent_out_kinds = set(dict_parent_kind[parent_scopeName])
-                        parent_out_kinds.discard('aten::size')
-                        if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
-                            prev_absorb_layer.append(parent)
-                        elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
-                            prev_absorb_layer.append(parent) ##TODO: check other scenarios
-                        else: # When parent to multiple ops, sq transformation could be wrong.
-                            prev_absorb_layer.append(None)
-                    else:
+
+                    parent_out_kinds = []
+                    for val_user in list(parent.outputs())[0].uses():
+                        next_node = val_user.user
+                        parent_out_kinds.append(next_node.kind())
+                    parent_out_kinds = set(parent_out_kinds)
+                    parent_out_kinds.discard('aten::size')
+
+                    if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
                         prev_absorb_layer.append(parent)
+                    elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        res = self.skip_op_absorb_helper(parent)
+                        prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                    else: # When parent to multiple ops, sq transformation could be wrong.
+                        prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
         return prev_absorb_layer
+
+
+    def skip_op_absorb_helper(self, parent_node):
+        for val_user in list(parent_node.outputs())[0].uses():
+            next_node = val_user.user
+            if next_node.kind() == 'aten::size':
+                continue
+            elif next_node.kind() in self.could_absorb_layers:
+                continue
+            elif next_node.kind() in self.skip_ops_to_find_absorb:
+                node_res = self.skip_op_absorb_helper(next_node)
+                if not node_res:
+                    return False
+            else:
+                return False
+        return True
 
     def mapping_torch_module_to_aten(self, op_types):
         res = []
@@ -951,26 +970,16 @@ class GraphTrace:
         if traced_model == None:
             return None, None
 
-        dict_parent_kind = defaultdict(list)
-        for node in traced_model.graph.nodes():
-            parents_list = get_parents(node)
-            node_kind, node_scopeName = node.kind(), node.scopeName()
-            if parents_list: #save input_kinds of all parent nodes
-                for parent_ in parents_list:
-                    parent = parent_.node()
-                    parent_kind = parent.kind()
-                    if 'prim' not in parent_kind and parent.scopeName() != node_scopeName:
-                        dict_parent_kind[parent.scopeName()].append(node_kind)
-
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, dict_parent_kind)
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
             if absorb == None:
-                no_absorb_layers.append(nodes[index])
+                no_absorb_layers.append(
+                    '.'.join(nodes[index].scopeName().split('/')[-1].split('.')[1:]))
                 continue
             node = nodes[index]
             layer_name = '.'.join(node.scopeName().split('/')[-1].split('.')[1:])
@@ -981,17 +990,17 @@ class GraphTrace:
                 absorb_to_layer[absorb_name].append(layer_name)
             else:
                 absorb_to_layer[absorb_name] = [layer_name]
-        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer)
+        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
         return absorb_to_layer, no_absorb_layers
 
-    def remove_unsupported_layers(self, model, absorb_to_layer):
+    def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
         res = {}
 
         for key in absorb_to_layer.keys():
-
             absorb_layer = get_module(model, key)
             layer_type = absorb_layer.__class__.__name__
             if layer_type not in self.supported_torch_module_to_aten.keys():
+                no_absorb_layers.extend(absorb_to_layer[key])
                 continue
             supported = True
             for layer_name in absorb_to_layer[key]:
@@ -999,6 +1008,7 @@ class GraphTrace:
                 layer_type = layer.__class__.__name__
                 if layer_type not in self.supported_torch_module_to_aten.keys():
                     supported = False
+                    no_absorb_layers.extend(absorb_to_layer[key])
                     break
             if supported:
                 res[key] = absorb_to_layer[key]

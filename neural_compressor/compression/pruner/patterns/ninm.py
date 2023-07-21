@@ -212,11 +212,12 @@ class PytorchPatternNInM(PytorchBasePattern):
         return least_ninm_masks
     
 
-    def reduce_score(self, score, key):
-        if key in self.invalid_layers:
-            return score
-        if self.keep_mask_layers.get(key, False):
-            return score
+    def reduce_score(self, score, key, force=False):
+        if not force:
+            if key in self.invalid_layers:
+                return score
+            if self.keep_mask_layers.get(key, False):
+                return score
         M = self.M
         mask = self.get_least_ninm_mask_from_data(score)
         current_score_new = self._reshape_orig_to_2dims(score)
@@ -386,9 +387,12 @@ class PytorchPatternNInM(PytorchBasePattern):
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         assert progressive_configs['progressive_type'] == "scores", "N:M progressive pruning only supports 'scores'."
         # we only have to handle global score or local score
-        return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores,
+        new_scores = {}
+        for key in scores.keys():
+            new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+        return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, new_scores,
                                                                              progressive_step, progressive_configs)
-        
+      
     def fasterprune(self, gpt, blocksize=128, percdamp=.01):
         """"""
         W = gpt.module.weight.data.clone()

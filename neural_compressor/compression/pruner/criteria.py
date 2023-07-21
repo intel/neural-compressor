@@ -1,4 +1,4 @@
-ng criterion."""
+"""pruning criterion."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -16,9 +16,7 @@ ng criterion."""
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ...utils.utility import LazyImport
-torch = LazyImport('torch')
-
+from .utils import torch
 
 CRITERIA = {}
 
@@ -191,7 +189,10 @@ class SnipMomentumCriterion(PruningCriterion):
             if self.low_memory_usage:
                 dtype = torch.bfloat16 if p.device.type == 'cpu' else torch.float16
             # self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
-            self.scores[key] = self.pattern.reduce_score(torch.zeros(p.shape, dtype=dtype).to(p.device), key)
+            if hasattr(self.pattern, 'reduce_score'):
+                self.scores[key] = self.pattern.reduce_score(torch.zeros(p.shape, dtype=dtype).to(p.device), key)
+            else:
+                self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
 
         self.alpha = 0.9
         self.beta = 1.0
@@ -203,7 +204,8 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 tmp = torch.abs(p * p.grad)
-                tmp = self.pattern.reduce_score(tmp, key)
+                if hasattr(self.pattern, 'reduce_score'):
+                    tmp = self.pattern.reduce_score(tmp, key, force=True)
                 if self.low_memory_usage:
                     tmp = tmp.bfloat16() if p.device.type == 'cpu' else tmp.half()
                 self.scores[key] += self.beta * tmp
@@ -294,4 +296,3 @@ class RetrainFreeCriterion(PruningCriterion):
                     mask_grad = mask_grad.bfloat16() if mask_grad.device.type == 'cpu' else mask_grad.half()
                 self.collected_grads[key].append(mask_grad.cpu())
                 self.scores[key] += mask_grad.pow(2)
-

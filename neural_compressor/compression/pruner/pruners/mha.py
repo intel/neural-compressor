@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.utils.utility import LazyImport
 from .base import (register_pruner,
                    PytorchBasePruner)
 from ..schedulers import get_scheduler
@@ -24,7 +23,7 @@ from ..patterns import get_pattern
 from ..criteria import get_criterion
 from ..utils import logger
 
-torch = LazyImport('torch')
+from ..utils import torch
 
 
 @register_pruner('pt_mha')

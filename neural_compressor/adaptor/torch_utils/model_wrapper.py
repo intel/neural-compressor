@@ -18,7 +18,11 @@
 """Torch.nn.Module Class Defination."""
 # Note: Do not import this file unless you have already imported torch, 
 # since the model classes inherit torch.nn.Module.
+import math
 import torch
+from torch.nn import functional as F
+from torch.autograd import Function
+from .weight_only import quant_weight
 from packaging.version import Version
 
 
@@ -146,3 +150,302 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
         new_module = QDQLinear(module)
         set_module(tmp_model, name, new_module)
     return tmp_model
+
+
+class WeightOnlyLinear(torch.nn.Module):
+    def __init__(self, in_features, out_features, bits, groupsize, 
+                 zp=False, bias=False, scale_dtype=torch.float32, 
+                 compression_dtype=torch.int32, compression_dim=1):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.bits = bits
+        self.groupsize = groupsize if groupsize != -1 else in_features
+        self.compression_dim = compression_dim
+        assert compression_dtype in [torch.int8, torch.int16, torch.int32, torch.int64], \
+                        "Only support torch.int8|16|32|64 as compressed dtype."
+        dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
+        self.compress_bits = dtype_bits_mapping[compression_dtype]
+        self.n_pack = self.compress_bits // self.bits
+        self.compressed_dtype = compression_dtype
+        self.float_type = scale_dtype
+        # K is input channel, N is output channel
+        assert compression_dim in [0, 1], "Only support 0 or 1 as compression dimension, " +\
+                                          "0 is output channel, 1 is input channel."
+        self.register_buffer(
+            'scale', 
+            torch.zeros(
+                (out_features, math.ceil(in_features / self.groupsize)), 
+                dtype=self.float_type,
+            )
+        )
+        if compression_dim == 1:
+            self.register_buffer(
+                'packed_weight', 
+                torch.zeros(
+                    (out_features, math.ceil(in_features / self.n_pack)), 
+                    dtype=self.compressed_dtype,
+                )
+            )
+            if zp:
+                self.register_buffer(
+                    'packed_zp', 
+                    torch.zeros(
+                        (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)), 
+                        dtype=self.compressed_dtype,
+                    )
+                )
+        else:
+            self.register_buffer(
+                'packed_weight', 
+                torch.zeros(
+                    (math.ceil(out_features / self.n_pack), in_features), 
+                    dtype=self.compressed_dtype,
+                )
+            )
+            if zp:
+                self.register_buffer(
+                    'packed_zp', 
+                    torch.zeros(
+                        (
+                            math.ceil(self.out_features / self.n_pack), 
+                            math.ceil(self.in_features / self.groupsize)
+                        ), 
+                        dtype=self.compressed_dtype,
+                    )
+                )
+        if bias:
+            self.register_buffer('bias', torch.zeros(self.out_features, dtype=self.float_type))
+        else:
+            self.bias = None
+
+    def pack(self, int_weight, scale, zp, bias):
+        if bias is not None:
+            assert hasattr(self, 'bias'), "bias is not set when initializing."
+            self.bias = bias.type(self.float_type)
+        assert scale.shape == self.scale.shape, "Scale shape is mismatched."
+        self.scale = scale.type(self.float_type)
+        if self.compression_dim == 0:
+            int_weight = int_weight.T
+            self.packed_weight = self.packed_weight.T
+        origin_shape = int_weight.shape
+        target_shape = self.packed_weight.shape
+        assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype)
+
+        # pack weight
+        for i in range(target_shape[0]):
+            for j in range(target_shape[1]):
+                start = self.n_pack * j
+                end = self.n_pack * (j + 1)
+                tmp = int_weight[i][start: end].type(self.compressed_dtype)
+                for e in range(len(tmp)):
+                    tmp[e] &= mask
+                    tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
+                    self.packed_weight[i][j] |= tmp[e]
+        if self.compression_dim == 0:
+            self.packed_weight = self.packed_weight.T
+
+        if zp is not None:
+            if self.compression_dim == 0:
+                zp = zp.T
+                self.packed_zp = self.packed_zp.T
+            assert hasattr(self, 'packed_zp'), "zp is not set when initializing."
+            target_shape = self.packed_zp.shape
+            for i in range(target_shape[0]):
+                for j in range(target_shape[1]):
+                    start = self.n_pack * j
+                    end = self.n_pack * (j + 1)
+                    tmp = zp[i][start: end].type(self.compressed_dtype)
+                    for e in range(len(tmp)):
+                        tmp[e] &= mask
+                        tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
+                        self.packed_zp[i][j] |= tmp[e]
+            if self.compression_dim == 0:
+                self.packed_zp = self.packed_zp.T
+
+    def recover(self):
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype)
+        if hasattr(self, 'packed_zp'):
+            weight_dtype = torch.uint8
+        else:
+            weight_dtype = torch.int8
+        # unpack weight
+        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype)
+        if self.compression_dim == 0:
+            weight = weight.T
+            self.packed_weight = self.packed_weight.T
+        origin_shape = weight.shape
+        target_shape = self.packed_weight.shape
+        for i in range(target_shape[0]):
+            for j in range(target_shape[1]):
+                for e in range(self.n_pack):
+                    index = j * self.n_pack + e
+                    if index >= origin_shape[1]:
+                        continue
+                    tmp = self.packed_weight[i][j]
+                    tmp = tmp << 32 - self.bits * (self.n_pack - e)
+                    tmp = tmp >> 32 - self.bits
+                    if weight_dtype == torch.uint8:
+                        tmp &= mask # remove sign bit
+                    weight[i][index] = tmp.type(weight_dtype)
+        if self.compression_dim == 0:
+            weight = weight.T
+        # unpack zero_point
+        if hasattr(self, 'packed_zp'):
+            if self.compression_dim == 0:
+                zp = zp.T
+                self.packed_zp = self.packed_zp.T
+            zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp
+            zp = torch.zeros(self.scale.shape, dtype=zp_dtype)
+            origin_shape = zp.shape
+            target_shape = self.packed_zp.shape
+            for i in range(target_shape[0]):
+                for j in range(target_shape[1]):
+                    for e in range(self.n_pack):
+                        index = j * self.n_pack + e
+                        if index >= origin_shape[1]:
+                            continue
+                        tmp = self.packed_zp[i][j]
+                        tmp = tmp << 32 - self.bits * (self.n_pack - e)
+                        tmp = tmp >> 32 - self.bits
+                        tmp &= mask
+                        zp[i][index] = tmp.type(zp_dtype)
+            if self.compression_dim == 0:
+                zp = zp.T
+            # recover fp32 weight with int_weight, scale, and zero_point
+            left_element = self.in_features % self.groupsize 
+            if left_element != 0:
+                split_index = self.in_features // self.groupsize  * self.groupsize
+                weight1 = weight[:, :-split_index].reshape(-1, self.groupsize)
+                scale1 = self.scale[:, :-1].reshape(-1, 1)
+                zp1 = zp[:, :-1].reshape(-1, 1)
+                weight1 = ((weight1 - zp1) * scale1).reshape(self.out_features, -1)
+                weight2 = weight[:, -split_index:]
+                scale2 = self.scale[:, -1:]
+                zp2 = zp[:, -1].reshape(-1, 1)
+                weight2 = ((weight2 - zp2) * scale2)
+                fp32_weight = torch.cat((weight1, weight2), dim=1)
+            else:
+                weight = weight.reshape(-1, self.groupsize)
+                scale = self.scale.reshape(-1, 1)
+                zp = zp.reshape(-1, 1)
+                fp32_weight = ((weight - zp) * scale).reshape(self.out_features, -1)
+        else:
+            # recover fp32 weight with int_weight, scale
+            left_element = self.in_features % self.groupsize 
+            if left_element != 0:
+                split_index = self.in_features // self.groupsize  * self.groupsize
+                weight1 = weight[:, :split_index].reshape(-1, self.groupsize)
+                scale1 = self.scale[:, :-1].reshape(-1, 1)
+                weight1 = (weight1 * scale1).reshape(self.out_features, -1)
+                weight2 = weight[:, split_index:]
+                scale2 = self.scale[:, -1:]
+                weight2 = (weight2 * scale2)
+                fp32_weight = torch.cat((weight1, weight2), dim=1)
+            else:
+                weight = weight.reshape(-1, self.groupsize)
+                scale = self.scale.reshape(-1, 1)
+                fp32_weight = (weight * scale).reshape(self.out_features, -1)
+        return fp32_weight
+
+    def forward(self, input):
+        weight = self.recover()
+        return F.linear(input, weight, self.bias)
+
+    def extra_repr(self) -> str:
+        return 'in_features={}, out_features={}, bits={}, group_size={}, bias={}'.format(
+            self.in_features, self.out_features, self.bits, self.groupsize, self.bias is not None
+        )
+
+
+class FakeAffineTensorQuantFunction(Function):
+    """Fake version of affine quantization
+    """
+
+    @staticmethod
+    def forward(ctx, inputs, num_bits=4, group_size=1024):
+        """
+
+        As it will be only applied on activation with per tensor granularity, broadcast is not needed.
+
+        Args:
+            ctx: Pytorch convention.
+            inputs: A Tensor of type float32.
+            min_range: A float.
+            max_range: A float.
+            num_bits: An integer
+
+        Returns:
+            outputs: A Tensor of type output_dtype
+        """
+        return quant_weight(inputs, num_bits, group_size)
+
+    @staticmethod
+    def backward(ctx, grad_outputs):
+        """
+        Args:
+            ctx: Pytorch convention.
+            grad_output: A tensor of gradient of outputs
+
+        Returns:
+            grad_inputs: A tensor of gradient
+        """
+        return grad_outputs, None, None
+
+
+class TEQLinearFakeQuant(torch.nn.Module):
+    """
+    wrapper quantization linear
+    """
+
+    def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1):
+        """
+        A forward hook to linear module
+        :param orig_layer: the original module
+        :param alpha: trainable alpha/scale
+        :param num_bits: quantization level
+        :param group_size: for fine-grained quantization
+        """
+        super(TEQLinearFakeQuant, self).__init__()
+        self.orig_layer = orig_layer
+        self.alpha = alpha
+
+        self.num_bits = num_bits
+        self.group_size = group_size
+
+    def forward(self, x):
+        alpha = torch.clip(self.alpha, 1e-5)
+        shape_len = len(x.shape) - 1
+        shape = (1,) * shape_len + (-1,)
+        x = x / alpha.view(shape)
+        weight = self.orig_layer.weight
+        weight = weight * alpha.unsqueeze(dim=0)
+        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size)
+        return F.linear(x, weight_q, self.orig_layer.bias)
+
+
+class TEQMulLinear(torch.nn.Module):
+    """
+    Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
+    """
+
+    def __init__(self, module, input_scale):
+        """
+        A forward hook to save input max of a module
+        :param module: the linear module
+        :param input_scale: scale for input
+        """
+
+        super().__init__()
+        self.register_buffer('input_scale', input_scale)
+        self.add_module('sq_linear', module)
+
+    @property
+    def weight(self):
+        return self.sq_linear.weight
+
+    def forward(self, X):
+        X = torch.mul(X, self.input_scale)
+        X = self.sq_linear(X)
+        return X

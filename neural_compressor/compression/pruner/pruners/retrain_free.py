@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from functools import partial
 from .base import (register_pruner,
                    PytorchBasePruner)
@@ -122,7 +123,6 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
         # the order of the following three lines can't not be exchanged
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.masks = self.rearrange_masks(self.masks)
-        # self.rearrange_masks(self.masks)
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")

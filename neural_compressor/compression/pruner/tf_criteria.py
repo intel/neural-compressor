@@ -17,10 +17,6 @@
 # limitations under the License.
 
 import numpy as np
-from ...utils.utility import LazyImport
-
-
-tf = LazyImport('tensorflow')
 
 CRITERIA = {}
 

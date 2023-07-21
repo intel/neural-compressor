@@ -20,7 +20,7 @@
 from .model_slim.auto_slim import parse_auto_slim_config
 from .model_slim.auto_slim import model_slim
 from .pruning import PRUNINGS
-from neural_compressor.compression.pruner.utils import process_config, torch, logger
+from .utils import process_config, torch, logger
 from typing import Optional, Union
 
 FRAMEWORK = {

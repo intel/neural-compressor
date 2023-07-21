@@ -23,6 +23,7 @@ from .transform import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 from .coco_transform import ParseDecodeCocoTransform
 from .postprocess import Postprocess
 from .imagenet_transform import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
+from .imagenet_transform import TensorflowShiftRescale
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -36,4 +37,5 @@ for f in modules:
 __all__ = ["TRANSFORMS", "BaseTransform", "ComposeTransform", "transform_registry", "ResizeTFTransform",
            "Postprocess", "LabelShift", "BilinearImagenetTransform", "TensorflowResizeCropImagenetTransform",
            "RescaleTFTransform", "NormalizeTFTransform", "ParseDecodeCocoTransform",
-           "TensorflowResizeWithRatio", "TFSquadV1PostTransform", "TFSquadV1ModelZooPostTransform"]
+           "TensorflowResizeWithRatio", "TFSquadV1PostTransform", "TFSquadV1ModelZooPostTransform",
+           "TensorflowShiftRescale"]

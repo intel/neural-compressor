@@ -20,4 +20,3 @@ CHECK LIST:
     - CONDA
     - other packages, such as, mpi4py
 """
-

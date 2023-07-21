@@ -10,6 +10,11 @@
   - [Query task status](#query-task-status)
   - [Stop service](#stop-service)
   - [Inspect logs](#inspect-logs)
+  - [Manage resource](#manage-resource)
+    - [Node States](#node-states)
+    - [Query cluster](#query-cluster)
+    - [Add node](#add-node)
+    - [Remove node](#remove-node)
 
 ## Install Neural Solution
 ### Prerequisites
@@ -126,3 +131,40 @@ There are several logs under workspace:
 
 ```
 
+## Manage resource
+Neural Solution supports cluster management for service maintainers, providing several command-line tools for efficient resource management. 
+
+### Node States
+
+Each node in the cluster can have three different states:
+
+- Alive: Represents a node that is functioning properly and available to handle requests.
+- Join: Indicates that a node is in the process of being added to the cluster but has not fully joined yet.
+- Remove: Indicates that a node is scheduled to be removed from the cluster.
+
+Below are some commonly used commands and their usage:
+
+### Query cluster
+This command is used to query the current status of the cluster. No additional parameters are required, simply enter the following command:
+```shell
+neural_solution cluster --query
+```
+### Add node
+This command is used to add nodes to the cluster. You can either specify a host file or provide a list of nodes separated by ";". The node format consists of three parts: hostname, number_of_sockets, and cores_per_socket. Here's a breakdown of each part:
+
+- hostname: This refers to the name or IP address of the node that you want to add to the cluster. It identifies the specific machine or server that will be part of the cluster.
+
+- number_of_sockets: This indicates the number of physical CPU sockets available on the node. A socket is a physical component that houses one or more CPU cores. It represents a physical processor unit.
+
+- cores_per_socket: This specifies the number of CPU cores present in each socket. A core is an individual processing unit within a CPU.
+
+For example:
+```shell
+neural_solution cluster --join "host1 2 20; host2 4 20"
+```
+### Remove node
+This command is used to remove nodes from the cluster based on the IDs obtained from the query. The IDs can be passed as a parameter to the command. For example:
+```shell
+neural_solution cluster --remove <query_id>
+```
+Please note that the above commands are just examples and may require additional parameters or configurations based on your specific setup.

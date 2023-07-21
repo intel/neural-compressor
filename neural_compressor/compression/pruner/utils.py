@@ -38,6 +38,7 @@ except:
     import torch.nn as nn
     import tensorflow
     import torch.nn.functional as F
+    import tensorflow as tf
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)

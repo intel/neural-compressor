@@ -18,15 +18,12 @@
 
 import copy
 
-from neural_compressor.utils.utility import LazyImport
 from .base import register_pruner, PytorchBasePruner
 from ..schedulers import get_scheduler
 from ..patterns import get_pattern
 from ..criteria import get_criterion
 from ..regs import get_reg
-from ..utils import logger
-
-torch = LazyImport('torch')
+from ..utils import logger, torch
 
 
 @register_pruner('pt_progressive')
@@ -204,7 +201,8 @@ class PytorchProgressivePruner(PytorchBasePruner):
         for n in self.masks.keys():
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
-        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks, )
+        if not self.use_progressive:
+            self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks, )
         self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks,
                                                                        self.criterion.scores, 1,
                                                                        self.progressive_configs)

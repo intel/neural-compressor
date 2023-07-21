@@ -212,6 +212,14 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             try:
                 weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
                                            'best_model.pt')
+                # for weight only quantized model.
+                weights_only_config_file = os.path.join(
+                  os.path.abspath(os.path.expanduser(checkpoint_dir)),'qconfig.json')
+                if os.path.exists(weights_only_config_file):
+                    model.load_state_dict(torch.load(weights_file))
+                    logger.info('Load weight_only quantized model')
+                    return model
+                # -------------------------------
                 try:
                     stat_dict = torch.jit.load(weights_file)
                     logger.info("torch.jit.load is used to recovery the int8 model quantized by INC IPEX backend")

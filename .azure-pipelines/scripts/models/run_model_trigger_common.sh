@@ -67,15 +67,21 @@ if [ "${mode}" == "env_setup" ]; then
         --new_benchmark=${new_benchmark} \
         --inc_new_api="${inc_new_api}"
 elif [ "${mode}" == "tuning" ]; then
+    if [ "${framework}" == "onnxrt" ]; then
+        output_model=${log_dir}/${model}/${framework}-${model}-tune.onnx
+    elif [ "${framework}" == "mxnet" ]; then
+        output_model=${log_dir}/${model}/resnet50_v1
+    elif [ "${framework}" == "tensorflow" ]; then
+        output_model=${log_dir}/${model}/${framework}-${model}-tune.pb
+    fi
+    [[ ${output_model} ]] && tuning_cmd="${tuning_cmd} --output_model=${output_model}"
+
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
-    $BOLD_YELLOW && echo "tuning_cmd is ${tuning_cmd}" && $RESET
+    $BOLD_YELLOW && echo "tuning_cmd is === ${tuning_cmd}" && $RESET
     $BOLD_YELLOW && echo "======== run tuning ========" && $RESET
     /bin/bash ${SCRIPTS_PATH}/run_tuning_common.sh \
-        --framework=${framework} \
-        --model=${model} \
         --tuning_cmd="${tuning_cmd}" \
-        --log_dir="${log_dir}/${model}" \
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
     $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET

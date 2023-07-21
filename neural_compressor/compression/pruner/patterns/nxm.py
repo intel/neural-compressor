@@ -22,9 +22,9 @@ from .base import (register_pattern,
                    KerasBasePattern,
                    SparsityInfo,
                    ProgressivePatternUtils)
+
 from ..utils import logger, torch, tf, nn
 import transformers
-
 
 @register_pattern('ptNxM')
 class PytorchPatternNxM(PytorchBasePattern):
@@ -134,7 +134,8 @@ class PytorchPatternNxM(PytorchBasePattern):
         for key in pre_masks.keys():
             if key in self.invalid_layers:
                 continue
-            reduced_mask = pre_masks[key].float() if self.block else self.get_reduced_masks_from_data(pre_masks[key].float(), key)
+            reduced_mask = pre_masks[key].float() if self.block \
+                else self.get_reduced_masks_from_data(pre_masks[key].float(), key)
             zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
             total_cnt += int(reduced_mask.numel())
         if total_cnt == 0:
@@ -221,7 +222,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         data = self._reshape_2dims_to_orig(data, orig_shape)
         return data
     
-    def reduce_score(self, score, key):
+    def reduce_score(self, score, key, force=False):
         """Recalculate the pruning score after reducing the data.
 
         Args:
@@ -230,10 +231,11 @@ class PytorchPatternNxM(PytorchBasePattern):
         Returns:
             The reduced pruning score.
         """
-        if key in self.invalid_layers:
-            return score
-        if self.keep_mask_layers.get(key, False):
-            return score
+        if not force:
+            if key in self.invalid_layers:
+                return score
+            if self.keep_mask_layers.get(key, False):
+                return score
         self.keep_mask_layers[key] = False
         new_score = self.reshape_orig_to_pattern(score, key)
         # sum or mean is quite different for per channel pruning
@@ -403,7 +405,7 @@ class PytorchPatternNxM(PytorchBasePattern):
             masks[key] = block_mask
 
         return masks
-    
+
     def mask_block_weights(self, masks):
         """Achieve weight pruning by multiplying the reshaped weights and block masks."""
         for key in masks.keys():
@@ -431,13 +433,14 @@ class PytorchPatternNxM(PytorchBasePattern):
             A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
         """
         score_or_linear = progressive_configs['progressive_type']  # "scores" or "linear"
+        new_scores = {}
         for key in scores.keys():
-            scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+            new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
         if score_or_linear == "scores":
-            return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, scores,
+            return ProgressivePatternUtils.update_progressive_masks_scores_order(pre_masks, cur_masks, new_scores,
                                                                                  progressive_step, progressive_configs)
         elif score_or_linear == "linear":
-            return ProgressivePatternUtils.update_progressive_masks_linear_order(pre_masks, cur_masks, scores,
+            return ProgressivePatternUtils.update_progressive_masks_linear_order(pre_masks, cur_masks, new_scores,
                                                                                  progressive_step, progressive_configs,
                                                                                  self.block_size)
         else:
@@ -805,7 +808,7 @@ class KerasPatternNxM(KerasBasePattern):
                 continue
             if len(scores[key].shape) == 4:  # need to permute
                 mask = masks[key]
-                orig_shape = self.modules[key].shape
+                orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
             layer_ratio = np.sum(masks[key] == 0.0) / masks[key].size

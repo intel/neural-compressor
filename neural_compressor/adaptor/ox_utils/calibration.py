@@ -37,7 +37,7 @@ from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
     _get_qrange_for_qType, calculate_scale_zp
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
-from neural_compressor.adaptor.ox_utils.util import find_by_name
+from neural_compressor.adaptor.ox_utils.util import to_numpy
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -139,17 +139,22 @@ class ONNXRTAugment:
                              (node.name in self.white_nodes)
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    tensors_to_dump.update(node.input)
+                    tensors_to_dump.update([input for input in node.input if len(input) != 0])
+                    tensors_to_dump.update([output for output in node.output if len(output) != 0])
                     tensors_to_dump.update(node.output)
                 elif weight_only:
                     for input in node.input:
                         if self.already_quantized and \
-                                input.replace('_dequantized', '_quantized') in initializers:
+                            input.replace('_dequantized', '_quantized') in initializers and \
+                            len(input) != 0:
                             tensors_to_dump.add(input)
-                        elif not self.already_quantized and input in initializers:
+                        elif not self.already_quantized and \
+                            input in initializers and \
+                            len(input) != 0:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    tensors_to_dump.update([node.input[0]])
+                    if len(node.input[0]) != 0:
+                        tensors_to_dump.update([node.input[0]])
 
         model_inputs = [i.name for i in model.graph.input]
         for tensor in tensors_to_dump:
@@ -250,22 +255,22 @@ class ONNXRTAugment:
         name_to_calibrator = {}
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
+
             if len_inputs == 1:
-                ort_inputs.update(
-                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                )
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
             else:
                 assert len_inputs == len(inputs), \
                     'number of input tensors must align with graph inputs'
-                if isinstance(inputs, dict):  # pragma: no cover
-                    ort_inputs.update(inputs)
-                else:
-                    for i in range(len_inputs):
-                        if not isinstance(inputs[i], np.ndarray):  # pragma: no cover
-                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                        else:
-                            ort_inputs.update({inputs_names[i]: inputs[i]})
 
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
             def _collect_data():
                 for output_idx, output in enumerate(session.run(None, ort_inputs)):
                     if q_config is not None and output.size != 0:
@@ -467,7 +472,7 @@ class ONNXRTAugment:
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
             if parent and parent.name in q_config and \
-                q_config[parent.name] not in ['fp32', 'fp16']:
+                q_config[parent.name] not in ['fp32', 'fp16', 'bf16']:
                 scheme = q_config[parent.name]['activation']['scheme']
                 qType = q_config[parent.name]['activation']['dtype']
             elif self.backend in ['TensorrtExecutionProvider']:
@@ -524,6 +529,8 @@ class ONNXRTAugment:
                     tensor_name in node.input[:2]:
                     for i in range(iters):
                         if node.op_type in ['Attention', 'QAttention'] and tensor_name not in node.input[:2]:
+                            continue
+                        if node.op_type in ['MatMul', 'QLinearMatMul'] and tensor_name != node.input[0]:
                             continue
                         if is_qdq:
                             map_node_activation[i][node_name] = \

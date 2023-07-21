@@ -18,10 +18,7 @@
 from .base import (register_pattern,
                    PytorchBasePattern
                    )
-from neural_compressor.utils.utility import LazyImport
-
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
+from ..utils import torch
 
 
 @register_pattern('ptMHA')
