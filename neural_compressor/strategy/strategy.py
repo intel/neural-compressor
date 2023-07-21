@@ -180,10 +180,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self._trials_count = 0
         self._capability = None
         self._tuning_space = None
-        # A algo scheduler for algos that were applied before tuning, such as sq.
-        # TODO add pre_tuning_algo_scheduler to meta properties
-        self._pre_tuning_algo_scheduler = self._initial_pre_tuning_algo_scheduler()
-        self.set_param_for_pre_tuning_algos(self._pre_tuning_algo_scheduler, self.config, self.model)
         self._algo_scheduler = None
 
         self._optype_statistics = None
@@ -206,6 +202,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self.diagnosis_done = False
 
         self._resume = resume
+        self._initial_adaptor()
+        # A algo scheduler for algos that were applied before tuning, such as sq.
+        # TODO add pre_tuning_algo_scheduler to meta properties
+        self._pre_tuning_algo_scheduler = self._initial_pre_tuning_algo_scheduler()
+        self.set_param_for_pre_tuning_algos(self._pre_tuning_algo_scheduler, self.config, self.model)
+        self.model = self._pre_tuning_algo_scheduler('pre_quantization')
         if self._resume is not None: self.setup_resume(resume)
 
     @property
@@ -316,6 +318,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # reuse the calibration iteration
         algo_scheduler.dataloader = self.calib_dataloader
         algo_scheduler.origin_model = self.model
+        # TODO update the calib_iter
+        algo_scheduler.calib_iter = 1
         algo_scheduler.adaptor = self.adaptor
         return algo_scheduler
 
@@ -326,13 +330,15 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         algo_scheduler.origin_model = self.model
         algo_scheduler.adaptor = self.adaptor
         return algo_scheduler
-
-    def _prepare_tuning(self):
-        """Prepare to tune and avoid repeated initialization of the adaptor and tuning space."""
+    
+    def _initial_adaptor(self):
         framework, framework_specific_info = self._set_framework_info(self.calib_dataloader, self.q_func)
         self.adaptor = self.adaptor or FRAMEWORKS[framework](framework_specific_info)
         self.framework = self.framework or framework
         self.cur_best_acc = self.cur_best_acc or self.initial_best_acc()
+
+    def _prepare_tuning(self):
+        """Prepare to tune and avoid repeated initialization of the adaptor and tuning space."""
         # query capability and build tuning space
         self.capability = self.capability or self.adaptor.query_fw_capability(self.model)
         logger.debug(self.capability)
@@ -1187,11 +1193,20 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # For not tuning recipe, tune cfg use it directly
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
         tune_cfg['trial_number'] = deepcopy(self.trials_count)
-        # WA for get the smooth quant args
+        # The sq-related args comes from user config, current best tuning config
+        # TODO simplify the logic for transforming the arguments
+        # update the sq-related args from self.cur_best_tuning_cfg
+        if self.cur_best_tuning_cfg:
+            for arg in ['smooth_quant', 'smooth_quant_args']:
+                if arg in tune_cfg['recipe_cfgs']:
+                    continue
+                val = self.cur_best_tuning_cfg.get('recipe_cfgs', {}).get(arg, None)
+                if val: tune_cfg['recipe_cfgs'][arg] = val
         # TODO simplify the check logic
+        # update the sq-related args from user config
         for k, v in self.config.recipes.get("smooth_quant_args", {}).items():
-            if k not in tune_cfg['recipe_cfgs']['smooth_quant_args']:
-                tune_cfg['recipe_cfgs']['smooth_quant_args'][k] = v
+            if k not in tune_cfg['recipe_cfgs'].get('smooth_quant_args', {}):
+                tune_cfg['recipe_cfgs'].setdefault('smooth_quant_args', {})[k] = v
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
             if recipe_name not in tune_cfg['recipe_cfgs']:

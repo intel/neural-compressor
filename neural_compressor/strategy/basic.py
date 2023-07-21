@@ -254,16 +254,27 @@ class BasicTuneStrategy(TuneStrategy):
         for calib_sampling_size in calib_sampling_size_lst:
             # Initialize the tuning config for each op according to the quantization approach.
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
+            initial_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
             early_stop_tuning = False
             stage1_cnt = 0
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
             stage1_max = 1e9  # TODO set a more appropriate value
+            if not self.cur_best_tuning_cfg:
+                self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
+            # try to tune sq alpha
+            if self._should_tuning_sq_alpha(self.config.recipes):
+                for tune_cfg in self.tuning_sq_alpha(tuning_space, \
+                    deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
+                    # TODO update the cur_best_tuning_cfg with current best acc
+                    yield tune_cfg
+
+            # op type-wise tuning
             op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],\
                 op_item_dtype_dict, initial_op_tuning_cfg)
+            
             for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
-                initial_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 if not self.cur_best_tuning_cfg:
                     self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
@@ -272,10 +283,6 @@ class BasicTuneStrategy(TuneStrategy):
                 if index == 1 and self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result)):
                     for op_tuning_cfg in self.quant_to_lower_bits(self.cur_best_tuning_cfg, calib_sampling_size):
                         yield op_tuning_cfg
-                # try to tune sq alpha
-                if self._should_tuning_sq_alpha(self.config.recipes):
-                    for tune_cfg in self.tuning_sq_alpha(tuning_space, deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
-                        yield tune_cfg
                 # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
                 if index == 1 and not self.applied_all_recipes_flag:
                     logger.info("Apply all recipes.")
@@ -362,18 +369,6 @@ class BasicTuneStrategy(TuneStrategy):
             logger.warning(f"[Strategy] All tuning options for the current strategy have been tried.\
                 If the quantized model does not seem to work well, it might be worth considering other strategies.")
 
-                        
-    def _should_tuning_sq_alpha(self, recipes):
-        # Only tune sq'alpha only if there are more than one alpha
-        return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha", [])) > 1
-    
-    def tuning_sq_alpha(self, tuning_cfg):
-        # TODO generate tuning config
-        pass
-
-    def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
-        """Tuning smooth quant's alpha.
-                        
     def _should_tuning_sq_alpha(self, recipes):
         # Only tune sq'alpha only if there are more than one alpha
         return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha", [])) > 1
@@ -392,6 +387,7 @@ class BasicTuneStrategy(TuneStrategy):
         sq_alpha_list = recipes.get("smooth_quant_args", {}).get("alpha", [])
         assert len(sq_alpha_list) > 0, "Only tune the smooth quant's alpha when user provide the alpha list,\
             but got alpha_list: {alpha_list}"
+        logger.info("[STRATEGY] Start tuning smooth quant'alpha.")
         sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
         for tune_cfg in sq_sampler:
             yield tune_cfg
