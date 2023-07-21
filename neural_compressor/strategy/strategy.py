@@ -1636,9 +1636,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         elif timeout == 0 and self.best_tune_result:
             logger.info("[Strategy] Found a model that meets the accuracy requirements.")
             need_stop = True
-        # elif self.trials_count >= self.config.tuning_criterion.max_trials:
-        #     logger.info("[Strategy] The number of trials is equal to the maximum trials, ending the tuning process.")
-        #     need_stop = True
+        elif self.trials_count >= self.config.tuning_criterion.max_trials:
+            logger.info("[Strategy] The number of trials is equal to the maximum trials, ending the tuning process.")
+            need_stop = True
         else:
             need_stop = False
 
