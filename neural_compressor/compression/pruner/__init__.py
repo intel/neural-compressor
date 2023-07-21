@@ -46,7 +46,8 @@ def prepare_pruning(config, model: torch.nn.Module,
     """
     # do the ugly work here
     # check if it is doing self-multihead-attention pruning
-    assert framework in FRAMEWORK.keys(), f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
+    assert framework in FRAMEWORK.keys(), \
+            f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
     pruning_list = []
     pruning_conf = process_config(config)
     # if enable progressive pruning or not.
@@ -66,9 +67,11 @@ def prepare_pruning(config, model: torch.nn.Module,
             else:
                 retrain_free_conf.append(pruner_info)
         if len(sparse_gpt_conf) > 0:
-            pruning_list.append(PRUNINGS['sparse_gpt_pruning'](sparse_gpt_conf, model, opt_or_dataloader, loss_func, device))
+            pruning_list.append(PRUNINGS['sparse_gpt_pruning'](sparse_gpt_conf, model,
+                                                               opt_or_dataloader, loss_func, device))
         if len(retrain_free_conf) > 0:
-            pruning_list.append(PRUNINGS['retrain_free_pruning'](retrain_free_conf, model, opt_or_dataloader, loss_func))
+            pruning_list.append(PRUNINGS['retrain_free_pruning'](retrain_free_conf,
+                                                                 model, opt_or_dataloader, loss_func))
         if len(pruning_list) > 1:
             logger.info(f"Note that two post-training pruning methods are used here.")
             return pruning_list

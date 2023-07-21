@@ -590,7 +590,8 @@ def generate_pruner_config(info):
                   )
 
 def get_layers(model):
-    """get each layer's name and its module
+    """Get each layer's name and its module.
+    
     Args:
         model: The model to be pruned.
 
@@ -599,11 +600,12 @@ def get_layers(model):
     layers = []
     search_flag = False
     def unfoldLayer(module):
-        """
-        unfold each layer
-        :param model: the given model or a single layer
-        :param root: root name
-        :return:
+        """Unfold each layer.
+        
+        Args:
+            module: The modules.
+            
+        Returns: The ModuleList of model
         """
         nonlocal search_flag
         nonlocal layers
@@ -622,10 +624,16 @@ def get_layers(model):
     return layers
 
 @torch.no_grad()
-def collect_layer_inputs(model, layers, layer_idx, prev_inputs, device='cuda:0'):
-    """
-    attention_flag: If True collect attention_mask list else the auto-genated causal_attention_mask.
-    device: Specify the type of device to return.
+def collect_layer_inputs(model, layers, layer_idx, inputs, device='cuda:0'):
+    """Getting the forward input of a layer.
+    
+    Args:
+        model: The model to be pruned.
+        layers: Selectable layers of the model.
+        layer_idx: The layer index. 
+        inputs: The dataloader or the output of the previous layer.
+        device: Specify the type of device to return.
+    Returns: input list.
     """
     inputs = []
     model_dev = model.device
@@ -638,7 +646,7 @@ def collect_layer_inputs(model, layers, layer_idx, prev_inputs, device='cuda:0')
     if layer_idx == 0:
         layer = layers[layer_idx]
         def forward(self, hidden_states, **kwargs):
-            # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
+            # TODO solve the problem of batchsize!=1
             inputs.append(hidden_states.to(device))
             inputs_info['attention_mask'] = kwargs['attention_mask']
             if 'alibi' in kwargs.keys():
@@ -647,7 +655,7 @@ def collect_layer_inputs(model, layers, layer_idx, prev_inputs, device='cuda:0')
         
         forward_cache = layers[layer_idx].forward
         layer.forward = partial(forward, layer)
-        for batch in prev_inputs:
+        for batch in inputs:
             try:
                 hidden_states = list(batch.values())[0].to(model_dev)
                 model(hidden_states)
@@ -662,8 +670,9 @@ def collect_layer_inputs(model, layers, layer_idx, prev_inputs, device='cuda:0')
         prev_layer = layers[layer_idx-1]
         
         for batch in prev_inputs:
-            prev_output = prev_layer(*batch) #需要注意调用前先设置好prev_mask
+            prev_output = prev_layer(*batch)
             batch[0] = prev_output[0]
             inputs.append(batch)
             
     return inputs, inputs_info
+

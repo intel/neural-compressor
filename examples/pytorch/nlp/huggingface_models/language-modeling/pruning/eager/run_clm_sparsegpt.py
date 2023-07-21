@@ -85,8 +85,8 @@ class Evaluator:
         step = 0
         for input_ids, label, label_indices in tqdm(self.dataloader):
             with torch.no_grad():
-                if step == 0:
-                    model = torch.jit.trace(model, input_ids)
+                # if step == 0:
+                #     model = torch.jit.trace(model, input_ids)
                 step += 1
                 # timing
                 if step > warmup_steps: my_timer.__enter__()
@@ -208,6 +208,10 @@ def parse_args():
         help="Pretrained tokenizer name or path if not the same as model_name",
     )
     parser.add_argument(
+        "--device", default=0, type=str,
+        help="device gpu int number, or 'cpu' ",
+    )
+    parser.add_argument(
         "--use_slow_tokenizer",
         action="store_true",
         help="If passed, will use a slow tokenizer (not backed by the 🤗 Tokenizers library).",
@@ -327,11 +331,6 @@ def parse_args():
     )
     # pruning config
     parser.add_argument(
-        "--cooldown_epochs",
-        type=int, default=0,
-        help="Cooling epochs after pruning."
-    )
-    parser.add_argument(
         "--do_prune", action="store_true",
         help="Whether or not to prune the model"
     )
@@ -369,6 +368,9 @@ def parse_args():
         type=int, default=2048,
         help="Maximum data length the model can receive."
     )
+    parser.add_argument(
+        "--trust_remote_code", default=True,
+        help="Transformers parameter: use the external repo")
     ### DDP mode config
     parser.add_argument(
         "--local_rank",
@@ -471,9 +473,8 @@ def main():
         config = AutoConfig.from_pretrained(args.config_name, torchscript=True)
     elif args.model_name_or_path:
         # torchscript will force `return_dict=False` to avoid jit errors
-        config = AutoConfig.from_pretrained(args.model_name_or_path, torchscript=True)
-        # config = AutoConfig.from_pretrained(args.model_name_or_path)
-        # config = None
+        config = AutoConfig.from_pretrained(args.model_name_or_path,
+                                            torchscript=True, trust_remote_code=args.trust_remote_code)
     else:
         config = CONFIG_MAPPING[args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
@@ -501,11 +502,12 @@ def main():
                 )
         else:
             model = AutoModelForCausalLM.from_pretrained(
-            args.model_name_or_path,
-            from_tf=bool(".ckpt" in args.model_name_or_path),
-            config=config,
-            low_cpu_mem_usage=args.low_cpu_mem_usage,
-            )
+                    args.model_name_or_path,
+                    from_tf=bool(".ckpt" in args.model_name_or_path),
+                    config=config,
+                    trust_remote_code=args.trust_remote_code,
+                    low_cpu_mem_usage=args.low_cpu_mem_usage,
+                    )
 
     else:
         logger.info("Training new model from scratch")
@@ -632,9 +634,6 @@ def main():
         pruning_configs,
         target_sparsity=args.target_sparsity,
         pattern=args.pruning_pattern,
-        # pruning_frequency=frequency,
-        # start_step=pruning_start,
-        # end_step=pruning_end,
     )
 
     if args.do_prune:
@@ -642,21 +641,26 @@ def main():
         torch.backends.cudnn.allow_tf32 = False
         use_cache = model.config.use_cache
         model.config.use_cache = False
-        # if torch.cuda.is_available():
+        # if torch.cuda.is_available():     # Larger models(e.g. 80G+) may not load into the video card memory.
         #     model = model.cuda()
-        # compression_manager = prepare_compression(model=model, confs=configs)
-        from neural_compressor.experimental.compression import get_pruning
-        pruning = get_pruning(configs, model, dataloader=train_dataloader)
-        # model = compression_manager.model.model
-        # compression_manager.callbacks.on_train_begin(dataloader=train_dataloader, model=model)
-        # compression_manager.callbacks.on_train_end()
+        device = args.device
+        if device != 'cpu':
+            device = "cuda:"+str(device)
+        from neural_compressor.compression.pruner import prepare_pruning
+        pruning = prepare_pruning(configs, model, train_dataloader, device=device)
         model.config.use_cache = use_cache
         
-    if torch.cuda.is_available():
-        model = model.cuda()
+    if args.output_dir is not None:
+        ###TODO set ddp save method
+        model.save_pretrained(args.output_dir+"/noslim")
+        tokenizer.save_pretrained(args.output_dir+"/noslim")
+        
+    # if torch.cuda.is_available():
+    #     model = model.cuda()
     model.eval()
     if args.evaluation_dataset_name != None:
-        dataset_eval = load_dataset( # for example:use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
+        dataset_eval = load_dataset( 
+            # for example:use the_pile's validation set for pruning, and lambada dataset for eval
             args.evaluation_dataset_name,
             args.dataset_config_name,
             split=f"validation",
@@ -668,11 +672,6 @@ def main():
     def eval_func(model):
         acc, avg_latency = evaluator.evaluate(model)
         return acc, avg_latency
-
-    if args.output_dir is not None:
-        ###TODO set ddp save method
-        model.save_pretrained(args.output_dir+"/noslim")
-        tokenizer.save_pretrained(args.output_dir+"/noslim")
 
     if not args.auto_slim:
         # only eval
