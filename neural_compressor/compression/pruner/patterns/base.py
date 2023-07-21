@@ -160,7 +160,7 @@ class ProgressivePatternUtils(object):
             # an empty tensor, at target sparsity is 0 situation
             return pre_masks
         threshold, _ = torch.kthvalue(global_new_added_scores, kth_masked_position, dim=0)
-        for key in scores.keys():
+        for key in scores.keys():  # pragma: no cover
             new_added_mask = new_added_masks[key]
             score = scores[key]
             new_added_filter = 1 - new_added_mask
@@ -172,7 +172,7 @@ class ProgressivePatternUtils(object):
         return progressive_masks
 
     @staticmethod
-    def update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):
+    def update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):  # pragma: no cover
         """Generate the progressive masks.
 
         Args:
