@@ -172,7 +172,11 @@ class ProgressivePatternUtils(object):
         return progressive_masks
 
     @staticmethod
-    def update_progressive_masks_local_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs):  # pragma: no cover
+    def update_progressive_masks_local_scores(pre_masks,
+                                              cur_masks,
+                                              scores,
+                                              progressive_step,
+                                              progressive_configs):  # pragma: no cover
         """Generate the progressive masks.
 
         Args:
