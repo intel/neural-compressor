@@ -56,11 +56,11 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 **Export arguments**:
 | export args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| qweight_config_path |      None     |   if need to export model with fp32_model and json file, set the path of qconfig.json |
+| qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
 |  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
-|  compression_dtype  |       torch.int32       |   data type for compressed dtype, select from [torch.int8|16|32|64]   |
+|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8|16|32|64]   |
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
-|  scale_dtype  |       torch.float32       |   data type for scale and bias   |
+|  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
 
 ### **User code**:
 ```python
