@@ -267,7 +267,7 @@ class SparseGPTPruning(BasePruning):
         self._model = self._model.cpu()
         
         inputs, inp_dict = collect_layer_inputs(model=self._model, layers=layers, layer_idx=0, \
-                                                prev_inputs=self._dataloader, device=self.dev)
+                                                inputs=self._dataloader, device=self.dev)
         if 'cuda' in self.dev.type:
             torch.cuda.empty_cache()
         

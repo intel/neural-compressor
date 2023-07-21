@@ -38,7 +38,6 @@ except:
     import torch.nn as nn
     import tensorflow
     import torch.nn.functional as F
-    import tensorflow as tf
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)
@@ -669,10 +668,9 @@ def collect_layer_inputs(model, layers, layer_idx, inputs, device='cuda:0'):
     else:
         prev_layer = layers[layer_idx-1]
         
-        for batch in prev_inputs:
+        for batch in inputs:
             prev_output = prev_layer(*batch)
             batch[0] = prev_output[0]
             inputs.append(batch)
             
     return inputs, inputs_info
-
