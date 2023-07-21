@@ -24,7 +24,7 @@
                     'bits': [4, 3, 8], # [1-8]
                     'group_size': [32, -1, 1, 16, 64, 128, 256, 512, 1024], # [1-inf]
                     'scheme': ['sym', 'asym'], # sym, no ZP
-                    'algorithm': ['RTN', 'AWQ'], # RTN, [RTN, GPTQ, AWQ,] RTN+AWQ+TEQ order
+                    'algorithm': ['RTN', 'AWQ', 'GPTQ']
         },
         'activation': {
                     'dtype': ['fp32']

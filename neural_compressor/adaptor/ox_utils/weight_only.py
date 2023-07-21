@@ -171,7 +171,8 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
 
         for node in nodes:
             if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
-                tensor = numpy_helper.to_array(model.get_initializer(node.input[1]))
+                tensor = numpy_helper.to_array(model.get_initializer(node.input[1]),
+                                                os.path.dirname(model.model_path))
                 new_tensor = tensor * best_scale
                 model.set_initializer(node.input[1], new_tensor.astype(tensor.dtype), raw=True)
                 output_dicts[node.input[0]] = output_dicts[node.input[0]] / np.reshape(best_scale, (1, -1))
@@ -298,7 +299,7 @@ def prepare_inputs(model, n_samples, dataloader):
                 so,
                 providers=["CPUExecutionProvider"]) if not model.is_large_model else \
               onnxruntime.InferenceSession(
-                model.model_path,
+                model.model_path + '_augment.onnx',
                 so,
                 providers=["CPUExecutionProvider"])
     inputs_names = [i.name for i in session.get_inputs()]
@@ -316,7 +317,7 @@ def prepare_inputs(model, n_samples, dataloader):
             inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
         else:
             inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
-    return inputs
+    return inputs, so
 
 def awq_quantize(model,
                  tune_cfg,
@@ -349,17 +350,18 @@ def awq_quantize(model,
     Returns:
         model: fake quantized ONNXModel
     """
+    import onnxruntime
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
 
     if mse_range or mse_range:
         absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
 
-        inputs = prepare_inputs(model, n_samples, dataloader)
+        inputs, so = prepare_inputs(model, n_samples, dataloader)
         del dataloader
 
-        org_output = model.output()
-        model.remove_tensors_from_outputs(org_output)
+        org_output = copy.deepcopy(model.model.graph.output)
+        model.remove_tensors_from_outputs([i.name for i in org_output])
         num_block = math.ceil(len(absorb_pairs) / n_blocks)
         dump_pairs = {}
         for idx, parent in enumerate(absorb_pairs):
@@ -381,7 +383,7 @@ def awq_quantize(model,
                             so,
                             providers=["CPUExecutionProvider"]) if not model.is_large_model else \
                           onnxruntime.InferenceSession(
-                            model.model_path,
+                            model.model_path + '_augment.onnx',
                             so,
                             providers=["CPUExecutionProvider"])
 
@@ -399,26 +401,27 @@ def awq_quantize(model,
             else:
                 dump_pairs[parent] = absorb_pairs[parent]
 
-        model.add_tensors_to_outputs(org_output)
+        model.model.graph.output.MergeFrom(org_output)
     return model
 
-def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False):
+def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=False):
     Qs = []
     group_size = config["weight"]["group_size"]
     bits = config["weight"]["bits"]
     scheme = config["weight"]["scheme"]
     maxq = 2 ** bits - 1
+    grid=100
+    maxshrink=.8
+    norm=2.4
 
     def find_params(weight):
         org_shape = weight.shape
         # find zp, scale
-        if group_size == -1:
-            W = W.flatten('F')
-        else:
-            W = W.flatten()
-        tmp = np.zeros(W.shape[0])
-        xmin = np.minimum(np.min(W, axis=0)[0], tmp)
-        xmax = np.maximum(np.max(W, axis=0)[0], tmp)
+        if group_size != -1:
+            weight = np.expand_dims(weight.flatten(), axis=1)
+        tmp = np.zeros(weight.shape[1])
+        xmin = np.minimum(np.min(weight, axis=0), tmp)
+        xmax = np.maximum(np.max(weight, axis=0), tmp)
         if scheme == "sym":
             xmax = np.maximum(np.abs(xmin), xmax)
             tmp = xmin < 0
@@ -430,21 +433,21 @@ def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False):
 
         scale = (xmax - xmin) / maxq
         if scheme == "sym":
-            zero = np.ones(scale.shape) * (maq + 1) / 2
+            zero = np.ones(scale.shape) * (maxq + 1) / 2
         else:
             zero = np.round(-xmin / scale)
         if mse:
-            best = np.ones([W.shape[1]]) * float("inf")
+            best = np.ones([weight.shape[1]]) * float("inf")
             for i in range(int(maxshrink * grid)):
                 p = 1 - i / grid
                 xmin1 = p * xmin
                 xmax1 = p * xmax
                 scale1 = (xmax1 - xmin1) / maxq
                 zero1 = np.round(-xmin1 / scale1) if scheme != "sym" else zero
-                q = np.clip(np.round(W / scale1) + zero1, 0, maxq)
-                q -= W
-                q = np.pow(np.abs(q), norm)
-                err = np.sum(q, 1)
+                q = np.clip(np.round(weight / scale1) + zero1, 0, maxq)
+                q -= weight
+                q = np.power(np.abs(q), norm)
+                err = np.sum(q, 0)
                 tmp = err < best
                 if np.any(tmp):
                     best[tmp] = err[tmp]
@@ -455,71 +458,66 @@ def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False):
             scale = np.repeat(scale, tmp)
             zero = np.repeat(zero, tmp)
         shape = [-1] + [1] * (len(org_shape) - 1)
-        scale = np.reshape(scale, org_shape)
-        zero = np.reshape(zero, org_shape)
+        scale = np.reshape(scale, shape)
+        zero = np.reshape(zero, shape)
         return scale, zero
 
     for W, H in zip(Ws, Hs):
+        dtype = W.dtype
         shape = W.shape
         scale, zp = find_params(W)
-
         dead = np.diag(H) == 0
         H[dead, dead] = 1
-        W[:, dead] = 0 # such channel makes no contribution to quantization computation
+        W[dead, :] = 0 # such channel makes no contribution to quantization computation
 
         # rearrange considering the diag's value
         if actorder:
-            perm = np.argsort(np.diag(H), descending=True)
-            W = W[:, perm]
-            H = H[perm][:, perm]
-
+            perm = np.argsort(np.diag(H))[::-1]
+            W = W[perm, :]
+            H = H[perm, :][:, perm]
         Losses = np.zeros(W.shape)
         Q = np.zeros(W.shape)
-
         damp = percdamp * np.mean(np.diag(H))
-        diag = np.arange(shape[0], device=device)
+        diag = np.arange(shape[0])
         H[diag, diag] += damp # add a average value of 
-        H = np.linalg.cholesky(H)
-        H = np.cholesky_inverse(H)
-        H = np.linalg.cholesky(H, upper=True)
+        H = np.linalg.cholesky(np.linalg.inv(H)).T
         Hinv = H
-
         for i1 in range(0, shape[0], blocksize):
             i2 = min(i1 + blocksize, shape[0])
             count = i2 - i1
 
-            W1 = W[:, i1:i2].clone()
+            W1 = copy.deepcopy(W[i1:i2, :])
             Q1 = np.zeros(W1.shape)
             Err1 = np.zeros(W1.shape)
             Losses1 = np.zeros(W1.shape)
             Hinv1 = Hinv[i1:i2, i1:i2]
 
             for i in range(count): # within a block, channel wise
-                w = W1[:, i]
+                w = W1[i, :]
                 d = Hinv1[i, i]
 
                 if group_size != -1:
                     if (i1 + i) % group_size == 0:
-                        scale, zp = find_params(W[:, (i1 + i):(i1 + i + group_size)])
+                        scale, zp = find_params(W[(i1 + i):(i1 + i + group_size), :])
 
-                q = (scale * (np.clip(np.round(w.unsqueeze(1) / scale) + zp, 0, maxq) - zp)).flatten()
-                Q1[:, i] = q
-                Losses1[:, i] = (w - q) ** 2 / d ** 2
+                q = (scale * (np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq) - zp)).flatten()
+                Q1[i, :] = q
+                Losses1[i, :] = (w - q) ** 2 / d ** 2
 
                 err1 = (w - q) / d
-                W1[:, i:] -= np.matmul(err1.unsqueeze(1), Hinv1[i, i:].unsqueeze(0))
-                Err1[:, i] = err1
+                W1[i:, :] -= np.matmul(np.expand_dims(Hinv1[i:, i], axis=1), np.expand_dims(err1, axis=0))
+                Err1[i, :] = err1
 
-            Q[:, i1:i2] = Q1
-            Losses[:, i1:i2] = Losses1 / 2
+            Q[i1:i2, :] = Q1
+            Losses[i1:i2, :] = Losses1 / 2
 
-            W[:, i2:] -= np.matmul(Err1, Hinv[i1:i2, i2:])
+            W[i2:, :] -= np.matmul(Hinv[i2:, i1:i2], Err1)
 
         if actorder:
             invperm = np.argsort(perm)
-            Q = Q[:, invperm]
+            Q = Q[invperm, :]
 
-        Qs.append(np.reshape(Q, W.shape))
+        Qs.append(np.reshape(Q, W.shape).astype(dtype))
     del Ws
     return Qs
 
@@ -550,15 +548,16 @@ def gptq_quantize(model,
     Returns:
         model: fake quantized ONNXModel
     """
+    import onnxruntime
+
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
     absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
 
-    inputs = prepare_inputs(model, n_samples, dataloader)
+    inputs, so = prepare_inputs(model, n_samples, dataloader)
     del dataloader
-
-    org_output = model.output()
-    model.remove_tensors_from_outputs(org_output)
+    org_output = copy.deepcopy(model.model.graph.output)
+    model.remove_tensors_from_outputs([i.name for i in org_output])
     for parent, nodes in absorb_pairs.items():
         dump_tensor = list(set([i.input[0] for i in nodes]))
         model.add_tensors_to_outputs(dump_tensor)
@@ -575,12 +574,12 @@ def gptq_quantize(model,
                     so,
                     providers=["CPUExecutionProvider"]) if not model.is_large_model else \
                   onnxruntime.InferenceSession(
-                    model.model_path,
+                    model.model_path + '_augment.onnx',
                     so,
                     providers=["CPUExecutionProvider"])
 
-        weights = [numpy_helper.to_array(model.get_initializer(node.input[1]),
-                    os.path.dirname(model.model_path)) for node in nodes]
+        weights = [copy.deepcopy(numpy_helper.to_array(model.get_initializer(node.input[1]),
+                    os.path.dirname(model.model_path))) for node in nodes]
         Hs = [np.zeros((i.shape[0], i.shape[0])) for i in weights]
         nsamples = 0
         for inp in inputs:
@@ -588,16 +587,18 @@ def gptq_quantize(model,
             for output_idx, output in enumerate(session.run(None, inp)):
                 output_dicts.setdefault(dump_tensor[output_idx], []).append(output)
 
-            inp = output_dicts[node.input[0]]
+            inp = output_dicts[nodes[0].input[0]][0]
             tmp = inp.shape[0]
+            if len(inp.shape) == 3:
+                inp = np.reshape(inp, (-1, inp.shape[-1]))
             Hs = [i * (nsamples / (nsamples + tmp)) for i in Hs]
             nsamples += tmp
             inp = np.sqrt(2 / nsamples) * inp
-            Hs = [i + np.matmul(inp, inp.T) for i in Hs]
+            Hs = [i + np.matmul(inp.T, inp) for i in Hs]
 
         model.remove_tensors_from_outputs(dump_tensor)
         weights = gptq(weights, inp, Hs, tune_cfg[nodes[0].name])
         for name, weight in zip([i.input[1] for i in nodes], weights):
             model.set_initializer(name, weight, raw=True)
-    model.add_tensors_to_outputs(org_output)
+    model.model.graph.output.MergeFrom(org_output)
     return model
