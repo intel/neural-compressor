@@ -9,6 +9,6 @@ psutil
 Pillow
 pycocotools-windows; sys_platform != 'linux'
 pycocotools; sys_platform == 'linux'
-opencv-python
+opencv-python-headless
 prettytable
 deprecated >= 1.2.13
