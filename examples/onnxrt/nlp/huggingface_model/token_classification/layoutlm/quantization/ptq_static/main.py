@@ -12,7 +12,7 @@ from datasets import ClassLabel, load_dataset, load_metric
 
 import funsd
 import transformers
-from data_utils import DataCollatorForKeyValueExtraction, DataTrainingArguments
+from utils import DataCollatorForKeyValueExtraction, DataTrainingArguments
 from trainer import FunsdTrainer as Trainer
 from transformers import (
     AutoConfig,
@@ -96,6 +96,10 @@ class ModelArguments:
     batch_size: int = field(
         default=1,
         metadata={"help": ("batch size for benchmark")},
+    )
+    quant_format: str = field(
+        default="QOperator",
+        metadata={"help": ("quant format")},
     )
 
 
@@ -432,19 +436,29 @@ def main():
 
             # check the optimized model is valid
             try:
-                onnxruntime.InferenceSession(model.SerializeToString(), providers=onnxruntime.get_available_providers())
+                onnxruntime.InferenceSession(onnx_model.SerializeToString(), providers=onnxruntime.get_available_providers())
             except Exception as e:
                 logger.warning("Optimized model is invalid: {}. ".format(e))
                 logger.warning("Model optimizer will be skipped. " \
                             "Try to upgrade onnxruntime to avoid this error")
                 onnx_model = onnx.load(model_args.input_model)
-        
+            
             from neural_compressor import quantization, PostTrainingQuantConfig
+            from neural_compressor.utils.constant import FP32
 
-            config = PostTrainingQuantConfig(approach='dynamic')
+            calib_dataset = IncDataset(test_dataset, onnx_model)
+            fp32_op_names = ['Attention_(0|3|4)', 
+                            '/layoutlm/embeddings/Add(_(2|4|6)|)',
+                            '.*?_position_embeddings.*?']
+            config = PostTrainingQuantConfig(approach='static',
+                                             quant_format=model_args.quant_format,
+                                             op_name_dict={op_name:FP32 for op_name in fp32_op_names})
             q_model = quantization.fit(onnx_model, 
                                        config,
-                                       eval_func=eval_func)
+                                       eval_func=eval_func,
+                                       calib_dataloader=DataLoader(framework='onnxruntime',
+                                                                   dataset=calib_dataset, 
+                                                                   batch_size=1))
             q_model.save(model_args.save_path)
         if model_args.benchmark:
             onnx_model = onnx.load(model_args.input_model)

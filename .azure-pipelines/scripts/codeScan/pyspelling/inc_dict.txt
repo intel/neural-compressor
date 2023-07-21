@@ -2608,6 +2608,8 @@ LayoutLMv
 layoutlmv
 funsd
 layoutlmft
+layoutlm
+LayoutLM
 nielsr
 HYPJUDY
 amerather
