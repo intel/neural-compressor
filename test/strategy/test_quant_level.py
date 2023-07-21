@@ -473,8 +473,8 @@ class TestQuantLevel(unittest.TestCase):
         self.assertTrue(found_fp32_conv)
 
     def test_quant_level_auto_with_max_trial(self):
-        # maxt_trails =1: even if the accuracy does not meet the requirements,
-        # the tuning process ends after the first attempt.
+        # maxt_trails = 1: even if the accuracy does not meet the requirements,
+        # the tuning process ends after the first trial.
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         acc_lst = [1.0, 0.9, 1.1, 1.2]
         def fake_eval3(model):
