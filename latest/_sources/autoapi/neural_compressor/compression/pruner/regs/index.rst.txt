@@ -59,7 +59,7 @@ Functions
    :param pattern: A config dict object that includes information of the pattern.
 
 
-.. py:class:: BaseReg(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern)
+.. py:class:: BaseReg(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.base.PytorchBasePattern)
 
 
    Regularizer.
@@ -71,7 +71,7 @@ Functions
    :param pattern: A config dict object that includes information of the pattern.
 
 
-.. py:class:: GroupLasso(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.BasePattern, coeff)
+.. py:class:: GroupLasso(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.base.PytorchBasePattern, coeff)
 
 
 

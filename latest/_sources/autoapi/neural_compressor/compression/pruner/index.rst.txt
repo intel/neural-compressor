@@ -16,6 +16,8 @@ Subpackages
    :maxdepth: 3
 
    model_slim/index.rst
+   patterns/index.rst
+   pruners/index.rst
 
 
 Submodules
@@ -25,10 +27,9 @@ Submodules
    :maxdepth: 1
 
    criteria/index.rst
-   patterns/index.rst
-   pruners/index.rst
    regs/index.rst
    schedulers/index.rst
+   tf_criteria/index.rst
    utils/index.rst
 
 

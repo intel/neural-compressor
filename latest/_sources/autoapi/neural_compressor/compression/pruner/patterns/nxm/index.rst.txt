@@ -1,0 +1,67 @@
+:py:mod:`neural_compressor.compression.pruner.patterns.nxm`
+===========================================================
+
+.. py:module:: neural_compressor.compression.pruner.patterns.nxm
+
+.. autoapi-nested-parse::
+
+   NxM patterns.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.patterns.nxm.PytorchPatternNxM
+   neural_compressor.compression.pruner.patterns.nxm.KerasPatternNxM
+
+
+
+
+.. py:class:: PytorchPatternNxM(config, modules)
+
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from BasePattern. In this pattern, the weights in a NxM block will be pruned or kept
+   during one pruning step.
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: block_size
+
+      A list of two integers representing the height and width of the block.
+
+   .. attribute:: Please note that the vertical direction of a Linear layer's weight refers to the output channel.
+
+      because PyTorch's tensor matmul has a hidden transpose operation.
+
+
+.. py:class:: KerasPatternNxM(config, modules)
+
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from BasePattern. In this pattern, the weights in a NxM block will be pruned or kept
+   during one pruning step.
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: block_size
+
+      A list of two integers representing the height and width of the block.
+
+   .. attribute:: Please note that the vertical direction of a Linear layer's weight refers to the output channel.
+
+      because PyTorch's tensor matmul has a hidden transpose operation.
+
+

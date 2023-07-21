@@ -42,12 +42,12 @@ Functions
    Register a criterion to the registry.
 
 
-.. py:function:: get_criterion(config, modules, framework='pytorch')
+.. py:function:: get_criterion(config, modules, pattern)
 
    Get registered criterion class.
 
 
-.. py:class:: PruningCriterion(modules, config, framework='pytorch')
+.. py:class:: PruningCriterion(modules, config, pattern)
 
 
    Pruning base criterion.
@@ -60,7 +60,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: MagnitudeCriterion(modules, config, framework='pytorch')
+.. py:class:: MagnitudeCriterion(modules, config, pattern)
 
 
 
@@ -78,7 +78,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: GradientCriterion(modules, config, framework='pytorch')
+.. py:class:: GradientCriterion(modules, config, pattern)
 
 
 
@@ -96,7 +96,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: SnipCriterion(modules, config, framework='pytorch')
+.. py:class:: SnipCriterion(modules, config, pattern)
 
 
 
@@ -116,7 +116,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: SnipMomentumCriterion(modules, config, framework='pytorch')
+.. py:class:: SnipMomentumCriterion(modules, config, pattern)
 
 
 
@@ -136,7 +136,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: SnipMomentumBlockCriterion(modules, config, framework='pytorch')
+.. py:class:: SnipMomentumBlockCriterion(modules, config, pattern, alpha=0.9, beta=1.0)
 
 
 
@@ -156,7 +156,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: RetrainFreeCriterion(modules, config, framework='pytorch')
+.. py:class:: RetrainFreeCriterion(modules, config, pattern)
 
 
 
