@@ -1,4 +1,4 @@
-"""pruning criterion."""
+ng criterion."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -210,10 +210,10 @@ class SnipMomentumCriterion(PruningCriterion):
 
 
 @register_criterion('block_mask')
-class SnipMomentumBlockCriterion(PruningCriterion):
+class BlockMaskCriterion(PruningCriterion):
     """Pruning criterion.
     
-    The snip_momentum_block criterion_class is derived from PruningCriterion.
+    The block_mask criterion_class is derived from PruningCriterion.
     A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.
 
     Args:
@@ -228,7 +228,7 @@ class SnipMomentumBlockCriterion(PruningCriterion):
 
     def __init__(self, modules, config, pattern, masks, alpha=0.9, beta=1.0):
         """Initiliaze a block_mask pruning criterion."""
-        super(SnipMomentumBlockCriterion, self).__init__(modules, config, pattern)
+        super(BlockMaskCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in masks.keys():
             mask = masks[key]

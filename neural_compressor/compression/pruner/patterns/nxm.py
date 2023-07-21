@@ -273,7 +273,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         if not self.block:
             mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
         else:
-            mask = mask.to(dtype=score.dtype)# torch.float32
+            mask = mask.float()
         return mask
 
     def get_masks_global(self, scores, cur_target_sparsity_ratio, pre_masks,

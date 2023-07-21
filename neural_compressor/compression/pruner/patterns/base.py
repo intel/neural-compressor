@@ -311,7 +311,7 @@ class BasePattern:
         self.max_sparsity_ratio_per_op = self.config['max_sparsity_ratio_per_op']
         self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
-        self.block = bool('block' in self.config['pruning_type'] or 'free' in self.config['pruning_type'])
+        self.block = bool('block' in self.config['pruning_type'] or 'retrain' in self.config['pruning_type'])
         # Not using deterministic_algorithms for all examples
 
     def get_masks(self, scores, target_sparsity_ratio, pre_masks):
@@ -522,6 +522,8 @@ class PytorchBasePattern(BasePattern):
             mask = torch.where(score <= threshold, zero, one)
         else:
             mask = torch.ones(score.shape, device=score.device)
+        if self.block:
+            mask = mask.float()
         return mask
 
     def get_sparsity_ratio(self, pre_masks, return_dict=False):

@@ -53,8 +53,9 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
-        self.masks = self.pattern.register_block_masks(self.modules)
-        self._rewrite_forward(self.masks)
+        self.masks = self.pattern.register_block_masks()
+        pruner_masks = [self.masks]
+        self._rewrite_forward(pruner_masks)
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(self.config, self.modules, self.pattern, self.masks)
         self.reg = get_reg(self.config, self.modules, self.pattern)
@@ -64,7 +65,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         
     def _rewrite_forward(self, pruner_masks):
         def forward(self, input):
-            block_mask = pruner_masks[self.mask_name]
+            block_mask = pruner_masks[0][self.mask_name]
             block_mask.requires_grad_(True) # Makesure that the gradient of block mask is always avilible
             block_size = [self.weight.shape[0] // block_mask.shape[0],
                           self.weight.shape[1] // block_mask.shape[1]]
@@ -125,7 +126,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         """Implement before optimizer.step()."""
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_before_optimizer_step()
-            self.criterion.on_before_optimizer_step()
+            self.criterion.on_before_optimizer_step(self.masks)
 
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
@@ -157,4 +158,3 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
                     else:
                         mask.grad.requires_grad_(False)
                     mask.grad.zero_()
-
