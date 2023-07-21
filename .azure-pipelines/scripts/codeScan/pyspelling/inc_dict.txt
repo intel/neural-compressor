@@ -2688,3 +2688,5 @@ fba
 hostname
 qweight
 qconfig
+TEQ
+WeightOnlyLinear
