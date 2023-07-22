@@ -623,14 +623,14 @@ def get_layers(model):
     return layers
 
 @torch.no_grad()
-def collect_layer_inputs(model, layers, layer_idx, inputs, device='cuda:0'):
+def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'):
     """Getting the forward input of a layer.
     
     Args:
         model: The model to be pruned.
         layers: Selectable layers of the model.
         layer_idx: The layer index. 
-        inputs: The dataloader or the output of the previous layer.
+        layer_inputs: The dataloader or the output of the previous layer.
         device: Specify the type of device to return.
     Returns: input list.
     """
@@ -639,7 +639,10 @@ def collect_layer_inputs(model, layers, layer_idx, inputs, device='cuda:0'):
     attention_mask = None
     # 'alibi' is a necessary attribute for the bloom models
     inputs_info = {'attention_mask': None}
-    model_type = model.config.model_type
+    if hasattr(model, 'config'): 
+        model_type = model.config.model_type
+    else :
+        model_type = 'null'
     if 'bloom' in model_type:
         inputs_info['alibi'] = None
     if layer_idx == 0:
@@ -654,7 +657,7 @@ def collect_layer_inputs(model, layers, layer_idx, inputs, device='cuda:0'):
         
         forward_cache = layers[layer_idx].forward
         layer.forward = partial(forward, layer)
-        for batch in inputs:
+        for batch in layer_inputs:
             try:
                 hidden_states = list(batch.values())[0].to(model_dev)
                 model(hidden_states)
@@ -668,7 +671,7 @@ def collect_layer_inputs(model, layers, layer_idx, inputs, device='cuda:0'):
     else:
         prev_layer = layers[layer_idx-1]
         
-        for batch in inputs:
+        for batch in layer_inputs:
             prev_output = prev_layer(*batch)
             batch[0] = prev_output[0]
             inputs.append(batch)

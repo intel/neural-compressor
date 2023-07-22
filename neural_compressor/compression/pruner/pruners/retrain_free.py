@@ -58,8 +58,8 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
         self.masks = self.pattern.register_block_masks()
-        pruner_masks = [self.masks]
-        self._rewrite_forward(pruner_masks)
+        self.pruner_masks = [self.masks]
+        self._rewrite_forward(self.pruner_masks)
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(modules=self.modules, config=self.config, pattern=self.pattern, masks=self.masks)
         self.reg = get_reg(self.config, self.modules, self.pattern)
@@ -123,6 +123,7 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
         # the order of the following three lines can't not be exchanged
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.masks = self.rearrange_masks(self.masks)
+        self.pruner_masks[0] = self.masks
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
@@ -138,27 +139,7 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
             # recover forward method at last prune step
             self._recover_forward()
         self.global_step += 1
-
-    # def on_before_optimizer_step(self):
-    #     """Implement before optimizer.step()."""
-    #     if self.global_step >= self.start_step and self.global_step <= self.end_step:
-    #         self.reg.on_before_optimizer_step()
-    #         self.criterion.on_before_optimizer_step()
-
-    # def on_after_optimizer_step(self):
-    #     """Prune the model after optimization."""
-    #     # the order of the following four lines can't not be exchanged
-    #     if self.global_step >= self.start_step and self.global_step <= self.end_step:
-    #         self.reg.on_after_optimizer_step()
-    #     self.zero_mask_grad()
-    #     if self.end_step == self.global_step:
-    #         # Iterative rearrangement with mask weight at the last step only
-    #         self.mask_weights()
-    #         logger.info(f"mask weights at last_prune_step: {self.global_step}")
-    #         # recover forward method at last prune step
-    #         self._recover_forward()
-    #     self.global_step += 1
-
+        
     def mask_weights(self):
         """Apply block masks to corresponding modules' weights.
 

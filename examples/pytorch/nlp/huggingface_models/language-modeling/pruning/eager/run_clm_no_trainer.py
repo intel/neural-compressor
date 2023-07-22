@@ -362,7 +362,7 @@ def parse_args():
     )
     parser.add_argument(
         "--pruning_pattern",
-        type=str, default="4x1",
+        type=str, default="channelx1",
         help="pruning pattern type, we support NxM and N:M."
     )
     parser.add_argument(
@@ -699,7 +699,7 @@ def main():
                 "pattern": "channelx1",
                 "pruning_op_types": ["Linear"],
                 "max_sparsity_ratio_per_op": 0.98,
-            }
+            },
         ]
     else:
         # auto config

@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.compression.pruner.utils import process_config, parse_to_prune
+from neural_compressor.compression.pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
 from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import logger, torch, collect_layer_inputs, get_layers
 from typing import Optional
@@ -233,7 +233,7 @@ class BasicPruning(BasePruning):
 class SparseGPTPruning(BasePruning):
     def __init__(self, config, model: torch.nn.Module,
                  dataloader: torch.utils.data.DataLoader,
-                 framework ='pytorch', device: str ='cuda:0'):
+                 framework ='pytorch', device: str =None):
         """Initialize."""
         super().__init__(config, model)
         assert 'cpu' in device or 'cuda' in device, f"Only cpu and cuda are supported."
@@ -258,29 +258,34 @@ class SparseGPTPruning(BasePruning):
         if torch.cuda.is_available():
             
             self.dev = torch.device(type='cuda')
-        for pruner in self.pruners:
-            self._do_pruning(pruner, self._layers)
+        self._do_pruning(self._layers)
         self._model = self._model.to(self.model_dev)
+        # TODO add get_sparsity_ratio() for sparseGPT
 
     @torch.no_grad()
-    def _do_pruning(self, pruner, layers):
+    def _do_pruning(self, layers):
         self._model = self._model.cpu()
         
         inputs, inp_dict = collect_layer_inputs(model=self._model, layers=layers, layer_idx=0, \
-                                                inputs=self._dataloader, device=self.dev)
+                                                layer_inputs=self._dataloader, device=self.dev)
         if 'cuda' in self.dev.type:
             torch.cuda.empty_cache()
         
         for i in tqdm(range(len(layers))):
             layer = layers[i].to(self.dev)
             layer_index_str = '.' + str(i) + '.'
-            layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
-            handles = pruner.register_gpt_hook(layer_op_names)
+            handles_list = []
+            for pruner in self.pruners:
+                layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
+                handles_list.append(pruner.register_gpt_hook(layer_op_names))
             for j in range(len(inputs)):
                 layer(inputs[j], **inp_dict)[0]
-            for h in handles:
-                h.remove()
-            pruner.fasterprune(layer_op_names)
+            for handles in handles_list:
+                for h in handles:
+                    h.remove()
+            for pruner in self.pruners:
+                layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
+                pruner.fasterprune(layer_op_names)
             for j in range(len(inputs)):
                 # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
                 inputs[j] = layer(inputs[j], **inp_dict)[0]
@@ -297,7 +302,7 @@ class RetrainFreePruning(BasePruning):
                  framework ='pytorch'):
         """Initialize."""
         super().__init__(config, model)
-        self.dev = model.device
+        # self.dev = model.device
         self._dataloader = dataloader
         self._loss_func = loss_func
         self._prepare_pruners()
@@ -339,13 +344,25 @@ class RetrainFreePruning(BasePruning):
         hook_handle_before = self._register_on_step_begin(self._model, self.pruners)
         self._do_pruning()
         hook_handle_before.remove()
+        get_sparsity_ratio(self.pruners, self._model)
 
     def _do_pruning(self):
-        for batch in self._dataloader:
-            outputs = self._model(return_dict=True, **batch)
-            loss = self._loss_func if self._loss_func is not None else outputs.loss
-            loss.backward()
-            for pruner in self.pruners:
-                pruner.on_step_end()
+        progress_bar = tqdm(range(len(self._dataloader)))
+        if self._loss_func is not None:
+            for inputs, target in self._dataloader:
+                outputs = self._model(inputs)
+                loss = self._loss_func(outputs, target)
+                loss.backward()
+                for pruner in self.pruners:
+                    pruner.on_step_end()
+                progress_bar.update(1)
+        else:
+            for batch in self._dataloader:
+                outputs = self._model(return_dict=True, **batch)
+                loss = outputs.loss
+                loss.backward()
+                for pruner in self.pruners:
+                    pruner.on_step_end()
+                progress_bar.update(1)
         
         

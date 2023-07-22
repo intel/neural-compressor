@@ -342,7 +342,7 @@ def parse_args():
     )
     parser.add_argument(
         "--pruning_pattern",
-        type=str, default="4x1",
+        type=str, default="1x1",
         help="pruning pattern type, we support NxM and N:M."
     )
     parser.add_argument(
@@ -615,7 +615,7 @@ def main():
         pruning_configs=[
             {
                 "pruning_type": "sparse_gpt",
-                "op_names": [".attn", ".fc", "_proj", "key", "dense", "_h"],
+                "op_names": [".attn", "_proj", ".fc", "key", "dense", "_h"],
             }
         ]
     else:
@@ -625,7 +625,6 @@ def main():
             model,
             ffn2_sparsity = args.target_sparsity,
             mha_sparsity = args.target_sparsity,
-            pruning_scope = "local",
             pruning_type = "sparse_gpt",
             pattern = args.pruning_pattern
         )
@@ -655,8 +654,8 @@ def main():
         model.save_pretrained(args.output_dir+"/noslim")
         tokenizer.save_pretrained(args.output_dir+"/noslim")
         
-    # if torch.cuda.is_available():
-    #     model = model.cuda()
+    if torch.cuda.is_available():
+        model = model.cuda()
     model.eval()
     if args.evaluation_dataset_name != None:
         dataset_eval = load_dataset( 

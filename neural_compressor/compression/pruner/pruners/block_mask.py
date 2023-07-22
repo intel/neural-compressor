@@ -54,8 +54,8 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
         self.masks = self.pattern.register_block_masks()
-        pruner_masks = [self.masks]
-        self._rewrite_forward(pruner_masks)
+        self.pruner_masks = [self.masks]
+        self._rewrite_forward(self.pruner_masks)
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(self.config, self.modules, self.pattern, self.masks)
         self.reg = get_reg(self.config, self.modules, self.pattern)
@@ -117,6 +117,8 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         if self.criterion.scores == {}:
             return
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
+        self.pruner_masks[0] = self.masks
+        
         self.mask_weights()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
