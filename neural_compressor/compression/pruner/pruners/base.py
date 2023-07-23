@@ -16,12 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import partial
-
 import numpy as np
-
-from ..utils import torch, tf, F
-
+from ..utils import torch, F, tf
 
 PRUNERS = {}
 
@@ -221,28 +217,6 @@ class PytorchBasePruner(BasePruner):
                 module = self.modules[key]
                 module.weight.data = module.weight.data * self.masks[key]
 
-    def rewrite_forward(self):
-        def forward(self, input):
-            block_size = [self.weight.shape[0] // self.block_mask.shape[0],
-                          self.weight.shape[1] // self.block_mask.shape[1]]
-            mask = self.block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(
-                block_size[1], dim=-1).to(self.weight.device)
-            return F.linear(input, self.weight * mask, self.bias)
-
-        for key in self.modules.keys():
-            if not hasattr(self.modules[key], 'block_mask'):
-                continue  # No corresponding block mask, skip.
-            module = self.modules[key]
-            module.forward = partial(forward, module)
-
-    def recover_forward(self):
-        with torch.no_grad():
-            for key in self.modules.keys():
-                if not hasattr(self.modules[key], 'block_mask'):
-                    continue  # No corresponding block mask, skip.
-                module = self.modules[key]
-                module.forward = partial(torch.nn.Linear.forward, module)
-
 
 class KerasBasePruner(BasePruner):
     """Pruning Pruner.
@@ -285,3 +259,4 @@ class KerasBasePruner(BasePruner):
         for key in self.modules.keys():
             module = self.modules[key]
             module.set_weights([module.get_weights()[0] * self.masks[key]] + module.get_weights()[1:])
+

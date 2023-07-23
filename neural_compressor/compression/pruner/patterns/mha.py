@@ -18,8 +18,6 @@
 from .base import (register_pattern,
                    PytorchBasePattern
                    )
-from neural_compressor.utils.utility import LazyImport
-
 from ..utils import torch
 
 

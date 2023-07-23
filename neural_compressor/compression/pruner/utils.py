@@ -19,10 +19,10 @@
 import re
 import yaml
 import numpy as np
-from ...config import WeightPruningConfig as WeightPruningConf
+from functools import partial
 
 try:
-    from ...conf.pythonic_config import WeightPruningConfig
+    from ...config import WeightPruningConfig
     from ...conf.config import PrunerV2
     from ...utils.utility import LazyImport
     from neural_compressor.conf.dotdict import DotDict
@@ -30,12 +30,14 @@ try:
     from neural_compressor.conf.config import Pruner
     LazyImport('torch.nn')
     torch = LazyImport('torch')
-    tf = LazyImport('tensorflow')
+    nn = torch.nn
+    tf = LazyImport('')
     F = LazyImport('torch.nn.functional')
 except:
     import torch
+    import torch.nn as nn
+    import tensorflow
     import torch.nn.functional as F
-    import tensorflow as tf
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)
@@ -425,7 +427,7 @@ def process_and_check_config(val):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
-    if isinstance(val, WeightPruningConfig) or isinstance(val, WeightPruningConf):
+    if isinstance(val, WeightPruningConfig):
         global_configs = val.weight_compression
         pruning_configs = val.pruning_configs
         check_key_validity(default_config, pruning_configs)
@@ -466,7 +468,7 @@ def process_config(config):
                 "The yaml file format is not correct. Please refer to document."
             )
 
-    if isinstance(config, WeightPruningConfig) or isinstance(config, WeightPruningConf):
+    if isinstance(config, WeightPruningConfig):
         return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
@@ -585,3 +587,93 @@ def generate_pruner_config(info):
                   end_epoch=info.end_step,
                   update_frequency=info.pruning_frequency,
                   )
+
+def get_layers(model):
+    """Get each layer's name and its module.
+    
+    Args:
+        model: The model to be pruned.
+
+    Returns: each layer's name and its modules
+    """
+    layers = []
+    search_flag = False
+    def unfoldLayer(module):
+        """Unfold each layer.
+        
+        Args:
+            module: The modules.
+            
+        Returns: The ModuleList of model
+        """
+        nonlocal search_flag
+        nonlocal layers
+        if search_flag:
+            return
+        if hasattr(type(module),"__name__") and 'ModuleList' in type(module).__name__:
+            layers = module
+            search_flag = True
+        layer_list = list(module.named_children())
+        for item in layer_list:
+            module = item[1]
+            if isinstance(module, torch.nn.Module):
+                unfoldLayer(module)
+
+    unfoldLayer(model)
+    return layers
+
+@torch.no_grad()
+def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'):
+    """Getting the forward input of a layer.
+    
+    Args:
+        model: The model to be pruned.
+        layers: Selectable layers of the model.
+        layer_idx: The layer index. 
+        layer_inputs: The dataloader or the output of the previous layer.
+        device: Specify the type of device to return.
+    Returns: input list.
+    """
+    inputs = []
+    model_dev = model.device
+    attention_mask = None
+    # 'alibi' is a necessary attribute for the bloom models
+    inputs_info = {'attention_mask': None}
+    if hasattr(model, 'config'): 
+        model_type = model.config.model_type
+    else :
+        model_type = 'null'
+    if 'bloom' in model_type:
+        inputs_info['alibi'] = None
+    if layer_idx == 0:
+        layer = layers[layer_idx]
+        def forward(self, hidden_states, **kwargs):
+            # TODO solve the problem of batchsize!=1
+            inputs.append(hidden_states.to(device))
+            inputs_info['attention_mask'] = kwargs['attention_mask']
+            if 'alibi' in kwargs.keys():
+                inputs_info['alibi'] = kwargs['alibi']
+            raise ValueError
+        
+        forward_cache = layers[layer_idx].forward
+        layer.forward = partial(forward, layer)
+        for batch in layer_inputs:
+            try:
+                hidden_states = list(batch.values())[0].to(model_dev)
+                model(hidden_states)
+                # model(**batch)
+            except ValueError:
+                pass
+        layer.forward = forward_cache
+        for key in inputs_info.keys():
+            if inputs_info[key] is not None:
+                inputs_info[key] = inputs_info[key].to(device)
+    else:
+        prev_layer = layers[layer_idx-1]
+        
+        for batch in layer_inputs:
+            prev_output = prev_layer(*batch)
+            batch[0] = prev_output[0]
+            inputs.append(batch)
+            
+    return inputs, inputs_info

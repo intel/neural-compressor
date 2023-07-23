@@ -16,15 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import partial
 from .base import (register_pruner,
                    PytorchBasePruner)
 from ..schedulers import get_scheduler
 from ..patterns import get_pattern
 from ..criteria import get_criterion
 from ..regs import get_reg
-from ..utils import logger
-
-from ..utils import torch
+from ..utils import logger, torch, F
 
 
 @register_pruner('pt_block_mask')
@@ -54,15 +53,39 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
-        self.masks = self.pattern.register_block_masks(self.modules)
-        self.rewrite_forward()
+        self.masks = self.pattern.register_block_masks()
+        self.pruner_masks = [self.masks]
+        self._rewrite_forward(self.pruner_masks)
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules, self.pattern)
+        self.criterion = get_criterion(self.config, self.modules, self.pattern, self.masks)
         self.reg = get_reg(self.config, self.modules, self.pattern)
 
         if "channel" not in self.pattern.pattern:
             logger.info("Enabling channel-wise pattern would be a better choice.")
+        
+    def _rewrite_forward(self, pruner_masks):
+        def forward(self, input):
+            block_mask = pruner_masks[0][self.mask_name]
+            block_mask.requires_grad_(True) # Makesure that the gradient of block mask is always avilible
+            block_size = [self.weight.shape[0] // block_mask.shape[0],
+                          self.weight.shape[1] // block_mask.shape[1]]
+            mask = block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(
+                block_size[1], dim=-1).to(self.weight.device)
+            return F.linear(input, self.weight * mask, self.bias)
 
+        for key in self.masks.keys():
+            module = self.modules[key]
+            module.mask_name = key
+            module.forward = partial(forward, module)
+
+    def _recover_forward(self):
+        with torch.no_grad():
+            for key in self.masks.keys():
+                module = self.modules[key]
+                delattr(module, 'mask_name')
+                self.masks[key].requires_grad_(False)
+                module.forward = partial(torch.nn.Linear.forward, module)
+    
     # def on_step_begin(self, local_step):
     #     """Implement at the start of each step.
 
@@ -94,7 +117,8 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         if self.criterion.scores == {}:
             return
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
-        self.update_block_masks(self.masks)
+        self.pruner_masks[0] = self.masks
+        
         self.mask_weights()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
@@ -104,7 +128,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         """Implement before optimizer.step()."""
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_before_optimizer_step()
-            self.criterion.on_before_optimizer_step()
+            self.criterion.on_before_optimizer_step(self.masks)
 
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
@@ -115,8 +139,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         self.mask_weights()
         if not self.end_step or self.end_step == self.global_step:
             # recover forward method and remove block mask parameters at last prune step
-            self.recover_forward()
-            self.pattern.remove_block_masks()
+            self._recover_forward()
         self.global_step += 1
 
     def mask_weights(self):
@@ -127,19 +150,10 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         with torch.no_grad():
             self.pattern.mask_block_weights(self.masks)
 
-    def update_block_masks(self, masks):
-        """Update the block mask parameters."""
-        with torch.no_grad():
-            for key in self.masks.keys():
-                module = self.modules[key]
-                module.block_mask.data = masks[key].data.to(module.block_mask.dtype)
-
     def zero_mask_grad(self):
         with torch.no_grad():
-            for key in self.modules.keys():
-                if not hasattr(self.modules[key], 'block_mask'):
-                    continue  # No corresponding block mask, skip.
-                mask = self.modules[key].block_mask
+            for key in self.masks.keys():
+                mask = self.masks[key]
                 if mask.grad is not None:
                     if mask.grad.grad_fn is not None:
                         mask.grad.detach_()
