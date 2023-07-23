@@ -36,7 +36,7 @@ try:
 except:
     import torch
     import torch.nn as nn
-    import tensorflow
+    import tensorflow as tf
     import torch.nn.functional as F
     from .dot_dict import DotDict  ##TODO
     import logging
