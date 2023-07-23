@@ -20,9 +20,10 @@ import re
 import yaml
 import numpy as np
 from functools import partial
+from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
-    from ...config import WeightPruningConfig
+    from ...conf.pythonic_config import WeightPruningConfig
     from ...conf.config import PrunerV2
     from ...utils.utility import LazyImport
     from neural_compressor.conf.dotdict import DotDict
@@ -167,7 +168,7 @@ def get_sparsity_ratio_tf(pruners, model):
             cnt += modules[key].get_weights()[0].size
         pattern_sparsity_cnt += int(cnt * sparsity_ratio)
         for key in pruner.masks.keys():
-            block_num = 1 
+            block_num = 1
             if pruner.pattern.block:
                 block_size = pruner.pattern.block_size[key]
                 block_num = block_size[0] * block_size[1]
@@ -181,7 +182,7 @@ def get_sparsity_ratio_tf(pruners, model):
 
     for layer in model.layers:
         if bool(layer.weights):
-            weights = layer.get_weights()[0]   
+            weights = layer.get_weights()[0]
             param_cnt += weights.size
     if linear_conv_cnt == 0:
         blockwise_over_matmul_gemm_conv = 0
@@ -427,7 +428,7 @@ def process_and_check_config(val):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
-    if isinstance(val, WeightPruningConfig):
+    if isinstance(val, WeightPruningConfig) or isinstance(val, WeightPruningConf):
         global_configs = val.weight_compression
         pruning_configs = val.pruning_configs
         check_key_validity(default_config, pruning_configs)
@@ -468,7 +469,7 @@ def process_config(config):
                 "The yaml file format is not correct. Please refer to document."
             )
 
-    if isinstance(config, WeightPruningConfig):
+    if isinstance(config, WeightPruningConfig) or isinstance(config, WeightPruningConf):
         return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
@@ -677,3 +678,4 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'
             inputs.append(batch)
             
     return inputs, inputs_info
+
