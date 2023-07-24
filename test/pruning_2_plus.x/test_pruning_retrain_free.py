@@ -23,7 +23,7 @@ class TestPruning(unittest.TestCase):
                 "op_names": ['encoder_layer_3.mlp*'],
                 'target_sparsity': 0.9,
                 'pattern': 'channelx1',
-                "pruning_op_types": "Linear",
+                "pruning_op_types": ["Linear"],
                 "pruning_type": "retrain_free",
                 "pruning_scope": "local",
                 "pruning_frequency": 2,
@@ -32,7 +32,7 @@ class TestPruning(unittest.TestCase):
                 "op_names": ['encoder_layer_2.mlp*'],
                 'target_sparsity': 0.4,
                 'pattern': 'channelx2',
-                "pruning_op_types": "Linear",
+                "pruning_op_types": ["Linear"],
                 "pruning_type": "retrain_free",
                 "pruning_scope": "global",
                 "pruning_frequency": 3,
@@ -66,6 +66,7 @@ class TestPruning(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

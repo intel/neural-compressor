@@ -32,7 +32,7 @@ try:
     LazyImport('torch.nn')
     torch = LazyImport('torch')
     nn = torch.nn
-    tf = LazyImport('')
+    tf = LazyImport('tensorflow')
     F = LazyImport('torch.nn.functional')
 except:
     import torch
@@ -660,7 +660,10 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'
         layer.forward = partial(forward, layer)
         for batch in layer_inputs:
             try:
-                hidden_states = list(batch.values())[0].to(model_dev)
+                if 'values' in dir(batch):
+                    hidden_states = list(batch.values())[0].to(model_dev)
+                else :
+                    hidden_states = batch[0].to(model_dev).to(model_dev)
                 model(hidden_states)
                 # model(**batch)
             except ValueError:
