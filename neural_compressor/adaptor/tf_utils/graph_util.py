@@ -425,6 +425,8 @@ class GraphAnalyzer():
                                                                         outputs=target_node)
 
         for sub_node in target_node:
+            if not sub_node in self.node_name_details:
+                continue
             for index, each_node_name in enumerate(self.node_name_details[sub_node].node.input):
                 if each_node_name + ':0' == old_constant_node_name \
                         or each_node_name == old_constant_node_name:
@@ -657,7 +659,7 @@ class GraphAnalyzer():
                 self.node_name_details[node_name] = each_node
 
         for node_name, node_details in self.node_name_details.items():
-            # update the upper node's output infomation.
+            # update the upper node's output information.
             for each_input in node_details.node.input:
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(
                     each_input)].outputs.append(node_name)

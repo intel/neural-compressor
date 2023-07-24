@@ -16,8 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # model slim related
-from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASearcher
-from .weight_slim import LinearCompressionIterator, MHACompression
+
 from ..utils import logger
 
 def model_slim(model, dataloader=None, round_multiplier=32):
@@ -39,6 +38,8 @@ def model_slim_ffn2(model, dataloader = None, round_multiplier=32):
         model: a sprase model.
         round_multiplier(int): the channel number after slimming should be multiple of this number.
     """
+    from .pattern_analyzer import Linear2LinearSearcher
+    from .weight_slim import LinearCompressionIterator
     logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
     pa_obj = Linear2LinearSearcher(model, dataloader)
     layers = pa_obj.search()
@@ -53,19 +54,15 @@ def model_slim_mha(model, dataloader = None):
     Args:
         model: a sprase model.
     """
+    from .weight_slim import MHACompression
+    from .pattern_analyzer import SelfMHASearcher
     logger.warning(f"You are using model slim methods, some attention heads will be removed permanently.")
-    recipe = {'BertLayer': ["attention"]}
-    searcher = RecipeSearcher(model, recipe)
-    layers = searcher.search('BertLayer')
-    if "PyTorchFXModel" in type(model).__name__:
-        config = model.model.config
-    else:
-        config = model.config
-    # linear_pruner = LinearCompressionIterator(layers)
-    for item in layers:
-        mha_compression = MHACompression(
-            item[0], config.num_attention_heads, config.hidden_size // config.num_attention_heads
-        )
+    pa_obj = SelfMHASearcher(model, dataloader)
+    layers, _ = pa_obj.search(split_qkv_ffn = False)
+    layers = pa_obj.obtain_mha_module(layers)
+    layers = pa_obj.from_layer_name_to_object(layers)
+    for layer in layers:
+        mha_compression = MHACompression(layer)
         mha_compression()
     return model
 
@@ -81,6 +78,7 @@ def parse_auto_slim_config(model, dataloader = None, ffn2_sparsity = .0, mha_spa
 
 def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
     """Get consecutive linear layers pruning configs."""
+    from .pattern_analyzer import Linear2LinearSearcher
     searcher = Linear2LinearSearcher(model, dataloader)
     layers = searcher.search()
     # extract the second linear layer
@@ -99,22 +97,36 @@ def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
 
 def generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs):
     """Get multi-head attention layers pruning configs."""
-    searcher = SelfMHASearcher(model, dataloader)
-    qkv_pattern, ffn_pattern = searcher.get_head_pattern()
-    qkv_layers, ffn_layers = searcher.search()
+    # method 1: apply real mha pruning
     mha_pruning_config = [
         {
-            "op_names": qkv_layers,
-            "pattern": qkv_pattern,
-            "target_sparsity": mha_sparsity,
-        },
-        {
-            "op_names": ffn_layers,
-            "pattern": ffn_pattern,
-            "target_sparsity": mha_sparsity,
+            "pattern": "mha",
+            "target_sparsity": mha_sparsity
         }
     ]
     # append kwargs to generated config
     for item in mha_pruning_config:
         item.update(kwargs)
     return mha_pruning_config
+
+    # method 2: apply experimental mha pruning
+    # from .pattern_analyzer import SelfMHASearcher
+    # searcher = SelfMHASearcher(model, dataloader)
+    # qkv_pattern, ffn_pattern = searcher.get_head_pattern()
+    # qkv_layers, ffn_layers = searcher.search()
+    # mha_pruning_config = [
+    #     {
+    #         "op_names": qkv_layers,
+    #         "pattern": qkv_pattern,
+    #         "target_sparsity": mha_sparsity,
+    #     },
+    #     {
+    #         "op_names": ffn_layers,
+    #         "pattern": ffn_pattern,
+    #         "target_sparsity": mha_sparsity,
+    #     }
+    # ]
+    # # append kwargs to generated config
+    # for item in mha_pruning_config:
+    #     item.update(kwargs)
+    # return mha_pruning_config

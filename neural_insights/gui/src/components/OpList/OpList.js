@@ -21,13 +21,16 @@ export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, se
 
   useEffect(() => {
     if (selectedWorkload) {
-      api.post('api/diagnosis/op_list?token=asd', { workload_id: selectedWorkload.uuid })
+      setOpList([]);
+      api.post('api/diagnosis/op_list?token=' + localStorage.getItem('token'), { workload_id: selectedWorkload.uuid })
         .then(
           response => {
-            setOpList(response.data);
+            setOpList(response.data.sort((a, b) => b.MSE - a.MSE));
           })
         .catch(error => {
-          setWarningText(error.message + ': ' + error?.response?.data);
+          if (selectedWorkload?.status !== 'wip') {
+            setWarningText(error.message + ': ' + error?.response?.data);
+          }
         });
     }
   }, [selectedWorkload, selectedOp]);
@@ -53,19 +56,21 @@ export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, se
 
   return (
     <div className="overflow-table">
-      <Table className="rounded" hover>
-        <thead>
-          <tr>
-            <th className="header center">OP Name</th>
-            <th className="header center">MSE</th>
-            <th className="header center">Activation Min</th>
-            <th className="header center">Activation Max</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableContent}
-        </tbody>
-      </Table>
+      {opList.length > 0 &&
+        <Table className="rounded" hover>
+          <thead>
+            <tr>
+              <th className="header center">OP Name</th>
+              <th className="header center">MSE</th>
+              <th className="header center">Activation Min</th>
+              <th className="header center">Activation Max</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableContent}
+          </tbody>
+        </Table>
+      }
     </div>
   );
 }

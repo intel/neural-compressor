@@ -1,5 +1,8 @@
 accelerate
 datasets
+sentencepiece
 transformers
 torch
 tqdm
+cupy
+optimum

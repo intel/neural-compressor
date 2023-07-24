@@ -7,8 +7,6 @@ work_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/pyspelling"
 log_dir="$work_dir/../scanLog"
 mkdir -p $log_dir
 
-pip install -r /neural-compressor/requirements.txt
-
 sed -i "s|\${DICT_DIR}|$work_dir|g" $work_dir/pyspelling_conf.yaml
 sed -i "s|\${REPO_DIR}|/neural-compressor|g" $work_dir/pyspelling_conf.yaml
 

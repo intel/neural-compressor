@@ -19,7 +19,7 @@ Objective
 
 ## Introduction
 
-In terms of evaluating the status of a specific model during tuning, we should have general objectives. Intel® Neural Compressor Objective supports code-free configuration through a yaml file. With built-in objectives, users can compress models with different objectives easily. In special cases, users can also register their own objective classes.
+In terms of evaluating the status of a specific model during tuning, we should have general objectives. Intel® Neural Compressor Objective supports code-free configuration through `neural_compressor.config.TuningCriterion`. With built-in objectives, users can compress models with different objectives easily. In special cases, users can also register their own objective classes.
 
 ### Single Objective
 

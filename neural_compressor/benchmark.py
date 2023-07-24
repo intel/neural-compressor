@@ -527,7 +527,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         logger.info("Start to run Profiling")
         ni_workload_id = register_neural_insights_workload(
             workload_location=os.path.abspath(os.path.abspath(options.workspace)),
-            model=model,
+            model=wrapped_model,
             workload_mode="benchmark",
         )
         try:
@@ -535,6 +535,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
             profile(wrapped_model, conf, b_dataloader)
             update_neural_insights_workload(ni_workload_id, "success")
         except Exception as e:
+            logger.error(e)
             update_neural_insights_workload(ni_workload_id, "failure")
 
     logger.info("Start to run Benchmark.")

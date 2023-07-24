@@ -15,11 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from neural_compressor.utils.utility import LazyImport
 
-torch = LazyImport('torch')
-from ...utils import logger
-from collections import UserDict
+try:
+    from neural_compressor.utils.utility import LazyImport
+
+    torch = LazyImport('torch')
+    from ...utils import logger
+except:
+    import torch
+    import logging
+
+    logger = logging.getLogger()
+from collections import UserDict, defaultdict
 
 
 def forward_wrapper(model, input, device='cpu'):
@@ -36,8 +43,8 @@ def forward_wrapper(model, input, device='cpu'):
             output = model(*input)
         else:  # pragma: no cover
             input = [inp.to(device) \
-                    if isinstance(inp, torch.Tensor) else inp
-                    for inp in input] # pylint: disable=E1133
+                         if isinstance(inp, torch.Tensor) else inp
+                     for inp in input]  # pylint: disable=E1133
             output = model(*input)
     else:
         if device == 'cpu' or not isinstance(input, torch.Tensor):
@@ -63,6 +70,16 @@ def model_forward(model, dataloader, iters, device):
             cnt += 1
             if cnt >= iters:
                 break
+
+
+def model_forward_per_sample(model, sample, device):
+    try:
+        output = forward_wrapper(model, sample, device)
+        return output
+
+    except Exception as e:
+        output = forward_wrapper(model, sample[0], device)
+        return output
 
 
 def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
@@ -268,7 +285,7 @@ class TorchSmoothQuant:
             self.hook_handles.append(hook_handle)
         if self.alpha == 'auto' and input_output_modules:
             logger.warning("Auto alpha for Smoothquant records input & output"
-                            + ", please avoid out of memory.")
+                           + ", please avoid out of memory.")
             for key in input_output_modules.keys():
                 hook_func = self._save_input_output_hook(key)
                 hook_handle = input_output_modules[key].register_forward_hook(hook_func)
@@ -392,8 +409,8 @@ class TorchSmoothQuant:
         :return:
         """
         layer = get_module(self.model, layer_name)
-        from .model_wrapper import SQLinearWrapper
-        if isinstance(layer, SQLinearWrapper):
+        if layer.__class__.__name__ == "SQLinearWrapper":
+            from .model_wrapper import SQLinearWrapper
             layer = layer.sq_linear
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
@@ -407,9 +424,10 @@ class TorchSmoothQuant:
         :param alpha_key: The alpha passed to SQLinearWrapper
         :return:
         """
-        from .model_wrapper import SQLinearWrapper
-        layer = get_module(self.model, layer_name)
+
         if self.insert_mul:
+            from .model_wrapper import SQLinearWrapper
+            layer = get_module(self.model, layer_name)
             if isinstance(layer, SQLinearWrapper):
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
@@ -418,11 +436,13 @@ class TorchSmoothQuant:
                 set_module(self.model, layer_name, new_module)
 
         elif self.allow_absorb:
+            layer = get_module(self.model, layer_name)
             if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
                     isinstance(layer, torch.nn.InstanceNorm2d):
                 if layer.affine:
                     layer.weight *= scale
-                    layer.bias *= scale
+                    if layer.bias != None:
+                        layer.bias *= scale
                 else:
                     layer.affine = True
                     weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
@@ -431,10 +451,11 @@ class TorchSmoothQuant:
                     bias = torch.zeros(layer.num_features, device=self.device, dtype=self.dtype)
                     layer.bias = torch.nn.Parameter(bias, requires_grad=False
                                                     )
-            elif isinstance(layer, torch.nn.LayerNorm):
+            elif isinstance(layer, torch.nn.LayerNorm) or layer.__class__.__name__ == "LPLayerNorm":
                 if layer.elementwise_affine:
                     layer.weight *= scale
-                    layer.bias *= scale
+                    if layer.bias != None:
+                        layer.bias *= scale
                 else:
                     layer.elementwise_affine = True
                     weight = torch.ones(layer.num_features, device=self.device, dtype=self.dtype) * scale
@@ -458,12 +479,12 @@ class TorchSmoothQuant:
                 layer.weight *= scale
 
             elif layer.__class__.__name__ == "LlamaRMSNorm" \
-              or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+                    or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
                 layer.weight *= scale
 
             else:
                 logger.warning(f"found unsupported layer {type(layer)}, try to multiply scale to "
-                  f"weight and bias directly, this may introduce accuracy issue, please have a check ")
+                               f"weight and bias directly, this may introduce accuracy issue, please have a check ")
                 if hasattr(layer, "weight") and layer.weight != None:
                     layer.weight *= scale
                 if hasattr(layer, "bias") and layer.bias != None:
@@ -569,7 +590,6 @@ class TorchSmoothQuant:
         """
         logger.info("auto tuning alpha")
         import copy
-        from .model_wrapper import SQLinearWrapper
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
@@ -599,7 +619,8 @@ class TorchSmoothQuant:
                                                                 self.absorb_scales_info[absorb_key])
                     input_of_op_q = quant_dequant_x(input_of_op * input_scale)
                     layer = get_module(self.model, layer_key)
-                    if isinstance(layer, SQLinearWrapper):
+
+                    if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
                     weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
@@ -672,15 +693,11 @@ class TorchSmoothQuant:
             input_maxes = self.input_maxes
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
-                    self.self_absorb_layers = self._get_all_layer_names()   # TODO: only support linear now.
+                    self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
-                        logger.warning("sorry, could not trace the model, smooth quant is ignored")
-                        logger.warning("if you are using huggingface model,"
-                                    "you could set torchscript to True "
-                                    "when loading the model or set the return_dict to False")
                         return self.model
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
@@ -702,16 +719,56 @@ class TorchSmoothQuant:
                     save_input_output = True
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
+
+                # Check if input_maxes match self.absorb_to_layer 
+                # (due to self._get_all_layer_names use layer tree instead of forward_path)
+                if not folding:
+                    diff_modules = set(self.absorb_to_layer.keys()).difference(input_maxes.keys())
+                    for d in diff_modules:
+                        del self.absorb_to_layer[d]
+                        
                 if alpha == 'auto':
                     self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
 
             if alpha == 'auto':
                 alpha = self.alpha_per_layer
+            example_inputs = self._get_example_input()
+            if example_inputs != None:
+                out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
+
+            self.model._smoothquant_optimized = True
+            if example_inputs != None:
+                # Check mathematical equivelancy
+                out_post_sq = model_forward_per_sample(self.model, example_inputs, self.device)
+
+                if not self.output_is_equal(out_post_sq, out_pre_sq):
+                    logger.warning(
+                        "Mathematical equivelancy of Smoothquant is not preserved. "
+                        "Please kindly report this issue to https://github.com/intel/neural-compressor.")
+                    # self.recover()
+                    # self.model._smoothquant_optimized = False
+            else:
+                logger.warning(" Could not get example input, equivelancy check is skipped")
+
             self.input_values, self.output_values = {}, {}
             return self.model
+
+    def output_is_equal(self, out1, out2, atol=1e-04):
+        try:
+            if isinstance(out1, tuple):
+                return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
+            elif isinstance(out1, dict):
+                return all(torch.all(torch.isclose(out1[k], out2[k], atol=atol)) for k in out1.keys())
+            elif isinstance(out1, torch.Tensor):
+                return torch.all(torch.isclose(out1, out2, atol=atol))
+            return False
+        except:
+            logger.warning("Automatically check failed, Please check equivelancy manually "
+                           "between out_pre_sq and out_post_sq if necessary.")
+            return True
 
     def recover(self):
         """
@@ -725,7 +782,7 @@ class TorchSmoothQuant:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
- 
+
     def _get_all_layer_names(self, op_types=['Linear']):
         """
         Try the model to find the layers which can be smooth quantized.
@@ -740,6 +797,16 @@ class TorchSmoothQuant:
                     self_absorb_layer[name] = [name]
         return self_absorb_layer
 
+    def _get_example_input(self):
+        if self.dataloader == None and self.example_inputs == None:
+            return None
+        if self.example_inputs is None:
+            ##assert self.dataloader, "Please provide dataloader or example_inputs"
+            for idx, input in enumerate(self.dataloader):
+                self.example_inputs = input
+
+        return self.example_inputs
+
     def _trace(self, op_types):
         """
         Try the model to find the layers which can be smooth quantized.
@@ -749,19 +816,34 @@ class TorchSmoothQuant:
         no_absorb_layers: A list saving the layers which could not find the absorb layer
         """
         tg = GraphTrace()
-        if self.example_inputs is None:
-            assert self.dataloader, "Please provide dataloader or example_inputs"
-            for idx, input in enumerate(self.dataloader):
-                self.example_inputs = input
-                break
+        self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
+        if absorb_to_layer == None and no_absorb_layers == None:
+            logger.warning("sorry, could not trace the model, smooth quant is skipped")
+            logger.warning("if you are using huggingface model,"
+                            "you could set torchscript to True "
+                            "when loading the model or set the return_dict to False")
+        elif absorb_to_layer == {}:
+            logger.warning("could not find any layer to be absorbed")
+        else:
+            to_absorb_cnt = 0
+            for key, item in absorb_to_layer.items():
+                to_absorb_cnt += len(item)
+            logger.info(
+                f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
+                f"layers could be absorbed in smooth quant")
         return absorb_to_layer, no_absorb_layers
 
 
-def get_parent(node):
+def get_parent(node, all_parents=False):
     if node.inputs() == None:
         return None
-    return list(node.inputs())[0].node()
+    elif len(list(node.inputs())) == 0:
+        return None
+    if not all_parents:
+        return list(node.inputs())[0].node()
+    else:
+        return list(node.inputs())
 
 
 class GraphTrace:
@@ -779,6 +861,7 @@ class GraphTrace:
             "InstanceNorm2d": "aten::instance_norm",
             "LlamaRMSNorm": "aten::mul",
             "T5LayerNorm": "aten::mul",
+            "LPLayerNorm": "aten::layer_norm"  ##mpt_chat
         }
         ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to",
@@ -795,12 +878,13 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        if isinstance(dummy_input, dict):
+        if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
-                traced_model = torch.jit.trace(model, dummy_input["input_ids"], strict=False)
+                traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(e)
+                logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         else:
             try:
                 traced_model = torch.jit.trace(model, dummy_input, strict=False)
@@ -809,8 +893,9 @@ class GraphTrace:
                 try:
                     traced_model = torch.jit.trace(model, dummy_input[0], strict=False)
                     traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(e)
+                    logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         return traced_model
 
     def get_nodes(self, traced_model, op_types=['Linear']):
@@ -834,11 +919,41 @@ class GraphTrace:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
-                    prev_absorb_layer.append(parent)
+
+                    parent_out_kinds = []
+                    for val_user in list(parent.outputs())[0].uses():
+                        next_node = val_user.user
+                        parent_out_kinds.append(next_node.kind())
+                    parent_out_kinds = set(parent_out_kinds)
+                    parent_out_kinds.discard('aten::size')
+
+                    if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
+                        prev_absorb_layer.append(parent)
+                    elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        res = self.skip_op_absorb_helper(parent)
+                        prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                    else: # When parent to multiple ops, sq transformation could be wrong.
+                        prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
         return prev_absorb_layer
+
+
+    def skip_op_absorb_helper(self, parent_node):
+        for val_user in list(parent_node.outputs())[0].uses():
+            next_node = val_user.user
+            if next_node.kind() == 'aten::size':
+                continue
+            elif next_node.kind() in self.could_absorb_layers:
+                continue
+            elif next_node.kind() in self.skip_ops_to_find_absorb:
+                node_res = self.skip_op_absorb_helper(next_node)
+                if not node_res:
+                    return False
+            else:
+                return False
+        return True
 
     def mapping_torch_module_to_aten(self, op_types):
         res = []
@@ -854,6 +969,7 @@ class GraphTrace:
         traced_model = self.trace(model, example_input)
         if traced_model == None:
             return None, None
+
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
@@ -862,26 +978,29 @@ class GraphTrace:
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
             if absorb == None:
-                no_absorb_layers.append(nodes[index])
+                no_absorb_layers.append(
+                    '.'.join(nodes[index].scopeName().split('/')[-1].split('.')[1:]))
                 continue
             node = nodes[index]
             layer_name = '.'.join(node.scopeName().split('/')[-1].split('.')[1:])
             absorb_name = '.'.join(absorb.scopeName().split('/')[-1].split('.')[1:])
+            if layer_name == "" or absorb_name == "":
+                continue
             if absorb_name in absorb_to_layer.keys():
                 absorb_to_layer[absorb_name].append(layer_name)
             else:
                 absorb_to_layer[absorb_name] = [layer_name]
-        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer)
+        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
         return absorb_to_layer, no_absorb_layers
 
-    def remove_unsupported_layers(self, model, absorb_to_layer):
+    def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
         res = {}
 
         for key in absorb_to_layer.keys():
-
             absorb_layer = get_module(model, key)
             layer_type = absorb_layer.__class__.__name__
             if layer_type not in self.supported_torch_module_to_aten.keys():
+                no_absorb_layers.extend(absorb_to_layer[key])
                 continue
             supported = True
             for layer_name in absorb_to_layer[key]:
@@ -889,6 +1008,7 @@ class GraphTrace:
                 layer_type = layer.__class__.__name__
                 if layer_type not in self.supported_torch_module_to_aten.keys():
                     supported = False
+                    no_absorb_layers.extend(absorb_to_layer[key])
                     break
             if supported:
                 res[key] = absorb_to_layer[key]

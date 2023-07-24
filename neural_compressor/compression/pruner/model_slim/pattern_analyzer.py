@@ -16,14 +16,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..utils import torch, logger
+from ..utils import logger
 import re
+from ....utils.utility import LazyImport
+torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
 
 JIT_SUPPORT_OPS = ['linear', 'dropout', 'gelu', 'silu', 'relu', 'mul', 'add']
 
 # MHA_SUPPORT_NAMES = ["q", "k", "v"]
 
-def get_attributes(module: torch.nn.Module, attrs: str):
+def get_attributes(module, attrs: str):
     """Get a multi-level descent module of module.
 
     Args:
@@ -33,12 +36,26 @@ def get_attributes(module: torch.nn.Module, attrs: str):
     Returns:
         attr: The target attribute of the module.
     """
+    assert isinstance(module, torch.nn.Module)
     attrs_list = attrs.split('.')
     sub_module = module
     while attrs_list:
         attr = attrs_list.pop(0)
         sub_module = getattr(sub_module, attr)
     return sub_module
+
+def get_common_module(layer1: str, layer2: str):
+    """Get the module which contains layer1 and layer2 (nearest father nodes)
+    """
+    attribute_seq1 = layer1.split('.')
+    attribute_seq2 = layer2.split('.')
+    target_module = []
+    for idx in range(min(len(attribute_seq1), len(attribute_seq2))):
+        if attribute_seq1[idx] != attribute_seq2[idx]:
+            break
+        else:
+            target_module.append(attribute_seq1[idx])
+    return '.'.join(target_module)
 
 def print_iterables(data_iters):
     """Print the auto slim logs."""
@@ -71,8 +88,9 @@ class RecipeSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model: torch.nn.Module, recipe: dict):
+    def __init__(self, model, recipe: dict):
         """Initialize the attributes."""
+        assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
@@ -118,8 +136,9 @@ class JitBasicSearcher(object):
         searching_results: The list/dict which store matched patterns.
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize the attributes."""
+        assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
             # neural compressor build-in model type
             self.model = model.model
@@ -195,7 +214,6 @@ class JitBasicSearcher(object):
         """Generate static graph from a external dataloader."""
         # dummy_input = self.dataloader[0]
         logger.info(f"Generating static graph from original model using external data: start.")
-        # import pdb;pdb.set_trace()
         for dummy_input in self.dataloader:
             if isinstance(dummy_input, dict):
                 try:
@@ -385,8 +403,9 @@ class Linear2LinearSearcher(JitBasicSearcher):
         current_pattern: a searching path to store searching status.
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
+        assert isinstance(model, torch.nn.Module)
         super(Linear2LinearSearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
         self.target_op_lut = {}
         self.current_pattern = []
@@ -462,7 +481,6 @@ class Linear2LinearSearcher(JitBasicSearcher):
             search_res = self.search_from_root_linear(linear_code)
             if search_res['target_frontier_linears'].__len__() > 0:
                 all_linear_structure_results.append(search_res)
-        #import pdb;pdb.set_trace()
         # Summary
         print_iterables(all_linear_structure_results)
         logger.info(f"Found {all_linear_structure_results.__len__()} linear2linear structures")
@@ -471,7 +489,17 @@ class Linear2LinearSearcher(JitBasicSearcher):
         return all_linear_structure_results
     
     def from_layer_name_to_object(self, l2l_search_layers):
-        """Obtain the layer object themselves from their names."""
+        """Obtain the layer objects themselves from their names.
+        {
+            'root_linear': str(attribute),
+            'target_frontier_linears': list(str)
+        }
+        ->
+        {
+            'root_linear': torch.nn.Linear,
+            'target_frontier_linears': [torch.nn.Linear, torch.nn.Linear, ...]
+        }
+        """
         layer_objs = []
         for item in l2l_search_layers:
             layer_obj = {
@@ -501,8 +529,9 @@ class SelfMHASearcher(JitBasicSearcher):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
+    def __init__(self, model, dataloader = None, placeholder_shape = None, placeholder_dtype = None):
         """Initialize."""
+        assert isinstance(model, torch.nn.Module)
         super(SelfMHASearcher, self).__init__(model, dataloader, placeholder_shape, placeholder_dtype)
 
     def get_head_pattern(self):
@@ -529,7 +558,6 @@ class SelfMHASearcher(JitBasicSearcher):
                 else:
                     # op which is not linear, skip
                     continue
-        # import pdb;pdb.set_trace()
         input_counts_filtered = {}
         # in our strategy, when three linear layers share the same input, they should be query, key, and value
         for k, v in input_counts.items():
@@ -634,7 +662,6 @@ class SelfMHASearcher(JitBasicSearcher):
             two lists containing self-attention modules' layer names.
 
         """
-        # import pdb;pdb.set_trace()
         input_names_for_linears = self.gather_mha_inputs()
         linear_clusters = self.gather_linear_from_input(input_names_for_linears)
         qkv_clusters = self.extract_qkv_from_linears(linear_clusters)
@@ -655,6 +682,82 @@ class SelfMHASearcher(JitBasicSearcher):
                 ffn_list += item['ffn']
             return qkv_list, ffn_list
 
+    def from_layer_name_to_object(self, mha_search_layers):
+        """Obtain the layer object themselves from their names.
+        [
+            {
+                'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn': ['attention_ffn_name']
+                'mha_name': ['mha_name'] # bert.encoder.layer.0, etc.
+                'mha_module': [torch.nn.Module] # which corresponds to mha_name above.
+            }
+            ...
+        ]
+        ->
+        [
+            {
+                'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn_name': ['attention_ffn_name'],
+                'mha_name': ['mha_name'] (keep not change),
+                'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+                'ffn_module': [torch.nn.Linear],
+                'mha_module': [torch.nn.Module] (keep not change),
+            }
+            ...
+        ]
+        """
+        layer_objs = []
+        for mha_search_layer in mha_search_layers:
+            # copy layer names
+            layer_obj = {
+                "qkv_name": mha_search_layer['qkv'][:],
+                "ffn_name": mha_search_layer['ffn'][:],
+                "mha_name": mha_search_layer['mha_name'][:],
+            }
+            # obtain pytorch module
+            layer_obj['qkv_module'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['qkv']]
+            layer_obj['ffn_module'] = [get_attributes(self.model, layer_name) for layer_name in mha_search_layer['ffn']]
+            # we can directly copy since we have already obtained this module before
+            layer_obj['mha_module'] = mha_search_layer['mha_module'][:] 
+            layer_objs.append(layer_obj)
+        return layer_objs
+    
+    def obtain_mha_module(self, self_attention_list):
+        """Return the attention module object (qkv & ffn's common module).
+
+        self_attention_list
+        [
+            {
+                'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn': ['attention_ffn_name']
+            }
+            ...
+        ]
+        ->
+        [
+            {
+                'qkv': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                'ffn': ['attention_ffn_name'],
+                'mha_name': ['mha_name'],
+                'mha_module': [torch.nn.Module]
+            }
+            ...
+        ]
+        """
+        for idx in range(len(self_attention_list)):
+            # get query layer name
+            # get attn_output layer name
+            qkv_layer_name = self_attention_list[idx]['qkv']
+            ffn_layer_name = self_attention_list[idx]['ffn']
+            # problematic implementations
+            # mha_module_name = get_common_module(qkv_layer_name, ffn_layer_name)
+            mha_module_name = get_common_module(qkv_layer_name[0], qkv_layer_name[-1])
+            self_attention_list[idx]['mha_name'] = [mha_module_name]
+            self_attention_list[idx]['mha_module'] = [
+                get_attributes(self.model, mha_module_name) for mha_module_name in self_attention_list[idx]['mha_name']
+            ]
+        return self_attention_list
+            
 class ClassifierHeadSearcher(object):
     """Static graph searcher for multi-head attention modules.
 
@@ -671,8 +774,9 @@ class ClassifierHeadSearcher(object):
         flatten_static_graph: A list of string with the model's static graph inference details.
     """
 
-    def __init__(self, model: torch.nn.Module):
+    def __init__(self, model):
         """Initialize."""
+        assert isinstance(model, torch.nn.Module)
         super(ClassifierHeadSearcher, self).__init__()
         self.model = model
         self.pruning_ops = ["Linear", "Conv2d"]
@@ -691,3 +795,42 @@ class ClassifierHeadSearcher(object):
         last_lc = all_lc_modules[-1]
         if last_lc == all_modules[-1]: return last_lc
         else: return None
+
+class ClassifierHeadSearcherTF(object):
+    """Static graph searcher for multi-head attention modules.
+
+    Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+    Automatically search multi-head attention modules which can be optimized.
+
+    Args:
+        model (tf.keras.Model): The Keras model for searching.
+            
+    Attributes:
+        model: The Keras model for searching.
+        device: The model's current device type.
+        static_graph: The static graph of original model.
+        flatten_static_graph: A list of string with the model's static graph inference details.
+    """
+
+    def __init__(self, model):
+        """Initialize."""
+        assert isinstance(model, tf.keras.Model)
+        super(ClassifierHeadSearcherTF, self).__init__()
+        self.model = model
+        self.pruning_ops = ["Dense", "Conv2d"]
+        self.excluded_ops = ["Dropout"] # to be extended
+    
+    def search(self, return_name=True):
+        all_modules = []
+        all_lc_modules = []
+        for layer in self.model.layers:
+            if layer.__class__.__name__ not in self.excluded_ops:
+                all_modules.append(layer.name)
+                if layer.__class__.__name__ in self.pruning_ops:
+                    all_lc_modules.append(layer.name)
+            else:
+                continue
+        last_lc = all_lc_modules[-1]
+        if last_lc == all_modules[-1]: 
+            return last_lc
+        return None

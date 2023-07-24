@@ -90,6 +90,9 @@ class Quantizer:
         self.quantized_value_map = {}
         self.new_value_info = {}
 
+        # List of recalculated quantize weight for Gather op.
+        self.recalculate_quantized_value = []
+
         # QuantizeRange tensor name and zero tensor name for scale and zero point calculation.
         # Used when static is False
         self.fixed_qrange_uint8_name = "fixed_quantization_range_uint8"
@@ -146,7 +149,7 @@ class Quantizer:
         """Quantize onnx model."""
         # step 1: insert q-dq, cast-cast pairs
         self.insert_qdq()
- 
+        
         # step 2: remove redundant pairs -> qdq model
         self.remove_redundant_pairs()
  
@@ -155,7 +158,7 @@ class Quantizer:
  
         self.merge_dedicated_qdq_pair() 
  
-        self.model.remove_unused_constant()
+        self.model.remove_unused_nodes()
 
         self.model.model.producer_name = __producer__
         self.model.model.producer_version = __version__
@@ -243,8 +246,11 @@ class Quantizer:
     def should_cast(self, node):
         """Check if node should be casted."""
         if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
-            return True
-        else:
+            parent = self.model.get_parent(node, 0)
+            if parent is not None and (parent.op_type != 'Cast' or parent.attribute[0].i in [1, 10, 16]):
+                return True
+            elif parent is None and node.input[0] in self.model.input():
+                return True
             return False
 
     def insert_qdq(self):
@@ -372,9 +378,11 @@ class Quantizer:
             self.model.replace_node_input(node, old_input_name, new_input_name)
         self.model.update()
 
-    def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
-        """Cast node dtype."""
+    def cast_inputs(self, node, cfg, indices=None):
+        """Cast node input dtype."""
         for idx, tensor_name in enumerate(node.input):
+            if indices and idx not in indices:
+                continue
             initializer = find_by_name(tensor_name, self.model.initializer())
             if initializer is not None:
                 if initializer.data_type != onnx_proto.TensorProto.FLOAT: 
@@ -394,10 +402,12 @@ class Quantizer:
                 node.input[idx] = name
                 self.new_value_info[name] = ValueInfo(tensor_name,
                                                              TensorProto.FLOAT, dtype_mapping[cfg])
-        if all([i not in self.new_value_info for i in node.input]):
-            return
 
+    def cast_outputs(self, node, cfg, indices=None):
+        """Cast node output dtype."""
         for idx, tensor_name in enumerate(node.output):
+            if indices and idx not in indices:
+                continue
             if tensor_name in self.value_infos and \
                 self.value_infos[tensor_name].type.HasField('tensor_type') and \
                 self.value_infos[tensor_name].type.tensor_type.elem_type != TensorProto.FLOAT:

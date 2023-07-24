@@ -15,3 +15,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# model slim related
+from .model_slim.auto_slim import parse_auto_slim_config
+from .model_slim.auto_slim import model_slim
+
+
+
+

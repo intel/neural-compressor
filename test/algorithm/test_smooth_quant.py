@@ -1,15 +1,16 @@
 import copy
 import unittest
-import onnx
 import numpy as np
 import shutil
 import torch
-from onnx import onnx_pb as onnx_proto
-from onnx import helper, TensorProto, numpy_helper
+import sys
+import math
+
+sys.path.append('./')
+
 from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-from neural_compressor.adaptor.ox_utils.smooth_quant import ORTSmoothQuant
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -17,106 +18,6 @@ try:
 except:
     TEST_IPEX = False
 
-def build_onnx_model():
-    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 5, 5])
-    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 5, 2])
-    H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 5, 2])
-
-    g_value = np.random.uniform(low=0.001, high=0.5, size=(25)).astype(np.float32)
-    G_init = helper.make_tensor('G', TensorProto.FLOAT, [5, 5], g_value.reshape(25).tolist())
-    matmul_node = onnx.helper.make_node('MatMul', ['A', 'G'], ['C'], name='Matmul')
-
-    b_value = np.random.uniform(low=0.001, high=0.5, size=(10)).astype(np.float32)
-    B_init = helper.make_tensor('B', TensorProto.FLOAT, [5, 2], b_value.reshape(10).tolist())
-    matmul_node2 = onnx.helper.make_node('MatMul', ['C', 'B'], ['I'], name='Matmul2')
-
-    e_value = np.random.uniform(low=0.001, high=0.5, size=(10)).astype(np.float32)
-    E_init = helper.make_tensor('E', TensorProto.FLOAT, [5, 2], e_value.reshape(10).tolist())
-    matmul_node3 = onnx.helper.make_node('MatMul', ['C', 'E'], ['K'], name='Matmul3')
-
-    add = onnx.helper.make_node('Add', ['I', 'E'], ['D'], name='add')
-
-    f_value = np.random.uniform(low=0.001, high=0.5, size=(10)).astype(np.float32)
-    F_init = helper.make_tensor('F', TensorProto.FLOAT, [5, 2], f_value.reshape(10).tolist())
-    add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
-
-    graph = helper.make_graph([matmul_node, matmul_node2, matmul_node3, add, add2], 'test_graph_1', [A], [H], [B_init, E_init, F_init, G_init])
-    model = helper.make_model(graph)
-    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
-    return model
-
-class TestORTSq(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.model = build_onnx_model()
-        dataset = Datasets("onnxrt_qdq")["dummy_v2"]((5,5), (5,1))
-        self.dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
-
-    @classmethod
-    def tearDownClass(self):
-        shutil.rmtree("./nc_workspace", ignore_errors=True)
-
-    def test_sq(self):
-        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
-        model = sq.transform(calib_iter=5)
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 1)
-        sq.recover()
-        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
-        for init in self.model.graph.initializer:
-            tensor = numpy_helper.to_array(init)
-            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
-            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
-
-        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
-        model = sq.transform(calib_iter=5, folding=False)
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 2)
-        sq.recover()
-        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
-        for init in self.model.graph.initializer:
-            tensor = numpy_helper.to_array(init)
-            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
-            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
-
-        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
-        model = sq.transform(calib_iter=5, folding=False, scales_per_op=True)
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 3)
-        sq.recover()
-        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
-        for init in self.model.graph.initializer:
-            tensor = numpy_helper.to_array(init)
-            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
-            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
-
-        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
-        model = sq.transform(calib_iter=5, scales_per_op=True)
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 3)
-        sq.recover()
-        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
-        for init in self.model.graph.initializer:
-            tensor = numpy_helper.to_array(init)
-            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
-            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
-
-        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
-        model = sq.transform(calib_iter=5, scales_per_op=True, alpha='auto')
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 3)
-        sq.recover()
-        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
-        for init in self.model.graph.initializer:
-            tensor = numpy_helper.to_array(init)
-            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
-            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
-
-
-        sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
-        model = sq.transform(calib_iter=5, alpha='auto')
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Mul']), 1)
-        sq.recover()
-        self.assertEqual(len(sq.model.nodes()), len(self.model.graph.node))
-        for init in self.model.graph.initializer:
-            tensor = numpy_helper.to_array(init)
-            sq_tensor = numpy_helper.to_array(sq.model.get_initializer(init.name))
-            self.assertAlmostEqual(tensor[0][0], sq_tensor[0][0], 4)
 
 class TestSqDepthwiseConv(unittest.TestCase):
     @classmethod
@@ -803,6 +704,101 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_dataloader=CalibDataloader(),
         )
         output2 = q_model.model(input_ids)
+
+
+class TestSqSkipOp(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                pass
+            def __iter__(self):
+                yield torch.rand((1, 4))
+
+        self.linear_dl = RandDataloader()
+
+    @classmethod 
+    def test_sq_skip_op_auto(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.linear0 = nn.Linear(4, 4, bias=False)
+                self.layernorm1 = nn.LayerNorm(4)
+                self.linear1 = nn.Linear(4, 4, bias=False)
+                self.ac1 = nn.ReLU()
+                self.ac2 = nn.LeakyReLU()
+                self.linear2 = nn.Linear(4, 4, bias=True)
+                self.linear3 = nn.Linear(4, 2, bias=True)
+                self.ac3 = nn.Sigmoid()
+
+            def forward(self, x):
+                x = self.linear0(x)
+                x1 = self.layernorm1(x)
+                x_l1 = self.linear1(x1)
+                x_ac1 = self.ac1(x1)
+                x_ac2 = self.ac2(x_ac1)
+                x_l2 = self.linear2(x1)
+                x = x_l1 * x_l2 + x_ac2
+                x = self.linear3(x)
+                x = self.ac3(x)
+                return x
+                
+        model = Model()
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha='auto', calib_iter=1, folding=True)
+        #the layernorm could not used for sq-absorb because it outputs to an add op.
+        assert len(sq.absorb_to_layer) == 0 
+
+class TestSqSkipOp_attn(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                pass
+            def __iter__(self):
+                yield torch.rand((1, 4))
+        self.linear_dl = RandDataloader()
+
+    @classmethod 
+    def test_sq_skip_op_attn_auto(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.hidden_size = 4
+                self.linear0 = nn.Linear(self.hidden_size, self.hidden_size,bias=False)
+                self.layernorm1 = nn.LayerNorm(self.hidden_size)
+                self.dim_k, self.dim_v = 8, 4
+                self.linear_q = nn.Linear(self.hidden_size, self.dim_k, bias=False)
+                self.linear_k = nn.Linear(self.hidden_size, self.dim_k, bias=False)
+                self.linear_v = nn.Linear(self.hidden_size, self.dim_v, bias=False)   
+                self.ac1 = nn.ReLU()
+                self.ac2 = nn.LeakyReLU()
+                self.linear3 = nn.Linear(self.hidden_size, 3, bias=True)
+                self.ac3 = nn.Sigmoid()
+
+            def forward(self, x):
+                x = self.linear0(x)
+                x = self.layernorm1(x)
+                q = self.linear_q(x)
+                k = self.linear_k(x)
+                v = self.linear_v(x)
+                score = torch.matmul(q, k.transpose(1, 0)) / math.sqrt(self.dim_k)
+                score = torch.softmax(score, dim=-1)
+                attn = torch.matmul(score, v)
+                x_ac1 = self.ac1(x)
+                x_ac2 = self.ac2(x_ac1)
+                x = attn + x_ac2
+                x = self.linear3(x)
+                x = self.ac3(x)
+                return x
+
+                
+        model = Model()
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha='auto', calib_iter=1, folding=True)
+        #the layernorm could not used for sq-absorb because it outputs to an add op.
+        assert len(sq.absorb_to_layer) == 0 
+
 
 
 if __name__ == '__main__':

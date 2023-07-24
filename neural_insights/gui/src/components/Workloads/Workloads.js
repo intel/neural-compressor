@@ -21,24 +21,26 @@ import { api } from './../../App';
 import { getLabel } from './../Diagnosis/Diagnosis';
 import { io } from 'socket.io-client';
 
-export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText }) {
+export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText, setSelectedOp }) {
   const [workloads, setWorkloads] = useState([]);
   const [spinner, setSpinner] = useState(true);
 
   let socket = io('/');
   socket.on('Config update', data => {
-    getWorkloads();
+    getWorkloads(false);
   });
 
   useEffect(() => {
-    getWorkloads();
+    getWorkloads(true);
   }, []);
 
-  let getWorkloads = () => {
-    api.get('api/workloads?token=asd')
+  let getWorkloads = (changeSelectedWorkload) => {
+    api.get('api/workloads?token=' + localStorage.getItem('token'))
       .then(
         response => {
-          setSelectedWorkload(response.data.workloads[0]);
+          if (changeSelectedWorkload) {
+            setSelectedWorkload(response.data.workloads[0]);
+          }
           setWorkloads(response.data.workloads);
           setSpinner(false);
         }
@@ -51,7 +53,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   let workloadsList = workloads.map(workload => {
     return (
-      <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload) }}>
+      <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload); setSelectedOp(null); }}>
         <Button variant="secondary" className={workload.uuid === selectedWorkload.uuid ? 'active' : ''}>
           {workload.mode}
           <div className='date'>{moment(moment.unix(workload.creation_time)).fromNow()}</div>
@@ -71,7 +73,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
       }
       {workloadsList.length === 0 &&
         <div className="data-panel">
-          <h3>Intel Neural Insights</h3>
+          <h3>Neural Insights</h3>
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
         </div>
       }

@@ -27,9 +27,12 @@ from ..utils.utility import LazyImport
 from ..model import BaseModel, Model
 from ..model.model import MODELS
 from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
+from .pruner.utils import parse_to_prune_tf, get_sparsity_ratio_tf
 from .pruner.pruners import get_pruner, PRUNERS
+
 LazyImport('torch.nn')
 torch = LazyImport('torch')
+tf = LazyImport('tensorflow')
 
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
@@ -221,8 +224,10 @@ class PruningCallbacks(BaseCallbacks):
         """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
-        if isinstance(self.model.model, torch.nn.Module):
+        if self.conf.framework == 'pytorch' and isinstance(self.model.model, torch.nn.Module):
             get_sparsity_ratio(self.pruners, self.model)
+        elif self.conf.framework == 'keras' and isinstance(self.model.model, tf.keras.Model):
+            get_sparsity_ratio_tf(self.pruners, self.model)
 
     def __repr__(self):
         """Return the class's string representation."""
@@ -237,13 +242,39 @@ class PruningCallbacks(BaseCallbacks):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        if isinstance(self.model.model, torch.nn.Module):
+        if self.conf.framework == 'pytorch' and isinstance(self.model.model, torch.nn.Module):
+            # model auto slim related
+            from .pruner.model_slim.pattern_analyzer import SelfMHASearcher
             for info in self.pruners_info:
-                modules = parse_to_prune(info, self.model.model)
+                if 'mha' in info['pattern']:
+                    # head pruning
+                    pa_obj = SelfMHASearcher(self.model.model)
+                    modules, _ = pa_obj.search(split_qkv_ffn = False)
+                    modules = pa_obj.obtain_mha_module(modules)
+                    modules = pa_obj.from_layer_name_to_object(modules)
+                    if len(modules) == 0:
+                        logger.warning("one pruner hooks no mha modules, please have a check")
+                    self.pruners.append(get_pruner(info, modules))
+                else:
+                    # original pruning types, e.g NxM or N:M
+                    modules = parse_to_prune(info, self.model.model)
+                    if modules == {}:
+                        logger.warning("one pruner hooks no layers, please have a check")
+
+                    self.pruners.append(get_pruner(info, modules))
+                    info['modules'] = [key for key in modules.keys()]
+                    info['len_of_modules'] = len(info['modules'])
+                    logger.info(info)
+        elif self.conf.framework == 'keras' and isinstance(self.model.model, tf.keras.Model):
+            from tensorflow.python.ops.numpy_ops import np_config
+            np_config.enable_numpy_behavior()
+            for info in self.pruners_info:
+                # original pruning types, e.g NxM or N:M
+                modules = parse_to_prune_tf(info, self.model.model)
                 if modules == {}:
                     logger.warning("one pruner hooks no layers, please have a check")
 
-                self.pruners.append(get_pruner(info, modules))
+                self.pruners.append(get_pruner(info, modules, 'keras'))
                 info['modules'] = [key for key in modules.keys()]
                 info['len_of_modules'] = len(info['modules'])
                 logger.info(info)

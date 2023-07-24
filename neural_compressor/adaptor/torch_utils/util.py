@@ -63,121 +63,6 @@ def is_fused_module(module):
         return False
 
 
-def _set_input_scale_hook(model, op_cfgs):
-    """Insert hooks to observer input scale and zeropoint.
-
-    Args:
-        model (object): the input model
-        op_cfgs (dict): dictionary of quantization configure for each op
-
-    Returns:
-        hook_list (list): the input observer hooks
-    """
-    def input_scale_hook(module, input):
-        assert hasattr(module, 'input_observer'), \
-            'Expect input_observer attribute already attached to the module'
-        module.input_observer(input[0])
-        return input
-
-    def output_scale_hook(module, input, output):
-        assert hasattr(module, 'output_observer'), \
-            'Expect output_observer attribute already attached to the module'
-        module.output_observer(output)
-        return output
-
-    def ConvReLU2d_scale_hook(module, input):
-        assert hasattr(module, 'input_observer'), \
-            'Expect input_observer attribute already attached to the module'
-        assert hasattr(module, 'output_observer'), \
-            'Expect output_observer attribute already attached to the module'
-        module.input_observer(input[0])
-        output = module._conv_forward(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer(output)
-        return input
-
-    def LinearReLU_scale_hook(module, input):
-        import torch.nn.functional as F
-        assert hasattr(module, 'input_observer'), \
-            'Expect input_observer attribute already attached to the module'
-        assert hasattr(module, 'output_observer'), \
-            'Expect output_observer attribute already attached to the module'
-        module.input_observer(input[0])
-        output = F.linear(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer(output)
-        return input
-
-    hook_list = []
-    for name, module in model.named_modules():
-        if 'Conv' in str(module.__class__.__name__) or \
-          'Linear' in str(module.__class__.__name__):
-            if not hasattr(module, 'qconfig') or not module.qconfig:
-                continue
-            device = next(module.parameters()).device
-            from torch.nn.intrinsic.qat import ConvBn2d, ConvReLU2d, ConvBnReLU2d, LinearReLU
-            if type(module) in [ConvBn2d, ConvBnReLU2d]:
-                module.input_observer = module.qconfig.activation().to(device)
-                handle_in = module.register_forward_pre_hook(input_scale_hook)
-                # module[0] == torch.nn.BatchNorm2d
-                module[0].qconfig = module.qconfig
-                module[0].output_observer = module[0].qconfig.activation().to(device)
-                handle_out = module[0].register_forward_hook(output_scale_hook)
-                hook_list.extend([handle_in, handle_out])
-            elif type(module) in [ConvReLU2d, LinearReLU]:
-                module.input_observer = module.qconfig.activation().to(device)
-                module.output_observer = module.qconfig.activation().to(device)
-                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook if \
-                                        type(module) == ConvReLU2d else LinearReLU_scale_hook)
-                hook_list.extend([handle_in_out])
-            else:
-                if is_fused_module(module):
-                    continue
-                module.input_observer = module.qconfig.activation().to(device)
-                module.output_observer = module.qconfig.activation().to(device)
-                handle_in = module.register_forward_pre_hook(input_scale_hook)
-                handle_out = module.register_forward_hook(output_scale_hook)
-                hook_list.extend([handle_in, handle_out])
-    return hook_list
-
-
-def _get_input_scale(model, hook_list):
-    """Fetch input scale and zeropoint from observer.
-
-    Args:
-        model (object): the input model
-        hook_list (list): the input observer hooks
-
-    Returns:
-        input_scale_info (dict): the input scale and zero_point of each modules
-    """
-    scale_info = {}
-    for name, module in model.named_modules():
-        from torch.nn.intrinsic.qat import ConvBn2d, ConvBnReLU2d
-        if type(module) in [ConvBn2d, ConvBnReLU2d]:
-            if hasattr(module, "input_observer") and hasattr(module[0], "output_observer"):
-                scale_in, zero_point_in = module.input_observer.calculate_qparams()
-                scale_out, zero_point_out = module[0].output_observer.calculate_qparams()
-                scale_info[name] = {
-                    'input_scale': float(scale_in),
-                    'input_zeropoint': int(zero_point_in),
-                    'output_scale': float(scale_out),
-                    'output_zeropoint': int(zero_point_out)
-                }
-                del module.input_observer, module[0].output_observer
-        elif hasattr(module, "input_observer") and hasattr(module, "output_observer"):
-            scale_in, zero_point_in = module.input_observer.calculate_qparams()
-            scale_out, zero_point_out = module.output_observer.calculate_qparams()
-            scale_info[name] = {
-                'input_scale': float(scale_in),
-                'input_zeropoint': int(zero_point_in),
-                'output_scale': float(scale_out),
-                'output_zeropoint': int(zero_point_out)
-            }
-            del module.input_observer, module.output_observer
-    for h in hook_list:
-        h.remove()
-    return scale_info
-
-
 def collate_torch_preds(results):
     """Fetch collated results.
 
@@ -365,7 +250,7 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                                 if pre_op_output['id'] == input_tensor_id:
                                     pre_op_output_infos[index]['inf_dtype'] = input_tensor_dtype
                                 else:
-                                    print('Do not find the input id', input_tensor_id)
+                                    pass
                             pre_op_infos['output_tensor_infos'] = pre_op_output_infos
                             cfgs[pre_op_module][pre_op_state][pre_op_index] = pre_op_infos
                         else:
@@ -1031,3 +916,46 @@ def get_op_type_by_name(op_name, quantizable_ops):
         if pair[0] == op_name:
             return pair[1]
     return None
+
+def collect_weight_info(q_config):
+    """collect weight info from q_config for dumping into qconfig.json
+
+    qconfig.json example:
+    ```
+    {
+        'fc': {
+            'bits': 4,
+            'group_size': 128,
+            'scheme': 'asym',
+            'algorithm': 'RTN'
+        }
+        ...
+    }
+    ```
+
+    Args:
+        q_config (_type_): quantization configue
+    """
+    weight_info = {}
+    from neural_compressor.utils.logger import level, DEBUG
+    for op, config in q_config['op'].items():
+        op_name, op_type = op
+        if config['weight']['dtype'] == 'fp32':
+            weight_info[op_name] = {'dtype': 'fp32'}
+        else:
+            if level == DEBUG:
+                weight_info[op_name] = {
+                    'dtype': config['weight']['dtype'],
+                    'bits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'scheme': config['weight']['scheme'],
+                    'algorithm': config['weight']['algorithm']
+                }
+            else:
+                weight_info[op_name] = {
+                    'dtype': config['weight']['dtype'],
+                    'bits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'scheme': config['weight']['scheme'],
+                }
+    return weight_info

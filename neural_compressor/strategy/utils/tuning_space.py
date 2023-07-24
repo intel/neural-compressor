@@ -23,7 +23,7 @@ from typing import Dict, Tuple, List
 from copy import deepcopy
 import itertools
 from ...utils import logger
-from .utility import OrderedDefaultDict
+from .utility import OrderedDefaultDict, preprocess_user_cfg
 from .tuning_structs import OpTuningConfig
 
 from .constant import TUNING_ITEMS_LST
@@ -217,6 +217,7 @@ class TuningSpace:
         from .utility import extract_data_type, reverted_data_type
         fw_op_cap = deepcopy(fw_op_cap)
         new_op_cap = deepcopy(cur_op_cap)
+        op_user_cfg = preprocess_user_cfg(op_user_cfg)
         for att in ['activation', 'weight']:
             if op_user_cfg.get(att, None) is not None:
                 user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att].get('dtype', None) is not None else []
@@ -268,9 +269,14 @@ class TuningSpace:
     def _merge_op_wise_cfg(self, cap: Dict, op_wise_usr_cfg: Dict, fw_cap: Dict):
         op_name_types = {key[0]: key for key in cap['op'].keys()}
         for op_name_pattern, op_user_cfg in op_wise_usr_cfg.items():
-            op_name_pattern = re.compile(op_name_pattern)
+            if isinstance(op_name_pattern, str):
+                op_name_pattern = re.compile(op_name_pattern)
+                str_flag=True
+            else:
+                str_flag=False
             for op_name in op_name_types:
-                if op_name_pattern.fullmatch(op_name):
+                if str_flag and op_name_pattern.fullmatch(str(op_name)) \
+                  or op_name_pattern == op_name:
                     op_name_type = op_name_types[op_name]
                     cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type],
                                                                  op_user_cfg,
@@ -466,7 +472,7 @@ class TuningSpace:
                                 # The dtype should be a string, need to align with fwk.yaml.
                                 self.ops_data_type[op_name_type][(quant_mode, att, _data_type, signed_flag)] = \
                                     item_options[0] if isinstance(item_options, list) else item_options
-                            if item_name not in ['dtype', 'quant_mode']:
+                            if item_name not in ['quant_mode']:
                                 parsed_op_cap[quant_mode][att][_data_type][signed_flag][item_name] = item_options
                     else:
                         # Parse the data info for item　with unique value.

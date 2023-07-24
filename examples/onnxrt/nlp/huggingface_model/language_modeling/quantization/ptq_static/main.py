@@ -206,27 +206,26 @@ def main():
     
     logger.info("Training/evaluation parameters %s", args)
             
-    model = onnx.load(args.model_path)
     ds = load_and_cache_examples(args, tokenizer, evaluate=True)
 
     def eval_func(model):
         return evaluate(args, model, tokenizer)
 
     if args.benchmark:
+        model = onnx.load(args.model_path)
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
+            b_dataloader = DataLoader(ds, args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
             evaluate(args, model, tokenizer)
         
     if args.tune:
-        # GPT2 optimizer
+        # optimize model
         from onnxruntime.transformers import optimizer
         from onnxruntime.transformers.fusion_options import FusionOptions
         opt_options = FusionOptions('gpt2')
@@ -238,11 +237,19 @@ def main():
             num_heads=12,
             hidden_size=768,
             optimization_options=opt_options)
-        model = model_optimizer.model  
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
+            model = onnx.load(args.model_path)
 
         from neural_compressor import quantization
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
         from neural_compressor.utils.constant import FP32
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
@@ -259,7 +266,7 @@ def main():
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
-                                   calib_dataloader=DefaultDataLoader(ds, args.eval_batch_size))
+                                   calib_dataloader=DataLoader(ds, args.eval_batch_size))
         q_model.save(args.output_model)
 
 

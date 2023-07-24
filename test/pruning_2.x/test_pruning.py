@@ -9,7 +9,11 @@ from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
-
+from neural_compressor.data import DataLoader
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.conf.dotdict import DotDict
+from neural_compressor.utils import create_obj_from_config
+from neural_compressor.conf.config import default_workspace
 
 class TestPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
@@ -71,6 +75,8 @@ class TestPruning(unittest.TestCase):
         compression_manager.callbacks.on_train_end()
         compression_manager.callbacks.on_before_eval()
         compression_manager.callbacks.on_after_eval()
+
+
 
 
 if __name__ == "__main__":

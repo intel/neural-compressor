@@ -76,9 +76,18 @@ class ConservativeTuneStrategy(TuneStrategy):
                          q_hooks=q_hooks)
         logger.info(f"*** Initialize conservative tuning")
         self.acc_meet_flag = False
-        self.quant_op_type_lst = ['conv', 'matmul', 'linear']
+        self.quant_op_type_lst = ['conv', 'matmul', 'bmm', 'linear']
+        extend_op_type_lst = self._get_extend_op_type_lst()
+        self.quant_op_type_lst += extend_op_type_lst
         res_lst = [None] * len(self.quant_op_type_lst)
         self.quant_status = {k : v for k, v in zip(self.quant_op_type_lst, res_lst)}
+        
+    def _get_extend_op_type_lst(self):
+        extend_lst = []
+        # add 'add' to op type list when sq is on
+        if self.config.recipes.get('smooth_quant', False):
+            extend_lst.append('add')
+        return extend_lst
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
@@ -150,11 +159,13 @@ class ConservativeTuneStrategy(TuneStrategy):
         for op_item, quant_mode in items_lst:
             op_name, op_type = op_item.name
             for target_op_type in self.quant_op_type_lst:
-                if target_op_type in op_type.lower():
+                if target_op_type in op_type.lower() or op_type.lower() in target_op_type:
                     if target_op_type not in sorted_items:
                         sorted_items[target_op_type] = []
                     sorted_items[target_op_type].append((op_item, quant_mode))
-        return sorted_items
+        new_sorted_items = COrderedDict((op_type, sorted_items[op_type]) for op_type \
+            in self.quant_op_type_lst if op_type in sorted_items)
+        return new_sorted_items
 
     def initialize_tune_cfg(self):
         """Init the tuning config.

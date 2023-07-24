@@ -72,12 +72,15 @@ class TestDistillation(unittest.TestCase):
     def test_distillation_intermediate_layers(self):
         criterion = nn.CrossEntropyLoss()
         distillation_criterion_conf = IntermediateLayersKnowledgeDistillationLossConfig(
-            layer_mappings=[['layer1.0', ],
-                            [['layer1.1.conv1', ''], ['layer1.1.conv1', '0']],],
-            loss_types=['KL', 'MSE'],
-            loss_weights=[0.5, 0.5])
+            layer_mappings=[
+                ['', ],
+                ['layer1.0', ],
+                [['layer1.1.conv1', ''], ['layer1.1.conv1', '0']],
+            ],
+            loss_types=['L1', 'KL', 'MSE'],
+            loss_weights=[0.5, 0.2, 0.3])
 
-        distillation_criterion_conf.config.IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][1][-1] = \
+        distillation_criterion_conf.config.IntermediateLayersKnowledgeDistillationLoss.layer_mappings[2][1][-1] = \
                 lambda x: x[:, :2,...]
         optimizer = torch.optim.SGD(self.student_model.parameters(), lr=0.0001)
         conf = DistillationConfig(self.teacher_model, distillation_criterion_conf)
