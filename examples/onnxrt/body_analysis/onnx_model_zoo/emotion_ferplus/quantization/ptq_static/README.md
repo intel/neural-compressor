@@ -37,7 +37,7 @@ Download dataset [Emotion FER dataset](https://www.kaggle.com/c/challenges-in-re
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --dataset_location=/path/to/data \
                    --output_model=path/to/save
 ```

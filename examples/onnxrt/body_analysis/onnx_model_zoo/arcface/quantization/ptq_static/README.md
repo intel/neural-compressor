@@ -37,7 +37,7 @@ Download dataset [Refined MS-Celeb-1M](https://s3.amazonaws.com/onnx-model-zoo/a
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/faces_ms1m_112x112/task.bin \
                    --output_model=path/to/save
 ```

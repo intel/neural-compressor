@@ -33,7 +33,7 @@ python run_glue.py \
 
 or
 ```bash
-sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
+sh run_quant.sh --topology=topology_name --input_model=model_name_or_path
 ```
 ## 2. Benchmark
 ```bash

@@ -34,7 +34,7 @@ pip install -r requirements.txt
     - For training, we enbaled early stop strategy.  
 ## 2. To get tuned model and its accuracy: 
 ```shell
-    bash run_tuning.sh --input_model=./bert_model  --output_model=./saved_results
+    bash run_quant.sh --input_model=./bert_model  --output_model=./saved_results
 ```
 
 or

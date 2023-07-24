@@ -35,7 +35,7 @@ if [ "${model}" == "resnet18" ]; then
     strategy="bayesian"
     batch_size=1
     new_benchmark=false
-    tuning_cmd="bash run_tuning.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=benchmark --batch_size=${batch_size} --iters=500"
 elif [ "${model}" == "resnet18_fx" ]; then
     model_src_dir="image_recognition/torchvision_models/quantization/ptq/cpu/fx/"
@@ -46,7 +46,7 @@ elif [ "${model}" == "resnet18_fx" ]; then
     batch_size=1
     new_benchmark=true
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=performance --batch_size=${batch_size} --iters=500"
 fi
 

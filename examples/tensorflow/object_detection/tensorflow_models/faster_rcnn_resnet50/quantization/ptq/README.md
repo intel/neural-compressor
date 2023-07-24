@@ -99,7 +99,7 @@ config = PostTrainingQuantConfig(
   
   ```shell
   # The cmd of running faster_rcnn_resnet50
-  bash run_tuning.sh --input_model=./faster_rcnn_resnet50_fp32_coco_pretrained_model/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_resnet50-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./faster_rcnn_resnet50_fp32_coco_pretrained_model/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_resnet50-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark
