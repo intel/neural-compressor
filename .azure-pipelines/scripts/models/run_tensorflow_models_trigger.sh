@@ -58,7 +58,7 @@ elif [ "${model}" == "inception_v1" ]; then
     strategy="basic"
     batch_size=1
     new_benchmark=true
-    tuning_cmd="bash run_quant.sh --config=${yaml} --input_model=${input_model}"
+    tuning_cmd="bash run_tuning.sh --config=${yaml} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
 elif [ "${model}" == "darknet19" ]; then
     model_src_dir="oob_models/quantization/ptq"
