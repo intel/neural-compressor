@@ -2,7 +2,7 @@
 
 1. [Introduction](#introduction)
 2. [Calibration Algorithms](#calibration-algorithms)
-3. [Supported Matrix](#supported-matrix)
+3. [Support Matrix](#support-matrix)
 
 ## Introduction
 
