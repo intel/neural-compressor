@@ -218,8 +218,10 @@ class TorchSmoothQuant:
             self.traced_model = self.model
         self.weight_scale_info = {}
         self.absorb_scales_info = {}
-        self.insert_mul = True
-        self.allow_absorb = False
+        self.insert_mul = False
+        self.allow_absorb = True
+        self.record_max_info = False
+        self.max_value_info = {} # to record max values for alpha tune
         self.self_absorb_layers = {}
         self.absorb_to_layer = {}
 
@@ -518,8 +520,18 @@ class TorchSmoothQuant:
                 weights.append(weight)
 
             weights = torch.cat(weights, dim=0)
-
             weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
+
+            if self.record_max_info:
+                # the input of layers with same absorb layer is the same.
+                input_minmax = [self.input_mins[layers[0]], self.input_maxes[layers[0]]]
+                self.max_value_info[key] = {}
+                self.max_value_info[key]['alpha'] = alpha_key
+                self.max_value_info[key]['input_minmax'] = input_minmax
+                self.max_value_info[key]['weight_max'] = weight_max_per_channel
+                self.max_value_info[key]['absorbed_layer'] = layers
+                continue
+
             input_power = torch.pow(input_max, alpha_key)
             logger.debug(f"{max(input_max)}, {min(input_max)}")
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha_key)
@@ -735,6 +747,12 @@ class TorchSmoothQuant:
             example_inputs = self._get_example_input()
             if example_inputs != None:
                 out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
+
+            if self.record_max_info:
+                # max_info is recorded in self.max_value_info
+                self._adjust_parameters(self.absorb_to_layer, input_maxes, alpha)
+                self.model._smoothquant_optimized = False
+                return self.model
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)

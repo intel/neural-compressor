@@ -83,7 +83,6 @@ class SmoothQuant(Algorithm):
             origin_model,
             dataloader,
             calib_iter,
-            self.tune_cfg,
             alpha=self.alpha,
             **kwargs,
         )
