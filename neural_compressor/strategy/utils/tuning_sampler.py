@@ -24,29 +24,14 @@ from typing import List, Dict, Any, Union, Tuple
 from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
 from ...utils import logger
+from .utility import ClassRegister
 
 TUNING_ITEM_PRIORITY = [('activation','scheme'), ('activation','algorithm'),('activation','granularity'),
                         ('activation','compute_dtype'), ('weight','scheme'), ('weight','algorithm'), \
                         ('weight','granularity')]
 
 
-
-class TuningSamplerRegistry:
-    """Class decorator used to register all TuningSampler subclasses."""
-
-    sampler_dict = {}
-
-    @classmethod
-    def register(cls, name):
-        """Register new tuning sampler.
-
-        Args:
-            name: the name of new tuning sampler.
-        """
-        def decorator(sampler):
-            assert name not in cls.sampler_dict, "Cannot have two sampler with the same name."
-            cls.sampler_dict[name] = sampler
-        return decorator
+tuning_sampler_dict = ClassRegister()
 
 class TuningOrder:
     """Not displayed in API Docs."""
@@ -560,3 +545,42 @@ class BlockFallbackTuningSampler(TuningSampler):
                 logger.debug(f"[BlockFallbackTuningSampler] updated_tuning_cfg {op_name_type}: {new_op_config}")
                 logger.debug(f"[BlockFallbackTuningSampler] fallback {op_name_type} to {self.target_dtype}")
             yield new_tune_cfg
+
+@tuning_sampler_dict("smooth_quant")
+class SmoothQuantSampler(TuningSampler):
+    """Not displayed in API Docs."""
+    def __init__(self,
+                 tuning_space: TuningSpace,
+                 tuning_order_lst: List[TuningOrder],
+                 initial_op_tuning_cfg: Dict,
+                 alpha_list: List[float],
+                 kwargs: Dict = {}):
+        """Init tuning sampler.
+
+        Args:
+            tuning_space: The tuning space.
+            tuning_order_lst: The traverse orders.
+            initial_op_tuning_cfg: The initialized tuning config.
+            alpha_list: smooth quant alpha list.
+            kwargs: other args.
+        """
+        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
+        self.sq_alpha_list = alpha_list
+
+
+    def __iter__(self):
+        """Yield the next tuning config.
+
+        Yields:
+            The next tuning config.
+        """
+        new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+        logger.debug(f"[STRATEGY] smooth quant alpha list: {self.sq_alpha_list}")
+        for alpha in self.sq_alpha_list:
+            recipe_cfgs = new_tune_cfg.setdefault("recipe_cfgs", {})
+            recipe_cfgs["smooth_quant"] = True
+            recipe_cfgs["smooth_quant_args"] = {"alpha": alpha}
+            logger.debug(f"[STRATEGY] set smooth quant alpha with: {alpha:.4f}")
+            yield new_tune_cfg
+
+
