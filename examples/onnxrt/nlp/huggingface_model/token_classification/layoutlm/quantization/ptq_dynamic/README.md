@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This example load LayoutLMv3 model and confirm its accuracy and speed based on [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
+This example load LayoutLM model and confirm its accuracy and speed based on [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
 
 # Prerequisite
 
@@ -34,12 +34,11 @@ optimum-cli export onnx --model ./layoutlm-base-uncased-finetuned-funsd ./layout
 
 ## 1. Quantization
 
-Static quantization with QOperator format:
+Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=./layoutlm-base-uncased-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
-                   --output_model=/path/to/model_tune \
-                   --quant_format="QOperator"
+                   --output_model=/path/to/model_tune 
 ```
 
 

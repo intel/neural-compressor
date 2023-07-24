@@ -107,7 +107,11 @@ class AutoTuneStrategy(TuneStrategy):
         # Quantize model with default config
         super().traverse()
         if self.best_qmodel:
+            logger.info("[Strategy] Found the model meets accuracy requirements, ending the tuning process.")
             return
+        elif self.config.tuning_criterion.max_trials == 1:
+            logger.info("[Strategy] Not found the model meets accuracy requirements,\
+                but the max trial is 1, ending the tuning process.")
         else:
             # Start to try different strategies sequentially
             self.sequential_traverse()

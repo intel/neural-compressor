@@ -1,6 +1,7 @@
 accelerate
 datasets
 transformers
+huggingface-hub
 seqeval
 tensorboard
 sentencepiece

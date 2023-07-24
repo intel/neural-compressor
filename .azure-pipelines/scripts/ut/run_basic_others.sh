@@ -14,9 +14,9 @@ find . -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --a
 sed -i '/ adaptor\//d' run.sh
 sed -i '/ tfnewapi\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
-sed -i '/ ipex\//d' run.sh
 sed -i '/ itex\//d' run.sh
 sed -i '/ pruning/d' run.sh
+sed -i '/ distillation\//d' run.sh
 sed -i '/ scheduler\//d' run.sh
 sed -i '/ nas\//d' run.sh
 

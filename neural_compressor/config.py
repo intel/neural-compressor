@@ -45,7 +45,7 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list, # TODO: allow AWQ+GPTQ algo
-            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ',] for i in s)),
+            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ', 'TEQ'] for i in s)),
         Optional('bits'):  And(
             list,
             lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
@@ -877,6 +877,12 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def teq_args(val=None):
+            if val is not None:
+                return _check_value("teq_args", val, dict)
+            else:
+                return {}
+
         def fast_bias_correction(val=None):
             if val is not None:
                 return _check_value("fast_bias_correction", val, bool)
@@ -953,6 +959,7 @@ class _BaseQuantizationConfig:
                    "rtn_args": rtn_args,
                    "awq_args": awq_args,
                    "gptq_args": gptq_args,
+                   "teq_args": teq_args,
                    }
         self._recipes = {}
         for k in RECIPES.keys():
@@ -1465,6 +1472,7 @@ class WeightPruningConfig:
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
+                 low_memory_usage=False,
                  **kwargs):
         """Init a WeightPruningConfig object."""
         self.backend = backend
@@ -1483,6 +1491,7 @@ class WeightPruningConfig:
             'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
             'sparsity_decay_type': sparsity_decay_type,
             'pruning_op_types': pruning_op_types,
+            'low_memory_usage': low_memory_usage
         })
         self._weight_compression.update(kwargs)
 

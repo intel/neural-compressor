@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .patterns import BasePattern
+from .patterns.base import PytorchBasePattern
 from .utils import torch
 
 REGS = {}
@@ -78,7 +78,7 @@ class BaseReg:
         pattern: A config dict object that includes information of the pattern.  
     """
 
-    def __init__(self, config: dict, modules: dict, pattern: BasePattern):
+    def __init__(self, config: dict, modules: dict, pattern: PytorchBasePattern):
         """Initialize."""
         self.modules = modules
         self.config = config
@@ -110,7 +110,7 @@ class GroupLasso(BaseReg):
         alpha: A float representing the coeffient related to group lasso.
     """
 
-    def __init__(self, config: dict, modules: dict, pattern: BasePattern, coeff):
+    def __init__(self, config: dict, modules: dict, pattern: PytorchBasePattern, coeff):
         """Initialize."""
         super(GroupLasso, self).__init__(config, modules, pattern)
         assert "x" in self.config.pattern, "group lasso only supports NXM pattern"
