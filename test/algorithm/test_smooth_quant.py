@@ -130,7 +130,7 @@ class TestTuneSqAlpha(unittest.TestCase):
             logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}")
             logger.info(note)
             partial_fake_eval = partial(fake_eval, eval_result_lst = eval_result_lst )
-            self.test_sq_tune_alpha_common(partial_fake_eval)
+            self._test_sq_tune_alpha_common(partial_fake_eval)
 
         for eval_result_lst, alpha, note in [
                 ([1, 0.8, 1.1, 0.7, 1.1], 0.5 ,"Expect tuning ends at 2nd trial with alpha is 0.5 and not tune sq's alpha."),
