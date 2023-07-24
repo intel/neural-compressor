@@ -267,7 +267,6 @@ class BasicTuneStrategy(TuneStrategy):
             if self._should_tuning_sq_alpha(self.config.recipes):
                 for tune_cfg in self.tuning_sq_alpha(tuning_space, \
                     deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
-                    # TODO update the cur_best_tuning_cfg with current best acc
                     yield tune_cfg
 
             # op type-wise tuning

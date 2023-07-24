@@ -1418,10 +1418,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         acc, _ = self.last_tune_result
         if self.cur_best_tuning_cfg is None:
             self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
+            logger.debug("[Strategy] Updated the current best tuning config as the last one is None.")
         if not isinstance(acc, list) and ((self.higher_is_better and acc >= self.cur_best_acc) \
             or (not self.higher_is_better and acc <= self.cur_best_acc)):
             self.cur_best_acc = acc
             self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
+            logger.debug("[Strategy] Updated the current best tuning config as got better accuracy.")
         elif len(self.metric_name) > 1 and self.metric_weight is not None:
             acc = np.mean(np.array(acc) * self.metric_weight)
             if (self.higher_is_better and acc >= self.cur_best_acc) or \

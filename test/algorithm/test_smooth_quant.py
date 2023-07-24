@@ -11,6 +11,8 @@ sys.path.append('./')
 from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+import logging
+logger = logging.getLogger("neural_compressor")
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -824,8 +826,8 @@ class TestTuneSqAlpha(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree(self.ns_workspace, ignore_errors=True)
-        
-    def test_sq_tune_alpha(self):
+
+    def test_sq_tune_alpha_common(self, eval_func):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
@@ -841,20 +843,29 @@ class TestTuneSqAlpha(unittest.TestCase):
                                            }
                      }
         )
-        
-        eval_result_lst = [1, 0.9, 0.8, 0.7, 1.1]
-        def fake_eval(model):
-            acc = eval_result_lst.pop(0)
-            return acc
-            
         q_model = quantization.fit(
             fp32_model,
             conf,
             calib_dataloader=DemoCalibDataloader(),
-            eval_func=fake_eval,
+            eval_func=eval_func,
         )
-        
         q_model.save(self.ns_workspace + "saved_result")
+
+    def test_tune_sq_alpha(self):
+        from functools import partial
+        def fake_eval(model, eval_result_lst):
+            acc = eval_result_lst.pop(0)
+            return acc
+        
+        for eval_result_lst, note in [
+                ([1, 0.8, 1.1, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
+                ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.15"),
+                ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.10")
+                ]:
+            logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}")
+            logger.info(note)
+            partial_fake_eval = partial(fake_eval, eval_result_lst = eval_result_lst )
+            self.test_sq_tune_alpha_common(partial_fake_eval)
 
 
 if __name__ == '__main__':
