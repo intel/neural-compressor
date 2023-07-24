@@ -370,7 +370,8 @@ class BasicTuneStrategy(TuneStrategy):
 
     def _should_tuning_sq_alpha(self, recipes):
         # Only tune sq'alpha only if there are more than one alpha
-        return recipes and len(recipes.get("smooth_quant_args", {}).get("alpha", [])) > 1
+        user_cfg_alpha = recipes.get("smooth_quant_args", {}).get("alpha", []) if recipes else False
+        return user_cfg_alpha and isinstance(user_cfg_alpha, list) and len(user_cfg_alpha) > 1
     
     def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
         """Tuning smooth quant's alpha.

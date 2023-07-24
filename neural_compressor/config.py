@@ -848,7 +848,7 @@ class _BaseQuantizationConfig:
                         if isinstance(v, str):
                             assert v == "auto", "the alpha of sq only supports float and 'auto'"
                         elif isinstance(v, float) or isinstance(v, int):
-                            val[k] = [k]
+                            continue
                         else:
                             logger.warning("Ignore the alpha as it's not a list, int or float.")
                         if isinstance(val[k], list):

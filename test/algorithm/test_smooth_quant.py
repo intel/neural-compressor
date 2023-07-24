@@ -92,7 +92,7 @@ class TestTuneSqAlpha(unittest.TestCase):
                 )
                 q_model.save(self.ns_workspace + "saved_result")
 
-    def test_sq_tune_alpha_common(self, eval_func):
+    def test_sq_tune_alpha_common(self, eval_func, alpha=np.arange(0.1, 0.2, 0.05).tolist()):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
@@ -104,7 +104,7 @@ class TestTuneSqAlpha(unittest.TestCase):
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
                      "smooth_quant_args": {'folding': False,
-                                           "alpha": np.arange(0.1, 0.2, 0.05).tolist(),
+                                           "alpha": alpha,
                                            }
                      }
         )
@@ -131,6 +131,16 @@ class TestTuneSqAlpha(unittest.TestCase):
             logger.info(note)
             partial_fake_eval = partial(fake_eval, eval_result_lst = eval_result_lst )
             self.test_sq_tune_alpha_common(partial_fake_eval)
+
+        for eval_result_lst, alpha, note in [
+                ([1, 0.8, 1.1, 0.7, 1.1], 0.5 ,"Expect tuning ends at 2nd trial with alpha is 0.5 and not tune sq's alpha."),
+                ([1, 0.8, 0.9, 0.7, 1.1], [0.5], "Expect tuning ends at 4th trial with alpha is  0.5 and not tune sq's alpha."),
+                ([1, 0.9, 0.8, 0.7, 1.1], [0.5, 0.7, 0.9] ,"Expect tuning ends at 4th trial with alpha is 0.5")
+                ]:
+            logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}, alpha: {alpha}")
+            logger.info(note)
+            partial_fake_eval = partial(fake_eval, eval_result_lst=eval_result_lst)
+            self.test_sq_tune_alpha_common(partial_fake_eval, alpha=alpha)
 
 
 if __name__ == '__main__':
