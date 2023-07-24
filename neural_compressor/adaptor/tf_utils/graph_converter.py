@@ -32,6 +32,7 @@ from neural_compressor.utils.utility import combine_histogram
 from neural_compressor.utils.utility import CaptureOutputToFile, CpuInfo
 from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.model import Model
+from neural_compressor.model.tensorflow_model import TensorflowSavedModelModel
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
