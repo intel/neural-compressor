@@ -1,8 +1,8 @@
 # Calibration Algorithms in Quantization
 
 1. [Introduction](#introduction)
-2. [Calibration Algorithm](#calibration-algorithm)
-3. [Supported Framework Matrix](#supported-framework-matrix)
+2. [Calibration Algorithms](#calibration-algorithms)
+3. [Supported Matrix](#supported-matrix)
 
 ## Introduction
 
