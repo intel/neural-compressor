@@ -770,6 +770,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("benchmark.yaml")
         os.remove("gather.yaml")
         os.remove("rename.yaml")
+        os.remove("rename_model.onnx")
         os.remove("rn50_9.onnx")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
@@ -1004,6 +1005,20 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.calib_dataloader = self.rename_dataloader
         quantizer.eval_dataloader = self.rename_dataloader
         quantizer.model = self.rename_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        conf.model.framework = 'onnxrt_integerops'
+        conf.quantization.approach = 'post_training_dynamic_quant'
+        conf.quantization.calibration.sampling_size = 1
+        conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.rename_dataloader
+        quantizer.eval_dataloader = self.rename_dataloader
+        onnx.save(self.rename_model, 'rename_model.onnx')
+        quantizer.model = 'rename_model.onnx'
+        # force set the model to large model
+        quantizer.model._is_large_model = True
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
