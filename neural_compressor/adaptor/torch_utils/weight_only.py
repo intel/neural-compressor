@@ -20,6 +20,7 @@
 
 import math
 from typing import OrderedDict
+from .util import set_module
 from ...utils import logger
 from ...utils.utility import LazyImport
 
@@ -27,13 +28,15 @@ tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 
-def qdq_weight_asym(weight, num_bits=4, quantile=1.0):
+def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     """Quant and dequant tensor with asym schema.
 
     Args:
         weight:  input weight
         num_bits (int, optional): num_bits. Defaults to 4.
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        return_int (bool, optional): Choose return fp32 or int8/uint8 data.
+                                     Defaults to False.
 
     Returns:
         output: qdq weight
@@ -52,16 +55,25 @@ def qdq_weight_asym(weight, num_bits=4, quantile=1.0):
     scale.unsqueeze_(dim=-1)
     zp.unsqueeze_(dim=-1)
     q = torch.clamp(torch.round(weight / scale) + zp, 0, maxq)
+    if return_int:
+        return q.type(torch.uint8), scale.type(torch.float), zp.type(torch.uint8)
     return scale * (q - zp)
 
 
-def qdq_weight_sym(weight, num_bits=4, quantile=1.0):
+def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_range=False):
     """Quant and dequant tensor with sym schema.
 
     Args:
         weight : input weight
         num_bits (int, optional): num_bits. Defaults to 4.
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        return_int (bool, optional): Choose return fp32 or int8/uint8 data.
+                                     Defaults to False.
+        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+                For example: 4 bit
+                    scale = amax / 8 if full_range else amax / 7
+                    If True, scale = -scale if abs(min)> abs(max) else scale
+                    Defaults to False.
 
     Returns:
         output: qdq weight
@@ -72,36 +84,51 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0):
     if num_bits == 1:
         maxq = torch.tensor(2 ** (num_bits - 1))
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
-
-    wmax = torch.abs(weight).max(1)[0]
+    max_val = torch.max(weight, 1)[0]
+    min_val = torch.min(weight, 1)[0]
+    flip_flag = torch.abs(max_val) > torch.abs(min_val)
+    wmax = torch.max(torch.abs(max_val), torch.abs(min_val))
     wmax = wmax * quantile
     tmp = (wmax == 0)
     wmax[tmp] = +1
-    scale = wmax / ((maxq - minq) / 2)
+    if full_range:
+        # use -8, 8 to make sure amax is not changed after fake quant
+        scale = wmax / (-minq)
+        tmp = scale * flip_flag.int()
+        scale -= 2*tmp # set negetive scale with flip_flag
+    else:
+        scale = wmax / maxq
     scale.unsqueeze_(dim=-1)
     q = torch.clamp(torch.round(weight / scale), minq, maxq)
+    if return_int:
+        return q.type(torch.int8), scale.type(torch.float), None
     return scale * q
 
 
-def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0):
+def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, 
+                     return_int=False, full_range=False):
     """Quant and dequant tensor per channel.
 
     Args:
         weight : input weight
         num_bits (int, optional): num_bits. Defaults to 4.
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        return_int (bool, optional): Choose return fp32 or int8/uint8 data.
+                                     Defaults to False.
+        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
     Returns:
         output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
     if scheme == "sym":
-        return qdq_weight_sym(weight, num_bits, quantile)
+        return qdq_weight_sym(weight, num_bits, quantile, return_int, full_range)
     else:
-        return qdq_weight_asym(weight, num_bits, quantile)
+        return qdq_weight_asym(weight, num_bits, quantile, return_int)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0):
+def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0, 
+                 return_int=False, full_range=False):
     """Quant and dequant tensor with group size.
 
     Args:
@@ -110,32 +137,77 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0)
         group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        return_int (bool, optional): Choose return fp32 or int8/uint8 data.
+                                     Defaults to False.
+        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
     Returns:
         output: qdq weight.
     """
     if group_size == -1 or weight.shape[1] < group_size:
-        return qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile)
+        return qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile, 
+                                return_int=return_int, full_range=full_range)
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        weight = qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile)
-        weight = weight.reshape(orig_shape)
-        return weight
+        if return_int:
+            weight, scale, zp = qdq_weight_actor(
+                weight, num_bits, scheme=scheme, quantile=quantile, 
+                return_int=True, full_range=full_range
+            )
+            weight = weight.reshape(orig_shape)
+            scale = scale.reshape(orig_shape[0], -1)
+            if zp is not None:
+                zp = zp.reshape(orig_shape[0], -1)
+            return weight, scale, zp
+        else:
+            weight = qdq_weight_actor(
+                weight, num_bits, scheme=scheme, quantile=quantile, full_range=full_range
+            )
+            return weight.reshape(orig_shape)
     else:
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        weight1 = qdq_weight_actor(weight1, num_bits, scheme=scheme, quantile=quantile)
+        if return_int:
+            weight1, scale1, zp1 = qdq_weight_actor(
+                weight1, num_bits, scheme=scheme, 
+                quantile=quantile, return_int=True, full_range=full_range
+            )
+            scale1 = scale1.reshape(orig_shape[0], -1)
+            if zp1 is not None:
+                zp1 = zp1.reshape(orig_shape[0], -1)
+        else:
+            weight1 = qdq_weight_actor(
+                weight1, num_bits, scheme=scheme, quantile=quantile, full_range=full_range
+            )
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = qdq_weight_actor(weight2, num_bits, scheme=scheme, quantile=quantile)
-        weight = torch.cat([weight1, weight2], dim=1)
-        return weight
+        if return_int:
+            weight2, scale2, zp2 = qdq_weight_actor(
+                weight2, num_bits, scheme=scheme, 
+                quantile=quantile, return_int=True, full_range=full_range
+            )
+            weight = torch.cat([weight1, weight2], dim=1)
+            scale = torch.cat([scale1, scale2], dim=1)
+            if zp2 is not None:
+                zp = torch.cat([zp1, zp2], dim=1)
+            else:
+                zp = None
+            return weight, scale, zp
+        else:
+            weight2 = qdq_weight_actor(
+                weight2, num_bits, scheme=scheme, 
+                quantile=quantile, full_range=full_range
+            )
+            weight = torch.cat([weight1, weight2], dim=1)
+            return weight
 
 
-def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", quantile=1.0, weight_config={}):
+def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
+                 quantile=1.0, weight_config={}, return_int=False, 
+                 sym_full_range=False, **kwargs):
     """Quant the model with round to nearst method.
 
     Args:
@@ -154,14 +226,20 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", quantile=1.0, 
                             'scheme': 'sym'
                         }
                 }
+        return_int (bool, optional): Choose return fp32 or int32 model.
+                                     Defaults to False.
+        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+                                     Defaults to False.
 
     Returns:
         model: fake quantized torch module
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    assert num_bits > 0, "bit for weight only should large than zero!"
-    ##supported_layers = ['Linear', 'Conv2d']
     supported_layers = ['Linear']
+    if return_int:
+        compression_dtype = kwargs.get("compression_dtype", torch.int32)
+        compression_dim = kwargs.get("compression_dim", 1)
+        scale_dtype = kwargs.get("scale_dtype", torch.float32)
     for n, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
@@ -171,25 +249,50 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", quantile=1.0, 
             scheme = weight_config[n]['scheme']
             quantile = weight_config[n].get('quantile', 1.0)
         logger.debug(f"RTN quantized module:{n, m}")
-        logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
-                                                f"scheme={scheme}, quantile={quantile}")
+        if scheme == 'sym':
+            logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
+                        f"scheme={scheme}, quantile={quantile}, sym_full_range={sym_full_range}")
+        else:
+            logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
+                        f"scheme={scheme}, quantile={quantile}")
         if num_bits <= 0:
             logger.info(f"skip {n}")
             continue
-        if m.__class__.__name__ == "Conv2d":
-            weight = m.weight
-            orig_shape = weight.shape
-            weight = weight.permute(1, 0, 2, 3)
-            weight = weight.reshape(weight.shape[0], -1)
+        weight = m.weight
+        if return_int:
+            from .model_wrapper import WeightOnlyLinear
+            int_weight, scale, zp = quant_weight(
+                weight, num_bits, group_size, scheme, 
+                quantile, return_int=True, full_range=sym_full_range
+            )
+            new_module = WeightOnlyLinear(
+                m.in_features, m.out_features, num_bits, group_size,
+                zp=zp is not None, bias=m.bias is not None, 
+                compression_dtype=compression_dtype, 
+                compression_dim=compression_dim, 
+                scale_dtype=scale_dtype, 
+            )
+            new_module.pack(int_weight, scale, zp, m.bias)
+            if n == '':
+                return new_module
+            else:
+                set_module(model, n, new_module)
         else:
-            weight = m.weight
-        q_weight = quant_weight(weight, num_bits, group_size, scheme, quantile)
-        if m.__class__.__name__ == "Conv2d":
-            q_weight = q_weight.reshape(orig_shape[1], orig_shape[0], orig_shape[2], orig_shape[3])
-            q_weight = q_weight.permute(1, 0, 2, 3)
-        m.weight.data.copy_(q_weight)
+            q_weight = quant_weight(
+                weight, num_bits, group_size, scheme, quantile, 
+                full_range=sym_full_range
+            )
+            m.weight.data.copy_(q_weight)
     return model
 
+def gptq_quantize(model, weight_config = {}, dataloader = None, device = None):
+    """Run weight-only quantization with """
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    from .gptq import GPTQuantizer
+    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
+    quantization_data = gptq_quantizer.execute_quantization()
+    logger.info("GPTQ quantizing done.")
+    return model # 
 
 def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
                             calib_func=None):
@@ -296,7 +399,8 @@ def _update_input_with_scale(args, kwargs, scales):
 
 @torch.no_grad()
 def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
-                 auto_scale=True, mse_range=True, calib_func=None, n_blocks=5):
+                 auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, 
+                 return_int=False, sym_full_range=False):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -323,6 +427,9 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
         calib_func: a custom inference function to replace dataloader and iters.
         n_blocks: split model into block number to avoid OOM.
+        return_int (bool, optional): Choose return fp32 or int32 model.
+                                     Defaults to False.
+        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
     Returns:
         model: fake quantized model
@@ -544,6 +651,53 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
     # apply quantization and clip
     logger.info("Quantizing the AWQ optimized fp32 model")
-    model = rtn_quantize(model, weight_config=weight_config)
+    model = rtn_quantize(
+        model, 
+        num_bits=-1, 
+        weight_config=weight_config, 
+        return_int=return_int,
+        sym_full_range=sym_full_range,
+    )
     logger.info("AWQ quantization is done.")
     return model
+
+def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, example_inputs=None):
+    """Run weight-only quantization with """
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    logger.info("TEQ quantizing start.")
+    if example_inputs is None:
+        if dataloader is None: # pragma: no cover
+            assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
+        try:
+            for idx, (input, label) in enumerate(dataloader):
+                example_inputs = input
+                break
+        except: # pragma: no cover
+            for idx, input in enumerate(dataloader):
+                example_inputs = input
+                break
+
+    from .teq import TEQuantizer
+    teq_quantizer = TEQuantizer(model, weight_config, example_inputs)
+
+    # 1. wrapper tuning scale to model
+    teq_quantizer.add_tuning_scale()
+
+    # 2. tuning
+    # custom train function, there calls calib_func
+    if calib_func: # pragma: no cover
+        calib_func(teq_quantizer.model)
+    else:
+        if dataloader is None: # pragma: no cover
+            assert False, "Please provide dataloader to train."
+        teq_quantizer.train(dataloader)
+
+    # 3. apply scale to model
+    teq_quantizer.transform()
+
+    # 4. get quantized model
+    teq_quantizer.quantize()
+
+    #quantization_data = gptq_quantizer.execute_quantization()
+    logger.info("TEQ quantizing done.")
+    return teq_quantizer.model

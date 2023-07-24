@@ -495,6 +495,7 @@ dnf
 dnn
 dnnl
 DNNL
+DnnlExecutionProvider
 Dockerfile
 doclist
 docstrings
@@ -563,6 +564,7 @@ enum
 env
 environ
 ep
+eps
 eq
 erf
 Erf
@@ -2606,6 +2608,8 @@ LayoutLMv
 layoutlmv
 funsd
 layoutlmft
+layoutlm
+LayoutLM
 nielsr
 HYPJUDY
 amerather
@@ -2684,3 +2688,5 @@ Chatbot
 chatbot
 fba
 hostname
+qweight
+qconfig

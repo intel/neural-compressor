@@ -1175,6 +1175,7 @@ class TensorFlowAdaptor(Adaptor):
             for res in iter_res:
                 node_name, val = list(res.keys())[0], list(res.values())[0]
                 val = Dequantize(val[0], (node_name, val[1], val[2])) if len(val) == 3 else val
+                val = val.astype(np.float32)
                 index_postfix = node_name.find(int8_postfix)
                 if index_postfix != -1:
                     node_name = node_name[:index_postfix]

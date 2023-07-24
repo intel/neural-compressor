@@ -373,7 +373,7 @@ def evaluate(model):
         return latency
 
     from neural_compressor.data import DataLoader
-    dataloader = DataLoader(dataset=Dataset(), framework='tensorflow', batch_size=FLAGS.batch_size)
+    dataloader = DataLoader(framework='tensorflow', dataset=Dataset(), batch_size=FLAGS.batch_size)
     latency = eval_func(dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         print("Batch size = {}".format(FLAGS.batch_size))
