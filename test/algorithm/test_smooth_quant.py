@@ -92,7 +92,7 @@ class TestTuneSqAlpha(unittest.TestCase):
                 )
                 q_model.save(self.ns_workspace + "saved_result")
 
-    def test_sq_tune_alpha_common(self, eval_func, alpha=np.arange(0.1, 0.2, 0.05).tolist()):
+    def _test_sq_tune_alpha_common(self, eval_func, alpha=np.arange(0.1, 0.2, 0.05).tolist()):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
@@ -140,7 +140,7 @@ class TestTuneSqAlpha(unittest.TestCase):
             logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}, alpha: {alpha}")
             logger.info(note)
             partial_fake_eval = partial(fake_eval, eval_result_lst=eval_result_lst)
-            self.test_sq_tune_alpha_common(partial_fake_eval, alpha=alpha)
+            self._test_sq_tune_alpha_common(partial_fake_eval, alpha=alpha)
 
 
 if __name__ == '__main__':
