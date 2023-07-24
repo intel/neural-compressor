@@ -43,7 +43,7 @@ stages:
               utContainerName: "utTest-no-coverage"
 
   - stage: Pruning
-    displayName: Unit Test Pruning/Distillation/Scheduler/nas
+    displayName: Unit Test Pruning/Distillation/Scheduler/NAS
     dependsOn: []
     jobs:
       - job:

@@ -41,7 +41,7 @@ stages:
               utArtifact: "ut-coverage-adaptor"
 
   - stage: Pruning
-    displayName: Unit Test Pruning/Distillation/Scheduler/nas
+    displayName: Unit Test Pruning/Distillation/Scheduler/NAS
     dependsOn: []
     jobs:
       - job:
@@ -107,7 +107,7 @@ stages:
               repo: $(REPO)
 
   - stage: Pruning_base
-    displayName: Unit Test Pruning baseline
+    displayName: Unit Test Pruning/Distillation/Scheduler/NAS baseline
     dependsOn: []
     jobs:
       - job:
