@@ -101,6 +101,7 @@ class TuneStrategyMeta(type):
             new_strategy.objectives.baseline = deepcopy(pre_strategy.baseline)
             new_strategy.capability = pre_strategy.capability
             new_strategy.tuning_space = pre_strategy.tuning_space
+            new_strategy.pre_tuning_algo_scheduler = pre_strategy.pre_tuning_algo_scheduler
             new_strategy.algo_scheduler = pre_strategy.algo_scheduler
             new_strategy.tuning_history = pre_strategy.tuning_history
             new_strategy.diagnosis_done = pre_strategy.diagnosis_done
@@ -204,10 +205,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self._resume = resume
         self._initial_adaptor()
         # A algo scheduler for algos that were applied before tuning, such as sq.
-        # TODO add pre_tuning_algo_scheduler to meta properties
-        self._pre_tuning_algo_scheduler = self._initial_pre_tuning_algo_scheduler()
-        self.set_param_for_pre_tuning_algos(self._pre_tuning_algo_scheduler, self.config, self.model)
-        self.model = self._pre_tuning_algo_scheduler('pre_quantization')
+        self._pre_tuning_algo_scheduler = None
         if self._resume is not None: self.setup_resume(resume)
 
     @property
@@ -307,7 +305,22 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             value: The new value for the algo_scheduler.
         """
         self._algo_scheduler = value
-
+    
+    @property
+    def pre_tuning_algo_scheduler(self):
+        """Gets the pre-tuning algo scheduler."""
+        return self._pre_tuning_algo_scheduler
+    
+    @pre_tuning_algo_scheduler.setter
+    def pre_tuning_algo_scheduler(self, algo_scheduler):
+        """Sets the pre-tuning algo scheduler.
+        
+        Args:
+            algo_scheduler: the pre-tuning algo scheduler
+        """
+        self._pre_tuning_algo_scheduler = algo_scheduler
+   
+    
     def _set_quant_type(self, config):
         if config.approach == 'post_training_weight_only':
             quant_options.quant_type = 3
@@ -323,6 +336,21 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         algo_scheduler.adaptor = self.adaptor
         return algo_scheduler
 
+    def _setup_pre_tuning_algo_scheduler(self):
+        # pre_tuning_algo_scheduler created by pre-strategy
+        if self.pre_tuning_algo_scheduler:
+            logger.debug("[Strategy] Pre-tuning algorithm scheduler was initialized by pre-strategy.")
+            return
+        else:
+            logger.debug("[Strategy] Create pre-tuning algorithm.")
+            # create pre_tuning_algo_scheduler at current strategy
+            self.pre_tuning_algo_scheduler = self._initial_pre_tuning_algo_scheduler()
+            # set param for pre_tuning_algo_scheduler
+            self.set_param_for_pre_tuning_algos(self._pre_tuning_algo_scheduler, self.config, self.model)
+            # execute the pre_tuning_algo_scheduler
+            self.model = self._pre_tuning_algo_scheduler('pre_quantization')
+        
+        
     def _initialize_algo_scheduler(self):
         algo_scheduler = AlgorithmScheduler(self.config.recipes)
         # reuse the calibration iteration
@@ -425,7 +453,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         except (ImportError, AttributeError) as e:
             logger.warning("[Strategy] Please install `mpi4py` correctly if using distributed tuning;" + \
                 " otherwise, ignore this warning.")
-
+        self._setup_pre_tuning_algo_scheduler()
         self._prepare_tuning()
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
@@ -876,7 +904,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == 'pytorch_ipex':
                     smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args['folding']
-            logger.debug(f"Set smooth quant with alpha {smooth_quant_args.get('alpha', 0.5)} as the pre-quantization algo.")
+            logger.debug(f"Set smooth quant with alpha {sq_algo.alpha: .4f} as the pre-tuning algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
 
     def set_param_for_pre_quantization_algos(self, algo_scheduler, tune_cfg, fp32_model) -> None:
@@ -892,24 +920,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         algo_scheduler.q_model = fp32_model
         # As the SQ has been moved to a pre-tuning algo scheduler, keep it for future use.
         return None
-        
-        # recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
-        # algo_scheduler.reset_exec_algorithms()
-        # if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
-        #     # skip assign alpha to sq first.
-        #     # set the alpha to 0.5 by default
-        #     smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
-        #     sq_algo = ALGORITHMS()['smooth_quant']
-        #     sq_algo.alpha = smooth_quant_args.get('alpha', 0.5)
-        #     if 'folding' not in smooth_quant_args:
-        #         smooth_quant_args['folding'] = True if self.framework in ['pytorch', 'pytorch_fx', 'onnxruntime'] \
-        #           else False
-        #         logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
-        #         if self.framework == 'pytorch_ipex':
-        #             smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
-        #     sq_algo.folding = smooth_quant_args['folding']
-        #     logger.debug(f"Set smooth quant with alpha {smooth_quant_args.get('alpha', 0.5)} as the pre-quantization algo.")
-        #     algo_scheduler.append_algorithm('pre_quantization', sq_algo)
 
 
     def set_param_for_post_quantization_algos(self, algo_scheduler, tune_cfg, pre_optimized_model, q_model) -> None:
@@ -1233,6 +1243,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # update the sq-related args from user config
         for k, v in self.config.recipes.get("smooth_quant_args", {}).items():
             if k not in tune_cfg['recipe_cfgs'].get('smooth_quant_args', {}):
+                if k == "alpha":
+                    # for O0, pass the first value to alpha
+                    if isinstance(v, list) and len(v) >= 1:
+                        v = v[0]
                 tune_cfg['recipe_cfgs'].setdefault('smooth_quant_args', {})[k] = v
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():

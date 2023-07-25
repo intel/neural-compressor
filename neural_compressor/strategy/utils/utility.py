@@ -149,6 +149,7 @@ class ClassRegister:
         self.register = {}
 
     def __call__(self, name):
+        """Call the class register."""
         def decorator(func):
             self.register[name] = func
             return func

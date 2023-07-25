@@ -64,12 +64,22 @@ class AutoTuneStrategy(TuneStrategy):
                          q_hooks=q_hooks)
         logger.info(f"*** Initialize auto tuning")
         self.strategies_sequence = ['conservative', 'basic']
+        
+    def _transfer_alpha(self, pre_strategy):
+        sq_alpha = pre_strategy.cur_best_tuning_cfg.get("recipe_cfgs", {}).get(\
+            "smooth_quant_args", {}).get("alpha", None)
+        if sq_alpha and self.conf.quantization.recipes:
+            logger.warning(f"[Strategy] Override the user config's smooth quant alpha into best alpha({\
+                sq_alpha: .4f}) found in pre-strategy.")
+            self.conf.quantization.recipes.setdefault("smooth_quant_args", {})["alpha"] = sq_alpha
 
     def sequential_traverse(self):
         """Try different strategies sequentially."""
         pre_strategy = self
         for strategy_name in self.strategies_sequence:
             logger.info(f"*** Start {strategy_name} tuning.")
+            # transfer the best alpha of sq to the next strategy
+            self._transfer_alpha(pre_strategy)
             strategy = STRATEGIES[strategy_name](
                 model = self.model,
                 conf = self.conf,

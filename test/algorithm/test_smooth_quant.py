@@ -907,14 +907,14 @@ class TestTuneSqAlpha(unittest.TestCase):
                 )
                 q_model.save(self.ns_workspace + "saved_result")
 
-    def _test_sq_tune_alpha_common(self, eval_func, alpha=np.arange(0.1, 0.2, 0.05).tolist()):
+    def _test_sq_tune_alpha_common(self, eval_func, alpha=np.arange(0.1, 0.2, 0.05).tolist(), quant_level=1):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-        tuning_criterion = TuningCriterion(max_trials=5)
+        tuning_criterion = TuningCriterion(max_trials=8)
 
         fp32_model = DemoModel()
         conf = PostTrainingQuantConfig(
-            quant_level=1,
+            quant_level=quant_level,
             tuning_criterion=tuning_criterion,
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
@@ -936,7 +936,8 @@ class TestTuneSqAlpha(unittest.TestCase):
         def fake_eval(model, eval_result_lst):
             acc = eval_result_lst.pop(0)
             return acc
-
+        
+        # test for alpha is a list
         for eval_result_lst, note in [
                 ([1, 0.8, 1.1, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
                 ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.15"),
@@ -946,7 +947,8 @@ class TestTuneSqAlpha(unittest.TestCase):
             logger.info(note)
             partial_fake_eval = partial(fake_eval, eval_result_lst = eval_result_lst )
             self._test_sq_tune_alpha_common(partial_fake_eval)
-
+        
+        # test for various alphas
         for eval_result_lst, alpha, note in [
                 ([1, 0.8, 1.1, 0.7, 1.1], 0.5 ,"Expect tuning ends at 2nd trial with alpha is 0.5 and not tune sq's alpha."),
                 ([1, 0.8, 0.9, 0.7, 1.1], [0.5], "Expect tuning ends at 4th trial with alpha is  0.5 and not tune sq's alpha."),
@@ -956,6 +958,32 @@ class TestTuneSqAlpha(unittest.TestCase):
             logger.info(note)
             partial_fake_eval = partial(fake_eval, eval_result_lst=eval_result_lst)
             self._test_sq_tune_alpha_common(partial_fake_eval, alpha=alpha)
+
+        # test for quant_level is auto or 0
+        for eval_result_lst, alpha, quant_level, note in [
+                (
+                    [1, 0.8, 1.1, 0.7, 1.1], 
+                    np.arange(0.1, 0.2, 0.05).tolist(), 
+                    "auto", 
+                    "Expect tuning ends at 2nd trial with alpha is 0.15."
+                    ),
+                (
+                    [1, 0.8, 0.9, 0.7, 1.1],
+                    np.arange(0.1, 0.2, 0.05).tolist(),
+                    "auto",
+                    "Expect tuning ends at 4th trial with alpha is  0.15 at basic strategy."
+                    ),
+                (
+                    [1, 1.1, 0.8, 0.7, 1.1], 
+                    np.arange(0.1, 0.2, 0.05).tolist(),
+                    0,
+                    "Expect tuning ends at 1th trial with alpha is 0.1")
+                ]:
+            logger.info(f"test_sq_tune_alpha_common with ")
+            logger.info(f"eval_result_lst: {eval_result_lst}, alpha: {alpha}, quant_level: {quant_level}")
+            logger.info(note)
+            partial_fake_eval = partial(fake_eval, eval_result_lst=eval_result_lst)
+            self._test_sq_tune_alpha_common(partial_fake_eval, alpha=alpha, quant_level=quant_level)
 
 
 if __name__ == '__main__':
