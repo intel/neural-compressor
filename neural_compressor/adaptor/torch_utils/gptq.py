@@ -158,6 +158,7 @@ class GPTQuantizer(object):
         self.model = model
 
         # weight config related
+        # import pdb;pdb.set_trace()
         self.weight_config = weight_config
         # default settings, check configs
         self.wbits_default = 4
@@ -167,7 +168,7 @@ class GPTQuantizer(object):
         self.actorder_default = True
         self.perchannel_default = True
         self.mse_default = False
-        self.check_config()
+        self.check_layer_config()
 
         # data & device
         self.dataloader = dataloader
@@ -175,30 +176,32 @@ class GPTQuantizer(object):
         self.device = device
         self.is_ready = False
 
-        self.use_cache = model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(model) # get the transformer block list above
+        self.use_cache = self.model.config.use_cache
+        self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
         # log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
         # initialize buffers which are essential for gptq computation. 
+        # import pdb;pdb.set_trace()
         try:
             self.dtype = next(iter(self.model.parameters())).dtype
             self.inp = torch.zeros(
-                (self.nsamples, model.seqlen, model.config.hidden_size), 
+                (self.nsamples, self.model.seqlen, self.model.config.hidden_size), 
                 dtype=self.dtype, 
                 device=self.device
             )
             self.cache = {'i': 0}
-            # for opt, bloom, llama, etc, their inputs are different thus their cache structures vary
-            # initialization
-            # for special_input_terms in arch_inputs[self.args.arch]:
-            #     self.cache[special_input_terms] = None
             self.out = torch.zeros_like(self.inp)
             self.is_ready = True
         except:
+            logger.warning("GPTQ Quantizer initialization failed!")
             pass
+        
+    def get_full_layer_name(self, sub_layer_name, block_idx):
+        transformer_name = self.gptq_related_blocks["transformers_name"]
+        return ".".join([transformer_name, str(block_idx), sub_layer_name])
 
-    def check_config(self):
+    def check_layer_config(self):
         """Copy arguments from weight_config to build-in attributes."""
         for layer_name, config in self.weight_config.items():
             self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
@@ -208,7 +211,11 @@ class GPTQuantizer(object):
             self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
             self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
             self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
-    
+
+    def get_layer_config(self, layer_name):
+        """Obtain config for one layer, since GPTQ supports layer-wise config."""
+        return self.weight_config.get(layer_name, None)
+
     @torch.no_grad()
     def pre_quantization(self):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
@@ -228,14 +235,13 @@ class GPTQuantizer(object):
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
             embedding_layer = embedding_layer.to(self.device)
 
-        # obtain the first layer inputs and registered to inputs
+        # Step2: modify the first transformer block's forward function to obtain inputs for calibration
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
-
-        # Step 2: use partial to modify original forward function
         forward_cache = self.gptq_related_blocks['transformers'][0].forward
         self.gptq_related_blocks['transformers'][0].forward = \
             partial(forward, self.gptq_related_blocks['transformers'][0])
 
+        # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             try:
@@ -243,81 +249,91 @@ class GPTQuantizer(object):
             except ValueError:
                 pass
         logger.info("Done.")
-        # restore original forward function
-        self.gptq_related_blocks['transformers'][0].forward = forward_cache
 
+        # Step 4: restore original forward function, relocate layers back to cpu.
+        self.gptq_related_blocks['transformers'][0].forward = forward_cache
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
-        # after store inputs, locate embedding layers and transformer[0] back to cpu
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
             embedding_layer.to(self.device)
         torch.cuda.empty_cache()
+        # end
         logger.info('GPTQ quantization prepared.')
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
+        # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
         self.pre_quantization()
 
+        # Step2: run gptq quantization in a transformer block-wise manner.
         quantizers = {}
-
         tblock_length = len(self.gptq_related_blocks['transformers'])
-        # Triggle GPTQ algorithm block by block.
+        # import pdb;pdb.set_trace()
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
             transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
-            # trace all layers which can be quantized (Linear, Conv2d, etc.)
+            # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
+            sub_layers_to_quant = {}
+            for layer_name, layer_obj in sub_layers.items():
+                # filter sub_layers with included layer_names in self.weight_config
+                full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                if self.weight_config.get(full_layer_name, None) == None:
+                    logger.warning(f"{full_layer_name} can be quantized but is excluded from your quantization configs.")
+                    continue
+                else:
+                    sub_layers_to_quant[layer_name] = layer_obj
+            del sub_layers
+            sub_layers = sub_layers_to_quant
+            # Step 2.2: Initailize GPTQ quantizers for collected layers.
             gptq_for_this_block = {}
+            # initialize gptq quantizer for every layer in a transformer block
             for layer_name in sub_layers:
+                weight_config_this_layer = self.weight_config.get(self.get_full_layer_name(layer_name, block_idx), None)
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 #gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(
-                    self.wbits,
-                    perchannel=self.perchannel,
-                    sym=self.sym,
-                    mse=self.mse
+                    weight_config_this_layer['wbits'],
+                    weight_config_this_layer['perchannel'],
+                    weight_config_this_layer['sym'],
+                    weight_config_this_layer['mse'],
                 )
-
+            # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
             def add_batch(_name):
                 def tmp(_, inp, out):
                     gptq_for_this_block[_name].add_batch(inp[0].data, out.data)
                 return tmp
-            
-            # register handles which add inputs and outputs to gptq object
-            handles = []
-            
+            handles = [] # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
-                # during the forward process, the batch data has been registered into gptq object.
-                # use dict passing
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
-            
+            # Step 2.4: everything is prepared, so start quantization!
             for layer_name in sub_layers:
+                weight_config_this_layer = self.weight_config.get(self.get_full_layer_name(layer_name, block_idx), None)
                 logger.info(f"Quantizing layer {layer_name}")
                 gptq_for_this_block[layer_name].fasterquant(
-                    percdamp=self.percdamp, 
-                    groupsize=self.group_size, 
-                    actorder=self.actorder
+                    percdamp = weight_config_this_layer['percdamp'], 
+                    groupsize = weight_config_this_layer['group_size'], 
+                    actorder = weight_config_this_layer['actorder'],
                 )
                 quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
-
+            
+            # Step 2.5: replace output data with quantized weights
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
-                # self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
             self.cache['i'] = idx
             self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
-            # iteratively replace the input with output (next block)
+            # iteratively replace the input with output, thus layerwise quantization can continue.
             self.inp, self.out = self.out, self.inp
             print('+------------------+--------------+------------+-----------+-------+')
             print('\n')

@@ -4560,7 +4560,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
-        import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
         logger.debug("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
         # convert tune_cfg to gptq_quantize's weight config
@@ -4590,7 +4590,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 continue # no need to be quantized
             else:
-                weight_config['op_name'] = {
+                weight_config[op_name] = {
                     'wbits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'sym': config['weight']['scheme'] == 'sym',

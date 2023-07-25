@@ -290,9 +290,9 @@ def gptq_quantize(model, weight_config = {}, dataloader = None, device = None):
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
     gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
-    q_model, quantization_data = gptq_quantizer.execute_quantization() # TODO: place quantization data to a proper place
+    fp32_modified_model, quantization_data = gptq_quantizer.execute_quantization() # TODO: place quantization data to a proper place
     logger.info("GPTQ quantizing done.")
-    return q_model # 
+    return fp32_modified_model # 
 
 def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
                             calib_func=None):
