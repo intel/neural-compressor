@@ -213,7 +213,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
         if self.backend == 'DnnlExecutionProvider' and \
-            any([i.domain in ['', 'ai.onnx'] and i.version < 15 for i in model.model.opset_import]):
+            any([i.domain in ['', 'ai.onnx'] and \
+            i.version < 15 for i in model.model.opset_import]): # pragma: no cover
             from onnx import version_converter
             from neural_compressor.model.onnx_model import ONNXModel
             try:
