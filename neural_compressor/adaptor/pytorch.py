@@ -1311,7 +1311,6 @@ class TemplateAdaptor(Adaptor):
                                        example_inputs=self.example_inputs, q_func=self.q_func)
         kwargs = {}  ## different backends may have different default values
         self.sq.record_max_info = record_max_info # whether record the max info of input and weight.
-        self.sq.record_max_info = True
         if op_types != None:
             kwargs["op_types"] = op_types
         if percentile != None:
@@ -1427,10 +1426,10 @@ class TemplateAdaptor(Adaptor):
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model._model, op_name)
-                new_module = SQLinearWrapper(module, scale, input_minmax, alpha)
-                set_module(q_model._model, op_name, new_module)
-                logger.debug(f"Current smoothquant scale of {op_name} is {scale}, alpha is {alpha}")
+                module = fetch_module(q_model, op_name)
+                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                set_module(q_model, op_name, new_module)
+                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         smoothquant_op_info = {'sq_linear': {}, 'qdq_linear': []}
         stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
@@ -2594,7 +2593,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         else:
             try:
                 q_model = copy.deepcopy(model)
-                origin_stat = q_model.state_dict()
             except Exception as e:  # pragma: no cover
                 logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                     repr(e)))
@@ -2622,7 +2620,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         assert not self.version.release < Version("1.10.0").release, \
                 "INC support IPEX version >= 1.10.0"
 
-        qscheme = self._cfg_to_qconfig(tune_cfg)
+        qscheme = self._cfg_to_qconfig(tune_cfg)  # Update json file in self.ipex_config_path
         iterations = tune_cfg.get('calib_iteration', 1)
         model._model.eval()
         inplace = True if self.performance_only else False
@@ -2668,7 +2666,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Recover model parameter when smoothquant folding = True, due to IPEX bug #1
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and recipe_cfgs['smooth_quant_args']['folding']:
+          and recipe_cfgs['smooth_quant_args']['folding'] and not inplace:
             self._apply_pre_optimization(model, tune_cfg, recover=True)
 
         with open(self.ipex_config_path, 'r') as f:
@@ -3150,7 +3148,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 module = fetch_module(q_model._model, op_name)
-                new_module = SQLinearWrapper(module, scale, input_minmax, alpha)
+                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
                 weight_scale = new_module._get_weight_scale()
                 smoothquant_scale_info[op_name] = {
                     'alpha': new_module.alpha,
@@ -3160,7 +3158,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     'input_dtype': new_module.dtype,
                     'weight_scale_after_mul': weight_scale,
                 }
-                logger.debug(f"Current smoothquant scale of {op_name} is {scale}, alpha is {alpha}")
+                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
@@ -3172,12 +3170,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             else:
                 model._model = ipex.quantization.prepare(model._model, static_qconfig,
                                     example_inputs=self.example_inputs, inplace=inplace)
-            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # TODO: update_sq_scale is used to update observer, should fuse in _cfg_to_qconfig
         from .torch_utils.util import update_sq_scale
         self._cfg_to_qconfig(tune_cfg)
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+        model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # real calibration for other operators
         try:
@@ -3193,11 +3191,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             logger.warning("The calibration failed when calibrating with ipex, "+\
                            "using scale info from SmoothQuant for Linear and " +\
                            "one iter calibration for other ops.")
+            # update ipex_config.json with smoothquant_scale_info
+            model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+            update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
-        # update ipex_config.json with smoothquant_scale_info
-        model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
-        model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
         with open(self.ipex_config_path, 'r') as f:

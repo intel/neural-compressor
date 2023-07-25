@@ -79,6 +79,7 @@ class SmoothQuant(Algorithm):
         if self.scales_per_op != None:
             kwargs['scales_per_op'] = self.scales_per_op
         kwargs['folding'] = self.folding
+        kwargs['record_max_info'] = True
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,

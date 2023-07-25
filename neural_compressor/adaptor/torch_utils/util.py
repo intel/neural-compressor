@@ -411,18 +411,63 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
                         v1['weight_tensor_infos'][0]['smooth_quant_scaling_factor'] = weight_scale_for_mul
                         v1['weight_tensor_infos'][0]['scale'] = weight_scale_after_mul
                         # # observers were overridden by the fallback step, setting it back.
-                        v1['activation_observer'] = {'name': 'SmoothQuantActivationObserver', 
-                                        'smooth_quant_enabled': False, 'dtype': 'torch.quint8', 
-                                        'qscheme': 'torch.per_tensor_affine', 'reduce_range': False,
-                                        'quant_min': 0, 'quant_max': 255, 
-                                        'alpha': smoothquant_scale_info[op_name]['alpha']
-                                        }
-                        v1['weight_observer'] = {'name': 'SmoothQuantWeightObserver', 
-                                        'smooth_quant_enabled': False, 'dtype': 'torch.qint8', 
-                                        'qscheme': 'torch.per_channel_symmetric', 'reduce_range': False, 
-                                        'quant_min': -128, 'quant_max': 127, 
-                                        'alpha': smoothquant_scale_info[op_name]['alpha'] #only update alpha
-                                        }
+                        v1['activation_observer'] = {
+                            "name": "SmoothQuantActivationObserver",
+                            "smooth_quant_enabled": True,
+                            "dtype": "torch.quint8",
+                            "qscheme": "torch.per_tensor_affine",
+                            "reduce_range": False,
+                            "quant_min": 0,
+                            "quant_max": 255,
+                            "alpha": smoothquant_scale_info[op_name]['alpha'],
+                            "act_observer": {
+                                "name": "HistogramObserver",
+                                "bins": 2048,
+                                "upsample_rate": 128,
+                                "dtype": "torch.quint8",
+                                "qscheme": "torch.per_tensor_affine",
+                                "reduce_range": False,
+                                "quant_min": 0,
+                                "quant_max": 255
+                            },
+                            "act_ic_observer": {
+                                "name": "PerChannelMinMaxObserver",
+                                "ch_axis": -1,
+                                "dtype": "torch.quint8",
+                                "qscheme": "torch.per_channel_affine",
+                                "reduce_range": False,
+                                "quant_min": 0,
+                                "quant_max": 255
+                            }
+                        }
+                        v1['weight_observer'] = {
+                            "name": "SmoothQuantWeightObserver",
+                            "smooth_quant_enabled": True,
+                            "dtype": "torch.qint8",
+                            "qscheme": "torch.per_channel_symmetric",
+                            "reduce_range": False,
+                            "quant_min": -128,
+                            "quant_max": 127,
+                            "alpha": smoothquant_scale_info[op_name]['alpha'],
+                            "wei_observer": {
+                                "name": "PerChannelMinMaxObserver",
+                                "ch_axis": 0,
+                                "dtype": "torch.qint8",
+                                "qscheme": "torch.per_channel_symmetric",
+                                "reduce_range": False,
+                                "quant_min": -128,
+                                "quant_max": 127
+                            },
+                            "wei_ic_observer": {
+                                "name": "PerChannelMinMaxObserver",
+                                "ch_axis": 1,
+                                "dtype": "torch.qint8",
+                                "qscheme": "torch.per_channel_affine",
+                                "reduce_range": False,
+                                "quant_min": -128,
+                                "quant_max": 127
+                            }
+                        }
         f.close()
     # overwrite ipex_config_path
     with open(ipex_config_path, 'w') as f1:

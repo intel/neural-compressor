@@ -75,6 +75,7 @@ class SQLinearWrapper(torch.nn.Module):
         # calculate and only save scale, zero_point to avoid memory usage
         self.scale, self.zero_point = self._calculate_qparams(input_scale, input_minmax, dtype)
         self.add_module('sq_linear', module)
+        self._update_sq_linear()
         self.ipex = False  # a flag used for ipex inference
     
     @property
@@ -111,6 +112,12 @@ class SQLinearWrapper(torch.nn.Module):
         obs(self.sq_linear.weight)
         scale, _ = obs.calculate_qparams()
         return scale
+
+    def _update_sq_linear(self):
+        # remove mul and reset sq_linear for ipex inference
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.sq_linear.weight /= scale
 
     def _recover_sq_linear(self):
         # remove mul and reset sq_linear for ipex inference

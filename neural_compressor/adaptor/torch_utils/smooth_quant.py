@@ -412,8 +412,7 @@ class TorchSmoothQuant:
         """
         layer = get_module(self.model, layer_name)
         if layer.__class__.__name__ == "SQLinearWrapper":
-            from .model_wrapper import SQLinearWrapper
-            layer = layer.sq_linear
+            return scale
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
         return scale
