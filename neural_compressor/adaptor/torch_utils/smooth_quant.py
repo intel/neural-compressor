@@ -491,7 +491,7 @@ class TorchSmoothQuant:
                 if hasattr(layer, "bias") and layer.bias != None:
                     layer.bias *= scale
 
-    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5):
+    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
         """
         adjust the weights and biases
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
@@ -521,7 +521,7 @@ class TorchSmoothQuant:
             weights = torch.cat(weights, dim=0)
             weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
 
-            if self.record_max_info:
+            if self.record_max_info and not tuning:
                 # the input of layers with same absorb layer is the same.
                 input_minmax = [self.input_mins[layers[0]], self.input_maxes[layers[0]]]
                 self.max_value_info[key] = {}
@@ -624,7 +624,7 @@ class TorchSmoothQuant:
                 loss_alpha = {}
                 for alpha in alpha_space:
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
-                                                                                              input_max_op, alpha)
+                                                                                              input_max_op, alpha, tuning=True)
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
                     input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
                                                                 self.absorb_scales_info[absorb_key])

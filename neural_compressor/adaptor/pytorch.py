@@ -1345,6 +1345,8 @@ class TemplateAdaptor(Adaptor):
             tsq = TorchSmoothQuant(q_model, None)
             alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for op_name, info in sq_max_info.items():
+                if alpha == 'auto':
+                    alpha = info['alpha']
                 absorb_layer = op_name
                 absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
@@ -1359,39 +1361,6 @@ class TemplateAdaptor(Adaptor):
                     for layer in absorbed_layer:
                         tsq._scale_layer_weight(layer, scale)
                     tsq._absorb_scales(absorb_layer, 1.0/scale)
-                logger.debug(f"Current smoothquant scale of {op_name} is {scale}, alpha is {alpha}")
-
-    def _apply_post_optimization(self, model, tune_cfg):
-        """recover model parameters based on tune_cfg.
-
-        Args:
-            model (torch.nn.Module): smoothquant optimized model.
-            tune_cfg (dict): optimization config.
-
-        Returns:
-            model: pre-optimized model.
-        """
-        q_model = model._model
-        sq_max_info = model.sq_max_info
-        if sq_max_info:
-            from .torch_utils.smooth_quant import TorchSmoothQuant
-            tsq = TorchSmoothQuant(q_model, None)
-            assert not q_model._smoothquant_optimized, \
-                    "The model is already optimized by smoothquant, cannot apply new alpha."
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
-                absorb_layer = op_name
-                absorbed_layer = info['absorbed_layer']
-                input_minmax = info['input_minmax']
-                weight_max = info['weight_max']
-                abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
-                input_power = torch.pow(abs_input_max, alpha)
-                weight_power = torch.pow(weight_max, 1 - alpha)
-                scale = torch.clip(input_power / weight_power, min=1e-5)
-                with torch.no_grad():
-                    for layer in absorbed_layer:
-                        tsq._scale_layer_weight(layer, 1.0/scale)
-                    tsq._absorb_scales(absorb_layer, scale)
                 logger.debug(f"Current smoothquant scale of {op_name} is {scale}, alpha is {alpha}")
 
     def qdq_quantize(self, model, tune_cfg):
@@ -1420,6 +1389,8 @@ class TemplateAdaptor(Adaptor):
                     "The model is already optimized by smoothquant, cannot apply new alpha."
             alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for op_name, info in sq_max_info.items():
+                if alpha == 'auto':
+                    alpha = info['alpha']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
@@ -3141,6 +3112,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             from .torch_utils.util import fetch_module
             alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for op_name, info in sq_max_info.items():
+                if alpha == 'auto':
+                    alpha = info['alpha']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
