@@ -2690,3 +2690,11 @@ fba
 hostname
 qweight
 qconfig
+McKinstry
+Migacz
+MinMax
+Szymon
+Vanhoucke
+ONNXCommunityMeetup
+luYBWA
+pQ
