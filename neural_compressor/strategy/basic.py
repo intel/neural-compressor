@@ -26,7 +26,6 @@ from .utils.tuning_sampler import (
     FallbackTuningSampler,
     BlockFallbackTuningSampler,
     LowerBitsSampler,
-    tuning_sampler_dict,
     )
 
 from .utils.tuning_structs import OpTuningConfig
@@ -368,30 +367,6 @@ class BasicTuneStrategy(TuneStrategy):
             logger.warning(f"[Strategy] All tuning options for the current strategy have been tried.\
                 If the quantized model does not seem to work well, it might be worth considering other strategies.")
 
-    def _should_tuning_sq_alpha(self, recipes):
-        # Only tune sq'alpha only if there are more than one alpha
-        user_cfg_alpha = recipes.get("smooth_quant_args", {}).get("alpha", []) if recipes else False
-        return user_cfg_alpha and isinstance(user_cfg_alpha, list) and len(user_cfg_alpha) > 1
-    
-    def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
-        """Tuning smooth quant's alpha.
-
-        Args:
-            tuning_space: tuning space
-            tuning_cfg: the initial tuning config
-            recipes: recipes specified by user
-
-        Yields:
-            tuning config
-        """
-        sq_alpha_list = recipes.get("smooth_quant_args", {}).get("alpha", [])
-        assert len(sq_alpha_list) > 0, "Only tune the smooth quant's alpha when user provide the alpha list,\
-            but got alpha_list: {alpha_list}"
-        logger.info("[STRATEGY] Start tuning smooth quant'alpha.")
-        sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
-        for tune_cfg in sq_sampler:
-            yield tune_cfg
-    
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name

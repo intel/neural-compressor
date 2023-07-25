@@ -99,6 +99,13 @@ class AutoTuneStrategy(TuneStrategy):
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         _, _, op_tuning_cfg = self.initial_tuning_cfg()
         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size_lst[0]
+        if not self.cur_best_tuning_cfg:
+            self.cur_best_tuning_cfg = deepcopy(op_tuning_cfg)
+        # try to tune sq alpha
+        if self._should_tuning_sq_alpha(self.config.recipes):
+            for tune_cfg in self.tuning_sq_alpha(tuning_space, deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
+                yield tune_cfg
+
         logger.info(f"Quantize the model with default config.")
         yield op_tuning_cfg
 

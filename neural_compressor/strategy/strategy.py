@@ -54,7 +54,7 @@ from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import FALLBACK_RECIPES_SET
 from .utils.utility import build_slave_faker_model, quant_options
-
+from .utils.tuning_sampler import  tuning_sampler_dict
 
 
 STRATEGIES = {}
@@ -1071,6 +1071,31 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             logger.debug("\tNone")
         logger.debug(f"\tDifference(s) in total: {difference_count}")
         return
+
+    def _should_tuning_sq_alpha(self, recipes):
+        # Only tune sq'alpha only if there are more than one alpha
+        user_cfg_alpha = recipes.get("smooth_quant_args", {}).get("alpha", []) if recipes else False
+        return user_cfg_alpha and isinstance(user_cfg_alpha, list) and len(user_cfg_alpha) > 1
+
+    def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
+        """Tuning smooth quant's alpha.
+
+        Args:
+            tuning_space: tuning space
+            tuning_cfg: the initial tuning config
+            recipes: recipes specified by user
+
+        Yields:
+            tuning config
+        """
+        sq_alpha_list = recipes.get("smooth_quant_args", {}).get("alpha", [])
+        assert len(sq_alpha_list) > 0, "Only tune the smooth quant's alpha when user provide the alpha list,\
+            but got alpha_list: {alpha_list}"
+        logger.info("[STRATEGY] Start tuning smooth quant'alpha.")
+        sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
+        for tune_cfg in sq_sampler:
+            yield tune_cfg
+
 
     def initial_tuning_cfg(self):
         """Init the tuning config.
