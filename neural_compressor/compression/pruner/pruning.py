@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.compression.pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
+from neural_compressor.compression.pruner.utils import parse_to_prune, get_sparsity_ratio
 from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import logger, torch, collect_layer_inputs, get_layers
 from typing import Optional
@@ -60,38 +60,111 @@ class BasePruning:
         pruner_info: A config dict object that contains pruners' information.
     """
     
-    def __init__(self, config, model: torch.nn.Module):
+    def __init__(self, config, model):
         """Initialize."""
         self._model = model
         self.pruners_info = config
-        self.pruners = self._generate_pruners(model)
+        self.pruners = self._generate_pruners()
 
-    def _generate_pruners(self, model: torch.nn.Module):
-        """Generate pruners.
+    # def _generate_pruners(self, model):
+    #     """Generate pruners.
 
-        :param config: WeightPruningConfig
-        :param model: The torch module to be pruned
-        :return: A list of pruner
-        """
-        assert isinstance(model, torch.nn.Module)
+    #     :param config: WeightPruningConfig
+    #     :param model: The torch module to be pruned
+    #     :return: A list of pruner
+    #     """
+    #     # assert isinstance(model, torch.nn.Module)
+    #     pruners = []
+    #     for info in self.pruners_info:
+    #         modules = parse_to_prune(info, model)
+    #         if modules == {}:
+    #             logger.warning("one pruner hooks no layers, please have a check")
+    #         pruners.append(get_pruner(info, modules))
+    #         info['modules'] = [key for key in modules.keys()]
+    #         info['len_of_modules'] = len(info['modules'])
+    #         logger.info(info)
+    #     return pruners
+    
+    def _generate_pruners(self):
+        """Obtain Pruner objects."""
         pruners = []
+        # model auto slim related
+        # assert isinstance(self._model, torch.nn.Module) # mha only for torch 
+        from .model_slim.pattern_analyzer import SelfMHASearcher
         for info in self.pruners_info:
-            modules = parse_to_prune(info, model)
-            if modules == {}:
-                logger.warning("one pruner hooks no layers, please have a check")
-            pruners.append(get_pruner(info, modules))
-            info['modules'] = [key for key in modules.keys()]
-            info['len_of_modules'] = len(info['modules'])
-            logger.info(info)
+            if 'mha' in info['pattern']:
+                # head pruning
+                pa_obj = SelfMHASearcher(self._model)
+                modules, _ = pa_obj.search(split_qkv_ffn = False)
+                modules = pa_obj.obtain_mha_module(modules)
+                modules = pa_obj.from_layer_name_to_object(modules)
+                if len(modules) == 0:
+                    logger.warning("one pruner hooks no mha modules, please have a check")
+                pruners.append(get_pruner(info, modules))
+            else:
+                # original pruning types, e.g NxM or N:M
+                modules = parse_to_prune(info, self._model)
+                if modules == {}:
+                    logger.warning("one pruner hooks no layers, please have a check")
+
+                pruners.append(get_pruner(info, modules))
+                info['modules'] = [key for key in modules.keys()]
+                info['len_of_modules'] = len(info['modules'])
+                logger.info(info)
         return pruners
+
+    def on_train_begin(self, dataloader=None):
+        """Implement at the beginning of training process.
+
+        Before training, ensure that pruners are generated.
+        """
+        for pruner in self.pruners:
+            pruner.on_train_begin(dataloader)
+        
+    def on_step_begin(self, local_step=0):
+        """Implement at the beginning of every step."""
+        for pruner in self.pruners:
+            pruner.on_step_begin(local_step)
+            
+    def on_step_end(self):
+        """Implement at the end of each step."""
+        for pruner in self.pruners:
+            pruner.on_step_end()
+
+    def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
+        for pruner in self.pruners:
+            pruner.on_before_optimizer_step()
+        
+    def on_after_optimizer_step(self):
+        """Implement after optimizer.step()."""
+        for pruner in self.pruners:
+            pruner.on_after_optimizer_step()
+
+    def on_epoch_begin(self, epoch):
+        """Implement at the beginning of every epoch."""
+        for pruner in self.pruners:
+            pruner.on_epoch_begin(epoch)
+    
+    def on_epoch_end(self):
+        """Implement the end of every epoch."""
+        for pruner in self.pruners:
+            pruner.on_epoch_end()
+    
+    def on_train_end(self):
+        """Implement the end of training phase."""
+        for pruner in self.pruners:
+            pruner.on_train_end()
+        get_sparsity_ratio(self.pruners, self._model)
 
 
 @register_pruning("basic_pruning")
 class BasicPruning(BasePruning):
-    def __init__(self, config, model: torch.nn.Module, opt: torch.optim.Optimizer):
+    def __init__(self, config, model, opt):
         """Initialize."""
         super().__init__(config, model)
-        self._prepare_pruners(model, opt)
+        if opt is not None:
+            self._prepare_pruners(model, opt)
     
     def _register_on_step_begin(self, model: torch.nn.Module):
         """Mount on_step_begin to the model.
@@ -192,7 +265,7 @@ class BasicPruning(BasePruning):
         else:
             torch.orig_save(obj, f)
 
-    def _prepare_pruners(self, model: torch.nn.Module, opt: torch.optim.Optimizer):
+    def _prepare_pruners(self, model, opt):
         """Wrapper the model and optimizer to support all the pruning functionality.
 
         :param config: WeightPruningConfig
@@ -231,42 +304,44 @@ class BasicPruning(BasePruning):
 
 @register_pruning("sparse_gpt_pruning")
 class SparseGPTPruning(BasePruning):
-    def __init__(self, config, model: torch.nn.Module,
-                 dataloader: torch.utils.data.DataLoader,
-                 framework ='pytorch', device: str =None):
+    """SparseGPT Pruning
+    The SparseGPT pruning_class is derived from BasePruning.
+        
+    Args:
+        config: A config dict object that contains the pruner information.
+        model: The model that need to be pruned.
+        dataloader: Processed datasets, which is necessary for sparseGPT pruning.
+        device: avilable device of pruning.
+    """
+    
+    def __init__(self, config, model, dataloader,
+                 framework='pytorch', device: str =None):
         """Initialize."""
         super().__init__(config, model)
-        assert 'cpu' in device or 'cuda' in device, f"Only cpu and cuda are supported."
-        self.dev = torch.device(device)
+        if device is None:
+            self.dev = model.device
+        else:
+            assert 'cpu' in device or 'cuda' in device, f"Only cpu and cuda are supported."
+            self.dev = torch.device(device)
         self._layers = []
-        self.collect_inputs = []
         self._dataloader = dataloader
-        self._prepare_pruners(model, dataloader)
+        if dataloader is not None:
+            self._prepare_pruners()
         
-    def _prepare_pruners(self, model: torch.nn.Module,
-                        dataloader: torch.utils.data.DataLoader):
-        """Wrapper the model and optimizer to support all the pruning functionality.
-
-        :param config: WeightPruningConfig
-        :param model: The user's model, a torch.nn.Module object
-        :param opt: The user's optimizer, a torch.optim object
-        :return: The modified model and optimizer
+    def _prepare_pruners(self):
+        """One-shot post-training pruning.
         """
-        self.dev = torch.device(type='cpu')
         self.model_dev = self._model.device
         self._layers = get_layers(self._model)
-        if torch.cuda.is_available():
-            
-            self.dev = torch.device(type='cuda')
-        self._do_pruning(self._layers)
+        self._do_pruning()
         self._model = self._model.to(self.model_dev)
         # TODO add get_sparsity_ratio() for sparseGPT
 
     @torch.no_grad()
-    def _do_pruning(self, layers):
+    def _do_pruning(self):
+        layers = self._layers
         self._model = self._model.cpu()
-        
-        inputs, inp_dict = collect_layer_inputs(model=self._model, layers=layers, layer_idx=0, \
+        inputs, inp_dict = collect_layer_inputs(model=self._model, layers=layers, layer_idx=0,
                                                 layer_inputs=self._dataloader, device=self.dev)
         if 'cuda' in self.dev.type:
             torch.cuda.empty_cache()
@@ -292,25 +367,28 @@ class SparseGPTPruning(BasePruning):
             layers[i] = layer.cpu()
             if 'cuda' in self.dev.type:
                 torch.cuda.empty_cache()
+                
+    def on_train_begin(self, dataloader):
+        assert dataloader is not None, f"The dataloader is a mandatory parameter of sparseGPT."
+        self._dataloader = dataloader
+        self._prepare_pruners()
+        
     
     
 @register_pruning("retrain_free_pruning")
 class RetrainFreePruning(BasePruning):
-    def __init__(self, config, model: torch.nn.Module,
-                 dataloader: torch.utils.data.DataLoader,
-                 loss_func = None,
-                 framework ='pytorch'):
+    def __init__(self, config, model, dataloader=None, loss_func=None, framework='pytorch'):
         """Initialize."""
         super().__init__(config, model)
-        # self.dev = model.device
         self._dataloader = dataloader
         self._loss_func = loss_func
-        self._prepare_pruners()
+        if dataloader is not None:
+            self._prepare_pruners()
         
-    def _register_on_step_begin(self, model: torch.nn.Module, pruners):
+    def _register_on_step_begin(self, model, pruners):
         """Mount on_step_begin to the model.
 
-        :param model:The torch module to be pruned
+        :param model:The module to be pruned
         :return: hook handle
         """
 
@@ -320,49 +398,30 @@ class RetrainFreePruning(BasePruning):
 
         hook_handle = model.register_forward_pre_hook(hook)
         return hook_handle
-    
-    # def _register_on_step_end(self, model: torch.nn.Module, pruners):
-    #     """Mount on_step_begin to the model.
-
-    #     :param model:The torch module to be pruned
-    #     :return: hook handle
-    #     """
-    #     def hook(_, grad_in, grad_out):
-    #         for pruner in pruners:
-    #             pruner.on_step_end()
-    #     hook_handle = model.register_backward_hook(hook)
-    #     return hook_handle
         
     def _prepare_pruners(self):
-        """Wrapper the model and optimizer to support all the pruning functionality.
-
-        :param config: WeightPruningConfig
-        :param model: The user's model, a torch.nn.Module object
-        :param opt: The user's optimizer, a torch.optim object
-        :return: The modified model and optimizer
-        """
-        hook_handle_before = self._register_on_step_begin(self._model, self.pruners)
+        # hook_handle_before = self._register_on_step_begin(self._model, self.pruners)
         self._do_pruning()
-        hook_handle_before.remove()
+        # hook_handle_before.remove()
         get_sparsity_ratio(self.pruners, self._model)
 
     def _do_pruning(self):
-        progress_bar = tqdm(range(len(self._dataloader)))
+        progress_bar = tqdm(range(len(self._dataloader.dataset)))
         if self._loss_func is not None:
             for inputs, target in self._dataloader:
+                self.on_step_begin()
                 outputs = self._model(inputs)
                 loss = self._loss_func(outputs, target)
                 loss.backward()
-                for pruner in self.pruners:
-                    pruner.on_step_end()
+                self.on_step_end()
                 progress_bar.update(1)
         else:
             for batch in self._dataloader:
+                self.on_step_begin()
                 outputs = self._model(return_dict=True, **batch)
                 loss = outputs.loss
                 loss.backward()
-                for pruner in self.pruners:
-                    pruner.on_step_end()
+                self.on_step_end()
                 progress_bar.update(1)
         
-        
+

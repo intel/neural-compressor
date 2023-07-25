@@ -58,11 +58,22 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.compression.pruner import prepare_pruning
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
-        # dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        from torch.utils.data import DataLoader
-        dummy_dataloader = DataLoader(dummy_dataset)
-        pruning = prepare_pruning(config, self.model, dummy_dataloader, loss_func=criterion)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+        
+        pruning = prepare_pruning(config, self.model)
+        for epoch in range(2):
+            self.model.train()
+            local_step = 0
+            for image, target in dummy_dataloader:
+                pruning.on_step_begin(local_step)
+                output = self.model(image)
+                loss = criterion(output, target)
+                loss.backward()
+                pruning.on_step_end()
+                local_step += 1
+        pruning.on_train_end()
 
+        pruning = prepare_pruning(config, self.model, dataloader=dummy_dataloader, loss_func=criterion)
 
 if __name__ == "__main__":
     unittest.main()

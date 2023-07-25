@@ -39,14 +39,15 @@ class TestPruning(unittest.TestCase):
             end_step=10
         )
 
-        # criterion = nn.CrossEntropyLoss()
         from neural_compressor.compression.pruner import prepare_pruning
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 512), low=0., high=1., label=True, dtype='int64')
-        # dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        from torch.utils.data import DataLoader
-        dummy_dataloader = DataLoader(dummy_dataset)
-        pruning = prepare_pruning(config, self.model, dummy_dataloader, device='cpu')
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
+        pruning = prepare_pruning(config, self.model, device='cpu')
+        pruning.on_train_begin(dummy_dataloader)
+        
+        pruning = prepare_pruning(config, self.model, dataloader=dummy_dataloader, device='cpu')
 
 
 if __name__ == "__main__":

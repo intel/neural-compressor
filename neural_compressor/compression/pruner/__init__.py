@@ -28,9 +28,8 @@ FRAMEWORK = {
     'keras': 'keras'
 }
 
-def prepare_pruning(config, model: torch.nn.Module,
-                    opt_or_dataloader: Union[torch.optim.Optimizer, torch.utils.data.DataLoader],
-                    loss_func=None, framework='pytorch', device: str ='cuda:0'):
+def prepare_pruning(config, model, optimizer=None, dataloader=None,
+                    loss_func=None, framework='pytorch', device: str=None):
     """Get registered pruner class.
 
     Get a Pruner object from PRUNINGS.
@@ -50,12 +49,11 @@ def prepare_pruning(config, model: torch.nn.Module,
             f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
     pruning_list = []
     pruning_conf = process_config(config)
-    # if enable progressive pruning or not.
-    if isinstance(opt_or_dataloader, torch.optim.Optimizer):
+    if optimizer is not None:
         for pruner_info in pruning_conf:
             assert 'gpt' not in pruner_info["pruning_type"] or 'retrain' not in pruner_info["pruning_type"], \
                     f"Basic pruning only supports strategies that can be sparse during training/fine-tuning"
-        return PRUNINGS['basic_pruning'](pruning_conf, model, opt_or_dataloader)
+        return PRUNINGS['basic_pruning'](pruning_conf, model, optimizer)
     else:
         sparse_gpt_conf = []
         retrain_free_conf = []
@@ -68,13 +66,14 @@ def prepare_pruning(config, model: torch.nn.Module,
                 retrain_free_conf.append(pruner_info)
         if len(sparse_gpt_conf) > 0:
             pruning_list.append(PRUNINGS['sparse_gpt_pruning'](sparse_gpt_conf, model,
-                                                               opt_or_dataloader, loss_func, device))
+                                                               dataloader, loss_func, device))
         if len(retrain_free_conf) > 0:
             pruning_list.append(PRUNINGS['retrain_free_pruning'](retrain_free_conf,
-                                                                 model, opt_or_dataloader, loss_func))
+                                                                 model, dataloader, loss_func))
         if len(pruning_list) > 1:
             logger.info(f"Note that two post-training pruning methods are used here.")
             return pruning_list
         return pruning_list[0]
+
 
 

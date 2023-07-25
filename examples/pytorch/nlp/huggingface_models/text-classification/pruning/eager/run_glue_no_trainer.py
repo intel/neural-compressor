@@ -523,7 +523,7 @@ def main():
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-    from neural_compressor.experimental.compression import prepare_pruning
+    from neural_compressor.compression.pruner import prepare_pruning
     prepare_pruning(configs, model, optimizer)
 
 
@@ -632,6 +632,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

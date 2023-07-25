@@ -12,9 +12,10 @@ import math
 class SparseGPTPruner(PytorchBasePruner):
     """Pruning Pruner.
     The sparse_gpt pruner_class is derived from PytorchBasePruner.
+    SparseGPTPruner supports one-shot pruning of most Large Language Models(LLMs).
+    Please refer to SparseGPT: Massive Language Models Can be Accurately Pruned in One-shot.
+        (https://arxiv.org/abs/2301.00774)
     
-    ###     Needs refinement   ###
-        
 
     Args:
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
@@ -88,3 +89,4 @@ class SparseGPTPruner(PytorchBasePruner):
             logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
             module = self.modules[name]
             self.pattern.fasterprune(self.gpts[name]) # is there necessary to add a hyperparameter of blocksize
+
