@@ -835,7 +835,7 @@ class TestTuneSqAlpha(unittest.TestCase):
         shutil.rmtree(self.ns_workspace, ignore_errors=True)
 
     @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
-    def test_sq_tune_alpha(self):
+    def test_sq_tune_alpha_ipex(self):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
