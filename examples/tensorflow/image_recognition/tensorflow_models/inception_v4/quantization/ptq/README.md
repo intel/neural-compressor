@@ -85,7 +85,7 @@ config = PostTrainingQuantConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/inception_v4/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb \
+  bash run_quant.sh --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb \
       --output_model=./nc_inception_v4.pb --dataset_location=/path/to/ImageNet/
   ```
 

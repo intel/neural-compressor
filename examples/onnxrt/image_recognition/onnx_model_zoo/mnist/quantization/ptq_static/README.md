@@ -24,7 +24,7 @@ wget https://github.com/onnx/models/raw/main/vision/classification/mnist/model/m
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/mnist \ # if dataset doesn't exist, it will be downloaded automatically into this path
                    --output_model=path/to/save
 ```

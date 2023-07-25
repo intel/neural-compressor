@@ -26,7 +26,7 @@ optimum-cli export onnx --model HYPJUDY/layoutlmv3-base-finetuned-funsd layoutlm
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=./layoutlmv3-base-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
+bash run_quant.sh --input_model=./layoutlmv3-base-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --quant_format="QOperator"
 ```

@@ -69,7 +69,7 @@ config = PostTrainingQuantConfig(
 
 ## 1. Quantization
   ```shell
-  bash run_tuning.sh --input_model=./SavedModel --output_model=./nc_SavedModel --dataset_location=/path/to/ImageNet/
+  bash run_quant.sh --input_model=./SavedModel --output_model=./nc_SavedModel --dataset_location=/path/to/ImageNet/
   ```
 
 ## 2. Benchmark

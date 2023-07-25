@@ -37,7 +37,7 @@ optimum-cli export onnx --model ./layoutlm-base-uncased-finetuned-funsd ./layout
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --input_model=./layoutlm-base-uncased-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
+bash run_quant.sh --input_model=./layoutlm-base-uncased-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
                    --output_model=/path/to/model_tune 
 ```
 

@@ -41,7 +41,7 @@ dev_ids.tsv  dev.tsv  test.tsv  train.tsv
 ## Run
 ### Tuning
 ```Shell
-bash run_tuning.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
+bash run_quant.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
 ```
 ### Benchmark
 ```Shell

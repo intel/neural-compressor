@@ -72,7 +72,7 @@ python infer.py
 or
 
 ```
-bash run_tuning.sh --dataset_location=dataset --input_model=model
+bash run_quant.sh --dataset_location=dataset --input_model=model
 ```
 
 ```
