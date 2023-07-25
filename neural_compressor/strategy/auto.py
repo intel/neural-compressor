@@ -69,8 +69,8 @@ class AutoTuneStrategy(TuneStrategy):
         sq_alpha = pre_strategy.cur_best_tuning_cfg.get("recipe_cfgs", {}).get(\
             "smooth_quant_args", {}).get("alpha", None)
         if sq_alpha and self.conf.quantization.recipes:
-            logger.warning(f"[Strategy] Override the user config's smooth quant alpha into best alpha({\
-                sq_alpha: .4f}) found in pre-strategy.")
+            logger.warning(f"[Strategy] Override the user config's smooth quant alpha into best alpha"\
+                           f"({sq_alpha: .4f}) found in pre-strategy.")
             self.conf.quantization.recipes.setdefault("smooth_quant_args", {})["alpha"] = sq_alpha
 
     def sequential_traverse(self):
