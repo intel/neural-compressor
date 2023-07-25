@@ -262,7 +262,7 @@ baseline_acc_0.776<span class="w">  </span>tune_1_acc_0.095<span class="w"> </sp
 </div>
 </li>
 <li><p>Run tuning:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_tuning.sh<span class="w"> </span>--topology<span class="o">=</span>inception_v3<span class="w"> </span>--dataset_location<span class="o">=</span>&lt;imagenet&gt;<span class="w"> </span><span class="se">\</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>inception_v3<span class="w"> </span>--dataset_location<span class="o">=</span>&lt;imagenet&gt;<span class="w"> </span><span class="se">\</span>
 <span class="w">         </span>--input_model<span class="o">=</span>./inceptionv3_fp32_pretrained_model.pb<span class="w"> </span>--output_model<span class="o">=</span>./nc_inceptionv3.pb<span class="w">  </span>--config<span class="o">=</span>./inceptionv3_dump_tensor.yaml<span class="w"> </span>
 </pre></div>
 </div>
