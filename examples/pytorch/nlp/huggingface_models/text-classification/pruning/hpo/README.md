@@ -21,11 +21,9 @@ To get tuned model and its accuracy:
 ```shell
 python run_glue_no_trainer.py \
         --model_name_or_path M-FAC/bert-mini-finetuned-mrpc \
-        --pruning_config bert_mini_mrpc.yaml \
         --task_name mrpc \
         --per_device_eval_batch_size 18 \
         --per_device_train_batch_size 18 \
-        --learning_rate 2e-5 \
         --do_prune
 
 ```

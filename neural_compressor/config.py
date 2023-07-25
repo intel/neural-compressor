@@ -1494,6 +1494,31 @@ class WeightPruningConfig:
         self._weight_compression = weight_compression
 
 
+class HPOconfig:
+    """Config class for hyperparameter optimization.
+    
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+        searcher(str): The name of search algorithms, currently support: grid, random, bo and xgb.
+        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
+        min_train_sample(int, optional): The min number of samples to start training the search model.
+        seed(int, optional): Random seed.
+
+    """
+    def __init__(self,
+                 search_space,
+                 searcher='xgb',
+                 higher_is_better=True,
+                 loss_type='reg',
+                 min_train_samples=10,
+                 seed=42):
+        self.search_space = search_space
+        self.searcher = searcher
+        self.higher_is_better = higher_is_better
+        self.loss_type = loss_type
+        self.min_train_samples = min_train_samples
+        self.seed = seed
+
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss.
 

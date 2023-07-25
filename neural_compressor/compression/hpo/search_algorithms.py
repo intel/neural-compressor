@@ -19,6 +19,7 @@ import numpy as np
 import xgboost as xgb
 
 from neural_compressor.strategy.bayesian import BayesianOptimization
+from ...config import HPOconfig
 
 from .search_space import BaseSearchSpace, DiscreteSearchSpace, ContinuousSearchSpace
 from .sa_optimizer import SimulatedAnnealingOptimizer
@@ -28,6 +29,42 @@ try:
 except:
     import logging
     logger = logging.getLogger(__name__)
+
+
+SEARCHERS = {}
+
+
+
+def get_searcher(config):
+    assert isinstance(config, HPOconfig), f'config should be {HPOconfig.__name__}'
+    assert config.searcher in SEARCHERS.keys(), f"current only support search algorithms: {SEARCHERS.keys()}"
+    if config.searcher == 'xgb':
+        return SEARCHERS[config.searcher](config.search_space,
+                                          higher_is_better=config.higher_is_better,
+                                          loss_type=config.loss_type,
+                                          min_train_samples=config.min_train_samples,
+                                          seed=config.seed)
+    else:
+        return SEARCHERS[config.searcher](config.search_space)
+
+
+def register_searcher(name):
+    """Class decorator to register a Searcher subclass to the registry.
+
+    Decorator function used before a Pattern subclass.
+    Make sure that the Searcher class decorated by this function can be registered in SEARCHERS.
+
+    Args:
+        cls (class): The subclass of register.
+        name: A string. Define the searcher type.
+
+    Returns:
+        cls: The class of register.
+    """
+    def register(searcher):
+        SEARCHERS[name] = searcher
+        return searcher
+    return register
 
 
 class Searcher(object):
@@ -81,6 +118,7 @@ class Searcher(object):
         return {k: para_vec[i] for i, k in enumerate(self.search_space_keys)}
 
 
+@register_searcher("grid")
 class GridSearcher(Searcher):
     """Grid search.
 
@@ -131,6 +169,7 @@ class GridSearcher(Searcher):
         return self.params_vec2params_dict(param)
 
 
+@register_searcher("random")
 class RandomSearcher(Searcher):
     """Random search.
 
@@ -153,6 +192,7 @@ class RandomSearcher(Searcher):
         return self.params_vec2params_dict(param)
 
 
+@register_searcher("bo")
 class BayesianOptimizationSearcher(Searcher):
     """Bayesian Optimization.
 
@@ -218,6 +258,7 @@ class BayesianOptimizationSearcher(Searcher):
         return res
 
 
+@register_searcher("xgb")
 class XgbSearcher(Searcher):
     """XGBoost searcher.
 
@@ -228,10 +269,10 @@ class XgbSearcher(Searcher):
     """
     def __init__(self,
                  search_space,
-                 seed=42,
                  higher_is_better=True,
                  loss_type='reg',
-                 min_train_samples=10) -> None:
+                 min_train_samples=10,
+                 seed=42):
         """Initialize the attributes."""
         super().__init__(search_space)
 

@@ -2,13 +2,12 @@ import unittest
 import numpy as np
 import sys
 sys.path.insert(0, './')
+from neural_compressor.config import HPOconfig
 from neural_compressor.compression.hpo import (GridSearcher,
-                                               RandomSearcher,
-                                               BayesianOptimizationSearcher,
-                                               XgbSearcher,
                                                DiscreteSearchSpace,
                                                ContinuousSearchSpace,
                                                get_searchspace,
+                                               get_searcher,
                                                SimulatedAnnealingOptimizer)
 
 
@@ -21,21 +20,27 @@ class TestHPO(unittest.TestCase):
         'sparsity_warm_epochs': get_searchspace(bound=(0, 5), interval=1),
         'per_device_train_batch_size': get_searchspace((5, 20), 1)
     }
-    print(search_space)
 
     def test_searcher(self):
+        hpo_config = HPOconfig({'num_train_epochs': self.search_space['num_train_epochs'],
+                                'cooldown_epochs': self.search_space['cooldown_epochs']}, searcher='grid')
         searcher = GridSearcher({'num_train_epochs': self.search_space['num_train_epochs'],
                                  'cooldown_epochs': self.search_space['cooldown_epochs']})
+        conf_searcher = get_searcher(hpo_config)
+        self.assertEqual(searcher.__class__, conf_searcher.__class__)
+        for _ in range(5):
+            self.assertEqual(searcher.suggest(), conf_searcher.suggest())
+        hpo_config = HPOconfig(self.search_space, 'random')
+        searcher = get_searcher(hpo_config)
         for _ in range(5):
             searcher.suggest()
-        searcher = RandomSearcher(self.search_space)
-        for _ in range(5):
-            searcher.suggest()
-        searcher = BayesianOptimizationSearcher(self.search_space)
+        hpo_config = HPOconfig(self.search_space, 'bo')
+        searcher = get_searcher(hpo_config)
         for _ in range(10):
             searcher.suggest()
             searcher.get_feedback(np.random.random())
-        searcher = XgbSearcher(self.search_space, min_train_samples=3)
+        hpo_config = HPOconfig(self.search_space, 'xgb', higher_is_better=True, min_train_samples=3)
+        searcher = get_searcher(hpo_config)
         for _ in range(5):
             searcher.suggest()
             searcher.get_feedback(np.random.random())
@@ -45,6 +50,8 @@ class TestHPO(unittest.TestCase):
 
     def test_search_space(self):
         ds = DiscreteSearchSpace(bound=[0, 10])
+        get_ds = get_searchspace(bound=[0, 10], interval=1)
+        self.assertEqual(ds.__class__, get_ds.__class__)
         self.assertEqual(ds.index(1), ds.get_nth_value(1))
         ds = DiscreteSearchSpace(value=[1, 2, 3, 4])
         self.assertEqual(ds.get_all(), [1, 2, 3, 4])
@@ -56,7 +63,7 @@ class TestHPO(unittest.TestCase):
         cs = ContinuousSearchSpace(bound=[0.01, 0.1])
         self.assertTrue(cs.get_value() >= 0.01)
         self.assertTrue(cs.get_value() < 0.1)
-    
+
     def test_sa(self):
         def f(x):
             return np.mean(np.log(x**2), axis=1)
