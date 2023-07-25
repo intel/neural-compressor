@@ -635,7 +635,7 @@ if __name__ == "__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     import time
     from neural_compressor.compression.hpo import get_searcher, get_searchspace
-    from neural_compressor.config import HPOconfig
+    from neural_compressor.config import HPOConfig
 
     args = parse_args()
 
@@ -647,7 +647,7 @@ if __name__ == "__main__":
         'sparsity_warm_epochs': get_searchspace(bound=(0, 5), interval=1),
         'per_device_train_batch_size': get_searchspace((5, 20), 1)
     }
-    config = HPOconfig(search_space=search_space,
+    config = HPOConfig(search_space=search_space,
                        searcher='xgb',
                        higher_is_better=True,
                        min_train_samples=3)

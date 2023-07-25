@@ -1494,7 +1494,7 @@ class WeightPruningConfig:
         self._weight_compression = weight_compression
 
 
-class HPOconfig:
+class HPOConfig:
     """Config class for hyperparameter optimization.
     
     Args:
@@ -1512,6 +1512,7 @@ class HPOconfig:
                  loss_type='reg',
                  min_train_samples=10,
                  seed=42):
+        """Init an HPOConfig object."""
         self.search_space = search_space
         self.searcher = searcher
         self.higher_is_better = higher_is_better

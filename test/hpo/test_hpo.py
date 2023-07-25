@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import sys
 sys.path.insert(0, './')
-from neural_compressor.config import HPOconfig
+from neural_compressor.config import HPOConfig
 from neural_compressor.compression.hpo import (GridSearcher,
                                                DiscreteSearchSpace,
                                                ContinuousSearchSpace,
@@ -22,7 +22,7 @@ class TestHPO(unittest.TestCase):
     }
 
     def test_searcher(self):
-        hpo_config = HPOconfig({'num_train_epochs': self.search_space['num_train_epochs'],
+        hpo_config = HPOConfig({'num_train_epochs': self.search_space['num_train_epochs'],
                                 'cooldown_epochs': self.search_space['cooldown_epochs']}, searcher='grid')
         searcher = GridSearcher({'num_train_epochs': self.search_space['num_train_epochs'],
                                  'cooldown_epochs': self.search_space['cooldown_epochs']})
@@ -30,16 +30,16 @@ class TestHPO(unittest.TestCase):
         self.assertEqual(searcher.__class__, conf_searcher.__class__)
         for _ in range(5):
             self.assertEqual(searcher.suggest(), conf_searcher.suggest())
-        hpo_config = HPOconfig(self.search_space, 'random')
+        hpo_config = HPOConfig(self.search_space, 'random')
         searcher = get_searcher(hpo_config)
         for _ in range(5):
             searcher.suggest()
-        hpo_config = HPOconfig(self.search_space, 'bo')
+        hpo_config = HPOConfig(self.search_space, 'bo')
         searcher = get_searcher(hpo_config)
         for _ in range(10):
             searcher.suggest()
             searcher.get_feedback(np.random.random())
-        hpo_config = HPOconfig(self.search_space, 'xgb', higher_is_better=True, min_train_samples=3)
+        hpo_config = HPOConfig(self.search_space, 'xgb', higher_is_better=True, min_train_samples=3)
         searcher = get_searcher(hpo_config)
         for _ in range(5):
             searcher.suggest()

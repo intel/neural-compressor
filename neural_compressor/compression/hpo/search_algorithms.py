@@ -19,7 +19,7 @@ import numpy as np
 import xgboost as xgb
 
 from neural_compressor.strategy.bayesian import BayesianOptimization
-from ...config import HPOconfig
+from ...config import HPOConfig
 
 from .search_space import BaseSearchSpace, DiscreteSearchSpace, ContinuousSearchSpace
 from .sa_optimizer import SimulatedAnnealingOptimizer
@@ -36,7 +36,7 @@ SEARCHERS = {}
 
 
 def get_searcher(config):
-    assert isinstance(config, HPOconfig), f'config should be {HPOconfig.__name__}'
+    assert isinstance(config, HPOConfig), f'config should be {HPOConfig.__name__}'
     assert config.searcher in SEARCHERS.keys(), f"current only support search algorithms: {SEARCHERS.keys()}"
     if config.searcher == 'xgb':
         return SEARCHERS[config.searcher](config.search_space,
