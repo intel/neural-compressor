@@ -194,7 +194,7 @@ def main():
             model = onnx.load(args.model_path)
 
         config = PostTrainingQuantConfig(
-            approach="dynamic",
+            approach="static",
             quant_level=1,
             quant_format=args.quant_format,
             recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
