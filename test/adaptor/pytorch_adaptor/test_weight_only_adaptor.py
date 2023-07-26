@@ -215,7 +215,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 2},
+                'awq_args':{'auto_scale': True, 'mse_range': True, 'folding': False, 'n_blocks': 2},
             },
         )
         q_model = quantization.fit(

@@ -4491,7 +4491,11 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the AWQ algorithm")
-        from .torch_utils.weight_only import awq_quantize
+        if 'awq_args' in self.recipes:
+            folding = self.recipes['awq_args'].get('folding', False)
+        else:
+            folding = False
+        from .torch_utils.weight_only import awq_quantize, _get_absorb_layers
         # get example inputs if not provided.
         if self.example_inputs is None:
             if dataloader is None:
@@ -4506,13 +4510,10 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     break
 
         # get modules that can be absorbed.
-        from .torch_utils.smooth_quant import GraphTrace
-        tg = GraphTrace()
-        supported_layers = ['Linear']
-        absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
-        if absorb_to_layer is None or absorb_to_layer == {}:
-            logger.warning('No absorb layer is detected, skip AWQ algorithm')
-            return model
+        absorb_to_layer = _get_absorb_layers(
+            model, self.example_inputs, 
+            supported_layers=['Linear'], folding=folding
+        )
 
         # got flipped dict from absorb_to_layer dict
         flipped_dict = {}
@@ -4557,7 +4558,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             mse_range = self.recipes['awq_args'].get('mse_range', True)
             n_blocks = self.recipes['awq_args'].get('n_blocks', 5)
         else:
-            auto_scale, mse_range = True, True
+            auto_scale, mse_range, n_blocks = True, True, 5
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
         else:
@@ -4565,6 +4566,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         model = awq_quantize(
             model, 
+            bits=-1, # no quantize for op not in weight_config
             weight_config=weight_config, 
             absorb_dict=absorb_to_layer, 
             dataloader=dataloader,
@@ -4575,6 +4577,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             n_blocks=n_blocks,
             return_int=False,
             sym_full_range=sym_full_range,
+            folding = folding,
         )
         return model
 

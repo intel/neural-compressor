@@ -401,10 +401,30 @@ def _update_input_with_scale(args, kwargs, scales):
     return new_args, new_kwargs
 
 
+def _get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False):
+    # get modules that can be absorbed.
+    from .smooth_quant import GraphTrace
+    tg = GraphTrace()
+    supported_layers = ['Linear']
+    absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
+        model, example_inputs, supported_layers
+    )
+    if absorb_to_layer is None or absorb_to_layer == {}:
+        if folding:
+            logger.warning('No absorb layer is detected, skip AWQ algorithm')
+            return model
+    # allow absorbing in itself
+    if not folding:
+        for k in no_absorb_layers:
+            absorb_to_layer[k] = k
+    return absorb_to_layer
+
+
 @torch.no_grad()
-def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
+def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
+                 weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
                  auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, 
-                 return_int=False, sym_full_range=False):
+                 return_int=False, sym_full_range=False, folding=False):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -434,6 +454,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
         return_int (bool, optional): Choose return fp32 or int32 model.
                                      Defaults to False.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        folding (bool, optional): Whether inserting mul for layers that cannot be absorbed.
 
     Returns:
         model: fake quantized model
@@ -539,8 +560,9 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
             logger.info(f"Processing module: {absorb}:{absorbed}")
             weight = torch.cat([fetch_module(model, _m).weight for _m in absorbed], dim=0)
-            w_max = _get_weight_scale(
-                weight, q_group_size=weight_config[absorbed[0]]['group_size'])
+            q_group_size = weight_config[absorbed[0]]['group_size'] if \
+                                absorbed[0] in weight_config else group_size
+            w_max = _get_weight_scale(weight, q_group_size=q_group_size)
             del weight
             x_max = _get_act_scale(output_values[absorb])
             absorbed_modules = {_m: fetch_module(model, _m) for _m in absorbed}
@@ -569,6 +591,10 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                     scales = scales / (scales.max() * scales.min()).sqrt()
                     for name, module in absorbed_modules.items():
                         module.weight.data = module.weight.data.mul(scales.view(1, -1))
+                        if name not in weight_config:
+                            weight_config[name]['bits'] = bits
+                            weight_config[name]['group_size'] = group_size
+                            weight_config[name]['scheme'] = scheme
                         module.weight.data = quant_weight(
                             module.weight.data,
                             num_bits=weight_config[name]['bits'], 
@@ -622,6 +648,10 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
                 for name, module in absorbed_modules.items():
                     for i_s in range(int(max_shrink * n_grid)):
                         ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
+                        if name not in weight_config:
+                            weight_config[name]['bits'] = bits
+                            weight_config[name]['group_size'] = group_size
+                            weight_config[name]['scheme'] = scheme
                         module.weight.data = quant_weight(
                             module.weight.data,
                             num_bits=weight_config[name]['bits'], 
@@ -658,7 +688,9 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     logger.info("Quantizing the AWQ optimized fp32 model")
     model = rtn_quantize(
         model, 
-        num_bits=-1, 
+        num_bits=bits, 
+        group_size=group_size,
+        scheme=scheme,
         weight_config=weight_config, 
         return_int=return_int,
         sym_full_range=sym_full_range,
