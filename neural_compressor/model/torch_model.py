@@ -319,7 +319,10 @@ class PyTorchModel(PyTorchBaseModel):
                     weight_config = collect_weight_info(self.q_config)
                     with open(weight_config_path, 'w') as f:
                         json.dump(weight_config, f, indent = 4)
-                        f.close()
+                    if hasattr(self, 'gptq_config') and self.gptq_config:
+                        gptq_config_path = os.path.join(root, "gptq_config.json")
+                        with open(gptq_config_path, 'w') as f:
+                            json.dump(self.gptq_config, f, indent = 4)
                 else:
                     stat_dict['best_configure'] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
@@ -396,7 +399,7 @@ class PyTorchModel(PyTorchBaseModel):
 
     def export_compressed_model(self, qweight_config_path=None, sym_full_range=False, 
                                 compression_dtype=torch.int32, compression_dim=1, 
-                                scale_dtype=torch.float32):
+                                scale_dtype=torch.float32, gptq_config_path=None):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
         Args:
@@ -409,6 +412,7 @@ class PyTorchModel(PyTorchBaseModel):
                                                 1 is input channel. Defaults to 1.
             scale_dtype (torch.Tensor, optional): Use float32 or float16. 
                                                     Defaults to torch.float32.
+            gptq_config_path (str, optional): Path of qconfig.json. Defaults to None.
         """
         from ..adaptor.torch_utils.util import fetch_module, set_module
         from ..adaptor.torch_utils.weight_only import rtn_quantize
@@ -416,9 +420,13 @@ class PyTorchModel(PyTorchBaseModel):
         if qweight_config_path is not None:
             with open(qweight_config_path, 'r') as f:
                 weight_config = json.load(f)
-            f.close()
         else:
             weight_config = collect_weight_info(self.q_config)
+        if gptq_config_path is not None:
+            with open(gptq_config_path, 'r') as f:
+                gptq_config = json.load(f)
+        else:
+            gptq_config = self.gptq_config if hasattr(self, 'gptq_config') else {}
         for k, v in weight_config.items():
             if v['dtype'] == 'fp32':
                 continue
@@ -426,6 +434,7 @@ class PyTorchModel(PyTorchBaseModel):
                 num_bits = v['bits']
                 group_size = v['group_size']
                 scheme = v['scheme']
+                gptq_perm = gptq_config[k] if k in gptq_config else None
             mod = fetch_module(self.model, k)
             mod = rtn_quantize(
                 mod, num_bits, group_size, scheme, 
@@ -434,6 +443,7 @@ class PyTorchModel(PyTorchBaseModel):
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 
                 scale_dtype=scale_dtype, 
+                gptq_perm=gptq_perm,
             )
             set_module(self.model, k, mod)
         return self.model

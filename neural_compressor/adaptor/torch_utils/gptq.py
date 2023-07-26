@@ -338,8 +338,7 @@ class GPTQuantizer(object):
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
             self.inp, self.out = self.out, self.inp
-            print('+------------------+--------------+------------+-----------+-------+')
-            print('\n')
+            logger.info('------------------------------')
         
         logger.info("Quantization done")
         self.model.config.use_cache = self.use_cache

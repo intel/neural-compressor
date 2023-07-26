@@ -155,7 +155,8 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, bits, groupsize, 
                  zp=False, bias=False, scale_dtype=torch.float32, 
-                 compression_dtype=torch.int32, compression_dim=1):
+                 compression_dtype=torch.int32, compression_dim=1,
+                 gptq_perm=False):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -218,11 +219,18 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer('bias', torch.zeros(self.out_features, dtype=self.float_type))
         else:
             self.bias = None
+        if gptq_perm:
+            self.register_buffer('gptq_perm', torch.zeros(in_features, dtype=torch.int32))
+        else:
+            self.gptq_perm = None
 
-    def pack(self, int_weight, scale, zp, bias):
+    def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
         if bias is not None:
             assert hasattr(self, 'bias'), "bias is not set when initializing."
             self.bias = bias.type(self.float_type)
+        if gptq_perm is not None:
+            assert hasattr(self, 'gptq_perm'), "gptq_perm is not set when initializing."
+            self.gptq_perm = gptq_perm.type(torch.int32)
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale.type(self.float_type)
         if self.compression_dim == 0:
@@ -347,6 +355,9 @@ class WeightOnlyLinear(torch.nn.Module):
                 weight = weight.reshape(-1, self.groupsize)
                 scale = self.scale.reshape(-1, 1)
                 fp32_weight = (weight * scale).reshape(self.out_features, -1)
+        if self.gptq_perm is not None:
+            invperm = torch.argsort(self.gptq_perm)
+            fp32_weight = fp32_weight[:, invperm]
         return fp32_weight
 
     def forward(self, input):
