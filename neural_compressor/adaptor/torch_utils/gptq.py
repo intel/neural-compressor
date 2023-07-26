@@ -268,6 +268,7 @@ class GPTQuantizer(object):
 
         # Step2: run gptq quantization in a transformer block-wise manner.
         quantizers = {}
+        quantizers_perm = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
         # import pdb;pdb.set_trace()
         for block_idx in range(tblock_length):
@@ -322,6 +323,8 @@ class GPTQuantizer(object):
                     groupsize = weight_config_this_layer['group_size'], 
                     actorder = weight_config_this_layer['actorder'],
                 )
+                if weight_config_this_layer['actorder']: # save perm for restoring the weights
+                    quantizers_perm[self.get_full_layer_name(layer_name, block_idx)] = gptq_for_this_block[layer_name].perm
                 quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
             
@@ -342,6 +345,8 @@ class GPTQuantizer(object):
         self.model.config.use_cache = self.use_cache
 
         # obtain model (all weight only quantization API function should return)
+        # print(quantizers_perm)
+        self.model.perms = quantizers_perm
         return self.model, quantizers
     
     @torch.no_grad()
@@ -366,6 +371,7 @@ class GPTQ:
         self.H = torch.zeros((self.columns, self.columns), device=self.device)
         self.nsamples = 0
         self.quantizer = Quantizer()
+        self.perm = None # actorder choice
 
     def add_batch(self, inp, out):
         if DEBUG:
@@ -419,6 +425,7 @@ class GPTQ:
             perm = torch.argsort(torch.diag(H), descending=True)
             W = W[:, perm]
             H = H[perm][:, perm]
+            self.perm = perm.clone()
 
         Losses = torch.zeros_like(W)
         Q = torch.zeros_like(W)
