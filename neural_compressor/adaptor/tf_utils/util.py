@@ -595,7 +595,9 @@ def get_weight_from_input_tensor(model, input_tensor_names, op_types):
         - sq_weight_tensors: A dictionary mapping each input tensor name to a list of its associated weight tensors.
         - sq_weights_nodes: A dictionary mapping each input tensor name to a list of its associated weight nodes.
     """
-    graph_info = GraphAnalyzer(model.graph_def).parse_graph()
+    g_analyzer = GraphAnalyzer()
+    g_analyzer.graph = model.graph_def
+    graph_info = g_analyzer.parse_graph()
 
     sq_weight_tensors = {}
     sq_weights_nodes = {}
