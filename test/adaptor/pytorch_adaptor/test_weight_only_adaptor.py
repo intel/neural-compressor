@@ -275,7 +275,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out1 = q_model.model(*input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(*input)
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-03))
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
         print("GPTQ Done")
 
     def test_TEQ_quant(self):
