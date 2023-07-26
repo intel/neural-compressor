@@ -646,13 +646,16 @@ def main():
         if device != 'cpu':
             device = "cuda:"+str(device)
         from neural_compressor.compression.pruner import prepare_pruning
-        pruning = prepare_pruning(configs, model, train_dataloader, device=device)
+        pruning = prepare_pruning(configs, model,  dataloader=train_dataloader, device=device)
         model.config.use_cache = use_cache
         
     if args.output_dir is not None:
         ###TODO set ddp save method
-        model.save_pretrained(args.output_dir+"/noslim")
-        tokenizer.save_pretrained(args.output_dir+"/noslim")
+        output_dir = args.output_dir
+        if args.auto_slim:
+            output_dir += "/before_slim"
+        model.save_pretrained(output_dir)
+        tokenizer.save_pretrained(output_dir)
         
     if torch.cuda.is_available():
         model = model.cuda()

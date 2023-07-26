@@ -723,7 +723,7 @@ def main():
     )
     
     from neural_compressor.compression.pruner import prepare_pruning
-    pruning = prepare_pruning(configs, model, train_dataloader)
+    pruning = prepare_pruning(configs, model, dataloader=train_dataloader)
     
     model.eval()
     if args.evaluation_dataset_name != None:
@@ -744,11 +744,14 @@ def main():
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
+        output_dir = args.output_dir
+        if args.auto_slim:
+            output_dir += "/before_slim"
         unwrapped_model.save_pretrained(
-            args.output_dir+"/noslim", is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
         )
         if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir+"/noslim")
+            tokenizer.save_pretrained(output_dir)
             if args.push_to_hub:
                 repo.push_to_hub(commit_message="End of pruning", auto_lfs_prune=True)
     
