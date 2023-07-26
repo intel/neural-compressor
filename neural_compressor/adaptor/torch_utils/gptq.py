@@ -325,7 +325,7 @@ class GPTQuantizer(object):
                 )
                 if weight_config_this_layer['actorder']: # save perm for restoring the weights
                     quantizers_perm[self.get_full_layer_name(layer_name, block_idx)] = gptq_for_this_block[layer_name].perm
-                quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
+                quantizers['%s.%d.%s' % (self.gptq_related_blocks['transformers_name'], block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
             
             # Step 2.5: replace output data with quantized weights
@@ -346,8 +346,8 @@ class GPTQuantizer(object):
 
         # obtain model (all weight only quantization API function should return)
         # print(quantizers_perm)
-        self.model.perms = quantizers_perm
-        return self.model, quantizers
+        # self.model.perms = quantizers_perm
+        return self.model, quantizers, quantizers_perm
     
     @torch.no_grad()
     def post_quantization(self, test_dataloader):
