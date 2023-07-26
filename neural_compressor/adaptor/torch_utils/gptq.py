@@ -171,9 +171,13 @@ class GPTQuantizer(object):
         self.check_layer_config()
 
         # data & device
-        self.dataloader = dataloader
-        self.nsamples = len(dataloader)
-        self.device = device
+        # import pdb;pdb.set_trace()
+        if hasattr(dataloader, "gptq_dataloader"):
+            self.dataloader = dataloader.gptq_dataloader
+        else:
+            self.dataloader = dataloader
+        self.nsamples = len(self.dataloader)
+        self.device = torch.device('cuda:0')
         self.is_ready = False
 
         self.use_cache = self.model.config.use_cache
@@ -267,6 +271,7 @@ class GPTQuantizer(object):
         self.pre_quantization()
 
         # Step2: run gptq quantization in a transformer block-wise manner.
+        # import pdb;pdb.set_trace()
         quantizers = {}
         quantizers_perm = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])

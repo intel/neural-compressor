@@ -4589,6 +4589,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         }
         """
         weight_config = {}
+        # import pdb;pdb.set_trace()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
@@ -4598,8 +4599,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     'wbits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'sym': config['weight']['scheme'] == 'sym',
-                    'percdamp': 0.01,
-                    'actorder': True
+                    'percdamp': self.recipes['gptq_args'].get("percdamp", 0.01),
+                    'actorder': self.recipes['gptq_args'].get("actorder", True)
                 } 
         # tune_cfg => weight_config 
         model, quantization_perm = gptq_quantize(
