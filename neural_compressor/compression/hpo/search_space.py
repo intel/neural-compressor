@@ -28,6 +28,14 @@ class SearchSpace:
         interval: Only for descrete search space. Intervals in discrete space.
         value: Only for descrete search space. A list that store all the number for search.
         type: descrete or continues.
+
+    Example:
+        from neural_compressor.compression.hpo import SearchSpace
+         search_space = {
+        'learning_rate': SearchSpace((0.0001, 0.001)),
+        'num_train_epochs': SearchSpace(bound=(20, 100), interval=1),
+        'weight_decay': SearchSpace((0.0001, 0.001), type='continuous')
+        }
     """
     def __new__(
             cls,

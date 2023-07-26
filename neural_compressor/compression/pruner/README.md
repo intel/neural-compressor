@@ -52,8 +52,9 @@ Pruning
 
 4. [Sparse Model Deployment](#sparse-model-deployment)
 
+5. [Pruning With HPO](#pruning-with-hyperparameter-optimization)
 
-5. [Reference](#reference)
+6. [Reference](#reference)
 
 
 ## Introduction
@@ -382,6 +383,10 @@ Please refer to [pruning examples](../../../examples/README.md#Pruning-1) for mo
 ## Sparse Model Deployment
 
 Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
+
+## Pruning with Hyperparameter Optimization
+Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO. 
+For more details, please refer to [HPO ducumentation](../../neural_compressor/compression/hpo/README.md)
 
 ## Reference
 
