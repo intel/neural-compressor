@@ -1679,7 +1679,8 @@ class TensorFlowAdaptor(Adaptor):
         return predictions
 
     def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
-                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
+                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True,
+                     record_max_info=False):
         """Convert the model by smooth quant.
 
         Args:
@@ -1693,7 +1694,7 @@ class TensorFlowAdaptor(Adaptor):
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
-
+            record_max_info: whether record the max info in model for alpha tuning.
         Returns:
             model: A smoothed Tensorflow model
         """
