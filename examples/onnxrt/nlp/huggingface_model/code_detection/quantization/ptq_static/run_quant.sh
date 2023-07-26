@@ -38,7 +38,6 @@ function run_tuning {
             --model_path ${input_model} \
             --data_path ${dataset_location} \
             --output_model ${output_model} \
-            --batch_size=${batch_size} \
             --tune
 
 }
