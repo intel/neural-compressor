@@ -217,13 +217,14 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
         weight_config (dict, optional): specific layer wise configirations. Defaults to {}.
-                For example, 
+            For example, 
                 weight_config={
                     'fc2':
                         {
                             'bits': 4, 
                             'group_size': 32, 
                             'scheme': 'sym'
+                            'gptq_perm': [1, 1, ...] # for gptq perm
                         }
                 }
         return_int (bool, optional): Choose return fp32 or int32 model.
@@ -240,15 +241,17 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
         scale_dtype = kwargs.get("scale_dtype", torch.float32)
-    for n, m in model.named_modules():
+    gptq_perm = kwargs.get("gptq_perm", None)
+    for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
-        if n in weight_config:  # pragma: no cover
-            num_bits = weight_config[n]['bits']
-            group_size = weight_config[n]['group_size']
-            scheme = weight_config[n]['scheme']
-            quantile = weight_config[n].get('quantile', 1.0)
-        logger.debug(f"RTN quantized module:{n, m}")
+        if name in weight_config:  # pragma: no cover
+            num_bits = weight_config[name]['bits']
+            group_size = weight_config[name]['group_size']
+            scheme = weight_config[name]['scheme']
+            quantile = weight_config[name].get('quantile', 1.0)
+            gptq_perm = weight_config[name].get('gptq_perm', None)
+        logger.debug(f"RTN quantized module:{name, m}")
         if scheme == 'sym':
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}, sym_full_range={sym_full_range}")
@@ -256,9 +259,11 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}")
         if num_bits <= 0:
-            logger.info(f"skip {n}")
+            logger.info(f"skip {name}")
             continue
         weight = m.weight
+        if gptq_perm is not None:
+            weight = weight[:, gptq_perm]
         if return_int:
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
@@ -271,17 +276,21 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 
                 scale_dtype=scale_dtype, 
+                gptq_perm=gptq_perm is not None,
             )
-            new_module.pack(int_weight, scale, zp, m.bias)
-            if n == '':
+            new_module.pack(int_weight, scale, zp, m.bias, gptq_perm)
+            if name == '':
                 return new_module
             else:
-                set_module(model, n, new_module)
+                set_module(model, name, new_module)
         else:
             q_weight = quant_weight(
                 weight, num_bits, group_size, scheme, quantile, 
                 full_range=sym_full_range
             )
+            if gptq_perm is not None:
+                invperm = torch.argsort(gptq_perm)
+                q_weight = q_weight[:, invperm]
             m.weight.data.copy_(q_weight)
     return model
 
@@ -292,12 +301,7 @@ def gptq_quantize(model, weight_config = {}, dataloader = None, device = None):
     gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
     fp32_modified_model, quantization_data, quantization_perm = gptq_quantizer.execute_quantization() # TODO: place quantization data to a proper place
     logger.info("GPTQ quantizing done.")
-    gptq_config = {
-        "quantizers": quantization_data,
-        "quantizers_perm": quantization_perm
-    }
-    fp32_modified_model.gptq_config = gptq_config
-    return fp32_modified_model # 
+    return fp32_modified_model, quantization_perm
 
 def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
                             calib_func=None):

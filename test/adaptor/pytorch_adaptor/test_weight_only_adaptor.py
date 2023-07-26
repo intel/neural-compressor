@@ -253,7 +253,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "weight": {
                         'bits': 4, # 1-8 bits 
                         'group_size': 128,  # -1 (per-channel)
-                        'scheme': 'sym', 
+                        'scheme': 'asym', 
                         'algorithm': 'GPTQ', 
                     },
                 },
@@ -269,10 +269,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 'gptq_args':{'percdamp': 0.01},
             },
         )
-        import pdb;pdb.set_trace()
+        input = (torch.ones([1, 512], dtype=torch.long))
         dataloader = gptq_inc_loader()
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
-        # perms are stored in q_model.model.perms, a dict
+        out1 = q_model.model(*input)
+        compressed_model = q_model.export_compressed_model()
+        out2 = compressed_model(*input)
+        # self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-03))
         print("GPTQ Done")
 
     def test_TEQ_quant(self):
