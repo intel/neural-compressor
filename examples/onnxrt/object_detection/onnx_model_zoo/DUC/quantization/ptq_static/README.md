@@ -40,7 +40,7 @@ cityscapes
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
                    --dataset_location=/path/to/cityscapes/leftImg8bit/val \
                    --quant_format="QOperator"

@@ -71,7 +71,7 @@ python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet
 ```
 or
 ```shell
-bash run_tuning.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
+bash run_quant.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
 bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
 ```
 
@@ -82,7 +82,7 @@ python main.py -t -a resnet50 --ipex --pretrained /path/to/imagenet
 ```
 or
 ```shell
-bash run_tuning.sh --input_model=resnet50 --dataset_location=/path/to/imagenet
+bash run_quant.sh --input_model=resnet50 --dataset_location=/path/to/imagenet
 bash run_benchmark.sh --input_model=resnet50 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
 ```
 
@@ -93,7 +93,7 @@ python main.py -t -a resnext101_32x16d_wsl --hub --ipex --pretrained /path/to/im
 ```
 or
 ```shell
-bash run_tuning.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet
+bash run_quant.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet
 bash run_benchmark.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
 ```
 

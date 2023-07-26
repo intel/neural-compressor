@@ -1,5 +1,3 @@
-import sys
-sys.path.append("./")
 import os
 import shutil
 import torch
@@ -274,6 +272,47 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
         # perms are stored in q_model.model.perms, a dict
         print("GPTQ Done")
+
+    def test_TEQ_quant(self):
+        class teq_inc_loader(object):
+            def __init__(self, nsamples=32):
+                self.batch_size = 1
+                self.nsamples = nsamples
+
+            def __len__(self):
+                return self.nsamples // self.batch_size
+
+            def __iter__(self):
+                for i in range(self.nsamples):
+                    yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
+
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_type_dict={
+                '.*':{  # re.match
+                    "weight": {
+                        'bits': 4, # 1-8 bits
+                        'group_size': 32,  # -1 (per-channel)
+                        'scheme': 'sym',
+                        'algorithm': 'TEQ',
+                    },
+                },
+            },
+            op_name_dict={
+                '.*lm_head':{   # re.match
+                    "weight": {
+                        'dtype': 'fp32'
+                    },
+                },
+            },
+            recipes={
+                'teq_args':{"folding": True},
+            },
+        )
+
+        dataloader = teq_inc_loader()
+
+        q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
 
 if __name__ == "__main__":
     unittest.main()

@@ -47,7 +47,7 @@ squad
 Static quantization with QDQ format:
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --dataset_location=/path/to/squad \
                    --quant_format='QDQ'
@@ -56,7 +56,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
 ## 2. Benchmark
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --dataset_location=/path/to/squad \
                    --batch_size=batch_size \
                    --mode=performance # or accuracy

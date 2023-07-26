@@ -26,7 +26,7 @@ from transformers.utils import check_min_version
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.5.0")
 
-from image_utils import RandomResizedCropAndInterpolationWithTwoPic, pil_loader, Compose
+from utils import RandomResizedCropAndInterpolationWithTwoPic, pil_loader, Compose
 
 from timm.data.constants import \
     IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD

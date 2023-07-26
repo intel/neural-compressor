@@ -472,6 +472,21 @@ class TestQuantLevel(unittest.TestCase):
                 found_fp32_conv = True
         self.assertTrue(found_fp32_conv)
 
+    def test_quant_level_auto_with_max_trial(self):
+        # maxt_trails = 1: even if the accuracy does not meet the requirements,
+        # the tuning process ends after the first trial.
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        acc_lst = [1.0, 0.9, 1.1, 1.2]
+        def fake_eval3(model):
+            result = acc_lst[0]
+            del acc_lst[0]
+            return result
+        tuning_criterion = TuningCriterion(max_trials=1)
+        conf = PostTrainingQuantConfig(approach='static', tuning_criterion=tuning_criterion)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval3)
+        self.assertIsNone(q_model)
+
 
 if __name__ == "__main__":
     unittest.main()
