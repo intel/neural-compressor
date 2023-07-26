@@ -634,24 +634,24 @@ if __name__ == "__main__":
 #     main()
     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     import time
-    from neural_compressor.compression.hpo import get_searcher, get_searchspace
+    from neural_compressor.compression.hpo import prepare_hpo, SearchSpace
     from neural_compressor.config import HPOConfig
 
     args = parse_args()
 
     search_space = {
-        'learning_rate': get_searchspace((0.0001, 0.001)),
-        'num_train_epochs': get_searchspace(bound=(20, 100), interval=1),
-        'weight_decay': get_searchspace((0.0001, 0.001)),
-        'cooldown_epochs': get_searchspace(bound=(0, 10), interval=1),
-        'sparsity_warm_epochs': get_searchspace(bound=(0, 5), interval=1),
-        'per_device_train_batch_size': get_searchspace((5, 20), 1)
+        'learning_rate': SearchSpace((0.0001, 0.001)),
+        'num_train_epochs': SearchSpace(bound=(20, 100), interval=1),
+        'weight_decay': SearchSpace((0.0001, 0.001)),
+        'cooldown_epochs': SearchSpace(bound=(0, 10), interval=1),
+        'sparsity_warm_epochs': SearchSpace(bound=(0, 5), interval=1),
+        'per_device_train_batch_size': SearchSpace((5, 20), 1)
     }
     config = HPOConfig(search_space=search_space,
                        searcher='xgb',
                        higher_is_better=True,
                        min_train_samples=3)
-    searcher = get_searcher(config)
+    searcher = prepare_hpo(config)
     for iter in range(10):
         print(f'search iter {iter}')
         st = time.time()

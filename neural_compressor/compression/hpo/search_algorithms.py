@@ -35,7 +35,7 @@ SEARCHERS = {}
 
 
 
-def get_searcher(config):
+def prepare_hpo(config):
     assert isinstance(config, HPOConfig), f'config should be {HPOConfig.__name__}'
     assert config.searcher in SEARCHERS.keys(), f"current only support search algorithms: {SEARCHERS.keys()}"
     if config.searcher == 'xgb':

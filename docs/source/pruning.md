@@ -386,6 +386,37 @@ Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more 
 
 Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
 
+## Pruning with Hyperparameter Optimization
+### Reason for HPO
+1. It reduces the human effort required, since many ML developers spend considerable time tuning the
+hyper-parameters, especially for large datasets or complex ML algorithms with a large number of
+hyperparameters.
+2. It improves the performance of ML models. Many ML hyper-parameters have different optimums to
+achieve best performance in different datasets or problems.
+3. It makes the models and research more reproducible. Only when the same level of hyper-parameter
+tuning process is implemented can different ML algorithms be compared fairly; hence, using a same HPO
+method on different ML algorithms also helps to determine the most suitable ML model for a specific
+problem
+
+### Get Started with HPO API
+Neural Compressor `HPO` API is defined under `neural_compressor.compression.hpo`, which takes a user-defined configure object as input.
+
+The following example shows how to use HPO feature to get the suitable hyperparameter automatically.
+```python
+from neural_compressor.compression.hpo import prepare_hpo, SearchSpace
+from neural_compressor.config import HPOConfig
+
+search_space = {
+  'learning_rate': SearchSpace((0.0001, 0.001)),
+  'num_train_epochs': SearchSpace(bound=(20, 100), interval=1)
+}
+config = HPOConfig(search_space=search_space, searcher='xgb', higher_is_better=True)
+searcher = prepare_hpo(config)
+for iter in range(total_search_times):
+  params = searcher.suggest()
+  ...
+  searcher.get_feedback(metric)
+```
 ## Reference
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.

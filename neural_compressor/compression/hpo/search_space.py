@@ -19,31 +19,30 @@ import random
 SEARCHSPACE = {}
 
 
-def get_searchspace(
-        bound=None,
-        interval=None,
-        value=None,
-        type=None
-        ):
-    """Get registered searchspace class.
+class SearchSpace:
+    """Abstract class, the main entrance for search space.
+    Using factory pattern to get the actual used class.
 
     Args:
         bound: A tuple or list that limit the max and min number of search space.
         interval: Only for descrete search space. Intervals in discrete space.
         value: Only for descrete search space. A list that store all the number for search.
         type: descrete or continues.
-
-    Returns：
-     A SearchSpace object.
     """
-    if type is None:
-        if interval is not None or value is not None:
-            type = "discrete"
-        else:
-            type = "continuous"
-       
-    assert type in SEARCHSPACE.keys(), f"only support {list(SEARCHSPACE.keys())}"
-    return SEARCHSPACE[type](bound, interval, value, type)
+    def __new__(
+            cls,
+            bound=None,
+            interval=None,
+            value=None,
+            type=None
+            ):
+        if type is None:
+            if interval is not None or value is not None:
+                type = "discrete"
+            else:
+                type = "continuous"
+        assert type in SEARCHSPACE.keys(), f"only support {list(SEARCHSPACE.keys())}"
+        return SEARCHSPACE[type](bound, interval, value, type)
 
 
 def register_searchspace(name):
