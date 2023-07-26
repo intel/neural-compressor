@@ -417,6 +417,7 @@ class PyTorchModel(PyTorchBaseModel):
         from ..adaptor.torch_utils.util import fetch_module, set_module
         from ..adaptor.torch_utils.weight_only import rtn_quantize
         from ..adaptor.torch_utils.util import collect_weight_info
+        from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
         if qweight_config_path is not None:
             with open(qweight_config_path, 'r') as f:
                 weight_config = json.load(f)
@@ -427,25 +428,51 @@ class PyTorchModel(PyTorchBaseModel):
                 gptq_config = json.load(f)
         else:
             gptq_config = self.gptq_config if hasattr(self, 'gptq_config') else {}
-        for k, v in weight_config.items():
-            if v['dtype'] == 'fp32':
-                continue
-            else:
-                num_bits = v['bits']
-                group_size = v['group_size']
-                scheme = v['scheme']
-                gptq_perm = gptq_config[k] if k in gptq_config else None
-            mod = fetch_module(self.model, k)
-            mod = rtn_quantize(
-                mod, num_bits, group_size, scheme, 
-                return_int=True, 
-                sym_full_range=sym_full_range,
-                compression_dtype=compression_dtype, 
-                compression_dim=compression_dim, 
-                scale_dtype=scale_dtype, 
-                gptq_perm=gptq_perm,
-            )
-            set_module(self.model, k, mod)
+        if gptq_config:
+            for k, v in weight_config.items():
+                if v['dtype'] == 'fp32':
+                    continue
+                else:
+                    num_bits = v['bits']
+                    group_size = v['group_size']
+                    scheme = v['scheme']
+                m = fetch_module(self.model, k)
+                gptq_conf = gptq_config[k]
+                if 'perm' in gptq_conf:
+                    fp32_weight = m.weight.data[:, gptq_conf['perm']]
+                if scheme == 'sym':
+                    int_weight = fp32_weight / gptq_conf['scale']
+                    zp = None
+                else:
+                    zp = gptq_conf['zero']
+                    int_weight = fp32_weight / gptq_conf['scale'] + zp
+                new_module = WeightOnlyLinear(
+                    m.in_features, m.out_features, num_bits, group_size,
+                    zp=zp is not None, bias=m.bias is not None, 
+                    compression_dtype=compression_dtype, 
+                    compression_dim=compression_dim, 
+                    scale_dtype=scale_dtype, 
+                )
+                new_module.pack(int_weight, gptq_conf['scale'], zp, m.bias)
+                set_module(self.model, k, m)
+        else:
+            for k, v in weight_config.items():
+                if v['dtype'] == 'fp32':
+                    continue
+                else:
+                    num_bits = v['bits']
+                    group_size = v['group_size']
+                    scheme = v['scheme']
+                mod = fetch_module(self.model, k)
+                mod = rtn_quantize(
+                    mod, num_bits, group_size, scheme, 
+                    return_int=True, 
+                    sym_full_range=sym_full_range,
+                    compression_dtype=compression_dtype, 
+                    compression_dim=compression_dim, 
+                    scale_dtype=scale_dtype, 
+                )
+                set_module(self.model, k, mod)
         return self.model
 
 

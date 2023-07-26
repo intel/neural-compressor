@@ -4521,10 +4521,10 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
         if 'GPTQ' in all_algo:
-            q_model._model, quantization_perm = self.gptq_quantize(
+            q_model._model, gptq_config = self.gptq_quantize(
                 q_model._model, tune_cfg, dataloader
             )
-            q_model.gptq_config = quantization_perm
+            q_model.gptq_config = gptq_config
         if 'TEQ' in all_algo:
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         if 'AWQ' in all_algo: # includes RTN in AWQ

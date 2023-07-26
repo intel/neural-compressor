@@ -241,7 +241,6 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
         scale_dtype = kwargs.get("scale_dtype", torch.float32)
-    gptq_perm = kwargs.get("gptq_perm", None)
     for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
@@ -250,7 +249,6 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             group_size = weight_config[name]['group_size']
             scheme = weight_config[name]['scheme']
             quantile = weight_config[name].get('quantile', 1.0)
-            gptq_perm = weight_config[name].get('gptq_perm', None)
         logger.debug(f"RTN quantized module:{name, m}")
         if scheme == 'sym':
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
@@ -262,8 +260,6 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             logger.info(f"skip {name}")
             continue
         weight = m.weight
-        if gptq_perm is not None:
-            weight = weight[:, gptq_perm]
         if return_int:
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
@@ -276,9 +272,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 
                 scale_dtype=scale_dtype, 
-                gptq_perm=gptq_perm is not None,
             )
-            new_module.pack(int_weight, scale, zp, m.bias, gptq_perm)
+            new_module.pack(int_weight, scale, zp, m.bias)
             if name == '':
                 return new_module
             else:
@@ -288,20 +283,27 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 weight, num_bits, group_size, scheme, quantile, 
                 full_range=sym_full_range
             )
-            if gptq_perm is not None:
-                invperm = torch.argsort(gptq_perm)
-                q_weight = q_weight[:, invperm]
             m.weight.data.copy_(q_weight)
     return model
 
-def gptq_quantize(model, weight_config = {}, dataloader = None, device = None):
+def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
     """Run weight-only quantization with """
+    # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
     gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
-    fp32_modified_model, quantization_data, quantization_perm = gptq_quantizer.execute_quantization() # TODO: place quantization data to a proper place
+    # TODO: place quantization data to a proper place
+    fp32_modified_model, quantization_data, quantization_perm = gptq_quantizer.execute_quantization()
+    # build gptq_config
+    gptq_config = {}
+    for k, v in quantization_data.items():
+        gptq_config[k] = {}
+        gptq_config[k]['scale'] = v.scale
+        gptq_config[k]['zero'] = v.zero # TODO: remove zero when sym
+        if k in quantization_perm:
+            gptq_config[k]['perm'] = quantization_perm[k]
     logger.info("GPTQ quantizing done.")
-    return fp32_modified_model, quantization_perm
+    return fp32_modified_model, gptq_config
 
 def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
                             calib_func=None):
