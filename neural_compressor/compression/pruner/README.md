@@ -386,7 +386,7 @@ Particular hardware/software like [Intel Extension for Transformer](https://gith
 
 ## Pruning with Hyperparameter Optimization
 Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO. 
-For more details, please refer to [HPO ducumentation](../../neural_compressor/compression/hpo/README.md)
+For more details, please refer to [HPO document](../../neural_compressor/compression/hpo/README.md)
 
 ## Reference
 

@@ -2690,3 +2690,7 @@ fba
 hostname
 qweight
 qconfig
+xgb
+xgboost
+hpo
+HPO
