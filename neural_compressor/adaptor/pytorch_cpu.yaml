@@ -267,7 +267,7 @@
                       # group_size=-1 means per-channel, others means per-group
                       'group_size': [32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024], # [1-inf], # 32
                       'scheme': ['sym', 'asym'], # sym, no ZP
-                      'algorithm': ['RTN', 'AWQ', 'GPTQ'], # RTN, [RTN, GPTQ, AWQ,] RTN+AWQ+TEQ order
+                      'algorithm': ['RTN', 'AWQ', 'GPTQ', 'TEQ'], # RTN, [RTN, GPTQ, AWQ,] RTN+AWQ+TEQ order
                       },
           'activation': {
                       'dtype': ['fp32'],
