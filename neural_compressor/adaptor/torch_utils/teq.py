@@ -157,6 +157,7 @@ class TEQuantizer:
             else:
                 new_module = TEQMulLinear(layer, scale)
                 set_module(self.model, layer_name, new_module)
+            self.weight_config[layer_name + ".sq_linear"] = self.weight_config[layer_name]
             return
 
         if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
@@ -310,7 +311,6 @@ class TEQuantizer:
 
         for n, m in self.model.named_modules():
             if self.weight_config.get(n) is None:
-                logger.info(f"quantize layer {n} not in weight config, skip.")
                 continue
             num_bits = self.weight_config[n]["bits"]
             group_size = self.weight_config[n]["group_size"]
