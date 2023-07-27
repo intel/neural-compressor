@@ -1460,6 +1460,7 @@ class WeightPruningConfig:
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
+                 low_memory_usage=False,
                  **kwargs):
         """Init a WeightPruningConfig object."""
         self.backend = backend
@@ -1478,6 +1479,7 @@ class WeightPruningConfig:
             'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
             'sparsity_decay_type': sparsity_decay_type,
             'pruning_op_types': pruning_op_types,
+            'low_memory_usage': low_memory_usage
         })
         self._weight_compression.update(kwargs)
 

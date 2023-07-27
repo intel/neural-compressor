@@ -2608,6 +2608,8 @@ LayoutLMv
 layoutlmv
 funsd
 layoutlmft
+layoutlm
+LayoutLM
 nielsr
 HYPJUDY
 amerather
@@ -2690,3 +2692,11 @@ qweight
 qconfig
 TEQ
 WeightOnlyLinear
+McKinstry
+Migacz
+MinMax
+Szymon
+Vanhoucke
+ONNXCommunityMeetup
+luYBWA
+pQ
