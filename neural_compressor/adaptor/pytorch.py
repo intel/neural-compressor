@@ -4662,7 +4662,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         extra_config = {"folding": folding}
 
-        quantizer = teq_quantize(
+        model = teq_quantize(
             model,
             weight_config,
             absorb_to_layer,
@@ -4671,7 +4671,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             example_inputs=self.example_inputs,
             calib_func=calib_func
         )
-        return quantizer.model
+        return model
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the AWQ algorithm")
