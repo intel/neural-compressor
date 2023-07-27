@@ -83,13 +83,13 @@ conf = PostTrainingQuantConfig(
     },
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)
+q_model.save('saved_results')
 compressed_model = q_model.export_compressed_model(
     compression_dtype=torch.int32,
     compression_dim=1,
     scale_dtype=torch.float16,
 )
 torch.save(compressed_model.state_dict(), 'compressed_model.pt')
-q_model.save('saved_results')
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
