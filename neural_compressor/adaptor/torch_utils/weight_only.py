@@ -719,10 +719,11 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
     """
     device = weight.device
     scale = scale.to(device)
-    zp = zp.to(device)
+    if zp is not None:
+        zp = zp.to(device)
     if group_size == -1:
         return torch.round(weight/scale) if zp is None else torch.round(weight/scale + zp)
-    int_weight = torch.zeros(weight.shape)
+    int_weight = torch.zeros(weight.shape).to(device)
     leng = weight.shape[1] // group_size
     tail_flag = False if weight.shape[1] % group_size == 0 else True
     for i in range(leng):
