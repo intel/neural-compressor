@@ -241,6 +241,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
         scale_dtype = kwargs.get("scale_dtype", torch.float32)
+        device = kwargs.get("device", 'cpu')
     for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
@@ -272,6 +273,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 
                 scale_dtype=scale_dtype, 
+                device=device,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
             if name == '':

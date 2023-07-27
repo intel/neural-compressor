@@ -399,7 +399,8 @@ class PyTorchModel(PyTorchBaseModel):
 
     def export_compressed_model(self, qweight_config_path=None, sym_full_range=False, 
                                 compression_dtype=torch.int32, compression_dim=1, 
-                                scale_dtype=torch.float32, gptq_config_path=None):
+                                scale_dtype=torch.float32, gptq_config_path=None,
+                                device='cpu'):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
         Args:
@@ -413,12 +414,12 @@ class PyTorchModel(PyTorchBaseModel):
             scale_dtype (torch.Tensor, optional): Use float32 or float16. 
                                                     Defaults to torch.float32.
             gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
+            device (str, optional): choose device for compression. Defaults to cpu.
         """
         from ..adaptor.torch_utils.util import fetch_module, set_module
         from ..adaptor.torch_utils.weight_only import rtn_quantize, quant_weight_w_scale
         from ..adaptor.torch_utils.util import collect_weight_info
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
-        device = self.model.device
         if qweight_config_path is not None:
             with open(qweight_config_path, 'r') as f:
                 weight_config = json.load(f)
@@ -476,6 +477,7 @@ class PyTorchModel(PyTorchBaseModel):
                     compression_dtype=compression_dtype, 
                     compression_dim=compression_dim, 
                     scale_dtype=scale_dtype, 
+                    device=device
                 )
                 set_module(self.model, k, mod)
         return self.model
