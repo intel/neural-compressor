@@ -252,7 +252,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 '.*':{ 	# re.match
                     "weight": {
                         'bits': 4, # 1-8 bits 
-                        'group_size': 128,  # -1 (per-channel)
+                        'group_size': 8,  # -1 (per-channel)
                         'scheme': 'sym', 
                         'algorithm': 'GPTQ', 
                     },

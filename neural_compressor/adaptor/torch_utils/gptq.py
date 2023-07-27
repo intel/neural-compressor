@@ -284,9 +284,7 @@ class GPTQuantizer(object):
         self.pre_quantization()
 
         # Step2: run gptq quantization in a transformer block-wise manner.
-        # import pdb;pdb.set_trace()
-        quantizers = {}
-        quantizers_perm = {}
+        gptq_config = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
         # import pdb;pdb.set_trace()
         for block_idx in range(tblock_length):
@@ -341,16 +339,17 @@ class GPTQuantizer(object):
                     self.get_full_layer_name(layer_name, block_idx), None
                 )
                 logger.info(f"Quantizing layer {layer_name}")
-                gptq_for_this_block[layer_name].fasterquant(
+                scale, zp = gptq_for_this_block[layer_name].fasterquant(
                     percdamp = weight_config_this_layer['percdamp'], 
                     groupsize = weight_config_this_layer['group_size'], 
                     actorder = weight_config_this_layer['actorder'],
                 )
+                gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {'scale': scale}
+                if not weight_config_this_layer['sym']:
+                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]['zero'] = zp
                 if weight_config_this_layer['actorder']: # save perm for restoring the weights
-                    quantizers_perm[self.get_full_layer_name(layer_name, block_idx)] = \
+                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]['perm'] = \
                                                                 gptq_for_this_block[layer_name].perm
-                tmp = '%s.%d.%s' % (self.gptq_related_blocks['transformers_name'], block_idx, layer_name)
-                quantizers[tmp] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
             
             # Step 2.5: replace output data with quantized weights
@@ -369,9 +368,10 @@ class GPTQuantizer(object):
         self.model.config.use_cache = self.use_cache
 
         # obtain model (all weight only quantization API function should return)
-        # print(quantizers_perm)
-        # self.model.perms = quantizers_perm
-        return self.model, quantizers, quantizers_perm
+        for k, v in gptq_config.items():
+            for m, n in v.items():
+                gptq_config[k][m] = n.tolist()
+        return self.model, gptq_config
     
     @torch.no_grad()
     def post_quantization(self, test_dataloader):
@@ -462,6 +462,9 @@ class GPTQ:
         H = torch.linalg.cholesky(H, upper=True)
         Hinv = H
 
+        scale = []
+        zero = []
+
         for i1 in range(0, self.columns, blocksize):
             i2 = min(i1 + blocksize, self.columns)
             count = i2 - i1
@@ -479,6 +482,8 @@ class GPTQ:
                 if groupsize != -1:
                     if (i1 + i) % groupsize == 0:
                         self.quantizer.find_params(W[:, (i1 + i):(i1 + i + groupsize)], weight=True)
+                        scale.append(self.quantizer.scale)
+                        zero.append(self.quantizer.zero)
 
                 q = quantize(
                     w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
@@ -515,6 +520,13 @@ class GPTQ:
         self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
         if DEBUG:
             logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+
+        if scale == []:
+            scale.append(self.quantizer.scale)
+            zero.append(self.quantizer.zero)
+        scale = torch.cat(scale, dim=1)
+        zero = torch.cat(zero, dim=1)
+        return scale, zero
 
     def free(self):
         if DEBUG:

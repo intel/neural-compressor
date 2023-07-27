@@ -292,19 +292,7 @@ def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
     gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
-    # TODO: place quantization data to a proper place
-    fp32_modified_model, quantization_data, quantization_perm = gptq_quantizer.execute_quantization()
-    # build gptq_config
-    gptq_config = {}
-    for k, v in quantization_data.items():
-        gptq_config[k] = {}
-        gptq_config[k]['scale'] = v.scale.tolist()
-        # remove zero when sym
-        if k in weight_config and not weight_config[k]['sym'] or \
-          'sym' in weight_config and not weight_config['sym']:
-            gptq_config[k]['zero'] = v.zero.tolist()
-        if k in quantization_perm:
-            gptq_config[k]['perm'] = quantization_perm[k].tolist()
+    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
 
@@ -715,3 +703,31 @@ def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, exa
     #quantization_data = gptq_quantizer.execute_quantization()
     logger.info("TEQ quantizing done.")
     return teq_quantizer.model
+
+
+def quant_weight_w_scale(weight, scale, zp, group_size=-1):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        scale: scale
+        zp: zero point
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+
+    Returns:
+        output: int weight.
+    """
+    if group_size == -1:
+        return weight/scale if zp is None else weight/scale + zp
+    int_weight = torch.zeros(weight.shape, dtype=torch.int8)
+    leng = weight.shape[1] // group_size
+    tail_flag = False if weight.shape[1] % group_size == 0 else True
+    for i in range(leng):
+        int_weight_tmp = weight[:, i*group_size: (i+1)*group_size] / scale[:, i].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp
+        int_weight[:, i*group_size: (i+1)*group_size] = int_weight_tmp
+    if tail_flag:
+        int_weight_tmp = weight[:, leng*group_size:] / scale[:, -1].unsqueeze(1)
+        int_weight[:, leng*group_size:]  = int_weight_tmp
+    return int_weight

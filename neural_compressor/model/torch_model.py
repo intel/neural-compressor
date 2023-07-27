@@ -415,7 +415,7 @@ class PyTorchModel(PyTorchBaseModel):
             gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
         """
         from ..adaptor.torch_utils.util import fetch_module, set_module
-        from ..adaptor.torch_utils.weight_only import rtn_quantize
+        from ..adaptor.torch_utils.weight_only import rtn_quantize, quant_weight_w_scale
         from ..adaptor.torch_utils.util import collect_weight_info
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
         if qweight_config_path is not None:
@@ -444,12 +444,10 @@ class PyTorchModel(PyTorchBaseModel):
                 else:
                     gptq_perm = None
                 gptq_scale = torch.tensor(gptq_conf['scale'])
-                if scheme == 'sym':
-                    gptq_zp = None
-                    int_weight = fp32_weight / gptq_scale
-                else:
-                    gptq_zp = torch.tensor(gptq_conf['zero'])
-                    int_weight = fp32_weight / gptq_scale + gptq_zp
+                gptq_zp = None if scheme == 'sym' else torch.tensor(gptq_conf['zero'])
+                int_weight = quant_weight_w_scale(
+                    fp32_weight, gptq_scale, gptq_zp, group_size
+                )
                 new_module = WeightOnlyLinear(
                     m.in_features, m.out_features, num_bits, group_size,
                     zp=gptq_zp is not None, bias=m.bias is not None, 
