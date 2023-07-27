@@ -870,12 +870,11 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: model-wise & op-wise configuration for quantization.
         """
-        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-
-        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
-
-        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
-        model.graph_def = self.pre_optimized_model.graph_def
+        if self.pre_optimized_model is None:
+            from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+            self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+            self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
+            model.graph_def = self.pre_optimized_model.graph_def
 
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
@@ -1702,6 +1701,12 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("Start Smoothing process for Smooth Quantization.")
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
+
+        # Do a pre-optimization before smooth quant
+        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
+        model.graph_def = self.pre_optimized_model.graph_def
 
         # Get the nodes list which can't be quantized from tune_cfg
         black_nodes = []

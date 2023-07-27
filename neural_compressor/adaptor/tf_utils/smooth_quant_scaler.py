@@ -91,8 +91,8 @@ class SmoothQuantScaler:
 
         Args:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel for each input node.
-            sq_weight_tensors (dict): A dictionary containing the weight tensors for each input node.
-            sq_weights_nodes (dict): A dictionary containing the constant nodes for each input node.
+            sq_weight_tensors (dict): A dictionary containing the name -> weight tensors mapping for each input node.
+            sq_weights_nodes (dict): A dictionary containing the name -> constant nodes mapping for each input node.
             sq_weight_node_names (dict): A dictionary from weight node name to the its concrete output node name.
         
         Returns:
@@ -105,12 +105,12 @@ class SmoothQuantScaler:
             # 3. adjust activation
             for idx, input_node_name in enumerate(max_vals_per_channel):
                 A_max_per_in_channel = max_vals_per_channel[input_node_name]
-                W_lst = sq_weight_tensors[input_node_name]  # VQK weight value
-                # Use the const nodes before to get weight values, VQK ReadVariable
-                W_const_node_lst = sq_weights_nodes[input_node_name]
-                # W_node_lst = sq_node_names[input_node_name]
-                # Get the concrete weight node as the output of Mul insertion, QKV ReadVariable
-                for w_i, W in enumerate(W_lst):
+                W_dict = sq_weight_tensors[input_node_name]
+                # Use the const nodes before to get weight values
+                W_const_node_dict = sq_weights_nodes[input_node_name]
+                # Get the concrete weight node as the output of Mul insertion
+                for w_i, W_name in enumerate(W_dict):
+                    W = W_dict[W_name]
                     if len(W.shape) == 4:
                         # https://www.tensorflow.org/api_docs/python/tf/nn/conv2d
                         # weight: [filter_height, filter_width, in_channels, out_channels]
@@ -124,7 +124,7 @@ class SmoothQuantScaler:
                         W_max_per_in_channel = np.max(tensor, axis=1)
                     else: # pragma: no cover
                         assert False, "not supported"
-                    cur_const_node = W_const_node_lst[w_i]
+                    cur_const_node = W_const_node_dict[W_name]
                     try:
                         scale = np.power(A_max_per_in_channel, self.alpha) /  \
                                 np.power(W_max_per_in_channel, (1-self.alpha))
