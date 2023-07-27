@@ -4610,16 +4610,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             from .torch_utils.smooth_quant import GraphTrace
             tg = GraphTrace()
             absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
+            if absorb_to_layer is None or absorb_to_layer == {}:
+                logger.warning('No absorb layer is detected, skip TEQ algorithm')
+                return model
         else:
             absorb_to_layer = {}
             for name, module in model.named_modules():
                 for op_type in supported_layers:
                     if op_type == str(module.__class__.__name__):
                         absorb_to_layer[name] = [name]
-
-        if absorb_to_layer is None or absorb_to_layer == {}:
-            logger.warning('No absorb layer is detected, skip TEQ algorithm')
-            return model
 
         # got flipped dict from absorb_to_layer dict
         flipped_dict = {}
