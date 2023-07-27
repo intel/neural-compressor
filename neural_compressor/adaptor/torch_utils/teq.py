@@ -67,13 +67,10 @@ class TEQuantizer:
         for _, p in self.model.named_parameters():
             return p.data.device, p.data.dtype
 
-    def add_tuning_scale(self, excluded_name="lm_head",
-            excluded_key=None, sqrt_w_init=False):
+    def add_tuning_scale(self, sqrt_w_init=False):
         """
         The main entry of smooth quant
         to the paper for more details
-        :param excluded_name: exclude layer
-        :param excluded_key: exclude key
         :param sqrt_w_init: use sqrt weight to init
         """
 
@@ -81,17 +78,7 @@ class TEQuantizer:
         for n, p in self.model.named_parameters():
             p.requires_grad = False
 
-        for key, item in self.absorb_to_layer.items():
-            if len(item) == 1 and excluded_name in item[0]:
-                excluded_key = key
-                break
-
-        if excluded_key != None:
-            self.absorb_to_layer.pop(excluded_key)  ## remove
-
         for layer_norm in self.absorb_to_layer:
-            if excluded_name in self.absorb_to_layer[layer_norm][0]: # pragma: no cover
-                continue
 
             layer_0_name = self.absorb_to_layer[layer_norm][0]
 
@@ -128,7 +115,7 @@ class TEQuantizer:
                 set_module(self.model, layer_name, wrapper_module)
 
         for n, m in self.model.named_modules():
-            if isinstance(m, torch.nn.Linear) and excluded_name not in n and "orig_layer" not in n:
+            if isinstance(m, torch.nn.Linear) and "orig_layer" not in n:
                 if self.weight_config.get(n) is None:
                     logger.info(f"out of absorbed layer {n} not in weight config, skip.")
                     continue
@@ -304,27 +291,22 @@ class TEQuantizer:
         return None
 
     @torch.no_grad()
-    def quantize(self, quant_lm_head=False):
+    def quantize(self):
         """
         quantization
         """
 
         for n, m in self.model.named_modules():
-            if self.weight_config.get(n) is None:
+            if self.weight_config.get(n) is None: # pragma: no cover
+                logger.info(f"quantize layer {n} not in weight config, skip.")
                 continue
             num_bits = self.weight_config[n]["bits"]
             group_size = self.weight_config[n]["group_size"]
             scheme = self.weight_config[n]["scheme"]
-            if quant_lm_head:
-                if isinstance(m, torch.nn.Linear):
-                    m.weight.data.copy_(
-                            quant_weight(m.weight, num_bits=num_bits,
-                                group_size=group_size, scheme=scheme))
-            else:
-                if isinstance(m, torch.nn.Linear) and "lm_head" not in n:
-                    m.weight.data.copy_(
-                            quant_weight(m.weight, num_bits=num_bits,
-                                group_size=group_size, scheme=scheme))
+            if isinstance(m, torch.nn.Linear): # pragma: no cover
+                m.weight.data.copy_(
+                        quant_weight(m.weight, num_bits=num_bits,
+                            group_size=group_size, scheme=scheme))
 
     def save(self, save_scale_file="", save_state_dict_file=""):
         """
