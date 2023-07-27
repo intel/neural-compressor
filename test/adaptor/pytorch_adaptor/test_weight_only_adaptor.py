@@ -272,9 +272,11 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         input = (torch.ones([1, 512], dtype=torch.long))
         dataloader = gptq_inc_loader()
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
+        q_model.save('saved')
         out1 = q_model.model(*input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(*input)
+        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
         print("GPTQ Done")
 
