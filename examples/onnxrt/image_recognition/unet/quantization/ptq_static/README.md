@@ -25,7 +25,7 @@ python convert_stable_diffusion_checkpoint_to_onnx.py --model_path "CompVis/stab
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --output_model=path/to/save
 ```
 

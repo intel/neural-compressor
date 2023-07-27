@@ -29,7 +29,7 @@ Download dataset [MS COCO 2017 dataset](https://cocodataset.org/#download).
 Quantize model with QLinearOps:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --dataset_location=path/to/val2017/ \
                    --label_path=/path/to/instances_val2017.json \
                    --output_model=path/to/save
@@ -38,7 +38,7 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 Quantize model with QDQ mode:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --dataset_location=path/to/val2017/ \
                    --label_path=/path/to/instances_val2017.json \
                    --output_model=path/to/save \

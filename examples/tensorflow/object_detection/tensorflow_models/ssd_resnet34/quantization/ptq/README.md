@@ -98,7 +98,7 @@ config = PostTrainingQuantConfig(
   
   ```shell
   # The cmd of running ssd_resnet34
-  bash run_tuning.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
+  bash run_quant.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
   ```
 
 ## 2. Benchmark
