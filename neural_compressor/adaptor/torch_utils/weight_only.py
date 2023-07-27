@@ -299,7 +299,10 @@ def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
     for k, v in quantization_data.items():
         gptq_config[k] = {}
         gptq_config[k]['scale'] = v.scale
-        gptq_config[k]['zero'] = v.zero # TODO: remove zero when sym
+        # remove zero when sym
+        if k in weight_config and not weight_config[k]['sym'] or \
+          'sym' in weight_config and not weight_config['sym']:
+            gptq_config[k]['zero'] = v.zero
         if k in quantization_perm:
             gptq_config[k]['perm'] = quantization_perm[k]
     logger.info("GPTQ quantizing done.")
