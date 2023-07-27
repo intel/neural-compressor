@@ -725,9 +725,11 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
     for i in range(leng):
         int_weight_tmp = weight[:, i*group_size: (i+1)*group_size] / scale[:, i].unsqueeze(1)
         if zp is not None:
-            int_weight_tmp += zp
+            int_weight_tmp += zp[:, i].unsqueeze(1)
         int_weight[:, i*group_size: (i+1)*group_size] = int_weight_tmp
     if tail_flag:
         int_weight_tmp = weight[:, leng*group_size:] / scale[:, -1].unsqueeze(1)
         int_weight[:, leng*group_size:]  = int_weight_tmp
+        if zp is not None:
+            int_weight_tmp += zp[:, -1].unsqueeze(1)
     return int_weight
