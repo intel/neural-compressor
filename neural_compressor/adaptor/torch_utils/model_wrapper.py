@@ -362,7 +362,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def forward(self, input):
         weight = self.recover()
-        input = input.type(weight.dtype)
+        input = input.type(weight.dtype).to(weight.device)
         return F.linear(input, weight, self.bias)
 
     def extra_repr(self) -> str:
