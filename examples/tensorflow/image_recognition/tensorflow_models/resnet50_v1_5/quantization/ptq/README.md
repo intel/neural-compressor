@@ -102,7 +102,7 @@ config = BenchmarkConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/resnet50_v1.pb \
+  bash run_quant.sh --input_model=/PATH/TO/resnet50_v1.pb \
       --output_model=./nc_resnet50_v1_5.pb --dataset_location=/path/to/ImageNet/
   ```
 

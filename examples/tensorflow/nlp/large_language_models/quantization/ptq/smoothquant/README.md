@@ -27,7 +27,7 @@ python main.py --model_name_or_path <MODEL_NAME>
 ### Smooth quant
 
 ```shell
-bash run_tuning.sh --input_model=<MODEL_NAME>
+bash run_quant.sh --input_model=<MODEL_NAME>
 ```
 
 Or you can use

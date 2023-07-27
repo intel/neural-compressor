@@ -179,7 +179,7 @@ See the [tensorflow.py](https://github.com/intel/neural-compressor/tree/master/n
 2. Run tuning:
 
    ```shell
-   bash run_tuning.sh --topology=inception_v3 --dataset_location=<imagenet> \
+   bash run_quant.sh --topology=inception_v3 --dataset_location=<imagenet> \
             --input_model=./inceptionv3_fp32_pretrained_model.pb --output_model=./nc_inceptionv3.pb  --config=./inceptionv3_dump_tensor.yaml 
    ```
 

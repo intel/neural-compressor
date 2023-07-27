@@ -36,7 +36,7 @@ Download [MS COCO 2017 dataset](https://cocodataset.org/#download).
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
                    --dataset_location=path/to/val2017 \
                    --quant_format="QOperator"
@@ -45,7 +45,7 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 Static quantization with QDQ format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
                    --dataset_location=path/to/val2017 \
                    --quant_format="QDQ"

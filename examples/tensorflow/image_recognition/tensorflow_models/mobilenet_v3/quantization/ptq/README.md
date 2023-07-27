@@ -106,7 +106,7 @@ config = BenchmarkConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v3/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/v3-large_224_1.0_float.pb \
+  bash run_quant.sh --input_model=/PATH/TO/v3-large_224_1.0_float.pb \
       --output_model=./nc_mobilenet_v3.pb --dataset_location=/path/to/ImageNet/
   ```
 

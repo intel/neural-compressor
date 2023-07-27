@@ -32,7 +32,7 @@ bash download_weights.sh
 
 ## Tune
 ```bash
-bash run_tuning.sh --input_model=weights/yolov3.weights  --dataset_location=coco
+bash run_quant.sh --input_model=weights/yolov3.weights  --dataset_location=coco
 ```
 ## Benchmark
 ```

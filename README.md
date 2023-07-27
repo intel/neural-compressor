@@ -138,11 +138,10 @@ q_model = fit(
 > More documentations can be found at [User Guide](./docs/source/user_guide.md).
 
 ## Selected Publications/Events
+* Post on Social Media: [ONNXCommunityMeetup2023: INT8 Quantization for Large Language Models with Intel Neural Compressor](https://www.youtube.com/watch?v=luYBWA1Q5pQ)  (July 2023)
+* Blog by Intel: [Accelerate Llama 2 with Intel AI Hardware and Software Optimizations](https://www.intel.com/content/www/us/en/developer/articles/news/llama2.html) (July 2023)
 * Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
 * Blog by MSFT: [Automate optimization techniques for transformer models](https://cloudblogs.microsoft.com/opensource/2023/06/26/automate-optimization-techniques-for-transformer-models/) (June 2023)
-* Post on Social Media: [Get Started Post-Training Dynamic Quantization | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=5xHKe4wWLes&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=4) (June 2023)
-* Post on Social Media: [How to Choose AI Model Quantization Techniques | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=ie3w_j0Ntsk) (June 2023)
-* Post on Social Media: [What is AI Model Optimization | AI Model Optimization with Intel® Neural Compressor | Intel Software](https://www.youtube.com/watch?v=m2LokuUdeVg&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=2) (June 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 

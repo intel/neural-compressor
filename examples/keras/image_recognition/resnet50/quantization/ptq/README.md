@@ -48,7 +48,7 @@ python prepare_model.py --output_model=/path/to/model
 # Run Command
 ## 1 Tune
   ```shell
-  bash run_tuning.sh --input_model=./resnet50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./resnet50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
 ## Benchmark

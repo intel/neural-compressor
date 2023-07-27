@@ -88,7 +88,7 @@ config = PostTrainingQuantConfig(
 
 ## Quantization
   ```shell
-  bash run_tuning.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
+  bash run_quant.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
   ```
 ## Benchmark
   ```shell

@@ -39,7 +39,7 @@ tar -xvzf caffe_ilsvrc12.tar.gz val.txt
 Quantize model with QLinearOps:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/imagenet \
                    --label_path=/path/to/val.txt \
                    --output_model=path/to/save
@@ -48,7 +48,7 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
 Quantize model with QDQ mode:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/imagenet \
                    --label_path=/path/to/val.txt \
                    --output_model=path/to/save \

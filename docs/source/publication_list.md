@@ -1,6 +1,8 @@
-Full Publications/Events (68)
+Full Publications/Events (70)
 ==========
-## 2023 (15)
+## 2023 (17)
+* Post on Social Media: [ONNXCommunityMeetup2023: INT8 Quantization for Large Language Models with Intel Neural Compressor](https://www.youtube.com/watch?v=luYBWA1Q5pQ)  (July 2023)
+* Blog by Intel: [Accelerate Llama 2 with Intel AI Hardware and Software Optimizations](https://www.intel.com/content/www/us/en/developer/articles/news/llama2.html) (July 2023)
 * Blog on Medium: [Model quantization diagnosis with Neural Insights](https://medium.com/@NeuralCompressor/model-quantization-diagnosis-with-neural-insights-8117033fba43) (July 2023)
 * Blog on Medium: [Simplify Your Custom Chatbot Deployment](https://medium.com/intel-analytics-software/simplify-your-custom-chatbot-deployment-on-intel-platforms-c8a911d906cf) (June 2023)
 * Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
