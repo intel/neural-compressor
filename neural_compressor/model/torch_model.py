@@ -442,6 +442,7 @@ class PyTorchModel(PyTorchBaseModel):
                     fp32_weight = m.weight.data[:, gptq_conf['perm']]
                     gptq_perm = torch.tensor(gptq_conf['perm'])
                 else:
+                    fp32_weight = m.weight.data
                     gptq_perm = None
                 gptq_scale = torch.tensor(gptq_conf['scale'])
                 gptq_zp = None if scheme == 'sym' else torch.tensor(gptq_conf['zero'])
