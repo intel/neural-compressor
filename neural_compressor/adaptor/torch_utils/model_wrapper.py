@@ -225,6 +225,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.gptq_perm = None
 
     def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
+        device = int_weight.device
         if bias is not None:
             assert hasattr(self, 'bias'), "bias is not set when initializing."
             self.bias = bias.type(self.float_type)
@@ -239,7 +240,7 @@ class WeightOnlyLinear(torch.nn.Module):
         origin_shape = int_weight.shape
         target_shape = self.packed_weight.shape
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
 
         # pack weight
         for i in range(target_shape[0]):
