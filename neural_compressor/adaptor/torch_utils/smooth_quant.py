@@ -623,8 +623,9 @@ class TorchSmoothQuant:
                 input_max_op[layer_key] = input_maxes[layer_key_]
                 loss_alpha = {}
                 for alpha in alpha_space:
-                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
-                                                                                              input_max_op, alpha, tuning=True)
+                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
+                        absorb_to_layer_sample,input_max_op, alpha, tuning=True
+                    )
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
                     input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
                                                                 self.absorb_scales_info[absorb_key])

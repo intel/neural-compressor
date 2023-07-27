@@ -1695,6 +1695,7 @@ class TensorFlowAdaptor(Adaptor):
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
             record_max_info: whether record the max info in model for alpha tuning.
+
         Returns:
             model: A smoothed Tensorflow model
         """
