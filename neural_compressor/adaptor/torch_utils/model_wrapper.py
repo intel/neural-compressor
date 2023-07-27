@@ -285,6 +285,7 @@ class WeightOnlyLinear(torch.nn.Module):
             weight_dtype = torch.int8
         # unpack weight
         weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
+        self.scale = self.scale.to(device)
         packed_weight = self.packed_weight
         if self.compression_dim == 0:
             weight = weight.T
@@ -368,6 +369,8 @@ class WeightOnlyLinear(torch.nn.Module):
     def forward(self, input):
         weight = self.recover(device=input.device)
         input = input.type(weight.dtype)
+        if self.bias is not None:
+            self.bias = self.bias.to(input.device)
         return F.linear(input, weight, self.bias)
 
     def extra_repr(self) -> str:
