@@ -10,6 +10,7 @@ import onnx
 logger = logging.getLogger(__name__)
 
 def load_dataset_from_local(file_path, model_name_or_path):
+    """Load the raw data from local."""
     import json
     import torch
 
@@ -25,6 +26,7 @@ def load_dataset_from_local(file_path, model_name_or_path):
 
     texts, labels = read_data(file_path)
 
+    # tokenize the raw data
     from transformers import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
@@ -66,11 +68,13 @@ class ONNXRTDataset:
 
 
 def get_dataloader(ort_model_path, dataset):
+    """Create INC ORT dataloader."""
     dataloader = ONNXRTDataset(ort_model_path, dataset)
     return dataloader
 
 
 def main():
+    # parse args
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data_path",
@@ -118,14 +122,8 @@ def main():
     dataloader = INC_DataLoader(
         framework="onnxruntime", dataset=ort_dataset, batch_size=args.batch_size
     )
-    # TODO RBM
-    accuracy = [0.6541]
 
-    def eval_func(model, *args):
-        # if len(accuracy) > 0:
-        #     res = accuracy.pop(0)
-        #     return res
-
+    def eval_func(model):
         session = ort.InferenceSession(
             model.SerializeToString(), providers=ort.get_available_providers()
         )
@@ -159,7 +157,8 @@ def main():
         print(acc)
 
         return acc
-
+    
+    # tune
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig, quantization
         from onnxruntime.transformers import optimizer
@@ -206,7 +205,8 @@ def main():
             calib_dataloader=dataloader,
         )
         q_model.save(args.output_model)
-
+    
+    # benchmark
     if args.benchmark:
         import onnx
         import onnxruntime as ort
