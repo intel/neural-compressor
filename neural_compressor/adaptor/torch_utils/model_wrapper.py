@@ -247,15 +247,14 @@ class WeightOnlyLinear(torch.nn.Module):
         mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
 
         # pack weight
-        for i in range(target_shape[0]):
-            for j in range(target_shape[1]):
-                start = self.n_pack * j
-                end = self.n_pack * (j + 1)
-                tmp = int_weight[i][start: end].type(self.compressed_dtype)
-                for e in range(len(tmp)):
-                    tmp[e] &= mask
-                    tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
-                    self.packed_weight[i][j] |= tmp[e]
+        for j in range(target_shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = int_weight[:, start: end].type(self.compressed_dtype)
+            for e in range(self.n_pack):
+                tmp[:, e] &= mask
+                tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
+                self.packed_weight[:, j] |= tmp[:, e]
         if self.compression_dim == 0:
             self.packed_weight = self.packed_weight.T
 
@@ -265,15 +264,14 @@ class WeightOnlyLinear(torch.nn.Module):
                 self.packed_zp = self.packed_zp.T
             assert hasattr(self, 'packed_zp'), "zp is not set when initializing."
             target_shape = self.packed_zp.shape
-            for i in range(target_shape[0]):
-                for j in range(target_shape[1]):
-                    start = self.n_pack * j
-                    end = self.n_pack * (j + 1)
-                    tmp = zp[i][start: end].type(self.compressed_dtype)
-                    for e in range(len(tmp)):
-                        tmp[e] &= mask
-                        tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
-                        self.packed_zp[i][j] |= tmp[e]
+            for j in range(target_shape[1]):
+                start = self.n_pack * j
+                end = self.n_pack * (j + 1)
+                tmp = zp[:, start: end].type(self.compressed_dtype)
+                for e in range(self.n_pack):
+                    tmp[:, e] &= mask
+                    tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
+                    self.packed_zp[:, j] |= tmp[e]
             if self.compression_dim == 0:
                 self.packed_zp = self.packed_zp.T
 
@@ -291,18 +289,17 @@ class WeightOnlyLinear(torch.nn.Module):
             self.packed_weight = self.packed_weight.T
         origin_shape = weight.shape
         target_shape = self.packed_weight.shape
-        for i in range(target_shape[0]):
-            for j in range(target_shape[1]):
-                for e in range(self.n_pack):
-                    index = j * self.n_pack + e
-                    if index >= origin_shape[1]:
-                        continue
-                    tmp = self.packed_weight[i][j]
-                    tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
-                    tmp = tmp >> self.compress_bits - self.bits
-                    if weight_dtype == torch.uint8:
-                        tmp &= mask # remove sign bit
-                    weight[i][index] = tmp.type(weight_dtype)
+        for j in range(target_shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                if index >= origin_shape[1]:
+                    continue
+                tmp = self.packed_weight[:, j]
+                tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
+                tmp = tmp >> self.compress_bits - self.bits
+                if weight_dtype == torch.uint8:
+                    tmp &= mask # remove sign bit
+                weight[:, index] = tmp.type(weight_dtype)
         if self.compression_dim == 0:
             weight = weight.T
         # unpack zero_point
@@ -314,17 +311,16 @@ class WeightOnlyLinear(torch.nn.Module):
             zp = torch.zeros(self.scale.shape, dtype=zp_dtype).to(device)
             origin_shape = zp.shape
             target_shape = self.packed_zp.shape
-            for i in range(target_shape[0]):
-                for j in range(target_shape[1]):
-                    for e in range(self.n_pack):
-                        index = j * self.n_pack + e
-                        if index >= origin_shape[1]:
-                            continue
-                        tmp = self.packed_zp[i][j]
-                        tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
-                        tmp = tmp >> self.compress_bits - self.bits
-                        tmp &= mask
-                        zp[i][index] = tmp.type(zp_dtype)
+            for j in range(target_shape[1]):
+                for e in range(self.n_pack):
+                    index = j * self.n_pack + e
+                    if index >= origin_shape[1]:
+                        continue
+                    tmp = self.packed_zp[:, j]
+                    tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
+                    tmp = tmp >> self.compress_bits - self.bits
+                    tmp &= mask
+                    zp[:, index] = tmp.type(zp_dtype)
             if self.compression_dim == 0:
                 zp = zp.T
             # recover fp32 weight with int_weight, scale, and zero_point
