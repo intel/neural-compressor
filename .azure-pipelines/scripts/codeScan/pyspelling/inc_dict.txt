@@ -2698,3 +2698,7 @@ Vanhoucke
 ONNXCommunityMeetup
 luYBWA
 pQ
+xgb
+xgboost
+hpo
+HPO
