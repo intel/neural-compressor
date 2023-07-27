@@ -101,6 +101,7 @@
 <li><p><a class="reference external" href="#get-started-with-pruning-api">Get Started With Pruning API</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 <li><p><a class="reference external" href="#sparse-model-deployment">Sparse Model Deployment</a></p></li>
+<li><p><a class="reference external" href="#pruning-with-hyperparameter-optimization">Pruning With HPO</a></p></li>
 <li><p><a class="reference external" href="#reference">Reference</a></p></li>
 </ol>
 <section id="introduction">
@@ -137,7 +138,7 @@
     <img src="imgs/pruning/pruning_patterns.jpg" width=680 height=145 alt="Sparsity Pattern">
 </a>
 </div><ul>
-<li><p>Multi-head Attention Pruning (Work in progress)</p>
+<li><p>Multi-head Attention Pruning</p>
 <p>Multi-head attention mechanism boosts transformer models’ capability of contextual information analysis. However, different heads’ contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. <strong>We haven’t support it in pruning, but we have provided experimental feature in Model Auto Slim</strong>. Please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim">multi-head attention auto slim examples</a></p>
 </li>
 </ul>
@@ -373,6 +374,11 @@ Users can pass the customized training/evaluation functions to <code class="docu
 <section id="sparse-model-deployment">
 <h2>Sparse Model Deployment<a class="headerlink" href="#sparse-model-deployment" title="Permalink to this heading"></a></h2>
 <p>Particular hardware/software like <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformer</a> are required to obtain inference speed and footprints’ optimization for most sparse models. However, using <a class="reference external" href="#click">model slim</a> for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)</p>
+</section>
+<section id="pruning-with-hyperparameter-optimization">
+<h2>Pruning with Hyperparameter Optimization<a class="headerlink" href="#pruning-with-hyperparameter-optimization" title="Permalink to this heading"></a></h2>
+<p>Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO.
+For more details, please refer to <a class="reference external" href="../../neural_compressor/compression/hpo/README">HPO document</a></p>
 </section>
 <section id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>

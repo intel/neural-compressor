@@ -25,6 +25,7 @@ Classes
    neural_compressor.config.PostTrainingQuantConfig
    neural_compressor.config.QuantizationAwareTrainingConfig
    neural_compressor.config.WeightPruningConfig
+   neural_compressor.config.HPOConfig
    neural_compressor.config.KnowledgeDistillationLossConfig
    neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig
    neural_compressor.config.SelfKnowledgeDistillationLossConfig
@@ -436,6 +437,23 @@ Classes
    prune = Pruning(config)
    prune.update_config(start_step=1, end_step=10)
    prune.model = self.model
+
+
+.. py:class:: HPOConfig(search_space, searcher='xgb', higher_is_better=True, loss_type='reg', min_train_samples=10, seed=42)
+
+
+   Config class for hyperparameter optimization.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+   :param searcher: The name of search algorithms, currently support: grid, random, bo and xgb.
+   :type searcher: str
+   :param higher_is_better: This flag indicates whether the metric higher is the better.
+   :type higher_is_better: bool, optional
+   :param min_train_sample: The min number of samples to start training the search model.
+   :type min_train_sample: int, optional
+   :param seed: Random seed.
+   :type seed: int, optional
 
 
 .. py:class:: KnowledgeDistillationLossConfig(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5])
