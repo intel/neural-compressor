@@ -204,6 +204,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
 
         self._resume = resume
         self._initial_adaptor()
+        self.calib_sampling_size_lst, self.calib_iter = self._get_calib_iter()
         # A algo scheduler for algos that were applied before tuning, such as sq.
         self._pre_tuning_algo_scheduler = None
         if self._resume is not None: self.setup_resume(resume)
@@ -331,8 +332,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # reuse the calibration iteration
         algo_scheduler.dataloader = self.calib_dataloader
         algo_scheduler.origin_model = self.model
-        # TODO update the calib_iter
-        algo_scheduler.calib_iter = 1
+        algo_scheduler.calib_iter = self.calib_iter[0] if isinstance(self.calib_iter, list) else self.calib_iter
         algo_scheduler.adaptor = self.adaptor
         return algo_scheduler
 
@@ -1253,7 +1253,19 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             if recipe_name not in tune_cfg['recipe_cfgs']:
                 tune_cfg['recipe_cfgs'][recipe_name] = recipe_val
         return tune_cfg
-
+    
+    def _get_calib_iter(self):
+        calib_sampling_size_lst = self.config.calibration_sampling_size
+        calib_sampling_size_lst = [int(calib_sampling_size) for calib_sampling_size in calib_sampling_size_lst]
+        if self.calib_dataloader:
+            # For the accelerate's DataLoaderShard, use total_batch_size instead of batch_size
+            bs = getattr(self.calib_dataloader, 'batch_size') or getattr(self.calib_dataloader, 'total_batch_size')
+            assert bs > 0, f"Calibration dataloader's batch size should be greater than one but got {bs}"
+            calib_iter = [math.ceil(int(x) / bs) for x in calib_sampling_size_lst]
+        else:
+            calib_iter = 1
+        return calib_sampling_size_lst, calib_iter
+            
     def build_tuning_space(self, config):
         """Create the tuning space.
 
@@ -1262,18 +1274,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         Args:
             config: The Conf class instance includes all user configurations.
         """
-        calib_sampling_size_lst = self.config.calibration_sampling_size
-        calib_sampling_size_lst = [int(calib_sampling_size) for calib_sampling_size in calib_sampling_size_lst]
-        if self.calib_dataloader:
-            # For the accelerate's DataLoaderShard, use total_batch_size instead of batch_size
-            bs = getattr(self.calib_dataloader, 'batch_size') or getattr(self.calib_dataloader, 'total_batch_size')
-            assert bs > 0, f"Calibration dataloader's batch size should be greater than one but got {bs}"
-            self.calib_iter = [math.ceil(int(x) / bs) for x in calib_sampling_size_lst]
-        else:
-            self.calib_iter = 1
         # create tuning space
         adaptor_cap = {
-            'calib': {'calib_sampling_size': calib_sampling_size_lst},
+            'calib': {'calib_sampling_size': self.calib_sampling_size_lst},
             'op': self.capability['opwise']
         }
         tuning_space = TuningSpace(adaptor_cap, conf=config, framework=self.framework)
