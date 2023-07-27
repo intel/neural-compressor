@@ -292,8 +292,8 @@ class WeightOnlyLinear(torch.nn.Module):
                     if index >= origin_shape[1]:
                         continue
                     tmp = self.packed_weight[i][j]
-                    tmp = tmp << 32 - self.bits * (self.n_pack - e)
-                    tmp = tmp >> 32 - self.bits
+                    tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
+                    tmp = tmp >> self.compress_bits - self.bits
                     if weight_dtype == torch.uint8:
                         tmp &= mask # remove sign bit
                     weight[i][index] = tmp.type(weight_dtype)
@@ -315,8 +315,8 @@ class WeightOnlyLinear(torch.nn.Module):
                         if index >= origin_shape[1]:
                             continue
                         tmp = self.packed_zp[i][j]
-                        tmp = tmp << 32 - self.bits * (self.n_pack - e)
-                        tmp = tmp >> 32 - self.bits
+                        tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
+                        tmp = tmp >> self.compress_bits - self.bits
                         tmp &= mask
                         zp[i][index] = tmp.type(zp_dtype)
             if self.compression_dim == 0:
@@ -362,6 +362,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def forward(self, input):
         weight = self.recover()
+        input = input.type(weight.dtype)
         return F.linear(input, weight, self.bias)
 
     def extra_repr(self) -> str:
