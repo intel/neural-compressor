@@ -717,6 +717,9 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
     Returns:
         output: int weight.
     """
+    device = weight.device
+    scale = scale.to(device)
+    zp = zp.to(device)
     if group_size == -1:
         return torch.round(weight/scale) if zp is None else torch.round(weight/scale + zp)
     int_weight = torch.zeros(weight.shape)

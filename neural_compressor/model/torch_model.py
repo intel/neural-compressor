@@ -418,6 +418,7 @@ class PyTorchModel(PyTorchBaseModel):
         from ..adaptor.torch_utils.weight_only import rtn_quantize, quant_weight_w_scale
         from ..adaptor.torch_utils.util import collect_weight_info
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
+        device = self.model.device
         if qweight_config_path is not None:
             with open(qweight_config_path, 'r') as f:
                 weight_config = json.load(f)
@@ -455,7 +456,7 @@ class PyTorchModel(PyTorchBaseModel):
                     compression_dtype=compression_dtype, 
                     compression_dim=compression_dim, 
                     scale_dtype=scale_dtype, 
-                )
+                ).to(device)
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
         else:
