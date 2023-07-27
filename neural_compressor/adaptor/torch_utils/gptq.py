@@ -177,7 +177,7 @@ class GPTQuantizer(object):
         else:
             self.dataloader = dataloader
         self.nsamples = len(self.dataloader)
-        self.device = torch.device('cuda:0')
+        self.device = model.device
         self.is_ready = False
 
         self.use_cache = self.model.config.use_cache
@@ -207,14 +207,27 @@ class GPTQuantizer(object):
 
     def check_layer_config(self):
         """Copy arguments from weight_config to build-in attributes."""
-        for layer_name, config in self.weight_config.items():
-            self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
-            self.weight_config[layer_name]['group_size'] = config.get('group_size', self.group_size_default)
-            self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
-            self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
-            self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
-            self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
-            self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
+        if 'wbits' in self.weight_config:
+            tmp_weight_config = {}
+            for name, module in self.model.named_modules():
+                tmp_weight_config[name] = {}
+                tmp_weight_config[name]['wbits'] = self.weight_config.get('wbits', self.wbits_default)
+                tmp_weight_config[name]['group_size'] = self.weight_config.get('group_size', self.group_size_default)
+                tmp_weight_config[name]['percdamp'] = self.weight_config.get('pecdamp', self.percdamp_default)
+                tmp_weight_config[name]['sym'] = self.weight_config.get('sym', self.sym_default)
+                tmp_weight_config[name]['actorder'] = self.weight_config.get('actorder', self.actorder_default)
+                tmp_weight_config[name]['perchannel'] = self.weight_config.get('perchannel', self.perchannel_default)
+                tmp_weight_config[name]['mse'] = self.weight_config.get('mse', self.mse_default)
+            self.weight_config = tmp_weight_config
+        else:
+            for layer_name, config in self.weight_config.items():
+                self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
+                self.weight_config[layer_name]['group_size'] = config.get('group_size', self.group_size_default)
+                self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
+                self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
+                self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
+                self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
+                self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
@@ -286,7 +299,8 @@ class GPTQuantizer(object):
                 # filter sub_layers with included layer_names in self.weight_config
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 if self.weight_config.get(full_layer_name, None) == None:
-                    logger.warning(f"{full_layer_name} can be quantized but is excluded from your quantization configs.")
+                    logger.warning(f"{full_layer_name} can be quantized but " + \
+                                    "is excluded from your quantization configs.")
                     continue
                 else:
                     sub_layers_to_quant[layer_name] = layer_obj
@@ -296,7 +310,9 @@ class GPTQuantizer(object):
             gptq_for_this_block = {}
             # initialize gptq quantizer for every layer in a transformer block
             for layer_name in sub_layers:
-                weight_config_this_layer = self.weight_config.get(self.get_full_layer_name(layer_name, block_idx), None)
+                weight_config_this_layer = self.weight_config.get(
+                    self.get_full_layer_name(layer_name, block_idx), None
+                )
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 #gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(
@@ -321,7 +337,9 @@ class GPTQuantizer(object):
                 h.remove()
             # Step 2.4: everything is prepared, so start quantization!
             for layer_name in sub_layers:
-                weight_config_this_layer = self.weight_config.get(self.get_full_layer_name(layer_name, block_idx), None)
+                weight_config_this_layer = self.weight_config.get(
+                    self.get_full_layer_name(layer_name, block_idx), None
+                )
                 logger.info(f"Quantizing layer {layer_name}")
                 gptq_for_this_block[layer_name].fasterquant(
                     percdamp = weight_config_this_layer['percdamp'], 
@@ -329,8 +347,10 @@ class GPTQuantizer(object):
                     actorder = weight_config_this_layer['actorder'],
                 )
                 if weight_config_this_layer['actorder']: # save perm for restoring the weights
-                    quantizers_perm[self.get_full_layer_name(layer_name, block_idx)] = gptq_for_this_block[layer_name].perm
-                quantizers['%s.%d.%s' % (self.gptq_related_blocks['transformers_name'], block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
+                    quantizers_perm[self.get_full_layer_name(layer_name, block_idx)] = \
+                                                                gptq_for_this_block[layer_name].perm
+                tmp = '%s.%d.%s' % (self.gptq_related_blocks['transformers_name'], block_idx, layer_name)
+                quantizers[tmp] = gptq_for_this_block[layer_name].quantizer
                 gptq_for_this_block[layer_name].free()
             
             # Step 2.5: replace output data with quantized weights
