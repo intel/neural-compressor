@@ -156,7 +156,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, bits, groupsize, 
                  zp=False, bias=False, scale_dtype=torch.float32, 
                  compression_dtype=torch.int32, compression_dim=1,
-                 gptq_perm=False):
+                 gptq_perm=False, device='cpu'):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -178,7 +178,7 @@ class WeightOnlyLinear(torch.nn.Module):
             torch.zeros(
                 (out_features, math.ceil(in_features / self.groupsize)), 
                 dtype=self.float_type,
-            )
+            ).to(device)
         )
         if compression_dim == 1:
             self.register_buffer(
@@ -186,7 +186,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 torch.zeros(
                     (out_features, math.ceil(in_features / self.n_pack)), 
                     dtype=self.compressed_dtype,
-                )
+                ).to(device)
             )
             if zp:
                 self.register_buffer(
@@ -194,7 +194,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     torch.zeros(
                         (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)), 
                         dtype=self.compressed_dtype,
-                    )
+                    ).to(device)
                 )
         else:
             self.register_buffer(
@@ -202,7 +202,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 torch.zeros(
                     (math.ceil(out_features / self.n_pack), in_features), 
                     dtype=self.compressed_dtype,
-                )
+                ).to(device)
             )
             if zp:
                 self.register_buffer(
@@ -213,14 +213,18 @@ class WeightOnlyLinear(torch.nn.Module):
                             math.ceil(self.in_features / self.groupsize)
                         ), 
                         dtype=self.compressed_dtype,
-                    )
+                    ).to(device)
                 )
         if bias:
-            self.register_buffer('bias', torch.zeros(self.out_features, dtype=self.float_type))
+            self.register_buffer(
+                'bias', torch.zeros(self.out_features, dtype=self.float_type).to(device)
+            )
         else:
             self.bias = None
         if gptq_perm:
-            self.register_buffer('gptq_perm', torch.zeros(in_features, dtype=torch.int32))
+            self.register_buffer(
+                'gptq_perm', torch.zeros(in_features, dtype=torch.int32).to(device)
+            )
         else:
             self.gptq_perm = None
 

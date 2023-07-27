@@ -456,7 +456,8 @@ class PyTorchModel(PyTorchBaseModel):
                     compression_dtype=compression_dtype, 
                     compression_dim=compression_dim, 
                     scale_dtype=scale_dtype, 
-                ).to(device)
+                    device=device,
+                )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
         else:

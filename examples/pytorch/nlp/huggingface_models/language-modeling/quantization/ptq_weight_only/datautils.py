@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import datasets
 
-cache_dir = "/home/wenhuach/.cache/"
+cache_dir = "~/.cache/"
 
 def set_seed(seed):
     np.random.seed(seed)
