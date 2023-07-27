@@ -432,6 +432,7 @@ class PyTorchModel(PyTorchBaseModel):
             gptq_config = self.gptq_config if hasattr(self, 'gptq_config') else {}
         if gptq_config:
             for k, v in weight_config.items():
+                logger.debug(f"Compressing {k} on device {device}")
                 if v['dtype'] == 'fp32':
                     continue
                 else:
@@ -463,6 +464,7 @@ class PyTorchModel(PyTorchBaseModel):
                 set_module(self.model, k, new_module)
         else:
             for k, v in weight_config.items():
+                logger.debug(f"Compressing {k} on device {device}")
                 if v['dtype'] == 'fp32':
                     continue
                 else:
