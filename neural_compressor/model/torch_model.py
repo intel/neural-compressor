@@ -320,8 +320,9 @@ class PyTorchModel(PyTorchBaseModel):
                     with open(weight_config_path, 'w') as f:
                         json.dump(weight_config, f, indent = 4)
                     if hasattr(self, 'gptq_config') and self.gptq_config:
-                        gptq_config_path = os.path.join(root, "gptq_config.bin")
-                        torch.save(self.gptq_config, gptq_config_path)
+                        gptq_config_path = os.path.join(root, "gptq_config.json")
+                        with open(gptq_config_path, 'w') as f:
+                            json.dump(self.gptq_config, f, indent = 4)
                 else:
                     stat_dict['best_configure'] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
@@ -411,7 +412,7 @@ class PyTorchModel(PyTorchBaseModel):
                                                 1 is input channel. Defaults to 1.
             scale_dtype (torch.Tensor, optional): Use float32 or float16. 
                                                     Defaults to torch.float32.
-            gptq_config_path (str, optional): Path of gptq_config.bin. Defaults to None.
+            gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
         """
         from ..adaptor.torch_utils.util import fetch_module, set_module
         from ..adaptor.torch_utils.weight_only import rtn_quantize
@@ -423,7 +424,8 @@ class PyTorchModel(PyTorchBaseModel):
         else:
             weight_config = collect_weight_info(self.q_config)
         if gptq_config_path is not None:
-            gptq_config = torch.load(gptq_config_path)
+            with open(gptq_config_path, 'r') as f:
+                gptq_config = json.load(f)
         else:
             gptq_config = self.gptq_config if hasattr(self, 'gptq_config') else {}
         if gptq_config:
@@ -438,20 +440,24 @@ class PyTorchModel(PyTorchBaseModel):
                 gptq_conf = gptq_config[k]
                 if 'perm' in gptq_conf:
                     fp32_weight = m.weight.data[:, gptq_conf['perm']]
-                if scheme == 'sym':
-                    int_weight = fp32_weight / gptq_conf['scale']
-                    zp = None
+                    gptq_perm = torch.tensor(gptq_conf['perm'])
                 else:
-                    zp = gptq_conf['zero']
-                    int_weight = fp32_weight / gptq_conf['scale'] + zp
+                    gptq_perm = None
+                gptq_scale = torch.tensor(gptq_conf['scale'])
+                if scheme == 'sym':
+                    gptq_zp = None
+                    int_weight = fp32_weight / gptq_scale
+                else:
+                    gptq_zp = torch.tensor(gptq_conf['zero'])
+                    int_weight = fp32_weight / gptq_scale + gptq_zp
                 new_module = WeightOnlyLinear(
                     m.in_features, m.out_features, num_bits, group_size,
-                    zp=zp is not None, bias=m.bias is not None, 
+                    zp=gptq_zp is not None, bias=m.bias is not None, 
                     compression_dtype=compression_dtype, 
                     compression_dim=compression_dim, 
                     scale_dtype=scale_dtype, 
                 )
-                new_module.pack(int_weight, gptq_conf['scale'], zp, m.bias)
+                new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, m)
         else:
             for k, v in weight_config.items():

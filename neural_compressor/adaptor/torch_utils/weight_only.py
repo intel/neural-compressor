@@ -298,13 +298,13 @@ def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
     gptq_config = {}
     for k, v in quantization_data.items():
         gptq_config[k] = {}
-        gptq_config[k]['scale'] = v.scale
+        gptq_config[k]['scale'] = v.scale.tolist()
         # remove zero when sym
         if k in weight_config and not weight_config[k]['sym'] or \
           'sym' in weight_config and not weight_config['sym']:
-            gptq_config[k]['zero'] = v.zero
+            gptq_config[k]['zero'] = v.zero.tolist()
         if k in quantization_perm:
-            gptq_config[k]['perm'] = quantization_perm[k]
+            gptq_config[k]['perm'] = quantization_perm[k].tolist()
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
 
