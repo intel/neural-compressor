@@ -65,8 +65,8 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
-<a target="_blank" href="imgs/pruning/pruning.png">
-    <img src="imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
+<a target="_blank" href="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png">
+    <img src="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
 </a>
 </div>
 
@@ -91,7 +91,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
 
 
-  We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
+  We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
 
 - Unstructured Pruning
 
@@ -99,13 +99,13 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 
 <div align=center>
-<a target="_blank" href="imgs/pruning/Pruning_patterns.jpg">
-    <img src="imgs/pruning/pruning_patterns.jpg" width=680 height=145 alt="Sparsity Pattern">
+<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_patterns.jpg">
+    <img src="../../../docs/source/imgs/pruning/pruning_patterns.jpg" width=680 height=145 alt="Sparsity Pattern">
 </a>
 </div>
 
 
-- Multi-head Attention Pruning (Work in progress)
+- Multi-head Attention Pruning
 
   Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in Model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
 
@@ -140,8 +140,8 @@ Pruning Criteria determines how should the weights of a neural network are score
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 <div align=center>
-<a target="_blank" href="imgs/pruning/pruning_criteria.png">
-    <img src="imgs/pruning/pruning_criteria.png" width=340 height=170 alt="Pruning criteria">
+<a target="_blank" href="../../../docs/source/imgs/pruning/pruning_criteria.png">
+    <img src="../../../docs/source/imgs/pruning/pruning_criteria.png" width=340 height=170 alt="Pruning criteria">
 </a>
 </div>
 
@@ -159,7 +159,7 @@ Pruning type defines how the masks are generated and applied to a neural network
   Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
-      <a target="_blank" href="imgs/pruning/progressive_pruning.png">
+      <a target="_blank" href="../../../docs/source/imgs/pruning/progressive_pruning.png">
           <img src="imgs/pruning/progressive_pruning.png" alt="Architecture" width=700 height=250>
       </a>
   </div>
@@ -192,8 +192,8 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 
 <div align=center>
-<a target="_blank" href="imgs/pruning/Pruning_schedule.jpg">
-    <img src="imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
+<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
+    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -222,8 +222,8 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
 Growth rules for the sparsity of iterative pruning, "exp", "cos", "cube",  and "linear" are available，We use exp by default.
 <div align=center>
-<a target="_blank" href="imgs/pruning/sparsity_decay_type.png">
-    <img src="imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
+<a target="_blank" href="../../../docs/source/imgs/pruning/sparsity_decay_type.png">
+    <img src="../../../docs/source/imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
 </a>
 </div>
 
@@ -238,8 +238,8 @@ Regularization is a technique that discourages learning a more complex model and
   The main idea of Group Lasso is to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
-<a target="_blank" href="imgs/pruning/Regularization.jpg">
-    <img src="imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
+<a target="_blank" href="../../../docs/source/imgs/pruning/Regularization.jpg">
+    <img src="../../../docs/source/imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
 </a>
 </div>
 
@@ -354,8 +354,8 @@ The following section exemplifies how to use hooks in user pass-in training func
 The pruning technique  is validated on typical models across various domains (including CV and NLP).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="imgs/pruning/pruning_scatter.png">
-    <img src="imgs/pruning/pruning_scatter.png" alt="Architecture" width=685 height=300>
+  <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_scatter.png">
+    <img src="../../../docs/source/imgs/pruning/pruning_scatter.png" alt="Architecture" width=685 height=300>
   </a>
 </div>
 
@@ -363,25 +363,25 @@ The pruning technique  is validated on typical models across various domains (in
 
 - Text Classification
 
-  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
 
 - Question Answering
 
-  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
 - Language Translation (Experimental, sparsity 0.8, pattern 4x1, BLEU 25.63(dense) vs 24.35(sparse))
 
-  Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
+  Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
 
 - Object Detection (Experimental, sparsity 0.8, pattern 4x1, mAP 0.404(dense) vs 0.381(sparse))
 
-  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
+  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
 
 - Image Recognition (Experimental, sparsity 0.75, pattern 2x1, top1 acc 0.801(dense) vs 0.7895(sparse))
 
-  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
+  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
 
-Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more information.
+Please refer to [pruning examples](../../../examples/README.md#Pruning-1) for more information.
 
 ## Sparse Model Deployment
 
