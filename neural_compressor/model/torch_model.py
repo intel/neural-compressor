@@ -439,8 +439,8 @@ class PyTorchModel(PyTorchBaseModel):
                 m = fetch_module(self.model, k)
                 gptq_conf = gptq_config[k]
                 if 'perm' in gptq_conf:
-                    fp32_weight = m.weight.data[:, gptq_conf['perm']]
                     gptq_perm = torch.tensor(gptq_conf['perm'])
+                    fp32_weight = m.weight.data[:, gptq_perm]
                 else:
                     fp32_weight = m.weight.data
                     gptq_perm = None
@@ -457,7 +457,7 @@ class PyTorchModel(PyTorchBaseModel):
                     scale_dtype=scale_dtype, 
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
-                set_module(self.model, k, m)
+                set_module(self.model, k, new_module)
         else:
             for k, v in weight_config.items():
                 if v['dtype'] == 'fp32':
