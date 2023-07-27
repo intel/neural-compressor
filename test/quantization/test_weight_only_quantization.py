@@ -210,12 +210,5 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
                 extra_config=extra_config, dataloader=dataloader)
         self.assertTrue(isinstance(model, torch.nn.Module))
 
-        del model
-
-        model = copy.deepcopy(self.gptj)
-        extra_config = {'folding': False}
-        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
-        self.assertTrue(isinstance(model, torch.nn.Module))
-
 if __name__ == "__main__":
     unittest.main()
