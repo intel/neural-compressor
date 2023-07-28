@@ -273,7 +273,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 for e in range(self.n_pack):
                     tmp[:, e] &= mask
                     tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
-                    self.packed_zp[:, j] |= tmp[e]
+                    self.packed_zp[:, j] |= tmp[:, e]
             if self.compression_dim == 0:
                 self.packed_zp = self.packed_zp.T
 
