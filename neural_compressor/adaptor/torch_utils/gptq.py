@@ -158,7 +158,6 @@ class GPTQuantizer(object):
         self.model = model
 
         # weight config related
-        # import pdb;pdb.set_trace()
         self.weight_config = weight_config
         # default settings, check configs
         self.wbits_default = 4
@@ -171,7 +170,6 @@ class GPTQuantizer(object):
         self.check_layer_config()
 
         # data & device
-        # import pdb;pdb.set_trace()
         if hasattr(dataloader, "gptq_dataloader"):
             self.dataloader = dataloader.gptq_dataloader
         else:
@@ -186,7 +184,6 @@ class GPTQuantizer(object):
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
         # initialize buffers which are essential for gptq computation. 
-        # import pdb;pdb.set_trace()
         try:
             self.dtype = next(iter(self.model.parameters())).dtype
             self.inp = torch.zeros(
@@ -286,7 +283,6 @@ class GPTQuantizer(object):
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
-        # import pdb;pdb.set_trace()
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
             transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
