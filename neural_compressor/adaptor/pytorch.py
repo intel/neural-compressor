@@ -4589,39 +4589,89 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         logger.debug("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
-        if self.example_inputs is None:
+        if self.example_inputs is None: # pragma: no cover
             if dataloader is None:
                 assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
             try:
-                for idx, (input, label) in enumerate(dataloader):
-                    self.example_inputs = input
+                for idx, (x, label) in enumerate(dataloader):
+                    self.example_inputs = x.to(model.device)
                     break
             except:
-                for idx, input in enumerate(dataloader):
-                    self.example_inputs = input
+                for idx, x in enumerate(dataloader):
+                    self.example_inputs = x.to(model.device)
                     break
 
-        if 'teq_args' in self.recipes:
-            wbits = self.recipes.get('wbits', 4)
-            group_size = self.recipes.get('group_size', 128)
-            sym = self.recipes.get('scheme', False)
-            folding = self.recipes.get('folding', True)
+        folding = True
+        if 'teq_args' in self.recipes: # pragma: no cover
+            folding = self.recipes['teq_args'].get('folding', True)
+            
+        supported_layers = ['Linear']
+        if folding: # pragma: no cover
+            from .torch_utils.smooth_quant import GraphTrace
+            tg = GraphTrace()
+            absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
+            if absorb_to_layer is None or absorb_to_layer == {}:
+                logger.warning('No absorb layer is detected, skip TEQ algorithm')
+                return model
+        else: # pragma: no cover
+            absorb_to_layer = {}
+            for name, module in model.named_modules():
+                for op_type in supported_layers:
+                    if op_type == str(module.__class__.__name__):
+                        absorb_to_layer[name] = [name]
 
-        weight_config = {
-            'wbits': wbits,
-            'group_size': group_size,
-            'sym': sym,
-            'folding': folding
-        }
-        quantizer = teq_quantize(
+        # got flipped dict from absorb_to_layer dict
+        flipped_dict = {}
+        for k, v in absorb_to_layer.items():
+            for m in v:
+                flipped_dict[m] = {'absorb_layer': k}
+
+        # check tune_cfg to skip layers without TEQ config
+        weight_config = {}
+        skipped_op_name_set = set()
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32': # pragma: no cover
+                if op_name in flipped_dict:
+                    absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
+                continue
+            else:
+                weight_config[op_name] = {}
+                weight_config[op_name]['bits'] = config['weight']['bits']
+                weight_config[op_name]['group_size'] = config['weight']['group_size']
+                weight_config[op_name]['scheme'] = config['weight']['scheme']
+                if op_name in flipped_dict:
+                    algorithm = config['weight']['algorithm']
+                    if algorithm != 'TEQ':
+                        absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
+                else:
+                    skipped_op_name_set.add(op_name)
+        if skipped_op_name_set: # pragma: no cover
+            logger.info("{} is skipped by TEQ algorithm".format(skipped_op_name_set))
+
+        # collect TEQ config from tune_cfg for quantization.
+        if len(absorb_to_layer) == 0: # pragma: no cover
+            logger.warning('No absorb layer needs TEQ algorithim, skip it')
+        else: # pragma: no cover
+            logger.debug("**absorb layer**: **absorbed layers**")
+        for k, v in absorb_to_layer.items():
+            logger.debug(f"{k}: {v}")
+
+        logger.info("Absorbed layers with the same absorb layer use the same config")
+
+        extra_config = {"folding": folding}
+
+        model = teq_quantize(
             model,
             weight_config,
+            absorb_to_layer,
+            extra_config,
             dataloader,
             example_inputs=self.example_inputs,
             calib_func=calib_func
         )
-        return quantizer.model
-
+        return model
+                
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the AWQ algorithm")
         from .torch_utils.weight_only import awq_quantize

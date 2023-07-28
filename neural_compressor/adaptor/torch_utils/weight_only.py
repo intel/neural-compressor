@@ -661,7 +661,8 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     logger.info("AWQ quantization is done.")
     return model
 
-def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, example_inputs=None):
+def teq_quantize(model, weight_config={}, absorb_to_layer={}, extra_config={},
+        dataloader= None, calib_func=None, example_inputs=None):
     """Run weight-only quantization with """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     logger.info("TEQ quantizing start.")
@@ -678,7 +679,7 @@ def teq_quantize(model, weight_config={}, dataloader= None, calib_func=None, exa
                 break
 
     from .teq import TEQuantizer
-    teq_quantizer = TEQuantizer(model, weight_config, example_inputs)
+    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, extra_config, example_inputs)
 
     # 1. wrapper tuning scale to model
     teq_quantizer.add_tuning_scale()
