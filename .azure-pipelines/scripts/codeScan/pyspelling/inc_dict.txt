@@ -2690,6 +2690,8 @@ fba
 hostname
 qweight
 qconfig
+TEQ
+WeightOnlyLinear
 McKinstry
 Migacz
 MinMax
