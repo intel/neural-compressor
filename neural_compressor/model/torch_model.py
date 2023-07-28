@@ -455,6 +455,7 @@ class PyTorchModel(PyTorchBaseModel):
                 new_module = WeightOnlyLinear(
                     m.in_features, m.out_features, num_bits, group_size,
                     zp=gptq_zp is not None, bias=m.bias is not None, 
+                    gptq_perm=gptq_perm is not None,
                     compression_dtype=compression_dtype, 
                     compression_dim=compression_dim, 
                     scale_dtype=scale_dtype, 
