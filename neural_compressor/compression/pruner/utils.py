@@ -18,6 +18,7 @@
 
 import re
 import yaml
+import numpy as np
 from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
@@ -29,10 +30,12 @@ try:
     from neural_compressor.conf.config import Pruner
     LazyImport('torch.nn')
     torch = LazyImport('torch')
+    tf = LazyImport('tensorflow')
     F = LazyImport('torch.nn.functional')
 except:
     import torch
     import torch.nn.functional as F
+    import tensorflow as tf
     from .dot_dict import DotDict  ##TODO
     import logging
     logger = logging.getLogger(__name__)
@@ -122,6 +125,62 @@ def get_sparsity_ratio(pruners, model):
 
     for n, param in model.named_parameters():
         param_cnt += param.numel()
+    if linear_conv_cnt == 0:
+        blockwise_over_matmul_gemm_conv = 0
+        elementwise_over_matmul_gemm_conv = 0
+    else:
+        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+    if param_cnt == 0:
+        elementwise_over_all = 0
+    else:
+        elementwise_over_all = float(
+            element_sparsity_cnt) / param_cnt
+
+    logger.info(
+        f"elementwise_over_matmul_gemm_conv:{elementwise_over_matmul_gemm_conv},"
+        f" elementwise_over_all:{elementwise_over_all},"
+        f"blockwise_over_matmul_gemm_conv:{blockwise_over_matmul_gemm_conv}")
+
+    return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
+
+def get_sparsity_ratio_tf(pruners, model):
+    """Calculate sparsity ratio of a module/layer.
+
+    Returns:
+        Three floats.
+        elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+        elementwise_over_all refers to zero elements' ratio in all layers in the model.
+        blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+    """
+    pattern_sparsity_cnt = 0
+    element_sparsity_cnt = 0
+    if hasattr(model, 'model'):
+        model = model.model
+    for pruner in pruners:
+        modules = pruner.modules
+        sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+        cnt = 0
+        for key in modules.keys():
+            cnt += modules[key].get_weights()[0].size
+        pattern_sparsity_cnt += int(cnt * sparsity_ratio)
+        for key in pruner.masks.keys():
+            block_num = 1 
+            if pruner.pattern.block:
+                block_size = pruner.pattern.block_size[key]
+                block_num = block_size[0] * block_size[1]
+            element_sparsity_cnt += np.sum(pruner.masks[key] == 0) * block_num
+
+    linear_conv_cnt = 0
+    param_cnt = 0
+    for layer in model.layers:
+        if layer.__class__.__name__ in ["Dense"] or re.search(r'Conv.d', layer.__class__.__name__) != None:
+            linear_conv_cnt += layer.get_weights()[0].size
+
+    for layer in model.layers:
+        if bool(layer.weights):
+            weights = layer.get_weights()[0]   
+            param_cnt += weights.size
     if linear_conv_cnt == 0:
         blockwise_over_matmul_gemm_conv = 0
         elementwise_over_matmul_gemm_conv = 0
@@ -355,6 +414,7 @@ def process_and_check_config(val):
                              'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
                              'sparsity_decay_type': 'exp', "criterion_type": "snip_momentum",
                              'pruning_op_types': ['Conv', 'Linear'],
+                             'low_memory_usage': False
                              }
     default_local_config = {'resume_from_pruned_checkpoint': False, 'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
@@ -424,6 +484,19 @@ def parse_last_linear(model):
     layer = searcher.search(return_name=True)
     return layer
 
+def parse_last_linear_tf(model):
+    """Locate the last linear layers of the model.
+    While pruning, the final linear often acts like classifier head, which might cause
+    accuracy drop.
+
+    Args:
+        model(tf.keras.Model): The model to be pruned.
+    """
+    from .model_slim.pattern_analyzer import ClassifierHeadSearcherTF
+    searcher = ClassifierHeadSearcherTF(model)
+    layer = searcher.search(return_name=True)
+    return layer
+
 def parse_to_prune(config, model):
     """Keep target pruned layers.
 
@@ -449,6 +522,40 @@ def parse_to_prune(config, model):
                 if layer_type in type(module).__name__ and hasattr(module, "weight"):
                     modules[name] = module
                     break
+    ##remove not to prune layers
+    """Drop non-pruned layers."""
+    exclude_names = config["excluded_op_names"]
+    patterns = [re.compile(s) for s in exclude_names]
+    if len(patterns) <= 0:
+        return modules
+    new_modules = {}
+    for name in modules.keys():
+        if any([p.search(name) for p in patterns]):
+            continue
+        new_modules[name] = modules[name]
+    return new_modules
+
+def parse_to_prune_tf(config, model):
+    """Keep target pruned layers.
+
+    Args:
+        config(string): A string representing the path to the configuration file.
+        model(tf.keras.Model): The model to be pruned.
+    """
+    modules = {}
+    # additional function: exclude last layer (often a classifier head and not suitable to be pruned)
+    classifier_head_name = parse_last_linear_tf(model)
+    if classifier_head_name != None:
+        config["excluded_op_names"].append(classifier_head_name)
+    # locate target layers
+    if config["op_names"] == None or config["op_names"] == []:
+        config["op_names"] = [".*"]
+
+    for layer in model.layers:
+        for layer_type in config["pruning_op_types"]:
+            if layer_type in layer.__class__.__name__ and bool(layer.weights):
+                modules[layer.name] = layer
+
     ##remove not to prune layers
     """Drop non-pruned layers."""
     exclude_names = config["excluded_op_names"]

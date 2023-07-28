@@ -35,7 +35,7 @@ Please download FashionMNIST dataset(https://github.com/zalandoresearch/fashion-
 # Run Command
 ## 1 Quantization
   ```shell
-  bash run_tuning.sh --input_model=./resnet50_fashion --output_model=./result --dataset_location=/path/to/FashionMNIST/
+  bash run_quant.sh --input_model=./resnet50_fashion --output_model=./result --dataset_location=/path/to/FashionMNIST/
   ```
 
 ## 2. Benchmark

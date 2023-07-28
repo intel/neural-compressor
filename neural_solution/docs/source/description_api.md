@@ -1,10 +1,10 @@
-# NeuralSolution OaaS API Documentation
+# Neural Solution API
 
-Welcome to NeuralSolution OaaS API documentation. This API documentation provides a detailed description of all the endpoints available in NeuralSolution OaaS API.
+Welcome to Neural Solution OaaS API documentation. This API documentation provides a detailed description of all the endpoints available in Neural Solution OaaS API.
 
 ## Base URL
 
-The base URL for NeuralSolution OaaS API is `{host_ip}:port`
+The base URL for Neural Solution OaaS API is `{host_ip}:port`
 
 ## Endpoints
 
@@ -12,7 +12,7 @@ The base URL for NeuralSolution OaaS API is `{host_ip}:port`
 
 #### Description
 
-This is the welcome interface for NeuralSolution OaaS.
+This is the welcome interface for Neural Solution OaaS.
 
 #### Usage
 ```bash
@@ -23,14 +23,14 @@ curl -X GET {host_ip}:port/description
 
 | Status Code | Description                                       |
 | ----------- | ------------------------------------------------- |
-| 200         | Welcome to NeuralSolution OaaS!                   |
+| 200         | Welcome to Neural Solution OaaS!                  |
 
 
 ### POST /task/submit
 
 #### Description
 
-Submit a new task to NeuralSolution OaaS.
+Submit a new task to Neural Solution OaaS.
 
 #### Parameters
 
@@ -66,7 +66,7 @@ curl -X GET {host_ip}:port/task/status/{task_id}
 
 | Status Code | Description      | Content       |
 | ----------- | ---------------- | ------------- |
-| 200         | The status of task .  | `status`: "running"/"done"/"pending"/"failed" |
+| 200         | The status of task .  | `status`: "running"/"done"/"pending"/"failed"</br> `tuning_info`: tuning information</br> `optimization_result`: optimization time, Accuracy, Duration, result_path|
 
 ### GET /task/log/{task_id}
 
@@ -142,6 +142,26 @@ curl -X GET {host_ip}:port/cluster
 | Status Code | Description | Content                                    |
 | ----------- | ------------| ------------------------------------------ |
 | 200         | Cluster information. |  `msg`: "Cluster information." |
+
+### GET /download/{task_id}
+
+#### Description
+
+Download optimized result locally.
+
+#### Usage
+```bash
+curl -X GET {host_ip}:port/download/{task_id} --output quantized_model.zip
+```
+
+#### Responses
+
+| Status Code | Description | Content          |
+| ----------- | ----------- | ---------------- |
+| 200         | Download optimized model. | zip file |
+| 400         | No quantized model when task failed. | `msg`: "Please check URL." |
+| 404         | Download optimized model. | `msg`: "Task failed, file not found" |
+
 
 ### GET /description
 

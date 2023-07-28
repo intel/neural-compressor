@@ -17,12 +17,13 @@
 
 """Logger: handles logging functionalities."""
 
-import os
 import logging
+import os
 
 
 class Logger(object):
     """Logger class."""
+
     __instance = None
 
     def __new__(cls):
@@ -33,14 +34,12 @@ class Logger(object):
         return Logger.__instance
 
     def _log(self):
-        """Setup the logger format and handler."""
-        LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
+        """Set up the logger format and handler."""
+        LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
         self._logger = logging.getLogger("neural_compressor")
         self._logger.handlers.clear()
         self._logger.setLevel(LOGLEVEL)
-        formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(message)s',
-            "%Y-%m-%d %H:%M:%S")
+        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(formatter)
         self._logger.addHandler(streamHandler)
@@ -53,25 +52,16 @@ class Logger(object):
 
 def _pretty_dict(value, indent=0):
     """Make the logger dict pretty."""
-    prefix = '\n' + ' ' * (indent + 4)
+    prefix = "\n" + " " * (indent + 4)
     if isinstance(value, dict):
-        items = [
-            prefix + repr(key) + ': ' + _pretty_dict(value[key], indent + 4)
-            for key in value
-        ]
-        return '{%s}' % (','.join(items) + '\n' + ' ' * indent)
+        items = [prefix + repr(key) + ": " + _pretty_dict(value[key], indent + 4) for key in value]
+        return "{%s}" % (",".join(items) + "\n" + " " * indent)
     elif isinstance(value, list):
-        items = [
-            prefix + _pretty_dict(item, indent + 4)
-            for item in value
-        ]
-        return '[%s]' % (','.join(items) + '\n' + ' ' * indent)
+        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
+        return "[%s]" % (",".join(items) + "\n" + " " * indent)
     elif isinstance(value, tuple):
-        items = [
-            prefix + _pretty_dict(item, indent + 4)
-            for item in value
-        ]
-        return '(%s)' % (','.join(items) + '\n' + ' ' * indent)
+        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
+        return "(%s)" % (",".join(items) + "\n" + " " * indent)
     else:
         return repr(value)
 
@@ -83,7 +73,7 @@ DEBUG = logging.DEBUG
 def log(level, msg, *args, **kwargs):
     """Output log with the level as a parameter."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().log(level, line, *args, **kwargs)
     else:
         Logger().get_logger().log(level, msg, *args, **kwargs)
@@ -92,7 +82,7 @@ def log(level, msg, *args, **kwargs):
 def debug(msg, *args, **kwargs):
     """Output log with the debug level."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().debug(line, *args, **kwargs)
     else:
         Logger().get_logger().debug(msg, *args, **kwargs)
@@ -101,7 +91,7 @@ def debug(msg, *args, **kwargs):
 def error(msg, *args, **kwargs):
     """Output log with the error level."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().error(line, *args, **kwargs)
     else:
         Logger().get_logger().error(msg, *args, **kwargs)
@@ -110,7 +100,7 @@ def error(msg, *args, **kwargs):
 def fatal(msg, *args, **kwargs):
     """Output log with the fatal level."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().fatal(line, *args, **kwargs)
     else:
         Logger().get_logger().fatal(msg, *args, **kwargs)
@@ -119,7 +109,7 @@ def fatal(msg, *args, **kwargs):
 def info(msg, *args, **kwargs):
     """Output log with the info level."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().info(line, *args, **kwargs)
     else:
         Logger().get_logger().info(msg, *args, **kwargs)
@@ -128,7 +118,7 @@ def info(msg, *args, **kwargs):
 def warn(msg, *args, **kwargs):
     """Output log with the warning level."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().warning(line, *args, **kwargs)
     else:
         Logger().get_logger().warning(msg, *args, **kwargs)
@@ -137,7 +127,7 @@ def warn(msg, *args, **kwargs):
 def warning(msg, *args, **kwargs):
     """Output log with the warining level (Alias of the method warn)."""
     if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split('\n')):
+        for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().warning(line, *args, **kwargs)
     else:
         Logger().get_logger().warning(msg, *args, **kwargs)

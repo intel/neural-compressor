@@ -25,7 +25,7 @@
 import copy
 import logging
 import sys
-
+import os
 import numpy as np
 import onnx
 import onnxruntime
@@ -37,7 +37,7 @@ from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
     _get_qrange_for_qType, calculate_scale_zp
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
-from neural_compressor.adaptor.ox_utils.util import find_by_name
+from neural_compressor.adaptor.ox_utils.util import to_numpy
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -53,7 +53,7 @@ class ONNXRTAugment:
                  black_nodes=[],
                  white_nodes=[],
                  iterations=[],
-                 backend=['CPUExecutionProvider'],
+                 backend='CPUExecutionProvider',
                  reduce_range=False):
         """Initialization.
 
@@ -139,17 +139,22 @@ class ONNXRTAugment:
                              (node.name in self.white_nodes)
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    tensors_to_dump.update(node.input)
+                    tensors_to_dump.update([input for input in node.input if len(input) != 0])
+                    tensors_to_dump.update([output for output in node.output if len(output) != 0])
                     tensors_to_dump.update(node.output)
                 elif weight_only:
                     for input in node.input:
                         if self.already_quantized and \
-                                input.replace('_dequantized', '_quantized') in initializers:
+                            input.replace('_dequantized', '_quantized') in initializers and \
+                            len(input) != 0:
                             tensors_to_dump.add(input)
-                        elif not self.already_quantized and input in initializers:
+                        elif not self.already_quantized and \
+                            input in initializers and \
+                            len(input) != 0:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    tensors_to_dump.update(node.output)
+                    if len(node.input[0]) != 0:
+                        tensors_to_dump.update([node.input[0]])
 
         model_inputs = [i.name for i in model.graph.input]
         for tensor in tensors_to_dump:
@@ -160,9 +165,7 @@ class ONNXRTAugment:
                 for augment_node_type in self.augment_nodes:
                     if augment_node_type in ['DequantizeLinear']:
                         # insert DequantizeLinear node as output
-                        if tensor.endswith('_scale') or tensor.endswith('_zero_point') or \
-                                tensor.endswith('_QuantizeLinear') or \
-                                tensor.endswith('_QuantizeInput_quantized'):
+                        if tensor.endswith('_scale') or tensor.endswith('_zero_point'):
                             continue
 
                         if not self.dynamically_quantized:
@@ -252,22 +255,22 @@ class ONNXRTAugment:
         name_to_calibrator = {}
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
+
             if len_inputs == 1:
-                ort_inputs.update(
-                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                )
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
             else:
                 assert len_inputs == len(inputs), \
                     'number of input tensors must align with graph inputs'
-                if isinstance(inputs, dict):  # pragma: no cover
-                    ort_inputs.update(inputs)
-                else:
-                    for i in range(len_inputs):
-                        if not isinstance(inputs[i], np.ndarray):  # pragma: no cover
-                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                        else:
-                            ort_inputs.update({inputs_names[i]: inputs[i]})
 
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
             def _collect_data():
                 for output_idx, output in enumerate(session.run(None, ort_inputs)):
                     if q_config is not None and output.size != 0:
@@ -469,7 +472,7 @@ class ONNXRTAugment:
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
             if parent and parent.name in q_config and \
-                q_config[parent.name] not in ['fp32', 'fp16']:
+                q_config[parent.name] not in ['fp32', 'fp16', 'bf16']:
                 scheme = q_config[parent.name]['activation']['scheme']
                 qType = q_config[parent.name]['activation']['dtype']
             elif self.backend in ['TensorrtExecutionProvider']:
@@ -483,14 +486,16 @@ class ONNXRTAugment:
 
         return quantization_params
 
-    def dump_tensor(self, activation=True, weight=False):
+    def dump_tensor(self, activation=True, weight=False, format=None):
         """Dump activation or weight or both from the model."""
+        is_qdq = False
         if "QuantizeLinear" in [node.op_type for node in self.model.graph.node] or \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]:
             self.augment_nodes = ["DequantizeLinear"]
             self.already_quantized = True
             self.dynamically_quantized = \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
+            is_qdq = format == 'qdq'
         self.augment_graph(activation_only=not weight, weight_only=not activation)
         _, output_dicts = self.get_intermediate_outputs()
         iters = len(list(output_dicts.values())[-1])
@@ -507,28 +512,39 @@ class ONNXRTAugment:
             if tensor_name.replace('_dequantized', '_quantized') in model_initializer_names:
                 nodes = [node for node in map_input[tensor_name] \
                          if node.name.replace('_quant', '') in self.white_nodes]
-            elif tensor_name.replace('_quantized', '') in model_input_names:
-                continue
-            else:
+            elif tensor_name in model_output_names:
                 nodes = [map_output[tensor_name]]
+            else:
+                nodes = map_input[tensor_name]
             for node in nodes:
                 node_name = node.name.replace('_quant', '')
                 if tensor_name in model_output_names and node_name not in self.white_nodes:
                     continue
-                while node_name not in self.white_nodes and self.already_quantized:
-                    node = augmengted_wrapper.get_parents(node, output_name_to_node=map_output)[0]
-                    node_name = node.name.replace('_quant', '')
                 if node_name not in self.white_nodes:
                     continue
                 if node_name not in map_node_weight:
                     map_node_weight[node_name] = {}
-                if tensor_name not in model_initializer_names:
+                if ((is_qdq and tensor_name.replace('_dequantized', '_quantized') not in model_initializer_names) or \
+                    (not is_qdq and tensor_name not in model_initializer_names)) and \
+                    tensor_name in node.input[:2]:
                     for i in range(iters):
-                        map_node_activation[i][node_name] = \
-                            {tensor_name.replace('_quantized', ''): tensors[i]}
-                else:
-                    map_node_weight[node_name].update({tensor_name.replace('_quantized', ''): \
-                                                           tensors[0]})
+                        if node.op_type in ['Attention', 'QAttention'] and tensor_name not in node.input[:2]:
+                            continue
+                        if node.op_type in ['MatMul', 'QLinearMatMul'] and tensor_name != node.input[0]:
+                            continue
+                        if is_qdq:
+                            map_node_activation[i][node_name] = \
+                                {tensor_name.replace('_dequantized', '').replace('_' + node_name, ''): tensors[i]}
+                        else:
+                            map_node_activation[i][node_name] = \
+                                {tensor_name.replace('_quantized', ''): tensors[i]}
+                elif not (node.op_type in ['QGemm'] and tensor_name not in node.input[:6]) and \
+                    not (node.op_type in ['QLinearConv'] and tensor_name not in node.input[:8]) and \
+                    not (node.op_type in ['Conv', 'Gemm', 'FusedConv'] and tensor_name not in node.input[:2]):
+                    if is_qdq:
+                        map_node_weight[node_name].update({tensor_name.replace('_dequantized', ''): tensors[0]})
+                    else:
+                        map_node_weight[node_name].update({tensor_name.replace('_quantized', ''): tensors[0]})
         dumped_tensors_map = {}
         if weight:
             dumped_tensors_map.update({"weight": map_node_weight})
@@ -701,5 +717,8 @@ class ONNXRTAugment:
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
             for item in val:
-                shape_infos[item[1][1]] = numpy_helper.to_array(self.model_wrapper.get_initializer(item[1][1])).shape
+                shape_infos[item[1][1]] = numpy_helper.to_array(
+                        self.model_wrapper.get_initializer(item[1][1]),
+                        base_dir=os.path.dirname(self.model_wrapper.model_path) if \
+                                self.model_wrapper.model_path is not None else "").shape
         return max_vals_per_channel, shape_infos, tensors_to_node

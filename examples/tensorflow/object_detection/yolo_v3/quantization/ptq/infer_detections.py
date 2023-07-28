@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,10 +20,13 @@ import time
 import numpy as np
 import tensorflow as tf
 from absl import app, flags
+
+from neural_compressor.data import DataLoader
 from neural_compressor.metric import COCOmAPv2
-from neural_compressor.data import TensorflowResizeWithRatio, ParseDecodeCocoTransform
 from neural_compressor.data import LabelBalanceCOCORecordFilter
-from neural_compressor.data import ComposeTransform, COCORecordDataset, DataLoader
+from neural_compressor.data import ComposeTransform, COCORecordDataset
+from neural_compressor.data import TensorflowResizeWithRatio, ParseDecodeCocoTransform
+
 from coco_constants import LABEL_MAP
 from utils import non_max_suppression
 

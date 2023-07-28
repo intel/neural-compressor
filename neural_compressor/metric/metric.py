@@ -921,6 +921,15 @@ class TensorflowTopK(BaseMetric):
             labels: The labels corresponding to the predictions.
             sample_weight: The sample weight.
         """
+        # extract the contents from tf.Tensor
+        if not isinstance(labels, int) and len(labels) > 0 \
+            and isinstance(labels[0], tf.Tensor):
+            temp_labels = []
+            for label_tensor in labels:
+                label_contents = label_tensor.numpy()
+                temp_labels.append(label_contents)
+            labels = temp_labels  
+            
         preds, labels = _topk_shape_validate(preds, labels)
 
         labels = labels.reshape([len(labels)])

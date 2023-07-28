@@ -79,9 +79,9 @@ def get_model_fwk_name(model):
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
-                ort.InferenceSession(model, so, providers=['CPUExecutionProvider'])
+                ort.InferenceSession(model, so, providers=ort.get_available_providers())
             else:
-                ort.InferenceSession(model.SerializeToString(), so, providers=['CPUExecutionProvider'])
+                ort.InferenceSession(model.SerializeToString(), so, providers=ort.get_available_providers())
         except Exception as e:  # pragma: no cover
             if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
                 logger.warning('Please use model path instead of onnx model object to quantize')
@@ -167,10 +167,10 @@ class Model(object):
         if isinstance(root, BaseModel):
             if conf != "NA" and conf.framework is None:
                 conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(root))]
-                if conf.backend == "ipex":
+                if hasattr(conf, 'backend') and conf.backend == "ipex":
                     assert conf.framework == "pytorch_ipex",\
                           "Please wrap the model with correct Model class!"
-                if conf.backend == "itex":
+                if hasattr(conf, 'backend') and conf.backend == "itex":
                     if get_model_type(root.model) == 'keras':
                         assert conf.framework == "keras",\
                               "Please wrap the model with KerasModel class!"
@@ -213,10 +213,10 @@ class Model(object):
                 return MODELS[framework](root, **kwargs)
             else:
                 conf.framework = framework
-                if conf.backend == "default":
+                if hasattr(conf, 'backend') and conf.backend == "default":
                     if framework == "pytorch":
                         conf.framework = "pytorch_fx"
-                elif conf.backend == "ipex":
+                elif hasattr(conf, 'backend') and conf.backend == "ipex":
                     conf.framework = "pytorch_ipex"
 
                 if 'tensorflow' in conf.framework:
@@ -227,7 +227,7 @@ class Model(object):
                             model_type = kwargs['modelType']
                         else:
                             model_type = get_model_type(root)
-                        if conf.backend == "itex":
+                        if hasattr(conf, 'backend') and conf.backend == "itex":
                             if model_type == 'keras':
                                 conf.framework = "keras"
                                 model = MODELS[conf.framework](root, **kwargs)
@@ -243,7 +243,7 @@ class Model(object):
                                                           root, **kwargs)
                 else:
                     model = MODELS[conf.framework](root, **kwargs)
-                if 'tensorflow' in conf.framework:
+                if 'tensorflow' in conf.framework and hasattr(conf, 'model_name'):
                     model.name = conf.model_name
                     model.output_tensor_names = conf.outputs
                     model.input_tensor_names = conf.inputs

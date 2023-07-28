@@ -353,6 +353,8 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
+            logger.warning(f"[Strategy] All tuning options for the current strategy have been tried.\
+                If the quantized model does not seem to work well, it might be worth considering other strategies.")
 
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()

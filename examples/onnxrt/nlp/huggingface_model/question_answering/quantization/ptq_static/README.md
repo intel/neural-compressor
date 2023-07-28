@@ -38,7 +38,7 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --quant_format="QOperator"
 ```

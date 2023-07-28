@@ -114,7 +114,7 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
         except Exception as e:
             print(f"[ WARNING ] {e}")
 
-    if strategy and strategy != "basic":  # Workaround for PyTorch huggingface models (`sed` in run_tuning.sh)
+    if strategy and strategy != "basic":  # Workaround for PyTorch huggingface models (`sed` in run_quant.sh)
         try:
             tuning_config = yaml_config.get("tuning", {})
             prev_strategy = tuning_config.get("strategy", {})

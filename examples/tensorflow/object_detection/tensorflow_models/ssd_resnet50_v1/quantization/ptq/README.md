@@ -121,14 +121,14 @@ config = PostTrainingQuantConfig(
   
   ```shell
   # The cmd of running ssd_resnet50_v1
-  bash run_tuning.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ### For ckpt model
   
   ```shell
   # The cmd of running ssd_resnet50_v1
-  bash run_tuning.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/ --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/ --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark

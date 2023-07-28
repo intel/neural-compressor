@@ -1,15 +1,13 @@
 import unittest
+
 from neural_solution.backend.task import Task
+
 
 class TestTask(unittest.TestCase):
     def setUp(self):
-        self.task = Task("123",
-            "python script.py",
-            4, "pending", 
-            "http://example.com/script.py",
-            True, 
-            "approach",
-            "requirement")
+        self.task = Task(
+            "123", "python script.py", 4, "pending", "http://example.com/script.py", True, "approach", "requirement"
+        )
 
     def test_task_attributes(self):
         self.assertEqual(self.task.task_id, "123")
@@ -23,5 +21,6 @@ class TestTask(unittest.TestCase):
         self.assertEqual(self.task.result, "")
         self.assertEqual(self.task.q_model_path, "")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

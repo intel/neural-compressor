@@ -10,6 +10,7 @@ from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
 from neural_compressor.adaptor.ox_utils.util import QuantizedInitializer, QuantizedValue, QuantizationMode
 import onnxruntime as ort
 from neural_compressor.config import ONNXQlinear2QDQConfig
+from neural_compressor.utils.utility import CpuInfo
 
 def build_model():
     initializers = []
@@ -1172,6 +1173,176 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+    def get_bf16_mixed_precision_model(self, model):
+        from neural_compressor import MixedPrecisionConfig
+        from neural_compressor.mix_precision import fit
+        config = MixedPrecisionConfig(backend='onnxrt_dnnl_ep', precision='bf16')
+        converted_model = fit(model, config)
+        return converted_model
+
+    @unittest.skipIf(not CpuInfo().bf16 or 'DnnlExecutionProvider' not in ort.get_all_providers(),
+        "skip since DnnlExecutionProvider is not supported")
+    def test_bf16(self):
+        optypes = ['Sum', 'Sub', 'Div', 'Pow', 'Add']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (1,2), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Equal', 'Greater', 'GreaterOrEqual', 'Less', 'LessOrEqual']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.BOOL, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (1,2), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Abs', 'Exp', 'Log', 'Round', 'Sqrt', 'Softmax', 'Exp', 'Tanh', 'Sigmoid', 'LeakyRelu', 'Round']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            node_infos = [['test', ['input1'], ['output'], optype]]
+            model = self.build_model(inps, outs, [], node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['ReduceMean', 'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceProd', \
+                   'ReduceSum', 'ReduceSumSquare']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
+            node_infos = [['test', ['input1'], ['output'], optype]]
+            model = self.build_model(inps, outs, [], node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Gelu']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            node_infos = [['test', ['input1'], ['output'], optype, 'com.microsoft']]
+            model = self.build_model(inps, outs, [], node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['BiasGelu', 'FastGelu']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, [2]]]
+            outs = [['output', TensorProto.FLOAT, [2]]]
+            weights = [['input2', TensorProto.FLOAT, [2], np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype, 'com.microsoft']]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+
+        optypes = ['MatMul']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['FusedMatMul']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2'], ['output'], optype, 'com.microsoft']]
+            model = self.build_model(inps, outs, weights, node_infos)
+            ort.InferenceSession(model.SerializeToString())
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['Gemm']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
+                        ['input3', TensorProto.FLOAT, [], np.random.random((1))]]
+            node_infos = [['test', ['input1', 'input2', 'input3'], ['output'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['LayerNormalization']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, (1,2)]]
+            outs = [['output1', TensorProto.FLOAT, (1,2)], ['output2', TensorProto.FLOAT, (1,2)], ['output3', TensorProto.FLOAT, (1,2)]]
+            weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
+                        ['input3', TensorProto.FLOAT, (2,1), np.random.random((2))]]
+            node_infos = [['test', ['input1', 'input2', 'input3'], ['output1', 'output2', 'output3'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
+            outputs = session.run(None, input_data)
+
+        optypes = ['BatchNormalization']
+        for optype in optypes:
+            inps = [['input1', TensorProto.FLOAT, [1, 2]]]
+            outs = [['output1', TensorProto.FLOAT, [1, 2]]]
+            weights = [['input2', TensorProto.FLOAT, [2], np.random.random((2))],
+                        ['input3', TensorProto.FLOAT, [2], np.random.random((2))],
+                        ['input4', TensorProto.FLOAT, [2], np.random.random((2))],
+                        ['input5', TensorProto.FLOAT, [2], np.random.random((2))],]
+            node_infos = [['test', ['input1', 'input2', 'input3', 'input4', 'input5'], ['output1'], optype]]
+            model = self.build_model(inps, outs, weights, node_infos)
+            ort.InferenceSession(model.SerializeToString())
+            input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
+            convert_model = self.get_bf16_mixed_precision_model(model)
+            self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
+            self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['DnnlExecutionProvider'])
             outputs = session.run(None, input_data)
 
 

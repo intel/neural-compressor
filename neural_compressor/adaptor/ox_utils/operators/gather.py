@@ -101,13 +101,17 @@ class GatherOperator(Operator):
                     for n in self.quantizer.model.get_children(child):
                         self.quantizer.model.replace_node_input(n, 
                                         child.output[0], gather_new_output)
+            
+            # int8 weight will be recalculated for the first time
             if any([child.op_type == 'QuantizeLinear' for child in children]) and \
-                    self.quantizer.model.get_initializer(parents[0].input[0]) is not None:
+                    self.quantizer.model.get_initializer(parents[0].input[0]) is not None and \
+                        parents[0].input[0] not in self.quantizer.recalculate_quantized_value:
                 int8_tensor = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[0]))
                 in_scale = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[1]))
                 in_zp = numpy_helper.to_array(self.quantizer.model.get_initializer(parents[0].input[2]))
                 new_int8_tensor = (((int8_tensor.astype('float32') - in_zp) * in_scale) / out_scale).round() + out_zp
                 self.quantizer.model.set_initializer(parents[0].input[0], new_int8_tensor.astype(int8_tensor.dtype))
+                self.quantizer.recalculate_quantized_value.append(parents[0].input[0])
             self.quantizer.remove_nodes.extend([node, parents[0]])
             
 @qop_registry(op_types="Gather")

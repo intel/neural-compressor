@@ -26,7 +26,7 @@ except:
     import logging
 
     logger = logging.getLogger()
-from collections import UserDict
+from collections import UserDict, defaultdict
 
 
 def forward_wrapper(model, input, device='cpu'):
@@ -70,6 +70,16 @@ def model_forward(model, dataloader, iters, device):
             cnt += 1
             if cnt >= iters:
                 break
+
+
+def model_forward_per_sample(model, sample, device):
+    try:
+        output = forward_wrapper(model, sample, device)
+        return output
+
+    except Exception as e:
+        output = forward_wrapper(model, sample[0], device)
+        return output
 
 
 def quant_dequant_w(m, num_bits=8, scheme='asym'):  ##TODO take sym as default
@@ -688,20 +698,7 @@ class TorchSmoothQuant:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer == None and no_absorb_layers == None:
-                        logger.warning("sorry, could not trace the model, smooth quant is ignored")
-                        logger.warning("if you are using huggingface model,"
-                                       "you could set torchscript to True "
-                                       "when loading the model or set the return_dict to False")
                         return self.model
-                    elif self.absorb_to_layer == {}:
-                        logger.warning("could not find any layer to be absorbed")
-                    else:
-                        to_absorb_cnt = 0
-                        for key, item in self.absorb_to_layer.items():
-                            to_absorb_cnt += len(item)
-
-                        logger.info(
-                            f"find {to_absorb_cnt} could be absorbed in {to_absorb_cnt + len(no_absorb_layers)}")
 
                 # remove self.self_absorb_layers if it exists in self.absorb_to_layer
                 for k, v in self.absorb_to_layer.items():
@@ -722,16 +719,56 @@ class TorchSmoothQuant:
                     save_input_output = True
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter, save_input_output)
+
+                # Check if input_maxes match self.absorb_to_layer 
+                # (due to self._get_all_layer_names use layer tree instead of forward_path)
+                if not folding:
+                    diff_modules = set(self.absorb_to_layer.keys()).difference(input_maxes.keys())
+                    for d in diff_modules:
+                        del self.absorb_to_layer[d]
+                        
                 if alpha == 'auto':
                     self.alpha_per_layer = self._auto_tune_alpha(input_maxes, **auto_alpha_args)  ##save the alpha
 
             if alpha == 'auto':
                 alpha = self.alpha_per_layer
+            example_inputs = self._get_example_input()
+            if example_inputs != None:
+                out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
+
+            self.model._smoothquant_optimized = True
+            if example_inputs != None:
+                # Check mathematical equivelancy
+                out_post_sq = model_forward_per_sample(self.model, example_inputs, self.device)
+
+                if not self.output_is_equal(out_post_sq, out_pre_sq):
+                    logger.warning(
+                        "Mathematical equivelancy of Smoothquant is not preserved. "
+                        "Please kindly report this issue to https://github.com/intel/neural-compressor.")
+                    # self.recover()
+                    # self.model._smoothquant_optimized = False
+            else:
+                logger.warning(" Could not get example input, equivelancy check is skipped")
+
             self.input_values, self.output_values = {}, {}
             return self.model
+
+    def output_is_equal(self, out1, out2, atol=1e-04):
+        try:
+            if isinstance(out1, tuple):
+                return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
+            elif isinstance(out1, dict):
+                return all(torch.all(torch.isclose(out1[k], out2[k], atol=atol)) for k in out1.keys())
+            elif isinstance(out1, torch.Tensor):
+                return torch.all(torch.isclose(out1, out2, atol=atol))
+            return False
+        except:
+            logger.warning("Automatically check failed, Please check equivelancy manually "
+                           "between out_pre_sq and out_post_sq if necessary.")
+            return True
 
     def recover(self):
         """
@@ -760,6 +797,16 @@ class TorchSmoothQuant:
                     self_absorb_layer[name] = [name]
         return self_absorb_layer
 
+    def _get_example_input(self):
+        if self.dataloader == None and self.example_inputs == None:
+            return None
+        if self.example_inputs is None:
+            ##assert self.dataloader, "Please provide dataloader or example_inputs"
+            for idx, input in enumerate(self.dataloader):
+                self.example_inputs = input
+
+        return self.example_inputs
+
     def _trace(self, op_types):
         """
         Try the model to find the layers which can be smooth quantized.
@@ -769,19 +816,34 @@ class TorchSmoothQuant:
         no_absorb_layers: A list saving the layers which could not find the absorb layer
         """
         tg = GraphTrace()
-        if self.example_inputs is None:
-            assert self.dataloader, "Please provide dataloader or example_inputs"
-            for idx, input in enumerate(self.dataloader):
-                self.example_inputs = input
-                break
+        self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
+        if absorb_to_layer == None and no_absorb_layers == None:
+            logger.warning("sorry, could not trace the model, smooth quant is skipped")
+            logger.warning("if you are using huggingface model,"
+                            "you could set torchscript to True "
+                            "when loading the model or set the return_dict to False")
+        elif absorb_to_layer == {}:
+            logger.warning("could not find any layer to be absorbed")
+        else:
+            to_absorb_cnt = 0
+            for key, item in absorb_to_layer.items():
+                to_absorb_cnt += len(item)
+            logger.info(
+                f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
+                f"layers could be absorbed in smooth quant")
         return absorb_to_layer, no_absorb_layers
 
 
-def get_parent(node):
+def get_parent(node, all_parents=False):
     if node.inputs() == None:
         return None
-    return list(node.inputs())[0].node()
+    elif len(list(node.inputs())) == 0:
+        return None
+    if not all_parents:
+        return list(node.inputs())[0].node()
+    else:
+        return list(node.inputs())
 
 
 class GraphTrace:
@@ -816,12 +878,13 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        if isinstance(dummy_input, dict):
+        if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
-                traced_model = torch.jit.trace(model, dummy_input["input_ids"], strict=False)
+                traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(e)
+                logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         else:
             try:
                 traced_model = torch.jit.trace(model, dummy_input, strict=False)
@@ -830,8 +893,9 @@ class GraphTrace:
                 try:
                     traced_model = torch.jit.trace(model, dummy_input[0], strict=False)
                     traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(e)
+                    logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         return traced_model
 
     def get_nodes(self, traced_model, op_types=['Linear']):
@@ -855,11 +919,41 @@ class GraphTrace:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
-                    prev_absorb_layer.append(parent)
+
+                    parent_out_kinds = []
+                    for val_user in list(parent.outputs())[0].uses():
+                        next_node = val_user.user
+                        parent_out_kinds.append(next_node.kind())
+                    parent_out_kinds = set(parent_out_kinds)
+                    parent_out_kinds.discard('aten::size')
+
+                    if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
+                        prev_absorb_layer.append(parent)
+                    elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        res = self.skip_op_absorb_helper(parent)
+                        prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                    else: # When parent to multiple ops, sq transformation could be wrong.
+                        prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
         return prev_absorb_layer
+
+
+    def skip_op_absorb_helper(self, parent_node):
+        for val_user in list(parent_node.outputs())[0].uses():
+            next_node = val_user.user
+            if next_node.kind() == 'aten::size':
+                continue
+            elif next_node.kind() in self.could_absorb_layers:
+                continue
+            elif next_node.kind() in self.skip_ops_to_find_absorb:
+                node_res = self.skip_op_absorb_helper(next_node)
+                if not node_res:
+                    return False
+            else:
+                return False
+        return True
 
     def mapping_torch_module_to_aten(self, op_types):
         res = []
@@ -875,6 +969,7 @@ class GraphTrace:
         traced_model = self.trace(model, example_input)
         if traced_model == None:
             return None, None
+
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
@@ -883,7 +978,8 @@ class GraphTrace:
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
             if absorb == None:
-                no_absorb_layers.append(nodes[index])
+                no_absorb_layers.append(
+                    '.'.join(nodes[index].scopeName().split('/')[-1].split('.')[1:]))
                 continue
             node = nodes[index]
             layer_name = '.'.join(node.scopeName().split('/')[-1].split('.')[1:])
@@ -894,17 +990,17 @@ class GraphTrace:
                 absorb_to_layer[absorb_name].append(layer_name)
             else:
                 absorb_to_layer[absorb_name] = [layer_name]
-        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer)
+        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
         return absorb_to_layer, no_absorb_layers
 
-    def remove_unsupported_layers(self, model, absorb_to_layer):
+    def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
         res = {}
 
         for key in absorb_to_layer.keys():
-
             absorb_layer = get_module(model, key)
             layer_type = absorb_layer.__class__.__name__
             if layer_type not in self.supported_torch_module_to_aten.keys():
+                no_absorb_layers.extend(absorb_to_layer[key])
                 continue
             supported = True
             for layer_name in absorb_to_layer[key]:
@@ -912,6 +1008,7 @@ class GraphTrace:
                 layer_type = layer.__class__.__name__
                 if layer_type not in self.supported_torch_module_to_aten.keys():
                     supported = False
+                    no_absorb_layers.extend(absorb_to_layer[key])
                     break
             if supported:
                 res[key] = absorb_to_layer[key]

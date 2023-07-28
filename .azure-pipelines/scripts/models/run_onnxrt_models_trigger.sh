@@ -22,50 +22,21 @@ do
 done
 
 FRAMEWORK="onnxrt"
-FRAMEWORK_VERSION="1.14.1"
+FRAMEWORK_VERSION="1.15.0"
 
 inc_new_api=false
 # ======== set up config for onnxrt models ========
 if [ "${model}" == "resnet50-v1-12" ]; then
-    model_src_dir="image_recognition/onnx_model_zoo/resnet50/quantization/ptq"
+    model_src_dir="image_recognition/onnx_model_zoo/resnet50/quantization/ptq_static"
     dataset_location="/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000/ILSVRC2012_img_val"
     input_model="/tf_dataset2/models/onnx/resnet50-v1-12/resnet50-v1-12.onnx"
     yaml="resnet50_v1_5.yaml"
     strategy="basic"
     batch_size=1
     new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
-elif [ "${model}" == "bert_base_MRPC_static" ]; then
-    model_src_dir="language_translation/bert/quantization/ptq"
-    dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
-    input_model="/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx"
-    yaml="bert_static.yaml"
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
-elif [ "${model}" == "bert_base_MRPC_dynamic" ]; then
-    model_src_dir="language_translation/bert/quantization/ptq"
-    dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
-    input_model="/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx"
-    yaml="bert_dynamic.yaml"
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
-elif [ "${model}" == "distilbert_base_MRPC_qdq" ]; then
-    model_src_dir="language_translation/distilbert/quantization/ptq"
-    dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
-    input_model="/tf_dataset2/models/onnx/distilbert_base_MRPC/distilbert-base-uncased.onnx"
-    yaml="distilbert_qdq.yaml"
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
+    inc_new_api=true
+    tuning_cmd="bash run_quant.sh --input_model=${input_model} --dataset_location=${dataset_location}"
+    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance --dataset_location=${dataset_location}"
 fi
 
 

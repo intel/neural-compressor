@@ -16,8 +16,11 @@
 
 
 def exec():
+    """Execute Neural Solution launch."""
     from neural_solution.launcher import main
+
     main()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     exec()

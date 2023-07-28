@@ -43,7 +43,7 @@ Follow the instructions on https://github.com/mlcommons/training/tree/master/sin
 
 ## 2. To get the tuned model and its accuracy:
 
-    bash run_tuning.sh  --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$  --output_model=saved_results
+    bash run_quant.sh  --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$  --output_model=saved_results
 
 ## 3. To get the benchmark of tuned model, includes Batch_size and Throughput:
 

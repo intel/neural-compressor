@@ -17,7 +17,7 @@ We provide API functions for you to complete the process above and slim your tra
 # auto slim config
 # part1 generate pruning configs for the second linear layers. 
 pruning_configs = []
-from neural_compressor.compression.pruner.model_slim.auto_slim import parse_auto_slim_config
+from neural_compressor.compression.pruner import parse_auto_slim_config
 auto_slim_configs = parse_auto_slim_config(
     model, 
     ffn2_sparsity = prune_ffn2_sparsity, # define target sparsity with a float between 0 and 1
@@ -32,7 +32,7 @@ pruning_configs += auto_slim_configs
 """
 ################
 
-from neural_compressor.compression.pruner.model_slim.auto_slim import model_slim
+from neural_compressor.compression.pruner import model_slim
 model = model_slim(model)
 ```
 Please noted that if you already have a sparse model which corresponding linear layers pruned, you can simply call the last two lines to complete the model slim. 

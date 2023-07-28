@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
- prepare_model.py --output_model=/path/to/model
+python prepare_model.py --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
@@ -48,7 +48,7 @@ The pretrained model is provided by [Keras Applications](https://keras.io/api/ap
 # Run Command
 ## 1 Tune
   ```shell
-  bash run_tuning.sh --input_model=./resnet50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./resnet50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
 ## Benchmark

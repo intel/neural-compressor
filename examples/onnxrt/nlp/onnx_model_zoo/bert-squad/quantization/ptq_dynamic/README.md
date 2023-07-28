@@ -45,7 +45,7 @@ squad
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --dataset_location=/path/to/squad 
 ```

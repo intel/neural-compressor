@@ -90,6 +90,9 @@ class Quantizer:
         self.quantized_value_map = {}
         self.new_value_info = {}
 
+        # List of recalculated quantize weight for Gather op.
+        self.recalculate_quantized_value = []
+
         # QuantizeRange tensor name and zero tensor name for scale and zero point calculation.
         # Used when static is False
         self.fixed_qrange_uint8_name = "fixed_quantization_range_uint8"
@@ -146,7 +149,7 @@ class Quantizer:
         """Quantize onnx model."""
         # step 1: insert q-dq, cast-cast pairs
         self.insert_qdq()
- 
+        
         # step 2: remove redundant pairs -> qdq model
         self.remove_redundant_pairs()
  
@@ -155,7 +158,7 @@ class Quantizer:
  
         self.merge_dedicated_qdq_pair() 
  
-        self.model.remove_unused_constant()
+        self.model.remove_unused_nodes()
 
         self.model.model.producer_name = __producer__
         self.model.model.producer_version = __version__
@@ -243,8 +246,11 @@ class Quantizer:
     def should_cast(self, node):
         """Check if node should be casted."""
         if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
-            return True
-        else:
+            parent = self.model.get_parent(node, 0)
+            if parent is not None and (parent.op_type != 'Cast' or parent.attribute[0].i in [1, 10, 16]):
+                return True
+            elif parent is None and node.input[0] in self.model.input():
+                return True
             return False
 
     def insert_qdq(self):

@@ -77,8 +77,7 @@ def get_file_extension(path: str) -> str:
 
 
 def get_framework_from_path(model_path: str) -> Optional[str]:
-    """
-    Get framework name from model extension.
+    """Get framework name from model extension.
 
     :param model_path: Path to model.
     """

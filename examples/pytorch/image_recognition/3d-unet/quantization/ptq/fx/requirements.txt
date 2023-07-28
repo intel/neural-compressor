@@ -4,5 +4,5 @@ batchgenerators==0.20.0
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch>=1.6.0+cpu
 torchvision>=0.7.0+cpu
-scipy<1.9.2, >=1.8
+scipy>=1.10.0
 scikit-learn
