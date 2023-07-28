@@ -103,3 +103,10 @@ quantized_model = load(tuned_checkpoint, model)
 ```
 --------
 For more details, please refer to the [sample code](./run_clm.py).
+
+# (May Remove Later) Run GPTQ algorithm
+```
+sh run-gptq-llm.sh
+# You may want to move script run-gptq-llm.sh to root dir of neural compressor and modify python file's path.
+# Please make sure pile dataset is downloaded.
+```

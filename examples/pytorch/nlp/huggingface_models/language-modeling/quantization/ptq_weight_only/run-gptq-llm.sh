@@ -3,4 +3,5 @@ python run-gptq-llm.py \
     --dataset pile \
     --wbits 4 \
     --group_size 128 \
-    --act-order 
+    --act-order \
+    --gpu

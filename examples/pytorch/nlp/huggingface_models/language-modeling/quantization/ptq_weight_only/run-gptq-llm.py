@@ -98,6 +98,7 @@ if __name__ == '__main__':
         help='Whether to use the new PTB and C4 eval'
     )
     parser.add_argument('--act-order', action='store_true', help='Whether to apply the activation order GPTQ heuristic')
+    parser.add_argument('--gpu', action='store_true', help='Whether to use gpu')
 
     args = parser.parse_args()
 
@@ -119,11 +120,18 @@ if __name__ == '__main__':
     )
     dataloader = INCDataloader(dataloader)
 
-    DEV = torch.device('cuda:0')
+    if args.gpu and torch.cuda.is_available():
+        DEV = torch.device('cuda:0')
+    else:
+        DEV = torch.device('cpu')
 
     print('Starting ...')
 
     # import pdb;pdb.set_trace()
+    if args.sym:
+        sym_opt = "sym"
+    else:
+        sym_opt = "asym"
     conf = PostTrainingQuantConfig(
         approach='weight_only',
         op_type_dict={
@@ -131,7 +139,7 @@ if __name__ == '__main__':
                 "weight": {
                     'bits': args.wbits, # 1-8 bits 
                     'group_size': args.group_size,  # -1 (per-channel)
-                    'scheme': 'asym', 
+                    'scheme': sym_opt, 
                     'algorithm': 'GPTQ', 
                 },
             },
@@ -147,6 +155,7 @@ if __name__ == '__main__':
             'gptq_args':{'percdamp': 0.01, 'actorder':args.act_order},
         },
     )
+    model = model.to(DEV)
 
     q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
     # 
