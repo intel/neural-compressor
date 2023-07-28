@@ -266,7 +266,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                'gptq_args':{'percdamp': 0.01},
+                'gptq_args':{'percdamp': 0.01, 'actorder': False},
             },
         )
         input = (torch.ones([1, 512], dtype=torch.long))
