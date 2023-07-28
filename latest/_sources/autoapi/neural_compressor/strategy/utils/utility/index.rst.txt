@@ -20,6 +20,7 @@ Classes
    neural_compressor.strategy.utils.utility.QuantType
    neural_compressor.strategy.utils.utility.QuantOptions
    neural_compressor.strategy.utils.utility.OrderedDefaultDict
+   neural_compressor.strategy.utils.utility.ClassRegister
 
 
 
@@ -105,5 +106,11 @@ Functions
 
    :returns: a class object where all properties and methods are virtual.
    :rtype: object
+
+
+.. py:class:: ClassRegister
+
+
+   Class register.
 
 

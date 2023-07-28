@@ -236,8 +236,10 @@ Functions
 
    :returns:
 
-             - sq_weight_tensors: A dictionary mapping each input tensor name to a list of its associated weight tensors.
-             - sq_weights_nodes: A dictionary mapping each input tensor name to a list of its associated weight nodes.
+             - sq_weight_tensors: A dictionary mapping each input tensor name
+                 to a dict of its associated weight tensors with weight name.
+             - sq_weights_nodes: A dictionary mapping each input tensor name
+                 to a dict of its associated weight nodes with weight name.
    :rtype: A tuple of two dictionaries
 
 

@@ -431,8 +431,16 @@ of official tensorflow r1.15 branch</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p>sq_weight_tensors: A dictionary mapping each input tensor name to a list of its associated weight tensors.</p></li>
-<li><p>sq_weights_nodes: A dictionary mapping each input tensor name to a list of its associated weight nodes.</p></li>
+<li><dl class="simple">
+<dt>sq_weight_tensors: A dictionary mapping each input tensor name</dt><dd><p>to a dict of its associated weight tensors with weight name.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>sq_weights_nodes: A dictionary mapping each input tensor name</dt><dd><p>to a dict of its associated weight nodes with weight name.</p>
+</dd>
+</dl>
+</li>
 </ul>
 </p>
 </dd>
