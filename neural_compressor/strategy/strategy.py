@@ -904,7 +904,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == 'pytorch_ipex':
                     smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args['folding']
-            logger.debug(f"Set smooth quant with alpha {sq_algo.alpha: .4f} as the pre-tuning algo.")
+            logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
 
     def set_param_for_pre_quantization_algos(self, algo_scheduler, tune_cfg, fp32_model) -> None:

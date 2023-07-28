@@ -589,6 +589,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
                 logger.debug("The loss history of different scale:{}".format(history))
                 logger.debug("The best alpha for scale: {}:{}".format(absorb, best_scale_alpha))
+                assert best_scales is not None, "Loss is infinity! Cannot find the correct scale."
                 best_scales = best_scales.view(-1)
                 assert torch.isnan(best_scales).sum() == 0, best_scales
                 scales = best_scales.detach()
