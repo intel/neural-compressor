@@ -218,8 +218,10 @@ class TorchSmoothQuant:
             self.traced_model = self.model
         self.weight_scale_info = {}
         self.absorb_scales_info = {}
-        self.insert_mul = True
-        self.allow_absorb = False
+        self.insert_mul = False
+        self.allow_absorb = True
+        self.record_max_info = False
+        self.max_value_info = {} # to record max values for alpha tune
         self.self_absorb_layers = {}
         self.absorb_to_layer = {}
 
@@ -410,8 +412,7 @@ class TorchSmoothQuant:
         """
         layer = get_module(self.model, layer_name)
         if layer.__class__.__name__ == "SQLinearWrapper":
-            from .model_wrapper import SQLinearWrapper
-            layer = layer.sq_linear
+            return scale
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
         return scale
@@ -490,7 +491,7 @@ class TorchSmoothQuant:
                 if hasattr(layer, "bias") and layer.bias != None:
                     layer.bias *= scale
 
-    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5):
+    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
         """
         adjust the weights and biases
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
@@ -518,8 +519,18 @@ class TorchSmoothQuant:
                 weights.append(weight)
 
             weights = torch.cat(weights, dim=0)
-
             weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
+
+            if self.record_max_info and not tuning:
+                # the input of layers with same absorb layer is the same.
+                input_minmax = [self.input_mins[layers[0]], self.input_maxes[layers[0]]]
+                self.max_value_info[key] = {}
+                self.max_value_info[key]['alpha'] = alpha_key
+                self.max_value_info[key]['input_minmax'] = input_minmax
+                self.max_value_info[key]['weight_max'] = weight_max_per_channel
+                self.max_value_info[key]['absorbed_layer'] = layers
+                continue
+
             input_power = torch.pow(input_max, alpha_key)
             logger.debug(f"{max(input_max)}, {min(input_max)}")
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha_key)
@@ -612,8 +623,9 @@ class TorchSmoothQuant:
                 input_max_op[layer_key] = input_maxes[layer_key_]
                 loss_alpha = {}
                 for alpha in alpha_space:
-                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
-                                                                                              input_max_op, alpha)
+                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
+                        absorb_to_layer_sample,input_max_op, alpha, tuning=True
+                    )
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
                     input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
                                                                 self.absorb_scales_info[absorb_key])
@@ -736,6 +748,12 @@ class TorchSmoothQuant:
             if example_inputs != None:
                 out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
+            if self.record_max_info:
+                # max_info is recorded in self.max_value_info
+                self._adjust_parameters(self.absorb_to_layer, input_maxes, alpha)
+                self.model._smoothquant_optimized = False
+                return self.model
+
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
 
@@ -795,6 +813,16 @@ class TorchSmoothQuant:
             for op_type in op_types:
                 if op_type == str(module.__class__.__name__):
                     self_absorb_layer[name] = [name]
+        # remove duplicate Linear if Linear is wrapped by Linear
+        key_list = list(self_absorb_layer.keys())
+        key_list.sort()
+        duplicate_list = []
+        for i, k1 in enumerate(key_list):
+            for k2 in key_list[i+1:]:
+                if k1 in k2:
+                    duplicate_list.append(k1)
+        for i in duplicate_list:
+            self_absorb_layer.pop(i)
         return self_absorb_layer
 
     def _get_example_input(self):

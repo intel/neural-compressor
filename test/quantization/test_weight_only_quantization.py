@@ -105,6 +105,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
 
+        fp32_model = copy.deepcopy(self.model)
         model2 = awq_quantize(
             fp32_model, 
             weight_config=weight_config, 
