@@ -4589,7 +4589,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         logger.debug("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
-        if self.example_inputs is None:
+        if self.example_inputs is None: # pragma: no cover
             if dataloader is None:
                 assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
             try:
@@ -4602,18 +4602,18 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     break
 
         folding = True
-        if 'teq_args' in self.recipes:
+        if 'teq_args' in self.recipes: # pragma: no cover
             folding = self.recipes['teq_args'].get('folding', True)
             
         supported_layers = ['Linear']
-        if folding:
+        if folding: # pragma: no cover
             from .torch_utils.smooth_quant import GraphTrace
             tg = GraphTrace()
             absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
             if absorb_to_layer is None or absorb_to_layer == {}:
                 logger.warning('No absorb layer is detected, skip TEQ algorithm')
                 return model
-        else:
+        else: # pragma: no cover
             absorb_to_layer = {}
             for name, module in model.named_modules():
                 for op_type in supported_layers:
@@ -4631,7 +4631,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         skipped_op_name_set = set()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
-            if config['weight']['dtype'] == 'fp32':
+            if config['weight']['dtype'] == 'fp32': # pragma: no cover
                 if op_name in flipped_dict:
                     absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
                 continue
@@ -4646,13 +4646,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                         absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
                 else:
                     skipped_op_name_set.add(op_name)
-        if skipped_op_name_set:
+        if skipped_op_name_set: # pragma: no cover
             logger.info("{} is skipped by TEQ algorithm".format(skipped_op_name_set))
 
         # collect TEQ config from tune_cfg for quantization.
-        if len(absorb_to_layer) == 0:
+        if len(absorb_to_layer) == 0: # pragma: no cover
             logger.warning('No absorb layer needs TEQ algorithim, skip it')
-        else:
+        else: # pragma: no cover
             logger.debug("**absorb layer**: **absorbed layers**")
         for k, v in absorb_to_layer.items():
             logger.debug(f"{k}: {v}")

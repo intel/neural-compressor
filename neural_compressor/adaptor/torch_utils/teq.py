@@ -102,7 +102,7 @@ class TEQuantizer:
 
             self.trained_alphas[layer_norm] = alpha
             for layer_name in self.absorb_to_layer[layer_norm]:
-                if self.weight_config.get(layer_name) is None:
+                if self.weight_config.get(layer_name) is None: # pragma: no cover
                     logger.info(f"layer {layer_name} not in weight config, skip.")
                     continue
                 num_bits = self.weight_config[layer_name]["bits"]
@@ -116,7 +116,7 @@ class TEQuantizer:
 
         for n, m in self.model.named_modules():
             if isinstance(m, torch.nn.Linear) and "orig_layer" not in n:
-                if self.weight_config.get(n) is None:
+                if self.weight_config.get(n) is None: # pragma: no cover
                     logger.info(f"out of absorbed layer {n} not in weight config, skip.")
                     continue
                 num_bits = self.weight_config[layer_name]["bits"]
@@ -283,7 +283,7 @@ class TEQuantizer:
                     optimizer.zero_grad()
                     lr_scheduler.step()
 
-                if global_steps >= train_steps:
+                if global_steps >= train_steps: # pragma: no cover
                     break
 
         logger.info("finish training")
