@@ -210,7 +210,7 @@ Functions
    :rtype: model
 
 
-.. py:function:: teq_quantize(model, weight_config={}, dataloader=None, calib_func=None, example_inputs=None)
+.. py:function:: teq_quantize(model, weight_config={}, absorb_to_layer={}, extra_config={}, dataloader=None, calib_func=None, example_inputs=None)
 
    Run weight-only quantization with
 
