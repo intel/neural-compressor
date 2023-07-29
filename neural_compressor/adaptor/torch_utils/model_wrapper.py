@@ -307,12 +307,12 @@ class WeightOnlyLinear(torch.nn.Module):
             weight = weight.T
         # unpack zero_point
         if hasattr(self, 'packed_zp'):
+            zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp
+            zp = torch.zeros(self.scale.shape, dtype=zp_dtype).to(device)
             packed_zp = self.packed_zp
             if self.compression_dim == 0:
                 zp = zp.T
                 packed_zp = packed_zp.T
-            zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp
-            zp = torch.zeros(self.scale.shape, dtype=zp_dtype).to(device)
             origin_shape = zp.shape
             target_shape = packed_zp.shape
             for j in range(target_shape[1]):
