@@ -252,7 +252,7 @@ class WeightOnlyLinear(torch.nn.Module):
             start = self.n_pack * j
             end = self.n_pack * (j + 1)
             tmp = int_weight[:, start: end].type(self.compressed_dtype)
-            for e in range(self.n_pack):
+            for e in range(tmp.shape[1]):
                 tmp[:, e] &= mask
                 tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
                 self.packed_weight[:, j] |= tmp[:, e]
@@ -270,7 +270,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 start = self.n_pack * j
                 end = self.n_pack * (j + 1)
                 tmp = zp[:, start: end].type(self.compressed_dtype)
-                for e in range(self.n_pack):
+                for e in range(tmp.shape[1]):
                     tmp[:, e] &= mask
                     tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
                     self.packed_zp[:, j] |= tmp[:, e]
