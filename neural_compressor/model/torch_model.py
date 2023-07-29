@@ -440,6 +440,18 @@ class PyTorchModel(PyTorchBaseModel):
                     group_size = v['group_size']
                     scheme = v['scheme']
                 m = fetch_module(self.model, k)
+                if k not in gptq_config:
+                    new_module = rtn_quantize(
+                        m, num_bits, group_size, scheme, 
+                        return_int=True, 
+                        sym_full_range=sym_full_range,
+                        compression_dtype=compression_dtype, 
+                        compression_dim=compression_dim, 
+                        scale_dtype=scale_dtype, 
+                        device=device
+                    )
+                    set_module(self.model, k, new_module)
+                    continue
                 gptq_conf = gptq_config[k]
                 if 'perm' in gptq_conf:
                     gptq_perm = torch.tensor(gptq_conf['perm'])
