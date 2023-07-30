@@ -60,30 +60,11 @@ class BasePruning:
         pruner_info: A config dict object that contains pruners' information.
     """
     
-    def __init__(self, config, model):
+    def __init__(self, config, model, opt=None):
         """Initialize."""
         self._model = model
         self.pruners_info = config
         self.pruners = self._generate_pruners()
-
-    # def _generate_pruners(self, model):
-    #     """Generate pruners.
-
-    #     :param config: WeightPruningConfig
-    #     :param model: The torch module to be pruned
-    #     :return: A list of pruner
-    #     """
-    #     # assert isinstance(model, torch.nn.Module)
-    #     pruners = []
-    #     for info in self.pruners_info:
-    #         modules = parse_to_prune(info, model)
-    #         if modules == {}:
-    #             logger.warning("one pruner hooks no layers, please have a check")
-    #         pruners.append(get_pruner(info, modules))
-    #         info['modules'] = [key for key in modules.keys()]
-    #         info['len_of_modules'] = len(info['modules'])
-    #         logger.info(info)
-    #     return pruners
     
     def _generate_pruners(self):
         """Obtain Pruner objects."""
@@ -111,6 +92,7 @@ class BasePruning:
                 info['modules'] = [key for key in modules.keys()]
                 info['len_of_modules'] = len(info['modules'])
                 logger.info(info)
+                
         return pruners
 
     def on_train_begin(self, dataloader=None):
@@ -156,150 +138,13 @@ class BasePruning:
         for pruner in self.pruners:
             pruner.on_train_end()
         get_sparsity_ratio(self.pruners, self._model)
-
+        
 
 @register_pruning("basic_pruning")
 class BasicPruning(BasePruning):
-    def __init__(self, config, model, opt):
+    def __init__(self, config, model, opt=None):
         """Initialize."""
         super().__init__(config, model)
-        if opt is not None:
-            self._prepare_pruners(model, opt)
-    
-    def _register_on_step_begin(self, model: torch.nn.Module):
-        """Mount on_step_begin to the model.
-
-        :param model:The torch module to be pruned
-        :return: hook handle
-        """
-
-        def hook(module, input):
-            for pruner in module.pruners:
-                pruner.on_step_begin(0)
-
-        hook_handle = model.register_forward_pre_hook(hook)
-        return hook_handle
-
-    def _rewrite_optimizer_step(self, opt: torch.optim.Optimizer):
-        """Mount on_before/after_optimizer_step to optimizer.
-
-        :param opt: user optimizer: should be a torch.optim.Optimizer object
-        :return: the modified optimizer
-        """
-
-        def new_step(self, closure=None):
-            if hasattr(self, "pruners"):  ## in case user save the whole optimzer
-                for pruner in self.pruners:
-                    pruner.on_before_optimizer_step()
-
-            if closure is not None:
-                res = self.orig_step(closure)
-            else:
-                res = self.orig_step()
-            if hasattr(self, "pruners"):
-                for pruner in self.pruners:
-                    pruner.on_after_optimizer_step()
-            return res
-
-        opt.orig_step = opt.step
-        import types
-        opt.step = types.MethodType(new_step, opt)
-        return opt
-
-    def save(self,
-            obj: object,
-            f,
-            pickle_module=None,
-            pickle_protocol=None,
-            _use_new_zipfile_serialization=None
-    ):
-        """A rewrite function for torch save.
-
-        :param obj:
-        :param f:
-        :param pickle_module:
-        :param pickle_protocol:
-        :param _use_new_zipfile_serialization:
-        :return:
-        """
-        params = {}
-        if pickle_module != None:
-            params['pickle_module'] = pickle_module
-        if pickle_protocol != None:
-            params['pickle_protocol'] = pickle_protocol
-        if _use_new_zipfile_serialization != None:
-            params['_use_new_zipfile_serialization'] = _use_new_zipfile_serialization
-
-        if isinstance(obj, torch.nn.Module) and hasattr(obj, "pruners"):
-            pruners = obj.pruners
-            obj.pruners = None
-            delattr(obj, "pruners")
-            obj.inc_hook_handle.remove()
-            delattr(obj, "inc_hook_handle")
-            if len(params) != 0:
-                torch.orig_save(obj, f, params)
-            else:
-                torch.orig_save(obj, f)
-            ##recover
-            obj.pruners = pruners
-            inc_hook_handle = self._register_on_step_begin(obj)
-            obj.inc_hook_handle = inc_hook_handle
-            return
-
-        if isinstance(obj, torch.optim.Optimizer) and hasattr(obj, "orig_step"):
-            pruners = obj.pruners
-            obj.pruners = None
-            delattr(obj, "pruners")
-            obj.step = obj.orig_step
-            delattr(obj, "orig_step")
-            if len(params) != 0:
-                torch.orig_save(obj, f, params)
-            else:
-                torch.orig_save(obj, f)
-            ##recover
-            self._rewrite_optimizer_step(obj)
-            obj.pruners = pruners
-            return
-        if len(params) != 0:
-            torch.orig_save(obj, f, params)
-        else:
-            torch.orig_save(obj, f)
-
-    def _prepare_pruners(self, model, opt):
-        """Wrapper the model and optimizer to support all the pruning functionality.
-
-        :param config: WeightPruningConfig
-        :param model: The user's model, a torch.nn.Module object
-        :param opt: The user's optimizer, a torch.optim object
-        :return: The modified model and optimizer
-        """
-        import torch
-        torch.orig_save = torch.save  ##rewrite torch save
-        setattr(torch, 'save', self.save)
-        model.pruners = self.pruners
-        opt.pruners = self.pruners
-
-        inc_hook_handle = self._register_on_step_begin(model)
-        model.inc_hook_handle = inc_hook_handle
-        self._rewrite_optimizer_step(opt)
-        # return model, opt
-
-    # def complete_pruning(model: torch.nn.Module, opt: torch.optim):
-    #     """UnWrapper the model and optimizer
-    #     :param model: the modified model
-    #     :param opt: the modified optimizer
-    #     :return: the pruned model and the user's optimizer
-    #     """
-    #
-    #     model.inc_hook_handle.remove()
-    #     delattr(model, "inc_hook_handle")
-    #     model.pruners = None
-    #     delattr(model, "pruners")
-    #     opt.pruners = None
-    #     delattr(opt, "pruners")
-    #     opt.step = opt.orig_step
-    #     delattr(opt, "orig_step")
-    #     return model, opt
 
 
 @register_pruning("sparse_gpt_pruning")
@@ -369,7 +214,10 @@ class SparseGPTPruning(BasePruning):
                 torch.cuda.empty_cache()
                 
     def on_train_begin(self, dataloader):
-        assert dataloader is not None, f"The dataloader is a mandatory parameter of sparseGPT."
+        if self._dataloader is not None:
+            logger.info("The sparseGPT pruning is already done at initialization time, calling on_train_begin() is a redundant operation.")
+        elif dataloader is None:
+            logger.error("The sparseGPT pruning must be passed the 'dataloader' argument when initializing or calling on_train_begin()")
         self._dataloader = dataloader
         self._prepare_pruners()
         
@@ -385,24 +233,8 @@ class RetrainFreePruning(BasePruning):
         if dataloader is not None:
             self._prepare_pruners()
         
-    def _register_on_step_begin(self, model, pruners):
-        """Mount on_step_begin to the model.
-
-        :param model:The module to be pruned
-        :return: hook handle
-        """
-
-        def hook(module, input):
-            for pruner in pruners:
-                pruner.on_step_begin(0)
-
-        hook_handle = model.register_forward_pre_hook(hook)
-        return hook_handle
-        
     def _prepare_pruners(self):
-        # hook_handle_before = self._register_on_step_begin(self._model, self.pruners)
         self._do_pruning()
-        # hook_handle_before.remove()
         get_sparsity_ratio(self.pruners, self._model)
 
     def _do_pruning(self):
@@ -423,5 +255,13 @@ class RetrainFreePruning(BasePruning):
                 loss.backward()
                 self.on_step_end()
                 progress_bar.update(1)
+                
+    def on_train_begin(self, dataloader):
+        if self._dataloader is not None:
+            logger.info("The retrain_free pruning is already done at initialization time, calling on_train_begin() is a redundant operation.")
+        elif dataloader is None:
+            logger.error("The retrain_free pruning must be passed the 'dataloader' argument when initializing or calling on_train_begin()")
+        self._dataloader = dataloader
+        self._prepare_pruners()
         
 
