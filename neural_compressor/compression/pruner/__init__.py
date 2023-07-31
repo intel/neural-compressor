@@ -196,8 +196,8 @@ def prepare_pruning(config, model, optimizer=None, dataloader=None,
 
     # assert framework in FRAMEWORK.keys(), \
     #         f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
-    assert framework=='pytorch', \
-            f"The Automation API currently only supports the 'pytorch' framework, but the framework given is: {framework}"
+    assert framework=='pytorch', f"The Automation API currently only supports the 'pytorch' framework, " \
+                f"but the framework given is: {framework}"
     pruning_list = []
     pruning_conf = process_config(config)
     if optimizer is not None:

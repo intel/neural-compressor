@@ -213,11 +213,13 @@ class SparseGPTPruning(BasePruning):
             if 'cuda' in self.dev.type:
                 torch.cuda.empty_cache()
                 
-    def on_train_begin(self, dataloader):
+    def on_train_begin(self, dataloader):# pragma: no cover
         if self._dataloader is not None:
-            logger.info("The sparseGPT pruning is already done at initialization time, calling on_train_begin() is a redundant operation.")
+            logger.info("The sparseGPT pruning is already done at initialization time, " \
+                        "calling on_train_begin() is a redundant operation.")
         elif dataloader is None:
-            logger.error("The sparseGPT pruning must be passed the 'dataloader' argument when initializing or calling on_train_begin()")
+            logger.error("The sparseGPT pruning must be passed the 'dataloader' argument " \
+                         "when initializing or calling on_train_begin()")
         self._dataloader = dataloader
         self._prepare_pruners()
         
@@ -256,12 +258,14 @@ class RetrainFreePruning(BasePruning):
                 self.on_step_end()
                 progress_bar.update(1)
                 
-    def on_train_begin(self, dataloader):
-        if self._dataloader is not None:
-            logger.info("The retrain_free pruning is already done at initialization time, calling on_train_begin() is a redundant operation.")
-        elif dataloader is None:
-            logger.error("The retrain_free pruning must be passed the 'dataloader' argument when initializing or calling on_train_begin()")
-        self._dataloader = dataloader
-        self._prepare_pruners()
+    # def on_train_begin(self, dataloader):
+    #     if self._dataloader is not None:
+    #         logger.info("The retrain_free pruning is already done at initialization time, " \
+    #                     "calling on_train_begin() is a redundant operation.")
+    #     elif dataloader is None:
+    #         logger.error("The retrain_free pruning must be passed the 'dataloader' argument " \
+    #                      "when initializing or calling on_train_begin()")
+    #     self._dataloader = dataloader
+    #     self._prepare_pruners()
         
 
