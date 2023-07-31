@@ -8,6 +8,7 @@ import torch.nn as nn
 import transformers
 
 #from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
+from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 from neural_compressor import quantization, PostTrainingQuantConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from evaluation import evaluate as lm_evaluate
@@ -124,49 +125,57 @@ if __name__ == '__main__':
         DEV = torch.device('cuda:0')
     else:
         DEV = torch.device('cpu')
+    
+    model = model.to(DEV)
 
     print('Starting ...')
-
     # import pdb;pdb.set_trace()
     if args.sym:
         sym_opt = "sym"
     else:
         sym_opt = "asym"
-    conf = PostTrainingQuantConfig(
-        approach='weight_only',
-        op_type_dict={
-            '.*':{ 	# re.match
-                "weight": {
-                    'bits': args.wbits, # 1-8 bits 
-                    'group_size': args.group_size,  # -1 (per-channel)
-                    'scheme': sym_opt, 
-                    'algorithm': 'GPTQ', 
-                },
-            },
-        },
-        op_name_dict={
-            '.*lm_head':{ 	# re.match
-                "weight": {
-                    'dtype': 'fp32'
-                },
-            },
-        },
-        recipes={
-            'gptq_args':{'percdamp': 0.01, 'actorder':args.act_order},
-        },
-    )
-    model = model.to(DEV)
 
-    q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
-    # 
-    # quantizers = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, device = DEV)
-    # gptq_quantizer = gptq.GPTQuantizer(model, weight_config, dataloader, DEV)
-    # quantization_data = gptq_quantizer.execute_quantization() # do quantization
+    # method 1: use general INC API
+    # conf = PostTrainingQuantConfig(
+    #     approach='weight_only',
+    #     op_type_dict={
+    #         '.*':{ 	# re.match
+    #             "weight": {
+    #                 'bits': args.wbits, # 1-8 bits 
+    #                 'group_size': args.group_size,  # -1 (per-channel)
+    #                 'scheme': sym_opt, 
+    #                 'algorithm': 'GPTQ', 
+    #             },
+    #         },
+    #     },
+    #     op_name_dict={
+    #         '.*lm_head':{ 	# re.match
+    #             "weight": {
+    #                 'dtype': 'fp32'
+    #             },
+    #         },
+    #     },
+    #     recipes={
+    #         'gptq_args':{'percdamp': 0.01, 'actorder':args.act_order},
+    #     },
+    # )
+    # q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
+
+    # method 2: directly use build-in function, for some models like falcon, please use this function
+    conf = {
+        ".*":{
+            'wbits': args.wbits, # 1-8 bits 
+            'group_size': args.group_size,  # -1 (per-channel)
+            'sym': (sym_opt == "sym"),
+            'actorder': args.act_order,
+        }
+    } 
+    q_model, gptq_config = gptq_quantize(model, weight_config=conf, dataloader=dataloader)
 
     results = lm_evaluate(
         model="hf-causal",
         model_args=f'pretrained="{args.model_name_or_path}",tokenizer="{args.model_name_or_path}",dtype=float32',
-        user_model=q_model.model.to(DEV), tasks=["lambada_openai"],
+        user_model=q_model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
         batch_size=4
     )

@@ -18,6 +18,7 @@
 
 import math
 import time
+import re
 import torch
 import torch.nn as nn
 import transformers
@@ -79,6 +80,12 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
     """Get all layers with target types."""
     if type(module) in layers:
         return {name: module}
+    else:
+        # use string type to find name:
+        if type(module).__name__ in ['Linear']:
+            return {name: module}
+        else:
+            pass
     res = {}
     for name1, child in module.named_children():
         res.update(find_layers(
@@ -228,7 +235,20 @@ class GPTQuantizer(object):
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
-        return self.weight_config.get(layer_name, None)
+        # First try the exact name matching, if cannot find, use re to search. For example, can support ".*" in op_name
+        config = None
+        config = self.weight_config.get(layer_name, None)
+        if config != None:
+            return config
+        else:
+            for k, v in self.weight_config.items():
+                regex = re.compile(k)
+                if len(regex.findall(layer_name)) != None:
+                    config = v
+                    return config
+                else:
+                    pass
+        return config
 
     @torch.no_grad()
     def pre_quantization(self):
@@ -239,7 +259,8 @@ class GPTQuantizer(object):
             self.inp[self.cache['i']] = hidden_states
             self.cache['i'] += 1
             for arg in kwargs:
-                if isinstance(kwargs[arg], torch.Tensor):
+                # TODO: investigate include parameters
+                if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
                     self.cache[arg] = kwargs[arg]
                 else:
                     continue
@@ -278,6 +299,7 @@ class GPTQuantizer(object):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
+        # import pdb;pdb.set_trace()
         self.pre_quantization()
 
         # Step2: run gptq quantization in a transformer block-wise manner.
@@ -292,7 +314,8 @@ class GPTQuantizer(object):
             for layer_name, layer_obj in sub_layers.items():
                 # filter sub_layers with included layer_names in self.weight_config
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                if self.weight_config.get(full_layer_name, None) == None:
+                # if self.weight_config.get(full_layer_name, None) == None:
+                if self.get_layer_config(full_layer_name) == None:
                     logger.warning(f"{full_layer_name} can be quantized but " + \
                                     "is excluded from your quantization configs.")
                     continue
@@ -304,8 +327,11 @@ class GPTQuantizer(object):
             gptq_for_this_block = {}
             # initialize gptq quantizer for every layer in a transformer block
             for layer_name in sub_layers:
-                weight_config_this_layer = self.weight_config.get(
-                    self.get_full_layer_name(layer_name, block_idx), None
+                # weight_config_this_layer = self.weight_config.get(
+                #     self.get_full_layer_name(layer_name, block_idx), None
+                # )
+                weight_config_this_layer = self.get_layer_config(
+                    self.get_full_layer_name(layer_name, block_idx)
                 )
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 #gptq_for_this_block[layer_name].quantizer = Quantizer()
@@ -324,15 +350,20 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
+            # import pdb;pdb.set_trace()
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
             # Step 2.4: everything is prepared, so start quantization!
+            # import pdb;pdb.set_trace()
             for layer_name in sub_layers:
-                weight_config_this_layer = self.weight_config.get(
-                    self.get_full_layer_name(layer_name, block_idx), None
+                # weight_config_this_layer = self.weight_config.get(
+                #     self.get_full_layer_name(layer_name, block_idx), None
+                # )
+                weight_config_this_layer = self.get_layer_config(
+                    self.get_full_layer_name(layer_name, block_idx)
                 )
                 logger.info(f"Quantizing layer {layer_name}")
                 scale, zp = gptq_for_this_block[layer_name].fasterquant(
