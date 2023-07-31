@@ -315,9 +315,7 @@ class GPTQuantizer(object):
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 # if self.weight_config.get(full_layer_name, None) == None:
                 if self.get_layer_config(full_layer_name) == None:
-                    logger.warning(f"{full_layer_name} can be quantized but " + \
-                                    "is excluded from your quantization configs.")
-                    continue
+                    logger.warning(f"{full_layer_name} can be quantized " + "but excluded from quantization configs.")
                 else:
                     sub_layers_to_quant[layer_name] = layer_obj
             del sub_layers
@@ -396,10 +394,6 @@ class GPTQuantizer(object):
             for m, n in v.items():
                 gptq_config[k][m] = n.tolist()
         return self.model, gptq_config
-    
-    @torch.no_grad()
-    def post_quantization(self, test_dataloader):
-        pass # gptq model can be evaluate using itrex optimized lm_eval
 
 class GPTQ:
     """
@@ -422,9 +416,9 @@ class GPTQ:
         self.perm = None # actorder choice
 
     def add_batch(self, inp, out):
-        if DEBUG:
-            self.inp1 = inp
-            self.out1 = out
+        # if DEBUG:
+        #     self.inp1 = inp
+        #     self.out1 = out
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
@@ -432,16 +426,17 @@ class GPTQ:
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()
-        if isinstance(self.layer, nn.Conv2d):
-            unfold = nn.Unfold(
-                self.layer.kernel_size,
-                dilation=self.layer.dilation,
-                padding=self.layer.padding,
-                stride=self.layer.stride
-            )
-            inp = unfold(inp)
-            inp = inp.permute([1, 0, 2])
-            inp = inp.flatten(1)
+        # TODO: llm's transformer sequential with nn.conv2d is currently not under test
+        # if isinstance(self.layer, nn.Conv2d):
+        #     unfold = nn.Unfold(
+        #         self.layer.kernel_size,
+        #         dilation=self.layer.dilation,
+        #         padding=self.layer.padding,
+        #         stride=self.layer.stride
+        #     )
+        #     inp = unfold(inp)
+        #     inp = inp.permute([1, 0, 2])
+        #     inp = inp.flatten(1)
         self.H *= self.nsamples / (self.nsamples + tmp)
         self.nsamples += tmp
         # inp = inp.float()
@@ -524,11 +519,11 @@ class GPTQ:
 
             W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:])
 
-            if DEBUG:
-                self.layer.weight.data[:, :i2] = Q[:, :i2]
-                self.layer.weight.data[:, i2:] = W[:, i2:]
-                logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
-                logger.info(f"{torch.sum(Losses)}")
+            # if DEBUG:
+            #     self.layer.weight.data[:, :i2] = Q[:, :i2]
+            #     self.layer.weight.data[:, i2:] = W[:, i2:]
+            #     logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+            #     logger.info(f"{torch.sum(Losses)}")
 
         if self.device != torch.device('cpu'):
             torch.cuda.synchronize()
