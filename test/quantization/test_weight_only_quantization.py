@@ -105,6 +105,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
 
+        fp32_model = copy.deepcopy(self.model)
         model2 = awq_quantize(
             fp32_model, 
             weight_config=weight_config, 
@@ -192,26 +193,28 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
     def test_teq(self):
         dataloader = self.generate_random_corpus()
         model = copy.deepcopy(self.gptj)
+
         weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'sym': True,
-            'folding': True
+            # 'op_name': (bit, group_size, sheme)
+            'transformer.h.0.mlp.fc_in': {
+                'bits': 8,
+                'group_size': -1,
+                'scheme': 'sym'
+            },
+            'transformer.h.0.mlp.fc_out': {
+                'bits': 4,
+                'group_size': 32,
+                'scheme': 'asym'
+            },
         }
-
-        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
-        self.assertTrue(isinstance(model, torch.nn.Module))
-
-        del model
-
-        model = copy.deepcopy(self.gptj)
-        weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'sym': True,
-            'folding': False
+        absorb_dict = {
+            'transformer.h.0.mlp.fc_in': ['transformer.h.0.mlp.fc_out']
         }
-        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
+        extra_config = {'folding': True}
+
+
+        model = teq_quantize(model, weight_config=weight_config, absorb_to_layer=absorb_dict,
+                extra_config=extra_config, dataloader=dataloader)
         self.assertTrue(isinstance(model, torch.nn.Module))
 
 if __name__ == "__main__":

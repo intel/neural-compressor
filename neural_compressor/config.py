@@ -838,10 +838,22 @@ class _BaseQuantizationConfig:
                 _check_value("smooth_quant_args", val, dict)
                 for k, v in val.items():
                     if k == "alpha":
+                        """
+                        examples:
+                            smooth_quant_args = {"alpha": "auto"}
+                            smooth_quant_args = {"alpha": 0.5}
+                            smooth_quant_args = {"alpha": [0.5]}
+                            smooth_quant_args = {"alpha": numpy.arange(0.1, 0.5, 0.05).tolist()}
+                        """
                         if isinstance(v, str):
                             assert v == "auto", "the alpha of sq only supports float and 'auto'"
+                        elif isinstance(v, float) or isinstance(v, int):
+                            continue
                         else:
-                            _check_value("alpha", v, float)
+                            logger.warning("Ignore the alpha as it's not a list, int or float.")
+                        if isinstance(val[k], list):
+                            assert all([vv >= 0.0 and vv <=1.0 for vv in val[k]]), \
+                                "The candidate value of smooth quantization alpha should be between 0 and 1."
 
                 return True
             else:
@@ -1493,6 +1505,32 @@ class WeightPruningConfig:
         """Set weight_compression."""
         self._weight_compression = weight_compression
 
+
+class HPOConfig:
+    """Config class for hyperparameter optimization.
+    
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+        searcher(str): The name of search algorithms, currently support: grid, random, bo and xgb.
+        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
+        min_train_sample(int, optional): The min number of samples to start training the search model.
+        seed(int, optional): Random seed.
+
+    """
+    def __init__(self,
+                 search_space,
+                 searcher='xgb',
+                 higher_is_better=True,
+                 loss_type='reg',
+                 min_train_samples=10,
+                 seed=42):
+        """Init an HPOConfig object."""
+        self.search_space = search_space
+        self.searcher = searcher
+        self.higher_is_better = higher_is_better
+        self.loss_type = loss_type
+        self.min_train_samples = min_train_samples
+        self.seed = seed
 
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss.

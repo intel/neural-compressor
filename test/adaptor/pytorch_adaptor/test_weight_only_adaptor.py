@@ -245,7 +245,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 for i in range(self.nsamples):
                     yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
 
-        
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={

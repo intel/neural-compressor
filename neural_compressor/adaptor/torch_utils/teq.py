@@ -41,6 +41,8 @@ class TEQuantizer:
         self,
         model,
         weight_config={},
+        absorb_to_layer={},
+        extra_config={},
         example_inputs=None
     ):
         """
@@ -48,17 +50,14 @@ class TEQuantizer:
         :param weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}.
         :param example_inputs: inputs for trace 
         """
-
         self.model = model
-        self.num_bits = weight_config.get('wbits', 4)
-        self.group_size = weight_config.get('group_size', -1)
-        self.scheme = weight_config.get('sym', False)
-        self.folding = weight_config.get('folding', True)
+        self.weight_config = weight_config
+        self.folding = extra_config.get('folding', True)
         self.example_inputs = example_inputs
         self.device, self.dtype = self._get_device()
         self.model.eval()
-
         self.trained_alphas = {}
+        self.absorb_to_layer = absorb_to_layer
 
     def _get_device(self):
         """
@@ -68,58 +67,18 @@ class TEQuantizer:
         for _, p in self.model.named_parameters():
             return p.data.device, p.data.dtype
 
-    def add_tuning_scale(self, op_types=['Linear'], excluded_name="lm_head",
-            excluded_key=None, sqrt_w_init=False):
+    def add_tuning_scale(self, sqrt_w_init=False):
         """
         The main entry of smooth quant
         to the paper for more details
-        :param op_types: The op typed to be smooth quantized
-        :param excluded_name: exclude layer
-        :param excluded_key: exclude key
         :param sqrt_w_init: use sqrt weight to init
         """
-        if self.folding:
-            self.insert_mul = False
-        else:
-            self.insert_mul = True
-
-        with torch.no_grad():
-            if self.insert_mul:
-                self.absorb_to_layer = self._get_all_layer_names()  # TODO: only support linear now.
-            else:
-                self.absorb_to_layer, no_absorb_layers = self._trace(
-                        op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
-                if self.absorb_to_layer == None and no_absorb_layers == None: # pragma: no cover
-                    logger.warning("sorry, could not trace the model, smooth quant is skipped")
-                    logger.warning("if you are using huggingface model,"
-                                       "you could set torchscript to True "
-                                       "when loading the model or set the return_dict to False")
-                elif self.absorb_to_layer == {}: # pragma: no cover
-                    logger.warning("could not find any layer to be absorbed")
-                else:
-                    to_absorb_cnt = 0
-                    for key, item in self.absorb_to_layer.items():
-                        to_absorb_cnt += len(item)
-
-                    logger.info(
-                            f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
-                            f"layers could be absorbed in smooth quant")
 
         # freeze model.
         for n, p in self.model.named_parameters():
             p.requires_grad = False
 
-        for key, item in self.absorb_to_layer.items():
-            if len(item) == 1 and excluded_name in item[0]:
-                excluded_key = key
-                break
-
-        if excluded_key != None:
-            self.absorb_to_layer.pop(excluded_key)  ## remove
-
         for layer_norm in self.absorb_to_layer:
-            if excluded_name in self.absorb_to_layer[layer_norm][0]: # pragma: no cover
-                continue
 
             layer_0_name = self.absorb_to_layer[layer_norm][0]
 
@@ -143,31 +102,32 @@ class TEQuantizer:
 
             self.trained_alphas[layer_norm] = alpha
             for layer_name in self.absorb_to_layer[layer_norm]:
+                if self.weight_config.get(layer_name) is None: # pragma: no cover
+                    logger.info(f"layer {layer_name} not in weight config, skip.")
+                    continue
+                num_bits = self.weight_config[layer_name]["bits"]
+                group_size = self.weight_config[layer_name]["group_size"]
+                scheme = self.weight_config[layer_name]["scheme"]
+
                 module = get_module(self.model, layer_name)
                 wrapper_module = TEQLinearFakeQuant(orig_layer=module, alpha=alpha,
-                        num_bits=self.num_bits, group_size=self.group_size)
+                        num_bits=num_bits, group_size=group_size, scheme=scheme)
                 set_module(self.model, layer_name, wrapper_module)
 
         for n, m in self.model.named_modules():
-            if isinstance(m, torch.nn.Linear) and excluded_name not in n and "orig_layer" not in n:
+            if isinstance(m, torch.nn.Linear) and "orig_layer" not in n:
+                if self.weight_config.get(n) is None: # pragma: no cover
+                    logger.info(f"out of absorbed layer {n} not in weight config, skip.")
+                    continue
+                num_bits = self.weight_config[layer_name]["bits"]
+                group_size = self.weight_config[layer_name]["group_size"]
+                scheme = self.weight_config[layer_name]["scheme"]
+
                 alpha = torch.nn.Parameter(torch.ones(m.weight.shape[1], device=self.device))
                 alpha.requires_grad_(False)
                 wrapper_module = TEQLinearFakeQuant(orig_layer=m, alpha=alpha,
-                        num_bits=self.num_bits, group_size=self.group_size)
+                        num_bits=num_bits, group_size=group_size, scheme=scheme)
                 set_module(self.model, n, wrapper_module)
-
-    def _get_all_layer_names(self, op_types=['Linear']):
-        """
-        Try the model to find the layers which can be smooth quantized.
-        :param op_types: The op types to be smooth quantized
-        :return:
-        """
-        self_absorb_layer = {}
-        for name, module in self.model.named_modules():
-            for op_type in op_types:
-                if op_type == str(module.__class__.__name__):
-                    self_absorb_layer[name] = [name]
-        return self_absorb_layer
 
     @torch.no_grad()
     def _absorb_scales(self, layer, scale, layer_name=""):
@@ -178,12 +138,13 @@ class TEQuantizer:
         :param layer_name: The layer name
         """
         # for insert mul
-        if self.insert_mul: # pragma: no cover
+        if not self.folding: # pragma: no cover
             if isinstance(layer, TEQMulLinear):
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
                 new_module = TEQMulLinear(layer, scale)
                 set_module(self.model, layer_name, new_module)
+            self.weight_config[layer_name + ".sq_linear"] = self.weight_config[layer_name]
             return
 
         if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
@@ -275,24 +236,12 @@ class TEQuantizer:
                 layer_module = get_module(self.model, layer_name)
                 self._scale_layer_weight(layer_module, weight_scale)
 
-        # for insert_mul = False
+        # for Folding = True
         for n, m in self.model.named_modules():
             if isinstance(m, TEQLinearFakeQuant):
                 set_module(self.model, n, m.orig_layer)
 
-    def _trace(self, op_types):
-        """
-        Try the model to find the layers which can be smooth quantized.
-        :param op_types: The op types to be smooth quantized
-        :return:
-        absorb_to_layer: A dict, absorb layer name:layers to be smooth quantized
-        no_absorb_layers: A list saving the layers which could not find the absorb layer
-        """
-        tg = GraphTrace()
-        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.model, self.example_inputs, op_types)
-        return absorb_to_layer, no_absorb_layers
-
-    def train(self, dataloader, train_steps=100, lr=1e-3, warmup_ratio=0.05,
+    def train(self, dataloader, train_steps=1000, lr=1e-3, warmup_ratio=0.05,
             gradient_accumulation_steps=1, logging_steps=10,
             betas=[0.9, 0.9], weight_decay=0, lr_scheduler_type="linear"):
         """
@@ -334,7 +283,7 @@ class TEQuantizer:
                     optimizer.zero_grad()
                     lr_scheduler.step()
 
-                if global_steps == train_steps:
+                if global_steps >= train_steps: # pragma: no cover
                     break
 
         logger.info("finish training")
@@ -342,24 +291,22 @@ class TEQuantizer:
         return None
 
     @torch.no_grad()
-    def quantize(self, scheme=None, quant_lm_head=False):
+    def quantize(self):
         """
         quantization
         """
-        if scheme is None:
-            scheme = self.scheme
 
         for n, m in self.model.named_modules():
-            if quant_lm_head:
-                if isinstance(m, torch.nn.Linear):
-                    m.weight.data.copy_(
-                            quant_weight(m.weight, num_bits=self.num_bits,
-                                group_size=self.group_size, scheme=scheme))
-            else:
-                if isinstance(m, torch.nn.Linear) and "lm_head" not in n:
-                    m.weight.data.copy_(
-                            quant_weight(m.weight, num_bits=self.num_bits,
-                                group_size=self.group_size, scheme=scheme))
+            if self.weight_config.get(n) is None: # pragma: no cover
+                logger.info(f"quantize layer {n} not in weight config, skip.")
+                continue
+            num_bits = self.weight_config[n]["bits"]
+            group_size = self.weight_config[n]["group_size"]
+            scheme = self.weight_config[n]["scheme"]
+            if isinstance(m, torch.nn.Linear): # pragma: no cover
+                m.weight.data.copy_(
+                        quant_weight(m.weight, num_bits=num_bits,
+                            group_size=group_size, scheme=scheme))
 
     def save(self, save_scale_file="", save_state_dict_file=""):
         """

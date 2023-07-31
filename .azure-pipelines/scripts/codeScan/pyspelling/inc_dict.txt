@@ -2690,6 +2690,8 @@ fba
 hostname
 qweight
 qconfig
+TEQ
+WeightOnlyLinear
 McKinstry
 Migacz
 MinMax
@@ -2698,3 +2700,7 @@ Vanhoucke
 ONNXCommunityMeetup
 luYBWA
 pQ
+xgb
+xgboost
+hpo
+HPO

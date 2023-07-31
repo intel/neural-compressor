@@ -75,6 +75,7 @@ class SQLinearWrapper(torch.nn.Module):
         # calculate and only save scale, zero_point to avoid memory usage
         self.scale, self.zero_point = self._calculate_qparams(input_scale, input_minmax, dtype)
         self.add_module('sq_linear', module)
+        self._update_sq_linear()
         self.ipex = False  # a flag used for ipex inference
     
     @property
@@ -111,6 +112,12 @@ class SQLinearWrapper(torch.nn.Module):
         obs(self.sq_linear.weight)
         scale, _ = obs.calculate_qparams()
         return scale
+
+    def _update_sq_linear(self):
+        # remove mul and reset sq_linear for ipex inference
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.sq_linear.weight /= scale
 
     def _recover_sq_linear(self):
         # remove mul and reset sq_linear for ipex inference
@@ -382,7 +389,7 @@ class FakeAffineTensorQuantFunction(Function):
     """
 
     @staticmethod
-    def forward(ctx, inputs, num_bits=4, group_size=1024):
+    def forward(ctx, inputs, num_bits=4, group_size=1024, scheme="asym"):
         """
 
         As it will be only applied on activation with per tensor granularity, broadcast is not needed.
@@ -397,7 +404,7 @@ class FakeAffineTensorQuantFunction(Function):
         Returns:
             outputs: A Tensor of type output_dtype
         """
-        return quant_weight(inputs, num_bits, group_size)
+        return quant_weight(inputs, num_bits, group_size, scheme)
 
     @staticmethod
     def backward(ctx, grad_outputs):
@@ -409,7 +416,7 @@ class FakeAffineTensorQuantFunction(Function):
         Returns:
             grad_inputs: A tensor of gradient
         """
-        return grad_outputs, None, None
+        return grad_outputs, None, None, None
 
 
 class TEQLinearFakeQuant(torch.nn.Module):
@@ -417,7 +424,7 @@ class TEQLinearFakeQuant(torch.nn.Module):
     wrapper quantization linear
     """
 
-    def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1):
+    def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1, scheme="asym"):
         """
         A forward hook to linear module
         :param orig_layer: the original module
@@ -431,6 +438,7 @@ class TEQLinearFakeQuant(torch.nn.Module):
 
         self.num_bits = num_bits
         self.group_size = group_size
+        self.scheme = scheme
 
     def forward(self, x):
         alpha = torch.clip(self.alpha, 1e-5)
@@ -439,7 +447,8 @@ class TEQLinearFakeQuant(torch.nn.Module):
         x = x / alpha.view(shape)
         weight = self.orig_layer.weight
         weight = weight * alpha.unsqueeze(dim=0)
-        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size)
+        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits,
+                self.group_size, self.scheme)
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
