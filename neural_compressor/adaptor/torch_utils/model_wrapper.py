@@ -24,6 +24,8 @@ from torch.nn import functional as F
 from torch.autograd import Function
 from .weight_only import quant_weight
 from packaging.version import Version
+from neural_compressor.utils import logger
+from neural_compressor.utils.logger import level, DEBUG
 
 
 def get_torch_version():
@@ -261,7 +263,7 @@ class WeightOnlyLinear(torch.nn.Module):
             tmp = int_weight[:, start: end].type(self.compressed_dtype)
             for e in range(tmp.shape[1]):
                 tmp[:, e] &= mask
-                tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
                 self.packed_weight[:, j] |= tmp[:, e]
         if self.compression_dim == 0:
             self.packed_weight = self.packed_weight.T
@@ -279,12 +281,13 @@ class WeightOnlyLinear(torch.nn.Module):
                 tmp = zp[:, start: end].type(self.compressed_dtype)
                 for e in range(tmp.shape[1]):
                     tmp[:, e] &= mask
-                    tmp[:, e] = tmp[:, e] << self.bits * (self.n_pack - 1 - e)
+                    tmp[:, e] = tmp[:, e] << (self.bits * e)
                     self.packed_zp[:, j] |= tmp[:, e]
             if self.compression_dim == 0:
                 self.packed_zp = self.packed_zp.T
 
     def recover(self):
+        logger.debug(f"Recovering {self} weight")
         device = self.scale.device
         mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
         if hasattr(self, 'packed_zp'):
@@ -305,7 +308,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 if index >= origin_shape[1]:
                     continue
                 tmp = packed_weight[:, j]
-                tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
                 tmp = tmp >> self.compress_bits - self.bits
                 if weight_dtype == torch.uint8:
                     tmp &= mask # remove sign bit
@@ -328,7 +331,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     if index >= origin_shape[1]:
                         continue
                     tmp = packed_zp[:, j]
-                    tmp = tmp << self.compress_bits - self.bits * (self.n_pack - e)
+                    tmp = tmp << (self.compress_bits - self.bits * (e + 1))
                     tmp = tmp >> self.compress_bits - self.bits
                     tmp &= mask
                     zp[:, index] = tmp.type(zp_dtype)
@@ -374,9 +377,16 @@ class WeightOnlyLinear(torch.nn.Module):
         return fp32_weight
 
     def forward(self, input):
-        weight = self.recover()
-        input = input.type(weight.dtype)
-        return F.linear(input, weight, self.bias)
+        if level == DEBUG:
+            if not hasattr(self, 'weight'):
+                self.weight = self.recover()
+            input = input.type(self.weight.dtype)
+            logger.debug(f"Calculating {self}")
+            return F.linear(input, self.weight, self.bias)
+        else:
+            weight = self.recover()
+            input = input.type(weight.dtype)
+            return F.linear(input, weight, self.bias)
 
     def extra_repr(self) -> str:
         return 'in_features={}, out_features={}, bits={}, group_size={}, bias={}'.format(
