@@ -1,30 +1,5 @@
-#!/usr/bin/env python
-# coding=utf-8
-# Copyright 2021 The HuggingFace Inc. team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""
-Fine-tuning the library models for causal language modeling (GPT, GPT-2, CTRL, ...)
-on a text file or a dataset without using HuggingFace Trainer.
-Here is the full list of checkpoints on the hub that can be fine-tuned by this script:
-https://huggingface.co/models?filter=text-generation
-"""
-# You can also adapt this script on your own causal language modeling task. Pointers for this are left as comments.
-from accelerate.utils import set_seed
-set_seed(42)
-from accelerate import Accelerator, DistributedType
-from accelerate.logging import get_logger
 import argparse
+import datasets
 import json
 import logging
 import math
@@ -32,13 +7,27 @@ import os
 import sys
 sys.path.insert(0, './neural-compressor')
 sys.path.insert(0, './')
+
 import random
+import numpy as np
 from itertools import chain
 from pathlib import Path
 
-import datasets
 import torch
-torch.use_deterministic_algorithms(True, warn_only=True)
+def set_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.random.manual_seed(seed)
+set_seed(42)
+def skip(*args, **kwargs):
+    pass
+torch.nn.init.kaiming_uniform_ = skip
+torch.nn.init.uniform_ = skip
+torch.nn.init.normal_ = skip
+
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+import logging
 from datasets import load_dataset
 from huggingface_hub import Repository, create_repo
 from torch.utils.data import DataLoader
@@ -51,6 +40,7 @@ from transformers import (
     MODEL_MAPPING,
     AutoConfig,
     AutoModelForCausalLM,
+    OPTForCausalLM,
     AutoTokenizer,
     SchedulerType,
     default_data_collator,
@@ -64,17 +54,16 @@ from timers import CPUTimer, GPUTimer
 from neural_compressor.compression.pruner import model_slim
 from neural_compressor.compression.pruner import parse_auto_slim_config
 
-    
-# Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.23.0.dev0")
-
-logger = get_logger(__name__)
+check_min_version("4.27.0.dev0")
+logger = logging.getLogger(__name__)
 
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/language-modeling/requirements.txt")
 
 MODEL_CONFIG_CLASSES = list(MODEL_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
-
+LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
+RANK = int(os.getenv('RANK', -1))
+WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 class Evaluator:
     def __init__(self, dataset, tokenizer, device, batch_size=16):
@@ -96,6 +85,8 @@ class Evaluator:
         step = 0
         for input_ids, label, label_indices in tqdm(self.dataloader):
             with torch.no_grad():
+                # if step == 0:
+                #     model = torch.jit.trace(model, input_ids)
                 step += 1
                 # timing
                 if step > warmup_steps: my_timer.__enter__()
@@ -166,49 +157,6 @@ class INCDataloader():
 
     def __len__(self):
         return self.length
-    
-    
-class Net(torch.nn.Module):
-    def __init__(self, ori_model):
-        super(Net, self).__init__()
-        self.model = ori_model
-    def forward(self, input_ids, pastkv, mask):
-        return self.model(input_ids=input_ids, attention_mask=mask, past_key_values=pastkv, return_dict=False)
-        
-def trace_model(model, tokenizer):
-    from optimum.utils import NormalizedConfigManager
-    normalized_config = NormalizedConfigManager.get_normalized_config_class(model.config.model_type)(model.config)
-    num_layers = normalized_config.num_layers
-    num_attention_heads = normalized_config.num_attention_heads
-    hidden_size = normalized_config.hidden_size
-    d_k = hidden_size // num_attention_heads
-    model_type = model.config.model_type
-    model = model.cpu()
-    model.eval()
-    prompt = "Once upon a time, there existed a little girl, who liked to have adventures." + \
-    " She wanted to go to places and meet new people, and have fun."
-    init_input_ids = tokenizer(prompt, return_tensors="pt").input_ids[0]
-    traced_model = None
-    if 'llama' in model_type:
-        input_ids = init_input_ids.clone()
-        attention_mask = torch.ones(len(input_ids)+1)
-        attention_mask[0] = 0
-        input_ids = input_ids[0:1].unsqueeze(0)
-        attention_mask = attention_mask.unsqueeze(0)
-        past_key_value = tuple([(torch.zeros([1,32,34,128]), torch.zeros([1,32,34,128])) for i in range(32)])
-        if 'llama_13b' in model_type:
-            past_key_value = tuple([(torch.zeros([1,40,34,128]), torch.zeros([1,40,34,128])) for i in range(40)])
-        net = model
-        traced_model = torch.jit.trace(net, (input_ids, attention_mask, past_key_value))
-    else:
-        input_ids = init_input_ids.clone().unsqueeze(0)
-        attention_mask = torch.ones(len(input_ids)).unsqueeze(0)
-        past_key_value = tuple([(torch.zeros([1,num_attention_heads,0,d_k]),
-                                    torch.zeros([1,num_attention_heads,0,d_k])) for i in range(num_layers)])
-        net = Net(model)
-        traced_model = torch.jit.trace(net, (input_ids, past_key_value, attention_mask))
-    return traced_model
-    
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Finetune a transformers model on a causal language modeling task")
@@ -260,6 +208,10 @@ def parse_args():
         help="Pretrained tokenizer name or path if not the same as model_name",
     )
     parser.add_argument(
+        "--device", default=0, type=str,
+        help="device gpu int number, or 'cpu' ",
+    )
+    parser.add_argument(
         "--use_slow_tokenizer",
         action="store_true",
         help="If passed, will use a slow tokenizer (not backed by the 🤗 Tokenizers library).",
@@ -277,10 +229,31 @@ def parse_args():
         help="Batch size (per device) for the evaluation dataloader.",
     )
     parser.add_argument(
+        "--learning_rate",
+        type=float,
+        default=5e-5,
+        help="Initial learning rate (after the potential warmup period) to use.",
+    )
+    parser.add_argument("--weight_decay", type=float, default=0.0, help="Weight decay to use.")
+    parser.add_argument("--num_train_epochs", type=int, default=3, help="Total number of training epochs to perform.")
+    parser.add_argument(
+        "--max_train_steps",
+        type=int,
+        default=None,
+        help="Total number of training steps to perform. If provided, overrides num_train_epochs.",
+    )
+    parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
         default=1,
         help="Number of updates steps to accumulate before performing a backward/update pass.",
+    )
+    parser.add_argument(
+        "--lr_scheduler_type",
+        type=SchedulerType,
+        default="linear",
+        help="The scheduler type to use.",
+        choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
     )
     parser.add_argument(
         "--num_warmup_steps", type=int, default=0, help="Number of steps for the warmup in the lr scheduler."
@@ -322,6 +295,18 @@ def parse_args():
     )
     parser.add_argument("--hub_token", type=str, help="The token to use to push to the Model Hub.")
     parser.add_argument(
+        "--checkpointing_steps",
+        type=str,
+        default=None,
+        help="Whether the various states should be saved at the end of every n steps, or 'epoch' for each epoch.",
+    )
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="If the training should continue from a checkpoint folder.",
+    )
+    parser.add_argument(
         "--with_tracking",
         action="store_true",
         help="Whether to enable experiment trackers for logging.",
@@ -346,11 +331,6 @@ def parse_args():
     )
     # pruning config
     parser.add_argument(
-        "--cooldown_epochs",
-        type=int, default=0,
-        help="Cooling epochs after pruning."
-    )
-    parser.add_argument(
         "--do_prune", action="store_true",
         help="Whether or not to prune the model"
     )
@@ -362,7 +342,7 @@ def parse_args():
     )
     parser.add_argument(
         "--pruning_pattern",
-        type=str, default="channelx1",
+        type=str, default="1x1",
         help="pruning pattern type, we support NxM and N:M."
     )
     parser.add_argument(
@@ -388,8 +368,17 @@ def parse_args():
         type=int, default=2048,
         help="Maximum data length the model can receive."
     )
+    parser.add_argument(
+        "--trust_remote_code", default=True,
+        help="Transformers parameter: use the external repo")
+    ### DDP mode config
+    parser.add_argument(
+        "--local_rank",
+        type=int, default=-1,
+        help="Automatic DDP Multi-GPU argument, do not modify")
+    
     args = parser.parse_args()
-
+        
     # Sanity checks
     if args.calibration_dataset_name is None and args.train_file is None and args.validation_file is None:
         raise ValueError("Need either a dataset name or a training/validation file.")
@@ -409,70 +398,32 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # DDP Mode
+    local_rank = args.local_rank
+    if local_rank != -1:
+        msg = 'is not compatible with YOLOv5 Multi-GPU DDP training'
+        batch_size = args.per_device_train_batch_size
+        assert batch_size % WORLD_SIZE == 0, f'--batch-size {batch_size} must be multiple of WORLD_SIZE'
+        assert torch.cuda.device_count() > local_rank, 'insufficient CUDA devices for DDP command'
+        torch.cuda.set_device(local_rank)
+        # device = torch.device('cuda', local_rank)
+        dist.init_process_group(backend="nccl" if dist.is_nccl_available() else "gloo")
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
     send_example_telemetry("run_clm_no_trainer", args)
-
-    # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
-    # If we're using tracking, we also need to initialize it here and it will by default pick up all supported trackers
-    # in the environment
-    accelerator_log_kwargs = {}
-
-    if args.with_tracking:
-        accelerator_log_kwargs["log_with"] = args.report_to
-        accelerator_log_kwargs["logging_dir"] = args.output_dir
-
-    accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
-
-    # Make one log on every process with the configuration for debugging.
+    
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
-    logger.info(accelerator.state, main_process_only=False)
-    if accelerator.is_local_main_process:
-        datasets.utils.logging.set_verbosity_warning()
-        transformers.utils.logging.set_verbosity_info()
-    else:
-        datasets.utils.logging.set_verbosity_error()
-        transformers.utils.logging.set_verbosity_error()
-
-    # If passed along, set the training seed now.
-    # if args.seed is not None: # Already set at the beginning of the file
-    #     set_seed(args.seed)
-
-    # Handle the repository creation
-    if accelerator.is_main_process:
-        if args.push_to_hub:
-            if args.hub_model_id is None:
-                repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
-            else:
-                repo_name = args.hub_model_id
-            create_repo(repo_name, exist_ok=True, token=args.hub_token)
-            repo = Repository(args.output_dir, clone_from=repo_name, token=args.hub_token)
-
-            with open(os.path.join(args.output_dir, ".gitignore"), "w+") as gitignore:
-                if "step_*" not in gitignore:
-                    gitignore.write("step_*\n")
-                if "epoch_*" not in gitignore:
-                    gitignore.write("epoch_*\n")
-        elif args.output_dir is not None:
-            os.makedirs(args.output_dir, exist_ok=True)
-    accelerator.wait_for_everyone()
-
-    # Get the datasets: you can either provide your own CSV/JSON/TXT training and evaluation files (see below)
-    # or just provide the name of one of the public datasets available on the hub at https://huggingface.co/datasets/
-    # (the dataset will be downloaded automatically from the datasets Hub).
-    #
-    # For CSV/JSON files, this script will use the column called 'text' or the first column if no column called
-    # 'text' is found. You can easily tweak this behavior (see below).
-    #
-    # In distributed training, the load_dataset function guarantee that only one local process can concurrently
-    # download the dataset.
+    
     if args.calibration_dataset_name is not None:
         # Downloading and loading a dataset from the hub.i
-        raw_datasets = load_dataset(args.calibration_dataset_name, args.dataset_config_name)
+        if "wiki" in args.calibration_dataset_name:
+            raw_datasets = load_dataset('wikitext', args.calibration_dataset_name, args.dataset_config_name)
+        else:
+            raw_datasets = load_dataset(args.calibration_dataset_name, args.dataset_config_name)
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset( #use the_pile's validation set for retraining pruning
                 args.calibration_dataset_name,
@@ -510,7 +461,7 @@ def main():
                 split=f"train[{args.validation_split_percentage}%:]",
                 **dataset_args,
             )
-
+            
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
@@ -522,31 +473,19 @@ def main():
         config = AutoConfig.from_pretrained(args.config_name, torchscript=True)
     elif args.model_name_or_path:
         # torchscript will force `return_dict=False` to avoid jit errors
-        config = AutoConfig.from_pretrained(args.model_name_or_path, torchscript=True)
-        # config = None
+        config = AutoConfig.from_pretrained(args.model_name_or_path,
+                                            torchscript=True, trust_remote_code=args.trust_remote_code)
     else:
         config = CONFIG_MAPPING[args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
-        
-    if args.model_name_or_path:
-        model = AutoModelForCausalLM.from_pretrained(
-                args.model_name_or_path,
-                from_tf=bool(".ckpt" in args.model_name_or_path),
-                config=config,
-                low_cpu_mem_usage=args.low_cpu_mem_usage,
-                )
-    else:
-        logger.info("Training new model from scratch")
-        model = AutoModelForCausalLM.from_config(config)
-    
-    model_name = model.config.model_type
-    
+
+    is_llama = bool("llama" in args.model_name_or_path)
+    is_t5 = bool("t5" in args.model_name_or_path)
     if args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, use_fast=not args.use_slow_tokenizer)
     elif args.model_name_or_path:
-        if 'llama' in model_name:
-            from transformers import LlamaTokenizer
-            tokenizer = LlamaTokenizer.from_pretrained(args.model_name_or_path)
+        if is_llama:
+            tokenizer = transformers.LlamaTokenizer.from_pretrained(args.model_name_or_path)
         else :
             tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
     else:
@@ -555,13 +494,34 @@ def main():
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
-    
+    if args.model_name_or_path:
+        if is_t5:
+            model = T5ForConditionalGeneration.from_pretrained(
+                args.model_name_or_path,
+                config=config,
+                )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                    args.model_name_or_path,
+                    from_tf=bool(".ckpt" in args.model_name_or_path),
+                    config=config,
+                    trust_remote_code=args.trust_remote_code,
+                    low_cpu_mem_usage=args.low_cpu_mem_usage,
+                    )
+
+    else:
+        logger.info("Training new model from scratch")
+        model = AutoModelForCausalLM.from_config(config)
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
     embedding_size = model.get_input_embeddings().weight.shape[0]
     if len(tokenizer) > embedding_size:
         model.resize_token_embeddings(len(tokenizer))
+    if local_rank != -1:
+        device = torch.device("cuda", local_rank)
+        model = model.to(device)
+        model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
     # Preprocessing the datasets.
     # First we tokenize all the texts.
@@ -571,9 +531,8 @@ def main():
     def tokenize_function(examples):
         return tokenizer(examples[text_column_name], max_length=args.max_length, truncation=True) #padding
     #   return tokenizer(examples[text_column_name])
-    
 
-    with accelerator.main_process_first():
+    if RANK in {-1, 0}:
         tokenized_datasets = raw_datasets.map(
             tokenize_function,
             batched=True,
@@ -624,7 +583,7 @@ def main():
     # To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
     # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.map
 
-    with accelerator.main_process_first():
+    if RANK in {-1, 0}:
         lm_datasets = tokenized_datasets.map(
             group_texts,
             batched=True,
@@ -633,133 +592,94 @@ def main():
             desc=f"Grouping texts in chunks of {block_size}",
         )
     train_dataset = lm_datasets["train"]
-    eval_dataset = lm_datasets["validation"]
-
-    # Log a few random samples from the training set:
-    # for index in random.sample(range(len(train_dataset)), 3):
-    #     logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
-
+    
     # DataLoaders creation:
-    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
-    max_sample_num = args.max_pruning_steps * total_batch_size
-    train_dataset = train_dataset.shuffle(seed=42).select(range(max_sample_num))
-    train_dataloader = DataLoader(
-        train_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
-    )
-    eval_dataloader = DataLoader(
-        eval_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
-    )
-
-    # Prepare everything with our `accelerator`.
-    model, train_dataloader, eval_dataloader = accelerator.prepare(
-        model, train_dataloader, eval_dataloader
-    )
-
-    # On TPU, the tie weights in our model have been disconnected, so we need to restore the ties.
-    if accelerator.distributed_type == DistributedType.TPU:
-        model.tie_weights()
-
-    # We need to initialize the trackers we use, and also store our configuration.
-    # The trackers initializes automatically on the main process.
-    if args.with_tracking:
-        experiment_config = vars(args)
-        # TensorBoard cannot log Enums, need the raw value
-        experiment_config["lr_scheduler_type"] = experiment_config["lr_scheduler_type"].value
-        accelerator.init_trackers("clm_no_trainer", experiment_config)
-
-    # Pruning!
-    logger.info("***** Running Pruning *****")
-    logger.info(f"  Num examples = {len(train_dataset)}")
-    logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
-    logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
-    logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
-    logger.info(f"  Total pruning steps = {args.max_pruning_steps}")
-
-    # Pruning preparation 
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
-    num_iterations = num_update_steps_per_epoch
-    num_warm = args.num_warmup_steps
-    total_iterations = args.max_pruning_steps
-    frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
-                                                           else args.pruning_frequency
-    pruning_start = max(num_warm, 1)
-    pruning_end = max(total_iterations - 1, pruning_start)
-    if not args.do_prune:
-        pruning_start = args.max_pruning_steps + 1
-        pruning_end = pruning_start
+    train_dataset = train_dataset.shuffle(seed=42).select(range(128))
+    total_batch_size = args.per_device_train_batch_size
+    if local_rank != -1:
+        total_batch_size *= WORLD_SIZE
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=args.per_device_train_batch_size, \
+                                                       sampler=train_sampler)
+    else:
+        train_dataloader = DataLoader(
+                train_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size)
         
+    logger.info("***** Running pruning *****")
+    logger.info(f"  Num examples = {len(train_dataset)}")
+    # logger.info(f"  Num Epochs = {args.num_train_epochs}")
+    logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
+    logger.info(f"  Total train/prune batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
+    
     if not args.auto_config:
         pruning_configs=[
             {
-                "pruning_type": "retrain_free",
-                "pruning_scope": "global",
-                "op_names": ['.fc', '.mlp'],
-                "excluded_op_names": [".attn"],
-                "sparsity_decay_type": "exp",
-                "pattern": "channelx1",
-                "pruning_op_types": ["Linear"],
-                "max_sparsity_ratio_per_op": 0.98,
-            },
+                "pruning_type": "sparse_gpt",
+                "op_names": [".attn", "_proj", ".fc", "key", "dense", "_h"],
+            }
         ]
     else:
-        # auto config
+        # auto slim config
         pruning_configs=[]
-        auto_configs = parse_auto_slim_config(
+        auto_slim_configs = parse_auto_slim_config(
             model,
             ffn2_sparsity = args.target_sparsity,
-            mha_sparsity = 0,
-            pruning_scope = "global",
-            pruning_type = "retrain_free",
+            mha_sparsity = args.target_sparsity,
+            pruning_type = "sparse_gpt",
+            pattern = args.pruning_pattern
         )
-        pruning_configs += auto_configs
-        
+        pruning_configs += auto_slim_configs
     configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
         pattern=args.pruning_pattern,
-        pruning_frequency=frequency,
-        start_step=pruning_start,
-        end_step=pruning_end,
     )
-    
-    from neural_compressor.compression.pruner import prepare_pruning
-    pruning = prepare_pruning(configs, model, dataloader=train_dataloader)
-    
+
+    if args.do_prune:
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        use_cache = model.config.use_cache
+        model.config.use_cache = False
+        # if torch.cuda.is_available():     # Larger models(e.g. 80G+) may not load into the video card memory.
+        #     model = model.cuda()
+        device = args.device
+        if device != 'cpu':
+            device = "cuda:"+str(device)
+        from neural_compressor.compression.pruner import prepare_pruning
+        pruning = prepare_pruning(configs, model,  dataloader=train_dataloader, device=device)
+        model.config.use_cache = use_cache
+        
+    if args.output_dir is not None:
+        ###TODO set ddp save method
+        output_dir = args.output_dir
+        if args.auto_slim:
+            output_dir += "/before_slim"
+        model.save_pretrained(output_dir)
+        tokenizer.save_pretrained(output_dir)
+        
+    if torch.cuda.is_available():
+        model = model.cuda()
     model.eval()
     if args.evaluation_dataset_name != None:
-        dataset_eval = load_dataset( # for example:use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
+        dataset_eval = load_dataset( 
+            # for example:use the_pile's validation set for pruning, and lambada dataset for eval
             args.evaluation_dataset_name,
             args.dataset_config_name,
             split=f"validation",
         )
-    else:      
+    else:
         dataset_eval = raw_datasets["validation"]
     dataset_eval = dataset_eval.shuffle(seed=42)
     evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
-    
     def eval_func(model):
         acc, avg_latency = evaluator.evaluate(model)
         return acc, avg_latency
 
-    if args.output_dir is not None:
-        accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        output_dir = args.output_dir
-        if args.auto_slim:
-            output_dir += "/before_slim"
-        unwrapped_model.save_pretrained(
-            output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        )
-        if accelerator.is_main_process:
-            tokenizer.save_pretrained(output_dir)
-            if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of pruning", auto_lfs_prune=True)
-    
     if not args.auto_slim:
         # only eval
         logger.info(f"***** Running Evaluation *****")
         acc, _ = eval_func(model)
-        logger.info(f"total_steps:{args.max_pruning_steps} accuracy:{acc}")
+        logger.info(f"pruned model accuracy:{acc}")
     else:
         logger.info(f"***** Running Evaluation before ffn auto slim*****")
         accuracy, avg_latency = eval_func(model)
@@ -769,17 +689,14 @@ def main():
         logger.info(f"***** Running Evaluation after ffn auto_slim*****")
         accuracy, avg_latency = eval_func(model)
         logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-        
-        if args.output_dir is not None:
-            accelerator.wait_for_everyone()
-            traced_model = trace_model(model, tokenizer)
-            logger.info(f"Save silmed jit model")
-            torch.jit.save(traced_model, args.output_dir+"/slimed_jit_model.pt")
-            
     
-    if args.with_tracking:
-        accelerator.end_training()
-
-
+    if RANK in {-1, 0}:
+        if args.output_dir is not None and args.auto_slim:
+            model.to('cpu')
+            torch.save(model, args.output_dir+"/slimed_model.pt")
+            tokenizer.save_pretrained(args.output_dir)
+            if args.push_to_hub:
+                repo.push_to_hub(commit_message="End of auto slim", auto_lfs_prune=True)
+    
 if __name__ == "__main__":
     main()
