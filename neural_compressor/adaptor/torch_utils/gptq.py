@@ -299,7 +299,6 @@ class GPTQuantizer(object):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
-        # import pdb;pdb.set_trace()
         self.pre_quantization()
 
         # Step2: run gptq quantization in a transformer block-wise manner.
@@ -350,14 +349,12 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
-            # import pdb;pdb.set_trace()
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
             # Step 2.4: everything is prepared, so start quantization!
-            # import pdb;pdb.set_trace()
             for layer_name in sub_layers:
                 # weight_config_this_layer = self.weight_config.get(
                 #     self.get_full_layer_name(layer_name, block_idx), None
