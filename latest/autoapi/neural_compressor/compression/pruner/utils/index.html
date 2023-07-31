@@ -136,6 +136,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.utils.generate_pruner_config" title="neural_compressor.compression.pruner.utils.generate_pruner_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_pruner_config</span></code></a>(info)</p></td>
 <td><p>Generate pruner config object from prune information.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.utils.get_layers" title="neural_compressor.compression.pruner.utils.get_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_layers</span></code></a>(model)</p></td>
+<td><p>Get each layer's name and its module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.utils.collect_layer_inputs" title="neural_compressor.compression.pruner.utils.collect_layer_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_layer_inputs</span></code></a>(model, layers, layer_idx, ...[, ...])</p></td>
+<td><p>Getting the forward input of a layer.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -354,6 +360,36 @@ accuracy drop.</p>
 <dd class="field-odd"><p>pruner</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.utils.get_layers">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.utils.</span></span><span class="sig-name descname"><span class="pre">get_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.utils.get_layers" title="Permalink to this definition"></a></dt>
+<dd><p>Get each layer’s name and its module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> – The model to be pruned.</p>
+</dd>
+</dl>
+<p>Returns: each layer’s name and its modules</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.utils.collect_layer_inputs">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.utils.</span></span><span class="sig-name descname"><span class="pre">collect_layer_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda:0'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.utils.collect_layer_inputs" title="Permalink to this definition"></a></dt>
+<dd><p>Getting the forward input of a layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The model to be pruned.</p></li>
+<li><p><strong>layers</strong> – Selectable layers of the model.</p></li>
+<li><p><strong>layer_idx</strong> – The layer index.</p></li>
+<li><p><strong>layer_inputs</strong> – The dataloader or the output of the previous layer.</p></li>
+<li><p><strong>device</strong> – Specify the type of device to return.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: input list.</p>
 </dd></dl>
 
 </section>

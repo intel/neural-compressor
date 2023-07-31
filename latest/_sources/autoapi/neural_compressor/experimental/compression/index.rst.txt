@@ -9,12 +9,3 @@
 
 
 
-Submodules
-----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 1
-
-   pruning/index.rst
-
-

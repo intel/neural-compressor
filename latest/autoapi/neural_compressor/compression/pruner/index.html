@@ -84,7 +84,7 @@
              
   <section id="module-neural_compressor.compression.pruner">
 <span id="neural-compressor-compression-pruner"></span><h1><a class="reference internal" href="#module-neural_compressor.compression.pruner" title="neural_compressor.compression.pruner"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner</span></code></a><a class="headerlink" href="#module-neural_compressor.compression.pruner" title="Permalink to this heading"></a></h1>
-<p>prune init.</p>
+<p>pruning init.</p>
 <section id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
 <div class="toctree-wrapper compound">
@@ -120,12 +120,68 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="criteria/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner.criteria</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="pruning/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner.pruning</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="regs/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner.regs</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="schedulers/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner.schedulers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="tf_criteria/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner.tf_criteria</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.pruner.utils</span></code></a></li>
 </ul>
 </div>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.save" title="neural_compressor.compression.pruner.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(obj, f[, pickle_module, pickle_protocol, ...])</p></td>
+<td><p>A rewrite function for torch save.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.prepare_pruning" title="neural_compressor.compression.pruner.prepare_pruning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_pruning</span></code></a>(config, model[, optimizer, ...])</p></td>
+<td><p>Get registered pruning class, wrapper the model and optimizer to support all the pruning functionality.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.save">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.</span></span><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_protocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_use_new_zipfile_serialization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.save" title="Permalink to this definition"></a></dt>
+<dd><p>A rewrite function for torch save.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – </p></li>
+<li><p><strong>f</strong> – </p></li>
+<li><p><strong>pickle_module</strong> – </p></li>
+<li><p><strong>pickle_protocol</strong> – </p></li>
+<li><p><strong>_use_new_zipfile_serialization</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.prepare_pruning">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.</span></span><span class="sig-name descname"><span class="pre">prepare_pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/pruner.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.prepare_pruning" title="Permalink to this definition"></a></dt>
+<dd><p>Get registered pruning class, wrapper the model and optimizer to support all the pruning functionality.</p>
+<p>Get a pruning object from PRUNINGS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>config</strong> – A config dict object that contains the pruners information.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pruning object.</p>
+</dd>
+</dl>
+<p>Raises: AssertionError: Cuurently only support prunings that have been registered in PRUNINGS.</p>
+</dd></dl>
+
+</section>
 </section>
 </section>
 

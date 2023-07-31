@@ -234,6 +234,8 @@
 </li>
       <li><a href="autoapi/neural_compressor/compression/pruner/pruners/base/index.html#neural_compressor.compression.pruner.pruners.base.BasePruner">BasePruner (class in neural_compressor.compression.pruner.pruners.base)</a>
 </li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasePruning">BasePruning (class in neural_compressor.compression.pruner.pruning)</a>
+</li>
       <li><a href="autoapi/neural_compressor/compression/pruner/regs/index.html#neural_compressor.compression.pruner.regs.BaseReg">BaseReg (class in neural_compressor.compression.pruner.regs)</a>
 </li>
       <li><a href="autoapi/neural_compressor/compression/hpo/search_space/index.html#neural_compressor.compression.hpo.search_space.BaseSearchSpace">BaseSearchSpace (class in neural_compressor.compression.hpo.search_space)</a>
@@ -247,6 +249,8 @@
       <li><a href="autoapi/neural_compressor/experimental/pruner_legacy/magnitude/index.html#neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner">BasicMagnitudePruner (class in neural_compressor.experimental.pruner_legacy.magnitude)</a>
 </li>
       <li><a href="autoapi/neural_compressor/experimental/nas/basic_nas/index.html#neural_compressor.experimental.nas.basic_nas.BasicNAS">BasicNAS (class in neural_compressor.experimental.nas.basic_nas)</a>
+</li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasicPruning">BasicPruning (class in neural_compressor.compression.pruner.pruning)</a>
 </li>
       <li><a href="autoapi/neural_compressor/data/transforms/tokenization/index.html#neural_compressor.data.transforms.tokenization.BasicTokenizer">BasicTokenizer (class in neural_compressor.data.transforms.tokenization)</a>
 
@@ -286,10 +290,10 @@
         <li><a href="autoapi/neural_compressor/strategy/bayesian/index.html#neural_compressor.strategy.bayesian.BayesianTuneStrategy">(class in neural_compressor.strategy.bayesian)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/experimental/benchmark/index.html#neural_compressor.experimental.benchmark.Benchmark">Benchmark (class in neural_compressor.experimental.benchmark)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/neural_compressor/experimental/benchmark/index.html#neural_compressor.experimental.benchmark.Benchmark">Benchmark (class in neural_compressor.experimental.benchmark)</a>
+</li>
       <li><a href="autoapi/neural_compressor/conf/config/index.html#neural_compressor.conf.config.Benchmark_Conf">Benchmark_Conf (class in neural_compressor.conf.config)</a>
 </li>
       <li><a href="autoapi/neural_compressor/benchmark/index.html#neural_compressor.benchmark.benchmark_with_raw_cmd">benchmark_with_raw_cmd() (in module neural_compressor.benchmark)</a>
@@ -356,6 +360,8 @@
 </li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/strategy/utils/tuning_sampler/index.html#neural_compressor.strategy.utils.tuning_sampler.BlockFallbackTuningSampler">BlockFallbackTuningSampler (class in neural_compressor.strategy.utils.tuning_sampler)</a>
+</li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.BlockMaskCriterion">BlockMaskCriterion (class in neural_compressor.compression.pruner.criteria)</a>
 </li>
       <li><a href="autoapi/neural_compressor/strategy/utils/utility/index.html#neural_compressor.strategy.utils.utility.build_slave_faker_model">build_slave_faker_model() (in module neural_compressor.strategy.utils.utility)</a>
 </li>
@@ -515,6 +521,8 @@
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/util/index.html#neural_compressor.adaptor.torch_utils.util.collate_torch_preds">collate_torch_preds() (in module neural_compressor.adaptor.torch_utils.util)</a>
 </li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/utils/index.html#neural_compressor.compression.pruner.utils.collect_layer_inputs">collect_layer_inputs() (in module neural_compressor.compression.pruner.utils)</a>
+</li>
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/util/index.html#neural_compressor.adaptor.torch_utils.util.collect_weight_info">collect_weight_info() (in module neural_compressor.adaptor.torch_utils.util)</a>
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/mxnet_utils/util/index.html#neural_compressor.adaptor.mxnet_utils.util.CollectorBase">CollectorBase (class in neural_compressor.adaptor.mxnet_utils.util)</a>
@@ -545,14 +553,14 @@
 </li>
       <li><a href="autoapi/neural_compressor/experimental/component/index.html#neural_compressor.experimental.component.Component">Component (class in neural_compressor.experimental.component)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/neural_compressor/data/transforms/transform/index.html#neural_compressor.data.transforms.transform.ComposeTransform">ComposeTransform (class in neural_compressor.data.transforms.transform)</a>
 
       <ul>
         <li><a href="autoapi/neural_compressor/experimental/data/transforms/transform/index.html#neural_compressor.experimental.data.transforms.transform.ComposeTransform">(class in neural_compressor.experimental.data.transforms.transform)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/neural_compressor/training/index.html#neural_compressor.training.CompressionManager">CompressionManager (class in neural_compressor.training)</a>
 </li>
       <li><a href="autoapi/neural_compressor/experimental/metric/bleu_util/index.html#neural_compressor.experimental.metric.bleu_util.compute_bleu">compute_bleu() (in module neural_compressor.experimental.metric.bleu_util)</a>
@@ -595,8 +603,16 @@
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/scheduler/index.html#neural_compressor.experimental.pytorch_pruner.scheduler.Scheduler.config">(neural_compressor.experimental.pytorch_pruner.scheduler.Scheduler attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index.html#neural_compressor.experimental.pytorch_pruner.pruning.Pruning.config_file_path">config_file_path (neural_compressor.experimental.pytorch_pruner.pruning.Pruning attribute)</a>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasePruning.config_file_path">config_file_path (neural_compressor.compression.pruner.pruning.BasePruning attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasicPruning.config_file_path">(neural_compressor.compression.pruner.pruning.BasicPruning attribute)</a>
 </li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.RetrainFreePruning.config_file_path">(neural_compressor.compression.pruner.pruning.RetrainFreePruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index.html#neural_compressor.experimental.pytorch_pruner.pruning.Pruning.config_file_path">(neural_compressor.experimental.pytorch_pruner.pruning.Pruning attribute)</a>
+</li>
+      </ul></li>
       <li><a href="autoapi/neural_compressor/benchmark/index.html#neural_compressor.benchmark.config_instance">config_instance() (in module neural_compressor.benchmark)</a>
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qat/quantize_layers/optimize_layer/index.html#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.optimize_layer.config_quantizable_layers">config_quantizable_layers() (in module neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.optimize_layer)</a>
@@ -669,6 +685,8 @@
         <li><a href="autoapi/neural_compressor/compression/pruner/pruners/block_mask/index.html#neural_compressor.compression.pruner.pruners.block_mask.PytorchBlockMaskPruner.criterion">(neural_compressor.compression.pruner.pruners.block_mask.PytorchBlockMaskPruner attribute)</a>
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index.html#neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner.criterion">(neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner.criterion">(neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner attribute)</a>
 </li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/compression/distillation/criterions/index.html#neural_compressor.compression.distillation.criterions.criterion_registry">criterion_registry() (in module neural_compressor.compression.distillation.criterions)</a>
@@ -1283,6 +1301,8 @@
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/tf_utils/util/index.html#neural_compressor.adaptor.tf_utils.util.get_input_output_node_names">get_input_output_node_names() (in module neural_compressor.adaptor.tf_utils.util)</a>
 </li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/utils/index.html#neural_compressor.compression.pruner.utils.get_layers">get_layers() (in module neural_compressor.compression.pruner.utils)</a>
+</li>
       <li><a href="autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_schema/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema.get_max_supported_opset_version">get_max_supported_opset_version() (in module neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema)</a>
 </li>
       <li><a href="autoapi/neural_compressor/utils/create_obj_from_config/index.html#neural_compressor.utils.create_obj_from_config.get_metrics">get_metrics() (in module neural_compressor.utils.create_obj_from_config)</a>
@@ -1323,10 +1343,10 @@
         <li><a href="autoapi/neural_compressor/experimental/benchmark/index.html#neural_compressor.experimental.benchmark.get_physical_ids">(in module neural_compressor.experimental.benchmark)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/utils/create_obj_from_config/index.html#neural_compressor.utils.create_obj_from_config.get_postprocess">get_postprocess() (in module neural_compressor.utils.create_obj_from_config)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/neural_compressor/utils/create_obj_from_config/index.html#neural_compressor.utils.create_obj_from_config.get_postprocess">get_postprocess() (in module neural_compressor.utils.create_obj_from_config)</a>
+</li>
       <li><a href="autoapi/neural_compressor/utils/create_obj_from_config/index.html#neural_compressor.utils.create_obj_from_config.get_preprocess">get_preprocess() (in module neural_compressor.utils.create_obj_from_config)</a>
 </li>
       <li><a href="autoapi/neural_compressor/compression/pruner/pruners/index.html#neural_compressor.compression.pruner.pruners.get_pruner">get_pruner() (in module neural_compressor.compression.pruner.pruners)</a>
@@ -1988,6 +2008,12 @@
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/model_slim/pattern_analyzer/index.html#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.model">(neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher attribute)</a>
 </li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasePruning.model">(neural_compressor.compression.pruner.pruning.BasePruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasicPruning.model">(neural_compressor.compression.pruner.pruning.BasicPruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.RetrainFreePruning.model">(neural_compressor.compression.pruner.pruning.RetrainFreePruning attribute)</a>
+</li>
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index.html#neural_compressor.experimental.pytorch_pruner.pruning.Pruning.model">(neural_compressor.experimental.pytorch_pruner.pruning.Pruning attribute)</a>
 </li>
       </ul></li>
@@ -2399,6 +2425,10 @@
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index.html#module-neural_compressor.compression.pruner.pruners.retrain_free">neural_compressor.compression.pruner.pruners.retrain_free</a>
 </li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#module-neural_compressor.compression.pruner.pruners.sparse_gpt">neural_compressor.compression.pruner.pruners.sparse_gpt</a>
+</li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#module-neural_compressor.compression.pruner.pruning">neural_compressor.compression.pruner.pruning</a>
+</li>
         <li><a href="autoapi/neural_compressor/compression/pruner/regs/index.html#module-neural_compressor.compression.pruner.regs">neural_compressor.compression.pruner.regs</a>
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/schedulers/index.html#module-neural_compressor.compression.pruner.schedulers">neural_compressor.compression.pruner.schedulers</a>
@@ -2504,8 +2534,6 @@
         <li><a href="autoapi/neural_compressor/experimental/component/index.html#module-neural_compressor.experimental.component">neural_compressor.experimental.component</a>
 </li>
         <li><a href="autoapi/neural_compressor/experimental/compression/index.html#module-neural_compressor.experimental.compression">neural_compressor.experimental.compression</a>
-</li>
-        <li><a href="autoapi/neural_compressor/experimental/compression/pruning/index.html#module-neural_compressor.experimental.compression.pruning">neural_compressor.experimental.compression.pruning</a>
 </li>
         <li><a href="autoapi/neural_compressor/experimental/contrib/index.html#module-neural_compressor.experimental.contrib">neural_compressor.experimental.contrib</a>
 </li>
@@ -4366,6 +4394,20 @@
 </li>
       </ul></li>
       <li>
+    neural_compressor.compression.pruner.pruners.sparse_gpt
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#module-neural_compressor.compression.pruner.pruners.sparse_gpt">module</a>
+</li>
+      </ul></li>
+      <li>
+    neural_compressor.compression.pruner.pruning
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#module-neural_compressor.compression.pruner.pruning">module</a>
+</li>
+      </ul></li>
+      <li>
     neural_compressor.compression.pruner.regs
 
       <ul>
@@ -4470,6 +4512,8 @@
         <li><a href="autoapi/neural_compressor/data/dataloaders/index.html#module-neural_compressor.data.dataloaders">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     neural_compressor.data.dataloaders.base_dataloader
 
@@ -4477,8 +4521,6 @@
         <li><a href="autoapi/neural_compressor/data/dataloaders/base_dataloader/index.html#module-neural_compressor.data.dataloaders.base_dataloader">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     neural_compressor.data.dataloaders.dataloader
 
@@ -4736,13 +4778,6 @@
 
       <ul>
         <li><a href="autoapi/neural_compressor/experimental/compression/index.html#module-neural_compressor.experimental.compression">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.experimental.compression.pruning
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/experimental/compression/pruning/index.html#module-neural_compressor.experimental.compression.pruning">module</a>
 </li>
       </ul></li>
       <li>
@@ -6246,6 +6281,8 @@
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index.html#neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner.pattern">(neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner attribute)</a>
 </li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner.pattern">(neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner attribute)</a>
+</li>
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/patterns/index.html#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.pattern">(neural_compressor.experimental.pytorch_pruner.patterns.Pattern attribute)</a>
 </li>
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index.html#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.pattern">(neural_compressor.experimental.pytorch_pruner.pruner.Pruner attribute)</a>
@@ -6333,7 +6370,7 @@
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/mxnet_utils/util/index.html#neural_compressor.adaptor.mxnet_utils.util.prepare_model_data">prepare_model_data() (in module neural_compressor.adaptor.mxnet_utils.util)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/experimental/compression/pruning/index.html#neural_compressor.experimental.compression.pruning.prepare_pruning">prepare_pruning() (in module neural_compressor.experimental.compression.pruning)</a>
+      <li><a href="autoapi/neural_compressor/compression/pruner/index.html#neural_compressor.compression.pruner.prepare_pruning">prepare_pruning() (in module neural_compressor.compression.pruner)</a>
 </li>
       <li><a href="autoapi/neural_compressor/strategy/utils/utility/index.html#neural_compressor.strategy.utils.utility.preprocess_user_cfg">preprocess_user_cfg() (in module neural_compressor.strategy.utils.utility)</a>
 </li>
@@ -6387,15 +6424,29 @@
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index.html#neural_compressor.experimental.pytorch_pruner.pruner.Pruner">(class in neural_compressor.experimental.pytorch_pruner.pruner)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index.html#neural_compressor.experimental.pytorch_pruner.pruning.Pruning.pruner_info">pruner_info (neural_compressor.experimental.pytorch_pruner.pruning.Pruning attribute)</a>
-</li>
-      <li><a href="autoapi/neural_compressor/experimental/pruner_legacy/pruner/index.html#neural_compressor.experimental.pruner_legacy.pruner.pruner_registry">pruner_registry() (in module neural_compressor.experimental.pruner_legacy.pruner)</a>
-</li>
-      <li><a href="autoapi/neural_compressor/experimental/pruning/index.html#neural_compressor.experimental.pruning.Pruning.pruners">pruners (neural_compressor.experimental.pruning.Pruning attribute)</a>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasePruning.pruner_info">pruner_info (neural_compressor.compression.pruner.pruning.BasePruning attribute)</a>
 
       <ul>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasicPruning.pruner_info">(neural_compressor.compression.pruner.pruning.BasicPruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.RetrainFreePruning.pruner_info">(neural_compressor.compression.pruner.pruning.RetrainFreePruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index.html#neural_compressor.experimental.pytorch_pruner.pruning.Pruning.pruner_info">(neural_compressor.experimental.pytorch_pruner.pruning.Pruning attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/neural_compressor/experimental/pruner_legacy/pruner/index.html#neural_compressor.experimental.pruner_legacy.pruner.pruner_registry">pruner_registry() (in module neural_compressor.experimental.pruner_legacy.pruner)</a>
+</li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasePruning.pruners">pruners (neural_compressor.compression.pruner.pruning.BasePruning attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.BasicPruning.pruners">(neural_compressor.compression.pruner.pruning.BasicPruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.RetrainFreePruning.pruners">(neural_compressor.compression.pruner.pruning.RetrainFreePruning attribute)</a>
+</li>
+        <li><a href="autoapi/neural_compressor/experimental/pruning/index.html#neural_compressor.experimental.pruning.Pruning.pruners">(neural_compressor.experimental.pruning.Pruning attribute)</a>
+</li>
         <li><a href="autoapi/neural_compressor/experimental/pruning_v2/index.html#neural_compressor.experimental.pruning_v2.Pruning.pruners">(neural_compressor.experimental.pruning_v2.Pruning attribute)</a>
 </li>
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index.html#neural_compressor.experimental.pytorch_pruner.pruning.Pruning.pruners">(neural_compressor.experimental.pytorch_pruner.pruning.Pruning attribute)</a>
@@ -6872,6 +6923,8 @@
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index.html#neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner.reg">(neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner attribute)</a>
 </li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner.reg">(neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner attribute)</a>
+</li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/compression/pruner/regs/index.html#neural_compressor.compression.pruner.regs.GroupLasso.reg_terms">reg_terms (neural_compressor.compression.pruner.regs.GroupLasso attribute)</a>
 </li>
@@ -6893,9 +6946,11 @@
       </ul></li>
       <li><a href="autoapi/neural_compressor/compression/pruner/pruners/base/index.html#neural_compressor.compression.pruner.pruners.base.register_pruner">register_pruner() (in module neural_compressor.compression.pruner.pruners.base)</a>
 </li>
+      <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index.html#neural_compressor.experimental.pytorch_pruner.pruner.register_pruners">register_pruners() (in module neural_compressor.experimental.pytorch_pruner.pruner)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index.html#neural_compressor.experimental.pytorch_pruner.pruner.register_pruners">register_pruners() (in module neural_compressor.experimental.pytorch_pruner.pruner)</a>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.register_pruning">register_pruning() (in module neural_compressor.compression.pruner.pruning)</a>
 </li>
       <li><a href="autoapi/neural_compressor/compression/pruner/regs/index.html#neural_compressor.compression.pruner.regs.register_reg">register_reg() (in module neural_compressor.compression.pruner.regs)</a>
 </li>
@@ -6981,6 +7036,8 @@
       </ul></li>
       <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion">RetrainFreeCriterion (class in neural_compressor.compression.pruner.criteria)</a>
 </li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.RetrainFreePruning">RetrainFreePruning (class in neural_compressor.compression.pruner.pruning)</a>
+</li>
       <li><a href="autoapi/neural_compressor/experimental/strategy/utils/utility/index.html#neural_compressor.experimental.strategy.utils.utility.reverted_data_type">reverted_data_type() (in module neural_compressor.experimental.strategy.utils.utility)</a>
 
       <ul>
@@ -7027,7 +7084,7 @@
         <li><a href="autoapi/neural_compressor/experimental/data/dataloaders/sampler/index.html#neural_compressor.experimental.data.dataloaders.sampler.Sampler">(class in neural_compressor.experimental.data.dataloaders.sampler)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/experimental/compression/pruning/index.html#neural_compressor.experimental.compression.pruning.save">save() (in module neural_compressor.experimental.compression.pruning)</a>
+      <li><a href="autoapi/neural_compressor/compression/pruner/index.html#neural_compressor.compression.pruner.save">save() (in module neural_compressor.compression.pruner)</a>
 </li>
       <li><a href="autoapi/neural_compressor/utils/load_huggingface/index.html#neural_compressor.utils.load_huggingface.save_for_huggingface_upstream">save_for_huggingface_upstream() (in module neural_compressor.utils.load_huggingface)</a>
 </li>
@@ -7058,12 +7115,16 @@
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index.html#neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner.scheduler">(neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner attribute)</a>
 </li>
+        <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner.scheduler">(neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner attribute)</a>
+</li>
         <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index.html#neural_compressor.experimental.pytorch_pruner.pruner.Pruner.scheduler">(neural_compressor.experimental.pytorch_pruner.pruner.Pruner attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.GradientCriterion.scores">scores (neural_compressor.compression.pruner.criteria.GradientCriterion attribute)</a>
+      <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.BlockMaskCriterion.scores">scores (neural_compressor.compression.pruner.criteria.BlockMaskCriterion attribute)</a>
 
       <ul>
+        <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.GradientCriterion.scores">(neural_compressor.compression.pruner.criteria.GradientCriterion attribute)</a>
+</li>
         <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.MagnitudeCriterion.scores">(neural_compressor.compression.pruner.criteria.MagnitudeCriterion attribute)</a>
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.PruningCriterion.scores">(neural_compressor.compression.pruner.criteria.PruningCriterion attribute)</a>
@@ -7071,8 +7132,6 @@
         <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion.scores">(neural_compressor.compression.pruner.criteria.RetrainFreeCriterion attribute)</a>
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.SnipCriterion.scores">(neural_compressor.compression.pruner.criteria.SnipCriterion attribute)</a>
-</li>
-        <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion.scores">(neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion attribute)</a>
 </li>
         <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion.scores">(neural_compressor.compression.pruner.criteria.SnipMomentumCriterion attribute)</a>
 </li>
@@ -7189,8 +7248,6 @@
 </li>
       <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.SnipCriterion">SnipCriterion (class in neural_compressor.compression.pruner.criteria)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion">SnipMomentumBlockCriterion (class in neural_compressor.compression.pruner.criteria)</a>
-</li>
       <li><a href="autoapi/neural_compressor/compression/pruner/criteria/index.html#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion">SnipMomentumCriterion (class in neural_compressor.compression.pruner.criteria)</a>
 </li>
       <li><a href="autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index.html#neural_compressor.experimental.pytorch_pruner.pruner.SnipMomentumPruner">SnipMomentumPruner (class in neural_compressor.experimental.pytorch_pruner.pruner)</a>
@@ -7203,6 +7260,10 @@
         <li><a href="autoapi/neural_compressor/experimental/data/datasets/dummy_dataset_v2/index.html#neural_compressor.experimental.data.datasets.dummy_dataset_v2.SparseDummyDataset">(class in neural_compressor.experimental.data.datasets.dummy_dataset_v2)</a>
 </li>
       </ul></li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruners/sparse_gpt/index.html#neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner">SparseGPTPruner (class in neural_compressor.compression.pruner.pruners.sparse_gpt)</a>
+</li>
+      <li><a href="autoapi/neural_compressor/compression/pruner/pruning/index.html#neural_compressor.compression.pruner.pruning.SparseGPTPruning">SparseGPTPruning (class in neural_compressor.compression.pruner.pruning)</a>
+</li>
       <li><a href="autoapi/neural_compressor/adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.split_shared_bias">split_shared_bias() (in module neural_compressor.adaptor.ox_utils.util)</a>
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/ox_utils/operators/split/index.html#neural_compressor.adaptor.ox_utils.operators.split.SplitOperator">SplitOperator (class in neural_compressor.adaptor.ox_utils.operators.split)</a>

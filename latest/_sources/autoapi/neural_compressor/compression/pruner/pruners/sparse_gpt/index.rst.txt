@@ -1,0 +1,53 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression.pruner.pruners.sparse_gpt`
+=================================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.sparse_gpt
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.sparse_gpt.SparseGPTPruner
+
+
+
+
+.. py:class:: SparseGPTPruner(config, modules, framework='pytorch')
+
+
+
+
+   Pruning Pruner.
+   The sparse_gpt pruner_class is derived from PytorchBasePruner.
+   SparseGPTPruner supports one-shot pruning of most Large Language Models(LLMs).
+   Please refer to SparseGPT: Massive Language Models Can be Accurately Pruned in One-shot.
+       (https://arxiv.org/abs/2301.00774)
+
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: pattern
+
+      A Pattern object that defines pruning weights' arrangements within space.
+
+   .. attribute:: criterion
+
+      A Criterion Object that defines which weights are to be pruned
+
+   .. attribute:: scheduler
+
+      A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+
+   .. attribute:: reg
+
+      A Reg object that defines regulization terms.
+
+

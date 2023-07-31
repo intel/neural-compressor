@@ -22,7 +22,7 @@ Classes
    neural_compressor.compression.pruner.criteria.GradientCriterion
    neural_compressor.compression.pruner.criteria.SnipCriterion
    neural_compressor.compression.pruner.criteria.SnipMomentumCriterion
-   neural_compressor.compression.pruner.criteria.SnipMomentumBlockCriterion
+   neural_compressor.compression.pruner.criteria.BlockMaskCriterion
    neural_compressor.compression.pruner.criteria.RetrainFreeCriterion
 
 
@@ -42,7 +42,7 @@ Functions
    Register a criterion to the registry.
 
 
-.. py:function:: get_criterion(config, modules, pattern)
+.. py:function:: get_criterion(config, modules, pattern, masks=None)
 
    Get registered criterion class.
 
@@ -136,14 +136,14 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: SnipMomentumBlockCriterion(modules, config, pattern, alpha=0.9, beta=1.0)
+.. py:class:: BlockMaskCriterion(modules, config, pattern, masks, alpha=0.9, beta=1.0)
 
 
 
 
    Pruning criterion.
 
-   The snip_momentum_block criterion_class is derived from PruningCriterion.
+   The block_mask criterion_class is derived from PruningCriterion.
    A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.
 
    :param config: A config dict object that includes information about pruner and pruning criterion.
@@ -156,7 +156,7 @@ Functions
       A dict {"module_name": Tensor} that stores the scores of pruning modules.
 
 
-.. py:class:: RetrainFreeCriterion(modules, config, pattern)
+.. py:class:: RetrainFreeCriterion(modules, config, pattern, masks)
 
 
 

@@ -33,6 +33,8 @@ Functions
    neural_compressor.compression.pruner.utils.parse_to_prune
    neural_compressor.compression.pruner.utils.parse_to_prune_tf
    neural_compressor.compression.pruner.utils.generate_pruner_config
+   neural_compressor.compression.pruner.utils.get_layers
+   neural_compressor.compression.pruner.utils.collect_layer_inputs
 
 
 
@@ -174,5 +176,27 @@ Functions
 
    :returns: A pruner config object.
    :rtype: pruner
+
+
+.. py:function:: get_layers(model)
+
+   Get each layer's name and its module.
+
+   :param model: The model to be pruned.
+
+   Returns: each layer's name and its modules
+
+
+.. py:function:: collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0')
+
+   Getting the forward input of a layer.
+
+   :param model: The model to be pruned.
+   :param layers: Selectable layers of the model.
+   :param layer_idx: The layer index.
+   :param layer_inputs: The dataloader or the output of the previous layer.
+   :param device: Specify the type of device to return.
+
+   Returns: input list.
 
 
