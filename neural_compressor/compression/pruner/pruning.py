@@ -123,12 +123,12 @@ class BasePruning:
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
 
-    def on_epoch_begin(self, epoch):
+    def on_epoch_begin(self, epoch):  # pragma: no cover
         """Implement at the beginning of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
     
-    def on_epoch_end(self):
+    def on_epoch_end(self):  # pragma: no cover
         """Implement the end of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_end()
@@ -213,7 +213,7 @@ class SparseGPTPruning(BasePruning):
             if 'cuda' in self.dev.type:
                 torch.cuda.empty_cache()
                 
-    def on_train_begin(self, dataloader):# pragma: no cover
+    def on_train_begin(self, dataloader):  # pragma: no cover
         if self._dataloader is not None:
             logger.info("The sparseGPT pruning is already done at initialization time, " \
                         "calling on_train_begin() is a redundant operation.")

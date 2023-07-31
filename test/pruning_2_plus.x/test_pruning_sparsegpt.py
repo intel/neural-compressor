@@ -48,6 +48,8 @@ class TestPruning(unittest.TestCase):
         # pruning.on_train_begin(dummy_dataloader)
         
         pruning = prepare_pruning(config, self.model, dataloader=dummy_dataloader, device='cpu')
+        pruning.on_train_begin(dummy_dataloader)
+        pruning.on_train_end()
 
 
 if __name__ == "__main__":

@@ -142,7 +142,6 @@ def save(
 def _prepare_hooks(model, pruning_list, opt=None):
     """Wrapper the model and optimizer to support all the pruning functionality.
 
-    :param config: WeightPruningConfig
     :param model: The user's model, a torch.nn.Module object
     :param opt: The user's optimizer, a torch.optim object
     :return: The modified model and optimizer
