@@ -187,7 +187,7 @@ class GPTQuantizer(object):
 
         self.use_cache = self.model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
-        # log_quantizable_layers_per_transformer(self.gptq_related_blocks)
+        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
         # initialize buffers which are essential for gptq computation. 
