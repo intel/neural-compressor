@@ -108,7 +108,7 @@ q_model = fit(
 )
 ```
 
-When the quantization is finished, the workload should appear on the Neural Insights page.
+When the quantization is started, the workload should appear on the Neural Insights page and successively, new information should be available while quantization is in progress (such as weights distribution and accuracy data).
 
 > Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.
 
