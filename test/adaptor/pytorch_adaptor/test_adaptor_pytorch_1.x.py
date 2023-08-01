@@ -2,6 +2,7 @@ import copy
 import neural_compressor.adaptor.pytorch as nc_torch
 import numpy as np
 import os
+import pickle
 import shutil
 import torch
 import torch.nn as nn
@@ -1113,6 +1114,37 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertTrue(isinstance(traced_model.sub, torch.fx.graph_module.GraphModule))
         traced_model_qat = symbolic_trace(model_origin, is_qat=True)
         self.assertTrue(isinstance(traced_model_qat.sub, torch.fx.graph_module.GraphModule))
+
+    def test_tensor_dump(self):
+        model = resnet18()
+        model = MODELS['pytorch'](model)
+        quantizer = Quantization('fx_ptq_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        dataloader = common.DataLoader(dataset)
+        dataloader = common._generate_common_dataloader(dataloader, 'pytorch')
+        quantizer.eval_dataloader = dataloader
+        quantizer.calib_dataloader = dataloader
+        quantizer.model = model.model
+        q_model = quantizer.fit()
+        quantizer.strategy.adaptor.inspect_tensor(
+            model, dataloader, op_list=['conv1', 'layer1.0.conv1'],
+            iteration_list=[1, 2], inspect_type='all', save_to_disk=True)
+        with open('saved/inspect_result.pkl', 'rb') as fp:
+            tensor_dict = pickle.load(fp)
+        a = tensor_dict["activation"][0]
+        w = tensor_dict["weight"]
+        self.assertTrue(w['conv1']['conv1.weight'].shape[0] ==
+                        a['conv1']['conv1.output0'].shape[1])
+        quantizer.strategy.adaptor.inspect_tensor(
+            q_model, dataloader, op_list=['conv1', 'layer1.0.conv1.0'],
+            iteration_list=[1, 2], inspect_type='all', save_to_disk=True)
+        with open('saved/inspect_result.pkl', 'rb') as fp:
+            tensor_dict = pickle.load(fp)
+        a = tensor_dict["activation"][0]
+        w = tensor_dict["weight"]
+        self.assertTrue(w['conv1']['conv1.weight'].shape[0] ==
+                        a['conv1']['conv1.output0'].shape[1])
+
 
 if __name__ == "__main__":
     unittest.main()
