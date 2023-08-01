@@ -4265,6 +4265,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         Returns:
             (object): quantized model
         """
+        
         assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
         if self.performance_only:
@@ -4292,11 +4293,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
         if 'GPTQ' in all_algo:
-            q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
-
+            q_model._model, gptq_config = self.gptq_quantize(
+                q_model._model, tune_cfg, dataloader
+            )
+            q_model.gptq_config = gptq_config
         if 'TEQ' in all_algo:
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         elif 'RTN' in all_algo:
@@ -4336,26 +4338,48 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
     def gptq_quantize(self, model, tune_cfg, dataloader):
         logger.debug("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
-        if 'gptq_args' in self.recipes:
-            percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
-            wbits = self.recipes.get('wbits', 4)
-            group_size = self.recipes.get('group_size', 128)
-            sym = self.recipes.get('scheme', False)
-        # implementation of gptq
-        # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
+        # convert tune_cfg to gptq_quantize's weight config
+        """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
+        keys of weight_config can not only be specific name, but can also be a re formula
         weight_config = {
-            'wbits': wbits, 
-            'group_size': group_size, 
-            'sym': sym,
-            'percdamp': percdamp
+            "layer_name_1": {
+                'wbits': 4,
+                'group_size': 128,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True
+            },
+            "layer_name_2": {
+                'wbits': 4,
+                'group_size': 128,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True
+            }
+            ...
         }
-        model = gptq_quantize(
+        """
+        weight_config = {}
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32':
+                continue # no need to be quantized
+            else:
+                weight_config[op_name] = {
+                    'wbits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'sym': config['weight']['scheme'] == 'sym',
+                    'percdamp': self.recipes['gptq_args'].get("percdamp", 0.01),
+                    'actorder': self.recipes['gptq_args'].get("actorder", True)
+                } 
+        # tune_cfg => weight_config 
+        model, quantization_perm = gptq_quantize(
             model, 
             weight_config,
             dataloader,
             self.device
         )
-        return model
+        return model, quantization_perm
 
     def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the TEQ algorithm")

@@ -24,6 +24,8 @@ from torch.nn import functional as F
 from torch.autograd import Function
 from .weight_only import quant_weight
 from packaging.version import Version
+from neural_compressor.utils import logger
+from neural_compressor.utils.logger import level, DEBUG
 
 
 def get_torch_version():
@@ -162,8 +164,10 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, bits, groupsize, 
                  zp=False, bias=False, scale_dtype=torch.float32, 
-                 compression_dtype=torch.int32, compression_dim=1):
+                 compression_dtype=torch.int32, compression_dim=1,
+                 gptq_perm=False, device='cpu'):
         super().__init__()
+        self.device = device
         self.in_features = in_features
         self.out_features = out_features
         self.bits = bits
@@ -184,7 +188,7 @@ class WeightOnlyLinear(torch.nn.Module):
             torch.zeros(
                 (out_features, math.ceil(in_features / self.groupsize)), 
                 dtype=self.float_type,
-            )
+            ).to(device)
         )
         if compression_dim == 1:
             self.register_buffer(
@@ -192,7 +196,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 torch.zeros(
                     (out_features, math.ceil(in_features / self.n_pack)), 
                     dtype=self.compressed_dtype,
-                )
+                ).to(device)
             )
             if zp:
                 self.register_buffer(
@@ -200,7 +204,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     torch.zeros(
                         (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)), 
                         dtype=self.compressed_dtype,
-                    )
+                    ).to(device)
                 )
         else:
             self.register_buffer(
@@ -208,7 +212,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 torch.zeros(
                     (math.ceil(out_features / self.n_pack), in_features), 
                     dtype=self.compressed_dtype,
-                )
+                ).to(device)
             )
             if zp:
                 self.register_buffer(
@@ -219,105 +223,118 @@ class WeightOnlyLinear(torch.nn.Module):
                             math.ceil(self.in_features / self.groupsize)
                         ), 
                         dtype=self.compressed_dtype,
-                    )
+                    ).to(device)
                 )
         if bias:
-            self.register_buffer('bias', torch.zeros(self.out_features, dtype=self.float_type))
+            self.register_buffer(
+                'bias', torch.zeros(self.out_features, dtype=self.float_type).to(device)
+            )
         else:
             self.bias = None
+        if gptq_perm:
+            self.register_buffer(
+                'gptq_perm', torch.zeros(in_features, dtype=torch.int32).to(device)
+            )
+        else:
+            self.gptq_perm = None
 
-    def pack(self, int_weight, scale, zp, bias):
+    def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
+        int_weight = int_weight.to(self.device)
         if bias is not None:
             assert hasattr(self, 'bias'), "bias is not set when initializing."
-            self.bias = bias.type(self.float_type)
+            self.bias = bias.type(self.float_type).to(self.device)
+        if gptq_perm is not None:
+            assert hasattr(self, 'gptq_perm'), "gptq_perm is not set when initializing."
+            self.gptq_perm = gptq_perm.type(torch.int32).to(self.device)
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
-        self.scale = scale.type(self.float_type)
+        self.scale = scale.type(self.float_type).to(self.device)
         if self.compression_dim == 0:
             int_weight = int_weight.T
             self.packed_weight = self.packed_weight.T
         origin_shape = int_weight.shape
         target_shape = self.packed_weight.shape
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(self.device)
 
         # pack weight
-        for i in range(target_shape[0]):
-            for j in range(target_shape[1]):
-                start = self.n_pack * j
-                end = self.n_pack * (j + 1)
-                tmp = int_weight[i][start: end].type(self.compressed_dtype)
-                for e in range(len(tmp)):
-                    tmp[e] &= mask
-                    tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
-                    self.packed_weight[i][j] |= tmp[e]
+        for j in range(target_shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = int_weight[:, start: end].type(self.compressed_dtype)
+            for e in range(tmp.shape[1]):
+                tmp[:, e] &= mask
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
+                self.packed_weight[:, j] |= tmp[:, e]
         if self.compression_dim == 0:
             self.packed_weight = self.packed_weight.T
 
         if zp is not None:
+            zp = zp.to(self.device)
             if self.compression_dim == 0:
                 zp = zp.T
                 self.packed_zp = self.packed_zp.T
             assert hasattr(self, 'packed_zp'), "zp is not set when initializing."
             target_shape = self.packed_zp.shape
-            for i in range(target_shape[0]):
-                for j in range(target_shape[1]):
-                    start = self.n_pack * j
-                    end = self.n_pack * (j + 1)
-                    tmp = zp[i][start: end].type(self.compressed_dtype)
-                    for e in range(len(tmp)):
-                        tmp[e] &= mask
-                        tmp[e] = tmp[e] << self.bits * (self.n_pack - 1 - e)
-                        self.packed_zp[i][j] |= tmp[e]
+            for j in range(target_shape[1]):
+                start = self.n_pack * j
+                end = self.n_pack * (j + 1)
+                tmp = zp[:, start: end].type(self.compressed_dtype)
+                for e in range(tmp.shape[1]):
+                    tmp[:, e] &= mask
+                    tmp[:, e] = tmp[:, e] << (self.bits * e)
+                    self.packed_zp[:, j] |= tmp[:, e]
             if self.compression_dim == 0:
                 self.packed_zp = self.packed_zp.T
 
     def recover(self):
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype)
+        logger.debug(f"Recovering {self} weight")
+        device = self.scale.device
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
         if hasattr(self, 'packed_zp'):
             weight_dtype = torch.uint8
         else:
             weight_dtype = torch.int8
         # unpack weight
-        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype)
+        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
+        packed_weight = self.packed_weight
         if self.compression_dim == 0:
             weight = weight.T
-            self.packed_weight = self.packed_weight.T
+            packed_weight = packed_weight.T
         origin_shape = weight.shape
-        target_shape = self.packed_weight.shape
-        for i in range(target_shape[0]):
+        target_shape = packed_weight.shape
+        for j in range(target_shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                if index >= origin_shape[1]:
+                    continue
+                tmp = packed_weight[:, j]
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                tmp = tmp >> self.compress_bits - self.bits
+                if weight_dtype == torch.uint8:
+                    tmp &= mask # remove sign bit
+                weight[:, index] = tmp.type(weight_dtype)
+        if self.compression_dim == 0:
+            weight = weight.T
+        # unpack zero_point
+        if hasattr(self, 'packed_zp'):
+            zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp
+            zp = torch.zeros(self.scale.shape, dtype=zp_dtype).to(device)
+            packed_zp = self.packed_zp
+            if self.compression_dim == 0:
+                zp = zp.T
+                packed_zp = packed_zp.T
+            origin_shape = zp.shape
+            target_shape = packed_zp.shape
             for j in range(target_shape[1]):
                 for e in range(self.n_pack):
                     index = j * self.n_pack + e
                     if index >= origin_shape[1]:
                         continue
-                    tmp = self.packed_weight[i][j]
-                    tmp = tmp << 32 - self.bits * (self.n_pack - e)
-                    tmp = tmp >> 32 - self.bits
-                    if weight_dtype == torch.uint8:
-                        tmp &= mask # remove sign bit
-                    weight[i][index] = tmp.type(weight_dtype)
-        if self.compression_dim == 0:
-            weight = weight.T
-        # unpack zero_point
-        if hasattr(self, 'packed_zp'):
-            if self.compression_dim == 0:
-                zp = zp.T
-                self.packed_zp = self.packed_zp.T
-            zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp
-            zp = torch.zeros(self.scale.shape, dtype=zp_dtype)
-            origin_shape = zp.shape
-            target_shape = self.packed_zp.shape
-            for i in range(target_shape[0]):
-                for j in range(target_shape[1]):
-                    for e in range(self.n_pack):
-                        index = j * self.n_pack + e
-                        if index >= origin_shape[1]:
-                            continue
-                        tmp = self.packed_zp[i][j]
-                        tmp = tmp << 32 - self.bits * (self.n_pack - e)
-                        tmp = tmp >> 32 - self.bits
-                        tmp &= mask
-                        zp[i][index] = tmp.type(zp_dtype)
+                    tmp = packed_zp[:, j]
+                    tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                    tmp = tmp >> self.compress_bits - self.bits
+                    tmp &= mask
+                    zp[:, index] = tmp.type(zp_dtype)
             if self.compression_dim == 0:
                 zp = zp.T
             # recover fp32 weight with int_weight, scale, and zero_point
@@ -354,11 +371,22 @@ class WeightOnlyLinear(torch.nn.Module):
                 weight = weight.reshape(-1, self.groupsize)
                 scale = self.scale.reshape(-1, 1)
                 fp32_weight = (weight * scale).reshape(self.out_features, -1)
+        if self.gptq_perm is not None:
+            invperm = torch.argsort(self.gptq_perm)
+            fp32_weight = fp32_weight[:, invperm]
         return fp32_weight
 
     def forward(self, input):
-        weight = self.recover()
-        return F.linear(input, weight, self.bias)
+        if level == DEBUG:
+            if not hasattr(self, 'weight'):
+                self.weight = self.recover()
+            input = input.type(self.weight.dtype)
+            logger.debug(f"Calculating {self}")
+            return F.linear(input, self.weight, self.bias)
+        else:
+            weight = self.recover()
+            input = input.type(weight.dtype)
+            return F.linear(input, weight, self.bias)
 
     def extra_repr(self) -> str:
         return 'in_features={}, out_features={}, bits={}, group_size={}, bias={}'.format(

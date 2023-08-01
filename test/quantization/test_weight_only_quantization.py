@@ -30,7 +30,6 @@ class SimpleDataLoader():
     def __iter__(self):
         yield self.input
 
-
 class TestAWQWeightOnlyQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -139,30 +138,48 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         dataloader = self.generate_random_corpus()
         model = copy.deepcopy(self.gptj)
         weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'perchannel': True, 
-            'sym': True,
-            'percdamp': 0.01,
-            'mse': True
+            'transformer.h.0.attn.k_proj':{
+                'wbits': 4,
+                'group_size': 128,
+                'sym': True,
+                'percdamp': 0.01,
+                'perchannel': False
+            },
+            'transformer.h.1.attn.k_proj':{
+                'wbits': 3,
+                'group_size': -1,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True,
+            },
+            'transformer.h.2.attn.k_proj':{
+                'wbits': 3,
+                'group_size': 32,
+                'sym': False,
+                'percdamp': 0.01,
+                'mse': True,
+                'actorder': False
+            },
+            'transformer.h.3.attn.k_proj':{
+                'wbits': 3,
+                'group_size': 256,
+                'sym': False,
+                'percdamp': 0.01,
+                'mse': True,
+                'actorder': False
+            },
         }
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
         self.assertTrue(isinstance(model, torch.nn.Module))
-
         del model
 
         model = copy.deepcopy(self.gptj)
         weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'perchannel': False, 
-            'sym': False,
-            'percdamp': 0.01,
-            'mse': False
+            "wbits": 4
         }
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
         self.assertTrue(isinstance(model, torch.nn.Module))
-
+        del model
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
     @classmethod
