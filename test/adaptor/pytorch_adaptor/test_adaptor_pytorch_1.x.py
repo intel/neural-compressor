@@ -709,16 +709,17 @@ class TestPytorchAdaptor(unittest.TestCase):
         quantizer.strategy.adaptor.inspect_tensor(
             model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
             iteration_list=[1, 2], inspect_type='all', save_to_disk=True)
-        load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
-        a = load_array('saved/dump_tensor/activation_iter1.npz')
-        w = load_array('saved/dump_tensor/weight.npz')
+        with open('saved/inspect_result.pkl', 'rb') as fp:
+            tensor_dict = pickle.load(fp)
+        a = tensor_dict["activation"][0]
+        w = tensor_dict["weight"]
         if PT_VERSION >= Version("1.8.0").release:
-            self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
-                            a['conv1.0'].item()['conv1.0.output0'].shape[1])
+            self.assertTrue(w['conv1.0']['conv1.0.weight'].shape[0] ==
+                            a['conv1.0']['conv1.0.output0'].shape[1])
         else:
-            self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
-                            a['conv1.0'].item()['conv1.1.output0'].shape[1])
-        data = np.random.random(w['conv1.0'].item()['conv1.0.weight'].shape).astype(np.float32)
+            self.assertTrue(w['conv1.0']['conv1.0.weight'].shape[0] ==
+                            a['conv1.0']['conv1.1.output0'].shape[1])
+        data = np.random.random(w['conv1.0']['conv1.0.weight'].shape).astype(np.float32)
         quantizer.strategy.adaptor.set_tensor(q_model, {'conv1.0.weight': data})
         changed_tensor = q_model.get_weight('conv1.weight')
         scales = changed_tensor.q_per_channel_scales()
