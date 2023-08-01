@@ -25,7 +25,6 @@ pip install intel-tensorflow
 
 ### Installation Dependency packages
 ```shell
-cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
 pip install -r requirements.txt
 ```
 

@@ -1,2 +1,2 @@
-tensorflow>=2.11.1
+tensorflow
 intel-extension-for-tensorflow[cpu]
