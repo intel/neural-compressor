@@ -1,6 +1,6 @@
 # Step by step example how to debug accuracy with Neural Insights
 1. [Introduction](#introduction)
-2. [Environment preparation](#environment-preparation)
+2. [Preparation](#preparation)
 3. [Running the quantization](#running-the-quantization)
 4. [Analyzing the result of quantization](#-analyzing-the-result-of-quantization)
 5. [Analyzing weight histograms](#-analyzing-weight-histograms)
@@ -8,8 +8,8 @@
 # Introduction
 In this instruction accuracy issue will be debugged using Neural Insights. TensorFlow Inception_v3 model will be used as an example. It will be quantized and the results will be analyzed to find the cause of the accuracy loss.
 
-# Environment preparation
-## Install Intel® Neural Compressor and Neural Insights from source
+# Preparation
+## Source
 First you need to install Intel® Neural Compressor.
 ```shell
 # Install Neural Compressor
@@ -23,13 +23,13 @@ pip install -r neural_insights/requirements.txt
 python setup.py install neural_insights
 ```
 
-## Install requirements for inception_v3
+## Requirements
 ```shell
-cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
+cd examples/tensorflow/image_recognition/tensorflow_models/inception_v3/quantization/ptq
 pip install -r requirements.txt
 ```
 
-## Prepare the model
+## Model
 Download pre-trained PB model file.
 ```shell
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/inceptionv3_fp32_pretrained_model.pb
@@ -46,7 +46,10 @@ bash prepare_dataset.sh --output_dir=./inception_v3/quantization/ptq/data --raw_
 # Running the quantization
 Before applying quantization, modify some code to enable Neural Insights:
 1. Set the argument `diagnosis` to be `True` in `PostTrainingQuantConfig` so that Neural Insights will dump weights and activations of quantizable Ops in this model.
-2. Denote the `op_name_dict` argument because that’s the answer of our investigation.
+2. Delete the `op_name_dict` argument because that’s the answer of our investigation.
+```python
+conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100], diagnosis=True)
+```
 3. Quantize the model with following command:
 ```shell
 bash run_tuning.sh --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb --output_model=./nc_inception_v3.pb --dataset_location=/path/to/ImageNet/
