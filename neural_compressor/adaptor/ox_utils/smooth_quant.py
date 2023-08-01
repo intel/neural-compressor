@@ -211,6 +211,7 @@ class ORTSmoothQuant:
         self.replace_input = []
 
     def clean(self):
+        """Clean data collected from calibration."""
         self.tensor_scales_info = {}
         self.new_added_mul_nodes = []
         self.new_init_tensors = []

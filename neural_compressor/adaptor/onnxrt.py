@@ -208,12 +208,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return self.smooth_quant_model
     
     def _need_smooth_quant(self, tune_cfg) -> bool:
-        # check whether smooth quant model or not
+        """Check the model needs smooth quant or not."""
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
             and recipe_cfgs['smooth_quant_args'].get('alpha', None):
-            new_sq_alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            self.cur_sq_args['alpha'] = new_sq_alpha
+            # update alpha according to tune_cfg
+            self.cur_sq_args['alpha'] = \
+                tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             return True
         else:
             return False
@@ -276,7 +277,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     repr(e)))
                 tmp_model = model
         
-        # smooth the model if needed
+        # smooth quant the model if needed
         if self._need_smooth_quant(tune_cfg) and not tmp_model.is_smoothquant_model():
             self.sq.model = tmp_model
             self.sq.record_max_info = False
@@ -322,7 +323,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return tmp_model
     
     def _reset_calib_iter(self, data_loader, cfg_calib_sampling_size, cfg_calib_iter):
-        """Check and reset calibration iterations."""
+        """Check and reset calibration iterations according to calib_sampleing_size and dataloader batch_size."""
         if isinstance(data_loader, BaseDataLoader):
             batch_size = data_loader.batch_size
             try:
