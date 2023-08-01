@@ -59,6 +59,7 @@ class KerasAdaptor(Adaptor):
 
     '''
     def __init__(self, framework_specific_info):
+        self.check_itex()
         super(KerasAdaptor, self).__init__(framework_specific_info)
         self.framework_specific_info = framework_specific_info
         self.approach = deep_get(self.framework_specific_info, 'approach', False)
@@ -85,6 +86,13 @@ class KerasAdaptor(Adaptor):
         self.optype_statistics = None
 
         self.conv_format = {}
+
+    def check_itex(self):
+        try:
+            import intel_extension_for_tensorflow
+        except:
+            raise ImportError("The Intel® Extension for TensorFlow is not installed. "\
+                                "Please install it to run models on ITEX backend")
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
