@@ -12,18 +12,6 @@ This example can run on Intel CPUs and GPUs.
 
 ### Installation
 Recommend python 3.7 or higher version.
-
-```shell
-# Install Intel® Neural Compressor
-pip install neural-compressor
-```
-
-### Install Intel Tensorflow
-```shell
-pip install intel-tensorflow
-```
-
-### Installation Dependency packages
 ```shell
 pip install -r requirements.txt
 ```
