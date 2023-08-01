@@ -24,12 +24,12 @@ optimum-cli export onnx --model decapoda-research/llama-13b-hf --task text-gener
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # folder path of onnx model
-                   --output_model=/path/to/model_tune \ # folder path to save onnx model
-                   --batch_size=batch_size # optional \
-                   --dataset NeelNanda/pile-10k \
-                   --alpha 0.6 \ # 0.6 for llama-7b, 0.8 for llama-13b
-                   --quant_format="QOperator" # or QDQ, optional
+bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
+                  --output_model=/path/to/model_tune \ # folder path to save onnx model
+                  --batch_size=batch_size # optional \
+                  --dataset NeelNanda/pile-10k \
+                  --alpha 0.6 \ # 0.6 for llama-7b, 0.8 for llama-13b
+                  --quant_format="QOperator" # or QDQ, optional
 ```
 
 ## 2. Benchmark

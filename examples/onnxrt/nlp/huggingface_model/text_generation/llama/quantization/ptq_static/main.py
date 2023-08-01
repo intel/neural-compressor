@@ -269,4 +269,4 @@ if __name__ == "__main__":
                     os.path.join(args.model_path, model),
                     config,
                     calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
-            q_model.save(os.path.join(args.output_model, model), save_as_huggingface_format=True)
+            q_model.save(os.path.join(args.output_model, model))

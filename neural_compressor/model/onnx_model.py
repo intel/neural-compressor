@@ -136,7 +136,7 @@ class ONNXModel(BaseModel):
         for node in self._model.graph.node:
             self.graph_info.update({node.name: node.op_type})
 
-    def save(self, root, save_as_huggingface_format=False):
+    def save(self, root):
         """Save ONNX model."""
         if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
@@ -150,10 +150,11 @@ class ONNXModel(BaseModel):
                                            convert_attribute=False)
         onnx.save(self._model, root)
         
-        if save_as_huggingface_format:
-            if self._config is None:
-                raise ValueError('There is no existing config.json in the same folder of fp32 model.')
-            self._config.save_pretrained(Path(root).parent.as_posix())
+        if self._config is not None:
+            model_type = '' if not hasattr(self._config, 'model_type') else getattr(self._config, 'model_type')
+            setattr(self._config.__class__, 'model_type', model_type)
+            output_config_file = Path(root).parent.joinpath('config.json').as_posix()
+            self._config.to_json_file(output_config_file, use_diff=False)
 
     def nodes(self):
         """Return model nodes."""
