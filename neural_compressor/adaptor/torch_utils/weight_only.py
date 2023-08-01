@@ -529,6 +529,11 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
 
     if auto_scale or mse_range:
         from .util import fetch_module, set_module
+        absorb_dict_keys = list(absorb_dict.keys())
+        for absorb in absorb_dict_keys:
+            if absorb_dict[absorb] == ['lm_head']:
+                logger.info('lm_head layer is skipped in AWQ to avoid out-of-memory.')
+                absorb_dict.pop(absorb)
         block_num = n_blocks
         module_num = math.ceil(len(absorb_dict) / block_num)
         logger.info(f"AWQ search splits the model into {block_num} blocks to avoid OOM, " +\
