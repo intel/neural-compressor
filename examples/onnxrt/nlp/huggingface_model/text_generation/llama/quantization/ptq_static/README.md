@@ -40,7 +40,7 @@ Accuracy:
 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                       --batch_size=batch_size \ # optional 
                       --mode=accuracy \
-                      --tokenizer=path/to/fp32_model \ # folder path of exported fp32 model
+                      --tokenizer=decapoda-research/llama-7b-hf \ # model name or folder path containing all relevant files for tokenizer
                       --tasks=lambada_openai
 ```
 
@@ -49,6 +49,6 @@ Performance:
 numactl -m 0 -C 0-3 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                                           --mode=performance \
                                           --batch_size=batch_size # optional \
-                                          --tokenizer=path/to/fp23_model \ # folder path of exported fp32 model
+                                          --tokenizer=decapoda-research/llama-7b-hf \ # model name or folder path containing all relevant files for tokenizer
                                           --intra_op_num_threads=4
 ```
