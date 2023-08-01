@@ -104,6 +104,9 @@ q_model = fit(
     eval_dataloader=dataloader)
 ```
 
+## Step by Step Diagnosis Example
+See [Step by Step Diagnosis Example](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) to check how to debug accuracy issues with Neural Insights.
+
 ## Research Collaborations
 
 Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Neural Insights!
