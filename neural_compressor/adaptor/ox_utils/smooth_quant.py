@@ -195,7 +195,7 @@ class ORTSmoothQuant:
                 scale = self.tensor_scales_info[key]
                 new_weight = weight * scale
                 self.model.set_initializer(input, new_weight)
-        
+
         for node, old_input_name, new_input_name in self.replace_input:
             self.model.replace_node_input(node, new_input_name, old_input_name)
 

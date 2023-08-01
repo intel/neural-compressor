@@ -163,7 +163,7 @@ class TestORTSq(unittest.TestCase):
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=8)
 
-        fp32_model = self.model
+        fp32_model = copy.deepcopy(self.model)
         conf = PostTrainingQuantConfig(
             quant_level=quant_level,
             tuning_criterion=tuning_criterion,
