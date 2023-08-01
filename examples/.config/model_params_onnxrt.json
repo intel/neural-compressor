@@ -798,17 +798,31 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "hf_layoutlmft_dynamic": {
-      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_dynamic",
+    "hf_layoutlmv2_dynamic": {
+        "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmv2/quantization/ptq_dynamic",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/hf_layoutlmv2/layoutlmv2-model.onnx",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+    "hf_layoutlmv2": {
+        "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmv2/quantization/ptq_static",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/hf_layoutlmv2/layoutlmv2-model.onnx",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+    "hf_layoutlm_dynamic": {
+      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlm/quantization/ptq_dynamic",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/models/onnx/hf_layoutlmft/layoutlmft-model.onnx",
+      "input_model": "/tf_dataset2/models/onnx/hf_layoutlm/layoutlm-model.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
-    "hf_layoutlmft": {
-      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_static",
+    "hf_layoutlm": {
+      "model_src_dir": "nlp/huggingface_model/token_classification/layoutlm/quantization/ptq_static",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/models/onnx/hf_layoutlmft/layoutlmft-model.onnx",
+      "input_model": "/tf_dataset2/models/onnx/hf_layoutlm/layoutlm-model.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },

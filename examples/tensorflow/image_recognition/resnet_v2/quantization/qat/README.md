@@ -35,7 +35,7 @@ To apply QAT, run the command below:
 
 ## 1. Quantization
 ```shell
-bash run_tuning.sh --output_model=/path/to/output_model
+bash run_quant.sh --output_model=/path/to/output_model
 ```
 
 ## 2. Benchmark

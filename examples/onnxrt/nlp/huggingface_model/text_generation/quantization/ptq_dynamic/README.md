@@ -25,7 +25,7 @@ python -m transformers.onnx --model=EleutherAI/gpt-j-6B model/ --framework pt -
 Static quantization:
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --batch_size=batch_size # optional
 ```

@@ -1261,7 +1261,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         adaptor.pre_optimized_model = ONNXModel(self.conv_model)
-        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        # tune_cfg was removed, not need to set it to None
+        # adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, scales_per_op=False)
         self.assertEqual(len([i for i in adaptor.pre_optimized_model.nodes() if i.op_type == 'Mul']), 1)
  
     def test_multi_metrics(self):

@@ -34,7 +34,7 @@ python run_clm.py \
 
 or
 ```bash
-sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym --weight_only_algorithm=RTN
+sh run_quant.sh --topology=topology_name --input_model=model_name_or_path --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym --weight_only_algorithm=RTN
 ```
 
 > NOTE
@@ -103,3 +103,10 @@ quantized_model = load(tuned_checkpoint, model)
 ```
 --------
 For more details, please refer to the [sample code](./run_clm.py).
+
+# (May Remove Later) Run GPTQ algorithm
+```
+sh run-gptq-llm.sh
+# You may want to move script run-gptq-llm.sh to root dir of neural compressor and modify python file's path.
+# Please make sure pile dataset is downloaded.
+```

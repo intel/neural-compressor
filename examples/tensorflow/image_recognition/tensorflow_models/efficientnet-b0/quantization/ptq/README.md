@@ -78,7 +78,7 @@ config = PostTrainingQuantConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq
-  bash run_tuning.sh --input_model=./efficientnet-b0/ \
+  bash run_quant.sh --input_model=./efficientnet-b0/ \
       --output_model=./nc_efficientnet-b0.pb --dataset_location=/path/to/ImageNet/
   ```
 

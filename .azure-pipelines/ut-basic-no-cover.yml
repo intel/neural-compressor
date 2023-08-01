@@ -43,7 +43,7 @@ stages:
               utContainerName: "utTest-no-coverage"
 
   - stage: Pruning
-    displayName: Unit Test Pruning
+    displayName: Unit Test Pruning/Distillation/Scheduler/NAS
     dependsOn: []
     jobs:
       - job:
@@ -54,21 +54,6 @@ stages:
               utScriptFileName: "run_basic_pruning"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-pruning"
-              utTestMode: "no-coverage"
-              utContainerName: "utTest-no-coverage"
-
-  - stage: IPEX
-    displayName: Unit Test IPEX
-    dependsOn: []
-    jobs:
-      - job:
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_ipex"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-ipex"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 

@@ -118,7 +118,7 @@ config = PostTrainingQuantConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/vgg19/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/frozen_vgg19.pb \
+  bash run_quant.sh --input_model=/PATH/TO/frozen_vgg19.pb \
       --output_model=./nc_vgg19.pb --dataset_location=/path/to/ImageNet/
   ```
 

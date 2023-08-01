@@ -84,7 +84,7 @@ config = PostTrainingQuantConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
+  bash run_quant.sh --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
       --output_model=./nc_resnet50_v1.pb --dataset_location=/path/to/ImageNet/
   ```
 

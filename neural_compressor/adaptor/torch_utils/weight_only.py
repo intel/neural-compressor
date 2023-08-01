@@ -217,13 +217,14 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
         weight_config (dict, optional): specific layer wise configirations. Defaults to {}.
-                For example, 
+            For example, 
                 weight_config={
                     'fc2':
                         {
                             'bits': 4, 
                             'group_size': 32, 
                             'scheme': 'sym'
+                            'gptq_perm': [1, 1, ...] # for gptq perm
                         }
                 }
         return_int (bool, optional): Choose return fp32 or int32 model.
@@ -240,15 +241,16 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
         scale_dtype = kwargs.get("scale_dtype", torch.float32)
-    for n, m in model.named_modules():
+        device = kwargs.get("device", 'cpu')
+    for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
-        if n in weight_config:  # pragma: no cover
-            num_bits = weight_config[n]['bits']
-            group_size = weight_config[n]['group_size']
-            scheme = weight_config[n]['scheme']
-            quantile = weight_config[n].get('quantile', 1.0)
-        logger.debug(f"RTN quantized module:{n, m}")
+        if name in weight_config:  # pragma: no cover
+            num_bits = weight_config[name]['bits']
+            group_size = weight_config[name]['group_size']
+            scheme = weight_config[name]['scheme']
+            quantile = weight_config[name].get('quantile', 1.0)
+        logger.debug(f"RTN quantized module:{name, m}")
         if scheme == 'sym':
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}, sym_full_range={sym_full_range}")
@@ -256,7 +258,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}")
         if num_bits <= 0:
-            logger.info(f"skip {n}")
+            logger.info(f"skip {name}")
             continue
         weight = m.weight
         if return_int:
@@ -271,12 +273,13 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 
                 scale_dtype=scale_dtype, 
+                device=device,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
-            if n == '':
+            if name == '':
                 return new_module
             else:
-                set_module(model, n, new_module)
+                set_module(model, name, new_module)
         else:
             q_weight = quant_weight(
                 weight, num_bits, group_size, scheme, quantile, 
@@ -285,14 +288,15 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             m.weight.data.copy_(q_weight)
     return model
 
-def gptq_quantize(model, weight_config = {}, dataloader = None, device = None):
+def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
     """Run weight-only quantization with """
+    # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
     gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
-    quantization_data = gptq_quantizer.execute_quantization()
+    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
     logger.info("GPTQ quantizing done.")
-    return model # 
+    return fp32_modified_model, gptq_config
 
 def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
                             calib_func=None):
@@ -589,6 +593,7 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
 
                 logger.debug("The loss history of different scale:{}".format(history))
                 logger.debug("The best alpha for scale: {}:{}".format(absorb, best_scale_alpha))
+                assert best_scales is not None, "Loss is infinity! Cannot find the correct scale."
                 best_scales = best_scales.view(-1)
                 assert torch.isnan(best_scales).sum() == 0, best_scales
                 scales = best_scales.detach()
@@ -660,3 +665,79 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     )
     logger.info("AWQ quantization is done.")
     return model
+
+def teq_quantize(model, weight_config={}, absorb_to_layer={}, extra_config={},
+        dataloader= None, calib_func=None, example_inputs=None):
+    """Run weight-only quantization with """
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    logger.info("TEQ quantizing start.")
+    if example_inputs is None:
+        if dataloader is None: # pragma: no cover
+            assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
+        try:
+            for idx, (input, label) in enumerate(dataloader):
+                example_inputs = input
+                break
+        except: # pragma: no cover
+            for idx, input in enumerate(dataloader):
+                example_inputs = input
+                break
+
+    from .teq import TEQuantizer
+    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, extra_config, example_inputs)
+
+    # 1. wrapper tuning scale to model
+    teq_quantizer.add_tuning_scale()
+
+    # 2. tuning
+    # custom train function, there calls calib_func
+    if calib_func: # pragma: no cover
+        calib_func(teq_quantizer.model)
+    else:
+        if dataloader is None: # pragma: no cover
+            assert False, "Please provide dataloader to train."
+        teq_quantizer.train(dataloader)
+
+    # 3. apply scale to model
+    teq_quantizer.transform()
+
+    # 4. get quantized model
+    teq_quantizer.quantize()
+
+    #quantization_data = gptq_quantizer.execute_quantization()
+    logger.info("TEQ quantizing done.")
+    return teq_quantizer.model
+
+
+def quant_weight_w_scale(weight, scale, zp, group_size=-1):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        scale: scale
+        zp: zero point
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+
+    Returns:
+        output: int weight.
+    """
+    device = weight.device
+    scale = scale.to(device)
+    if zp is not None:
+        zp = zp.to(device)
+    if group_size == -1:
+        return torch.round(weight/scale) if zp is None else torch.round(weight/scale + zp)
+    int_weight = torch.zeros(weight.shape).to(device)
+    leng = weight.shape[1] // group_size
+    tail_flag = False if weight.shape[1] % group_size == 0 else True
+    for i in range(leng):
+        int_weight_tmp = weight[:, i*group_size: (i+1)*group_size] / scale[:, i].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, i].unsqueeze(1)
+        int_weight[:, i*group_size: (i+1)*group_size] = torch.round(int_weight_tmp)
+    if tail_flag:
+        int_weight_tmp = weight[:, leng*group_size:] / scale[:, -1].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, -1].unsqueeze(1)
+        int_weight[:, leng*group_size:] = torch.round(int_weight_tmp)
+    return int_weight
