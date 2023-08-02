@@ -4577,7 +4577,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             n_blocks=n_blocks,
             return_int=False,
             sym_full_range=sym_full_range,
-            folding = folding,
         )
         return model
 
