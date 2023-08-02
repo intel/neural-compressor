@@ -703,6 +703,8 @@ class _BaseQuantizationConfig:
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
+                 'layer_wise_quant': whether to use layer wise quant
+                 'layer_wise_quant_args': parameters for layer_wise_quant
                  'fast_bias_correction': whether do fast bias correction
                  'weight_correction': whether do weight correction
                  'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
@@ -847,6 +849,18 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def layer_wise_quant(val=None):
+            if val is not None:
+                return _check_value("layer_wise_quant", val, bool)
+            else:
+                return False
+
+        def layer_wise_quant_args(val=None):
+            if val is not None:
+                return _check_value("layer_wise_quant_args", val, dict)
+            else:
+                return {}
+
         def rtn_args(val=None):
             if val is not None:
                 return _check_value("rtn_args", val, dict)
@@ -934,6 +948,8 @@ class _BaseQuantizationConfig:
 
         RECIPES = {"smooth_quant": smooth_quant,
                    "smooth_quant_args": smooth_quant_args,
+                   "layer_wise_quant": layer_wise_quant,
+                   "layer_wise_quant_args": layer_wise_quant_args,
                    "fast_bias_correction": fast_bias_correction,
                    "weight_correction": weight_correction,
                    "gemm_to_matmul": gemm_to_matmul,
@@ -1128,6 +1144,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
+                 'layer_wise_quant': whether to use layer wise quant
                  'fast_bias_correction': whether do fast bias correction
                  'weight_correction': whether do weight correction
                  'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models

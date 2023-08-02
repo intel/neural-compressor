@@ -3568,6 +3568,22 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             self.prepare_custom_config_dict, self.convert_custom_config_dict = None, None
         self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
+
+        # for layer-wise quant
+        # recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs and recipe_cfgs.get('layer_wise_quant', False) \
+                and self.approach != 'post_training_dynamic_quant':
+            import copy
+            from .torch_utils.layer_wise_quant import LayerWiseQuant
+
+            model_path = recipe_cfgs['layer_wise_quant_args'].get('model_path', None)
+            assert model_path is not None,\
+                "the layer_wise_quant_args should have args model_path to load the weight of model."
+            device = recipe_cfgs['layer_wise_quant_args'].get('decvice', 'cpu')
+            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, device=device)
+            q_model._model = lw_quant.quantize(dataloader, clean_weight=False)
+            return q_model
+        
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
             q_model._model.train()

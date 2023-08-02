@@ -134,7 +134,6 @@ class PytorchProgressivePruner(PytorchBasePruner):
                         f"Pruning pattern is {self.pattern.N} in {self.pattern.M}, "
                         f"while progressive steps {self.progressive_steps} is overflowing.")
             else:
-                breakpoint()
                 raise NotImplementedError
 
     def check_is_pruned_progressive_step(self, step):
