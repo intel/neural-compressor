@@ -245,10 +245,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
         if self.backend == 'DnnlExecutionProvider' and \
-            any([i.domain in ['', 'ai.onnx'] and i.version < 15 for i in model.model.opset_import]):
+            any([i.domain in ['', 'ai.onnx'] and \
+            i.version < 15 for i in model.model.opset_import]): # pragma: no cover
             from onnx import version_converter
+            from neural_compressor.model.onnx_model import ONNXModel
             try:
-                model.model = self._rename_node(version_converter.convert_version(model.model, 15))
+                model = self._rename_node(ONNXModel(version_converter.convert_version(model.model, 15)))
             except:
                 logging.warning("Fail to upgrade model opset_import to >= 15, "\
                                 "please upgrate it manually to run with bf16 data type")
@@ -716,7 +718,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.model = self._replace_gemm_with_matmul(tmp_model).model if \
             options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get('gemm_to_matmul', True) else \
             tmp_model
-        model.model = self._rename_node(model.model)
+        model = self._rename_node(model)
         model = self._revert_fusedconv(model)
         if self.backend == 'TensorrtExecutionProvider':
             model = self._revert_conv_add_fusion(model)
@@ -788,7 +790,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.update()
         return model
 
-    def _rename_node(self, model):
+    def _rename_node(self, model_wrapper):
+        model = model_wrapper.model
         node_names = [i.name for i in model.graph.node]
         if len(set(node_names)) < len(node_names):
             logger.warning("This model has nodes with the same name, please check" \
@@ -797,8 +800,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             for idx, node in enumerate(model.graph.node):
                 if node_names.count(node.name) > 1:
                     node.name = node.op_type + '_nc_rename_' + str(idx)
-            onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
-        return model
+            if model_wrapper.is_large_model:
+                onnx.save(model,
+                          os.path.join(self.work_space, "renamed_model.onnx"),
+                          save_as_external_data=True,
+                          all_tensors_to_one_file=True,
+                          location="weights.pb",
+                          convert_attribute=False)
+            else:
+                onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
+        return model_wrapper
 
     @staticmethod
     def _replace_gemm_with_matmul(model):
