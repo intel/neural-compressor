@@ -29,6 +29,7 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --batch_size=batch_size # optional \
                   --dataset NeelNanda/pile-10k \
                   --alpha 0.6 \ # 0.6 for llama-7b, 0.8 for llama-13b
+                  --tokenizer=decapoda-research/llama-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
                   --quant_format="QOperator" # or QDQ, optional
 ```
 
