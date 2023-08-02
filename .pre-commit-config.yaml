@@ -1,0 +1,107 @@
+exclude: |
+  (?x)^(
+      conda_meta/.+|
+      neural_insights/gui.+|
+      neural_insights/test.+|
+      neural_solution/frontend/.+|
+      neural_solution/test/.+|
+      neural_coder/extensions/.+|
+      examples/.+
+  )$
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        files: (.*\.(py|md|rst|yaml|yml))$
+      - id: check-json
+      - id: check-case-conflict
+      - id: check-yaml
+        exclude: conda_meta/
+      - id: file-contents-sorter
+        files: |
+          (?x)^(
+              .azure-pipelines/scripts/codeScan/pyspelling/inc_dict.txt|
+              .azure-pipelines/scripts/codeScan/pydocstyle/scan_path*.txt
+          )$
+        args: [--unique, --ignore-case]
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+        files: (.*\.(py|md|rst|cmake|yaml|yml))$
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.1
+    hooks:
+      - id: insert-license
+        files: |
+          (?x)^(
+            neural_solution/.*(py|yaml|yml|sh)|
+            neural_compressor/.*(py|yaml|yml|sh)|
+            neural_insights/.*(py|yaml|yml|sh)
+          )$
+        args:
+          - --license-filepath
+          - license_template.txt
+          - --use-current-year
+          - --detect-license-in-X-top-lines
+          - "40"
+          - --skip-license-insertion-comment
+          - "Copyright"
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.10.1
+    hooks:
+      - id: pyupgrade
+        args: [--py38-plus]
+
+  - repo: https://github.com/asottile/yesqa
+    rev: v1.5.0
+    hooks:
+      - id: yesqa
+        name: Unused noqa
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+      - id: docformatter
+        args: [
+            --in-place,
+            --wrap-summaries=0, # 0 means disable wrap
+            --wrap-descriptions=0, # 0 means disable wrap
+            --black,
+            --style=sphinx,
+          ]
+
+  - repo: https://github.com/psf/black.git
+    rev: 23.3.0
+    hooks:
+      - id: black
+        files: (.*\.py)$
+
+  - repo: https://github.com/asottile/blacken-docs
+    rev: 1.15.0
+    hooks:
+      - id: blacken-docs
+        args: [--line-length=80]
+        exclude: docs/source-app
+
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-beautysh
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.280
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --no-cache]
