@@ -4,9 +4,11 @@ import unittest
 import copy
 import torch
 
-from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize, gptq_quantize, teq_quantize
+from neural_compressor.adaptor.torch_utils.weight_only import (
+    rtn_quantize, awq_quantize, gptq_quantize, teq_quantize, _get_absorb_layers
+)
 from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
-from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
+from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear, MulLinear
 import transformers
 
 
@@ -93,6 +95,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         absorb_dict = {
             'fc1': ['fc2']
         }
+        absorb_dict = _get_absorb_layers(fp32_model, self.example_inputs , folding=False)
         model1 = awq_quantize(
             fp32_model, 
             weight_config=weight_config, 
@@ -102,7 +105,33 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             auto_scale=True, 
             mse_range=True, 
         )
-        self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
+        self.assertTrue(isinstance(model1.fc1, MulLinear))
+
+        fp32_model = copy.deepcopy(self.model)
+        model2 = awq_quantize(
+            fp32_model, 
+            weight_config=weight_config, 
+            absorb_dict=absorb_dict, 
+            dataloader=self.dataloader, 
+            n_samples=128, 
+            auto_scale=True, 
+            mse_range=True, 
+            return_int=True
+        )
+        self.assertTrue(isinstance(model2.fc1.linear, WeightOnlyLinear))
+
+        fp32_model = copy.deepcopy(self.model)
+        absorb_dict = _get_absorb_layers(fp32_model, self.example_inputs , folding=True)
+        model2 = awq_quantize(
+            fp32_model, 
+            weight_config=weight_config, 
+            absorb_dict=absorb_dict, 
+            dataloader=self.dataloader, 
+            n_samples=128, 
+            auto_scale=True, 
+            mse_range=True
+        )
+        self.assertTrue(isinstance(model2.fc1, torch.nn.Linear))
 
         fp32_model = copy.deepcopy(self.model)
         model2 = awq_quantize(

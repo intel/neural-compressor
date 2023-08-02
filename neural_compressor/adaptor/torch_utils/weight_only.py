@@ -416,7 +416,10 @@ def _get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldi
     # allow absorbing in itself
     if not folding:
         for k in no_absorb_layers:
-            absorb_to_layer[k] = k
+            if k in absorb_to_layer:
+                absorb_to_layer[k].append(k)
+            else:
+                absorb_to_layer[k] = k
     return absorb_to_layer
 
 
@@ -424,7 +427,7 @@ def _get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldi
 def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                  weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
                  auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, 
-                 return_int=False, sym_full_range=False, folding=False):
+                 return_int=False, sym_full_range=False):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -444,8 +447,9 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
             For example,
                 absorb_dict = {
                     # 'absorb_layer': absorbed_layer
-                    'fc1': ['fc2', 'fc3']
-                } # in this case, fc2 and fc3 need to share the same scale.
+                    'fc1': ['fc1', 'fc2', 'fc3']
+                } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
+                # self absorb module will replace with MulLinear, which contains torch.mul and module.
         n_samples: calibration sample number.
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
@@ -454,12 +458,12 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
         return_int (bool, optional): Choose return fp32 or int32 model.
                                      Defaults to False.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
-        folding (bool, optional): Whether inserting mul for layers that cannot be absorbed.
 
     Returns:
         model: fake quantized model
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
+    from .model_wrapper import MulLinear
     # collect module names to record their input/output for loss calculation.
     module_for_loss_dict = OrderedDict()
     # get the upper module if absorbed modules have the same absorb module.
@@ -470,6 +474,8 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
             split_dict = {}
             split_absorb = absorb.split('.')
             for ab in absorbed:
+                if ab == absorb:
+                    continue # skip self absorb
                 split_dict[ab] = ab.split('.')
             for ab, sp_list in split_dict.items():
                 for i in range(len(sp_list)):
@@ -538,9 +544,11 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
         module_num = math.ceil(len(absorb_dict) / block_num)
         logger.info(f"AWQ search splits the model into {block_num} blocks to avoid OOM, " +\
                     f"each block contains {module_num} modules")
+
         for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
             # Split module_name_list to avoid OOM when recording output tensors.
             if idx % module_num == 0:
+                # excute calibration
                 layer_args = {}
                 layer_kwargs = {}
                 part_module_hook_config = {}
@@ -554,6 +562,8 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                             new_module = Catcher(tmp_module, i)
                             set_module(model, i, new_module)
                             part_module_hook_config[i] = ['output'] # fetch output tensor
+                if absorb in absorbed:
+                    part_module_hook_config[absorb].append('input')
                 input_values, output_values = calibration(part_module_hook_config)
                 # recover Catcher
                 for id, name in enumerate(module_for_loss_dict):
@@ -563,7 +573,18 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                             tmp_module = fetch_module(model, i)
                             set_module(model, i, tmp_module.module)
 
+            self_absorb_flag = False
+            if absorb in absorbed:
+                absorbed.remove(absorb)
+                self_absorb_flag = True
+
+            # start AWQ scale and mse calculatioin
             logger.info(f"Processing module: {absorb}:{absorbed}")
+            for name in absorbed:
+                if name not in weight_config:
+                    weight_config[name]['bits'] = bits
+                    weight_config[name]['group_size'] = group_size
+                    weight_config[name]['scheme'] = scheme
             weight = torch.cat([fetch_module(model, _m).weight for _m in absorbed], dim=0)
             q_group_size = weight_config[absorbed[0]]['group_size'] if \
                                 absorbed[0] in weight_config else group_size
@@ -596,10 +617,6 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                     scales = scales / (scales.max() * scales.min()).sqrt()
                     for name, module in absorbed_modules.items():
                         module.weight.data = module.weight.data.mul(scales.view(1, -1))
-                        if name not in weight_config:
-                            weight_config[name]['bits'] = bits
-                            weight_config[name]['group_size'] = group_size
-                            weight_config[name]['scheme'] = scheme
                         module.weight.data = quant_weight(
                             module.weight.data,
                             num_bits=weight_config[name]['bits'], 
@@ -630,6 +647,8 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                 scales = best_scales.detach()
                 # update absorb model
                 absorb_module = fetch_module(model, absorb)
+                if isinstance(absorb_module, MulLinear):
+                    absorb_module = absorb_module.linear
                 if len(absorb_module.weight.shape) == 1:
                     absorb_module.weight.div_(scales)  # for LayerNorm
                 else:
@@ -653,10 +672,6 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                 for name, module in absorbed_modules.items():
                     for i_s in range(int(max_shrink * n_grid)):
                         ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
-                        if name not in weight_config:
-                            weight_config[name]['bits'] = bits
-                            weight_config[name]['group_size'] = group_size
-                            weight_config[name]['scheme'] = scheme
                         module.weight.data = quant_weight(
                             module.weight.data,
                             num_bits=weight_config[name]['bits'], 
@@ -684,6 +699,104 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                             best_error = loss
                             best_clip_ratio = ratio
                         module.load_state_dict(org_stat[name])
+
+                    logger.debug("The loss history of different clip range:{}".format(history))
+                    weight_config[name]['quantile'] = best_clip_ratio
+                    logger.debug("The best clip ratio for {}:{}".format(name, best_clip_ratio))
+
+            # for self absorbed module
+            if self_absorb_flag:
+                if absorb not in weight_config:
+                    weight_config[absorb]['bits'] = bits
+                    weight_config[absorb]['group_size'] = group_size
+                    weight_config[absorb]['scheme'] = scheme
+                logger.info(f"Processing self absorbed module: {absorb}")
+                absorb_module = fetch_module(model, absorb)
+                weight = absorb_module.weight
+                q_group_size = weight_config[absorb]['group_size'] if \
+                                    absorb in weight_config else group_size
+                w_max = _get_weight_scale(weight, q_group_size=q_group_size)
+                del weight
+                x_max = _get_act_scale(input_values[absorb])
+                org_stat = absorb_module.state_dict()
+                org_out = output_values[absorb]
+
+                if auto_scale:
+                    module = absorb_module
+                    logger.info("Searching best scales with AWQ algorithm")
+                    best_error = float('inf')
+                    best_scales = None
+                    best_scale_alpha = None
+                    n_grid = 20
+                    history = []
+                    for ratio in range(n_grid):
+                        ratio = ratio * 1 / n_grid
+                        scales = (x_max.pow(ratio) / w_max.pow(1-ratio)
+                                ).clamp(min=1e-4).view(-1)
+                        scales = scales / (scales.max() * scales.min()).sqrt()
+                        module.weight.data = module.weight.data.mul(scales.view(1, -1))
+                        module.weight.data = quant_weight(
+                            module.weight.data,
+                            num_bits=weight_config[name]['bits'], 
+                            group_size=weight_config[name]['group_size'], 
+                            scheme=weight_config[name]['scheme'],
+                        ) / scales.view(1, -1)
+                        loss = 0
+                        out = absorb_module(input_values[absorb])
+                        loss += (org_out - out).float().pow(2).mean().item()  # float prevents overflow
+                        history.append(loss)
+                        is_best = loss < best_error
+                        if is_best:
+                            best_error = loss
+                            best_scales = scales
+                            best_scale_alpha = ratio
+                        absorb_module.load_state_dict(org_stat)
+
+                    logger.debug("The loss history of different scale:{}".format(history))
+                    logger.debug("The best alpha for scale: {}:{}".format(absorb, best_scale_alpha))
+                    assert best_scales is not None, "Loss is infinity! Cannot find the correct scale."
+                    best_scales = best_scales.view(-1)
+                    assert torch.isnan(best_scales).sum() == 0, best_scales
+                    scales = best_scales.detach()
+                    # update model
+                    absorb_module.weight.mul_(scales.view(1, -1))
+                    wrapped_module = MulLinear(absorb_module, input_scale=(1.0/scales).view(1, -1))
+                    set_module(model, absorb, wrapped_module)
+                    name = absorb+'.linear'
+                    weight_config[name] = weight_config[absorb]
+                    weight_config.pop(absorb)
+
+                if mse_range:
+                    logger.info("Searching the best clip range with AWQ algorithm")
+                    best_error = float('inf')
+                    best_clip_ratio = None
+                    n_grid = 100
+                    max_shrink = 0.1
+                    history = []
+                    absorb_module = fetch_module(model, absorb)
+                    if isinstance(absorb_module, MulLinear):
+                        absorb_module = absorb_module.linear
+                    org_stat = absorb_module.state_dict()
+
+                    for i_s in range(int(max_shrink * n_grid)):
+                        ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
+                        module.weight.data = quant_weight(
+                            module.weight.data,
+                            num_bits=weight_config[name]['bits'], 
+                            group_size=weight_config[name]['group_size'], 
+                            scheme=weight_config[name]['scheme'],
+                            quantile=ratio,
+                        )
+
+                        loss = 0
+                        out = absorb_module(input_values[absorb])
+                        loss += (org_out - out).float().pow(2).mean().item()  # float prevents overflow
+                        history.append(loss)
+                        is_best = loss < best_error
+                        if is_best:
+                            best_error = loss
+                            best_clip_ratio = ratio
+                        absorb_module.load_state_dict(org_stat)
 
                     logger.debug("The loss history of different clip range:{}".format(history))
                     weight_config[name]['quantile'] = best_clip_ratio

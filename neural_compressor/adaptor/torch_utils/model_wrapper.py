@@ -476,10 +476,8 @@ class TEQLinearFakeQuant(torch.nn.Module):
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
-class TEQMulLinear(torch.nn.Module):
-    """
-    Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
-    """
+class MulLinear(torch.nn.Module):
+    """Linear wrapper to apply scale to input."""
 
     def __init__(self, module, input_scale):
         """
@@ -487,16 +485,15 @@ class TEQMulLinear(torch.nn.Module):
         :param module: the linear module
         :param input_scale: scale for input
         """
-
         super().__init__()
         self.register_buffer('input_scale', input_scale)
-        self.add_module('sq_linear', module)
+        self.add_module('linear', module)
 
     @property
     def weight(self):
-        return self.sq_linear.weight
+        return self.linear.weight
 
     def forward(self, X):
         X = torch.mul(X, self.input_scale)
-        X = self.sq_linear(X)
+        X = self.linear(X)
         return X
