@@ -336,6 +336,7 @@ class Quantizer:
                     children = self.model.get_children(match_nodes[1])
                     input_dtype = '1' # float32
                     output_dtype = '1' # 'float32'
+                    outs = None
                     for inp in parent.input:
                         if inp in self.new_value_info:
                             input_dtype = str(self.new_value_info[inp].new_dtype)
@@ -345,7 +346,7 @@ class Quantizer:
                         if len(outs) > 0:
                             output_dtype = str(self.new_value_info[outs[0]].new_dtype)
                             break
-                    if len(outs) == 0 or all([not self.should_cast(i) for i in children]):
+                    if outs is None or len(outs) == 0 or all([not self.should_cast(i) for i in children]):
                         return
                     if input_dtype == str(match_nodes[1].attribute[0].i) and \
                         output_dtype == str(match_nodes[0].attribute[0].i) and \

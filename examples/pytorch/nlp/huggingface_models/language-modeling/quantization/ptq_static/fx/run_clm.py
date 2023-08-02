@@ -536,6 +536,22 @@ def main():
         else None,
     )
 
+    eval_dataloader = trainer.get_eval_dataloader()
+    # transformer issue #1
+    # for transformers 4.31.0: accelerate dataloader
+    # *** ValueError: batch_size attribute should not be set 
+    # after DataLoaderShard is initialized
+    if eval_dataloader.batch_size is None:
+        def _build_inc_dataloader(dataloader):
+            class INCDataLoader:
+                __iter__ = dataloader.__iter__
+                def __init__(self) -> None:
+                    self.dataloader = dataloader
+                    self.batch_size = dataloader.total_batch_size
+            return INCDataLoader()
+        eval_dataloader = _build_inc_dataloader(eval_dataloader)
+    batch_size = eval_dataloader.batch_size
+
     # Tune
     def eval_func_for_nc(model_tuned):
         trainer.model = model_tuned
@@ -564,7 +580,7 @@ def main():
         conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model,
                                    conf,
-                                   calib_dataloader=trainer.get_eval_dataloader(),
+                                   calib_dataloader=eval_dataloader,
                                    eval_func=eval_func_for_nc)
         q_model.save(training_args.output_dir)
         exit(0)
@@ -582,7 +598,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=1)
-            benchmark.fit(new_model, b_conf, b_dataloader=trainer.get_eval_dataloader())
+            benchmark.fit(new_model, b_conf, b_dataloader=eval_dataloader)
         else:
             eval_func_for_nc(new_model)
 
