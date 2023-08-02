@@ -59,18 +59,21 @@ class KerasAdaptor(Adaptor):
 
     '''
     def __init__(self, framework_specific_info):
-        self.check_itex()
         super(KerasAdaptor, self).__init__(framework_specific_info)
         self.framework_specific_info = framework_specific_info
         self.approach = deep_get(self.framework_specific_info, 'approach', False)
         self.quantize_config = {'op_wise_config': {}}
         self.device = self.framework_specific_info['device']
+        self.backend = self.framework_specific_info['backend']
         #self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         #os.makedirs(self.work_dir, exist_ok=True)
         self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D', 'AveragePooling2D', 
         'MaxPooling2D', 'AvgPool2D', 'MaxPool2D']
 
+        if self.backend == 'itex':
+            self._check_itex()
+            
         self.pre_optimized_object = None
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
@@ -87,7 +90,7 @@ class KerasAdaptor(Adaptor):
 
         self.conv_format = {}
 
-    def check_itex(self):
+    def _check_itex(self):
         try:
             import intel_extension_for_tensorflow
         except:
