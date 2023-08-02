@@ -50,8 +50,9 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         commit_hash = revision
     else:
         ref_path = os.path.join(storage_folder, "refs", revision)
-        with open(ref_path) as f:
-            commit_hash = f.read()
+        if os.path.exists(ref_path):
+            with open(ref_path) as f:
+                commit_hash = f.read()
     pointer_path = os.path.join(
         storage_folder, "snapshots", commit_hash
     )
