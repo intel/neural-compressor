@@ -846,8 +846,8 @@ class _BaseQuantizationConfig:
                             smooth_quant_args = {"alpha": numpy.arange(0.1, 0.5, 0.05).tolist()}
                         """
                         if isinstance(v, str):
-                            assert v == "auto", "the alpha of sq only supports float and 'auto'"
-                        elif isinstance(v, float) or isinstance(v, int):
+                            assert v == "auto", "the alpha of sq only supports float, list and 'auto'"
+                        elif isinstance(v, float) or isinstance(v, int) or isinstance(v, list):
                             continue
                         else:
                             logger.warning("Ignore the alpha as it's not a list, int or float.")
