@@ -420,7 +420,7 @@ def _get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldi
             if k in absorb_to_layer:
                 absorb_to_layer[k].append(k)
             else:
-                absorb_to_layer[k] = k
+                absorb_to_layer[k] = [k]
     return absorb_to_layer
 
 
