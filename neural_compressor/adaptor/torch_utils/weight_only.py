@@ -469,6 +469,12 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
     module_for_loss_dict = OrderedDict()
     absorb_dict = deepcopy(absorb_dict)
     weight_config = deepcopy(weight_config)
+    # skip lm_head
+    absorb_dict_keys = list(absorb_dict.keys())
+    for absorb in absorb_dict_keys:
+        if absorb_dict[absorb] == ['lm_head']:
+            logger.info('lm_head layer is skipped in AWQ to avoid out-of-memory.')
+            absorb_dict.pop(absorb)
     # get the upper module if absorbed modules have the same absorb module.
     for absorb, absorbed in absorb_dict.items():
         # used as input for absob module
@@ -538,11 +544,6 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
 
     if auto_scale or mse_range:
         from .util import fetch_module, set_module
-        absorb_dict_keys = list(absorb_dict.keys())
-        for absorb in absorb_dict_keys:
-            if absorb_dict[absorb] == ['lm_head']:
-                logger.info('lm_head layer is skipped in AWQ to avoid out-of-memory.')
-                absorb_dict.pop(absorb)
         block_num = n_blocks
         module_num = math.ceil(len(absorb_dict) / block_num)
         logger.info(f"AWQ search splits the model into {block_num} blocks to avoid OOM, " +\
@@ -556,19 +557,22 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                 layer_kwargs = {}
                 part_module_hook_config = {}
                 logger.info(f"AWQ search calibration round {idx//module_num + 1}")
+                # add Catcher
                 for id, name in enumerate(module_for_loss_dict):
                     if idx <= id < (idx + module_num):
                         part_module_hook_config[name] = ['output'] # fetch input tensor
+                        if name in absorb_dict[name]:
+                            # fetch input tensro of self-absorb
+                            part_module_hook_config[name].append('input') 
                         for i in module_for_loss_dict[name]:
                             # use Catcher to record input args and kwargs
                             tmp_module = fetch_module(model, i)
                             new_module = Catcher(tmp_module, i)
                             set_module(model, i, new_module)
                             part_module_hook_config[i] = ['output'] # fetch output tensor
-                if absorb in absorbed:
-                    part_module_hook_config[absorb].append('input')
+                # calibration
                 input_values, output_values = calibration(part_module_hook_config)
-                # recover Catcher
+                # remove Catcher
                 for id, name in enumerate(module_for_loss_dict):
                     if idx <= id < (idx + module_num):
                         for i in module_for_loss_dict[name]:
@@ -581,6 +585,7 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
                 absorbed.remove(absorb)
                 self_absorb_flag = True
 
+            # for absorbed modules
             if len(absorbed) > 0:
                 # start AWQ scale and mse calculatioin
                 logger.info(f"Processing module: {absorb}:{absorbed}")
