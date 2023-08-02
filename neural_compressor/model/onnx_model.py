@@ -792,3 +792,14 @@ class ONNXModel(BaseModel):
             current_node = matched_parent
 
         return matched_parents
+
+    def is_smoothquant_model(self):
+        """Check the model is smooth quantized or not.
+
+        Returns:
+            bool: the model is smooth quantized or not.
+        """
+        for init in self.model.graph.initializer:
+            if "_smooth_scale" in init.name:
+                return True
+        return False
