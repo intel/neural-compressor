@@ -105,7 +105,7 @@ q_model = fit(
 ```
 
 ## Step by Step Diagnosis Example
-See [Step by Step Diagnosis Example](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) to check how to debug accuracy issues with Neural Insights.
+See [Step by Step Diagnosis Example TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) or [Step by Step Diagnosis Example ONNX](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md) to check how to debug accuracy issues with Neural Insights.
 
 ## Research Collaborations
 
