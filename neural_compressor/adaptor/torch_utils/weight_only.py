@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 import math
 from typing import OrderedDict
 from .util import set_module
@@ -466,6 +467,8 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym',
     from .model_wrapper import MulLinear
     # collect module names to record their input/output for loss calculation.
     module_for_loss_dict = OrderedDict()
+    absorb_dict = deepcopy(absorb_dict)
+    weight_config = deepcopy(weight_config)
     # get the upper module if absorbed modules have the same absorb module.
     for absorb, absorbed in absorb_dict.items():
         # used as input for absob module
