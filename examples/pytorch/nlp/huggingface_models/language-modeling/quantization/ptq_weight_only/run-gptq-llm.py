@@ -174,7 +174,8 @@ if __name__ == '__main__':
 
     results = lm_evaluate(
         model="hf-causal",
-        model_args=f'pretrained="{args.model_name_or_path}",tokenizer="{args.model_name_or_path}",dtype=float32',
+        # model_args=f'pretrained="{args.model_name_or_path}",tokenizer="{args.model_name_or_path}",dtype=float32',
+        model_args='pretrained='+args.model_name_or_path+',tokenizer='+args.model_name_or_path+',dtype=float32',
         user_model=q_model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
         batch_size=4
