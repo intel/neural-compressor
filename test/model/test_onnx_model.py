@@ -177,7 +177,8 @@ class TestOnnxModel(unittest.TestCase):
                    sessions[0],
                    config,
                    'hf_test',
-                   use_cache=False)
+                   use_cache=False,
+                   use_io_binding=False)
         self.assertNotEqual(model, None)
 
     def test_nodes(self):
