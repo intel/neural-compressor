@@ -1,14 +1,12 @@
 import io
 import os
 import warnings
-from typing import Any, Dict
+from typing import Any, BinaryIO, Callable, Dict, Optional, Union, IO
 
 from .utils import torch
 from neural_compressor.adaptor.torch_utils.layer_wise_quant import modified_pickle as pickle
 
 from torch.serialization import (
-    FILE_LIKE,
-    MAP_LOCATION,
     _get_restore_location,
     StorageType,
     _maybe_decode_ascii,
@@ -17,6 +15,10 @@ from torch.serialization import (
     _is_torchscript_zip,
     _is_zipfile
 )
+
+FILE_LIKE = Union[str, os.PathLike, BinaryIO, IO[bytes]]
+MAP_LOCATION = Optional[Union[Callable[[torch.Tensor, str], torch.Tensor],
+                              torch.device, str, Dict[str, str]]]
 
 
 def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
