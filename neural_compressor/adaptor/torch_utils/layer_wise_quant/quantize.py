@@ -10,8 +10,9 @@ from torch.quantization import prepare, convert
 from accelerate.utils import set_module_tensor_to_device
 from .utils import _get_path, get_named_children, update_module, load_tensor_from_shard, load_tensor
 
+from neural_compressor.config import default_workspace
 
-TMP_DIR = f'./layer_wise_quant_tmp_dir_{time.time()}'
+TMP_DIR = f'{default_workspace}/layer_wise_quant_tmp_dir_{time.time()}'
 
 
 def mk_tmp_dir():
