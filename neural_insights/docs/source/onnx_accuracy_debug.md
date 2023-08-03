@@ -18,27 +18,10 @@ pip install accelerate seqeval tensorboard sentencepiece timm fvcore Pillow eino
 ```
 
 ## Model
-Get the LayoutLMv3 model.
+Get the LayoutLMv3 model from Intel® Neural Compressor [LayoutLMv3 example](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static).
 ```shell
 optimum-cli export onnx --model HYPJUDY/layoutlmv3-base-finetuned-funsd layoutlmv3-base-finetuned-funsd-onnx/ --task=token-classification
 ```
-
-## Scripts
-Copy `funsd.py`, `model.py`, and `utils.py` scripts from Intel® Neural Compressor [LayoutLMv3 example](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static).
-
-## Dataset
-First, define some variables that will be used.
-```python
-model_name_or_path = "HYPJUDY/layoutlmv3-base-finetuned-funsd"
-input_model = "./layoutlmv3-base-finetuned-funsd-onnx/model.onnx"
-output_model = "./layoutlmv3-base-finetuned-funsd-onnx/model-int8.onnx"
-task_name="ner"
-```
-
-Dataset needs to be preprocessed before the quantization like in [main.py](https://github.com/intel/neural-compressor/blob/d1f315f359440382d713a0a20c7927c7c0d252a1/examples/onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static/main.py#L267) and [main.py](https://github.com/intel/neural-compressor/blob/d1f315f359440382d713a0a20c7927c7c0d252a1/examples/onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static/main.py#L185).
-
-## Evaluation metric and function
-Evaluation metric and function should be configured like in [main.py](https://github.com/intel/neural-compressor/blob/d1f315f359440382d713a0a20c7927c7c0d252a1/examples/onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static/main.py#L185).
 
 # Running the quantization
 Generate a quantized model.
