@@ -37,6 +37,7 @@ from neural_compressor.adaptor.ox_utils.util import to_numpy
 import math
 import sys
 import re
+from typing import Dict
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -157,21 +158,26 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=True,
-            percentile=99.999, op_types=['MatMul', 'Gemm', 'Conv', 'FusedConv'], scales_per_op=True):
+        # sq algo and args
+        self.sq = None
+        self.cur_sq_args = {}
+
+    def smooth_quant(self, model, dataloader, iterations, alpha=0.5, folding=True,
+            percentile=99.999, op_types=['MatMul', 'Gemm', 'Conv', 'FusedConv'],
+            scales_per_op=True, record_max_info=False):
         """Get augmented model with smooth quant.
 
         Args:
             model_wrapper (object): origin_model
             dataloader (object): dataloader
             iterations (int): iterations
-            tune_cfg (dict): quantization config
             alpha (float or str): smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
             folding (bool): whether fold those foldable Mul which are inserted for SmoothQuant
             percentile (float): percentile of calibration to remove outliers
             op_types (list): The op types whose input tensor will be dumped
             scales_per_op (bool): True, each op will have an individual scale, mainly for accuracy
                                   False, ops with the same input will share a scale, mainly for performance
+            record_max_info (bool): False, whether record the scale information
 
         Returns:
             model: A modified onnx model
@@ -180,11 +186,38 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return self.smooth_quant_model
 
         from .ox_utils.smooth_quant import ORTSmoothQuant
-        quantize_config = self._cfg_to_quantize_config(tune_cfg) if tune_cfg is not None else None
-        sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
-        self.smooth_quant_model = sq.transform(
-            alpha, folding, percentile, op_types, scales_per_op, iterations, quantize_config)
+
+        # set params to cur_sq_args
+        self.cur_sq_args['alpha'] = alpha
+        self.cur_sq_args['folding'] = folding
+        self.cur_sq_args['percentile'] = percentile
+        self.cur_sq_args['op_types'] = op_types
+        self.cur_sq_args['scales_per_op'] = scales_per_op
+        self.cur_sq_args['calib_iter'] = iterations
+        
+        # pre-optimization
+        self._pre_optimize(model)
+
+        # assign the algo to the adaptor, so adaptor can call it later when needed
+        self.sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
+        self.sq.record_max_info = record_max_info
+        self.smooth_quant_model = self.sq.transform(**self.cur_sq_args)
+        logger.info("Updated the pre-optimized model with smooth quant model.")
+        # TODO double-check the smooth_quant_model and pre_optimized_model to make sure there no two fp32 model replicas
+        self.pre_optimized_model = self.smooth_quant_model
         return self.smooth_quant_model
+    
+    def _need_smooth_quant(self, tune_cfg) -> bool:
+        """Check the model needs smooth quant or not."""
+        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+            and recipe_cfgs['smooth_quant_args'].get('alpha', None):
+            # update alpha according to tune_cfg
+            self.cur_sq_args['alpha'] = \
+                tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
+            return True
+        else:
+            return False
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -200,9 +233,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         Returns:
             (dict): quantized model
-        """
+        """        
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
-        if self.smooth_quant_model is not None:
+        if self.smooth_quant_model is not None and model.is_smoothquant_model():
             model = self.smooth_quant_model
         elif self.pre_optimized_model is not None:
             model = self.pre_optimized_model
@@ -213,10 +246,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
         if self.backend == 'DnnlExecutionProvider' and \
-            any([i.domain in ['', 'ai.onnx'] and i.version < 15 for i in model.model.opset_import]):
+            any([i.domain in ['', 'ai.onnx'] and \
+            i.version < 15 for i in model.model.opset_import]): # pragma: no cover
             from onnx import version_converter
+            from neural_compressor.model.onnx_model import ONNXModel
             try:
-                model.model = self._rename_node(version_converter.convert_version(model.model, 15))
+                model = self._rename_node(ONNXModel(version_converter.convert_version(model.model, 15)))
             except:
                 logging.warning("Fail to upgrade model opset_import to >= 15, "\
                                 "please upgrate it manually to run with bf16 data type")
@@ -243,47 +278,19 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                     repr(e)))
                 tmp_model = model
+        
+        # smooth quant the model if needed
+        if self._need_smooth_quant(tune_cfg) and not tmp_model.is_smoothquant_model():
+            self.sq.model = tmp_model
+            self.sq.record_max_info = False
+            tmp_model = self.sq.transform(**self.cur_sq_args)
+
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
-            if isinstance(data_loader, BaseDataLoader):
-                batch_size = data_loader.batch_size
-                try:
-                    for i in range(batch_size):
-                        if calib_sampling_size % (batch_size - i) == 0:
-                            calib_batch_size = batch_size - i
-                            if i != 0:  # pragma: no cover
-                                logger.warning("Reset `calibration.dataloader.batch_size` field "
-                                               "to {}".format(calib_batch_size) +
-                                               " to make sure the sampling_size is "
-                                               "divisible exactly by batch size")
-                            break
-                    tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
-                    data_loader.batch(calib_batch_size)
-                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                                                quantize_config, tmp_iterations)
-                except Exception as e:  # pragma: no cover
-                    if 'Got invalid dimensions for input' in str(e):
-                        logger.warning("Please set sampling_size to a multiple of {}".format(
-                            str(e).partition('Expected: ')[2].partition('\n')[0]))
-                        exit(0)
-                    logger.warning(
-                        "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, 1))
-                    data_loader.batch(1)
-                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                              quantize_config, calib_sampling_size)
-            else:  # pragma: no cover
-                if hasattr(data_loader, 'batch_size') and \
-                  calib_sampling_size % data_loader.batch_size != 0:
-                    logger.warning(
-                        "Please note that calibration sampling size {} " \
-                        "isn't divisible exactly by batch size {}. " \
-                        "So the real sampling size is {}.".
-                        format(calib_sampling_size, data_loader.batch_size,
-                               data_loader.batch_size * iterations))
-                quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                          quantize_config, iterations)
+            calib_iterations = self._reset_calib_iter(data_loader, calib_sampling_size, iterations)
+            quantize_params = self._get_quantize_params(tmp_model, data_loader, \
+                                                        quantize_config, calib_iterations)
         else:
             quantize_params = None
         self.quantize_params = quantize_params
@@ -316,6 +323,45 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self._dump_model_op_stats(tmp_model)
         tmp_model.topological_sort()
         return tmp_model
+    
+    def _reset_calib_iter(self, data_loader, cfg_calib_sampling_size, cfg_calib_iter):
+        """Check and reset calibration iterations according to calib_sampleing_size and dataloader batch_size."""
+        if isinstance(data_loader, BaseDataLoader):
+            batch_size = data_loader.batch_size
+            try:
+                for i in range(batch_size):
+                    if cfg_calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                            "to {}".format(calib_batch_size) +
+                                            " to make sure the sampling_size is "
+                                            "divisible exactly by batch size")
+                        break
+                tmp_iterations = int(math.ceil(cfg_calib_sampling_size / calib_batch_size))
+                data_loader.batch(calib_batch_size)
+                calib_iterations = tmp_iterations
+            except Exception as e:  # pragma: no cover
+                if 'Got invalid dimensions for input' in str(e):
+                    logger.warning("Please set sampling_size to a multiple of {}".format(
+                        str(e).partition('Expected: ')[2].partition('\n')[0]))
+                    exit(0)
+                logger.warning(
+                    "Fail to forward with batch size={}, set to {} now.".
+                    format(batch_size, 1))
+                data_loader.batch(1)
+                calib_iterations = cfg_calib_sampling_size
+        else:  # pragma: no cover
+            if hasattr(data_loader, 'batch_size') and \
+                cfg_calib_sampling_size % data_loader.batch_size != 0:
+                logger.warning(
+                    "Please note that calibration sampling size {} " \
+                    "isn't divisible exactly by batch size {}. " \
+                    "So the real sampling size is {}.".
+                    format(cfg_calib_sampling_size, data_loader.batch_size,
+                            data_loader.batch_size * cfg_calib_iter))
+            calib_iterations = cfg_calib_iter
+        return calib_iterations
 
     def _generate_qconfig(self, model, tune_cfg, quantize_params):
         tune_cfg = copy.deepcopy(tune_cfg)
@@ -478,10 +524,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = ONNXModel(model)
         black_nodes = [node for node in quantize_config if quantize_config[node]=='fp32']
         white_nodes = [node for node in quantize_config if quantize_config[node]!='fp32']
+        
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
-                  iterations=list(range(0, quantize_config['calib_iteration'])),
+                  iterations=list(range(0, iterations)), \
                   backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
@@ -630,6 +677,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return is_nlp
 
     def _pre_optimize(self, model, level=1):
+        # the pre-optimization may already done at the smoothing process
+        # pre_optimize -> sq -> update the pre_optimized_model
+        if self.pre_optimized_model:
+            logger.info("Pre-optimization already done, return it directly.")
+            return self.pre_optimized_model
         from neural_compressor import options
         from neural_compressor.adaptor.ox_utils.util import \
             remove_init_from_model_input, split_shared_bias
@@ -679,7 +731,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.model = self._replace_gemm_with_matmul(tmp_model).model if \
             options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get('gemm_to_matmul', True) else \
             tmp_model
-        model.model = self._rename_node(model.model)
+        model = self._rename_node(model)
         model = self._revert_fusedconv(model)
         if self.backend == 'TensorrtExecutionProvider':
             model = self._revert_conv_add_fusion(model)
@@ -751,7 +803,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.update()
         return model
 
-    def _rename_node(self, model):
+    def _rename_node(self, model_wrapper):
+        model = model_wrapper.model
         node_names = [i.name for i in model.graph.node]
         if len(set(node_names)) < len(node_names):
             logger.warning("This model has nodes with the same name, please check" \
@@ -760,8 +813,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             for idx, node in enumerate(model.graph.node):
                 if node_names.count(node.name) > 1:
                     node.name = node.op_type + '_nc_rename_' + str(idx)
-            onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
-        return model
+            if model_wrapper.is_large_model:
+                onnx.save(model,
+                          os.path.join(self.work_space, "renamed_model.onnx"),
+                          save_as_external_data=True,
+                          all_tensors_to_one_file=True,
+                          location="weights.pb",
+                          convert_attribute=False)
+            else:
+                onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
+        return model_wrapper
 
     @staticmethod
     def _replace_gemm_with_matmul(model):

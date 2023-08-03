@@ -16,15 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import partial
 from .base import (register_pruner,
                    PytorchBasePruner)
 from ..schedulers import get_scheduler
 from ..patterns import get_pattern
 from ..criteria import get_criterion
 from ..regs import get_reg
-from ..utils import logger
-
-from ..utils import torch
+from ..utils import logger, torch, F
 
 @register_pruner('pt_retrain_free')
 class PytorchRetrainFreePruner(PytorchBasePruner):
@@ -58,16 +57,39 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
     def _init(self):
         """Initialize."""
         self.pattern = get_pattern(self.config, self.modules)
-        self.masks = self.pattern.register_block_masks(self.modules)
-        self.rewrite_forward()
+        self.masks = self.pattern.register_block_masks()
+        self.pruner_masks = [self.masks]
+        self._rewrite_forward(self.pruner_masks)
         self.scheduler = get_scheduler(self.config)
-        self.criterion = get_criterion(self.config, self.modules, self.pattern)
+        self.criterion = get_criterion(modules=self.modules, config=self.config, pattern=self.pattern, masks=self.masks)
         self.reg = get_reg(self.config, self.modules, self.pattern)
-
         logger.warning("Retrain-free pruner fixed the weights, please DO NOT turn on gradient update.")
         assert "channel" in self.pattern.pattern, \
-            "retrain-free pruner only supports large patterns like channel-wise pruning."
+                "retrain-free pruner only supports large patterns like channel-wise pruning."
 
+    def _rewrite_forward(self, pruner_masks):
+        def forward(self, input):
+            block_mask = pruner_masks[0][self.mask_name]
+            block_mask.requires_grad_(True) # Makesure that the gradient of block mask is always avilible
+            block_size = [self.weight.shape[0] // block_mask.shape[0],
+                          self.weight.shape[1] // block_mask.shape[1]]
+            mask = block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(
+                block_size[1], dim=-1).to(self.weight.device)
+            return F.linear(input, self.weight * mask, self.bias)
+
+        for key in self.masks.keys():
+            module = self.modules[key]
+            module.mask_name = key
+            module.forward = partial(forward, module)
+
+    def _recover_forward(self):
+        with torch.no_grad():
+            for key in self.masks.keys():
+                module = self.modules[key]
+                delattr(module, 'mask_name')
+                self.masks[key].requires_grad_(False)
+                module.forward = partial(torch.nn.Linear.forward, module)
+    
     # def on_step_begin(self, local_step):
     #     """Implement at the start of each step.
 
@@ -100,33 +122,24 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
             return
         # the order of the following three lines can't not be exchanged
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
-        self.rearrange_masks(self.masks)
-        self.update_block_masks(self.masks)
+        self.masks = self.rearrange_masks(self.masks)
+        self.pruner_masks[0] = self.masks
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
         logger.info(f"current sparsity ratio is {self.current_sparsity_ratio}")
 
-    def on_before_optimizer_step(self):
-        """Implement before optimizer.step()."""
+    def on_step_end(self):
+        """Implement after every step."""
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
-            self.reg.on_before_optimizer_step()
-            self.criterion.on_before_optimizer_step()
-
-    def on_after_optimizer_step(self):
-        """Prune the model after optimization."""
-        # the order of the following four lines can't not be exchanged
-        if self.global_step >= self.start_step and self.global_step <= self.end_step:
-            self.reg.on_after_optimizer_step()
-        # self.mask_weights()
-        # Iterative rearrangement with mask weight at the last step only
+            self.criterion.on_before_optimizer_step(self.masks)
+        self.zero_mask_grad()
         if self.end_step == self.global_step:
             self.mask_weights()
             logger.info(f"mask weights at last_prune_step: {self.global_step}")
-            # recover forward method and remove block mask parameters at last prune step
-            self.recover_forward()
-            self.pattern.remove_block_masks()
+            # recover forward method at last prune step
+            self._recover_forward()
         self.global_step += 1
-
+        
     def mask_weights(self):
         """Apply block masks to corresponding modules' weights.
 
@@ -135,24 +148,16 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
         with torch.no_grad():
             self.pattern.mask_block_weights(self.masks)
 
-    def update_block_masks(self, masks):
-        """Update the block mask parameters."""
-        with torch.no_grad():
-            for key in self.masks.keys():
-                module = self.modules[key]
-                module.block_mask.data = masks[key].float().data
-
     def rearrange_masks(self, masks):
         """Rearrange the masks of each layer with constant sparsity."""
         with torch.no_grad():
-            new_masks = {}
             for key in masks.keys():
                 block_mask = masks[key]
                 num_pruned = torch.sum(block_mask == 0.0).data.item()
                 if not num_pruned or not self.criterion.collected_grads[key]:
-                    new_masks[key] = block_mask
                     continue
                 grads = torch.stack(self.criterion.collected_grads[key], dim=0).squeeze()
+                # self.criterion.collected_grads[key] = [] # clear grads after each pruning step
                 grads = grads.permute(1, 0).contiguous()
                 grads_sq = grads.pow(2).sum(dim=1)
                 _, indicies = grads_sq.sort(descending=False)
@@ -167,20 +172,21 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
                     removed = grad_sum_length.argmin()
                     del masked_indicies[removed]
 
-                new_masks[key] = torch.ones(len(indicies)).to(block_mask.device)
-                new_masks[key][masked_indicies] = 0
-                new_masks[key] = new_masks[key] * torch.ones_like(block_mask).to(block_mask.device)
-            self.masks = new_masks
+                new_mask = torch.ones(len(indicies)).to(block_mask.device)
+                new_mask[masked_indicies] = 0
+                new_mask = new_mask * torch.ones_like(block_mask,
+                                                      device=block_mask.device, dtype=block_mask.dtype)
+                block_mask.data = new_mask.data
+        return masks
 
     def zero_mask_grad(self):
         with torch.no_grad():
-            for key in self.modules.keys():
-                if not hasattr(self.modules[key], 'block_mask'):
-                    continue  # No corresponding block mask, skip.
-                mask = self.modules[key].block_mask
+            for key in self.masks.keys():
+                mask = self.masks[key]
                 if mask.grad is not None:
                     if mask.grad.grad_fn is not None:
                         mask.grad.detach_()
                     else:
                         mask.grad.requires_grad_(False)
                     mask.grad.zero_()
+

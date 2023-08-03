@@ -24,7 +24,6 @@ from collections import OrderedDict, UserDict, namedtuple
 from packaging.version import Version
 import yaml
 from functools import partial
-from neural_compressor.adaptor.torch_utils.util import set_module
 from neural_compressor.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
@@ -1059,11 +1058,9 @@ class TemplateAdaptor(Adaptor):
         Returns:
             q_capability (dictionary): tuning capability for each op from model.
         """
-        tmp_model = model
-        tmp_model.eval()
         quantizable_ops = []
         self.block_wise =[]
-        self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
+        self._get_quantizable_ops_recursively(model, '', quantizable_ops)
         q_capability = {}
         q_capability['block_wise'] = None
         q_capability['optypewise'] = OrderedDict()
@@ -1188,7 +1185,7 @@ class TemplateAdaptor(Adaptor):
             (self.version.release >= Version("1.11.0").release):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
-            self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
+            self._get_bf16_ops_recursively(model, '', bf16_ops)
             mixed_capability = self._combine_capability(bf16_ops, q_capability)
             return mixed_capability
         return q_capability
@@ -1275,21 +1272,22 @@ class TemplateAdaptor(Adaptor):
                                 enable_act=enable_act)
         return op_to_traces
 
-    def smooth_quant(self, model, dataloader, calib_iter, tune_cfg=None, alpha=0.5, folding=False,
-                     percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False):
+    def smooth_quant(self, model, dataloader, calib_iter, alpha=0.5, folding=False,
+                     percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False, 
+                     record_max_info=False):
         """ convert the model by smooth quant.
 
         Args:
             model: origin FP32 model
             dataloader: calib dataloader
             calib_iter: calib iters
-            tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
             folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile:Percentile of calibration to remove outliers, not supported now
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
+            record_max_info: whether record the max info in model for alpha tuning.
 
         Returns:
             model: A modified fp32 model, inplace=True.
@@ -1311,7 +1309,8 @@ class TemplateAdaptor(Adaptor):
             from .torch_utils.smooth_quant import TorchSmoothQuant
             self.sq = TorchSmoothQuant(model._model, dataloader=dataloader,
                                        example_inputs=self.example_inputs, q_func=self.q_func)
-        kwargs = {}  ##different backends may have different default values
+        kwargs = {}  ## different backends may have different default values
+        self.sq.record_max_info = record_max_info # whether record the max info of input and weight.
         if op_types != None:
             kwargs["op_types"] = op_types
         if percentile != None:
@@ -1324,7 +1323,45 @@ class TemplateAdaptor(Adaptor):
             calib_iter=calib_iter,
             **kwargs
         )
+        if self.sq.record_max_info:
+            model.sq_max_info = self.sq.max_value_info
         return model
+
+    def _apply_pre_optimization(self, model, tune_cfg, recover=False):
+        """update model parameters based on tune_cfg.
+
+        Args:
+            model (torch.nn.Module): smoothquant optimized model.
+            tune_cfg (dict): optimization config.
+            recover (dict): recover pre-optimization change.
+
+        Returns:
+            model: pre-optimized model.
+        """
+        q_model = model._model
+        sq_max_info = model.sq_max_info
+        if sq_max_info:
+            from .torch_utils.smooth_quant import TorchSmoothQuant
+            tsq = TorchSmoothQuant(q_model, None)
+            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
+            for op_name, info in sq_max_info.items():
+                if alpha == 'auto':
+                    alpha = info['alpha']
+                absorb_layer = op_name
+                absorbed_layer = info['absorbed_layer']
+                input_minmax = info['input_minmax']
+                weight_max = info['weight_max']
+                abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
+                input_power = torch.pow(abs_input_max, alpha)
+                weight_power = torch.pow(weight_max, 1 - alpha)
+                scale = torch.clip(input_power / weight_power, min=1e-5)
+                with torch.no_grad():
+                    if recover:
+                        scale = 1.0 / scale
+                    for layer in absorbed_layer:
+                        tsq._scale_layer_weight(layer, scale)
+                    tsq._absorb_scales(absorb_layer, 1.0/scale)
+                logger.debug(f"Current smoothquant scale of {op_name} is {scale}, alpha is {alpha}")
 
     def qdq_quantize(self, model, tune_cfg):
         """insert quant, dequant pairs before linear to simulate quantization.
@@ -1337,16 +1374,33 @@ class TemplateAdaptor(Adaptor):
             model: qdq quantized model.
         """
         q_model = model._model
-        from .torch_utils.smooth_quant import set_module
+        from .torch_utils.util import fetch_module, set_module
         from .torch_utils.model_wrapper import QDQLinear, SQLinearWrapper
         smoothquant_scale_info = {}
         fallback_op_name_list = []
         stats_result = {}
         for (op_name, op_type), qconfig in tune_cfg['op'].items():
             if op_type == 'Linear' and qconfig['weight']['dtype'] != 'int8':
-                # rstrip is for auto strategy, the model passed to the second strategy is already optimized.
-                op_name = op_name.rstrip('.sq_linear') 
                 fallback_op_name_list.append(op_name)
+
+        sq_max_info = model.sq_max_info
+        if sq_max_info:
+            assert not q_model._smoothquant_optimized, \
+                    "The model is already optimized by smoothquant, cannot apply new alpha."
+            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
+            for op_name, info in sq_max_info.items():
+                if alpha == 'auto':
+                    alpha = info['alpha']
+                input_minmax = info['input_minmax']
+                weight_max = info['weight_max']
+                abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
+                input_power = torch.pow(abs_input_max, alpha)
+                weight_power = torch.pow(weight_max, 1 - alpha)
+                scale = torch.clip(input_power / weight_power, min=1e-5)
+                module = fetch_module(q_model, op_name)
+                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                set_module(q_model, op_name, new_module)
+                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         smoothquant_op_info = {'sq_linear': {}, 'qdq_linear': []}
         stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
@@ -1380,37 +1434,6 @@ class TemplateAdaptor(Adaptor):
                    field_names=field_names).print_stat()
 
         return model
-
-    def _wrapper_sq_linear(self, tmp_model, recover=False):
-        """Help function for _get_quantizable_ops_recursively to align smoothquant processed model"""
-        class SQLinearWrapper(torch.nn.Module):
-            def __init__(self, module):
-                super().__init__()
-                self.add_module('sq_linear', module)
-
-            def forward(self, X):
-                return self.sq_linear(X)
-            
-            @property 
-            def weight(self):
-                return self.sq_linear.weight
-
-        from .torch_utils.smooth_quant import get_module, set_module
-        if recover:
-            for name in self.sq_module_name_list:
-                new_module = get_module(tmp_model, name+'.sq_linear')
-                set_module(tmp_model, name, new_module)
-            return tmp_model
-        else:
-            self.sq_module_name_list = []
-            for name, module in tmp_model.named_modules():
-                if 'Linear' == str(module.__class__.__name__):
-                    self.sq_module_name_list.append(name)
-            for name in self.sq_module_name_list:
-                module = get_module(tmp_model, name)
-                new_module = SQLinearWrapper(module)
-                set_module(tmp_model, name, new_module)
-            return tmp_model
 
 
 unify_op_type_mapping = {
@@ -1506,8 +1529,11 @@ class PyTorchAdaptor(TemplateAdaptor):
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-            if model._model._smoothquant_optimized:
-                return self.qdq_quantize(q_model, tune_cfg)
+            return self.qdq_quantize(q_model, tune_cfg)
+
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and recipe_cfgs['smooth_quant_args']['folding']:
+            self._apply_pre_optimization(q_model, tune_cfg)
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
@@ -2516,7 +2542,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         except:
             logger.warning('Fail to remove {}.'.format(self.ipex_config_path))
         self.device = 'ipex'
-        self.tmp_model = None
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
@@ -2531,319 +2556,136 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         Returns:
             (dict): quantized model
         """
+        # IPEX bug #1: deepcopied prepared model cannot do calibration, need model._model
+        # q_model._model is useless, but we need to copy other attributes, and pass the coverted 
+        # model to q_model. Also, sq will collect state_dict to origin_stat for recover
+        if self.performance_only:
+            q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
 
-        # For smoothquant optimized model
+        assert self.approach in ['post_training_static_quant', 'post_training_auto_quant'], \
+                "IPEX in INC only supports approach is static or auto"
+        assert not self.version.release < Version("1.10.0").release, \
+            "INC support IPEX version >= 1.10.0"
+
+        # Update model parameter when smoothquant folding = False
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and self.version.release >= Version("2.1").release \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-            if model._model._smoothquant_optimized:
-                return self.qdq_quantize(model, tune_cfg, dataloader, q_func)
+            return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
+        # Update model parameter when smoothquant folding = True
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and recipe_cfgs['smooth_quant_args']['folding']:
+            self._apply_pre_optimization(model, tune_cfg)
 
         assert self.approach != 'quant_aware_training', \
             "Intel PyTorch Extension didn't support quantization aware training mode"
         assert not self.version.release < Version("1.10.0").release, \
                 "INC support IPEX version >= 1.10.0"
 
-        qscheme = self._cfg_to_qconfig(tune_cfg)
+        qscheme = self._cfg_to_qconfig(tune_cfg)  # Update json file in self.ipex_config_path
         iterations = tune_cfg.get('calib_iteration', 1)
-        model.model.eval()
+        model._model.eval()
+        inplace = True if self.performance_only else False
 
-        if self.performance_only:
-            if hasattr(model.model, "save_qconf_summary"):
-                q_model = model.model
-                q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-                if q_func is not None:
-                    q_func(q_model)
+        if self.version.release >= Version("1.12.0").release:
+            # Check save_qconf_summary part is a workaroud for IPEX bug.
+            # Sometimes the prepared model from get_op_capablitiy loss this attribute
+            if not hasattr(model._model, "save_qconf_summary"):
+                from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                if self.version.release >= Version("2.1").release:
+                    static_qconfig = ipex.quantization.default_static_qconfig_mapping
                 else:
-                    self.model_calibration(q_model, dataloader, iterations, None,
-                                           tune_cfg.get('calib_sampling_size', 1))
-                q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
-                    (self.version.release >= Version("1.11.0").release):
-                    with torch.no_grad():
-                        with torch.cpu.amp.autocast():
-                            q_model = ipex.quantization.convert(q_model, inplace=True)
-                            try:
-                                if isinstance(self.example_inputs, dict):
-                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                                else:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs)
-                                q_model = torch.jit.freeze(q_model.eval())
-                            except:
-                                if isinstance(self.example_inputs, dict):
-                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
-                                                              strict=False)
-                                else:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                                q_model = torch.jit.freeze(q_model.eval())
+                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                    qscheme=torch.per_channel_symmetric))
+                if isinstance(self.example_inputs, dict):
+                    model._model = ipex.quantization.prepare(model._model, static_qconfig,
+                                        example_kwarg_inputs=self.example_inputs, inplace=inplace)
                 else:
-                    q_model = ipex.quantization.convert(q_model, inplace=True)
-                    with torch.no_grad():
-                        try:
-                            if isinstance(self.example_inputs, dict):
-                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                            else:
-                                q_model = torch.jit.trace(q_model, self.example_inputs)
-                            q_model = torch.jit.freeze(q_model.eval())
-                        except:
-                            if isinstance(self.example_inputs, dict):
-                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
-                                                          strict=False)
-                            else:
-                                q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                            q_model = torch.jit.freeze(q_model.eval())
-                # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-                # At the 2nd run, the llga pass will be triggered and the model is turned into
-                # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                self._simple_inference(q_model, dataloader, iterations=2)
+                    model._model = ipex.quantization.prepare(model._model, static_qconfig,
+                                        example_inputs=self.example_inputs, inplace=inplace)
+            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
+            if q_func is not None:
+                q_func(model._model)
             else:
-                assert not self.version.release < Version("1.10.0").release, \
-                    "INC support IPEX version >= 1.10.0"
-                if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    q_model = model.model
-                    if self.version.release < Version("1.12.0").release:
-                        ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,  # pylint: disable=E1101
-                                                                qscheme=qscheme)
-                        self.model_calibration(q_model, dataloader, iterations, ipex_conf,
-                                               tune_cfg.get('calib_sampling_size', 1))
-                        ipex_conf.save(self.ipex_config_path)
-                        ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)   # pylint: disable=E1101
-                        q_model = ipex.quantization.convert(q_model,
-                                                            ipex_conf,
-                                                            self.example_inputs,
-                                                            inplace=True)  # pylint: disable=E1121
-                    else:
-                        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        if self.version.release >= Version("2.1").release:
-                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
-                        else:
-                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                            qscheme=torch.per_channel_symmetric))
-
-                        if isinstance(self.example_inputs, dict):
-                            q_model = ipex.quantization.prepare(model._model, static_qconfig, \
-                                                                example_kwarg_inputs=self.example_inputs, inplace=True)
-                        else:
-                            q_model = ipex.quantization.prepare(model._model, static_qconfig, \
-                                                                example_inputs=self.example_inputs, inplace=True)
-
-                        q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-                        if q_func is not None:
-                            q_func(q_model)
-                        else:
-                            self.model_calibration(q_model, dataloader, iterations, None,
-                                                   tune_cfg.get('calib_sampling_size', 1))
-                        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
-                            (self.version.release >= Version("1.11.0").release):
-                            with torch.no_grad():
-                                with torch.cpu.amp.autocast():
-                                    q_model = ipex.quantization.convert(q_model, inplace=True)
-                                    try:
-                                        if isinstance(self.example_inputs, dict):
-                                            q_model = torch.jit.trace(q_model,
-                                                                      example_kwarg_inputs=self.example_inputs)
-                                        else:
-                                            q_model = torch.jit.trace(q_model, self.example_inputs)
-                                        q_model = torch.jit.freeze(q_model.eval())
-                                    except:
-                                        if isinstance(self.example_inputs, dict):
-                                            q_model = torch.jit.trace(q_model,
-                                                                      example_kwarg_inputs=self.example_inputs,
-                                                                      strict=False)
-                                        else:
-                                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                                        q_model = torch.jit.freeze(q_model.eval())
-                        else:
-                            q_model = ipex.quantization.convert(q_model, inplace=True)
-                            with torch.no_grad():
-                                try:
-                                    if isinstance(self.example_inputs, dict):
-                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                                    else:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs)
-                                    q_model = torch.jit.freeze(q_model.eval())
-                                except:
-                                    if isinstance(self.example_inputs, dict):
-                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
-                                                                  strict=False)
-                                    else:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                                    q_model = torch.jit.freeze(q_model.eval())
-                        # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-                        # At the 2nd run, the llga pass will be triggered and the model is turned into
-                        # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                        self._simple_inference(q_model, dataloader, iterations=2)
-            model._model = q_model
-            with open(self.ipex_config_path, 'r') as f:
-                model.tune_cfg = json.load(f)
-            model.ipex_config_path = self.ipex_config_path
-            if self.version.release >= Version("1.12.0").release:
-                self._dump_model_op_stats(tune_cfg)
-            return model
+                self.model_calibration(model._model, dataloader, iterations, None,
+                                    tune_cfg.get('calib_sampling_size', 1))
+            model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+            self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
         else:
-            if self.tmp_model is None:
-                try:
-                    self.tmp_model = copy.deepcopy(model)
-                except Exception as e:  # pragma: no cover
-                    logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                        repr(e)))
-                    self.tmp_model = model
-            if hasattr(model.model, "save_qconf_summary"):
-                if self.tmp_model is None:
-                    try:
-                        self.tmp_model = copy.deepcopy(model)
-                    except Exception as e:  # pragma: no cover
-                        logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                            repr(e)))
-                        self.tmp_model = model
-                q_model = model.model
-                q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-                if q_func is not None:
-                    q_func(q_model)
-                else:
-                    self.model_calibration(q_model, dataloader, iterations, None,
-                                           tune_cfg.get('calib_sampling_size', 1))
-                q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
-                    (self.version.release >= Version("1.11.0").release):
-                    with torch.no_grad():
-                        with torch.cpu.amp.autocast():
-                            q_model = ipex.quantization.convert(q_model, inplace=False)
-                            try:
-                                if isinstance(self.example_inputs, dict):
-                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                                else:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs)
-                                q_model = torch.jit.freeze(q_model.eval())
-                            except:
-                                if isinstance(self.example_inputs, dict):
-                                    q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
-                                                              strict=False)
-                                else:
-                                    q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                                q_model = torch.jit.freeze(q_model.eval())
-                else:
-                    q_model = ipex.quantization.convert(q_model, inplace=False)
-                    with torch.no_grad():
-                        try:
-                            if isinstance(self.example_inputs, dict):
-                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                            else:
-                                q_model = torch.jit.trace(q_model, self.example_inputs)
-                            q_model = torch.jit.freeze(q_model.eval())
-                        except:
-                            if isinstance(self.example_inputs, dict):
-                                q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
-                                                          strict=False)
-                            else:
-                                q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                            q_model = torch.jit.freeze(q_model.eval())
-                # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-                # At the 2nd run, the llga pass will be triggered and the model is turned into
-                # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                self._simple_inference(q_model, dataloader, iterations=2)
-            else:
-                if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    if self.version.release < Version("1.12.0").release: # pragma: no cover
-                        try:
-                            self.tmp_model = copy.deepcopy(model)
-                        except Exception as e:  # pragma: no cover
-                            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                                repr(e)))
-                            self.tmp_model = model
-                        ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,  # pylint: disable=E1101
-                                                                qscheme=qscheme)
-                        self.model_calibration(self.tmp_model.model, dataloader, iterations, ipex_conf,
-                                               tune_cfg.get('calib_sampling_size', 1))
-                        ipex_conf.save(self.ipex_config_path)
-                        ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)   # pylint: disable=E1101
-                        q_model = ipex.quantization.convert(self.tmp_model.model,
-                                                            ipex_conf,
-                                                            self.example_inputs,
-                                                            inplace=True)  # pylint: disable=E1121
-                    else:
-                        if self.tmp_model is None:
-                            try:
-                                self.tmp_model = copy.deepcopy(model)
-                            except Exception as e:  # pragma: no cover
-                                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                                    repr(e)))
-                                self.tmp_model = model
-                        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        if self.version.release >= Version("2.1").release:
-                            static_qconfig = ipex.quantization.default_static_qconfig_mapping
-                        else:
-                            static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                                qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                            qscheme=torch.per_channel_symmetric))
-                        if isinstance(self.example_inputs, dict):
-                            q_model = ipex.quantization.prepare(model._model, static_qconfig,
-                                                                example_kwarg_inputs=self.example_inputs,
-                                                                inplace=False)
-                        else:
-                            q_model = ipex.quantization.prepare(model._model, static_qconfig,
-                                                                example_inputs=self.example_inputs, inplace=False)
-                        q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-                        if q_func is not None:
-                            q_func(q_model)
-                        else:
-                            self.model_calibration(q_model, dataloader, iterations, None,
-                                                   tune_cfg.get('calib_sampling_size', 1))
-                        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
-                            (self.version.release >= Version("1.11.0").release):
-                            with torch.no_grad():
-                                with torch.cpu.amp.autocast():
-                                    q_model = ipex.quantization.convert(q_model, inplace=True)
-                                    try:
-                                        if isinstance(self.example_inputs, dict):
-                                            q_model = torch.jit.trace(q_model,
-                                                                      example_kwarg_inputs=self.example_inputs)
-                                        else:
-                                            q_model = torch.jit.trace(q_model, self.example_inputs)
-                                        q_model = torch.jit.freeze(q_model.eval())
-                                    except:
-                                        if isinstance(self.example_inputs, dict):
-                                            q_model = torch.jit.trace(q_model,
-                                                                      example_kwarg_inputs=self.example_inputs,
-                                                                      strict=False)
-                                        else:
-                                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                                        q_model = torch.jit.freeze(q_model.eval())
-                        else:
-                            q_model = ipex.quantization.convert(q_model, inplace=True)
-                            with torch.no_grad():
-                                try:
-                                    if isinstance(self.example_inputs, dict):
-                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                                    else:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs)
-                                    q_model = torch.jit.freeze(q_model.eval())
-                                except:
-                                    if isinstance(self.example_inputs, dict):
-                                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs,
-                                                                  strict=False)
-                                    else:
-                                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                                    q_model = torch.jit.freeze(q_model.eval())
-                        # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-                        # At the 2nd run, the llga pass will be triggered and the model is turned into
-                        # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                        self._simple_inference(q_model, dataloader, iterations=2)
+            # for IPEX version < 1.12
+            ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path, 
+                                                    qscheme=qscheme)  # pylint: disable=E1101
+            self.model_calibration(q_model._model, dataloader, iterations, ipex_conf,
+                                    tune_cfg.get('calib_sampling_size', 1))
+            ipex_conf.save(self.ipex_config_path)
+            ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)   # pylint: disable=E1101
+            q_model._model = ipex.quantization.convert(q_model._model,
+                                                ipex_conf,
+                                                self.example_inputs,
+                                                inplace=True)  # pylint: disable=E1121
 
-            self.tmp_model._model = q_model
-            with open(self.ipex_config_path, 'r') as f:
-                self.tmp_model.tune_cfg = json.load(f)
-            self.tmp_model.ipex_config_path = self.ipex_config_path
-            if self.version.release >= Version("1.12.0").release:
-                self._dump_model_op_stats(tune_cfg)
-            return self.tmp_model
+        # Recover model parameter when smoothquant folding = True, due to IPEX bug #1
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and recipe_cfgs['smooth_quant_args']['folding'] and not inplace:
+            self._apply_pre_optimization(model, tune_cfg, recover=True)
+
+        with open(self.ipex_config_path, 'r') as f:
+            q_model.tune_cfg = json.load(f)
+        q_model.ipex_config_path = self.ipex_config_path
+        if self.version.release >= Version("1.12.0").release:
+            self._dump_model_op_stats(tune_cfg)
+        return q_model
+
+    def _ipex_post_quant_process(self, model, q_model, dataloader, inplace=False):
+        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+            (self.version.release >= Version("1.11.0").release):
+            with torch.no_grad():
+                with torch.cpu.amp.autocast():
+                    q_model._model = ipex.quantization.convert(model._model, inplace=inplace)
+                    try:
+                        if isinstance(self.example_inputs, dict):
+                            q_model._model = torch.jit.trace(q_model._model, example_kwarg_inputs=self.example_inputs)
+                        else:
+                            q_model._model = torch.jit.trace(q_model._model, self.example_inputs)
+                        q_model._model = torch.jit.freeze(q_model._model.eval())
+                    except:
+                        if isinstance(self.example_inputs, dict):
+                            q_model._model = torch.jit.trace(q_model._model, example_kwarg_inputs=self.example_inputs,
+                                                        strict=False)
+                        else:
+                            q_model._model = torch.jit.trace(q_model._model, self.example_inputs, strict=False)
+                        q_model._model = torch.jit.freeze(q_model._model.eval())
+        else:
+            q_model._model = ipex.quantization.convert(model._model, inplace=inplace)
+            with torch.no_grad():
+                try:
+                    if isinstance(self.example_inputs, dict):
+                        q_model._model = torch.jit.trace(q_model._model, example_kwarg_inputs=self.example_inputs)
+                    else:
+                        q_model._model = torch.jit.trace(q_model._model, self.example_inputs)
+                    q_model._model = torch.jit.freeze(q_model._model.eval())
+                except:
+                    if isinstance(self.example_inputs, dict):
+                        q_model._model = torch.jit.trace(q_model._model, example_kwarg_inputs=self.example_inputs,
+                                                    strict=False)
+                    else:
+                        q_model._model = torch.jit.trace(q_model._model, self.example_inputs, strict=False)
+                    q_model._model = torch.jit.freeze(q_model._model.eval())
+        # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
+        # At the 2nd run, the llga pass will be triggered and the model is turned into
+        # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
+        self._simple_inference(q_model._model, dataloader, iterations=2)
 
     def _dump_model_op_stats(self, tune_cfg):
         """This is a function to dump quantizable ops of model to user.
@@ -3083,27 +2925,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             if self.example_inputs is None:
                 self.example_inputs = get_example_inputs(model, self.q_dataloader)
         else:
-            if self.performance_only:
-                if self.recipes and self.recipes.get('smooth_quant', False):  # pragma: no cover
-                    logger.warning("Smoothquant for ipex requires a deepcopy of model"
-                                    + ", please avoid out of memory.")
-                    try:
-                        # Deepcopy due to model changed when `ipex.quantization.prepare`
-                        tmp_model = copy.deepcopy(model)
-                    except Exception as e:  # pragma: no cover
-                        logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                            repr(e)))
-                        raise
-                else:
-                    tmp_model = model
-            else:
-                try:
-                    tmp_model = copy.deepcopy(model)
-                except Exception as e:  # pragma: no cover
-                    logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                        repr(e)))
-                    raise
-            tmp_model.eval()
+            model.eval()
             # to record the origin batch_size
             if isinstance(self.q_dataloader, BaseDataLoader):
                 batch_size = self.q_dataloader.batch_size
@@ -3115,7 +2937,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                                  "Please use IPEX >= 1.12.0!")
                 ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)   # pylint: disable=E1101
                 self.model_calibration(
-                    tmp_model,
+                    model,
                     self.q_dataloader,
                     conf=ipex_conf,
                 )
@@ -3146,39 +2968,31 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         folding = smooth_quant_args.get('folding', False)
                         if not folding:
                             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-                            if not hasattr(tmp_model, '_smoothquant_optimized') \
-                              or not tmp_model._smoothquant_optimized:
-                                # to make sure ipex_config.json is based on pre-optimized model
-                                tmp_model = self._wrapper_sq_linear(tmp_model)
                     if self.example_inputs is None:
-                        self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
+                        self.example_inputs = get_example_inputs(model, self.q_dataloader)
                     if isinstance(self.example_inputs, dict):
-                        tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig,
+                        model = ipex.quantization.prepare(model, static_qconfig,
                                                               example_kwarg_inputs=self.example_inputs, inplace=True)
                     else:
-                        tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig,
+                        model = ipex.quantization.prepare(model, static_qconfig,
                                                               example_inputs=self.example_inputs, inplace=True)
 
                 if self.q_dataloader or self.example_inputs:
-                    self._simple_inference(tmp_model, self.q_dataloader, iterations=1)
+                    self._simple_inference(model, self.q_dataloader, iterations=1)
                 else:
                     try:
-                        self.q_func(tmp_model)
+                        self.q_func(model)
                     except Exception as e:
                         logger.error("Calibration with IPEX failed due to:{}".format(e))
                         assert False, "Please pass in example_inputs or calib_dataloader to bypass."
 
-                tmp_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+                model.save_qconf_summary(qconf_summary=self.ipex_config_path)
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
                             to config.yaml'.format(batch_size))
-            if not self.performance_only:
-                del tmp_model
-                import gc
-                gc.collect()
+
         map_op_name_to_fqn = {}
-        
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release: # pragma: no cover
@@ -3249,9 +3063,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         logger.info("FFN Blocks : ")
         logger.info(ffn_blocks)
         self.block_wise = ffn_blocks
-        
-
-        os.remove(self.ipex_config_path)
 
     def get_fuse_ops(self, default_cfgs): # pragma: no cover
         elt_wise = ['relu', 'sigmoid', 'gelu']
@@ -3288,126 +3099,83 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         op_patterns.append([(value[0], value[1]), (cur_id, cur_op)])
         return op_patterns
 
-    def qdq_quantize(self, model, tune_cfg, dataloader, q_func):
+    def qdq_quantize(self, model, q_model, tune_cfg, dataloader, q_func):
         assert not self.version.release < Version("2.1").release, \
             "IPEX version >= 2.1 is required for SmoothQuant."
-
-        if not self.performance_only:
-            try:
-                self.tmp_model = copy.deepcopy(model)
-            except Exception as e:  # pragma: no cover
-                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                    repr(e)))
-                self.tmp_model = model
-        else:
-            self.tmp_model = model
-        q_model = self.tmp_model._model
+        inplace = True if self.performance_only else False
 
         # fetch SmoothQuant scale info from pre-optimized model
-        from .torch_utils.model_wrapper import SQLinearWrapper
-        from .torch_utils.util import update_sq_scale
-        smoothquant_scale_info = {}
-        for name, module in q_model.named_modules():
-            if isinstance(module, SQLinearWrapper):
-                weight_scale = module._get_weight_scale()
-                smoothquant_scale_info[name + '.sq_linear'] = {
-                    'alpha': module.alpha,
-                    'input_scale_for_mul': module.input_scale,
-                    'input_scale_after_mul': module.scale,
-                    'input_zero_point_after_mul': module.zero_point,
-                    'input_dtype': module.dtype,
+        sq_max_info = model.sq_max_info
+        if sq_max_info:
+            smoothquant_scale_info = {}
+            from .torch_utils.model_wrapper import SQLinearWrapper
+            from .torch_utils.util import fetch_module
+            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
+            for op_name, info in sq_max_info.items():
+                if alpha == 'auto':
+                    alpha = info['alpha']
+                input_minmax = info['input_minmax']
+                weight_max = info['weight_max']
+                abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
+                input_power = torch.pow(abs_input_max, alpha)
+                weight_power = torch.pow(weight_max, 1 - alpha)
+                scale = torch.clip(input_power / weight_power, min=1e-5)
+                module = fetch_module(q_model._model, op_name)
+                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                weight_scale = new_module._get_weight_scale()
+                smoothquant_scale_info[op_name] = {
+                    'alpha': new_module.alpha,
+                    'input_scale_for_mul': new_module.input_scale,
+                    'input_scale_after_mul': new_module.scale,
+                    'input_zero_point_after_mul': new_module.zero_point,
+                    'input_dtype': new_module.dtype,
                     'weight_scale_after_mul': weight_scale,
                 }
-                module.ipex = True
-                # Note: save weight scale before recover
-                module._recover_sq_linear()
+                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
-        # Rebuild the config json after pre-optimize algo (SmoothQuant), model is changed.
-        static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
-        if isinstance(self.example_inputs, dict):
-            q_model = ipex.quantization.prepare(q_model, static_qconfig,
-                                                example_kwarg_inputs=self.example_inputs, inplace=True)
-        else:
-            q_model = ipex.quantization.prepare(q_model, static_qconfig,
-                                                example_inputs=self.example_inputs, inplace=True)
+        # Check save_qconf_summary part is a workaroud for IPEX bug.
+        # Sometimes the prepared model from get_op_capablitiy loss this attribute
+        if not hasattr(model._model, "save_qconf_summary"):
+            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+            if isinstance(self.example_inputs, dict):
+                model._model = ipex.quantization.prepare(model._model, static_qconfig,
+                                    example_kwarg_inputs=self.example_inputs, inplace=inplace)
+            else:
+                model._model = ipex.quantization.prepare(model._model, static_qconfig,
+                                    example_inputs=self.example_inputs, inplace=inplace)
 
-        # enable fallback
-        self._simple_inference(q_model, dataloader, iterations=1)   # fake calibration for save qconf
-        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-        self._cfg_to_qconfig(tune_cfg)
         # TODO: update_sq_scale is used to update observer, should fuse in _cfg_to_qconfig
+        from .torch_utils.util import update_sq_scale
+        self._cfg_to_qconfig(tune_cfg)
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
-        q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
+        model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         # real calibration for other operators
         try:
             # IPEX may raise an error on the second iteration.
             # OverflowError: cannot convert float infinity to integer
             if q_func is not None:
-                q_func(q_model)
+                q_func(model._model)
             else:
                 iterations = tune_cfg.get('calib_iteration', 1)
-                self.model_calibration(q_model, dataloader, iterations, None,
+                self.model_calibration(model._model, dataloader, iterations, None,
                                     tune_cfg.get('calib_sampling_size', 1))
         except:
             logger.warning("The calibration failed when calibrating with ipex, "+\
                            "using scale info from SmoothQuant for Linear and " +\
                            "one iter calibration for other ops.")
+            # update ipex_config.json with smoothquant_scale_info
+            model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+            update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
-        # update ipex_config.json with smoothquant_scale_info
-        q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
-        q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-
-        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
-            (self.version.release >= Version("1.11.0").release):
-            logger.warning("SmoothQuant folding=False with bf16 may cause accuracy=0! " +\
-                            "Please consider setting excluded_precisions=['bf16'] in your config.")
-            with torch.no_grad():
-                with torch.cpu.amp.autocast():
-                    q_model = ipex.quantization.convert(q_model, inplace=True)
-                    # inference once after convert for SmoothQuant
-                    self._simple_inference(q_model, dataloader, iterations=1)
-                    try:
-                        if isinstance(self.example_inputs, dict):
-                            q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                        else:
-                            q_model = torch.jit.trace(q_model, self.example_inputs)
-                        q_model = torch.jit.freeze(q_model.eval())
-                    except:
-                        if isinstance(self.example_inputs, dict):
-                            q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs, strict=False)
-                        else:
-                            q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                        q_model = torch.jit.freeze(q_model.eval())
-        else:
-            q_model = ipex.quantization.convert(q_model, inplace=True)
-            # inference once after convert for SmoothQuant
-            self._simple_inference(q_model, dataloader, iterations=1)
-            with torch.no_grad():
-                try:
-                    if isinstance(self.example_inputs, dict):
-                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs)
-                    else:
-                        q_model = torch.jit.trace(q_model, self.example_inputs)
-                    q_model = torch.jit.freeze(q_model.eval())
-                except:
-                    if isinstance(self.example_inputs, dict):
-                        q_model = torch.jit.trace(q_model, example_kwarg_inputs=self.example_inputs, strict=False)
-                    else:
-                        q_model = torch.jit.trace(q_model, self.example_inputs, strict=False)
-                    q_model = torch.jit.freeze(q_model.eval())
-        # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-        # At the 2nd run, the llga pass will be triggered and the model is turned into
-        # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-        self._simple_inference(q_model, dataloader, iterations=2)
-        self.tmp_model._model = q_model
+        self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
         with open(self.ipex_config_path, 'r') as f:
-            self.tmp_model.tune_cfg = json.load(f)
-        self.tmp_model.ipex_config_path = self.ipex_config_path
+            q_model.tune_cfg = json.load(f)
+        q_model.ipex_config_path = self.ipex_config_path
         self._dump_model_op_stats(tune_cfg)
-        return self.tmp_model
+        return q_model
 
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path=None):
@@ -3538,7 +3306,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
           and not recipe_cfgs['smooth_quant_args']['folding'] \
           and self.approach != 'post_training_dynamic_quant':
-                return self.qdq_quantize(q_model, tune_cfg)
+            return self.qdq_quantize(q_model, tune_cfg)
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+          and recipe_cfgs['smooth_quant_args']['folding']:
+            self._apply_pre_optimization(q_model, tune_cfg)
+
 
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
@@ -4509,6 +4281,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         Returns:
             (object): quantized model
         """
+        
         assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
         if self.performance_only:
@@ -4536,11 +4309,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
         if 'GPTQ' in all_algo:
-            q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
-
+            q_model._model, gptq_config = self.gptq_quantize(
+                q_model._model, tune_cfg, dataloader
+            )
+            q_model.gptq_config = gptq_config
         if 'TEQ' in all_algo:
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         elif 'RTN' in all_algo:
@@ -4558,7 +4332,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         else:
             sym_full_range=False
         from .torch_utils.weight_only import rtn_quantize
-        from .torch_utils.util import fetch_module
+        from .torch_utils.util import fetch_module, set_module
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
@@ -4580,64 +4354,136 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
     def gptq_quantize(self, model, tune_cfg, dataloader):
         logger.debug("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
-        if 'gptq_args' in self.recipes:
-            percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
-            wbits = self.recipes.get('wbits', 4)
-            group_size = self.recipes.get('group_size', 128)
-            sym = self.recipes.get('scheme', False)
-        # implementation of gptq
-        # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
+        # convert tune_cfg to gptq_quantize's weight config
+        """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
+        keys of weight_config can not only be specific name, but can also be a re formula
         weight_config = {
-            'wbits': wbits, 
-            'group_size': group_size, 
-            'sym': sym,
-            'percdamp': percdamp
+            "layer_name_1": {
+                'wbits': 4,
+                'group_size': 128,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True
+            },
+            "layer_name_2": {
+                'wbits': 4,
+                'group_size': 128,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True
+            }
+            ...
         }
-        model = gptq_quantize(
+        """
+        weight_config = {}
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32':
+                continue # no need to be quantized
+            else:
+                weight_config[op_name] = {
+                    'wbits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'sym': config['weight']['scheme'] == 'sym',
+                    'percdamp': self.recipes['gptq_args'].get("percdamp", 0.01),
+                    'actorder': self.recipes['gptq_args'].get("actorder", True)
+                } 
+        # tune_cfg => weight_config 
+        model, quantization_perm = gptq_quantize(
             model, 
             weight_config,
             dataloader,
             self.device
         )
-        return model
+        return model, quantization_perm
 
     def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
-        if self.example_inputs is None:
+        if self.example_inputs is None: # pragma: no cover
             if dataloader is None:
                 assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
             try:
-                for idx, (input, label) in enumerate(dataloader):
-                    self.example_inputs = input
+                for idx, (x, label) in enumerate(dataloader):
+                    self.example_inputs = x.to(model.device)
                     break
             except:
-                for idx, input in enumerate(dataloader):
-                    self.example_inputs = input
+                for idx, x in enumerate(dataloader):
+                    self.example_inputs = x.to(model.device)
                     break
 
-        if 'teq_args' in self.recipes:
-            wbits = self.recipes.get('wbits', 4)
-            group_size = self.recipes.get('group_size', 128)
-            sym = self.recipes.get('scheme', False)
-            folding = self.recipes.get('folding', True)
+        folding = True
+        if 'teq_args' in self.recipes: # pragma: no cover
+            folding = self.recipes['teq_args'].get('folding', True)
+            
+        supported_layers = ['Linear']
+        if folding: # pragma: no cover
+            from .torch_utils.smooth_quant import GraphTrace
+            tg = GraphTrace()
+            absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
+            if absorb_to_layer is None or absorb_to_layer == {}:
+                logger.warning('No absorb layer is detected, skip TEQ algorithm')
+                return model
+        else: # pragma: no cover
+            absorb_to_layer = {}
+            for name, module in model.named_modules():
+                for op_type in supported_layers:
+                    if op_type == str(module.__class__.__name__):
+                        absorb_to_layer[name] = [name]
 
-        weight_config = {
-            'wbits': wbits,
-            'group_size': group_size,
-            'sym': sym,
-            'folding': folding
-        }
-        quantizer = teq_quantize(
+        # got flipped dict from absorb_to_layer dict
+        flipped_dict = {}
+        for k, v in absorb_to_layer.items():
+            for m in v:
+                flipped_dict[m] = {'absorb_layer': k}
+
+        # check tune_cfg to skip layers without TEQ config
+        weight_config = {}
+        skipped_op_name_set = set()
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32': # pragma: no cover
+                if op_name in flipped_dict:
+                    absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
+                continue
+            else:
+                weight_config[op_name] = {}
+                weight_config[op_name]['bits'] = config['weight']['bits']
+                weight_config[op_name]['group_size'] = config['weight']['group_size']
+                weight_config[op_name]['scheme'] = config['weight']['scheme']
+                if op_name in flipped_dict:
+                    algorithm = config['weight']['algorithm']
+                    if algorithm != 'TEQ':
+                        absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
+                else:
+                    skipped_op_name_set.add(op_name)
+        if skipped_op_name_set: # pragma: no cover
+            logger.info("{} is skipped by TEQ algorithm".format(skipped_op_name_set))
+
+        # collect TEQ config from tune_cfg for quantization.
+        if len(absorb_to_layer) == 0: # pragma: no cover
+            logger.warning('No absorb layer needs TEQ algorithim, skip it')
+        else: # pragma: no cover
+            logger.debug("**absorb layer**: **absorbed layers**")
+        for k, v in absorb_to_layer.items():
+            logger.debug(f"{k}: {v}")
+
+        logger.info("Absorbed layers with the same absorb layer use the same config")
+
+        extra_config = {"folding": folding}
+
+        model = teq_quantize(
             model,
             weight_config,
+            absorb_to_layer,
+            extra_config,
             dataloader,
             example_inputs=self.example_inputs,
             calib_func=calib_func
         )
-        return quantizer.model
-
+        return model
+                
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the AWQ algorithm")
         from .torch_utils.weight_only import awq_quantize

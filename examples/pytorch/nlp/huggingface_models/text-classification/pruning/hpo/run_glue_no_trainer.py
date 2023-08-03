@@ -628,6 +628,7 @@ def main(args):
 
         eval_metric = metric.compute()
         logger.info(f"mnli-mm: {eval_metric}")
+    return eval_metric
 
 
 if __name__ == "__main__":
@@ -652,7 +653,7 @@ if __name__ == "__main__":
                        higher_is_better=True,
                        min_train_samples=3)
     searcher = prepare_hpo(config)
-    for iter in range(10):
+    for iter in range(5):
         print(f'search iter {iter}')
         st = time.time()
         params = searcher.suggest()
@@ -666,5 +667,5 @@ if __name__ == "__main__":
         acc = metric['accuracy']
         f1 = metric['f1']
         rt = time.time() - st
-        tmp_str = f'{iter + 10}\t{params}\t{acc}\t{f1}\t{rt}\n'
+        tmp_str = f'{iter}\t{params}\t{acc}\t{f1}\t{rt}\n'
         print(tmp_str)

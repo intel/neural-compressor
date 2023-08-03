@@ -840,10 +840,22 @@ class _BaseQuantizationConfig:
                 _check_value("smooth_quant_args", val, dict)
                 for k, v in val.items():
                     if k == "alpha":
+                        """
+                        examples:
+                            smooth_quant_args = {"alpha": "auto"}
+                            smooth_quant_args = {"alpha": 0.5}
+                            smooth_quant_args = {"alpha": [0.5]}
+                            smooth_quant_args = {"alpha": numpy.arange(0.1, 0.5, 0.05).tolist()}
+                        """
                         if isinstance(v, str):
-                            assert v == "auto", "the alpha of sq only supports float and 'auto'"
+                            assert v == "auto", "the alpha of sq only supports float, list and 'auto'"
+                        elif isinstance(v, float) or isinstance(v, int) or isinstance(v, list):
+                            continue
                         else:
-                            _check_value("alpha", v, float)
+                            logger.warning("Ignore the alpha as it's not a list, int or float.")
+                        if isinstance(val[k], list):
+                            assert all([vv >= 0.0 and vv <=1.0 for vv in val[k]]), \
+                                "The candidate value of smooth quantization alpha should be between 0 and 1."
 
                 return True
             else:

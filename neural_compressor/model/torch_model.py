@@ -319,7 +319,10 @@ class PyTorchModel(PyTorchBaseModel):
                     weight_config = collect_weight_info(self.q_config)
                     with open(weight_config_path, 'w') as f:
                         json.dump(weight_config, f, indent = 4)
-                        f.close()
+                    if hasattr(self, 'gptq_config') and self.gptq_config:
+                        gptq_config_path = os.path.join(root, "gptq_config.json")
+                        with open(gptq_config_path, 'w') as f:
+                            json.dump(self.gptq_config, f, indent = 4)
                 else:
                     stat_dict['best_configure'] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
@@ -396,7 +399,8 @@ class PyTorchModel(PyTorchBaseModel):
 
     def export_compressed_model(self, qweight_config_path=None, sym_full_range=False, 
                                 compression_dtype=torch.int32, compression_dim=1, 
-                                scale_dtype=torch.float32):
+                                scale_dtype=torch.float32, gptq_config_path=None,
+                                device='cpu'):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
         Args:
@@ -409,33 +413,88 @@ class PyTorchModel(PyTorchBaseModel):
                                                 1 is input channel. Defaults to 1.
             scale_dtype (torch.Tensor, optional): Use float32 or float16. 
                                                     Defaults to torch.float32.
+            gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
+            device (str, optional): choose device for compression. Defaults to cpu.
         """
         from ..adaptor.torch_utils.util import fetch_module, set_module
-        from ..adaptor.torch_utils.weight_only import rtn_quantize
+        from ..adaptor.torch_utils.weight_only import rtn_quantize, quant_weight_w_scale
         from ..adaptor.torch_utils.util import collect_weight_info
+        from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
         if qweight_config_path is not None:
             with open(qweight_config_path, 'r') as f:
                 weight_config = json.load(f)
-            f.close()
         else:
             weight_config = collect_weight_info(self.q_config)
-        for k, v in weight_config.items():
-            if v['dtype'] == 'fp32':
-                continue
-            else:
-                num_bits = v['bits']
-                group_size = v['group_size']
-                scheme = v['scheme']
-            mod = fetch_module(self.model, k)
-            mod = rtn_quantize(
-                mod, num_bits, group_size, scheme, 
-                return_int=True, 
-                sym_full_range=sym_full_range,
-                compression_dtype=compression_dtype, 
-                compression_dim=compression_dim, 
-                scale_dtype=scale_dtype, 
-            )
-            set_module(self.model, k, mod)
+        if gptq_config_path is not None:
+            with open(gptq_config_path, 'r') as f:
+                gptq_config = json.load(f)
+        else:
+            gptq_config = self.gptq_config if hasattr(self, 'gptq_config') else {}
+        if gptq_config:
+            for k, v in weight_config.items():
+                logger.debug(f"Compressing {k} on device {device}")
+                if v['dtype'] == 'fp32':
+                    continue
+                else:
+                    num_bits = v['bits']
+                    group_size = v['group_size']
+                    scheme = v['scheme']
+                m = fetch_module(self.model, k)
+                if k not in gptq_config:
+                    new_module = rtn_quantize(
+                        m, num_bits, group_size, scheme, 
+                        return_int=True, 
+                        sym_full_range=sym_full_range,
+                        compression_dtype=compression_dtype, 
+                        compression_dim=compression_dim, 
+                        scale_dtype=scale_dtype, 
+                        device=device
+                    )
+                    set_module(self.model, k, new_module)
+                    continue
+                gptq_conf = gptq_config[k]
+                if 'perm' in gptq_conf:
+                    gptq_perm = torch.tensor(gptq_conf['perm'])
+                    fp32_weight = m.weight.data[:, gptq_perm]
+                else:
+                    fp32_weight = m.weight.data
+                    gptq_perm = None
+                gptq_scale = torch.tensor(gptq_conf['scale'])
+                gptq_zp = None if scheme == 'sym' else torch.tensor(gptq_conf['zero'])
+                int_weight = quant_weight_w_scale(
+                    fp32_weight, gptq_scale, gptq_zp, group_size
+                )
+                new_module = WeightOnlyLinear(
+                    m.in_features, m.out_features, num_bits, group_size,
+                    zp=gptq_zp is not None, bias=m.bias is not None, 
+                    gptq_perm=gptq_perm is not None,
+                    compression_dtype=compression_dtype, 
+                    compression_dim=compression_dim, 
+                    scale_dtype=scale_dtype, 
+                    device=device,
+                )
+                new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
+                set_module(self.model, k, new_module)
+        else:
+            for k, v in weight_config.items():
+                logger.debug(f"Compressing {k} on device {device}")
+                if v['dtype'] == 'fp32':
+                    continue
+                else:
+                    num_bits = v['bits']
+                    group_size = v['group_size']
+                    scheme = v['scheme']
+                mod = fetch_module(self.model, k)
+                mod = rtn_quantize(
+                    mod, num_bits, group_size, scheme, 
+                    return_int=True, 
+                    sym_full_range=sym_full_range,
+                    compression_dtype=compression_dtype, 
+                    compression_dim=compression_dim, 
+                    scale_dtype=scale_dtype, 
+                    device=device
+                )
+                set_module(self.model, k, mod)
         return self.model
 
 
