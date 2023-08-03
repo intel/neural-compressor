@@ -61,6 +61,7 @@ class Router:
         """Initialize object."""
         self.routes: Dict[str, RoutingDefinition] = {
             "workloads": RealtimeRoutingDefinition(get_workloads_list),
+            "workloads/delete": RealtimeRoutingDefinition(delete_workload),
             "profiling": RealtimeRoutingDefinition(get_profiling_details),
             "model/graph": RealtimeRoutingDefinition(get_model_graph),
             "model/graph/highlight_pattern": RealtimeRoutingDefinition(find_pattern_in_graph),
@@ -145,6 +146,19 @@ def get_workloads_list(data: Dict[str, Any]) -> dict:
     serialized_workloads = [workload.serialize() for workload in workload_manager.workloads]
     return {
         "workloads": serialized_workloads,
+    }
+
+
+def delete_workload(data: Dict[str, Any]) -> dict:
+    """Remove workload from workloads list."""
+    workload_id: Optional[str] = data.get("workload_id", None)
+    if workload_id is None:
+        raise ClientErrorException("Could not find workload ID.")
+
+    removed_id = WorkloadManager().remove_workload(workload_id)
+
+    return {
+        "workload_id": removed_id,
     }
 
 
