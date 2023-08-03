@@ -1,8 +1,8 @@
 import os
 import json
-import requests
 
-import torch
+from neural_compressor.utils.utility import LazyImport
+torch = LazyImport("torch")
 from accelerate import init_empty_weights
 from transformers import AutoConfig
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
