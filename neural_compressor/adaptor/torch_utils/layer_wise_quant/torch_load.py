@@ -33,7 +33,8 @@ PROTOCOL_VERSION = 1001
 STORAGE_KEY_SEPARATOR = ','
 
 FILE_LIKE: TypeAlias = Union[str, os.PathLike, BinaryIO, IO[bytes]]
-MAP_LOCATION: TypeAlias = Optional[Union[Callable[[torch.Tensor, str], torch.Tensor], torch.device, str, Dict[str, str]]]
+MAP_LOCATION: TypeAlias = Optional[Union[Callable[[torch.Tensor, str], torch.Tensor],
+                                         torch.device, str, Dict[str, str]]]
 
 __all__ = [
     'SourceChangeWarning',

@@ -3345,7 +3345,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         if recipe_cfgs and recipe_cfgs.get('layer_wise_quant', False) \
                 and self.approach != 'post_training_dynamic_quant':
-            import copy
             from .torch_utils.layer_wise_quant import LayerWiseQuant
 
             model_path = recipe_cfgs['layer_wise_quant_args'].get('model_path', None)
