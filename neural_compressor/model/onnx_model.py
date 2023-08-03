@@ -50,6 +50,11 @@ class ONNXModel(BaseModel):
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model object to quantize')
 
+        self._config = None
+        if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath('config.json').as_posix()):
+            from transformers import PretrainedConfig
+            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
+
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -144,6 +149,12 @@ class ONNXModel(BaseModel):
                                            location="int8_weights.pb",
                                            convert_attribute=False)
         onnx.save(self._model, root)
+        
+        if self._config is not None:
+            model_type = '' if not hasattr(self._config, 'model_type') else getattr(self._config, 'model_type')
+            setattr(self._config.__class__, 'model_type', model_type)
+            output_config_file = Path(root).parent.joinpath('config.json').as_posix()
+            self._config.to_json_file(output_config_file, use_diff=False)
 
     def nodes(self):
         """Return model nodes."""
