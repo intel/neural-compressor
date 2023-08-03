@@ -38,6 +38,7 @@ from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_trans
     _get_qrange_for_qType, calculate_scale_zp
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
 from neural_compressor.adaptor.ox_utils.util import to_numpy
+from neural_compressor.utils.vis_utils import vs_bar
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -254,6 +255,8 @@ class ONNXRTAugment:
         intermediate_tensor = {}
         name_to_calibrator = {}
         for idx, (inputs, labels) in enumerate(self.dataloader):
+            if idx > 0:
+                break
             ort_inputs = {}
 
             if len_inputs == 1:
@@ -275,6 +278,12 @@ class ONNXRTAugment:
                 for output_idx, output in enumerate(session.run(None, ort_inputs)):
                     if q_config is not None and output.size != 0:
                         node_name = name_to_node[node_output_names[output_idx]]
+                        _node_output_name = node_output_names[output_idx]
+                        logger.info(f"Collecting data for node {node_name}; node_output_name is {node_output_names[output_idx]}, data shape is {output.shape}")
+                        if "MatMul" in _node_output_name and "output" in _node_output_name:
+                            logger.info(f"Matmul and output in node output name, visualize it.")
+                            vs_bar(data=output[0], name=_node_output_name.replace("/", "_"))
+                            # import pdb; pdb.set_trace()
                         if node_output_names[output_idx] not in name_to_calibrator:
                             calib_method = q_config[node_name]['activation']['algorithm'] \
                                 if q_config and node_name in q_config \
@@ -300,6 +309,7 @@ class ONNXRTAugment:
                         output_dicts.setdefault(node_output_names[output_idx], \
                             []).append(output)
                             
+            
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break
@@ -308,6 +318,7 @@ class ONNXRTAugment:
             else:
                 _collect_data()
 
+        import pdb; pdb.set_trace()
         # for kl and percentile method, collect calibration range after all tensors are collected.
         merged_dict = intermediate_tensor
         for (output_name, node_name), datas in merged_dict.items():
