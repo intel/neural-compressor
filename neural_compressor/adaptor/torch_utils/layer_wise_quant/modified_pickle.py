@@ -197,7 +197,7 @@ READONLY_BUFFER  = b'\x98'  # make top of stack readonly
 __all__.extend([x for x in dir() if re.match("[A-Z][A-Z0-9_]+$", x)])
 
 
-class _Framer:
+class _Framer: # pragma: no cover
 
     _FRAME_SIZE_MIN = 4
     _FRAME_SIZE_TARGET = 64 * 1024
@@ -260,7 +260,7 @@ class _Framer:
         write(payload)
 
 
-class _Unframer:
+class _Unframer: # pragma: no cover
 
     def __init__(self, file_read, file_readline, file_tell=None):
         self.file_read = file_read
@@ -319,7 +319,7 @@ class _Unframer:
 
 # Tools used for pickling.
 
-def _getattribute(obj, name):
+def _getattribute(obj, name): # pragma: no cover
     for subpath in name.split('.'):
         if subpath == '<locals>':
             raise AttributeError("Can't get local attribute {!r} on {!r}"
@@ -332,7 +332,7 @@ def _getattribute(obj, name):
                                  .format(name, obj)) from None
     return obj, parent
 
-def whichmodule(obj, name):
+def whichmodule(obj, name): # pragma: no cover
     """Find the module an object belong to."""
     module_name = getattr(obj, '__module__', None)
     if module_name is not None:
@@ -351,7 +351,7 @@ def whichmodule(obj, name):
             pass
     return '__main__'
 
-def encode_long(x):
+def encode_long(x): # pragma: no cover
     r"""Encode a long to a two's complement little-endian binary string.
     Note that 0 is a special case, returning an empty string, to save a
     byte in the LONG1 pickling context.
@@ -381,7 +381,7 @@ def encode_long(x):
             result = result[:-1]
     return result
 
-def decode_long(data):
+def decode_long(data): # pragma: no cover
     r"""Decode a long from a two's complement little-endian binary string.
 
     >>> decode_long(b'')
@@ -404,7 +404,7 @@ def decode_long(data):
 
 # Pickling machinery
 
-class _Pickler:
+class _Pickler: # pragma: no cover
 
     def __init__(self, file, protocol=None, *, fix_imports=True,
                  buffer_callback=None):
@@ -1134,7 +1134,7 @@ class _Pickler:
 # Unpickling machinery
 
 
-class _Unpickler:
+class _Unpickler: # pragma: no cover
 
     def __init__(self, file, *, fix_imports=True,
                  encoding="ASCII", errors="strict", buffers=None):
@@ -1742,11 +1742,11 @@ class _Unpickler:
 
 # Shorthands
 
-def _dump(obj, file, protocol=None, *, fix_imports=True, buffer_callback=None):
+def _dump(obj, file, protocol=None, *, fix_imports=True, buffer_callback=None): # pragma: no cover
     _Pickler(file, protocol, fix_imports=fix_imports,
              buffer_callback=buffer_callback).dump(obj)
 
-def _dumps(obj, protocol=None, *, fix_imports=True, buffer_callback=None):
+def _dumps(obj, protocol=None, *, fix_imports=True, buffer_callback=None): # pragma: no cover
     f = io.BytesIO()
     _Pickler(f, protocol, fix_imports=fix_imports,
              buffer_callback=buffer_callback).dump(obj)
@@ -1755,12 +1755,12 @@ def _dumps(obj, protocol=None, *, fix_imports=True, buffer_callback=None):
     return res
 
 def _load(file, *, fix_imports=True, encoding="ASCII", errors="strict",
-          buffers=None):
+          buffers=None): # pragma: no cover
     return _Unpickler(file, fix_imports=fix_imports, buffers=buffers,
                      encoding=encoding, errors=errors).load()
 
 def _loads(s, *, fix_imports=True, encoding="ASCII", errors="strict",
-           buffers=None):
+           buffers=None): # pragma: no cover
     if isinstance(s, str):
         raise TypeError("Can't load pickle from unicode string")
     file = io.BytesIO(s)
@@ -1772,7 +1772,7 @@ Pickler, Unpickler = _Pickler, _Unpickler
 dump, dumps, load, loads = _dump, _dumps, _load, _loads
 
 # Doctest
-def _test():
+def _test(): # pragma: no cover
     import doctest
     return doctest.testmod()
 
