@@ -536,7 +536,7 @@ class _Pickler:
         self.framer.commit_frame()
 
         # Check for persistent id (defined by a subclass)
-        pid = self.persistent_id(obj)
+        pid = self.persistent_id(obj) # pylint: disable=E1128
         if pid is not None and save_persistent_id:
             self.save_pers(pid)
             return
@@ -550,7 +550,7 @@ class _Pickler:
         rv = NotImplemented
         reduce = getattr(self, "reducer_override", None)
         if reduce is not None:
-            rv = reduce(obj)
+            rv = reduce(obj) # pylint: disable=E1102
 
         if rv is NotImplemented:
             # Check the type dispatch table

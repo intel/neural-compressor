@@ -31,6 +31,7 @@ pip install torch==1.12.0 \
             onnxruntime_extensions \
             tf_slim \
             transformers \
+            accelerate \
             flask==2.1.3 \
             xgboost
 

@@ -5,10 +5,8 @@ import shutil
 from copy import deepcopy
 from tqdm import tqdm
 
-# import torch
 from .utils import torch
 from torch.quantization import prepare, convert
-# from torch.ao.quantization import swap_module, get_default_custom_config_dict, get_default_static_quant_module_mappings
 from accelerate.utils import set_module_tensor_to_device
 from .utils import _get_path, get_named_children, update_module, load_tensor_from_shard, load_tensor
 

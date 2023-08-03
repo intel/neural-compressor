@@ -20,8 +20,7 @@ import copyreg
 import pathlib
 import torch._weights_only_unpickler as _weights_only_unpickler
 
-from neural_compressor.compression.layer_wise_quant import modified_pickle as pickle
-# import pickle
+from neural_compressor.adaptor.torch_utils.layer_wise_quant import modified_pickle as pickle
 
 DEFAULT_PROTOCOL = 2
 
@@ -1121,7 +1120,8 @@ class StorageType():
 
 import gc
 
-def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_file='data.pkl', **pickle_load_args):
+def _load(zip_file, tensor_name, prefix, map_location, pickle_module, 
+          pickle_file='data.pkl', **pickle_load_args):
     restore_location = _get_restore_location(map_location)
 
     loaded_storages = {}
@@ -1142,7 +1142,8 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
         # TODO: Once we decide to break serialization FC, we can
         # stop wrapping with TypedStorage
         else:
-            storage = zip_file.get_storage_from_record(name, numel, torch.UntypedStorage)._typed_storage()._untyped_storage
+            storage = zip_file.get_storage_from_record(name, numel, torch.UntypedStorage)\
+                ._typed_storage()._untyped_storage
             typed_storage = torch.storage.TypedStorage(
                 wrap_storage=restore_location(storage, location),
                 dtype=dtype,
@@ -1184,9 +1185,6 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
     # because it's marked readonly in pickle.
     # The type: ignore is because mypy can't statically determine the type of this class.
     class UnpicklerWrapper(pickle_module.Unpickler):  # type: ignore[name-defined]
-        # from https://stackoverflow.com/questions/13398462/unpickling-python-objects-with-a-changed-module-path/13405732
-        # Lets us override the imports that pickle uses when unpickling an object.
-        # This is useful for maintaining BC if we change a module path that tensor instantiation relies on.
         def find_class(self, mod_name, name):
             if type(name) is str and 'Storage' in name:
                 try:

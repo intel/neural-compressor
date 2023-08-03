@@ -11,6 +11,7 @@ pandas
 tf_slim
 pillow>=8.2.0
 transformers>=4.30.2
+accelerate
 tensorflow_model_optimization
 horovod
 tensorflow-addons
