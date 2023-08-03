@@ -71,9 +71,6 @@ class KerasAdaptor(Adaptor):
         self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D', 'AveragePooling2D', 
         'MaxPooling2D', 'AvgPool2D', 'MaxPool2D']
 
-        if self.backend == 'itex':
-            self._check_itex()
-            
         self.pre_optimized_object = None
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
@@ -298,6 +295,9 @@ class KerasAdaptor(Adaptor):
         if self.bf16_ops and not self.quantize_config['op_wise_config']:
             converted_model = self.convert_bf16()
             return converted_model
+        
+        if self.backend == 'itex':
+            self._check_itex()
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
