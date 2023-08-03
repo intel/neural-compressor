@@ -105,6 +105,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorchWeightOnlyAdaptor" title="neural_compressor.adaptor.pytorch.PyTorchWeightOnlyAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchWeightOnlyAdaptor</span></code></a></p></td>
 <td><p>Adaptor of PyTorch framework, all PyTorch API is in this class.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorchQuery" title="neural_compressor.adaptor.pytorch.PyTorchQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchQuery</span></code></a></p></td>
+<td><p>Base class that defines Query Interface.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -194,6 +197,13 @@
 <dd class="field-odd"><p><strong>framework_specific_info</strong> (<em>dict</em>) – dictionary of tuning configure from yaml file.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">PyTorchQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/pytorch.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchQuery" title="Permalink to this definition"></a></dt>
+<dd><p>Base class that defines Query Interface.
+Each adaption layer should implement the inherited class for specific backend on their own.</p>
 </dd></dl>
 
 </section>
