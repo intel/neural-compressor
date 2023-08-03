@@ -2574,16 +2574,22 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         assert not self.version.release < Version("1.10.0").release, \
             "INC support IPEX version >= 1.10.0"
 
-        # Update model parameter when smoothquant folding = False
+        # check smoothquant folding value
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if 'smooth_quant_args' in recipe_cfgs and 'folding' in recipe_cfgs['smooth_quant_args']:
+            if recipe_cfgs['smooth_quant_args']['folding'] is None:
+                if self.version.release < Version("2.1").release:
+                    folding = True
+                else:
+                    folding=False
+            else:
+                folding = recipe_cfgs['smooth_quant_args']['folding']
+        # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and self.version.release >= Version("2.1").release \
-          and not recipe_cfgs['smooth_quant_args']['folding'] \
-          and self.approach != 'post_training_dynamic_quant':
+          and not folding and self.approach != 'post_training_dynamic_quant':
             return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
         # Update model parameter when smoothquant folding = True
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and recipe_cfgs['smooth_quant_args']['folding']:
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) and folding:
             self._apply_pre_optimization(model, tune_cfg)
 
         assert self.approach != 'quant_aware_training', \
