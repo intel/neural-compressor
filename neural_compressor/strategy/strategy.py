@@ -1249,6 +1249,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     if isinstance(v, list) and len(v) >= 1:
                         v = v[0]
                 tune_cfg['recipe_cfgs'].setdefault('smooth_quant_args', {})[k] = v
+        if 'layer_wise_quant_args' in self.config.recipes:
+            tune_cfg['recipe_cfgs']['layer_wise_quant_args'] = self.config.recipes['layer_wise_quant_args']
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
             if recipe_name not in tune_cfg['recipe_cfgs']:

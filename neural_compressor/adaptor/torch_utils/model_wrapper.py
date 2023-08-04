@@ -68,6 +68,20 @@ class QDQLinear(torch.nn.Module):
         self.module.weight = torch.nn.Parameter(weith_qdq)
 
 
+class QDQLayer(torch.nn.Module):
+    def __init__(self, module, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.quant = torch.ao.quantization.QuantStub()
+        self.module = module
+        self.dequant = torch.ao.quantization.DeQuantStub()
+    
+    def forward(self, X):
+        X = self.quant(X)
+        X = self.module(X)
+        X = self.dequant(X)
+        return X
+
+
 class SQLinearWrapper(torch.nn.Module):
     def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
         super().__init__()
