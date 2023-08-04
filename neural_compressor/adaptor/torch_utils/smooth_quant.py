@@ -832,6 +832,7 @@ class TorchSmoothQuant:
             ##assert self.dataloader, "Please provide dataloader or example_inputs"
             for idx, input in enumerate(self.dataloader):
                 self.example_inputs = input
+                break
 
         return self.example_inputs
 
