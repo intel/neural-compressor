@@ -1524,12 +1524,20 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
 
             percdamp = self.recipes.get('gptq_args', {}).get('percdamp', 0.01)
+            blocksize = self.recipes.get('gptq_args', {}).get('blocksize', 128)
+            actorder = self.recipes.get('gptq_args', {}).get('actorder', False)
+            mse = self.recipes.get('gptq_args', {}).get('mse', False)
+            perchannel = self.recipes.get('gptq_args', {}).get('perchannel', True)
             calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
             model = gptq_quantize(model,
                                   quant_config,
                                   data_loader,
                                   calib_sampling_size,
-                                  percdamp)
+                                  percdamp=percdamp,
+                                  blocksize=blocksize,
+                                  actorder=actorder,
+                                  mse=mse,
+                                  perchannel=perchannel)
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
 

@@ -554,8 +554,8 @@ def gptq_quantize(model,
                   tune_cfg,
                   dataloader,
                   n_samples=128,
-                  blocksize=128,
                   percdamp=.01,
+                  blocksize=128,
                   actorder=False,
                   mse=False,
                   perchannel=True
@@ -577,8 +577,8 @@ def gptq_quantize(model,
                 }
         dataloader (object): dataloader for calibration.
         n_samples (int, optional): calibration sample number.
-        blocksize (int, optional): blocksize to quantize weight.
         percdamp (float, optional): percent of the average Hessian diagonal to use for dampening.
+        blocksize (int, optional): blocksize to quantize weight.
         actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
         mse (bool, optional): whether get scale and zero point with mse error.
         perchannel (bool, optional): whether quantize weight per-channel.

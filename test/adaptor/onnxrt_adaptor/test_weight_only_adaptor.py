@@ -40,7 +40,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("nc_workspace", ignore_errors=True)
-        #shutil.rmtree("gptj", ignore_errors=True)
+        shutil.rmtree("gptj", ignore_errors=True)
 
     def test_RTN_quant(self):
 
