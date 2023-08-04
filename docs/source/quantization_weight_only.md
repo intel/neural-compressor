@@ -28,7 +28,7 @@ There are many excellent works for weight only quantization to improve its accur
 |:--------------:|:----------:|:----------:|
 |       RTN      |  &#10004;  |  &#10004;  |
 |       AWQ      |  &#10004;  |  &#10004;  |
-|      GPTQ      | stay tuned | stay tuned |
+|      GPTQ      | stay tuned | &#10004; |
 
 ## Examples
 ### **Quantization Capability**:
