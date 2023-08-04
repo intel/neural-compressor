@@ -34,12 +34,22 @@ python run_clm.py \
 
 or
 ```bash
-sh run_quant.sh --topology=topology_name --input_model=model_name_or_path --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym --weight_only_algorithm=RTN
+sh run_quant.sh --topology=gpt_j_wikitext_weight_only --input_model=EleutherAI/gpt-j-6B --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym --weight_only_algorithm=RTN
 ```
 
 > NOTE
 >
 > `weight_only_bits`, `weight_only_group`, `weight_only_scheme`, and `weight_only_algorithm` can be modified by user. For details, please refer to [README](../../../../../../../docs/source/quantization_weight_only.md).
+
+### Run MLPerf on GPT-J-6B
+Use the following link to get
+[**CNN Daily Mail** datasets](https://github.com/intel-innersource/frameworks.ai.benchmarking.mlperf.submission.inference-submission-v3-1/tree/master/closed/Intel/code/gpt-j/pytorch-cpu#download-and-prepare-dataset)
+and [gpt-j-6B mlperf model](https://github.com/mlcommons/inference/tree/master/language/gpt-j#download-gpt-j-model)
+
+Then run following command to do quantization
+```shell
+sh run_gptj_mlperf_int4.sh
+```
 
 ## 2. Benchmark
 ```bash
@@ -59,7 +69,7 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 </thead>
 <tbody align="center">
   <tr>
-    <td>gpt_j_wikitext</td>
+    <td>gpt_j_wikitext_weight_only</td>
     <td><a href="https://huggingface.co/EleutherAI/gpt-j-6B">EleutherAI/gpt-j-6B</a></td>
     <td><a href="https://huggingface.co/datasets/wikitext">wikitext</a></td>
   </tr>
@@ -102,6 +112,7 @@ from neural_compressor.utils.pytorch import load
 quantized_model = load(tuned_checkpoint, model)
 ```
 --------
+
 For more details, please refer to the [sample code](./run_clm.py).
 
 # (May Remove Later) Run GPTQ algorithm
