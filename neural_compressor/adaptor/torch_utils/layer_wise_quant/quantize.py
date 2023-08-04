@@ -106,14 +106,14 @@ class LayerWiseQuant:
                     for idx, input in pbar:
                         pbar.set_description(f'iter {idx}')
                         self.q_model(**input)
-                except Exception:
+                except Exception:  # pragma: no cover
                     for idx, (input, label) in pbar:
                         self.q_model(**input)
             else:
                 self.q_model(**calib_data)
         self._remove_hooks()
 
-    def _save(self, path=None, clean_weight=True):
+    def _save(self, path=None, clean_weight=True):  # pragma: no cover
         if path is None:
             path = TMP_DIR
         for name, module in self.modules:

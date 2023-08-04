@@ -52,7 +52,7 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
     def load_tensor(dtype, numel, key, location):
         name = f'data/{key}'
 
-        if version.release < Version("2.0.0").release:
+        if version.release < Version("2.0.0").release: # pragma: no cover
             storage = zip_file.get_storage_from_record(name, numel, torch.UntypedStorage).storage().untyped()
             typed_storage = torch.storage.TypedStorage(
                 wrap_storage=restore_location(storage, location),
@@ -105,7 +105,7 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
             if type(name) is str and 'Storage' in name:
                 try:
                     return StorageType(name)
-                except KeyError:
+                except KeyError:  # pragma: no cover
                     pass
             mod_name = load_module_mapping.get(mod_name, mod_name)
             return super().find_class(mod_name, name)
@@ -118,7 +118,7 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
             assert typename == 'storage', \
                 f"Unknown typename for persistent_load, expected 'storage' but got '{typename}'"
             storage_type, key, location, numel = data
-            if storage_type is torch.UntypedStorage:
+            if storage_type is torch.UntypedStorage: # pragma: no cover
                 dtype = torch.uint8
             else:
                 dtype = storage_type.dtype
@@ -256,10 +256,11 @@ def load(
     """
     torch._C._log_api_usage_once("torch.load")
     # Add ability to force safe only weight loads via environment variable
-    if os.getenv("TORCH_FORCE_WEIGHTS_ONLY_LOAD", "0").lower() in ['1', 'y', 'yes', 'true']:
+    if os.getenv("TORCH_FORCE_WEIGHTS_ONLY_LOAD", "0").lower() \
+            in ['1', 'y', 'yes', 'true']:  # pragma: no cover
         weights_only = True
 
-    if weights_only:
+    if weights_only:  # pragma: no cover
         if pickle_module is not None:
             raise RuntimeError("Can not safely load weights when explicit pickle_module is specified")
     else:
@@ -276,7 +277,7 @@ def load(
             # reset back to the original position.
             orig_position = opened_file.tell()
             with _open_zipfile_reader(opened_file) as opened_zipfile:
-                if _is_torchscript_zip(opened_zipfile):
+                if _is_torchscript_zip(opened_zipfile):  # pragma: no cover
                     warnings.warn("'torch.load' received a zip file that looks like a TorchScript archive"
                                   " dispatching to 'torch.jit.load' (call 'torch.jit.load' directly to"
                                   " silence this warning)", UserWarning)

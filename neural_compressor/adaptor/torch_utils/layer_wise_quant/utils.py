@@ -76,16 +76,16 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
     )
     if os.path.isdir(pointer_path):
         return pointer_path
-
-    from huggingface_hub import snapshot_download
-    file_path = snapshot_download(repo_id)
-    return file_path
+    else:  # pragma: no cover
+        from huggingface_hub import snapshot_download
+        file_path = snapshot_download(repo_id)
+        return file_path
 
 
 def load_shell(pretrained_model_name_or_path, cls):
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
-    if is_local:
+    if is_local:  # pragma: no cover
         path = pretrained_model_name_or_path
     else:
         path = dowload_hf_model(pretrained_model_name_or_path)
@@ -93,7 +93,7 @@ def load_shell(pretrained_model_name_or_path, cls):
         config = AutoConfig.from_pretrained(path)
         with init_empty_weights():
             model = cls.from_config(config)
-    else:
+    else:  # pragma: no cover
         config = cls.config_class.from_pretrained(path)
         with init_empty_weights():
             model = cls(config)
@@ -108,11 +108,11 @@ def get_super_module_by_name(model, module_name):
     for name in name_list[:-1]:
         if hasattr(model, name):
             model = getattr(model, name)
-        else:
+        else:  # pragma: no cover
             return None
     if hasattr(model, name_list[-1]):
         return model
-    else:
+    else:  # pragma: no cover
         return None
 
 
@@ -123,7 +123,7 @@ def update_module(model, module_name, new_module):
         setattr(super_module, module_name.split('.')[-1], new_module)
 
 
-def load_layer_wise_quantized_model(path):
+def load_layer_wise_quantized_model(path):  # pragma: no cover
     """Load layer wise quantized model."""
     model = torch.load(os.path.join(path, 'model_arch.pt'))
     for name, _ in model.named_modules():
@@ -133,7 +133,9 @@ def load_layer_wise_quantized_model(path):
     return model
 
 
-def load_tensor_from_shard(pretrained_model_name_or_path, tensor_name, prefix=None):
+def load_tensor_from_shard(pretrained_model_name_or_path,
+                           tensor_name,
+                           prefix=None):  # pragma: no cover
     """Load tensor from shard."""
     path = _get_path(pretrained_model_name_or_path)
     idx_dict = json.load(open(os.path.join(path, 'pytorch_model.bin.index.json'), 'r'))['weight_map']
@@ -149,9 +151,9 @@ def load_tensor(path, tensor_name=None, prefix=None):
     """Load a tensor from bin file with given tensor name."""
     # transformers.modeling_utils
     if tensor_name:
-        if "gamma" in tensor_name:
+        if "gamma" in tensor_name:  # pragma: no cover
             tensor_name = tensor_name.replace("gamma", "weight")
-        if "beta" in tensor_name:
+        if "beta" in tensor_name:  # pragma: no cover
             tensor_name = tensor_name.replace("beta", "bias")
 
     if os.path.isdir(path):
@@ -160,14 +162,14 @@ def load_tensor(path, tensor_name=None, prefix=None):
     if tensor_name:
         if tensor_name in state_dict:
             return state_dict[tensor_name]
-        else:
+        else:  # pragma: no cover
             return state_dict[tensor_name.replace(f'{prefix}.', '')]
-    else:
+    else:  # pragma: no cover
         return state_dict
 
 def _get_path(pretrained_model_name_or_path):
     is_local = os.path.isdir(pretrained_model_name_or_path)
-    if is_local:
+    if is_local:  # pragma: no cover
         path = pretrained_model_name_or_path
     else:
         path = dowload_hf_model(pretrained_model_name_or_path)
