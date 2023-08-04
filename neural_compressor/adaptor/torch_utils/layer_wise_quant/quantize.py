@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from copy import deepcopy
 from tqdm import tqdm
 
 from .utils import torch
+from ..model_wrapper import QDQLayer
 from torch.quantization import prepare, convert
 from accelerate.utils import set_module_tensor_to_device
 from .utils import _get_path, get_named_children, update_module, load_tensor_from_shard, load_tensor
@@ -38,20 +39,6 @@ def mk_tmp_dir():
 
 def del_tmp_dir():
     shutil.rmtree(TMP_DIR)
-
-
-class QDQLayer(torch.nn.Module):
-    def __init__(self, module, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.quant = torch.ao.quantization.QuantStub()
-        self.module = module
-        self.dequant = torch.ao.quantization.DeQuantStub()
-    
-    def forward(self, X):
-        X = self.quant(X)
-        X = self.module(X)
-        X = self.dequant(X)
-        return X
 
 
 class LayerWiseQuant:
