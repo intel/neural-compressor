@@ -16,6 +16,7 @@
 
 import json
 import os
+import shutil
 from os import PathLike
 from typing import List, Optional
 
@@ -158,4 +159,14 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
         for workload in self.workloads:
             if workload.uuid == workload_uuid:
                 return workload
+        raise ClientErrorException("Could not find workload with specified ID.")
+
+    def remove_workload(self, workload_uuid: str) -> str:
+        """Remove workload from workloads list."""
+        for index, workload in enumerate(self.workloads):
+            if workload.uuid == workload_uuid:
+                shutil.rmtree(workload.workload_location, ignore_errors=True)
+                del self._workloads[index]
+                self.dump_config()
+                return workload.uuid
         raise ClientErrorException("Could not find workload with specified ID.")

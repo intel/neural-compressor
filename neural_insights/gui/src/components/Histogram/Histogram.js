@@ -37,7 +37,7 @@ function Histogram({ selectedWorkload, selectedOp, histogramType, setWarningText
 
   return (
     <div className="Histogram">
-      <h3>Histogram</h3>
+      <h3>{histogramType.charAt(0).toUpperCase() + histogramType.slice(1)} histogram</h3>
       {!histogramData && <Spinner className="spinner" animation="border" />}
 
       {histogramData?.length === 0 && <p>No histogram data for this OP.</p>}

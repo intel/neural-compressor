@@ -90,6 +90,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobil
 ```
 
 ```python
+from neural_compressor import Metric
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import DataLoader
 from neural_compressor.data import Datasets
