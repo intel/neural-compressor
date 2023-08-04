@@ -1,14 +1,14 @@
-CALIBRATION_DATA=/path/to/your/data/calibration-data/cnn_dailymail_calibration.json
-VALIDATION_DATA=/path/to/your/data/validation-data/cnn_dailymail_validation.json
-MODEL_DIR=/path/to/finetuned-gptj/
+CALIBRATION_DATA=/your/data/calibration-data/cnn_dailymail_calibration.json
+VALIDATION_DATA=/your/data/validation-data/cnn_dailymail_validation.json
+MODEL_DIR=/your/gptj/
 
-python -u run_gptj_mlperf_int4.py \
+python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only/run_gptj_mlperf_int4.py \
     --model_name_or_path ${MODEL_DIR} \
     --wbits 4 \
-    --act-order \
     --sym \
     --group_size 128 \
     --nsamples 128 \
     --calib-data-path ${CALIBRATION_DATA} \
     --val-data-path ${VALIDATION_DATA} \
     --calib-iters 128 \
+    --use_fp16
