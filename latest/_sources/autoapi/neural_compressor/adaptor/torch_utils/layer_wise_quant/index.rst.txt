@@ -1,0 +1,23 @@
+:py:mod:`neural_compressor.adaptor.torch_utils.layer_wise_quant`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.layer_wise_quant
+
+.. autoapi-nested-parse::
+
+   Torch layer-wise quantization module.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   modified_pickle/index.rst
+   quantize/index.rst
+   torch_load/index.rst
+   utils/index.rst
+
+
