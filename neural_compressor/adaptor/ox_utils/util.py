@@ -70,13 +70,15 @@ dtype_mapping = {
 PROVIDERS = {
     'default': 'CPUExecutionProvider',
     'onnxrt_trt_ep': 'TensorrtExecutionProvider',
+    'onnxrt_dnnl_ep': 'DnnlExecutionProvider',
     'onnxrt_cuda_ep': 'CUDAExecutionProvider',
 }
 
 ONNXRT_BACKENDS = {
     'CPUExecutionProvider': 'default',
     'TensorrtExecutionProvider': 'onnxrt_trt_ep',
-    'CUDAExecutionProvider': 'onnxrt_cuda_ep'
+    'CUDAExecutionProvider': 'onnxrt_cuda_ep',
+    'DnnlExecutionProvider': 'onnxrt_dnnl_ep'
 }
 
 def dtype_to_name(dtype_mapping, dtype):

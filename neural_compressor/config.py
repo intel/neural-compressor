@@ -45,7 +45,7 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list, # TODO: allow AWQ+GPTQ algo
-            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ',] for i in s)),
+            lambda s: all(i in ['minmax', 'RTN', 'AWQ', 'GPTQ', 'TEQ'] for i in s)),
         Optional('bits'):  And(
             list,
             lambda s: all(0 < i <= 8 and type(i)==int for i in s)),
@@ -259,7 +259,8 @@ class BenchmarkConfig:
         inputs (list, optional): A list of strings containing the inputs of model. Default is an empty list.
         outputs (list, optional): A list of strings containing the outputs of model. Default is an empty list.
         backend (str, optional): Backend name for model execution. Supported values include: 'default', 'itex',
-                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'. Default value is 'default'.
+                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'.
+                                Default value is 'default'.
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
                                 Default value is 5.
         iteration (int, optional): The number of iterations to run performance tests. Default is -1.
@@ -327,7 +328,7 @@ class BenchmarkConfig:
     def backend(self, backend):
         """Set backend."""
         if _check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep']):
             self._backend = backend
 
     @property
@@ -692,7 +693,8 @@ class _BaseQuantizationConfig:
     Args:
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
-        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        backend: Backend for model execution.
+                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
         domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
@@ -836,12 +838,30 @@ class _BaseQuantizationConfig:
                 _check_value("smooth_quant_args", val, dict)
                 for k, v in val.items():
                     if k == "alpha":
+                        """
+                        examples:
+                            smooth_quant_args = {"alpha": "auto"}
+                            smooth_quant_args = {"alpha": 0.5}
+                            smooth_quant_args = {"alpha": [0.5]}
+                            smooth_quant_args = {"alpha": numpy.arange(0.1, 0.5, 0.05).tolist()}
+                        """
                         if isinstance(v, str):
-                            assert v == "auto", "the alpha of sq only supports float and 'auto'"
+                            assert v == "auto", "the alpha of sq only supports float, list and 'auto'"
+                        elif isinstance(v, float) or isinstance(v, int) or isinstance(v, list):
+                            continue
                         else:
-                            _check_value("alpha", v, float)
+                            logger.warning("Ignore the alpha as it's not a list, int or float.")
+                        if isinstance(val[k], list):
+                            assert all([vv >= 0.0 and vv <=1.0 for vv in val[k]]), \
+                                "The candidate value of smooth quantization alpha should be between 0 and 1."
 
                 return True
+            else:
+                return {}
+
+        def rtn_args(val=None):
+            if val is not None:
+                return _check_value("rtn_args", val, dict)
             else:
                 return {}
 
@@ -854,6 +874,12 @@ class _BaseQuantizationConfig:
         def gptq_args(val=None):
             if val is not None:
                 return _check_value("gptq_args", val, dict)
+            else:
+                return {}
+
+        def teq_args(val=None):
+            if val is not None:
+                return _check_value("teq_args", val, dict)
             else:
                 return {}
 
@@ -930,8 +956,10 @@ class _BaseQuantizationConfig:
                    "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
                    "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
                    "dedicated_qdq_pair": dedicated_qdq_pair,
+                   "rtn_args": rtn_args,
                    "awq_args": awq_args,
                    "gptq_args": gptq_args,
+                   "teq_args": teq_args,
                    }
         self._recipes = {}
         for k in RECIPES.keys():
@@ -1058,7 +1086,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if _check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep']):
             self._backend = backend
 
     @property
@@ -1103,7 +1131,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 
     Args:
         device: Support 'cpu' and 'gpu'.
-        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        backend: Backend for model execution.
+                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
         domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
@@ -1262,7 +1291,8 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
     Args:
         device: Support 'cpu' and 'gpu'.
-        backend: Backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+        backend: Backend for model execution.
+                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
@@ -1442,6 +1472,7 @@ class WeightPruningConfig:
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
+                 low_memory_usage=False,
                  **kwargs):
         """Init a WeightPruningConfig object."""
         self.backend = backend
@@ -1460,6 +1491,7 @@ class WeightPruningConfig:
             'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
             'sparsity_decay_type': sparsity_decay_type,
             'pruning_op_types': pruning_op_types,
+            'low_memory_usage': low_memory_usage
         })
         self._weight_compression.update(kwargs)
 
@@ -1473,6 +1505,32 @@ class WeightPruningConfig:
         """Set weight_compression."""
         self._weight_compression = weight_compression
 
+
+class HPOConfig:
+    """Config class for hyperparameter optimization.
+    
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+        searcher(str): The name of search algorithms, currently support: grid, random, bo and xgb.
+        higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
+        min_train_sample(int, optional): The min number of samples to start training the search model.
+        seed(int, optional): Random seed.
+
+    """
+    def __init__(self,
+                 search_space,
+                 searcher='xgb',
+                 higher_is_better=True,
+                 loss_type='reg',
+                 min_train_samples=10,
+                 seed=42):
+        """Init an HPOConfig object."""
+        self.search_space = search_space
+        self.searcher = searcher
+        self.higher_is_better = higher_is_better
+        self.loss_type = loss_type
+        self.min_train_samples = min_train_samples
+        self.seed = seed
 
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss.
@@ -1704,8 +1762,8 @@ class MixedPrecisionConfig(object):
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
-                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep',
-                                 default is 'default', 'ipex' doesn't support tune.
+                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
+                                 default is 'default'.
         precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         model_name (str, optional): The name of the model. Default value is empty.
@@ -1864,7 +1922,7 @@ class MixedPrecisionConfig(object):
     def backend(self, backend):
         """Set backend."""
         if _check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep']):
             self._backend = backend
 
     @property

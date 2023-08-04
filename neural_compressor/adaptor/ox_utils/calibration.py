@@ -472,7 +472,7 @@ class ONNXRTAugment:
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
             if parent and parent.name in q_config and \
-                q_config[parent.name] not in ['fp32', 'fp16']:
+                q_config[parent.name] not in ['fp32', 'fp16', 'bf16']:
                 scheme = q_config[parent.name]['activation']['scheme']
                 qType = q_config[parent.name]['activation']['dtype']
             elif self.backend in ['TensorrtExecutionProvider']:

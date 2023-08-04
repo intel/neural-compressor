@@ -33,7 +33,7 @@ cd examples/pytorch/image_recognition/peleenet/quantization/ptq/fx
 python main.py --tune --pretrained -j 1 /path/to/imagenet --weights weights/peleenet_acc7208.pth.tar
 or
 ```shell
-sh run_tuning.sh --dataset_location=/path/to/imagenet --input_model=weights/peleenet_acc7208.pth.tar
+sh run_quant.sh --dataset_location=/path/to/imagenet --input_model=weights/peleenet_acc7208.pth.tar
 ```
 ## 2. Benchmark
 ```bash

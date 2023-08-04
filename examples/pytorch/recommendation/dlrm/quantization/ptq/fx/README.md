@@ -36,7 +36,7 @@ PyTorch 1.10 or higher version is needed with pytorch_fx backend.
 ### tune with INC
   ```shell
   cd examples/pytorch/recommendation/dlrm/quantization/ptq/fx
-  bash run_tuning.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset"
+  bash run_quant.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset"
   ```
 
 ### benchmark

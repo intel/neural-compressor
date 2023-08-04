@@ -419,6 +419,7 @@ DDP
 DDR
 de
 deberta
+decapoda
 DecodeImage
 deepengine
 deeplab
@@ -495,6 +496,7 @@ dnf
 dnn
 dnnl
 DNNL
+DnnlExecutionProvider
 Dockerfile
 doclist
 docstrings
@@ -563,6 +565,7 @@ enum
 env
 environ
 ep
+eps
 eq
 erf
 Erf
@@ -1185,6 +1188,7 @@ nd
 ndarray
 NDArray
 nderlu
+NeelNanda
 neox
 nepoch
 ner
@@ -2606,6 +2610,8 @@ LayoutLMv
 layoutlmv
 funsd
 layoutlmft
+layoutlm
+LayoutLM
 nielsr
 HYPJUDY
 amerather
@@ -2684,3 +2690,19 @@ Chatbot
 chatbot
 fba
 hostname
+qweight
+qconfig
+TEQ
+WeightOnlyLinear
+McKinstry
+Migacz
+MinMax
+Szymon
+Vanhoucke
+ONNXCommunityMeetup
+luYBWA
+pQ
+xgb
+xgboost
+hpo
+HPO

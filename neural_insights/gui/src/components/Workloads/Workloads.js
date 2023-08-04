@@ -15,6 +15,9 @@
 import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/esm/Button';
 import Spinner from 'react-bootstrap/Spinner';
+import Image from 'react-bootstrap/Image';
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import './Workloads.scss';
 import moment from 'moment';
 import { api } from './../../App';
@@ -51,6 +54,19 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
       });
   }
 
+  let deleteWorkload = (selectedWorkload) => {
+    api.post('api/workloads/delete?token=' + localStorage.getItem('token'), { workload_id: selectedWorkload.uuid })
+      .then(
+        response => {
+          getWorkloads(true);
+        }
+      )
+      .catch(error => {
+        setWarningText(error.message);
+        setSpinner(false);
+      });
+  }
+
   let workloadsList = workloads.map(workload => {
     return (
       <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload); setSelectedOp(null); }}>
@@ -62,6 +78,24 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
     );
   });
 
+  const tooltipDelete = (
+    <Tooltip id="tooltipDelete">
+      Delete this workload
+    </Tooltip>
+  );
+
+  const tooltipCopy = (
+    <Tooltip id="tooltipCopy">
+      Copy full model path
+    </Tooltip>
+  );
+
+  const tooltipFullPath = (
+    <Tooltip id="tooltipFullPath">
+      {selectedWorkload?.model_path}
+    </Tooltip>
+  );
+
   return (
     <div>
       {spinner && <Spinner className="spinner" animation="border" />}
@@ -72,18 +106,56 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
         </div>
       }
       {workloadsList.length === 0 &&
-        <div className="data-panel">
+        <div className="data-panel no-data workloads-list">
           <h3>Neural Insights</h3>
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
         </div>
       }
       {selectedWorkload &&
-        <div className="data-panel">
-          <h3>Details</h3>
-          <p>Framework: {selectedWorkload?.framework}</p>
-          <p>Model path: {getLabel(selectedWorkload?.model_path)}</p>
+        <div className="data-panel workloads-list">
+          <h3>Details
+            <OverlayTrigger placement="right" overlay={tooltipDelete}>
+              <div className="delete-button" role="button" onClick={e => { deleteWorkload(selectedWorkload); setSelectedOp(null); }}>
+                <Image src="icons/057a-trash-solid-red.svg"
+                  onMouseOver={e => (e.currentTarget.src = "icons/057a-trash-solid.svg")}
+                  onMouseOut={e => (e.currentTarget.src = "icons/057a-trash-solid-red.svg")}
+                />
+              </div>
+            </OverlayTrigger>
+          </h3>
+          <table class="details-table">
+            <tbody>
+              <tr>
+                <td>Framework:</td>
+                <td>{selectedWorkload?.framework}</td>
+              </tr>
+              <tr>
+                <td>
+                  Model path:
+                </td>
+                <td>
+                  <OverlayTrigger placement="bottom" overlay={tooltipFullPath}>
+                    <div>{getLabel(selectedWorkload?.model_path)}</div>
+                  </OverlayTrigger>
+                </td>
+                <td>
+                  {selectedWorkload?.framework === 'TensorFlow' &&
+                    <OverlayTrigger placement="right" overlay={tooltipCopy}>
+                      <div className="delete-button" role="button" onClick={() => { navigator.clipboard.writeText(selectedWorkload.model_path) }}>
+                        <Image src="icons/146b-copy-outlined.svg"
+                          onMouseOver={e => (e.currentTarget.src = "icons/146b-copy-outlined-gray.svg")}
+                          onMouseOut={e => (e.currentTarget.src = "icons/146b-copy-outlined.svg")}
+                        />
+                      </div>
+                    </OverlayTrigger>
+                  }
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       }
     </div>
   )
+
 }

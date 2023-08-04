@@ -67,11 +67,11 @@ bash prepare_model.sh --dataset_location=./data --output_dir=./model
 Make sure the data and model have been generated successfully which located at ./data and ./model respectively.
 And your output_model will be located at ./output_model like the command below
   ```shell
-    bash run_tuning.sh --input_model=./model --dataset_location=./data --output_model=output_model
+    bash run_quant.sh --input_model=./model --dataset_location=./data --output_model=output_model
   ```
 If you want the model without iterator inside the graph, you can add --strip_iterator like:
   ```shell
-    bash run_tuning.sh --input_model=./model --dataset_location=./data --output_model=output_model --strip_iterator
+    bash run_quant.sh --input_model=./model --dataset_location=./data --output_model=output_model --strip_iterator
   ```
 To run benchmark:
   ```shell
