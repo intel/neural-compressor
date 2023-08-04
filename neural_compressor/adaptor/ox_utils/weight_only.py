@@ -24,10 +24,12 @@ import onnx
 import logging
 import numpy as np
 from onnx import onnx_pb as onnx_proto
+from neural_compressor.utils.utility import LazyImport
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from onnx import numpy_helper, helper
 
+ort = LazyImport("onnxruntime")
 logger = logging.getLogger("neural_compressor")
 
 def qdq_tensor(data, config, ratio=1.):
@@ -41,8 +43,8 @@ def qdq_tensor(data, config, ratio=1.):
     Returns:
         output: qdq weight
     """
-    bit = config["bits"]
-    scheme = config["scheme"]
+    bit = config.get("bits", 8)
+    scheme = config.get("scheme", "asym")
     if scheme == "sym":
         maxq = 2 ** (bit - 1) - 1 if bit != 1 else 0
         minq = -2 ** (bit - 1) if bit != 1 else -1
@@ -89,17 +91,15 @@ def rtn_quantize(model, tune_cfg, ratios={}):
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model) 
     for node in model.nodes():
-        if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
-            if model.get_initializer(node.input[1]) is None:
-                continue
+        if node.op_type in ["MatMul", "Attention"] and model.get_initializer(node.input[1]) is not None:
             weight = numpy_helper.to_array(
                         model.get_initializer(node.input[1]),
                         base_dir=os.path.dirname(model.model_path)).copy()
             dtype = weight.dtype
-            config = tune_cfg[node.name]["weight"]
+            config = tune_cfg[node.name].get("weight", {})
 
             org_w_shape = weight.shape # ic, oc
-            group_size = config["group_size"] if config["group_size"] != -1 else org_w_shape[0]
+            group_size = config.get("group_size", -1) if config.get("group_size", -1) != -1 else org_w_shape[0]
 
             if org_w_shape[0] % group_size == 0:
                 weight = weight.reshape(group_size, -1)
@@ -140,7 +140,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
         inp_scale = np.mean(np.reshape(np.abs(inp), (-1, inp[0].shape[-1])), axis=0)
         weight = []
         org_out = []
-        config = tune_cfg[nodes[0].name]
+        config = tune_cfg.get(nodes[0].name, {})
         
         # search scale
         best_error = float("inf")
@@ -154,12 +154,12 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             for node in nodes:
                 weight = numpy_helper.to_array(model.get_initializer(node.input[1]),
                                                 os.path.dirname(model.model_path))
-                w_scale = get_weight_scale(weight, config["weight"]["group_size"])
+                w_scale = get_weight_scale(weight, config.get("weight", {}).get("group_size", -1))
                 org_out = np.matmul(inp, weight)
                 scales = np.clip(np.power(inp_scale, ratio) / np.power(w_scale, (1 - ratio)), 1e-4, None)
                 scales = np.reshape(scales / np.sqrt(np.max(scales) * np.min(scales)), (-1, 1))
 
-                q_weight = qdq_tensor(weight * scales, config["weight"]) / scales
+                q_weight = qdq_tensor(weight * scales, config.get("weight", {})) / scales
                 out = np.matmul(inp, q_weight)
                 loss += np.mean(np.power((org_out - out), 2))
 
@@ -170,19 +170,17 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
                 best_scale = scales
 
         for node in nodes:
-            if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
-                tensor = numpy_helper.to_array(model.get_initializer(node.input[1]),
+            tensor = numpy_helper.to_array(model.get_initializer(node.input[1]),
                                                 os.path.dirname(model.model_path))
-                new_tensor = tensor * best_scale
-                model.set_initializer(node.input[1], new_tensor.astype(tensor.dtype), raw=True)
-                output_dicts[node.input[0]] = output_dicts[node.input[0]] / np.reshape(best_scale, (1, -1))
+            new_tensor = tensor * best_scale
+            model.set_initializer(node.input[1], new_tensor.astype(tensor.dtype), raw=True)
+            output_dicts[node.input[0]] = output_dicts[node.input[0]] / np.reshape(best_scale, (1, -1))
 
         parent = model.get_node(parent)
         if parent.name in updated_nodes:
             continue
 
-        if parent.op_type in ["LayerNormalization", "BatchNormalization", "InstanceNormalization"] and \
-                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):  # pragma: no cover
+        if parent.op_type in ["LayerNormalization", "BatchNormalization", "InstanceNormalization"]:  # pragma: no cover
             for idx in [1, 2]:
                 tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]),
                                                 os.path.dirname(model.model_path))
@@ -192,8 +190,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
         elif parent.op_type in ["SimplifiedLayerNormalization", "MatMul", "Gemm", "Mul"] and \
-                not all([model.get_initializer(inp) is None for inp in parent.input]) and \
-                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):
+                not all([model.get_initializer(inp) is None for inp in parent.input]):
             for inp in parent.input:
                 if model.get_initializer(inp) is not None:
                     tensor = numpy_helper.to_array(model.get_initializer(inp),
@@ -203,8 +200,7 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             updated_nodes.append(parent.name)
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
-        elif parent.op_type in ["Conv", "FusedConv"] and \
-                all([node.name in tune_cfg and tune_cfg[node.name] != "fp32" for node in nodes]):  # pragma: no cover
+        elif parent.op_type in ["Conv", "FusedConv"]:  # pragma: no cover
             tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]),
                                             os.path.dirname(model.model_path))
             new_tensor = tensor / np.reshape(best_scale, (1, -1))
@@ -214,26 +210,24 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
 
         else:  # pragma: no cover
             # insert mul
-            q_nodes = [node for node in nodes if node.name in tune_cfg and tune_cfg[node.name] != "fp32"]
-            if len(q_nodes) > 0:
-                scale_tensor = helper.make_tensor(
+            scale_tensor = helper.make_tensor(
                     name=parent.output[0] + "_weight_only_scale",
                     data_type=onnx_proto.TensorProto.FLOAT,
                     dims=best_scale.shape,
                     vals=(1. / best_scale).flatten().tolist())
-                new_init_tensors.append(scale_tensor)
-                mul_output_name = parent.output[0] + "_weight_only_out"
-                mul_node = helper.make_node(
+            new_init_tensors.append(scale_tensor)
+            mul_output_name = parent.output[0] + "_weight_only_out"
+            mul_node = helper.make_node(
                     "Mul",
                     inputs=[q_nodes[0].input[0], scale_tensor.name],
                     outputs=[mul_output_name],
                     name=q_nodes[0].input[0] + "_weight_only_mul"
                 )
-                new_added_mul_nodes.append(mul_node)
-                for node in q_nodes:
-                    replace_input.append([node, node.input[0], mul_node.output[0]])
-                updated_nodes.append(parent.name)
-                output_dicts[mul_node.output[0]] = output_dicts[mul_node.input[0]] / np.reshape(best_scale, (1, -1))
+            new_added_mul_nodes.append(mul_node)
+            for node in nodes:
+                replace_input.append([node, node.input[0], mul_node.output[0]])
+            updated_nodes.append(parent.name)
+            output_dicts[mul_node.output[0]] = output_dicts[mul_node.input[0]] / np.reshape(best_scale, (1, -1))
  
     model.add_nodes(new_added_mul_nodes)
     model.add_initializers(new_init_tensors)
@@ -253,37 +247,46 @@ def apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts):
         inp = np.concatenate(output_dicts[nodes[0].input[0]], axis=0)
 
         for node in nodes:
-            if node.name in tune_cfg and tune_cfg[node.name] != "fp32":
- 
-                group_size = tune_cfg[node.name]["weight"]["group_size"]
-                config = tune_cfg[node.name]
-                weight = numpy_helper.to_array(
-                            model.get_initializer(node.input[1]),
-                            base_dir=os.path.dirname(model.model_path))
-                org_w_shape = weight.shape # ic, oc
-                org_out = np.matmul(inp, weight) # n_token, oc
+            config = tune_cfg.get(node.name, {})
+            org_weight = numpy_helper.to_array(
+                                model.get_initializer(node.input[1]),
+                                base_dir=os.path.dirname(model.model_path))
+            org_w_shape = org_weight.shape # ic, oc
+            group_size = config.get("group_size", -1) if config.get("group_size", -1) != -1 else org_w_shape[0]
+            org_out = np.matmul(inp, org_weight) # n_token, oc
 
-                best_error = float("inf")
-                best_ratio = 1
-                for i_s in range(10):
-                    ratio = 1 - i_s / 100
-                    q_weight = qdq_tensor(weight, config["weight"], ratio)
-                    cur_out = np.matmul(inp, q_weight)
-                    loss = np.mean(np.power((org_out - cur_out), 2))
-                    is_best = loss < best_error
-                    if is_best:
-                        best_error = loss
-                        best_ratio = ratio
-                ratios[node.input[1]] = best_ratio
-    model = rtn_quantize(model, tune_cfg, ratios)        
+            best_error = float("inf")
+            best_ratio = 1
+            for i_s in range(10):
+                ratio = 1 - i_s / 100
+                weight = copy.deepcopy(org_weight)
+                if org_w_shape[0] % group_size == 0:
+                    weight = weight.reshape(group_size, -1)
+                    weight = qdq_tensor(weight, config, ratios.get(node.input[1], 1))
+                    weight = weight.reshape(org_w_shape)
+                else:
+                    index = org_w_shape[0] // group_size * group_size
+                    if index != 0:
+                        part_weight = weight[:index, :].reshape(group_size, -1)
+                        part_weight = qdq_tensor(part_weight, config, ratios.get(node.input[1], 1))
+                        weight[:index, :] = part_weight.reshape(index, -1)
+                    weight[index:, :] = qdq_tensor(weight[index:, :], config, ratios.get(node.input[1], 1))
+                    
+                cur_out = np.matmul(inp, weight)
+                loss = np.mean(np.power((org_out - cur_out), 2))
+                is_best = loss < best_error
+                if is_best:
+                    best_error = loss
+                    best_ratio = ratio
+            ratios[node.input[1]] = best_ratio
+    model = rtn_quantize(model, tune_cfg, ratios)
     return model
 
 def prepare_inputs(model, n_samples, dataloader):
-    import onnxruntime
     from importlib.util import find_spec
     from neural_compressor.adaptor.ox_utils.util import to_numpy
     
-    so = onnxruntime.SessionOptions()
+    so = ort.SessionOptions()
     if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
         from onnxruntime_extensions import get_library_path
         so.register_custom_ops_library(get_library_path())
@@ -294,20 +297,20 @@ def prepare_inputs(model, n_samples, dataloader):
                         all_tensors_to_one_file=True,
                         convert_attribute=False)
 
-    session = onnxruntime.InferenceSession(
+    session = ort.InferenceSession(
                 model.model.SerializeToString(),
                 so,
-                providers=["CPUExecutionProvider"]) if not model.is_large_model else \
-              onnxruntime.InferenceSession(
+                providers=ort.get_available_providers()) if not model.is_large_model else \
+              ort.InferenceSession(
                 model.model_path + '_augment.onnx',
                 so,
-                providers=["CPUExecutionProvider"])
+                providers=ort.get_available_providers())
     inputs_names = [i.name for i in session.get_inputs()]
     del session
 
     inputs = []
     for i, data in enumerate(dataloader):
-        if ((i + 1) * dataloader.batch_size) >= n_samples:
+        if ((i + 1) * dataloader.batch_size) > n_samples:
             break
         if len(inputs_names) != 1 or isinstance(data[0], dict):
             assert len(data[0]) == len(inputs_names), "Input number mismatch, " \
@@ -350,7 +353,6 @@ def awq_quantize(model,
     Returns:
         model: fake quantized ONNXModel
     """
-    import onnxruntime
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
 
@@ -378,14 +380,14 @@ def awq_quantize(model,
                                     all_tensors_to_one_file=True,
                                     convert_attribute=False)
 
-                session = onnxruntime.InferenceSession(
+                session = ort.InferenceSession(
                             model.model.SerializeToString(),
                             so,
-                            providers=["CPUExecutionProvider"]) if not model.is_large_model else \
-                          onnxruntime.InferenceSession(
+                            providers=ort.get_available_providers()) if not model.is_large_model else \
+                          ort.InferenceSession(
                             model.model_path + '_augment.onnx',
                             so,
-                            providers=["CPUExecutionProvider"])
+                            providers=ort.get_available_providers())
 
                 for inp in inputs:
                     for output_idx, output in enumerate(session.run(None, inp)):
@@ -404,11 +406,11 @@ def awq_quantize(model,
         model.model.graph.output.MergeFrom(org_output)
     return model
 
-def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=False):
+def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=False, perchannel=True):
     Qs = []
-    group_size = config["weight"]["group_size"]
-    bits = config["weight"]["bits"]
-    scheme = config["weight"]["scheme"]
+    group_size = config.get("weight", {}).get("group_size", -1)
+    bits = config.get("weight", {}).get("bits", 8)
+    scheme = config.get("weight", {}).get("scheme", "asym")
     maxq = 2 ** bits - 1
     grid=100
     maxshrink=.8
@@ -417,7 +419,7 @@ def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=F
     def find_params(weight):
         org_shape = weight.shape
         # find zp, scale
-        if group_size != -1:
+        if not perchannel:
             weight = np.expand_dims(weight.flatten(), axis=1)
         tmp = np.zeros(weight.shape[1])
         xmin = np.minimum(np.min(weight, axis=0), tmp)
@@ -453,7 +455,7 @@ def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=F
                     best[tmp] = err[tmp]
                     scale[tmp] = scale1[tmp]
                     zero[tmp] = zero1[tmp]
-        if group_size != -1:
+        if not perchannel:
             tmp = org_shape[1]
             scale = np.repeat(scale, tmp)
             zero = np.repeat(zero, tmp)
@@ -525,7 +527,11 @@ def gptq_quantize(model,
                   tune_cfg,
                   dataloader,
                   n_samples=128,
-                  percdamp=0.01
+                  blocksize=128,
+                  percdamp=.01,
+                  actorder=False,
+                  mse=False,
+                  perchannel=True
                   ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -542,14 +548,16 @@ def gptq_quantize(model,
                             'algorithm': 'GPTQ'
                         }
                 }
-        n_samples: calibration sample number.
-        percdamp(float, optional): 
+        n_samples(int, optional): calibration sample number.
+        blocksize(int, optional): blocksize to quantize weight.
+        percdamp(float, optional): percent of the average Hessian diagonal to use for dampening.
+        actorder(bool, optional): whether rearrange Hessian matrix considering the diag's value.
+        mse(bool, optional): whether get scale and zero point with mse error.
+        perchannel(bool, optional): whether quantize weight per-channel.
 
     Returns:
         model: fake quantized ONNXModel
     """
-    import onnxruntime
-
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
     absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
@@ -569,14 +577,14 @@ def gptq_quantize(model,
                             all_tensors_to_one_file=True,
                             convert_attribute=False)
 
-        session = onnxruntime.InferenceSession(
+        session = ort.InferenceSession(
                     model.model.SerializeToString(),
                     so,
-                    providers=["CPUExecutionProvider"]) if not model.is_large_model else \
-                  onnxruntime.InferenceSession(
+                    providers=ort.get_available_providers()) if not model.is_large_model else \
+                  ort.InferenceSession(
                     model.model_path + '_augment.onnx',
                     so,
-                    providers=["CPUExecutionProvider"])
+                    providers=ort.get_available_providers())
 
         weights = [copy.deepcopy(numpy_helper.to_array(model.get_initializer(node.input[1]),
                     os.path.dirname(model.model_path))) for node in nodes]
@@ -597,7 +605,16 @@ def gptq_quantize(model,
             Hs = [i + np.matmul(inp.T, inp) for i in Hs]
 
         model.remove_tensors_from_outputs(dump_tensor)
-        weights = gptq(weights, inp, Hs, tune_cfg[nodes[0].name])
+        weights = gptq(weights,
+                       inp,
+                       Hs,
+                       tune_cfg.get(nodes[0].name, {}),
+                       blocksize=blocksize,
+                       percdamp=percdamp,
+                       actorder=actorder,
+                       mse=mse,
+                       perchannel=perchannel
+                      )
         for name, weight in zip([i.input[1] for i in nodes], weights):
             model.set_initializer(name, weight, raw=True)
     model.model.graph.output.MergeFrom(org_output)
