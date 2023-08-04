@@ -19,7 +19,6 @@
 from collections import namedtuple
 
 import numpy as np
-
 from ..utils import torch, tf
 
 PATTERNS = {}
@@ -313,7 +312,7 @@ class BasePattern:
         self.max_sparsity_ratio_per_op = self.config['max_sparsity_ratio_per_op']
         self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
-        self.block = bool('block' in self.config['pruning_type'] or 'free' in self.config['pruning_type'])
+        self.block = bool('block' in self.config['pruning_type'] or 'retrain' in self.config['pruning_type'])
         # Not using deterministic_algorithms for all examples
 
     def get_masks(self, scores, target_sparsity_ratio, pre_masks):
@@ -389,7 +388,7 @@ class BasePattern:
     def get_reduced_masks_from_data(self, data, key):
         """Obtain the unpruned weights and reshape according to the block_size."""
         raise NotImplementedError
-    
+
     def get_sparsity_ratio_each_layer(self, mask):
         """Calculate the sparsity ratio of each layer."""
         raise NotImplementedError
@@ -486,7 +485,9 @@ class BasePattern:
 class PytorchBasePattern(BasePattern):
     def __init__(self, config, modules):
         super().__init__(config, modules)
-        torch.use_deterministic_algorithms(False)
+        #   If you need to use it, you can set it in example 
+        #   and start the environment variable: exaport CUBLAS_WORKSPACE_CONFIG=:'4096:8'
+        # torch.use_deterministic_algorithms(True, warn_only=True)
 
     def reduce_tensor(self, data, dim):
         """Reduce the data along the given dimension.
@@ -527,6 +528,8 @@ class PytorchBasePattern(BasePattern):
             mask = torch.where(score <= threshold, zero, one)
         else:
             mask = torch.ones(score.shape, device=score.device)
+        if self.block:
+            mask = mask.float()
         return mask
 
     def get_sparsity_ratio(self, pre_masks, return_dict=False):
@@ -698,3 +701,4 @@ class KerasBasePattern(BasePattern):
 
         sparsity_ratio = float(zero_cnts) / total_cnts
         return infos, SparsityInfo(zero_cnts, total_cnts, sparsity_ratio)
+    

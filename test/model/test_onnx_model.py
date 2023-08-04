@@ -2,6 +2,8 @@ import sys
 import os
 import onnx
 from onnx import helper, TensorProto, numpy_helper
+import shutil
+import subprocess
 import unittest
 import numpy as np
 
@@ -151,6 +153,33 @@ class TestOnnxModel(unittest.TestCase):
 
         model = onnx.helper.make_model(graph, **{'opset_imports': [onnx.helper.make_opsetid('', 14)]})
         self.matmul_reshape_model = model
+
+        cmd = 'optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/'
+        p = subprocess.Popen(cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) # nosec
+        p.communicate()
+
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree("./gptj", ignore_errors=True)
+        shutil.rmtree("./hf_test", ignore_errors=True)
+
+    def test_hf_model(self):
+        from optimum.onnxruntime import ORTModelForCausalLM
+        from transformers import AutoConfig, AutoTokenizer
+        os.mkdir('hf_test')
+        model = ONNXModel('gptj/decoder_model.onnx')
+        model.save('./hf_test/decoder_model.onnx')
+        self.assertTrue(os.path.exists('hf_test/config.json'))
+
+        config = AutoConfig.from_pretrained('hf_test')
+        sessions = ORTModelForCausalLM.load_model('hf_test/decoder_model.onnx')
+        model = ORTModelForCausalLM(
+                   sessions[0],
+                   config,
+                   'hf_test',
+                   use_cache=False,
+                   use_io_binding=False)
+        self.assertNotEqual(model, None)
 
     def test_nodes(self):
         self.assertEqual(len(self.model.nodes()), 6)

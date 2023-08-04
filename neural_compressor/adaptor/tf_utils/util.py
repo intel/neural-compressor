@@ -592,18 +592,23 @@ def get_weight_from_input_tensor(model, input_tensor_names, op_types):
 
     Returns:
         A tuple of two dictionaries:
-        - sq_weight_tensors: A dictionary mapping each input tensor name to a list of its associated weight tensors.
-        - sq_weights_nodes: A dictionary mapping each input tensor name to a list of its associated weight nodes.
+        - sq_weight_tensors: A dictionary mapping each input tensor name
+            to a dict of its associated weight tensors with weight name.
+        - sq_weights_nodes: A dictionary mapping each input tensor name
+            to a dict of its associated weight nodes with weight name.
     """
-    graph_info = GraphAnalyzer(model.graph_def).parse_graph()
+    g_analyzer = GraphAnalyzer()
+    g_analyzer.graph = model.graph_def
+    graph_info = g_analyzer.parse_graph()
 
     sq_weight_tensors = {}
     sq_weights_nodes = {}
 
     from tensorflow.python.framework import tensor_util
     for name in input_tensor_names:
-        curr_weight_tensors = []
-        curr_weights_nodes = []
+        # Use dict rather than list to fix the QKV/VQK misorder issue
+        curr_weight_tensors = {}
+        curr_weights_nodes = {}
         next_node_names = graph_info[name].outputs
         for node_name in next_node_names:
             curr_node = graph_info[node_name].node
@@ -613,8 +618,9 @@ def get_weight_from_input_tensor(model, input_tensor_names, op_types):
                 weight_name = curr_node.input[1]
                 weight_node = graph_info[weight_name].node
                 weight_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
-                curr_weight_tensors.append(weight_tensor)
-                curr_weights_nodes.append(weight_node)
+                curr_weight_tensors[weight_name] = weight_tensor
+                curr_weights_nodes[weight_name] = weight_node
+        # {input node -> {xxx_q_proj_matmul: value1, xxx_v_proj_matmul: value2, ...}, ...}
         sq_weight_tensors[name] = curr_weight_tensors
         sq_weights_nodes[name] = curr_weights_nodes
     return sq_weight_tensors, sq_weights_nodes

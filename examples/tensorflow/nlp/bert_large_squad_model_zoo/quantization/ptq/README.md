@@ -82,7 +82,7 @@ python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v
 
 ## Quantization
   ```shell
-  bash run_tuning.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=/path/to/evaluation/dataset
   ```
 
 ### Quantization Config

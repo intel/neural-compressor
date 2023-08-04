@@ -18,6 +18,7 @@
 
 import math
 import time
+import re
 import torch
 import torch.nn as nn
 import transformers
@@ -61,8 +62,6 @@ def trace_gptq_target_blocks(module, module_types = [torch.nn.ModuleList]):
     gptq_related_blocks = {
         "embeddings": {},
         "transformers_pre": {}, # todo
-        #"transformers_name": None, # None
-        #"transformers": None, # None
         "transformers_name": "", # None
         "transformers": [], # None
         "transformers_post": {}, # todo
@@ -81,6 +80,12 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
     """Get all layers with target types."""
     if type(module) in layers:
         return {name: module}
+    else:
+        # use string type to find name:
+        if type(module).__name__ in ['Linear']:
+            return {name: module}
+        else:
+            pass
     res = {}
     for name1, child in module.named_children():
         res.update(find_layers(
@@ -141,38 +146,47 @@ class GPTQuantizer(object):
         """
         Args:
             model: the fp32 model to quantize
-            weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}.
-                For example, 
-                    weight_config={
-                        'bits': 4, 
-                        'group_size': 32, 
-                        'sym': True,
-                        'actorder': False
-                        'percdamp': .01
-                    }
+            weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}. For example, 
+            weight_config={
+                'layer1':
+                {
+                    'bits': 4, 
+                    'group_size': 32, 
+                    'sym': False,
+                    'percdamp': .01,
+                    'actorder': False
+                }
+                ...
+            }
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
             device: cpu or cuda
         """
         # model
         self.model = model
+
         # weight config related
         self.weight_config = weight_config
-        self.wbits = 4
-        self.percdamp = 0.01
-        self.sym = False
-        self.actorder = True
-        self.perchannel = True
-        self.mse = False
-        self.group_size = 128
-        self.process_config()
+        # default settings, check configs
+        self.wbits_default = 4
+        self.group_size_default = 128
+        self.percdamp_default = 0.01
+        self.sym_default = False
+        self.actorder_default = True
+        self.perchannel_default = True
+        self.mse_default = False
+        self.check_layer_config()
+
         # data & device
-        self.dataloader = dataloader
-        self.nsamples = len(dataloader)
-        self.device = device
+        if hasattr(dataloader, "gptq_dataloader"):
+            self.dataloader = dataloader.gptq_dataloader
+        else:
+            self.dataloader = dataloader
+        self.nsamples = len(self.dataloader)
+        self.device = model.device
         self.is_ready = False
 
-        self.use_cache = model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(model) # get the transformer block list above
+        self.use_cache = self.model.config.use_cache
+        self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
@@ -180,30 +194,62 @@ class GPTQuantizer(object):
         try:
             self.dtype = next(iter(self.model.parameters())).dtype
             self.inp = torch.zeros(
-                (self.nsamples, model.seqlen, model.config.hidden_size), 
+                (self.nsamples, self.model.seqlen, self.model.config.hidden_size), 
                 dtype=self.dtype, 
                 device=self.device
             )
             self.cache = {'i': 0}
-            # for opt, bloom, llama, etc, their inputs are different thus their cache structures vary
-            # initialization
-            # for special_input_terms in arch_inputs[self.args.arch]:
-            #     self.cache[special_input_terms] = None
             self.out = torch.zeros_like(self.inp)
             self.is_ready = True
         except:
+            logger.warning("GPTQ Quantizer initialization failed!")
             pass
+        
+    def get_full_layer_name(self, sub_layer_name, block_idx):
+        transformer_name = self.gptq_related_blocks["transformers_name"]
+        return ".".join([transformer_name, str(block_idx), sub_layer_name])
 
-    def process_config(self):
+    def check_layer_config(self):
         """Copy arguments from weight_config to build-in attributes."""
-        self.wbits = self.weight_config.get('wbits', self.wbits)
-        self.percdamp = self.weight_config.get('perdamp', self.percdamp)
-        self.sym = self.weight_config.get('sym', self.sym)
-        self.group_size = self.weight_config.get('group_size', self.group_size)
-        self.actorder = self.weight_config.get('actorder', self.actorder)
-        self.perchannel = self.weight_config.get('perchannel', self.perchannel)
-        self.mse = self.weight_config.get('mse', self.mse)
-    
+        if 'wbits' in self.weight_config:
+            tmp_weight_config = {}
+            for name, module in self.model.named_modules():
+                tmp_weight_config[name] = {}
+                tmp_weight_config[name]['wbits'] = self.weight_config.get('wbits', self.wbits_default)
+                tmp_weight_config[name]['group_size'] = self.weight_config.get('group_size', self.group_size_default)
+                tmp_weight_config[name]['percdamp'] = self.weight_config.get('pecdamp', self.percdamp_default)
+                tmp_weight_config[name]['sym'] = self.weight_config.get('sym', self.sym_default)
+                tmp_weight_config[name]['actorder'] = self.weight_config.get('actorder', self.actorder_default)
+                tmp_weight_config[name]['perchannel'] = self.weight_config.get('perchannel', self.perchannel_default)
+                tmp_weight_config[name]['mse'] = self.weight_config.get('mse', self.mse_default)
+            self.weight_config = tmp_weight_config
+        else:
+            for layer_name, config in self.weight_config.items():
+                self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
+                self.weight_config[layer_name]['group_size'] = config.get('group_size', self.group_size_default)
+                self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
+                self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
+                self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
+                self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
+                self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
+
+    def get_layer_config(self, layer_name):
+        """Obtain config for one layer, since GPTQ supports layer-wise config."""
+        # First try the exact name matching, if cannot find, use re to search. For example, can support ".*" in op_name
+        config = None
+        config = self.weight_config.get(layer_name, None)
+        if config != None:
+            return config
+        else:
+            for k, v in self.weight_config.items():
+                regex = re.compile(k)
+                if len(regex.findall(layer_name)) != None:
+                    config = v
+                    return config
+                else:
+                    pass
+        return config
+
     @torch.no_grad()
     def pre_quantization(self):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
@@ -213,7 +259,8 @@ class GPTQuantizer(object):
             self.inp[self.cache['i']] = hidden_states
             self.cache['i'] += 1
             for arg in kwargs:
-                if isinstance(kwargs[arg], torch.Tensor):
+                # TODO: investigate include parameters
+                if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
                     self.cache[arg] = kwargs[arg]
                 else:
                     continue
@@ -223,14 +270,13 @@ class GPTQuantizer(object):
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
             embedding_layer = embedding_layer.to(self.device)
 
-        # obtain the first layer inputs and registered to inputs
+        # Step2: modify the first transformer block's forward function to obtain inputs for calibration
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
-
-        # Step 2: use partial to modify original forward function
         forward_cache = self.gptq_related_blocks['transformers'][0].forward
         self.gptq_related_blocks['transformers'][0].forward = \
             partial(forward, self.gptq_related_blocks['transformers'][0])
 
+        # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             try:
@@ -238,93 +284,116 @@ class GPTQuantizer(object):
             except ValueError:
                 pass
         logger.info("Done.")
-        # restore original forward function
-        self.gptq_related_blocks['transformers'][0].forward = forward_cache
 
+        # Step 4: restore original forward function, relocate layers back to cpu.
+        self.gptq_related_blocks['transformers'][0].forward = forward_cache
         self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
-        # after store inputs, locate embedding layers and transformer[0] back to cpu
         for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
             embedding_layer.to(self.device)
         torch.cuda.empty_cache()
+        # end
         logger.info('GPTQ quantization prepared.')
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
+        # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
         self.pre_quantization()
 
-        quantizers = {}
-
+        # Step2: run gptq quantization in a transformer block-wise manner.
+        gptq_config = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
-        # Triggle GPTQ algorithm block by block.
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
             transformer_block = self.gptq_related_blocks['transformers'][block_idx].to(self.device)
-            # trace all layers which can be quantized (Linear, Conv2d, etc.)
+            # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
+            sub_layers_to_quant = {}
+            for layer_name, layer_obj in sub_layers.items():
+                # filter sub_layers with included layer_names in self.weight_config
+                full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                # if self.weight_config.get(full_layer_name, None) == None:
+                if self.get_layer_config(full_layer_name) == None:
+                    logger.warning(f"{full_layer_name} can be quantized " + "but excluded from quantization configs.")
+                else:
+                    sub_layers_to_quant[layer_name] = layer_obj
+            del sub_layers
+            sub_layers = sub_layers_to_quant
+            # Step 2.2: Initailize GPTQ quantizers for collected layers.
             gptq_for_this_block = {}
+            # initialize gptq quantizer for every layer in a transformer block
             for layer_name in sub_layers:
+                # weight_config_this_layer = self.weight_config.get(
+                #     self.get_full_layer_name(layer_name, block_idx), None
+                # )
+                weight_config_this_layer = self.get_layer_config(
+                    self.get_full_layer_name(layer_name, block_idx)
+                )
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
                 #gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(
-                    self.wbits,
-                    perchannel=self.perchannel,
-                    sym=self.sym,
-                    mse=self.mse
+                    weight_config_this_layer['wbits'],
+                    weight_config_this_layer['perchannel'],
+                    weight_config_this_layer['sym'],
+                    weight_config_this_layer['mse'],
                 )
-
+            # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
             def add_batch(_name):
                 def tmp(_, inp, out):
                     gptq_for_this_block[_name].add_batch(inp[0].data, out.data)
                 return tmp
-            
-            # register handles which add inputs and outputs to gptq object
-            handles = []
-            
+            handles = [] # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
-                # during the forward process, the batch data has been registered into gptq object.
-                # use dict passing
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
-            
+            # Step 2.4: everything is prepared, so start quantization!
             for layer_name in sub_layers:
-                logger.info(f"Quantizing layer {layer_name}")
-                gptq_for_this_block[layer_name].fasterquant(
-                    percdamp=self.percdamp, 
-                    groupsize=self.group_size, 
-                    actorder=self.actorder
+                # weight_config_this_layer = self.weight_config.get(
+                #     self.get_full_layer_name(layer_name, block_idx), None
+                # )
+                weight_config_this_layer = self.get_layer_config(
+                    self.get_full_layer_name(layer_name, block_idx)
                 )
-                quantizers['%d.%s' % (block_idx, layer_name)] = gptq_for_this_block[layer_name].quantizer
+                logger.info(f"Quantizing layer {layer_name}")
+                scale, zp = gptq_for_this_block[layer_name].fasterquant(
+                    percdamp = weight_config_this_layer['percdamp'], 
+                    groupsize = weight_config_this_layer['group_size'], 
+                    actorder = weight_config_this_layer['actorder'],
+                )
+                gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {'scale': scale}
+                if not weight_config_this_layer['sym']:
+                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]['zero'] = zp
+                if weight_config_this_layer['actorder']: # save perm for restoring the weights
+                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]['perm'] = \
+                                                                gptq_for_this_block[layer_name].perm
                 gptq_for_this_block[layer_name].free()
-
+            
+            # Step 2.5: replace output data with quantized weights
             idx = self.cache.pop('i')
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
-                # self.out[j] = self.perform_transformer_forward(transformer_block, self.inp[j].unsqueeze(0))
             self.cache['i'] = idx
             self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
-            # iteratively replace the input with output (next block)
+            # iteratively replace the input with output, thus layerwise quantization can continue.
             self.inp, self.out = self.out, self.inp
-            print('+------------------+--------------+------------+-----------+-------+')
-            print('\n')
+            logger.info('------------------------------')
         
         logger.info("Quantization done")
         self.model.config.use_cache = self.use_cache
 
-        return quantizers
-    
-    @torch.no_grad()
-    def post_quantization(self, test_dataloader):
-        pass # gptq model can be evaluate using itrex optimized lm_eval
+        # obtain model (all weight only quantization API function should return)
+        for k, v in gptq_config.items():
+            for m, n in v.items():
+                gptq_config[k][m] = n.tolist()
+        return self.model, gptq_config
 
 class GPTQ:
     """
@@ -344,11 +413,12 @@ class GPTQ:
         self.H = torch.zeros((self.columns, self.columns), device=self.device)
         self.nsamples = 0
         self.quantizer = Quantizer()
+        self.perm = None # actorder choice
 
     def add_batch(self, inp, out):
-        if DEBUG:
-            self.inp1 = inp
-            self.out1 = out
+        # if DEBUG:
+        #     self.inp1 = inp
+        #     self.out1 = out
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
@@ -356,16 +426,17 @@ class GPTQ:
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()
-        if isinstance(self.layer, nn.Conv2d):
-            unfold = nn.Unfold(
-                self.layer.kernel_size,
-                dilation=self.layer.dilation,
-                padding=self.layer.padding,
-                stride=self.layer.stride
-            )
-            inp = unfold(inp)
-            inp = inp.permute([1, 0, 2])
-            inp = inp.flatten(1)
+        # TODO: llm's transformer sequential with nn.conv2d is currently not under test
+        # if isinstance(self.layer, nn.Conv2d):
+        #     unfold = nn.Unfold(
+        #         self.layer.kernel_size,
+        #         dilation=self.layer.dilation,
+        #         padding=self.layer.padding,
+        #         stride=self.layer.stride
+        #     )
+        #     inp = unfold(inp)
+        #     inp = inp.permute([1, 0, 2])
+        #     inp = inp.flatten(1)
         self.H *= self.nsamples / (self.nsamples + tmp)
         self.nsamples += tmp
         # inp = inp.float()
@@ -397,6 +468,7 @@ class GPTQ:
             perm = torch.argsort(torch.diag(H), descending=True)
             W = W[:, perm]
             H = H[perm][:, perm]
+            self.perm = perm.clone()
 
         Losses = torch.zeros_like(W)
         Q = torch.zeros_like(W)
@@ -408,6 +480,9 @@ class GPTQ:
         H = torch.cholesky_inverse(H)
         H = torch.linalg.cholesky(H, upper=True)
         Hinv = H
+
+        scale = []
+        zero = []
 
         for i1 in range(0, self.columns, blocksize):
             i2 = min(i1 + blocksize, self.columns)
@@ -426,6 +501,8 @@ class GPTQ:
                 if groupsize != -1:
                     if (i1 + i) % groupsize == 0:
                         self.quantizer.find_params(W[:, (i1 + i):(i1 + i + groupsize)], weight=True)
+                        scale.append(self.quantizer.scale)
+                        zero.append(self.quantizer.zero)
 
                 q = quantize(
                     w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
@@ -442,11 +519,11 @@ class GPTQ:
 
             W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:])
 
-            if DEBUG:
-                self.layer.weight.data[:, :i2] = Q[:, :i2]
-                self.layer.weight.data[:, i2:] = W[:, i2:]
-                logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
-                logger.info(f"{torch.sum(Losses)}")
+            # if DEBUG:
+            #     self.layer.weight.data[:, :i2] = Q[:, :i2]
+            #     self.layer.weight.data[:, i2:] = W[:, i2:]
+            #     logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+            #     logger.info(f"{torch.sum(Losses)}")
 
         if self.device != torch.device('cpu'):
             torch.cuda.synchronize()
@@ -462,6 +539,13 @@ class GPTQ:
         self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
         if DEBUG:
             logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+
+        if scale == []:
+            scale.append(self.quantizer.scale)
+            zero.append(self.quantizer.zero)
+        scale = torch.cat(scale, dim=1)
+        zero = torch.cat(zero, dim=1)
+        return scale, zero
 
     def free(self):
         if DEBUG:

@@ -27,8 +27,9 @@ There are many excellent works for weight only quantization to improve its accur
 | Algorithms/Framework |   PyTorch  |    ONNX Runtime    |
 |:--------------:|:----------:|:----------:|
 |       RTN      |  &#10004;  |  &#10004;  |
-|       AWQ      |  &#10004;  |  &#10004;  |
-|      GPTQ      | stay tuned | &#10004; |
+|       AWQ      |  &#10004;  | &#10004; |
+|      GPTQ      | &#10004; | &#10004; |
+|      TEQ      | &#10004; | stay tuned |
 
 ## Examples
 ### **Quantization Capability**:
@@ -48,6 +49,18 @@ There are many excellent works for weight only quantization to improve its accur
 
 
 **Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
+
+### **Export Compressed Model**
+To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
+
+**Export arguments**:
+| export args  | default value |                               comments                              |
+|:----------:|:-------------:|:-------------------------------------------------------------------:|
+| qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
+|  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
+|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8|16|32|64]   |
+|  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
+|  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
 
 ### **User code**:
 ```python
@@ -71,6 +84,12 @@ conf = PostTrainingQuantConfig(
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)
 q_model.save('saved_results')
+compressed_model = q_model.export_compressed_model(
+    compression_dtype=torch.int32,
+    compression_dim=1,
+    scale_dtype=torch.float16,
+)
+torch.save(compressed_model.state_dict(), 'compressed_model.pt')
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.

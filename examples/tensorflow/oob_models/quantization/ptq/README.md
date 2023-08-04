@@ -98,7 +98,7 @@ List models names can get with open_model_zoo:
 ## run tuning
 
 ```bash
-./run_tuning.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --output_model=${output_model_path}
+./run_quant.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --output_model=${output_model_path}
 ```
 
 ### Quantization Config

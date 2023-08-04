@@ -1,3 +1,5 @@
+import sys
+sys.path.append("./")
 import os
 import shutil
 import torch
@@ -59,6 +61,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             'hf-internal-testing/tiny-random-GPTJForCausalLM',
             torchscript=True,
         )
+        self.gptj.seqlen = 512
         self.llm_dataloader = LLMDataLoader()
         self.lm_input = torch.ones([1, 10], dtype=torch.long)
 
@@ -242,14 +245,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 for i in range(self.nsamples):
                     yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
 
-        
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
                 '.*':{ 	# re.match
                     "weight": {
                         'bits': 4, # 1-8 bits 
-                        'group_size': 128,  # -1 (per-channel)
+                        'group_size': 8,  # -1 (per-channel)
                         'scheme': 'sym', 
                         'algorithm': 'GPTQ', 
                     },
@@ -263,12 +265,19 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                'gptq_args':{'percdamp': 0.01},
+                'gptq_args':{'percdamp': 0.01, 'actorder': False},
             },
         )
+        input = (torch.ones([1, 512], dtype=torch.long))
         dataloader = gptq_inc_loader()
-        # import pdb;pdb.set_trace()
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
+        q_model.save('saved')
+        out1 = q_model.model(*input)
+        compressed_model = q_model.export_compressed_model()
+        out2 = compressed_model(*input)
+        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        print("GPTQ Done")
 
     def test_TEQ_quant(self):
         class teq_inc_loader(object):
@@ -310,7 +319,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         dataloader = teq_inc_loader()
 
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
-
 
 if __name__ == "__main__":
     unittest.main()

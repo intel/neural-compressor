@@ -147,9 +147,9 @@ function ProfilingChart({ profilingChartData }) {
       data={getChartData(profilingChartData)}
       layout={layout}
       useResizeHandler={true}
-      style={{ width: '80vw' }}
+      style={{ 'width': '100%' }}
     ></Plot>
-  </div>)
+  </div >)
 };
 
 const getChartData = (profilingData) => {

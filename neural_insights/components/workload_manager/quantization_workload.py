@@ -70,8 +70,9 @@ class AccuracyData(JsonSerializer):
         Returns: accuracy ratio if baseline and optimized accuracy are present
                  Otherwise returns None
         """
-        if self.optimized_accuracy is None or self.baseline_accuracy is None:
+        if self.optimized_accuracy in [None, 0] or self.baseline_accuracy in [None, 0]:
             return None
+
         return (self.optimized_accuracy - self.baseline_accuracy) / self.baseline_accuracy
 
     def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:

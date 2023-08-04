@@ -88,11 +88,14 @@ pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
+
 ```python
+from neural_compressor import Metric
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import DataLoader
 from neural_compressor.data import Datasets
 
+top1 = Metric(name="topk", k=1)
 dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
 dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 
@@ -101,8 +104,14 @@ q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
     conf=PostTrainingQuantConfig(diagnosis=True),
     calib_dataloader=dataloader,
-    eval_dataloader=dataloader)
+    eval_dataloader=dataloader,
+    eval_metric=top1
+)
 ```
+
+When the quantization is started, the workload should appear on the Neural Insights page and successively, new information should be available while quantization is in progress (such as weights distribution and accuracy data).
+
+> Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.
 
 ## Research Collaborations
 

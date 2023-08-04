@@ -43,7 +43,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
 ## 1. Quantization
 
 ```
-bash run_tuning.sh --input_model <path to HF-ViT-Base16-Img224-frozen.pb> --output_model ./output --dataset_location <path to imagenet>
+bash run_quant.sh --input_model <path to HF-ViT-Base16-Img224-frozen.pb> --output_model ./output --dataset_location <path to imagenet>
 ```
 
 

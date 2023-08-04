@@ -25,7 +25,7 @@ TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activ
                     ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
                     ('weight','bits'), ('weight','group_size'), 'sampling_size']
 
-PRECISION_SET_V2_0 = {'fp32', 'bf16'}
+PRECISION_SET_V2_0 = {'fp32', 'bf16', 'fp16'}
 
 auto_query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
 static_query_order = ['static', 'bf16', 'fp16', 'fp32']
