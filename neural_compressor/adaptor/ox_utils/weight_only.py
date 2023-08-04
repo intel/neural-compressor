@@ -219,9 +219,9 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
             mul_output_name = parent.output[0] + "_weight_only_out"
             mul_node = helper.make_node(
                     "Mul",
-                    inputs=[q_nodes[0].input[0], scale_tensor.name],
+                    inputs=[nodes[0].input[0], scale_tensor.name],
                     outputs=[mul_output_name],
-                    name=q_nodes[0].input[0] + "_weight_only_mul"
+                    name=nodes[0].input[0] + "_weight_only_mul"
                 )
             new_added_mul_nodes.append(mul_node)
             for node in nodes:
