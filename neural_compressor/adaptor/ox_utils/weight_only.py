@@ -283,6 +283,17 @@ def apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts):
     return model
 
 def prepare_inputs(model, n_samples, dataloader):
+    """Prepare inputs for weight only quantization.
+
+    Args:
+        model (ModelProto or ONNXModel): onnx model
+        n_samples (int, optional): calibration sample number.
+        dataloader (object): dataloader for calibration.
+
+    Returns:
+        inputs: prepared inputs.
+        so: session options
+    """
     from importlib.util import find_spec
     from neural_compressor.adaptor.ox_utils.util import to_numpy
     
@@ -345,7 +356,8 @@ def awq_quantize(model,
                             'algorithm': 'AWQ'
                         }
                 }
-        n_samples: calibration sample number.
+        dataloader (object): dataloader for calibration.
+        n_samples (int, optional): calibration sample number.
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
         n_blocks (int, optional): split model into block number to avoid OOM.
@@ -406,7 +418,22 @@ def awq_quantize(model,
         model.model.graph.output.MergeFrom(org_output)
     return model
 
-def gptq(Ws, inp, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=False, perchannel=True):
+def gptq(Ws, Hs, config, blocksize=128, percdamp=.01, actorder=False, mse=False, perchannel=True):
+    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+    Args:
+        Ws (list): list of weight.
+        Hs (list): list of Hessian matrix.
+        config (dict): quantizaion config.
+        blocksize (int, optional): blocksize to quantize weight.
+        percdamp (float, optional): percent of the average Hessian diagonal to use for dampening.
+        actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
+        mse (bool, optional): whether get scale and zero point with mse error.
+        perchannel (bool, optional): whether quantize weight per-channel.
+
+    Returns:
+        Qs: fake quantized weights
+    """
     Qs = []
     group_size = config.get("weight", {}).get("group_size", -1)
     bits = config.get("weight", {}).get("bits", 8)
@@ -548,12 +575,13 @@ def gptq_quantize(model,
                             'algorithm': 'GPTQ'
                         }
                 }
-        n_samples(int, optional): calibration sample number.
-        blocksize(int, optional): blocksize to quantize weight.
-        percdamp(float, optional): percent of the average Hessian diagonal to use for dampening.
-        actorder(bool, optional): whether rearrange Hessian matrix considering the diag's value.
-        mse(bool, optional): whether get scale and zero point with mse error.
-        perchannel(bool, optional): whether quantize weight per-channel.
+        dataloader (object): dataloader for calibration.
+        n_samples (int, optional): calibration sample number.
+        blocksize (int, optional): blocksize to quantize weight.
+        percdamp (float, optional): percent of the average Hessian diagonal to use for dampening.
+        actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
+        mse (bool, optional): whether get scale and zero point with mse error.
+        perchannel (bool, optional): whether quantize weight per-channel.
 
     Returns:
         model: fake quantized ONNXModel
@@ -606,7 +634,6 @@ def gptq_quantize(model,
 
         model.remove_tensors_from_outputs(dump_tensor)
         weights = gptq(weights,
-                       inp,
                        Hs,
                        tune_cfg.get(nodes[0].name, {}),
                        blocksize=blocksize,
