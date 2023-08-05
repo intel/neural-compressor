@@ -523,15 +523,12 @@ class TorchSmoothQuant:
 
             if self.record_max_info and not tuning:
                 # the input of layers with same absorb layer is the same.
-                for i, layer in enumerate(layers):
-                    if i > 1:
-                        self.max_value_info[layer] = self.max_value_info[layers[0]]
-                    input_minmax = [self.input_mins[key], self.input_maxes[key]]
-                    self.max_value_info[layer] = {}
-                    self.max_value_info[layer]['alpha'] = alpha_key
-                    self.max_value_info[layer]['input_minmax'] = input_minmax
-                    self.max_value_info[layer]['weight_max'] = weight_max_per_channel
-                    self.max_value_info[layer]['absorbed_layer'] = layers
+                input_minmax = [self.input_mins[layers[0]], self.input_maxes[layers[0]]]
+                self.max_value_info[key] = {}
+                self.max_value_info[key]['alpha'] = alpha_key
+                self.max_value_info[key]['input_minmax'] = input_minmax
+                self.max_value_info[key]['weight_max'] = weight_max_per_channel
+                self.max_value_info[key]['absorbed_layer'] = layers
                 continue
 
             input_power = torch.pow(input_max, alpha_key)

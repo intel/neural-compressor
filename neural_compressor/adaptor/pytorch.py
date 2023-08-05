@@ -1388,19 +1388,21 @@ class TemplateAdaptor(Adaptor):
             assert not q_model._smoothquant_optimized, \
                     "The model is already optimized by smoothquant, cannot apply new alpha."
             alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
+            for _, info in sq_max_info.items():
                 if alpha == 'auto':
                     alpha = info['alpha']
+                absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model, op_name)
-                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
-                set_module(q_model, op_name, new_module)
-                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                for op_name in absorbed_layer:
+                    module = fetch_module(q_model, op_name)
+                    new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                    set_module(q_model, op_name, new_module)
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         smoothquant_op_info = {'sq_linear': {}, 'qdq_linear': []}
         stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
@@ -3117,27 +3119,29 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             from .torch_utils.model_wrapper import SQLinearWrapper
             from .torch_utils.util import fetch_module
             alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
+            for _, info in sq_max_info.items():
                 if alpha == 'auto':
                     alpha = info['alpha']
+                absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model._model, op_name)
-                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
-                weight_scale = new_module._get_weight_scale()
-                smoothquant_scale_info[op_name] = {
-                    'alpha': new_module.alpha,
-                    'input_scale_for_mul': new_module.input_scale,
-                    'input_scale_after_mul': new_module.scale,
-                    'input_zero_point_after_mul': new_module.zero_point,
-                    'input_dtype': new_module.dtype,
-                    'weight_scale_after_mul': weight_scale,
-                }
-                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                for op_name in absorbed_layer:
+                    module = fetch_module(q_model._model, op_name)
+                    new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                    weight_scale = new_module._get_weight_scale()
+                    smoothquant_scale_info[op_name] = {
+                        'alpha': new_module.alpha,
+                        'input_scale_for_mul': new_module.input_scale,
+                        'input_scale_after_mul': new_module.scale,
+                        'input_zero_point_after_mul': new_module.zero_point,
+                        'input_dtype': new_module.dtype,
+                        'weight_scale_after_mul': weight_scale,
+                    }
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
