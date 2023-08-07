@@ -1387,10 +1387,8 @@ class TemplateAdaptor(Adaptor):
         if sq_max_info:
             assert not q_model._smoothquant_optimized, \
                     "The model is already optimized by smoothquant, cannot apply new alpha."
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for _, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+                alpha = info['alpha']
                 absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
@@ -3118,10 +3116,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             smoothquant_scale_info = {}
             from .torch_utils.model_wrapper import SQLinearWrapper
             from .torch_utils.util import fetch_module
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for _, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+                alpha = info['alpha']
                 absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
