@@ -14,8 +14,14 @@ pip install -r requirements.txt
 
 ## 2. Prepare Model
 
+Fine-tuning the model on [code defect detection](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Code/Defect-detection#codexglue----defect-detection) task.
+```
+bash run_fine_tuning.sh --train_dataset_location=./dataset/train.jsonl --dataset_location=./dataset/valid.jsonl  --fine_tune
+```
+
+Export model to ONNX format. 
 ```bash
-# TODO replace the model
+# TODO replace the model name
 optimum-cli export onnx --model Intel/TBD-MODEL-NAME --task text-classification onnx_model/
 ```
 

@@ -9,9 +9,11 @@ import onnx
 
 logger = logging.getLogger(__name__)
 
+
 def load_dataset_from_local(file_path, model_name_or_path):
     """Load the raw data from local."""
     import json
+
     import torch
 
     def read_data(file_path):
@@ -51,6 +53,101 @@ def load_dataset_from_local(file_path, model_name_or_path):
     return dataset
 
 
+# evaluation func for fine-tuning
+def evaluate(model, val_loader):
+    import torch
+
+    print("***　eval model .. ")
+    all_labels = []
+    all_preds = []
+    for idx, batch in enumerate(val_loader):
+        model.eval()
+        with torch.no_grad():
+            labels = batch.pop("labels")
+            inputs = batch
+            outputs = model(**inputs, labels=labels)
+            loss = outputs.loss
+            logits = outputs.logits
+            all_labels.append(labels.numpy())
+            all_preds.append(np.argmax(logits.detach().numpy(), axis=1))
+            np.concatenate(all_labels, axis=0)
+            np.concatenate(all_preds, axis=0)
+            cur_acc = np.mean(
+                np.concatenate(all_labels, axis=0) == np.concatenate(all_preds, axis=0)
+            )
+            print(f"{idx} batch evaluation accuracy: {cur_acc}")
+    cur_acc = np.mean(
+        np.concatenate(all_labels, axis=0) == np.concatenate(all_preds, axis=0)
+    )
+    print("Overall evaluation accuracy: ", cur_acc)
+    return cur_acc
+
+
+def fine_tune(args):
+    import os
+
+    import numpy as np
+    import torch
+    from torch.utils.data import DataLoader
+    from transformers import AdamW, AutoModelForSequenceClassification
+
+    train_dataset = load_dataset_from_local(
+        args.train_data_path, args.model_name_or_path
+    )
+    val_dataset = load_dataset_from_local(args.data_path, args.model_name_or_path)
+    model = AutoModelForSequenceClassification.from_pretrained(args.model_name_or_path)
+    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+
+    optim = AdamW(model.parameters(), lr=5e-5)
+
+    results = {"eval_acc": 0}
+    global_step = -1
+    for epoch in range(3):
+        all_labels = []
+        all_preds = []
+        for idx, batch in enumerate(train_loader):
+            global_step += 1
+            optim.zero_grad()
+            labels = batch.pop("labels")
+            inputs = batch
+            model.train()
+            outputs = model(**inputs, labels=labels)
+            loss = outputs.loss
+            logits = outputs.logits
+            # print(np.argmax(logits.detach().numpy(), axis=1))
+            all_labels.append(labels.numpy())
+            all_preds.append(np.argmax(logits.detach().numpy(), axis=1))
+            np.concatenate(all_labels, axis=0)
+            np.concatenate(all_preds, axis=0)
+            cur_acc = np.mean(
+                np.concatenate(all_labels, axis=0) == np.concatenate(all_preds, axis=0)
+            )
+            print("  Current acc:%s", round(cur_acc, 4))
+            loss.backward()
+            print(f" Loss: {loss.item()}")
+            optim.step()
+
+            if global_step % 100 == 0:
+                best_acc = results["eval_acc"]
+                cur_acc = evaluate(model, val_loader)
+                if cur_acc > best_acc:
+                    results["eval_acc"] = cur_acc
+                    best_acc = results["eval_acc"]
+                    print("  Best acc:%s", round(best_acc, 4))
+                    checkpoint_prefix = "checkpoint-best-acc-new"
+                    output_dir = os.path.join("{}".format(checkpoint_prefix))
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
+                    model_to_save = model.module if hasattr(model, "module") else model
+                    model.config.to_json_file(
+                        "config-{}-{}-{}".format(checkpoint_prefix, epoch, idx)
+                    )
+                    output_dir = os.path.join(output_dir, "{}".format("model.bin"))
+                    torch.save(model_to_save.state_dict(), output_dir)
+                    print("Saving model checkpoint to %s", output_dir)
+
+
 class ONNXRTDataset:
     def __init__(self, model_path, dataset):
         self.inputs = [inp.name for inp in onnx.load(model_path).graph.input]
@@ -77,6 +174,12 @@ def main():
     # parse args
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--train_data_path",
+        default=None,
+        type=str,
+        help="An optional input training data file to evaluate the perplexity on (a text file).",
+    )
+    parser.add_argument(
         "--data_path",
         default=None,
         type=str,
@@ -92,6 +195,12 @@ def main():
         "--model_path", default=None, type=str, help="The onnx model path."
     )
     parser.add_argument("--benchmark", action="store_true", default=False)
+    parser.add_argument(
+        "--fine_tune",
+        action="store_true",
+        default=False,
+        help="whether fine tune the model",
+    )
     parser.add_argument(
         "--tune", action="store_true", default=False, help="whether quantize the model"
     )
@@ -111,23 +220,12 @@ def main():
     )
     args = parser.parse_args()
 
-    # TODO RBM
-    # args.model_name_or_path = "/home/st_liu/workspace/inc_examples/microsoft/codebert-base"
+    # fine tune
+    if args.fine_tune:
+        fine_tune(args)
 
-    train_dataset = load_dataset_from_local(args.data_path, args.model_name_or_path)
-    ort_dataset = ONNXRTDataset(args.model_path, train_dataset)
 
-    from neural_compressor.data import DataLoader as INC_DataLoader
-
-    dataloader = INC_DataLoader(
-        framework="onnxruntime", dataset=ort_dataset, batch_size=args.batch_size
-    )
-
-    acc_result = [0.69]
     def eval_func(model):
-        if len(acc_result) > 0:
-            res = acc_result.pop(0)
-            return res
         session = ort.InferenceSession(
             model.SerializeToString(), providers=ort.get_available_providers()
         )
@@ -168,6 +266,15 @@ def main():
         from onnxruntime.transformers import optimizer
         from onnxruntime.transformers.fusion_options import FusionOptions
 
+        train_dataset = load_dataset_from_local(args.data_path, args.model_name_or_path)
+        ort_dataset = ONNXRTDataset(args.model_path, train_dataset)
+
+        from neural_compressor.data import DataLoader as INC_DataLoader
+
+        dataloader = INC_DataLoader(
+            framework="onnxruntime", dataset=ort_dataset, batch_size=args.batch_size
+        )
+
         model_type = "bert"
         opt_options = FusionOptions(model_type)
         opt_options.enable_embed_layer_norm = False
@@ -200,7 +307,7 @@ def main():
             approach="static",
             quant_level=1,
             quant_format=args.quant_format,
-            #recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
+            # recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
         )
         q_model = quantization.fit(
             model,
@@ -209,12 +316,18 @@ def main():
             calib_dataloader=dataloader,
         )
         q_model.save(args.output_model)
-    
+
     # benchmark
     if args.benchmark:
         import onnx
         import onnxruntime as ort
+        from neural_compressor.data import DataLoader as INC_DataLoader
 
+        train_dataset = load_dataset_from_local(args.data_path, args.model_name_or_path)
+        ort_dataset = ONNXRTDataset(args.model_path, train_dataset)
+        dataloader = INC_DataLoader(
+            framework="onnxruntime", dataset=ort_dataset, batch_size=args.batch_size
+        )
         model = onnx.load(args.model_path)
         if args.mode == "performance":
             from neural_compressor.benchmark import fit
