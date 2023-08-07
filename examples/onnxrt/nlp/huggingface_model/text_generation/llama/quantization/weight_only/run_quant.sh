@@ -58,7 +58,7 @@ function run_tuning {
 
     python main.py \
             --model_path ${input_model} \
-	        --tokenizer ${tokenizer-decapoda-research/llama-7b-hf} \
+	    --tokenizer ${tokenizer-decapoda-research/llama-7b-hf} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
             --dataset ${dataset-NeelNanda/pile-10k} \
