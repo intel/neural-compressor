@@ -3130,7 +3130,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 for op_name in absorbed_layer:
-                    module = fetch_module(q_model._model, op_name)
+                    module = copy.deepcopy(fetch_module(q_model._model, op_name))
                     new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
                     weight_scale = new_module._get_weight_scale()
                     smoothquant_scale_info[op_name] = {
