@@ -18,7 +18,7 @@ requirements:
   run:
     - python
     - pip
-    - neural_compressor>=2.2
+    - neural-compressor>=2.2
     - Flask
     - Flask-Cors
     - Flask-SocketIO
