@@ -20,7 +20,6 @@ from .base import (register_pattern,
                    SparsityInfo,
                    ProgressivePatternUtils)
 from ..utils import logger, torch, tf, nn
-import transformers
 
 
 @register_pattern('ptN:M')
@@ -394,7 +393,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                                                                              progressive_step, progressive_configs)
       
     def fasterprune(self, gpt, blocksize=128, percdamp=.01):
-        """"""
+        import transformers
         W = gpt.module.weight.data.clone()
         dev = gpt.dev
         rows = gpt.rows
@@ -464,4 +463,5 @@ class PytorchPatternNInM(PytorchBasePattern):
         module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
 

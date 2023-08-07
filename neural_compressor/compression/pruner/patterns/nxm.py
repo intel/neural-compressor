@@ -24,7 +24,6 @@ from .base import (register_pattern,
                    ProgressivePatternUtils)
 
 from ..utils import logger, torch, tf, nn
-import transformers
 
 @register_pattern('ptNxM')
 class PytorchPatternNxM(PytorchBasePattern):
@@ -447,6 +446,7 @@ class PytorchPatternNxM(PytorchBasePattern):
             raise NotImplementedError
         
     def fasterprune(self, gpt, blocksize=128, percdamp=.01):
+        import transformers
         sparsity = self.target_sparsity_ratio
         W = gpt.module.weight.data.clone()
         dev = gpt.dev
@@ -814,4 +814,5 @@ class KerasPatternNxM(KerasBasePattern):
             layer_ratio = np.sum(masks[key] == 0.0) / masks[key].size
             logger.info(f'{key} sparsity is {layer_ratio}')
         return masks
+
 
