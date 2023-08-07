@@ -29,5 +29,6 @@ Submodules
    quantizer/index.rst
    smooth_quant/index.rst
    util/index.rst
+   weight_only/index.rst
 
 

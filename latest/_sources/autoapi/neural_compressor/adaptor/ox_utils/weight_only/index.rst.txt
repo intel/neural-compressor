@@ -1,0 +1,197 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.weight_only`
+========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.weight_only
+
+.. autoapi-nested-parse::
+
+   WeightOnly for onnxrt adaptor.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor
+   neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize
+   neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale
+   neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale
+   neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip
+   neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs
+   neural_compressor.adaptor.ox_utils.weight_only.awq_quantize
+   neural_compressor.adaptor.ox_utils.weight_only.gptq
+   neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize
+
+
+
+.. py:function:: qdq_tensor(data, config, ratio=1.0)
+
+   Quant and dequant tensor per group.
+
+   :param data: input weight
+   :param config: quantization config
+   :type config: dict
+   :param ratio: percentile of clip. Defaults to 1.0.
+   :type ratio: float, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: rtn_quantize(model, tune_cfg, ratios={})
+
+   Quant the model with round to nearst method.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param tune_cfg: quantization config
+                    For example,
+                    tune_cfg={
+                        'fc2':
+                            {
+                                'bits': 4,
+                                'group_size': 32,
+                                'scheme': 'sym',
+                                'algorithm': 'RTN'
+                            }
+                    }
+   :type tune_cfg: dict
+   :param ratios: percentile of clip. Defaults to {}.
+   :type ratios: dict, optional
+
+   :returns: fake quantized ONNXModel
+   :rtype: model
+
+
+.. py:function:: get_weight_scale(weight, group_size)
+
+   Get the scale of weight.
+
+
+.. py:function:: apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts)
+
+   Apply scale for salient weight.
+
+
+.. py:function:: apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts)
+
+   Apply clip for weight by checking mse.
+
+
+.. py:function:: prepare_inputs(model, n_samples, dataloader)
+
+   Prepare inputs for weight only quantization.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param n_samples: calibration sample number.
+   :type n_samples: int, optional
+   :param dataloader: dataloader for calibration.
+   :type dataloader: object
+
+   :returns: prepared inputs.
+             so: session options
+   :rtype: inputs
+
+
+.. py:function:: awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, mse_range=True, n_blocks=5)
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param tune_cfg: quantization config
+                    For example,
+                    tune_cfg={
+                        'fc2':
+                            {
+                                'bits': 4,
+                                'group_size': 32,
+                                'scheme': 'sym',
+                                'algorithm': 'AWQ'
+                            }
+                    }
+   :type tune_cfg: dict
+   :param dataloader: dataloader for calibration.
+   :type dataloader: object
+   :param n_samples: calibration sample number.
+   :type n_samples: int, optional
+   :param auto_scale: whether enable scale for salient weight. Defaults to True.
+   :type auto_scale: bool, optional
+   :param mse_range: whether enable clip for weight by checking mse. Defaults to True.
+   :type mse_range: bool, optional
+   :param n_blocks: split model into block number to avoid OOM.
+   :type n_blocks: int, optional
+
+   :returns: fake quantized ONNXModel
+   :rtype: model
+
+
+.. py:function:: gptq(Ws, Hs, config, blocksize=128, percdamp=0.01, actorder=False, mse=False, perchannel=True)
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param Ws: list of weight.
+   :type Ws: list
+   :param Hs: list of Hessian matrix.
+   :type Hs: list
+   :param config: quantizaion config.
+   :type config: dict
+   :param blocksize: blocksize to quantize weight.
+   :type blocksize: int, optional
+   :param percdamp: percent of the average Hessian diagonal to use for dampening.
+   :type percdamp: float, optional
+   :param actorder: whether rearrange Hessian matrix considering the diag's value.
+   :type actorder: bool, optional
+   :param mse: whether get scale and zero point with mse error.
+   :type mse: bool, optional
+   :param perchannel: whether quantize weight per-channel.
+   :type perchannel: bool, optional
+
+   :returns: fake quantized weights
+   :rtype: Qs
+
+
+.. py:function:: gptq_quantize(model, tune_cfg, dataloader, n_samples=128, percdamp=0.01, blocksize=128, actorder=False, mse=False, perchannel=True)
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param tune_cfg: quantization config
+                    For example,
+                    tune_cfg={
+                        'fc2':
+                            {
+                                'bits': 4,
+                                'group_size': 32,
+                                'scheme': 'sym',
+                                'algorithm': 'GPTQ'
+                            }
+                    }
+   :type tune_cfg: dict
+   :param dataloader: dataloader for calibration.
+   :type dataloader: object
+   :param n_samples: calibration sample number.
+   :type n_samples: int, optional
+   :param percdamp: percent of the average Hessian diagonal to use for dampening.
+   :type percdamp: float, optional
+   :param blocksize: blocksize to quantize weight.
+   :type blocksize: int, optional
+   :param actorder: whether rearrange Hessian matrix considering the diag's value.
+   :type actorder: bool, optional
+   :param mse: whether get scale and zero point with mse error.
+   :type mse: bool, optional
+   :param perchannel: whether quantize weight per-channel.
+   :type perchannel: bool, optional
+
+   :returns: fake quantized ONNXModel
+   :rtype: model
+
+
