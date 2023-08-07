@@ -113,6 +113,9 @@ When the quantization is started, the workload should appear on the Neural Insig
 
 > Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.
 
+## Step by Step Diagnosis Example
+Refer to [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) and [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md) to get started with some basic quantization accuracy diagnostic skills.
+
 ## Research Collaborations
 
 Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Neural Insights!
