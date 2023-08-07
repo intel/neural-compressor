@@ -706,6 +706,15 @@ class TorchSmoothQuant:
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
                     self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
+                    # fetch modules with the same input
+                    group_modules = self._trace(op_types, skip_unsupported_layers=False)
+                    for k, v in group_modules.items():
+                        # use one input for qkv
+                        for i in v:
+                            if i in self.self_absorb_layers:
+                                self.self_absorb_layers.pop(i)
+                        self.self_absorb_layers[v[0]] = v
+                    logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
@@ -836,7 +845,7 @@ class TorchSmoothQuant:
 
         return self.example_inputs
 
-    def _trace(self, op_types):
+    def _trace(self, op_types, skip_unsupported_layers=True):
         """
         Try the model to find the layers which can be smooth quantized.
         :param op_types: The op types to be smooth quantized
@@ -846,7 +855,12 @@ class TorchSmoothQuant:
         """
         tg = GraphTrace()
         self._get_example_input()
-        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
+        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
+            self.traced_model, self.example_inputs, op_types, 
+            skip_unsupported_layers=skip_unsupported_layers
+        )
+        if not skip_unsupported_layers:
+            return absorb_to_layer
         if absorb_to_layer == None and no_absorb_layers == None:
             logger.warning("sorry, could not trace the model, smooth quant is skipped")
             logger.warning("if you are using huggingface model,"
@@ -994,7 +1008,7 @@ class GraphTrace:
         res = list(set(res))
         return res
 
-    def get_absorb_to_layer(self, model, example_input, op_types):
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
         traced_model = self.trace(model, example_input)
         if traced_model == None:
             return None, None
@@ -1019,7 +1033,8 @@ class GraphTrace:
                 absorb_to_layer[absorb_name].append(layer_name)
             else:
                 absorb_to_layer[absorb_name] = [layer_name]
-        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
+        if skip_unsupported_layers:
+            absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
         return absorb_to_layer, no_absorb_layers
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
