@@ -756,6 +756,27 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "llama-7b-rtn": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "llama-7b-awq": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "llama-7b-gptq": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
     "hf_roberta-large": {
       "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",
