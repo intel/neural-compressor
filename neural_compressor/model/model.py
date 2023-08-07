@@ -74,7 +74,7 @@ def get_model_fwk_name(model):
         from importlib.util import find_spec
         try:
             so = ort.SessionOptions()
-            if sys.version_info < (3,10) and \
+            if sys.version_info < (3,11) and \
                 find_spec('onnxruntime_extensions'): # pragma: no cover
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())

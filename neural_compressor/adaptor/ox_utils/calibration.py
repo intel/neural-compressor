@@ -213,7 +213,7 @@ class ONNXRTAugment:
         """Gather intermediate model outputs after running inference."""
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
-        if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
+        if sys.version_info < (3, 11) and find_spec('onnxruntime_extensions'):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 

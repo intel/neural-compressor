@@ -708,7 +708,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         sess_options.graph_optimization_level = optimization_levels[level]
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+        if sys.version_info < (3,11) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
         if not model.is_large_model:
@@ -1233,7 +1233,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+        if sys.version_info < (3,11) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
         session = ort.InferenceSession(self.work_space + 'eval.onnx',

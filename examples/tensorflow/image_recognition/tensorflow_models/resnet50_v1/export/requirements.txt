@@ -3,4 +3,4 @@ intel-extension-for-tensorflow[cpu]
 tf2onnx>=1.10.1
 onnx
 onnxruntime
-onnxruntime-extensions; python_version < '3.10'
+onnxruntime-extensions; python_version < '3.11'
