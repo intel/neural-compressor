@@ -1371,6 +1371,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 framework_specific_info['use_bf16'] = True
             if framework_specific_info['backend'] == 'onnxrt_dnnl_ep' and self.config.device == 'cpu':
                 framework_specific_info['use_bf16'] = True
+            if self.config.approach =='post_training_weight_only':
+                framework = 'onnxrt_weightonly'   # use specific adaptor for weight_only approach
+ 
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.config.backend == 'ipex':
                 framework = 'pytorch_ipex'
