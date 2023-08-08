@@ -20,7 +20,7 @@ from neural_compressor.compression.pruner.utils import parse_to_prune, get_spars
 from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import logger, torch, collect_layer_inputs, get_layers
 from typing import Optional
-from tqdm.auto import tqdm
+
 PRUNINGS = {}
 
 def register_pruning(name):
@@ -184,6 +184,7 @@ class SparseGPTPruning(BasePruning):
 
     @torch.no_grad()
     def _do_pruning(self):
+        from tqdm.auto import tqdm
         layers = self._layers
         self._model = self._model.cpu()
         inputs, inp_dict = collect_layer_inputs(model=self._model, layers=layers, layer_idx=0,
@@ -240,6 +241,7 @@ class RetrainFreePruning(BasePruning):
         get_sparsity_ratio(self.pruners, self._model)
 
     def _do_pruning(self):
+        from tqdm.auto import tqdm
         progress_bar = tqdm(range(len(self._dataloader.dataset)))
         if self._loss_func is not None:
             for inputs, target in self._dataloader:
@@ -268,4 +270,5 @@ class RetrainFreePruning(BasePruning):
     #     self._dataloader = dataloader
     #     self._prepare_pruners()
         
+
 

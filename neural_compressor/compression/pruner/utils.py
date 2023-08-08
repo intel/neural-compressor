@@ -19,7 +19,6 @@
 import re
 import yaml
 import numpy as np
-from functools import partial
 from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
@@ -657,6 +656,7 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'
             raise ValueError
         
         forward_cache = layers[layer_idx].forward
+        from functools import partial
         layer.forward = partial(forward, layer)
         for batch in layer_inputs:
             try:
@@ -681,4 +681,5 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'
             inputs.append(batch)
             
     return inputs, inputs_info
+
 
