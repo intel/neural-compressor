@@ -26,7 +26,7 @@ optimum-cli export onnx --model decapoda-research/llama-7b-hf --task text-genera
 bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --output_model=/path/to/model_tune \ # folder path to save onnx model
                   --batch_size=batch_size # optional \
-                  --dataset NeelNanda/pile-10k \
+                  --dataset=NeelNanda/pile-10k \
                   --tokenizer=decapoda-research/llama-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
                   --algorithm=RTN # support RTN, AWQ, GPTQ
 ```
