@@ -75,12 +75,11 @@ def calibration(model, dataloader=None, n_samples=128, calib_func=None):
 
 def _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     # Step 1: replace block_forward to collect block inputs and avoid entire inference
-    total_hidden_states = []
+    total_block_args = []
     total_block_kwargs = []
-    def forward(layer, hidden_states, **kwargs):
-        nonlocal total_hidden_states
+    def forward(layer, *args, **kwargs):
         # update total_hidden_states, total_block_kwargs, per batch
-        total_hidden_states.append(hidden_states)
+        total_block_args.append(args)
         total_block_kwargs.append(kwargs)
         raise ValueError
 
@@ -107,7 +106,7 @@ def _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     # Step 4: recover model and block forward
     model.forward = model_forward_cache
     first_block.forward = block_forward_cache
-    return total_hidden_states, total_block_kwargs
+    return total_block_args, total_block_kwargs
 
 
 
@@ -132,12 +131,12 @@ def awq_optmization(model, bits=4, group_size=32, scheme='asym', weight_config={
         from .util import get_example_input
         example_inputs = get_example_input(dataloader)
     block_absorb_dict, absorb_layer_dict = _get_absorb_per_block(model, example_inputs)
-    total_hidden_states, block_kwargs = _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None)
+    total_block_args, total_block_kwargs = _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None)
     block_prefix, block_num = _get_block_prefix(model)
     block_list = fetch_module(model, block_prefix)
     for i, module_list in block_absorb_dict.items():
         block = fetch_module(model, block_prefix + '.' + str(i))
         total_out = []
-        for hidden_states in total_hidden_states:
-            out = block(hidden_states, **block_kwargs)
-            total_out.append()
+        for args, kwargs in zip(total_block_args, total_block_kwargs):
+            out = block(*args, **kwargs)
+            total_out.append(out)
