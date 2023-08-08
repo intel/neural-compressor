@@ -41,7 +41,7 @@ class SparseGPTPruner(PytorchBasePruner):
         logger.warning("sparse_gpt pruner fixed the weights, Please DO NOT train or update gradients.")
         assert "1x1" in self.pattern.pattern or ":" in self.pattern.pattern, \
                 "sparse_gpt pruner type only supports 1x1 and N:M patterns."
-    
+                
     class SparseGPT():
         def __init__(self, module):
             import transformers
@@ -58,6 +58,7 @@ class SparseGPTPruner(PytorchBasePruner):
             self.nsamples = 0
 
         def add_batch(self, inp, blocksize=1024):
+            import transformers
             if len(inp.shape) == 2:
                 inp = inp.unsqueeze(0)
             sample_num = inp.shape[0] # batchsize
