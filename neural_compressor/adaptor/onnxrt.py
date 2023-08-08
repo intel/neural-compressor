@@ -99,6 +99,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             config_file = 'onnxrt_cuda.yaml'
         elif self.backend == 'DnnlExecutionProvider':
             config_file = 'onnxrt_dnnl.yaml'
+        elif self.backend == 'DmlExecutionProvider':
+            config_file = 'onnxrt_dml.yaml'
         else: # pragma: no cover
             assert False, "{} provider is not supported in current environment, " \
                 "supported providers: {}".format(self.backend,
