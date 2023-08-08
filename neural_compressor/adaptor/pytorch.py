@@ -1290,6 +1290,32 @@ class TemplateAdaptor(Adaptor):
                     fused_dict.update({op_name: fp32_int8_ops})
         return fused_dict
 
+    def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
+        """This is a helper function to diagnosis.
+
+        Args:
+            fp32_model (object): Fp32 model (original)
+            int8_model (object): Quantized model
+            tune_cfg (dict): Quantization config
+            save_path (Path): The path to save min/max value of op outputs
+
+        Returns:
+            Op name list for inspecting, tuning configuration
+        """
+        exclude_list = ["QuantStub", "DeQuantStub", "BatchNorm2d", "Sequential"]
+        optype_list = torch.quantization.get_default_qconfig_propagation_list()
+        supported_optype = []
+        for optype in optype_list:
+            op_type = str(optype).rstrip('\'>').split('.')[-1]
+            if "intrinsic." not in str(optype) and op_type not in exclude_list:
+                supported_optype.append(optype)
+        inspect_node_list = []
+        for name, child in fp32_model.model.named_modules():
+            op_type = type(child)
+            if op_type in supported_optype:
+                inspect_node_list.append(name)
+        return inspect_node_list, tune_cfg
+
     def inspect_tensor(self,
                        model,
                        dataloader,
