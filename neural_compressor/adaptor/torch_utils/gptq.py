@@ -121,6 +121,40 @@ def log_quantizable_layers_per_transformer(
 
 #===========================================
 
+#==================dataset related==============================
+# we would like to convert dataset into GPTQ related structure
+def prepare_gptq_calibration(calib_dataset, model, seed = 0, nsamples = 128, seqlen = 2048):
+    # directly prepare tokenized data for gptq calibration
+    class INCDataloader(object):
+        def __init__(self, gptq_dataloader):
+            self.batch_size = 1
+            self.gptq_dataloader = gptq_dataloader
+            self.length = len(gptq_dataloader)
+            self.batch_size = 1
+
+        def __iter__(self):
+            pass
+
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained(model, use_fast=True)
+    import random
+    random.seed(seed)
+    trainloader = []
+    for _ in range(nsamples):
+        while True:
+            i = random.randint(0, len(calib_dataset) - 1)
+            trainenc = tokenizer(calib_dataset[i]['text'], return_tensors='pt')
+            if trainenc.input_ids.shape[1] > seqlen:
+                break
+        i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
+        j = i + seqlen
+        inp = trainenc.input_ids[:, i:j]
+        tar = inp.clone()
+        tar[:, :-1] = -100
+        trainloader.append((inp, tar))
+    return INCDataloader(trainloader)
+#===============================================================
+
 #===============quantization related============================
 def quantize(x, scale, zero, maxq):
     """Do quantization."""
@@ -176,12 +210,14 @@ class GPTQuantizer(object):
         self.mse_default = False
         self.check_layer_config()
 
-        # data & device
+        # dataloader 
         if hasattr(dataloader, "gptq_dataloader"):
             self.dataloader = dataloader.gptq_dataloader
         else:
             self.dataloader = dataloader
         self.nsamples = len(self.dataloader)
+
+        # device
         self.device = model.device
         self.is_ready = False
 
@@ -191,10 +227,12 @@ class GPTQuantizer(object):
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
         # initialize buffers which are essential for gptq computation. 
+        self.model_hidden_size = 2048
+        self.initialize_inp_buffersize()
         try:
             self.dtype = next(iter(self.model.parameters())).dtype
             self.inp = torch.zeros(
-                (self.nsamples, self.model.seqlen, self.model.config.hidden_size), 
+                (self.nsamples, self.model.seqlen, self.model_hidden_size), 
                 dtype=self.dtype, 
                 device=self.device
             )
@@ -204,6 +242,43 @@ class GPTQuantizer(object):
         except:
             logger.warning("GPTQ Quantizer initialization failed!")
             pass
+    
+    @torch.no_grad()
+    def initialize_inp_buffersize(self):
+        # Run a forward and generate proper buffer tensor
+        # Thus, no need to pass hidden_states dimension parameters of model.config
+        # e.g. OPT's hidden_states dimension can be called by model.config.hidden_size
+        # but mpt's hidden_states dimension can be called by model.config.d_model
+        def forward(layer, hidden_states, **kwargs):
+            # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
+            logger.info(f"The hidden_states shape along transformers blocks is {hidden_states.shape}.")
+            self.model_hidden_size = hidden_states.shape[-1]
+            raise ValueError
+
+        # Step1: fetch the embeddings and other layers before the transformer stack.
+        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+            embedding_layer = embedding_layer.to(self.device)
+
+        # Step2: modify the first transformer block's forward function to obtain inputs for calibration
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
+        forward_cache = self.gptq_related_blocks['transformers'][0].forward
+        self.gptq_related_blocks['transformers'][0].forward = \
+            partial(forward, self.gptq_related_blocks['transformers'][0])
+
+        # Step3: run forward to obtain calibration datasets
+        logger.info("Collecting calibration inputs...")
+        for batch in self.dataloader:
+            try:
+                self.model(batch[0].to(self.device))
+            except ValueError:
+                break
+
+        # Step 4: restore original forward function, relocate layers back to cpu.
+        self.gptq_related_blocks['transformers'][0].forward = forward_cache
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
+        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+            embedding_layer.to(self.device)
+        torch.cuda.empty_cache()
         
     def get_full_layer_name(self, sub_layer_name, block_idx):
         transformer_name = self.gptq_related_blocks["transformers_name"]
