@@ -1109,6 +1109,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
+    <td>CodeBert</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/code_detection/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>CodeBert</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/code_detection/quantization/ptq_dynamic">integerops</a></td>
+  </tr>
+  <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
