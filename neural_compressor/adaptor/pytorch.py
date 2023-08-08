@@ -1387,10 +1387,8 @@ class TemplateAdaptor(Adaptor):
         if sq_max_info:
             assert not q_model._smoothquant_optimized, \
                     "The model is already optimized by smoothquant, cannot apply new alpha."
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for _, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+                alpha = info['alpha']
                 absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
@@ -3118,10 +3116,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             smoothquant_scale_info = {}
             from .torch_utils.model_wrapper import SQLinearWrapper
             from .torch_utils.util import fetch_module
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
             for _, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+                alpha = info['alpha']
                 absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
@@ -3130,7 +3126,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 for op_name in absorbed_layer:
-                    module = fetch_module(q_model._model, op_name)
+                    module = copy.deepcopy(fetch_module(q_model._model, op_name))
                     new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
                     weight_scale = new_module._get_weight_scale()
                     smoothquant_scale_info[op_name] = {

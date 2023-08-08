@@ -412,7 +412,7 @@ class TorchSmoothQuant:
         """
         layer = get_module(self.model, layer_name)
         if layer.__class__.__name__ == "SQLinearWrapper":
-            return scale
+            return scale # weigth update is done in SQLinearWrapper initialization
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
         return scale
@@ -430,6 +430,7 @@ class TorchSmoothQuant:
             from .model_wrapper import SQLinearWrapper
             layer = get_module(self.model, layer_name)
             if isinstance(layer, SQLinearWrapper):
+                layer._recover_sq_linear()
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
                 input_minmax = [self.input_mins[layer_name], self.input_maxes[layer_name]]
@@ -532,10 +533,7 @@ class TorchSmoothQuant:
                 continue
 
             input_power = torch.pow(input_max, alpha_key)
-            logger.debug(f"{max(input_max)}, {min(input_max)}")
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha_key)
-            # logger.info(f"{absorb_to_layer[key][0]} layer sparsity is
-            # {1.0-torch.count_nonzero(input_power)/input_power.numel()}")
 
             scale = torch.clip(input_power / weight_power, min=1e-5)
             scale[input_power == 0] = 1.0
@@ -624,7 +622,7 @@ class TorchSmoothQuant:
                 loss_alpha = {}
                 for alpha in alpha_space:
                     self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
-                        absorb_to_layer_sample,input_max_op, alpha, tuning=True
+                        absorb_to_layer_sample, input_max_op, alpha, tuning=True
                     )
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
                     input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
@@ -634,9 +632,8 @@ class TorchSmoothQuant:
 
                     if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
-                    weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
-                    layer_cp.weight.data = weight_qdq
+                    layer_cp.weight.data = quant_dequant_w(layer_cp)
                     output_of_op_q = layer_cp(input_of_op_q)
                     self.recover()
                     loss = torch.sum(torch.abs(output_of_op - output_of_op_q) ** 2)
@@ -665,6 +662,7 @@ class TorchSmoothQuant:
                 if len(loss_all_layers) > 1:
                     ans_layer2absorb[absorb_key] = min_alpha
         logger.info("auto tuning alpha done")
+        logger.debug(ans_layer2absorb)
         return ans_layer2absorb
 
     def transform(self, alpha=0.5, folding=False, percentile=99.999, op_types=['Linear', 'Conv2d'],
