@@ -402,26 +402,29 @@ def _update_input_with_scale(args, kwargs, scales):
     return new_args, new_kwargs
 
 
-def _get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False):
+def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False):
+    """Get absorb_to_layer and no_absorb_layer.
+
+    Args:
+        model (torch.nn.Module): input model
+        example_inputs: example_inputs
+        supported_layers (list, optional): supported_layers. Defaults to ['Linear'].
+        folding (bool, optional): whether allow self-absorption. Defaults to False.
+
+    Returns:
+        absorb_to_layer: dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+        no_absorb_layers: list of no_absorb_layers
+    """
     # get modules that can be absorbed.
     from .smooth_quant import GraphTrace
     tg = GraphTrace()
-    supported_layers = ['Linear']
     absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
         model, example_inputs, supported_layers
     )
     if absorb_to_layer is None or absorb_to_layer == {}:
         if folding:
-            logger.warning('No absorb layer is detected, skip AWQ algorithm')
-            return model
-    # allow absorbing in itself
-    if not folding:
-        for k in no_absorb_layers:
-            if k in absorb_to_layer:
-                absorb_to_layer[k].append(k)
-            else:
-                absorb_to_layer[k] = [k]
-    return absorb_to_layer
+            logger.warning('No absorb layer is detected, please set folding=False for self-absorption')
+    return absorb_to_layer, no_absorb_layers
 
 
 @torch.no_grad()
