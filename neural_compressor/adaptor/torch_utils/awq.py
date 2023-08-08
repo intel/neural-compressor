@@ -107,7 +107,7 @@ def _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     # Step 4: recover model and block forward
     model.forward = model_forward_cache
     first_block.forward = block_forward_cache
-    return total_hidden_states, block_kwargs
+    return total_hidden_states, total_block_kwargs
 
 
 
