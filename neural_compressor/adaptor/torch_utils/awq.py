@@ -76,18 +76,12 @@ def calibration(model, dataloader=None, n_samples=128, calib_func=None):
 def _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     # Step 1: replace block_forward to collect block inputs and avoid entire inference
     total_hidden_states = []
-    block_kwargs = {}
+    total_block_kwargs = []
     def forward(layer, hidden_states, **kwargs):
         nonlocal total_hidden_states
-        # update total_hidden_states, collect each batch
+        # update total_hidden_states, total_block_kwargs, per batch
         total_hidden_states.append(hidden_states)
-        # update block_kwargs
-        for k, v in kwargs.items():
-            if isinstance(v, torch.Tensor) and v.shape[0] == hidden_states.shape[0] \
-              and k in block_kwargs:
-                block_kwargs[k] = torch.cat([block_kwargs[k], v], dim=0)
-            else:
-                block_kwargs[k] = v
+        total_block_kwargs.append(kwargs)
         raise ValueError
 
     block_prefix, block_num = _get_block_prefix(model)
