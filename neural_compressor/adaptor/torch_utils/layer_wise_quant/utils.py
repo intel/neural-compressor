@@ -82,7 +82,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_shell(pretrained_model_name_or_path, cls):
+def load_shell(pretrained_model_name_or_path, cls, **kwargs):
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover
@@ -90,11 +90,11 @@ def load_shell(pretrained_model_name_or_path, cls):
     else:
         path = dowload_hf_model(pretrained_model_name_or_path)
     if cls.__base__ == _BaseAutoModelClass:
-        config = AutoConfig.from_pretrained(path)
+        config = AutoConfig.from_pretrained(path, **kwargs)
         with init_empty_weights():
             model = cls.from_config(config)
     else:  # pragma: no cover
-        config = cls.config_class.from_pretrained(path)
+        config = cls.config_class.from_pretrained(path, **kwargs)
         with init_empty_weights():
             model = cls(config)
     model.tie_weights()

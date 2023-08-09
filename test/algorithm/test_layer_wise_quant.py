@@ -15,7 +15,7 @@ class TestLayerWise(unittest.TestCase):
     def test_layer_wise(self):
 
         model_name_or_path = 'facebook/opt-125m'
-        fp32_model = load_shell(model_name_or_path, AutoModelForCausalLM)
+        fp32_model = load_shell(model_name_or_path, AutoModelForCausalLM, torchscript=True)
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
         texts = [
@@ -46,7 +46,8 @@ class TestLayerWise(unittest.TestCase):
                 "layer_wise_quant": True,
                 "layer_wise_quant_args": {
                     "model_path": "facebook/opt-125m",
-                    "output_dir": "./saved_result"
+                    "smooth_quant": True,
+                    "smooth_quant_alpha": 0.5
                 }
             })
 
@@ -65,7 +66,7 @@ class TestLayerWise(unittest.TestCase):
         )
 
         model_name_or_path = 'facebook/opt-125m'
-        model = load_shell(model_name_or_path, AutoModelForCausalLM)
+        model = load_shell(model_name_or_path, AutoModelForCausalLM, torchscript=True)
         children = get_children(model)
         named_children = get_named_children(model)
         self.assertEqual(children, [v for k, v in named_children])

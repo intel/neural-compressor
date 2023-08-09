@@ -24,11 +24,13 @@ from tqdm import tqdm
 
 from .utils import torch
 from ..model_wrapper import QDQLayer
-from torch.quantization import prepare, convert
+from torch.quantization import prepare, convert, QuantWrapper
 from accelerate.utils import set_module_tensor_to_device
 from .utils import _get_path, get_named_children, update_module, load_tensor_from_shard, load_tensor
 
 from neural_compressor.config import default_workspace
+
+from ..smooth_quant import TorchSmoothQuant
 
 TMP_DIR = f'{default_workspace}/layer_wise_quant_tmp_dir_{time.time()}'
 
@@ -45,25 +47,56 @@ class LayerWiseQuant:
     """Layer wise quantization.
     Layer-by-layer quantize the model, in order to save memomery.
     """
-    def __init__(self, q_model, pretrained_model_name_or_path, op_cfgs,
-                 output_dir=None, device='cpu'):
+    def __init__(self, q_model, pretrained_model_name_or_path, op_cfgs, calib_data,
+                 smooth_quant=False, output_dir=None, device='cpu', alpha=0.5):
         """Init LayerWiseQuant."""
         # self.q_model = load_shell(pretrained_model_name_or_path, cls)
         self.q_model = q_model
         self.fp32_model = deepcopy(self.q_model)
         self.path = _get_path(pretrained_model_name_or_path)
         self.op_cfgs = op_cfgs
+        self.calib_data = calib_data
         self.output_dir = output_dir
         if self.output_dir:
             os.makedirs(self.output_dir, exist_ok=True)
         self.modules = get_named_children(self.q_model)
         self.device = device
         self._handle = {}
+
+        self.smooth_quant = smooth_quant
+        self.alpha = alpha
+        if smooth_quant:
+            self.init_sq()
     
-    def quantize(self, calib_data, clean_weight=True):
+    def init_sq(self):
+        handles = self._register_weight_hooks(self.fp32_model)
+
+        # traced_model = torch.jit.trace(self.fp32_model, torch.randint(0, 100, (1, 3)))
+        op_types = ['Linear']
+        sq = TorchSmoothQuant(self.fp32_model, self.calib_data)
+        sq._check_need_calibration(self.alpha, percentile=99.999, op_types=['Linear', 'Conv2d'],
+                                   scales_per_op=False, calib_iter=100)
+        absorb_to_layer = sq._get_all_layer_names()
+        group_modules = sq._trace(op_types, skip_unsupported_layers=False)
+        for k, v in group_modules.items():
+            # use one input for qkv
+            for i in v:
+                if i in absorb_to_layer:
+                    absorb_to_layer.pop(i)
+                    absorb_to_layer[v[0]] = v
+        assert absorb_to_layer is not None,  "if you are using huggingface model,"
+        "you could set torchscript to True when loading the model or set the return_dict to False"
+        self.absorb_layers = []
+        self.scale_weight_layers = []
+        for k, v in absorb_to_layer.items():
+            self.absorb_layers.append(k)
+            self.scale_weight_layers += v
+        self._remove_hooks(handles)
+
+    def quantize(self, clean_weight=True):
         """The main entry of layer wise quantization."""
         mk_tmp_dir()
-        self._layer_wise_quantize(calib_data)
+        self._layer_wise_quantize(self.calib_data)
         if self.output_dir:
             self._save(self.output_dir, clean_weight=clean_weight)
         else:
@@ -143,6 +176,8 @@ class LayerWiseQuant:
                         for n, _ in module.module.named_parameters():
                             value = load_value(name + '.' + n)
                             set_module_tensor_to_device(self.q_model, name + '.module.' + n, self.device, value)
+                        if self.smooth_quant:
+                            self._adjust_parameters(module, name, input[0])
                         prepare(module, inplace=True)
                     else:
                         for n, p in module.named_parameters():
@@ -163,9 +198,45 @@ class LayerWiseQuant:
         for name, module in self.modules:
             self._handle[name] = [module.register_forward_pre_hook(forward_pre_hook(name))]
             self._handle[name] += [module.register_forward_hook(forward_hook(name))]
+    
+    def _register_weight_hooks(self, model):
+        def forward_pre_hook(name):
+            def load_value(param_name):
+                if 'lm_head' in param_name and getattr(model.config, "tie_word_embeddings", True):
+                    input_embeddings = model.get_input_embeddings()
+                    for name, module in modules:
+                        if module == input_embeddings:
+                            param_name = name + '.' + param_name.split('.')[-1]
+                prefix = model.base_model_prefix
+                if 'pytorch_model.bin.index.json' in os.listdir(self.path):
+                    value = load_tensor_from_shard(self.path, param_name, prefix)
+                else:
+                    value = load_tensor(os.path.join(self.path, 'pytorch_model.bin'), param_name, prefix)
+                return value
 
-    def _remove_hooks(self):
-        for handle in self._handle.values():
+            def hook(module, input):
+                for n, p in module.named_parameters():
+                    param_name = name + '.' + n
+                    value = load_value(param_name)
+                    set_module_tensor_to_device(model, param_name, self.device, value)
+            return hook
+
+        def forward_hook(name):
+            def hook(module, input, output):
+                self._clean_weight(module, name)
+            return hook
+
+        handle = {}
+        modules = get_named_children(model)
+        for name, module in modules:
+            handle[name] = [module.register_forward_pre_hook(forward_pre_hook(name))]
+            handle[name] += [module.register_forward_hook(forward_hook(name))]
+        return handle
+
+    def _remove_hooks(self, handles=None):
+        if handles is None:
+            handles = self._handle
+        for handle in handles.values():
             [h.remove() for h in handle]
 
     def _clean_weight(self, module, name):
@@ -187,7 +258,24 @@ class LayerWiseQuant:
                     new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
                     submodule._parameters[n] = new_value
         gc.collect()
+    
+    def _adjust_parameters(self, module, name, input):
+        input = input.reshape(-1, input.shape[-1])
+        max_tensor = torch.max(input, dim=0)[0]
+        min_tensor = torch.min(input, dim=0)[0]
+        input_max = torch.max(torch.abs(max_tensor), torch.abs(min_tensor))
 
+        input_power = torch.pow(input_max, self.alpha)
+        weights = module.module.weight
+        weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
+        weight_power = torch.pow(weight_max_per_channel, 1 - self.alpha)
+        scale = torch.clip(input_power / weight_power, min=1e-5)
+        scale[input_power == 0] = 1.0
+
+        if name in self.absorb_layers:
+            module.input_scale = scale
+        if name in self.scale_weight_layers:
+            module.module.weight = torch.nn.Parameter(weights * scale)
     
     def _load_state_dict(self,  module_name, weight_path):
         file_path = os.path.join(weight_path, f'{module_name}.pt')

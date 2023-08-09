@@ -69,13 +69,16 @@ class QDQLinear(torch.nn.Module):
 
 
 class QDQLayer(torch.nn.Module):
-    def __init__(self, module, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, module, input_scale=None) -> None:
+        super().__init__()
         self.quant = torch.ao.quantization.QuantStub()
         self.module = module
         self.dequant = torch.ao.quantization.DeQuantStub()
+        self.input_scale = input_scale
     
     def forward(self, X):
+        if self.input_scale is not None:
+            X = torch.mul(X, self.input_scale)
         X = self.quant(X)
         X = self.module(X)
         X = self.dequant(X)
