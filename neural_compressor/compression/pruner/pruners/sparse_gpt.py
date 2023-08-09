@@ -84,11 +84,11 @@ class SparseGPTPruner(PytorchBasePruner):
             handles.append(module.register_forward_pre_hook(add_batch(self.gpts[name])))
         return handles
         
-    @torch.no_grad()
     def fasterprune(self, op_names):
-        for name in op_names:
-            logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
-            module = self.modules[name]
-            self.pattern.fasterprune(self.gpts[name]) # is there necessary to add a hyperparameter of blocksize
+        with torch.no_grad():
+            for name in op_names:
+                logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
+                module = self.modules[name]
+                self.pattern.fasterprune(self.gpts[name]) # is there necessary to add a hyperparameter of blocksize
 
 
