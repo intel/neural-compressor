@@ -119,42 +119,6 @@ def log_quantizable_layers_per_transformer(
         for name in layer_names:
             logger.info(name)
 
-#===========================================
-
-#==================dataset related==============================
-# we would like to convert dataset into GPTQ related structure
-# def prepare_gptq_calibration(calib_dataset, model, seed = 0, nsamples = 128, seqlen = 2048):
-#     # directly prepare tokenized data for gptq calibration
-#     class INCDataloader(object):
-#         def __init__(self, gptq_dataloader):
-#             self.batch_size = 1
-#             self.gptq_dataloader = gptq_dataloader
-#             self.length = len(gptq_dataloader)
-#             self.batch_size = 1
-
-#         def __iter__(self):
-#             pass
-
-#     from transformers import AutoTokenizer
-#     tokenizer = AutoTokenizer.from_pretrained(model, use_fast=True)
-#     import random
-#     random.seed(seed)
-#     trainloader = []
-#     for _ in range(nsamples):
-#         while True:
-#             i = random.randint(0, len(calib_dataset) - 1)
-#             trainenc = tokenizer(calib_dataset[i]['text'], return_tensors='pt')
-#             if trainenc.input_ids.shape[1] > seqlen:
-#                 break
-#         i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
-#         j = i + seqlen
-#         inp = trainenc.input_ids[:, i:j]
-#         tar = inp.clone()
-#         tar[:, :-1] = -100
-#         trainloader.append((inp, tar))
-#     return INCDataloader(trainloader)
-#===============================================================
-
 #===============quantization related============================
 def quantize(x, scale, zero, maxq):
     """Do quantization."""
