@@ -241,7 +241,10 @@ class RetrainFreePruning(BasePruning):
 
     def _do_pruning(self):
         from tqdm.auto import tqdm
-        progress_bar = tqdm(range(len(self._dataloader.dataset)/self._dataloader.dataset.batch))
+        length = len(self._dataloader.dataset)
+        if self._dataloader.batch_sampler is not None:
+            length = len(self._dataloader.batch_sampler)
+        progress_bar = tqdm(range(length))
         if self._loss_func is not None:
             for inputs, target in self._dataloader:
                 self.on_step_begin()
