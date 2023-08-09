@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import datasets
+from datasets import load_dataset
 
 #from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
@@ -135,7 +136,6 @@ class Evaluator:
 
 if __name__ == '__main__':
     import argparse
-    from datautils import *
 
     parser = argparse.ArgumentParser()
 
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         help='BLOOM model to load; pass `bigscience/bloom-X`.'
     )
     parser.add_argument(
-        '--dataset', type=str, choices=['wikitext2', 'ptb', 'c4', 'pile'],
+        '--dataset', type=str, default="NeelNanda/pile-10k",
         help='Where to extract calibration data from.'
     )
     parser.add_argument(
@@ -222,8 +222,7 @@ if __name__ == '__main__':
     # dataloader = INCDataloader(dataloader)
     # ================================================
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False, cache_dir=cache_dir)
-    # calib_dataset = load_dataset(args.dataset, split="train") # default
-    calib_dataset = datasets.load_from_disk('/data4/cyy/gptq_inc/pile-10k/') # for test, will be replaced with line above when pr is ready
+    calib_dataset = load_dataset(args.dataset, split="train") # default
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, pad_max=model.seqlen, is_calib=True)
     calib_dataloader = DataLoader(

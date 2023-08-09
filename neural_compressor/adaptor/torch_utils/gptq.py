@@ -317,7 +317,6 @@ class GPTQuantizer(object):
         # critical: hooker function which collects inputs
         def forward(layer, hidden_states, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
-            # import pdb;pdb.set_trace()
             self.inp[self.cache['i']] = hidden_states
             self.cache['i'] += 1
             for arg in kwargs:
@@ -342,7 +341,6 @@ class GPTQuantizer(object):
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             try:
-                # import pdb;pdb.set_trace()
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     self.model(batch[0].to(self.device))
                 else:
@@ -366,7 +364,6 @@ class GPTQuantizer(object):
         # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
         self.pre_quantization()
-        # import pdb;pdb.set_trace()
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
@@ -413,7 +410,6 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
-            # import pdb;pdb.set_trace()
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
