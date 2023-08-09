@@ -622,7 +622,6 @@ def get_layers(model):
     unfoldLayer(model)
     return layers
 
-@torch.no_grad()
 def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'):
     """Getting the forward input of a layer.
     
@@ -645,40 +644,42 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device='cuda:0'
         model_type = 'null'
     if 'bloom' in model_type:
         inputs_info['alibi'] = None
-    if layer_idx == 0:
-        layer = layers[layer_idx]
-        def forward(self, hidden_states, **kwargs):
-            # TODO solve the problem of batchsize!=1
-            inputs.append(hidden_states.to(device))
-            inputs_info['attention_mask'] = kwargs['attention_mask']
-            if 'alibi' in kwargs.keys():
-                inputs_info['alibi'] = kwargs['alibi']
-            raise ValueError
         
-        forward_cache = layers[layer_idx].forward
-        from functools import partial
-        layer.forward = partial(forward, layer)
-        for batch in layer_inputs:
-            try:
-                if 'values' in dir(batch):
-                    hidden_states = list(batch.values())[0].to(model_dev)
-                else :
-                    hidden_states = batch[0].to(model_dev).to(model_dev)
-                model(hidden_states)
-                # model(**batch)
-            except ValueError:
-                pass
-        layer.forward = forward_cache
-        for key in inputs_info.keys():
-            if inputs_info[key] is not None:
-                inputs_info[key] = inputs_info[key].to(device)
-    else:
-        prev_layer = layers[layer_idx-1]
-        
-        for batch in layer_inputs:
-            prev_output = prev_layer(*batch)
-            batch[0] = prev_output[0]
-            inputs.append(batch)
+    with torch.no_grad():
+        if layer_idx == 0:
+            layer = layers[layer_idx]
+            def forward(self, hidden_states, **kwargs):
+                # TODO solve the problem of batchsize!=1
+                inputs.append(hidden_states.to(device))
+                inputs_info['attention_mask'] = kwargs['attention_mask']
+                if 'alibi' in kwargs.keys():
+                    inputs_info['alibi'] = kwargs['alibi']
+                raise ValueError
+            
+            forward_cache = layers[layer_idx].forward
+            from functools import partial
+            layer.forward = partial(forward, layer)
+            for batch in layer_inputs:
+                try:
+                    if 'values' in dir(batch):
+                        hidden_states = list(batch.values())[0].to(model_dev)
+                    else :
+                        hidden_states = batch[0].to(model_dev).to(model_dev)
+                    model(hidden_states)
+                    # model(**batch)
+                except ValueError:
+                    pass
+            layer.forward = forward_cache
+            for key in inputs_info.keys():
+                if inputs_info[key] is not None:
+                    inputs_info[key] = inputs_info[key].to(device)
+        else:
+            prev_layer = layers[layer_idx-1]
+            
+            for batch in layer_inputs:
+                prev_output = prev_layer(*batch)
+                batch[0] = prev_output[0]
+                inputs.append(batch)
             
     return inputs, inputs_info
 
