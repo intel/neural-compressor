@@ -236,32 +236,32 @@ if __name__ == "__main__":
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        if args.algorithm.upper() == "RTN":
-            dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
-            config = PostTrainingQuantConfig(
-                approach="weight_only",
-                calibration_sampling_size=[8],
-                op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
-                )
-
-        elif args.algorithm.upper() == "AWQ":
-            dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
-            config = PostTrainingQuantConfig(
-                approach="weight_only",
-                calibration_sampling_size=[8],
-                recipes={"awq_args": {"mse_range": False}},
-                op_type_dict={".*": {"weight": {"algorithm": ["AWQ"]}}},
-                )
- 
-        elif args.algorithm.upper() == "GPTQ":
-            dataloader = GPTQDataloader(os.path.join(args.model_path, model), seqlen=args.seqlen, batch_size=1)
-            config = PostTrainingQuantConfig(
-                approach="weight_only",
-                calibration_sampling_size=[128],
-                op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
-                )
-
         for model in ["decoder_model.onnx", "decoder_with_past_model.onnx"]:
+            if args.algorithm.upper() == "RTN":
+                dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
+                config = PostTrainingQuantConfig(
+                    approach="weight_only",
+                    calibration_sampling_size=[8],
+                    op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
+                    )
+
+            elif args.algorithm.upper() == "AWQ":
+                dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
+                config = PostTrainingQuantConfig(
+                    approach="weight_only",
+                    calibration_sampling_size=[8],
+                    recipes={"awq_args": {"mse_range": False}},
+                    op_type_dict={".*": {"weight": {"algorithm": ["AWQ"]}}},
+                    )
+ 
+            elif args.algorithm.upper() == "GPTQ":
+                dataloader = GPTQDataloader(os.path.join(args.model_path, model), seqlen=args.seqlen, batch_size=1)
+                config = PostTrainingQuantConfig(
+                    approach="weight_only",
+                    calibration_sampling_size=[128],
+                    op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
+                    )
+
             q_model = quantization.fit(
                     os.path.join(args.model_path, model),
                     config,
