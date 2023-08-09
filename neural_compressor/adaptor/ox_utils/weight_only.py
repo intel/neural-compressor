@@ -298,7 +298,7 @@ def prepare_inputs(model, n_samples, dataloader):
     from neural_compressor.adaptor.ox_utils.util import to_numpy
     
     so = ort.SessionOptions()
-    if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
+    if sys.version_info < (3, 11) and find_spec('onnxruntime_extensions'):  # pragma: no cover
         from onnxruntime_extensions import get_library_path
         so.register_custom_ops_library(get_library_path())
     if model.is_large_model:
