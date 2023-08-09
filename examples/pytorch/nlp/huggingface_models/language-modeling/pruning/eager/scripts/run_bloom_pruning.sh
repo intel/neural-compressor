@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 set -x
@@ -17,11 +18,10 @@ CUDA_VISIBLE_DEVICES=4 python \
     --block_size 512 \
     --max_length 512 \
     --do_prune \
+    --auto_config \
     --auto_slim \
     --output_dir ./sparse_model \
     --target_sparsity 0.1 \
     --pruning_pattern channelx1 \
     --pruning_frequency 500
     
-    
-

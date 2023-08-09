@@ -22,17 +22,17 @@ import numpy as np
 from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
+    
     from ...conf.pythonic_config import WeightPruningConfig
     from ...conf.config import PrunerV2
     from ...utils.utility import LazyImport
     from neural_compressor.conf.dotdict import DotDict
     from neural_compressor.utils import logger
     from neural_compressor.conf.config import Pruner
-    LazyImport('torch.nn')
     torch = LazyImport('torch')
-    nn = torch.nn
-    tf = LazyImport('tensorflow')
+    nn = LazyImport('torch.nn')
     F = LazyImport('torch.nn.functional')
+    tf = LazyImport('tensorflow')
 except:
     import torch
     import torch.nn as nn
