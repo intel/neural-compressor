@@ -221,7 +221,7 @@ if __name__ == '__main__':
     # )
     # dataloader = INCDataloader(dataloader)
     # ================================================
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False, cache_dir=cache_dir)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
     calib_dataset = load_dataset(args.dataset, split="train") # default
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, pad_max=model.seqlen, is_calib=True)
@@ -284,7 +284,7 @@ if __name__ == '__main__':
 
     results = lm_evaluate(
         model="hf-causal",
-        model_args=f'pretrained="{args.model_name_or_path}",tokenizer="{args.model_name_or_path}",dtype=float32',
+        model_args='pretrained='+args.model_name_or_path+',tokenizer='+args.model_name_or_path+',dtype=float32',
         user_model=q_model.model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
         batch_size=4
