@@ -123,36 +123,36 @@ def log_quantizable_layers_per_transformer(
 
 #==================dataset related==============================
 # we would like to convert dataset into GPTQ related structure
-def prepare_gptq_calibration(calib_dataset, model, seed = 0, nsamples = 128, seqlen = 2048):
-    # directly prepare tokenized data for gptq calibration
-    class INCDataloader(object):
-        def __init__(self, gptq_dataloader):
-            self.batch_size = 1
-            self.gptq_dataloader = gptq_dataloader
-            self.length = len(gptq_dataloader)
-            self.batch_size = 1
+# def prepare_gptq_calibration(calib_dataset, model, seed = 0, nsamples = 128, seqlen = 2048):
+#     # directly prepare tokenized data for gptq calibration
+#     class INCDataloader(object):
+#         def __init__(self, gptq_dataloader):
+#             self.batch_size = 1
+#             self.gptq_dataloader = gptq_dataloader
+#             self.length = len(gptq_dataloader)
+#             self.batch_size = 1
 
-        def __iter__(self):
-            pass
+#         def __iter__(self):
+#             pass
 
-    from transformers import AutoTokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model, use_fast=True)
-    import random
-    random.seed(seed)
-    trainloader = []
-    for _ in range(nsamples):
-        while True:
-            i = random.randint(0, len(calib_dataset) - 1)
-            trainenc = tokenizer(calib_dataset[i]['text'], return_tensors='pt')
-            if trainenc.input_ids.shape[1] > seqlen:
-                break
-        i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
-        j = i + seqlen
-        inp = trainenc.input_ids[:, i:j]
-        tar = inp.clone()
-        tar[:, :-1] = -100
-        trainloader.append((inp, tar))
-    return INCDataloader(trainloader)
+#     from transformers import AutoTokenizer
+#     tokenizer = AutoTokenizer.from_pretrained(model, use_fast=True)
+#     import random
+#     random.seed(seed)
+#     trainloader = []
+#     for _ in range(nsamples):
+#         while True:
+#             i = random.randint(0, len(calib_dataset) - 1)
+#             trainenc = tokenizer(calib_dataset[i]['text'], return_tensors='pt')
+#             if trainenc.input_ids.shape[1] > seqlen:
+#                 break
+#         i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
+#         j = i + seqlen
+#         inp = trainenc.input_ids[:, i:j]
+#         tar = inp.clone()
+#         tar[:, :-1] = -100
+#         trainloader.append((inp, tar))
+#     return INCDataloader(trainloader)
 #===============================================================
 
 #===============quantization related============================
@@ -175,6 +175,7 @@ class GPTQuantizer(object):
         model, 
         weight_config={}, 
         dataloader=None, 
+        nsamples = 128, 
         device=None
     ):
         """
@@ -203,6 +204,7 @@ class GPTQuantizer(object):
         # default settings, check configs
         self.wbits_default = 4
         self.group_size_default = 128
+        self.block_size_default = 128
         self.percdamp_default = 0.01
         self.sym_default = False
         self.actorder_default = True
@@ -211,11 +213,14 @@ class GPTQuantizer(object):
         self.check_layer_config()
 
         # dataloader 
-        if hasattr(dataloader, "gptq_dataloader"):
-            self.dataloader = dataloader.gptq_dataloader
-        else:
-            self.dataloader = dataloader
-        self.nsamples = len(self.dataloader)
+        # if hasattr(dataloader, "gptq_dataloader"):
+        #     self.dataloader = dataloader.gptq_dataloader
+        # else:
+        #     self.dataloader = dataloader
+        self.dataloader_original = dataloader
+        self.dataloader = []
+        self.nsamples = nsamples
+        self.obtain_first_n_samples()
 
         # device
         self.device = model.device
@@ -226,7 +231,7 @@ class GPTQuantizer(object):
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
         #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
 
-        # initialize buffers which are essential for gptq computation. 
+        # initialize buffers which are essential for gptq computation.
         self.model_hidden_size = 2048
         self.initialize_inp_buffersize()
         try:
@@ -242,7 +247,19 @@ class GPTQuantizer(object):
         except:
             logger.warning("GPTQ Quantizer initialization failed!")
             pass
-    
+
+    def obtain_first_n_samples(self):
+        """Get first nsample data as the real calibration dataset."""
+        self.dataloader.clear()
+        for batch in self.dataloader_original:
+            self.dataloader.append(batch)
+            if len(self.dataloader) == self.nsamples:
+                break
+            else:
+                continue
+        if len(self.dataloader) < self.nsamples:
+            logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
+
     @torch.no_grad()
     def initialize_inp_buffersize(self):
         # Run a forward and generate proper buffer tensor
@@ -269,7 +286,10 @@ class GPTQuantizer(object):
         logger.info("Collecting calibration inputs...")
         for batch in self.dataloader:
             try:
-                self.model(batch[0].to(self.device))
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    self.model(batch[0].to(self.device))
+                else:
+                    self.model(batch.to(self.device))
             except ValueError:
                 break
 
@@ -292,6 +312,7 @@ class GPTQuantizer(object):
                 tmp_weight_config[name] = {}
                 tmp_weight_config[name]['wbits'] = self.weight_config.get('wbits', self.wbits_default)
                 tmp_weight_config[name]['group_size'] = self.weight_config.get('group_size', self.group_size_default)
+                tmp_weight_config[name]['block_size'] = self.weight_config.get('block_size', self.group_size_default)
                 tmp_weight_config[name]['percdamp'] = self.weight_config.get('pecdamp', self.percdamp_default)
                 tmp_weight_config[name]['sym'] = self.weight_config.get('sym', self.sym_default)
                 tmp_weight_config[name]['actorder'] = self.weight_config.get('actorder', self.actorder_default)
@@ -302,6 +323,7 @@ class GPTQuantizer(object):
             for layer_name, config in self.weight_config.items():
                 self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
                 self.weight_config[layer_name]['group_size'] = config.get('group_size', self.group_size_default)
+                self.weight_config[layer_name]['block_size'] = config.get('block_size', self.group_size_default)
                 self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
                 self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
                 self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
@@ -331,6 +353,7 @@ class GPTQuantizer(object):
         # critical: hooker function which collects inputs
         def forward(layer, hidden_states, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
+            # import pdb;pdb.set_trace()
             self.inp[self.cache['i']] = hidden_states
             self.cache['i'] += 1
             for arg in kwargs:
@@ -355,7 +378,11 @@ class GPTQuantizer(object):
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             try:
-                self.model(batch[0].to(self.device))
+                # import pdb;pdb.set_trace()
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    self.model(batch[0].to(self.device))
+                else:
+                    self.model(batch.to(self.device))
             except ValueError:
                 pass
         logger.info("Done.")
@@ -375,7 +402,7 @@ class GPTQuantizer(object):
         # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
         self.pre_quantization()
-
+        # import pdb;pdb.set_trace()
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
@@ -422,6 +449,7 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
+            # import pdb;pdb.set_trace()
             for j in range(self.nsamples):
                 self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
             self.cache['i'] = idx
@@ -437,6 +465,7 @@ class GPTQuantizer(object):
                 )
                 logger.info(f"Quantizing layer {layer_name}")
                 scale, zp = gptq_for_this_block[layer_name].fasterquant(
+                    blocksize = weight_config_this_layer['block_size'],
                     percdamp = weight_config_this_layer['percdamp'], 
                     groupsize = weight_config_this_layer['group_size'], 
                     actorder = weight_config_this_layer['actorder'],

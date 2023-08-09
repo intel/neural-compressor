@@ -4391,13 +4391,16 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     'group_size': config['weight']['group_size'],
                     'sym': config['weight']['scheme'] == 'sym',
                     'percdamp': self.recipes['gptq_args'].get("percdamp", 0.01),
-                    'actorder': self.recipes['gptq_args'].get("actorder", True)
+                    'actorder': self.recipes['gptq_args'].get("actorder", True),
+                    'block_size': self.recipes['gptq_args'].get("block_size", True)
                 } 
+        nsamples = self.recipes['gptq_args'].get("nsamples", 128)
         # tune_cfg => weight_config 
         model, quantization_perm = gptq_quantize(
             model, 
             weight_config,
             dataloader,
+            nsamples,
             self.device
         )
         return model, quantization_perm
