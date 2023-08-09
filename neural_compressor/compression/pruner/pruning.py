@@ -182,7 +182,6 @@ class SparseGPTPruning(BasePruning):
         self._model = self._model.to(self.model_dev)
         # TODO add get_sparsity_ratio() for sparseGPT
 
-    @torch.no_grad()
     def _do_pruning(self):
         from tqdm.auto import tqdm
         layers = self._layers
@@ -191,28 +190,28 @@ class SparseGPTPruning(BasePruning):
                                                 layer_inputs=self._dataloader, device=self.dev)
         if 'cuda' in self.dev.type:
             torch.cuda.empty_cache()
-        
-        for i in tqdm(range(len(layers))):
-            layer = layers[i].to(self.dev)
-            layer_index_str = '.' + str(i) + '.'
-            handles_list = []
-            for pruner in self.pruners:
-                layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
-                handles_list.append(pruner.register_gpt_hook(layer_op_names))
-            for j in range(len(inputs)):
-                layer(inputs[j], **inp_dict)[0]
-            for handles in handles_list:
-                for h in handles:
-                    h.remove()
-            for pruner in self.pruners:
-                layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
-                pruner.fasterprune(layer_op_names)
-            for j in range(len(inputs)):
-                # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
-                inputs[j] = layer(inputs[j], **inp_dict)[0]
-            layers[i] = layer.cpu()
-            if 'cuda' in self.dev.type:
-                torch.cuda.empty_cache()
+        with torch.no_grad():
+            for i in tqdm(range(len(layers))):
+                layer = layers[i].to(self.dev)
+                layer_index_str = '.' + str(i) + '.'
+                handles_list = []
+                for pruner in self.pruners:
+                    layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
+                    handles_list.append(pruner.register_gpt_hook(layer_op_names))
+                for j in range(len(inputs)):
+                    layer(inputs[j], **inp_dict)[0]
+                for handles in handles_list:
+                    for h in handles:
+                        h.remove()
+                for pruner in self.pruners:
+                    layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
+                    pruner.fasterprune(layer_op_names)
+                for j in range(len(inputs)):
+                    # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
+                    inputs[j] = layer(inputs[j], **inp_dict)[0]
+                layers[i] = layer.cpu()
+                if 'cuda' in self.dev.type:
+                    torch.cuda.empty_cache()
                 
     def on_train_begin(self, dataloader):  # pragma: no cover
         if self._dataloader is not None:
@@ -242,7 +241,7 @@ class RetrainFreePruning(BasePruning):
 
     def _do_pruning(self):
         from tqdm.auto import tqdm
-        progress_bar = tqdm(range(len(self._dataloader.dataset)))
+        progress_bar = tqdm(range(len(self._dataloader.dataset)/self._dataloader.dataset.batch))
         if self._loss_func is not None:
             for inputs, target in self._dataloader:
                 self.on_step_begin()
