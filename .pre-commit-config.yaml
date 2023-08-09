@@ -12,13 +12,9 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-      - id: check-added-large-files
-      - id: check-merge-conflict
-      - id: detect-private-key
       - id: end-of-file-fixer
         files: (.*\.(py|md|rst|yaml|yml))$
       - id: check-json
-      - id: check-case-conflict
       - id: check-yaml
         exclude: conda_meta/
       - id: file-contents-sorter
@@ -55,7 +51,7 @@ repos:
     rev: v3.10.1
     hooks:
       - id: pyupgrade
-        args: [--py38-plus]
+        args: [--py36-plus]
 
   - repo: https://github.com/asottile/yesqa
     rev: v1.5.0
@@ -77,7 +73,7 @@ repos:
             --wrap-summaries=0, # 0 means disable wrap
             --wrap-descriptions=0, # 0 means disable wrap
             --black,
-            --style=sphinx,
+            --style=google,
           ]
 
   - repo: https://github.com/psf/black.git
@@ -90,7 +86,7 @@ repos:
     rev: 1.15.0
     hooks:
       - id: blacken-docs
-        args: [--line-length=80]
+        args: [--line-length=120]
         exclude: docs/source-app
 
   - repo: https://github.com/executablebooks/mdformat
@@ -101,7 +97,7 @@ repos:
           - mdformat-beautysh
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.280
+    rev: v0.0.282
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]

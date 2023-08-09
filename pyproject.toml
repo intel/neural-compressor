@@ -31,6 +31,7 @@ ignore = [
     "E741", # Do not use variables named ‘l’, ‘O’, or ‘I’
     "E722", # Do not use bare except
     "F405", # {name} may be undefined, or defined from star imports
+    "F841", # Local variable is assigned to but never used{name}
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
