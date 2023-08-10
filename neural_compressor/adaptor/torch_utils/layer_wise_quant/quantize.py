@@ -21,6 +21,7 @@ import time
 import shutil
 from copy import deepcopy
 from tqdm import tqdm
+from collections import UserDict
 
 from .utils import torch
 from ..model_wrapper import QDQLayer
@@ -41,6 +42,31 @@ def mk_tmp_dir():
 
 def del_tmp_dir():
     shutil.rmtree(TMP_DIR)
+
+
+def forward_wrapper(model, input, device='cpu'):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        if device == 'cpu':
+            output = model(**input)
+        else:  # pragma: no cover
+            for inp in input.keys():
+                input[inp] = input[inp].to(device) \
+                    if isinstance(input[inp], torch.Tensor) else input[inp]
+            output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if device == 'cpu':
+            output = model(*input)
+        else:  # pragma: no cover
+            input = [inp.to(device) if isinstance(inp, torch.Tensor)
+                     else inp for inp in input]  # pylint: disable=E1133
+            output = model(*input)
+    else:
+        if device == 'cpu' or not isinstance(input, torch.Tensor):
+            output = model(input)
+        else:  # pragma: no cover
+            input = input.to(device)  # pylint: disable=no-member
+            output = model(input)
+    return output
 
 
 class LayerWiseQuant:
@@ -64,7 +90,9 @@ class LayerWiseQuant:
         self._handle = {}
 
         self.smooth_quant = smooth_quant
-        self.alpha = alpha
+        self.alpha = float(alpha)
+        assert self.alpha > 0 and self.alpha < 1, \
+            f'alpha should be in range (0, 1), but got {alpha}'
         if smooth_quant:
             self.init_sq()
     
@@ -125,10 +153,12 @@ class LayerWiseQuant:
                 try:
                     for idx, input in pbar:
                         pbar.set_description(f'iter {idx}')
-                        self.q_model(**input)
+                        forward_wrapper(self.q_model, input, self.device)
+                        # self.q_model(**input)
                 except Exception:  # pragma: no cover
                     for idx, (input, label) in pbar:
-                        self.q_model(**input)
+                        forward_wrapper(self.q_model, input, self.device)
+                        # self.q_model(**input)
             else:
                 self.q_model(**calib_data)
         self._remove_hooks()
