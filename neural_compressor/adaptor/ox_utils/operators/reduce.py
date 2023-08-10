@@ -29,6 +29,8 @@ class ReduceOperator(Operator):
 
 @op_registry(op_types="ReduceMax, ReduceMin")
 class ReduceMinMaxOperator(Operator):
+    """ReduceMin and ReduceMax Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
         """Initialization."""
         super(ReduceMinMaxOperator, self).__init__(onnx_quantizer, onnx_node)
