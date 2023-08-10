@@ -857,17 +857,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            "D": [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = ["Conv", "Relu"]
         q_model = self.qlinear_test(tmp_model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.mode.graph.node), 4)
+        self.assertEqual(len(q_model.model.graph.node), 4)
         q_model = self.qdq_test(tmp_model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.mode.graph.node), 7)
+        self.assertEqual(len(q_model.model.graph.node), 7)
         
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
         session = ort.InferenceSession(model.SerializeToString(), sess_options, providers=ort.get_available_providers())
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         q_model = self.qlinear_test(tmp_model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.mode.graph.node), 5)
+        self.assertEqual(len(q_model.model.graph.node), 5)
         q_model = self.qdq_test(tmp_model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.mode.graph.node), 8)
+        self.assertEqual(len(q_model.model.graph.node), 8)
 
         graph = helper.make_graph([conv_node, relu_node, add_node], 'test_graph_2', [A, B, E], [F])
         model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
@@ -875,9 +875,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         session = ort.InferenceSession(model.SerializeToString(), sess_options, providers=ort.get_available_providers())
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         q_model = self.qlinear_test(tmp_model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.mode.graph.node), 5)
+        self.assertEqual(len(q_model.model.graph.node), 5)
         q_model = self.qdq_test(tmp_model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.mode.graph.node), 8)
+        self.assertEqual(len(q_model.model.graph.node), 8)
 
     def test_clip(self):
         A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
