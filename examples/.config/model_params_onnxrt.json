@@ -846,6 +846,13 @@
         "input_model": "/tf_dataset2/models/onnx/hf_codebert/codebert-model.onnx",
         "main_script": "main.py",
         "batch_size": 1
+      },
+      "hf_codebert_dynamic": {
+        "model_src_dir": "nlp/huggingface_model/code_detection/quantization/ptq_dynamic",
+        "dataset_location": "/tf_dataset2/datasets/devign_dataset/valid.jsonl",
+        "input_model": "/tf_dataset2/models/onnx/hf_codebert/codebert-model.onnx",
+        "main_script": "main.py",
+        "batch_size": 1
       }
   }
 }

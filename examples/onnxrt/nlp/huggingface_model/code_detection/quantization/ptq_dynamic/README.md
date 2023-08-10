@@ -41,8 +41,7 @@ Static quantization with QOperator format:
 ```bash
 bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --dataset_location=path/to/glue/data \
-                   --quant_format="QOperator"
+                   --dataset_location=path/to/glue/data
 ```
 
 ## 2. Benchmark
