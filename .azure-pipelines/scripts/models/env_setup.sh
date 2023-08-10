@@ -80,7 +80,7 @@ fi
 cd ${model_src_dir}
 pip install ruamel_yaml
 pip install psutil
-pip install protobuf==3.20.1
+pip install protobuf==4.23.4
 if [[ "${framework}" == "tensorflow" ]]; then
     pip install intel-tensorflow==${fwk_ver}
 elif [[ "${framework}" == "pytorch" ]]; then
