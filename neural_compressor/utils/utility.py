@@ -950,6 +950,9 @@ def print_op_list(workload_location: str):
         None
     """
     minmax_file_path = os.path.join(workload_location, "inspect_saved", "activation_min_max.pkl")
+    if not os.path.exists(minmax_file_path):
+        logging.getLogger("neural_compressor").warning("Could not find activation min max data.")
+        return
     input_model_tensors = get_tensors_info(
         workload_location,
         model_type="input",

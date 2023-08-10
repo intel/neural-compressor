@@ -17,6 +17,7 @@
 from typing import Optional, Any
 
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.model.torch_model import PyTorchModel
 from neural_compressor.utils import logger
 
 
@@ -53,6 +54,11 @@ def register_neural_insights_workload(
             model_path: str = os.path.join(workload_location, "input_model.onnx")
             os.makedirs(workload_location, exist_ok=True)
             onnx.save(model.model, model_path)
+        elif isinstance(model, PyTorchModel):
+            import torch
+            model_path: str = os.path.join(workload_location, "input_model.pt")
+            os.makedirs(workload_location, exist_ok=True)
+            torch.save(model.state_dict(), model_path)
         assert isinstance(model_path, str), 'Model path not detected'
 
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)

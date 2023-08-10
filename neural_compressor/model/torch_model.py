@@ -48,6 +48,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         torch.nn.Module.__init__(self)
         self._model = model
         assert isinstance(model, torch.nn.Module), "model should be pytorch nn.Module."
+        self._model_path = None if not isinstance(model, str) else model
         self.handles = []
         self.tune_cfg= None
         self.q_config = None
@@ -97,6 +98,16 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
     def model(self, model):
         """Setter to model."""
         self._model = model
+
+    @property
+    def model_path(self):
+        """Return model path."""
+        return self._model_path
+
+    @model_path.setter
+    def model_path(self, path):
+        """Set model path."""
+        self._model_path = path
 
     @property
     def fp32_model(self):

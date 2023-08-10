@@ -18,7 +18,8 @@ from typing import List, Type
 
 from neural_insights.components.model.model import Model
 from neural_insights.components.model.onnxrt.model import OnnxrtModel
-from neural_insights.components.model.pytorch.model import PyTorchScriptModel
+from neural_insights.components.model.pytorch.model import PyTorchModel
+from neural_insights.components.model.pytorch.pytorch_script.model import PyTorchScriptModel
 from neural_insights.components.model.tensorflow.frozen_pb import FrozenPbModel
 from neural_insights.components.model.tensorflow.keras import KerasModel
 from neural_insights.components.model.tensorflow.meta_graph import MetaGraphModel
@@ -39,6 +40,7 @@ class ModelRepository:
             OnnxrtModel,
             SavedModelModel,
             PyTorchScriptModel,
+            PyTorchModel,
         ]
 
     def get_model(self, path: str) -> Model:
