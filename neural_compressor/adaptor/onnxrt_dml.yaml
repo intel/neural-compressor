@@ -16,9 +16,9 @@
 
 -
   version:
-    name: '1.6.0'
-  int8: &ref_1_6 {
-    'static': &ref_1_6_static {
+    name: '1.13.1'
+  int8: &ref_1_13 {
+    'static': &ref_1_13_static {
       'Conv': {
         'weight':   &int8_sym_perchanneltensor_minmax {
                     'dtype': ['int8'],
@@ -32,11 +32,6 @@
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax']
                     },
-        'mode': ['QDQ', 'QLinear']
-      },
-      'FusedConv': {
-        'weight':   *int8_sym_perchanneltensor_minmax, #'QDQ': *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
       'Gather': {
@@ -66,19 +61,11 @@
       },
       'Relu': *default_static_qlinear_qdq, 
       'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
       'MaxPool': *default_static_qlinear_qdq,
-      'EmbedLayerNormalization': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
       'Add': *default_static_qlinear,
     },
-    'dynamic': &ref_1_6_dynamic {
+    'dynamic': &ref_1_13_dynamic {
       'Conv': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'FusedConv': {
         'weight':   *uint8_asym_perchanneltensor_minmax,
         'activation': *uint8_asym_pertensor_minmax
       },
@@ -87,318 +74,38 @@
         'activation': *uint8_asym_pertensor_minmax
       },
       'Gather': *default_dynamic,
-      'EmbedLayerNormalization': *default_dynamic,
-      'LSTM': *default_dynamic,
     }
   }
+  fp16: &common_fp16 ['Abs', 'Acos', 'Acosh', 'Add', 'Affine', 'ArgMax', 'ArgMin', 'Asin',
+    'Asinh', 'Atan', 'Atanh', 'AveragePool', 'BatchNormalization', 'Ceil', 'Celu', 'Clip',
+    'Concat', 'ConstantOfShape', 'Conv', 'ConvTranspose', 'Cos', 'Cosh', 'Crop', 'CumSum',
+    'DepthToSpace', 'Div', 'Dropout', 'Einsum', 'Elu', 'Equal', 'Erf', 'Exp', 'Expand',
+    'EyeLike', 'Flatten', 'Floor', 'GRU', 'Gather', 'GatherElements', 'GatherND', 'Gemm',
+    'GlobalAveragePool', 'GlobalLpPool', 'GlobalMaxPool', 'Greater', 'GreaterOrEqual',
+    'HardSigmoid', 'Hardmax', 'Identity', 'ImageScaler', 'InstanceNormalization', 'IsNaN',
+    'LRN', 'LSTM', 'LeakyRelu', 'Less', 'LessOrEqual', 'Log', 'LogSoftmax', 'LpNormalization',
+    'LpPool', 'MatMul', 'Max', 'MaxPool', 'MaxRoiPool', 'MaxUnpool', 'Mean',
+    'MeanVarianceNormalization', 'MemcpyFromHost', 'MemcpyToHost', 'Min', 'Mod', 'Mul',
+    'Neg', 'OneHot', 'PRelu', 'Pad', 'ParametricSoftplus', 'Pow', 'RNN', 'Range', 'Reciprocal',
+    'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceMean',
+    'ReduceMin', 'ReduceProd', 'ReduceSum', 'ReduceSumSquare', 'Relu', 'Reshape', 'Resize',
+    'ReverseSequence', 'RoiAlign', 'Round', 'ScaledTanh', 'Scatter', 'ScatterElements',
+    'ScatterND', 'Selu', 'Shrink', 'Sigmoid', 'Sign', 'Sin', 'Sinh', 'Slice', 'Softmax',
+    'Softplus', 'Softsign', 'SpaceToDepth', 'Split', 'Sqrt', 'Squeeze', 'Sub', 'Sum',
+    'Tan', 'Tanh', 'ThresholdedRelu', 'Tile', 'TopK', 'Transpose', 'Trilu', 'Unsqueeze',
+    'Upsample', 'Where', 'Attention', 'BeamSearch', 'BiasDropout', 'BiasGelu', 'BiasSoftmax',
+    'BitmaskBiasDropout', 'BitmaskDropout', 'ComplexMul', 'ComplexMulConj', 'DecoderAttention',
+    'EmbedLayerNormalization', 'FastGelu', 'FusedMatMul', 'Gelu', 'GreedySearch', 'Inverse',
+    'Irfft', 'LongformerAttention', 'Rfft', 'SkipLayerNormalization', 'TransposeMatMul', 'Trilu']
+
+ 
   recipes: &default_optimization
     graph_optimization:   # from onnxruntime graph_optimization_level
       level: ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
 
 -
   version:
-    name: '1.7.0'
-  int8: {
-    'static': {
-      'FusedConv': {
-        'weight': *int8_sym_perchanneltensor_minmax, #'QDQ': *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Conv': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Gather': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'MatMul': *default_static_qlinear_qdq,
-      'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'EmbedLayerNormalization': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
-      'Add': *default_static_qlinear,
-    },
-    'dynamic': *ref_1_6_dynamic 
-  }
-  recipes:
-    <<: *default_optimization
-
--
-  version:
-    name: '1.8.0'
-  int8: {
-    'static': {
-      'FusedConv': {
-        'weight': *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Conv': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Gather': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'MatMul': {
-        'weight':  *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'EmbedLayerNormalization': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
-      'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'Resize': *default_static_qlinear_qdq,
-    },
-    'dynamic': {
-      'Conv': {
-        'weight': *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'FusedConv': {
-        'weight': *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'MatMul': {
-        'weight': *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'Gather': *default_dynamic,
-      'EmbedLayerNormalization': *default_dynamic,
-      'LSTM': *default_dynamic,
-    }
-  }
-  recipes:
-    <<: *default_optimization
-
--
-  version:
-    name: '1.9.0'
-  int8: {
-    'static': {
-      'FusedConv': {
-        'weight': *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Conv': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Gather': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'MatMul': {
-        'weight':   *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'EmbedLayerNormalization': {
-        'weight': *uint8_asym_pertensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
-      'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'Resize': *default_static_qlinear_qdq,
-    },
-    'dynamic': &ref_1_9_dynamic {
-      'Conv': {
-        'weight': *uint8_asym_pertensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'FusedConv': {
-        'weight': *uint8_asym_pertensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'MatMul': {
-        'weight': *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'EmbedLayerNormalization': {
-        'weight': *uint8_asym_pertensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'Gather': *default_dynamic,
-      'LSTM': *default_dynamic,
-    }
-  }
-  recipes:
-    <<: *default_optimization
-
--
-  version:
-    name: '1.10.0'
-  int8: {
-    'static': {
-      'FusedConv': {
-        'weight': *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Conv': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Gather': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'MatMul': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'EmbedLayerNormalization': {
-        'weight': *uint8_asym_pertensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
-      'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'Resize': *default_static_qlinear_qdq,
-    },
-    'dynamic': *ref_1_9_dynamic
-  }
-  recipes:
-    <<: *default_optimization
-
--
-  version:
-    name: '1.11.0'
-  int8: &ref_1_11 {
-    'static': {
-      'FusedConv': {
-        'weight': *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Conv': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Gather': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'MatMul': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Gemm': {
-        'weight':   *int8_sym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'EmbedLayerNormalization': {
-        'weight': *uint8_asym_pertensor_minmax, # QDQ: *int8_sym_pertensor_minmax
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
-      'Mul': *default_static_qlinear,
-      'Relu': *default_static_qlinear_qdq,
-      'Clip': *default_static_qlinear_qdq,
-      'LeakyRelu': *default_static_qlinear_qdq,
-      'Sigmoid': *default_static_qlinear_qdq,
-      'MaxPool': *default_static_qlinear_qdq,
-      'GlobalAveragePool': *default_static_qlinear_qdq,
-      'Pad': *default_static_qlinear_qdq,
-      'Split': *default_static_qlinear_qdq,
-      'Add': *default_static_qlinear,
-      'Squeeze': *default_static_qlinear_qdq,
-      'Reshape': *default_static_qlinear_qdq,
-      'Concat': *default_static_qlinear_qdq,
-      'AveragePool': *default_static_qlinear_qdq,
-      'Unsqueeze': *default_static_qlinear_qdq,
-      'Transpose': *default_static_qlinear_qdq,
-      'ArgMax': *default_static_qlinear,
-      'Resize': *default_static_qlinear_qdq,
-    },
-    'dynamic': *ref_1_9_dynamic
-  }
-  recipes:
-    <<: *default_optimization
-
--
-  version:
-    name: '1.14.0'
-  int8: *ref_1_11
-  bf16: &common_bf16 ['MatMul', 'Gemm', 'BatchNormalization', 'Softmax', 'Sum',
-    'Abs', 'BiasGelu', 'Exp', 'FastGelu', 'Gelu', 'Log', 'Relu', 'Round', 'Sigmoid',
-    'Sqrt', 'Tanh', 'Add', 'Sub', 'Mul', 'Div', 'Pow', 'ReduceMean', 'Equal',
-    'FusedMatMul', 'Greater', 'GreaterOrEqual', 'LeakyRelu', 'Less', 'LessOrEqual',
-    'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze', 'ReduceL1', 'ReduceL2', 'ReduceLogSum',
-    'ReduceLogSumExp', 'ReduceMax', 'ReduceProd', 'ReduceSum', 'ReduceSumSquare',
-    'LayerNormalization', 'Concat']
-  recipes:
-    <<: *default_optimization
-
--
-  version:
     name: 'default'
-  int8: *ref_1_6
+  int8: *ref_1_13
   recipes:
     <<: *default_optimization
