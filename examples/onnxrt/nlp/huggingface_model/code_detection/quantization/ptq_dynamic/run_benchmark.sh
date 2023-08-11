@@ -37,8 +37,8 @@ function run_benchmark {
             --model_name_or_path microsoft/codebert-base \
             --model_path ${input_model} \
             --data_path ${dataset_location} \
-            --mode=${mode} \
-            --batch_size=${batch_size} \
+            --mode ${mode} \
+            --batch_size ${batch_size} \
             --benchmark
 
 }
