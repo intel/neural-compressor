@@ -4,7 +4,6 @@ from ..schedulers import get_scheduler
 from ..patterns import get_pattern
 from ..criteria import get_criterion
 from ..regs import get_reg
-import transformers
 from ..utils import logger, torch, nn
 import gc
 import math
@@ -42,9 +41,10 @@ class SparseGPTPruner(PytorchBasePruner):
         logger.warning("sparse_gpt pruner fixed the weights, Please DO NOT train or update gradients.")
         assert "1x1" in self.pattern.pattern or ":" in self.pattern.pattern, \
                 "sparse_gpt pruner type only supports 1x1 and N:M patterns."
-    
+                
     class SparseGPT():
         def __init__(self, module):
+            import transformers
             self.module = module
             self.dev = self.module.weight.device
             W = module.weight.data.clone()
@@ -58,6 +58,7 @@ class SparseGPTPruner(PytorchBasePruner):
             self.nsamples = 0
 
         def add_batch(self, inp, blocksize=1024):
+            import transformers
             if len(inp.shape) == 2:
                 inp = inp.unsqueeze(0)
             sample_num = inp.shape[0] # batchsize
@@ -83,10 +84,11 @@ class SparseGPTPruner(PytorchBasePruner):
             handles.append(module.register_forward_pre_hook(add_batch(self.gpts[name])))
         return handles
         
-    @torch.no_grad()
     def fasterprune(self, op_names):
-        for name in op_names:
-            logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
-            module = self.modules[name]
-            self.pattern.fasterprune(self.gpts[name]) # is there necessary to add a hyperparameter of blocksize
+        with torch.no_grad():
+            for name in op_names:
+                logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
+                module = self.modules[name]
+                self.pattern.fasterprune(self.gpts[name]) # is there necessary to add a hyperparameter of blocksize
+
 

@@ -20,7 +20,7 @@ from neural_compressor.compression.pruner.utils import parse_to_prune, get_spars
 from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import logger, torch, collect_layer_inputs, get_layers
 from typing import Optional
-from tqdm.auto import tqdm
+
 PRUNINGS = {}
 
 def register_pruning(name):
@@ -182,36 +182,36 @@ class SparseGPTPruning(BasePruning):
         self._model = self._model.to(self.model_dev)
         # TODO add get_sparsity_ratio() for sparseGPT
 
-    @torch.no_grad()
     def _do_pruning(self):
+        from tqdm.auto import tqdm
         layers = self._layers
         self._model = self._model.cpu()
         inputs, inp_dict = collect_layer_inputs(model=self._model, layers=layers, layer_idx=0,
                                                 layer_inputs=self._dataloader, device=self.dev)
         if 'cuda' in self.dev.type:
             torch.cuda.empty_cache()
-        
-        for i in tqdm(range(len(layers))):
-            layer = layers[i].to(self.dev)
-            layer_index_str = '.' + str(i) + '.'
-            handles_list = []
-            for pruner in self.pruners:
-                layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
-                handles_list.append(pruner.register_gpt_hook(layer_op_names))
-            for j in range(len(inputs)):
-                layer(inputs[j], **inp_dict)[0]
-            for handles in handles_list:
-                for h in handles:
-                    h.remove()
-            for pruner in self.pruners:
-                layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
-                pruner.fasterprune(layer_op_names)
-            for j in range(len(inputs)):
-                # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
-                inputs[j] = layer(inputs[j], **inp_dict)[0]
-            layers[i] = layer.cpu()
-            if 'cuda' in self.dev.type:
-                torch.cuda.empty_cache()
+        with torch.no_grad():
+            for i in tqdm(range(len(layers))):
+                layer = layers[i].to(self.dev)
+                layer_index_str = '.' + str(i) + '.'
+                handles_list = []
+                for pruner in self.pruners:
+                    layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
+                    handles_list.append(pruner.register_gpt_hook(layer_op_names))
+                for j in range(len(inputs)):
+                    layer(inputs[j], **inp_dict)[0]
+                for handles in handles_list:
+                    for h in handles:
+                        h.remove()
+                for pruner in self.pruners:
+                    layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
+                    pruner.fasterprune(layer_op_names)
+                for j in range(len(inputs)):
+                    # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
+                    inputs[j] = layer(inputs[j], **inp_dict)[0]
+                layers[i] = layer.cpu()
+                if 'cuda' in self.dev.type:
+                    torch.cuda.empty_cache()
                 
     def on_train_begin(self, dataloader):  # pragma: no cover
         if self._dataloader is not None:
@@ -240,7 +240,11 @@ class RetrainFreePruning(BasePruning):
         get_sparsity_ratio(self.pruners, self._model)
 
     def _do_pruning(self):
-        progress_bar = tqdm(range(len(self._dataloader.dataset)))
+        from tqdm.auto import tqdm
+        length = len(self._dataloader.dataset)
+        if self._dataloader.batch_sampler is not None:
+            length = len(self._dataloader.batch_sampler)
+        progress_bar = tqdm(range(length))
         if self._loss_func is not None:
             for inputs, target in self._dataloader:
                 self.on_step_begin()
@@ -268,4 +272,5 @@ class RetrainFreePruning(BasePruning):
     #     self._dataloader = dataloader
     #     self._prepare_pruners()
         
+
 
