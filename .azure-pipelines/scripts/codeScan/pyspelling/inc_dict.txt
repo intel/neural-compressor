@@ -2659,9 +2659,11 @@ classDef
 bdf
 bmm
 AWQ
-GPTQ
-RTN
 awq
+GPTQ
+gptq
+RTN
+rtn
 gptq
 percdamp
 Frantar
@@ -2693,6 +2695,7 @@ hostname
 qweight
 qconfig
 TEQ
+teq
 WeightOnlyLinear
 McKinstry
 Migacz
