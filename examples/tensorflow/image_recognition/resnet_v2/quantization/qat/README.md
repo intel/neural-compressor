@@ -15,9 +15,9 @@ This document is used to list steps of reproducing Intel® Neural Compressor QAT
 pip install neural-compressor
 ```
 
-### Install Tensorflow
+### Installation Dependency packages
 ```shell
-pip install tensorflow
+pip install -r requirements.txt
 ```
 
 ### Install Intel Extension for Tensorflow

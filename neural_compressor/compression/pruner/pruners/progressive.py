@@ -23,9 +23,8 @@ from ..schedulers import get_scheduler
 from ..patterns import get_pattern
 from ..criteria import get_criterion
 from ..regs import get_reg
-from ..utils import logger
+from ..utils import logger, torch
 
-from ..utils import torch
 
 @register_pruner('pt_progressive')
 class PytorchProgressivePruner(PytorchBasePruner):
@@ -134,7 +133,6 @@ class PytorchProgressivePruner(PytorchBasePruner):
                         f"Pruning pattern is {self.pattern.N} in {self.pattern.M}, "
                         f"while progressive steps {self.progressive_steps} is overflowing.")
             else:
-                breakpoint()
                 raise NotImplementedError
 
     def check_is_pruned_progressive_step(self, step):

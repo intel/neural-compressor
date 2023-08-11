@@ -89,6 +89,10 @@ class TensorFlowAdaptor(Adaptor):
 
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.itex_mode = self.backend == 'itex' or cfg_yaml_name == 'tensorflow_itex.yaml'
+        
+        if self.itex_mode:
+            self._check_itex()
+            
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name),
             performance_only=self.performance_only,
@@ -109,6 +113,13 @@ class TensorFlowAdaptor(Adaptor):
 
         self._last_dequantize_ops = None
         self.smooth_quant_model = None
+
+    def _check_itex(self):
+        try:
+            import intel_extension_for_tensorflow
+        except:
+            raise ImportError("The Intel® Extension for TensorFlow is not installed. "\
+                                "Please install it to run models on ITEX backend")
 
     def _log_histogram(self, writer, tag, values, step=0, bins=1000):
         """Writes a histogram for later analysis."""
@@ -870,12 +881,11 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: model-wise & op-wise configuration for quantization.
         """
-        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-
-        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
-
-        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
-        model.graph_def = self.pre_optimized_model.graph_def
+        if self.pre_optimized_model is None:
+            from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+            self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+            self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
+            model.graph_def = self.pre_optimized_model.graph_def
 
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
@@ -1679,7 +1689,8 @@ class TensorFlowAdaptor(Adaptor):
         return predictions
 
     def smooth_quant(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
-                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
+                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True,
+                     record_max_info=False):
         """Convert the model by smooth quant.
 
         Args:
@@ -1693,6 +1704,7 @@ class TensorFlowAdaptor(Adaptor):
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
+            record_max_info: whether record the max info in model for alpha tuning.
 
         Returns:
             model: A smoothed Tensorflow model
@@ -1700,6 +1712,12 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("Start Smoothing process for Smooth Quantization.")
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
+
+        # Do a pre-optimization before smooth quant
+        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
+        model.graph_def = self.pre_optimized_model.graph_def
 
         # Get the nodes list which can't be quantized from tune_cfg
         black_nodes = []

@@ -30,7 +30,6 @@ class SimpleDataLoader():
     def __iter__(self):
         yield self.input
 
-
 class TestAWQWeightOnlyQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -105,6 +104,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
 
+        fp32_model = copy.deepcopy(self.model)
         model2 = awq_quantize(
             fp32_model, 
             weight_config=weight_config, 
@@ -138,30 +138,48 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         dataloader = self.generate_random_corpus()
         model = copy.deepcopy(self.gptj)
         weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'perchannel': True, 
-            'sym': True,
-            'percdamp': 0.01,
-            'mse': True
+            'transformer.h.0.attn.k_proj':{
+                'wbits': 4,
+                'group_size': 128,
+                'sym': True,
+                'percdamp': 0.01,
+                'perchannel': False
+            },
+            'transformer.h.1.attn.k_proj':{
+                'wbits': 3,
+                'group_size': -1,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True,
+            },
+            'transformer.h.2.attn.k_proj':{
+                'wbits': 3,
+                'group_size': 32,
+                'sym': False,
+                'percdamp': 0.01,
+                'mse': True,
+                'actorder': False
+            },
+            'transformer.h.3.attn.k_proj':{
+                'wbits': 3,
+                'group_size': 256,
+                'sym': False,
+                'percdamp': 0.01,
+                'mse': True,
+                'actorder': False
+            },
         }
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
         self.assertTrue(isinstance(model, torch.nn.Module))
-
         del model
 
         model = copy.deepcopy(self.gptj)
         weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'perchannel': False, 
-            'sym': False,
-            'percdamp': 0.01,
-            'mse': False
+            "wbits": 4
         }
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
         self.assertTrue(isinstance(model, torch.nn.Module))
-
+        del model
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
     @classmethod
@@ -186,26 +204,28 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
     def test_teq(self):
         dataloader = self.generate_random_corpus()
         model = copy.deepcopy(self.gptj)
+
         weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'sym': True,
-            'folding': True
+            # 'op_name': (bit, group_size, sheme)
+            'transformer.h.0.mlp.fc_in': {
+                'bits': 8,
+                'group_size': -1,
+                'scheme': 'sym'
+            },
+            'transformer.h.0.mlp.fc_out': {
+                'bits': 4,
+                'group_size': 32,
+                'scheme': 'asym'
+            },
         }
-
-        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
-        self.assertTrue(isinstance(model, torch.nn.Module))
-
-        del model
-
-        model = copy.deepcopy(self.gptj)
-        weight_config = {
-            'wbits': 4,
-            'group_size': 128,
-            'sym': True,
-            'folding': False
+        absorb_dict = {
+            'transformer.h.0.mlp.fc_in': ['transformer.h.0.mlp.fc_out']
         }
-        model = teq_quantize(model, weight_config=weight_config, dataloader=dataloader)
+        extra_config = {'folding': True}
+
+
+        model = teq_quantize(model, weight_config=weight_config, absorb_to_layer=absorb_dict,
+                extra_config=extra_config, dataloader=dataloader)
         self.assertTrue(isinstance(model, torch.nn.Module))
 
 if __name__ == "__main__":

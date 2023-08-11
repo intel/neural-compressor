@@ -4,5 +4,6 @@ sentencepiece
 transformers
 torch
 tqdm
-cupy
 optimum
+einops
+

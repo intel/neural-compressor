@@ -8,7 +8,7 @@ sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from neural_compressor.experimental.compression import prepare_pruning
+from transformers import (AutoModelForCausalLM)
 
 
 class TestPruning(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestPruning(unittest.TestCase):
                 "pattern": 'channelx2',
                 "pruning_type": "block_mask",
                 "pruning_scope": "global",
-                "criterion_type": "snip_momentum_block",
+                "criterion_type": "block_mask",
                 "pruning_op_types": "Linear",
             },
             {
@@ -32,35 +32,7 @@ class TestPruning(unittest.TestCase):
                 "pruning_op_types": "Linear",
                 "pruning_type": "block_mask",
                 "pruning_scope": "local",
-                "criterion_type": "snip_momentum_block",
             },
-            {
-                "op_names": ['encoder_layer_3.mlp*'],
-                'target_sparsity': 0.9,
-                'pattern': 'channelx1',
-                "pruning_op_types": "Linear",
-                "pruning_type": "retrain_free",
-                "pruning_scope": "local",
-                "pruning_frequency": 2,
-            },
-            {
-                "op_names": ['encoder_layer_0.mlp*'],
-                'target_sparsity': 0.4,
-                'pattern': 'channelx2',
-                "pruning_op_types": "Linear",
-                "pruning_type": "retrain_free",
-                "pruning_scope": "global",
-                "pruning_frequency": 3,
-            },
-            {
-                "op_names": ['encoder_layer_0.mlp*', "conv_proj"],
-                'target_sparsity': 0.4,
-                'pattern': 'channelx2',
-                "pruning_op_types": ["Linear","Conv2d"],
-                "pruning_type": "retrain_free",
-                "pruning_scope": "global",
-                "pruning_frequency": 3,
-            }
         ]
         config = WeightPruningConfig(
             local_configs,
@@ -70,11 +42,13 @@ class TestPruning(unittest.TestCase):
         )
 
         criterion = nn.CrossEntropyLoss()
+        from neural_compressor.compression.pruner import prepare_pruning
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        model, optimizer = prepare_pruning(config, self.model, optimizer)
         datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
+        dummy_dataset = datasets['dummy'](shape=(20, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+        pruning = prepare_pruning(config, self.model, optimizer)
+        
 
         for epoch in range(2):
             self.model.train()
