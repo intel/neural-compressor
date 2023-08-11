@@ -1004,3 +1004,109 @@ def collect_weight_info(q_config):
                     'scheme': config['weight']['scheme'],
                 }
     return weight_info
+
+
+def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
+                            calib_func=None, input_func=None, output_func=None):
+    """A help function to get input and output tensor of modules in module_name_list.
+
+    Args:
+        model: torch model.
+        module_hook_config (dict, optional): required module name for input/output. Defaults to {}.
+            For example:
+                module_hook_config = {
+                    'fc1': ['output'],
+                    'fc2': ['input', 'output']
+                }
+        dataloader: dataloader for model input.
+        iters: iterations for inference.
+        calib_func: a custom inference function to replace dataloader and iters.
+        input_func: preprocess input for less memory usage
+        output_func: preprocess output for less memory usage
+
+    Returns:
+        total_values: recorded input_values, output_values. 
+            for example: 
+                {'fc1': 
+                    {'input': [], 'output': []},
+                }
+                                    
+    """
+    #total_values = {}
+    from collections import defaultdict
+    total_values = defaultdict(defaultdict)
+    def _save_input_output_hook(name, record_input=False, record_output=False):
+        """
+        A forward hook to save input and output values of a module
+            param name: the module name
+            return: A hook function
+        """
+        def _hook(module, inputs, outputs):
+            # if name not in total_values:
+            #     total_values[name] = {}
+            if record_input:
+                input = inputs[0]
+                if input_func is not None:
+                    input = input_func(input)
+                if name in total_values and 'input' in total_values[name]:
+                    total_values[name]['input'].append(input)
+                else:
+                    total_values[name]['input'] = [input]
+            if record_output:
+                output = outputs[0] if isinstance(outputs, tuple) else outputs
+                if output_func is not None:
+                    output = output_func(output)
+                if input_func is not None:
+                    input = input_func(input)
+                if name in total_values and 'output' in total_values[name]:
+                    total_values[name]['output'].append(output)
+                else:
+                    total_values[name]['output'] = [output]
+        return _hook
+
+    hook_list = []
+    for name, module in model.named_modules():
+        if name in module_hook_config:
+            require_list = module_hook_config[name]
+            logger.debug(f"required hooks {name}: {require_list}")
+            _hook = _save_input_output_hook(
+                name, 
+                record_input='input' in require_list,
+                record_output='output' in require_list,
+            )
+            require_list = module_hook_config[name]
+            hook_list.append(
+                module.register_forward_hook(_hook))
+    if calib_func:
+        calib_func(model)
+    else:
+        from .smooth_quant import model_forward
+        model_forward(model, dataloader, iters, device=next(model.parameters()).device)
+    for h in hook_list:
+        h.remove()
+    return total_values
+
+
+def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False):
+    """Get absorb_to_layer and no_absorb_layer.
+
+    Args:
+        model (torch.nn.Module): input model
+        example_inputs: example_inputs
+        supported_layers (list, optional): supported_layers. Defaults to ['Linear'].
+        folding (bool, optional): whether allow self-absorption. Defaults to False.
+
+    Returns:
+        absorb_to_layer: dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+        no_absorb_layers: list of no_absorb_layers
+    """
+    # get modules that can be absorbed.
+    from .smooth_quant import GraphTrace
+    tg = GraphTrace()
+    absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
+        model, example_inputs, supported_layers
+    )
+    if absorb_to_layer is None or absorb_to_layer == {}:
+        if folding:
+            logger.warning('No absorb layer is detected, please set folding=False for self-absorption')
+    return absorb_to_layer, no_absorb_layers

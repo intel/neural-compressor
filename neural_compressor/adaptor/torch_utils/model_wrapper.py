@@ -493,7 +493,24 @@ class MulLinear(torch.nn.Module):
     def weight(self):
         return self.linear.weight
 
+    @weight.setter
+    def weight(self, weight):
+        self.linear.weight = weight
+
     def forward(self, X):
         X = torch.mul(X, self.input_scale)
         X = self.linear(X)
         return X
+
+    def _update_linear(self):
+        # update linear weight with input_scale
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.linear.weight /= scale
+
+    def _recover_linear(self):
+        # remove mul and reset sq_linear for ipex inference
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.linear.weight *= scale
+

@@ -61,14 +61,14 @@ def model_forward(model, dataloader, iters, device):
         for idx, (input, label) in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
-            if cnt >= iters:
+            if iters != -1 and cnt >= iters:
                 break
     except Exception as e:
         cnt = 0
         for idx, input in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
-            if cnt >= iters:
+            if iters != -1 and cnt >= iters:
                 break
 
 
