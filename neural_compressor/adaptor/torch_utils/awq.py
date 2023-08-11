@@ -105,7 +105,7 @@ def _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     total_block_kwargs = []
     def forward(layer, *args, **kwargs):
         # update total_hidden_states, total_block_kwargs, per batch
-        total_block_args.append(args)
+        total_block_args.append(list(args))
         total_block_kwargs.append(kwargs)
         raise ValueError
 
@@ -147,8 +147,10 @@ def _get_weight_scale(weight, q_group_size=-1):
 
 
 @torch.no_grad()
-def _get_act_scale(x):
-    return x.abs().view(-1, x.shape[-1]).mean(0)
+def _get_act_scale(input_val):
+    tmp = [x.abs().view(-1, x.shape[-1]) for x in input_val]
+    tmp = torch.cat(tmp, dim=0)
+    return tmp.mean(0)
 
 
 class ActAwareWeightQuant:
@@ -197,16 +199,20 @@ class ActAwareWeightQuant:
             input_values = get_module_input_output(
                 block, module_hook_config, calib_func=block_calibration,
             )
+            # Step 3: search best scale for linears in one block and apply it
             if auto_scale:
-                # Step 2: search best scale for linears in one block and apply it
                 scale_info = self.search_scale(block, block_name, module_list, input_values)
-                # Step 3: get input of next block before update scale
-                # weights of linear is updated by scale
+            # Step 2: update self.total_block_args, self.total_block_kwargs for next block
+            out_list = self.block_inference(block)
+            self.update_block_input(out_list)
+            # Step 4: get input of next block before update scale
+            # weights of linear is updated by scale
+            if auto_scale:
                 self.apply_scale(scale_info)
+            # Step 5: search best clip range for linears in one block and save to weight_config
             if mse_range:
-                # Step 3: search best clip range for linears in one block and save to weight_config
                 self.search_clip(block_name, module_list, input_values)
-        # Step 4: apply clip range in weight_config when quantizing model weights
+        # Step 6: apply clip range in weight_config when quantizing model weights
         self.apply_quantize_with_clip(return_int)
         return self.model
 
@@ -232,7 +238,7 @@ class ActAwareWeightQuant:
             w_max = _get_weight_scale(weight, q_group_size=cur_group_size)
             del weight
             input_val = input_values[module_name_list[0]]['input']
-            x_max = _get_act_scale(torch.cat(input_val, dim=0))
+            x_max = _get_act_scale(input_val)
             absorbed_modules = {_m: fetch_module(block, _m) for _m in module_name_list}
             # Step 4: collect origin output for MSE and state_dict for recover.
             org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
@@ -389,6 +395,15 @@ class ActAwareWeightQuant:
             sym_full_range=self.sym_full_range,
         )
         logger.info("AWQ quantization is done.")
+
+    def update_block_input(self, input_list):
+        for i, inp in enumerate(input_list):
+            if len(self.total_block_args[i]) > 0:
+                self.total_block_args[i][0] = inp
+            elif 'hidden_states' in self.total_block_kwargs[i]:
+                self.total_block_kwargs[i]['hidden_states'] = inp
+            else:
+                assert False, "cannot find hidden_states position for next block"
 
     def block_inference(self, model):
         total_out = []

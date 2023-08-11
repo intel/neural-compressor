@@ -4491,7 +4491,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
         logger.debug("quantizing with the AWQ algorithm")
-        from .torch_utils.weight_only import awq_quantize, get_absorb_layers
+        from .torch_utils.weight_only import awq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None:
             from neural_compressor.adaptor.torch_utils.util import get_example_input
@@ -4502,7 +4502,14 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         weight_config = {}
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
-            weight_config[op_name] = config
+            if config['weight']['dtype'] == 'fp32':
+                weight_config[op_name] = {
+                    'bits': -1, # skip quantization
+                    'group_size': 128,
+                    'scheme': 'asym'
+                }
+            else:
+                weight_config[op_name] = config['weight']
 
         if 'awq_args' in self.recipes:
             auto_scale = self.recipes['awq_args'].get('auto_scale', True)
