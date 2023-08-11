@@ -115,7 +115,6 @@ def fine_tune(args):
             outputs = model(**inputs, labels=labels)
             loss = outputs.loss
             logits = outputs.logits
-            # print(np.argmax(logits.detach().numpy(), axis=1))
             all_labels.append(labels.numpy())
             all_preds.append(np.argmax(logits.detach().numpy(), axis=1))
             np.concatenate(all_labels, axis=0)
@@ -256,8 +255,6 @@ def main():
         preds_flatten = np.concatenate(all_preds, 0)
         correct_count = np.sum(label_flatten == preds_flatten)
         acc = correct_count / len(label_flatten)
-        print(acc)
-
         return acc
     
     # tune
@@ -306,7 +303,6 @@ def main():
         config = PostTrainingQuantConfig(
             approach="dynamic",
             quant_level=1,
-            # recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
         )
         q_model = quantization.fit(
             model,
@@ -332,9 +328,7 @@ def main():
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
 
-            conf = BenchmarkConfig(
-                iteration=100, cores_per_instance=28, num_of_instance=1
-            )
+            conf = BenchmarkConfig(iteration=100)
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == "accuracy":
             acc_result = eval_func(model)
