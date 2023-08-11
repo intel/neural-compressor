@@ -5,10 +5,10 @@ import copy
 import torch
 
 from neural_compressor.adaptor.torch_utils.weight_only import (
-    rtn_quantize, awq_quantize, gptq_quantize, teq_quantize, _get_absorb_layers
+    rtn_quantize, awq_quantize, gptq_quantize, teq_quantize
 )
 from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
-from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear, MulLinear
+from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 import transformers
 
 
@@ -76,75 +76,42 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         model2 = rtn_quantize(fp32_model, weight_config=weight_config, return_int=True)
         self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
-
     def test_awq(self):
-        fp32_model = copy.deepcopy(self.model)
-        weight_config = {
-            # 'op_name': (bit, group_size, sheme)
-            'fc1': {
-                'bits': 8,
-                'group_size': -1,
-                'scheme': 'sym'
-            },
-            'fc2': {
-                'bits': 4,
-                'group_size': 32,
-                'scheme': 'asym'
-            },
-        }
-        absorb_dict = {
-            'fc1': ['fc2']
-        }
-        absorb_dict = _get_absorb_layers(fp32_model, self.example_inputs , folding=False)
-        model1 = awq_quantize(
-            fp32_model, 
-            weight_config=weight_config, 
-            absorb_dict=absorb_dict, 
-            dataloader=self.dataloader, 
-            n_samples=128, 
-            auto_scale=True, 
-            mse_range=True, 
-        )
-        self.assertTrue(isinstance(model1.fc1, MulLinear))
+        example_inputs = torch.ones([1, 10], dtype=torch.long)
+        from neural_compressor.adaptor.torch_utils.awq import ActAwareWeightQuant
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+                'facebook/opt-125m', torchscript=True,)
+        class LLMCalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                for i in range(2):
+                    yield example_inputs
 
-        fp32_model = copy.deepcopy(self.model)
-        model2 = awq_quantize(
-            fp32_model, 
-            weight_config=weight_config, 
-            absorb_dict=absorb_dict, 
-            dataloader=self.dataloader, 
-            n_samples=128, 
-            auto_scale=True, 
-            mse_range=True, 
-            return_int=True
-        )
-        self.assertTrue(isinstance(model2.fc1.linear, WeightOnlyLinear))
+        out1 = model(example_inputs)
+        awq = ActAwareWeightQuant(model, dataloader=LLMCalibDataloader(), bits=8, group_size=-1)
+        qdq_model = awq.quantize()
+        out2 = qdq_model(example_inputs)
+        # output data is up to 4, so use big atol=0.5
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=0.5))
 
-        fp32_model = copy.deepcopy(self.model)
-        absorb_dict = _get_absorb_layers(fp32_model, self.example_inputs , folding=True)
-        model2 = awq_quantize(
-            fp32_model, 
-            weight_config=weight_config, 
-            absorb_dict=absorb_dict, 
-            dataloader=self.dataloader, 
-            n_samples=128, 
-            auto_scale=True, 
-            mse_range=True
-        )
-        self.assertTrue(isinstance(model2.fc1, torch.nn.Linear))
+        def calib_func(model):
+            for i in range(2):
+                model(self.lm_input)
+        out1 = self.gptj(example_inputs)
+        awq = ActAwareWeightQuant(
+            self.gptj, calib_func=calib_func, example_inputs=self.lm_input,
+            bits=8, group_size=-1)
+        qdq_model = awq.quantize()
+        out2 = qdq_model(example_inputs)
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-2))
 
-        fp32_model = copy.deepcopy(self.model)
-        model2 = awq_quantize(
-            fp32_model, 
-            weight_config=weight_config, 
-            absorb_dict=absorb_dict, 
-            dataloader=self.dataloader, 
-            n_samples=128, 
-            auto_scale=True, 
-            mse_range=True, 
-            return_int=True
-        )
-        self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
+        # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
+        qdq_model = awq_quantize(self.gptj, example_inputs=self.lm_input, calib_func=calib_func)
+        out2 = qdq_model(example_inputs)
+        print(out1[0], out2[0])
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
+
 
 class TestGPTQWeightOnlyQuant(unittest.TestCase):
     @classmethod
