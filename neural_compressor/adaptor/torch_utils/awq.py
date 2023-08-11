@@ -17,7 +17,7 @@ def _get_block_prefix(model, module_types=[torch.nn.ModuleList]):
         if type(m) in module_types:
             block_prefix = n
             block_num = len(m)
-            logger.debug(f"block_prefix: {block_prefix}")
+            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
             break
     assert block_num > 0, "block num should't be zero!"
     return block_prefix, block_num
@@ -314,7 +314,8 @@ class ActAwareWeightQuant:
                     absorb_module.weight.div_(scale)  # for LayerNorm
                 else:
                     absorb_module.weight.div_(scale.view(-1, 1))
-                if absorb_module.bias is not None:
+                # hasattr is for LlamaRMSNorm
+                if hasattr(absorb_module, 'bias') and absorb_module.bias is not None:
                     absorb_module.bias.div_(scale.view(-1))
                 for name in module_tuple:
                     absorbed_module = fetch_module(self.model, name)
