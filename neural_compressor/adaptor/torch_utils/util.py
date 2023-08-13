@@ -962,7 +962,7 @@ def get_op_type_by_name(op_name, quantizable_ops):
             return pair[1]
     return None
 
-def collect_weight_info(q_config):
+def collect_weight_info(model, q_config):
     """collect weight info from q_config for dumping into qconfig.json
 
     qconfig.json example:
@@ -988,12 +988,15 @@ def collect_weight_info(q_config):
         if config['weight']['dtype'] == 'fp32':
             weight_info[op_name] = {'dtype': 'fp32'}
         else:
+            # fetch module type for MulLinear
+            module = fetch_module(model, op_name)
             if level == DEBUG:
                 weight_info[op_name] = {
                     'dtype': config['weight']['dtype'],
                     'bits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'scheme': config['weight']['scheme'],
+                    'module_type': str(type(module)).split('\'')[1],
                     'algorithm': config['weight']['algorithm']
                 }
             else:
@@ -1002,6 +1005,7 @@ def collect_weight_info(q_config):
                     'bits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'scheme': config['weight']['scheme'],
+                    'module_type': str(type(module)).split('\'')[1],
                 }
     return weight_info
 

@@ -1,4 +1,5 @@
 import sys
+import copy
 sys.path.append("./")
 import os
 import shutil
@@ -218,17 +219,23 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 'awq_args':{'auto_scale': True, 'mse_range': True, 'folding': False},
             },
         )
+        fp32_model = copy.deepcopy(self.gptj)
         q_model = quantization.fit(
             self.gptj, 
             conf, 
             calib_dataloader=self.llm_dataloader,
         )
+        q_model.save('saved')
         input = torch.ones([1, 10], dtype=torch.long)
         out1 = q_model(input)
+        from neural_compressor.utils.pytorch import load
+        reload_model = load('saved', fp32_model, weight_only=True)
+        out2 = reload_model(input)
         q_model.export_compressed_model()
-        out2 = q_model(input)
+        out3 = q_model(input)
         # no idea about the gap at 1e-08, use allclose instead of out1==out2
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        self.assertTrue(torch.allclose(out1[0], out3[0], atol=1e-05))
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, WeightOnlyLinear))
         self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 

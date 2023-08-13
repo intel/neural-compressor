@@ -479,13 +479,15 @@ class TEQLinearFakeQuant(torch.nn.Module):
 class MulLinear(torch.nn.Module):
     """Linear wrapper to apply scale to input."""
 
-    def __init__(self, module, input_scale):
+    def __init__(self, module, input_scale=None):
         """
         A forward hook to save input max of a module
         :param module: the linear module
         :param input_scale: scale for input
         """
         super().__init__()
+        if input_scale is None:
+            input_scale = torch.empty(module.in_features)
         self.register_buffer('input_scale', input_scale)
         self.add_module('linear', module)
 
