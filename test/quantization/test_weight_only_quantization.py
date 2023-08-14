@@ -125,17 +125,17 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             torchscript=True,
         )
         self.gptj.seqlen = 512
-    
-    def generate_random_corpus(self, nsamples = 32):
-        meta_data = []
-        for _ in range(nsamples):
-            inp = torch.ones([1, 512], dtype=torch.long)
-            tar = torch.ones([1, 512], dtype=torch.long)
-            meta_data.append((inp, tar))
-        return meta_data
 
     def test_gptq(self):
-        dataloader = self.generate_random_corpus()
+        class GPTQLLMDataLoader():
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                for i in range(2):
+                    yield torch.ones([1, 512], dtype=torch.long)
+
+        dataloader = GPTQLLMDataLoader()
         model = copy.deepcopy(self.gptj)
         weight_config = {
             'transformer.h.0.attn.k_proj':{
@@ -177,7 +177,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         weight_config = {
             "wbits": 4
         }
-        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, use_full_length=False)
         self.assertTrue(isinstance(model, torch.nn.Module))
         del model
 

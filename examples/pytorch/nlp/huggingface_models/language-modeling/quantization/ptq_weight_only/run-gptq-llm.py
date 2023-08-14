@@ -72,7 +72,7 @@ class Evaluator:
 
     @torch.no_grad()
     def tokenize_function(self, examples):
-        if args.weight_only_algo in ['AWQ', 'TEQ', 'GPTQ']:
+        if args.weight_only_algo in ['AWQ', 'TEQ']:
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             example = self.tokenizer(examples["text"], padding="max_length", max_length=self.pad_max)
@@ -91,7 +91,8 @@ class Evaluator:
             pad_len = self.pad_max - input_ids.shape[0]
             last_ind.append(input_ids.shape[0] - 1)
             if self.is_calib:
-                input_ids = input_ids[:self.pad_max] if len(input_ids) > self.pad_max else input_ids
+                # input_ids = input_ids[:self.pad_max] if len(input_ids) > self.pad_max else input_ids
+                input_ids = input_ids
             else:
                 input_ids = pad(input_ids, (0, pad_len), value=self.pad_val)
             input_ids_padded.append(input_ids)
@@ -198,6 +199,9 @@ if __name__ == '__main__':
     parser.add_argument('--act-order', action='store_true', 
         help='Whether to apply the activation order GPTQ heuristic'
     )
+    parser.add_argument('--use_full_length', action='store_true', 
+        help='Only select data whose length equals or more than model.seqlen, please refer to GPTQ original implementation'
+    )
     parser.add_argument('--gpu', action='store_true', help='Whether to use gpu')
 
     args = parser.parse_args()
@@ -222,9 +226,10 @@ if __name__ == '__main__':
     # dataloader = INCDataloader(dataloader)
     # ================================================
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
-    calib_dataset = load_dataset(args.dataset, split="train") # default
+    # calib_dataset = load_dataset(args.dataset, split="train") # default
+    calib_dataset = datasets.load_from_disk('/data4/cyy/gptq_inc/pile-10k/')
     calib_dataset = calib_dataset.shuffle(seed=42)
-    calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, pad_max=model.seqlen, is_calib=True)
+    calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
     calib_dataloader = DataLoader(
         calib_evaluator.dataset,
         batch_size=args.calib_size,
@@ -246,46 +251,58 @@ if __name__ == '__main__':
         sym_opt = "asym"
 
     # method 1: use general INC API
-    conf = PostTrainingQuantConfig(
-        approach='weight_only',
-        op_type_dict={
-            '.*':{ 	# re.match
-                "weight": {
-                    'bits': args.wbits, # 1-8 bits 
-                    'group_size': args.group_size,  # -1 (per-channel)
-                    'scheme': sym_opt, 
-                    'algorithm': 'GPTQ', 
-                },
-            },
-        },
-        op_name_dict={
-            '.*lm_head':{ 	# re.match
-                "weight": {
-                    'dtype': 'fp32'
-                },
-            },
-        },
-        recipes={
-            'gptq_args':{'percdamp': 0.01, 'actorder':args.act_order, 'block_size': args.block_size, 'nsampeles': args.nsamples},
-        },
-    )
-    q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader,)
+    # conf = PostTrainingQuantConfig(
+    #     approach='weight_only',
+    #     op_type_dict={
+    #         '.*':{ 	# re.match
+    #             "weight": {
+    #                 'bits': args.wbits, # 1-8 bits 
+    #                 'group_size': args.group_size,  # -1 (per-channel)
+    #                 'scheme': sym_opt, 
+    #                 'algorithm': 'GPTQ', 
+    #             },
+    #         },
+    #     },
+    #     op_name_dict={
+    #         '.*lm_head':{ 	# re.match
+    #             "weight": {
+    #                 'dtype': 'fp32'
+    #             },
+    #         },
+    #     },
+    #     recipes={
+    #         'gptq_args':{
+    #             'percdamp': 0.01, 
+    #             'actorder':args.act_order, 
+    #             'block_size': args.block_size, 
+    #             'nsampeles': args.nsamples,
+    #             'use_full_length': args.use_full_length
+    #         },
+    #     },
+    # )
+    # q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader,)
 
     # method 2: directly use build-in function, for some models like falcon, please use this function
-    # conf = {
-    #     ".*":{
-    #         'wbits': args.wbits, # 1-8 bits 
-    #         'group_size': args.group_size,  # -1 (per-channel)
-    #         'sym': (sym_opt == "sym"),
-    #         'actorder': args.act_order,
-    #     }
-    # } 
-    # q_model, gptq_config = gptq_quantize(model, weight_config=conf, dataloader=calib_dataloader, nsamples = args.nsamples)
+    conf = {
+        ".*":{
+            'wbits': args.wbits, # 1-8 bits 
+            'group_size': args.group_size,  # -1 (per-channel)
+            'sym': (sym_opt == "sym"),
+            'actorder': args.act_order,
+        }
+    } 
+    q_model, gptq_config = gptq_quantize(
+        model, 
+        weight_config=conf, 
+        dataloader=calib_dataloader, 
+        nsamples = args.nsamples, 
+        use_full_length = args.use_full_length
+    )
 
     results = lm_evaluate(
         model="hf-causal",
         model_args='pretrained='+args.model_name_or_path+',tokenizer='+args.model_name_or_path+',dtype=float32',
-        user_model=q_model.model.to(DEV), tasks=["lambada_openai"],
+        user_model=q_model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
         batch_size=4
     )

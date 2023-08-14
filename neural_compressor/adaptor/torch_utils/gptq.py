@@ -25,6 +25,7 @@ import transformers
 from tqdm import tqdm
 from functools import partial
 from ...utils import logger
+import random
 
 DEBUG = False 
 
@@ -140,6 +141,7 @@ class GPTQuantizer(object):
         weight_config={}, 
         dataloader=None, 
         nsamples = 128, 
+        use_full_length = True,
         device=None
     ):
         """
@@ -162,8 +164,12 @@ class GPTQuantizer(object):
         """
         # model
         self.model = model
+        self.use_cache = self.model.config.use_cache
+        self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
+        self.dtype = next(iter(self.model.parameters())).dtype
+        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
 
-        # weight config related
+        # weight config
         self.weight_config = weight_config
         # default settings, check configs
         self.wbits_default = 4
@@ -176,53 +182,84 @@ class GPTQuantizer(object):
         self.mse_default = False
         self.check_layer_config()
 
-        # dataloader 
-        # if hasattr(dataloader, "gptq_dataloader"):
-        #     self.dataloader = dataloader.gptq_dataloader
-        # else:
-        #     self.dataloader = dataloader
-        self.dataloader_original = dataloader
-        self.dataloader = []
-        self.nsamples = nsamples
-        self.obtain_first_n_samples()
-
         # device
         self.device = model.device
         self.is_ready = False
 
-        self.use_cache = self.model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
-        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
-        #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
+        # dataloader
+        self.use_full_length = use_full_length
+        self.dataloader_original = dataloader
+        self.dataloader = []
+        self.nsamples = nsamples
+        self.prepare_dataloader()
 
-        # initialize buffers which are essential for gptq computation.
-        self.model_hidden_size = 2048
-        self.initialize_inp_buffersize()
-        try:
-            self.dtype = next(iter(self.model.parameters())).dtype
-            self.inp = torch.zeros(
-                (self.nsamples, self.model.seqlen, self.model_hidden_size), 
-                dtype=self.dtype, 
-                device=self.device
-            )
-            self.cache = {'i': 0}
-            self.out = torch.zeros_like(self.inp)
-            self.is_ready = True
-        except:
-            logger.warning("GPTQ Quantizer initialization failed!")
-            pass
+    def prepare_dataloader(self):
+        if self.use_full_length:
+            # (Recommend) only take sequence whose length exceeds model.seqlen, which perserves calibration's tokens are all valid
+            # This is GPTQ official dataloader implementation
+            self.obtain_first_n_samples_fulllength()
+            # initialize buffers which are essential for gptq computation.
+            self.model_hidden_size = 2048
+            self.initialize_inp_buffersize()
+            try:
+                # Since length is unified, we can allocate a continous space to store inputs
+                self.inp = torch.zeros(
+                    (len(self.dataloader), self.model.seqlen, self.model_hidden_size), 
+                    dtype=self.dtype, 
+                    device=self.device
+                )
+                self.cache = {'i': 0}
+                self.out = torch.zeros_like(self.inp)
+                self.is_ready = True
+            except:
+                logger.warning("GPTQ Quantizer initialization failed!")
+                pass
+        else:
+            # general selection, no padding, not GPTQ original implementation.
+            self.obtain_first_n_samples()
+            try:
+                self.inp = [torch.zeros(1) for _ in range(len(self.dataloader))]
+                self.cache = {'i': 0}
+                self.out = [torch.zeros(1) for _ in range(len(self.dataloader))]
+                self.is_ready = True
+            except:
+                logger.warning("GPTQ Quantizer initialization failed!")
+                pass
 
-    def obtain_first_n_samples(self):
+    def obtain_first_n_samples(self, seed=0):
         """Get first nsample data as the real calibration dataset."""
         self.dataloader.clear()
+        random.seed(seed)
         for batch in self.dataloader_original:
-            self.dataloader.append(batch)
             if len(self.dataloader) == self.nsamples:
                 break
+            if batch[0].shape[-1] > self.model.seqlen:
+                i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
+                j = i + self.model.seqlen
+                batch_final = batch[0][:, i:j]
             else:
-                continue
+                batch_final = batch[0]
+            self.dataloader.append(batch_final)
         if len(self.dataloader) < self.nsamples:
             logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
+    
+    def obtain_first_n_samples_fulllength(self, seed=0):
+        self.dataloader.clear()
+        random.seed(seed)
+        unified_length = self.model.seqlen
+        for batch in self.dataloader_original:
+            if len(self.dataloader) == self.nsamples:
+                break
+            if batch[0].shape[-1] == unified_length:
+                inp = batch[0]
+            elif batch[0].shape[-1] > unified_length:
+                i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
+                j = i + unified_length
+                inp = batch[0][:, i:j]
+            self.dataloader.append(inp)
+        if len(self.dataloader) < self.nsamples: # pragma: no cover
+            logger.warning(f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
+            but only {len(self.dataloader)} samples satisfy your setting. You may choose smaller 'model.seqlen' value.")
 
     @torch.no_grad()
     def initialize_inp_buffersize(self):
@@ -321,9 +358,17 @@ class GPTQuantizer(object):
             self.cache['i'] += 1
             for arg in kwargs:
                 # TODO: investigate include parameters
-                if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
-                    self.cache[arg] = kwargs[arg]
+                if self.use_full_length:
+                    if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
+                        self.cache[arg] = kwargs[arg]
+                    else:
+                        continue
                 else:
+                    # each outputs can be different shape, hence also use list to store
+                    if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
+                        if self.cache.get(arg, None) == None:
+                            self.cache[arg] = []
+                        self.cache[arg].append(kwargs[arg])
                     continue
             raise ValueError
 
@@ -347,6 +392,10 @@ class GPTQuantizer(object):
                     self.model(batch.to(self.device))
             except ValueError:
                 pass
+        # output inp data shape
+        logger.info("All calibration data's shape =>")
+        for idx in range(len(self.dataloader)):
+            logger.info(self.inp[idx].shape)
         logger.info("Done.")
 
         # Step 4: restore original forward function, relocate layers back to cpu.
@@ -357,6 +406,12 @@ class GPTQuantizer(object):
         torch.cuda.empty_cache()
         # end
         logger.info('GPTQ quantization prepared.')
+
+    def gather_single_batch_from_dict(self, data_dict, idx):
+        single_batch = {}
+        for k, v in data_dict.items():
+            single_batch[k] = data_dict[k][idx]
+        return single_batch
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
@@ -410,8 +465,14 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
-            for j in range(self.nsamples):
-                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+            for j in range(len(self.dataloader)):
+                if self.use_full_length:
+                    # self.inp[j] shape: [seq_len, hidden_size]
+                    self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+                else:
+                    # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
+                    cache_batch = self.gather_single_batch_from_dict(self.cache, j)
+                    self.out[j] = transformer_block(self.inp[j], **cache_batch)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
@@ -440,8 +501,14 @@ class GPTQuantizer(object):
             
             # Step 2.5: replace output data with quantized weights
             idx = self.cache.pop('i')
-            for j in range(self.nsamples):
-                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+            for j in range(len(self.dataloader)):
+                if self.use_full_length:
+                    # self.inp[j] shape: [seq_len, hidden_size]
+                    self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+                else:
+                    # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
+                    cache_batch = self.gather_single_batch_from_dict(self.cache, j)
+                    self.out[j] = transformer_block(self.inp[j], **cache_batch)[0]
             self.cache['i'] = idx
             self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
