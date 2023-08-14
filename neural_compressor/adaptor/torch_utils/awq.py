@@ -68,29 +68,6 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     return block_absorb_dict, absorb_layer_dict
 
 
-
-def calibration(model, dataloader=None, n_samples=128, calib_func=None):
-    """ Calibration with dataloader or calib_func
-
-    Args:
-        model (torch.nn.Module): input model
-        dataloader: dataloader. Defaults to None.
-        n_samples (int, optional): n_samples. Defaults to 128.
-        calib_func: calib_func. Defaults to None.
-    """
-    # calibration with dataloader or calib_func
-    if calib_func is not None:
-        calib_func(model)
-    else:
-        import math
-        batch_size = dataloader.batch_size
-        iters = int(math.ceil(n_samples / batch_size))
-        if n_samples % batch_size != 0:
-            logger.info("calibration samples increase from {} to {} due to batch_size is {}".format(
-                n_samples, iters*batch_size, batch_size,
-            ))
-        model_forward(model, dataloader, iters, next(model.parameters()).device)
-
 @torch.no_grad()
 def _get_weight_scale(weight, q_group_size=-1):
     org_shape = weight.shape
