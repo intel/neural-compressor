@@ -164,7 +164,7 @@ class ActAwareWeightQuant:
         )
         # process per block
         for i, module_list in self.block_absorb_dict.items():
-            logger.info(f"Processing block: {i}")
+            logger.info(f"Processing block: {i+1}/{self.block_num}")
             # Step 1: fetch all input values of each linear for scale calculation
             # use the first linear for QKV tuple
             block_name = self.block_prefix + '.' + str(i)
