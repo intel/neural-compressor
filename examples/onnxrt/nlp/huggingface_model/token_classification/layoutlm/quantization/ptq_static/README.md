@@ -1,33 +1,22 @@
-Step-by-Step
-============
+# Step-by-Step
 
 This example load LayoutLM model and confirm its accuracy and speed based on [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
 
 # Prerequisite
 
 ## 1. Environment
+
 ```shell
 pip install neural-compressor
 pip install -r requirements.txt
 ```
+
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
-Finetune on FUNSD. Refer to the [link](https://github.com/microsoft/unilm/tree/master/layoutlm#fine-tuning-example-on-funsd)
 
 ```bash
-python main.py \
-       --model_name_or_path microsoft/layoutlm-base-uncased \
-       --output_dir ./layoutlm-base-uncased-finetuned-funsd \
-       --do_train \
-       --max_steps 1000 \
-       --warmup_ratio 0.1 
-```
-
-Export a model to ONNX with `optimum.exporters.onnx`.
-
-```bash
-optimum-cli export onnx --model ./layoutlm-base-uncased-finetuned-funsd ./layoutlm-base-uncased-finetuned-funsd-onnx/ --task=token-classification
+python prepare_model.py  --input_model="microsoft/layoutlm-base-uncased" --output_model="./layoutlm-base-uncased-finetuned-funsd-onnx/"
 ```
 
 # Run
@@ -41,7 +30,6 @@ bash run_quant.sh --input_model=./layoutlm-base-uncased-finetuned-funsd-onnx/mod
                    --output_model=/path/to/model_tune \
                    --quant_format="QOperator"
 ```
-
 
 ## 2. Benchmark
 

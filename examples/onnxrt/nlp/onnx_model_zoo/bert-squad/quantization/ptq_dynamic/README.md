@@ -1,33 +1,34 @@
-Step-by-Step
-============
+# Step-by-Step
 
-This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task.
+This example load a language translation model and confirm its accuracy and speed based on [SQuAD](<(https://rajpurkar.github.io/SQuAD-explorer/)>) task.
 
 # Prerequisite
 
 ## 1. Environment
+
 ```shell
 pip install neural-compressor
 pip install -r requirements.txt
 ```
+
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
 
-Download pretrained bert model. We will refer to `vocab.txt` file.
+Download pretrained bert model. We will refer to `vocab.txt` file.t
 
 ```bash
-wget https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip
-unzip uncased_L-12_H-768_A-12.zip
+python prepare_model.py  --input_model="bert" --output_model="bert.zip"
 ```
 
 Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/master/text/machine_comprehension/bert-squad).
 
 ```bash
-wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx
+python prepare_model.py  --input_model="BERT-Squad" --output_model="bertsquad-12.onnx"
 ```
 
 ## 3. Prepare Dataset
+
 Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
 Dataset directories:
@@ -47,7 +48,7 @@ Dynamic quantization:
 ```bash
 bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/squad 
+                   --dataset_location=/path/to/squad
 ```
 
 ## 2. Benchmark
@@ -55,6 +56,6 @@ bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
                       --dataset_location=/path/to/squad \
-                      --batch_size=batch_size \ 
+                      --batch_size=batch_size \
                       --mode=performance # or accuracy
 ```

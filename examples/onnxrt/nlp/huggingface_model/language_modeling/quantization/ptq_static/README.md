@@ -25,7 +25,7 @@ Use `export.py` script for ONNX model conversion.
 Require transformers==3.2.0.
 
 ```shell
-python export.py --model_name_or_path=gpt2 # or other supported model identifier
+python prepare_model.py --output_model=gpt2 # or other supported model identifier
 ```
 
 ## 3. Prepare Dataset
