@@ -1114,3 +1114,54 @@ def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldin
         if folding:
             logger.warning('No absorb layer is detected, please set folding=False for self-absorption')
     return absorb_to_layer, no_absorb_layers
+
+
+def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
+    """get the input args and kwargs of first block.
+
+    Args:
+        model (torch.nn.Module): input model
+        dataloader (dataloader, optional): input dataloader. Defaults to None.
+        n_samples (int, optional): number samples from dataloader. Defaults to 128.
+        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+
+    Raises:
+        ValueError: to avoid inference of rest parts in model
+
+    Returns:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+    """
+    # Step 1: replace block_forward to collect block inputs and avoid entire inference
+    total_block_args = []
+    total_block_kwargs = []
+    def forward(layer, *args, **kwargs):
+        # update total_hidden_states, total_block_kwargs, per batch
+        total_block_args.append(list(args))
+        total_block_kwargs.append(kwargs)
+        raise ValueError
+
+    block_prefix, block_num = _get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    block_forward_cache = first_block.forward
+    first_block.forward = partial(forward, first_block)
+
+    # Step 2: replace model_forward to avoid ValueError
+    model_forward_cache = model.forward
+    def model_forward(model, *args, **kwargs):
+        nonlocal model_forward_cache
+        try:
+            model_forward_cache(*args, **kwargs)
+        except ValueError:
+            pass
+    model.forward = partial(model_forward, model)
+
+    # Step 3: execute calibration
+    calibration(model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func)
+    logger.info("The hidden_states collection is done.")
+
+    # Step 4: recover model and block forward
+    model.forward = model_forward_cache
+    first_block.forward = block_forward_cache
+    return total_block_args, total_block_kwargs

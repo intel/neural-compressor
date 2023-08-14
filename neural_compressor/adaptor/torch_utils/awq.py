@@ -5,6 +5,7 @@ from neural_compressor.adaptor.torch_utils.util import (
     get_example_input, 
     get_absorb_layers,
     get_module_input_output,
+    get_hidden_states
 )
 from .model_wrapper import MulLinear
 from ...utils import logger
@@ -99,42 +100,6 @@ def calibration(model, dataloader=None, n_samples=128, calib_func=None):
             ))
         model_forward(model, dataloader, iters, next(model.parameters()).device)
 
-def _get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
-    # Step 1: replace block_forward to collect block inputs and avoid entire inference
-    total_block_args = []
-    total_block_kwargs = []
-    def forward(layer, *args, **kwargs):
-        # update total_hidden_states, total_block_kwargs, per batch
-        total_block_args.append(list(args))
-        total_block_kwargs.append(kwargs)
-        raise ValueError
-
-    block_prefix, block_num = _get_block_prefix(model)
-    block_list = fetch_module(model, block_prefix)
-    first_block = block_list[0]
-    block_forward_cache = first_block.forward
-    first_block.forward = partial(forward, first_block)
-
-    # Step 2: replace model_forward to avoid ValueError
-    model_forward_cache = model.forward
-    def model_forward(model, *args, **kwargs):
-        nonlocal model_forward_cache
-        try:
-            model_forward_cache(*args, **kwargs)
-        except ValueError:
-            pass
-    model.forward = partial(model_forward, model)
-
-    # Step 3: execute calibration
-    calibration(model, dataloader=dataloader, n_samples=128, calib_func=calib_func)
-    logger.info("The hidden_states collection is done.")
-
-    # Step 4: recover model and block forward
-    model.forward = model_forward_cache
-    first_block.forward = block_forward_cache
-    return total_block_args, total_block_kwargs
-
-
 @torch.no_grad()
 def _get_weight_scale(weight, q_group_size=-1):
     org_shape = weight.shape
@@ -154,6 +119,7 @@ def _get_act_scale(input_val):
 
 
 class ActAwareWeightQuant:
+    """Implementation of Activation-aware Weight quantization (AWQ) algo."""
     def __init__(self, model, example_inputs=None, calib_func=None, dataloader=None, n_samples=128,
                  bits=4,  group_size=32, scheme='asym', sym_full_range=False, weight_config={},):
         self.example_inputs = example_inputs
@@ -161,7 +127,7 @@ class ActAwareWeightQuant:
             assert dataloader is not None, "datalaoder or example_inputs is required."
             self.example_inputs = get_example_input(dataloader)
         # Step 1: get hidden states and kwargs of first block. 
-        self.total_block_args, self.total_block_kwargs = _get_hidden_states(
+        self.total_block_args, self.total_block_kwargs = get_hidden_states(
             model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func
         )
         # Step 2: get block list and block prefix, number
@@ -175,6 +141,19 @@ class ActAwareWeightQuant:
         self.model = model
 
     def quantize(self, auto_scale=True, mse_range=True, folding=False, return_int=False):
+        """execute
+
+        Args:
+            auto_scale (bool, optional): whether search scale. Defaults to True.
+            mse_range (bool, optional): whether search clip range. Defaults to True.
+            folding (bool, optional): whether only allow update scale when it can be fold 
+                                      to upper layer. Defaults to False.
+            return_int (bool, optional): whether return int dtype with WeightOnlyLinear. 
+                                         Defaults to False.
+
+        Returns:
+            model: quantized model
+        """
         # Step 1: get absorbed module list per block, includes self-absorption
         # block_absorb_dict is split per block, includes all absorb relationship.
         # absorb_layer_dict is the inverse of block_absorb_dict for all blocks
@@ -217,6 +196,18 @@ class ActAwareWeightQuant:
         return self.model
 
     def search_scale(self, block, block_name, module_list, input_values):
+        """search scales per block.
+
+        Args:
+            block (torch.nn.Module): a block of model
+            block_name (str): the block name in model.
+            module_list (dict): contains all linear tuple in current block, 
+                                linears in the same tuple shares scale.
+            input_values (dict): contains all input values of linears in current block
+
+        Returns:
+            scale_info: a dict that contains input scales of linears in current block
+        """
         from .weight_only import quant_weight
         scale_info = {}
         logger.info("Searching best scales with AWQ algorithm")
@@ -298,6 +289,11 @@ class ActAwareWeightQuant:
 
     @torch.no_grad()
     def apply_scale(self, scale_info):
+        """apply scales to model.
+
+        Args:
+            scale_info (dict): a dict that contains input scales of linears in current block
+        """
         for module_tuple, scale in scale_info.items():
             logger.debug(f"apply scale for module: {module_tuple}")
             assert module_tuple in self.absorb_layer_dict, "cannot find the absorb module."
@@ -322,6 +318,14 @@ class ActAwareWeightQuant:
                     absorbed_module.weight.mul_(scale.view(1, -1))
 
     def search_clip(self, block_name, module_list, input_values):
+        """search best clip range of each linears in current block.
+
+        Args:
+            block_name (str): block name in model.
+            module_list (dict): contains all linear tuple in current block, 
+                                linears in the same tuple shares scale.
+            input_values (dict): contains all input values of linears in current block
+        """
         from .weight_only import quant_weight
         logger.info("Searching the best clip range with AWQ algorithm")
         for module_tuple in module_list:
@@ -383,6 +387,12 @@ class ActAwareWeightQuant:
                 logger.debug("The best clip ratio for {}:{}".format(module_name, best_clip_ratio))
 
     def apply_quantize_with_clip(self, return_int=False):
+        """quantize model with clip range
+
+        Args:
+            return_int (bool, optional): whether return int dtype with WeightOnlyLinear. 
+                                         Defaults to False.
+        """
         # apply quantization and clip
         logger.info("Quantizing the AWQ optimized fp32 model")
         from .weight_only import rtn_quantize
@@ -398,6 +408,11 @@ class ActAwareWeightQuant:
         logger.info("AWQ quantization is done.")
 
     def update_block_input(self, input_list):
+        """update block input for next block inference
+
+        Args:
+            input_list (list): A list of previous block outputs to serve as input to the next block.
+        """
         for i, inp in enumerate(input_list):
             if len(self.total_block_args[i]) > 0:
                 self.total_block_args[i][0] = inp
@@ -407,6 +422,14 @@ class ActAwareWeightQuant:
                 assert False, "cannot find hidden_states position for next block"
 
     def block_inference(self, model):
+        """collect output of block.
+
+        Args:
+            model (torch.nn.Module): input model.
+
+        Returns:
+            output(list):  a list of block output.
+        """
         total_out = []
         for args, kwargs in zip(self.total_block_args, self.total_block_kwargs):
             out = model(*args, **kwargs)
@@ -416,6 +439,15 @@ class ActAwareWeightQuant:
         return total_out
 
     def module_inference(self, model, inputs):
+        """collect output of module.
+
+        Args:
+            model (torch.nn.Module): input model.
+            inputs (list): a list of module input.
+
+        Returns:
+            output(list):  a list of module output.
+        """
         total_out = []
         for inp in inputs:
             out = model(inp)

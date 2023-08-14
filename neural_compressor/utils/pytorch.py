@@ -185,6 +185,18 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
 
 
 def load_weight_only(checkpoint_dir, model):
+    """load model in weight_only mode
+
+    Args:
+        checkpoint_dir (dir/file/dict): The folder of checkpoint. 'qconfig.json' and 
+                                        'best_model.pt' are needed in This directory. 
+                                        'checkpoint' dir is under workspace folder and 
+                                        workspace folder is define in configure yaml file.
+        model (object): fp32 model need to do quantization.
+
+    Returns:
+        (object): quantized model
+    """
     import neural_compressor # for eval(config['module_type'])
     from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear
     weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
