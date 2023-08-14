@@ -5,23 +5,14 @@ from neural_compressor.adaptor.torch_utils.util import (
     get_example_input, 
     get_absorb_layers,
     get_module_input_output,
-    get_hidden_states
+    get_hidden_states,
+    get_block_prefix
 )
 from .model_wrapper import MulLinear
 from ...utils import logger
 from .smooth_quant import model_forward, set_module
 from functools import partial
 
-
-def _get_block_prefix(model, module_types=[torch.nn.ModuleList]):
-    for n, m in model.named_modules():
-        if type(m) in module_types:
-            block_prefix = n
-            block_num = len(m)
-            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
-            break
-    assert block_num > 0, "block num should't be zero!"
-    return block_prefix, block_num
 
 def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}):
     """Get absorbed layer per block. 
@@ -57,7 +48,7 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     if len(skip_op_set) > 0:
         logger.info(f"{skip_op_set} are skipped when running AWQ optimization")
 
-    block_prefix, block_num = _get_block_prefix(model)
+    block_prefix, block_num = get_block_prefix(model)
     for i in range(block_num):
         block_absorb_dict[i] = []
         block_name = block_prefix + '.' + str(i) + '.'
@@ -131,7 +122,7 @@ class ActAwareWeightQuant:
             model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func
         )
         # Step 2: get block list and block prefix, number
-        self.block_prefix, self.block_num = _get_block_prefix(model)
+        self.block_prefix, self.block_num = get_block_prefix(model)
         self.block_list = fetch_module(model, self.block_prefix)
         self.bits = bits
         self.group_size = group_size

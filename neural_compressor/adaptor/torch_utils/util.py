@@ -21,6 +21,7 @@ import json
 import numpy as np
 from collections import UserDict
 from packaging.version import Version
+from functools import partial
 from ...utils import logger
 from ...utils.utility import LazyImport, CpuInfo
 
@@ -1116,6 +1117,27 @@ def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldin
     return absorb_to_layer, no_absorb_layers
 
 
+def get_block_prefix(model, module_types=[torch.nn.ModuleList]):
+    """get prefix and number of blockes
+
+    Args:
+        model (torch.nn.Module): input model
+        module_types (list, optional): a list contains block_list class. Defaults to [torch.nn.ModuleList].
+
+    Returns:
+        block_prefix(str): block_list name in model
+        block_num(int): number of block in block_list
+    """
+    for n, m in model.named_modules():
+        if type(m) in module_types:
+            block_prefix = n
+            block_num = len(m)
+            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
+            break
+    assert block_num > 0, "block num should't be zero!"
+    return block_prefix, block_num
+
+
 def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     """get the input args and kwargs of first block.
 
@@ -1141,7 +1163,7 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
         total_block_kwargs.append(kwargs)
         raise ValueError
 
-    block_prefix, block_num = _get_block_prefix(model)
+    block_prefix, block_num = get_block_prefix(model)
     block_list = fetch_module(model, block_prefix)
     first_block = block_list[0]
     block_forward_cache = first_block.forward
