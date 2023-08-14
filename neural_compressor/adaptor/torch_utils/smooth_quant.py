@@ -29,9 +29,9 @@ except:
 from collections import UserDict, defaultdict
 
 
-def forward_wrapper(model, input, device='cpu'):
+def forward_wrapper(model, input, device=torch.device('cpu')):
     if isinstance(input, dict) or isinstance(input, UserDict):
-        if device == 'cpu':
+        if device == torch.device('cpu'):
             output = model(**input)
         else:  # pragma: no cover
             for inp in input.keys():
@@ -39,7 +39,7 @@ def forward_wrapper(model, input, device='cpu'):
                     if isinstance(input[inp], torch.Tensor) else input[inp]
             output = model(**input)
     elif isinstance(input, list) or isinstance(input, tuple):
-        if device == 'cpu':
+        if device == torch.device('cpu'):
             output = model(*input)
         else:  # pragma: no cover
             input = [inp.to(device) \
@@ -47,7 +47,7 @@ def forward_wrapper(model, input, device='cpu'):
                      for inp in input]  # pylint: disable=E1133
             output = model(*input)
     else:
-        if device == 'cpu' or not isinstance(input, torch.Tensor):
+        if device == torch.device('cpu') or not isinstance(input, torch.Tensor):
             output = model(input)
         else:  # pragma: no cover
             input = input.to(device)  # pylint: disable=no-member
