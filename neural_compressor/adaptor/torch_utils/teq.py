@@ -140,11 +140,11 @@ class TEQuantizer:
         # for insert mul
         if not self.folding: # pragma: no cover
             if isinstance(layer, MulLinear):
-                set_module(self.model, layer_name, layer.sq_linear)  ##recover
+                set_module(self.model, layer_name, layer.linear)  ##recover
             else:
                 new_module = MulLinear(layer, scale)
                 set_module(self.model, layer_name, new_module)
-            self.weight_config[layer_name + ".sq_linear"] = self.weight_config[layer_name]
+            self.weight_config[layer_name + ".linear"] = self.weight_config[layer_name]
             return
 
         if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
@@ -208,7 +208,7 @@ class TEQuantizer:
         :return:
         """
         if layer.__class__.__name__ == "MulLinear":
-            layer = layer.sq_linear
+            layer = layer.linear
 
         if layer.__class__.__name__ == "TEQLinearFakeQuant":
             layer = layer.orig_layer
