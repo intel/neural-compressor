@@ -226,8 +226,7 @@ if __name__ == '__main__':
     # dataloader = INCDataloader(dataloader)
     # ================================================
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
-    # calib_dataset = load_dataset(args.dataset, split="train") # default
-    calib_dataset = datasets.load_from_disk('/data4/cyy/gptq_inc/pile-10k/')
+    calib_dataset = load_dataset(args.dataset, split="train") # default
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
     calib_dataloader = DataLoader(
