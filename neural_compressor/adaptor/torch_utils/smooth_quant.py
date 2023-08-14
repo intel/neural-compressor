@@ -94,7 +94,7 @@ def model_forward_per_sample(model, sample, device):
         return output
 
 
-def quant_dequant_w(m, num_bits=8, scheme='sym'):  ##TODO take sym as default
+def quant_dequant_w(m, num_bits=8, scheme='sym'): 
     eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
         x = m.weight
@@ -261,8 +261,6 @@ class WrapperLayer(torch.nn.Module):
 
     def forward(self, x):
         if self.quant:
-            # scale = 1.0/self.input_scale
-            # scale[self.input_scale==0] = 0
             # self.q_input = x * scale ##save the q_input
             if self.save_q_input:
                 self.q_input = x
@@ -880,13 +878,11 @@ class TorchSmoothQuant:
         :param shared_criterion:
         :return:
         """
-        # alpha_step=0.1
         logger.info("start sq auto tuning")
         alpha_scale = 100
         alpha_space = list(range(round(alpha_min * alpha_scale), round((alpha_max + alpha_step) * alpha_scale),
                                  round(alpha_step * alpha_scale)))
         alpha_space = [alpha / alpha_scale for alpha in alpha_space]
-        ##alpha_space.append(-1.0)
         ##wrapper new module
         self._qdq_model_wrapper_for_auto(save_q_input=True)
         ##set alpha to 0.5 as default
