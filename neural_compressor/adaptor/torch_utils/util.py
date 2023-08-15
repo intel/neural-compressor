@@ -1114,17 +1114,17 @@ def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldin
     return absorb_to_layer, no_absorb_layers
 
 
-def get_block_prefix(model, module_types=[torch.nn.ModuleList]):
+def get_block_prefix(model):
     """get prefix and number of blockes
 
     Args:
         model (torch.nn.Module): input model
-        module_types (list, optional): a list contains block_list class. Defaults to [torch.nn.ModuleList].
 
     Returns:
         block_prefix(str): block_list name in model
         block_num(int): number of block in block_list
     """
+    module_types=[torch.nn.ModuleList]
     for n, m in model.named_modules():
         if type(m) in module_types:
             block_prefix = n
