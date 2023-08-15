@@ -1352,7 +1352,10 @@ class TemplateAdaptor(Adaptor):
         observer_dict = {}
         ret = {}
         if inspect_type == 'activation' or inspect_type == 'all':
-            from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+            if self.version.release >= Version("2.0.0").release:
+                from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+            else:
+                from torch.quantization import get_observer_dict
             ret['activation'] = []
             get_observer_dict(new_model.model, observer_dict)
             if iteration_list is None:
