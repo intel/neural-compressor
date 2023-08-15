@@ -4395,7 +4395,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     'block_size': self.recipes['gptq_args'].get("block_size", True)
                 } 
         nsamples = self.recipes['gptq_args'].get("nsamples", 128)
-        use_full_length = self.recipes['gptq_args'].get("use_full_length", True)
+        use_full_length = self.recipes['gptq_args'].get("use_full_length", False)
         # tune_cfg => weight_config 
         model, quantization_perm = gptq_quantize(
             model, 

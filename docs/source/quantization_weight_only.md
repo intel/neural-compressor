@@ -38,7 +38,7 @@ There are many excellent works for weight only quantization to improve its accur
 | bits | [1-8] |
 | group_size | [-1, 1-N] | 
 | scheme | ['asym', 'sym'] |
-| algorithm | ['RTN', 'AWQ'] |
+| algorithm | ['RTN', 'AWQ', 'GPTQ'] |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
@@ -47,8 +47,17 @@ There are many excellent works for weight only quantization to improve its accur
 |  mse_range |      True     | Whether search for the best clip range from range [0.89, 1.0, 0.01] |
 |  n_blocks  |       5       |   Split the model into n blocks for AWQ search to avoid out-of-memory   |
 
+**GPTQ arguments**:
+|  gptq_args  | default value |                               comments                              |
+|:----------:|:-------------:|:-------------------------------------------------------------------:|
+| actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
+|  percdamp | 0.01 | Add a small Hessian's diagonal values to itself, which increase Hessian's numerical stability|
+|  nsamples  | 128 |  Calibration samples' size |
+|  use_full_length  | False | Whether to align calibration data to a fixed length|
+|  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |
 
-**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
+
+**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size. Term **group_size** in GPTQ refers to number of channels which share the same quantization parameters. 
 
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
@@ -76,9 +85,8 @@ conf = PostTrainingQuantConfig(
             },
         },
     },
-    ### GPTQ is WIP
     recipes={
-        # 'gptq_args':{'percdamp': 0.01},
+        # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsampeles': 128, 'use_full_length': False},
         'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
     },
 )
