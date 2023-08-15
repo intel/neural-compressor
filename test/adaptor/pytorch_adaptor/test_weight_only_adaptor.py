@@ -179,7 +179,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertFalse(torch.all(out1 == out2))
         q_model.save('saved')
         from neural_compressor.utils.pytorch import load
-        new_model = load('saved', model)
+        new_model = load('saved', model, weight_only=True)
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
 
