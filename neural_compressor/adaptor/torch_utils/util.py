@@ -1037,7 +1037,6 @@ def get_module_input_output(model, module_hook_config={}, dataloader=None, iters
                 }
                                     
     """
-    #total_values = {}
     from collections import defaultdict
     total_values = defaultdict(defaultdict)
     def _save_input_output_hook(name, record_input=False, record_output=False):
@@ -1047,8 +1046,6 @@ def get_module_input_output(model, module_hook_config={}, dataloader=None, iters
             return: A hook function
         """
         def _hook(module, inputs, outputs):
-            # if name not in total_values:
-            #     total_values[name] = {}
             if record_input:
                 input = inputs[0]
                 if input_func is not None:

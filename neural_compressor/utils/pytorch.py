@@ -185,7 +185,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
 
 
 def load_weight_only(checkpoint_dir, model):
-    """load model in weight_only mode
+    """Load model in weight_only mode.
 
     Args:
         checkpoint_dir (dir/file/dict): The folder of checkpoint. 'qconfig.json' and 

@@ -109,7 +109,7 @@ class ActAwareWeightQuant:
         self.model = model
 
     def quantize(self, auto_scale=True, mse_range=True, folding=False, return_int=False):
-        """execute
+        """Execute AWQ quantization.
 
         Args:
             auto_scale (bool, optional): whether search scale. Defaults to True.
@@ -164,7 +164,7 @@ class ActAwareWeightQuant:
         return self.model
 
     def search_scale(self, block, block_name, module_list, input_values):
-        """search scales per block.
+        """Search scales per block.
 
         Args:
             block (torch.nn.Module): a block of model
@@ -257,7 +257,7 @@ class ActAwareWeightQuant:
 
     @torch.no_grad()
     def apply_scale(self, scale_info):
-        """apply scales to model.
+        """Apply scales to model.
 
         Args:
             scale_info (dict): a dict that contains input scales of linears in current block
@@ -286,7 +286,7 @@ class ActAwareWeightQuant:
                     absorbed_module.weight.mul_(scale.view(1, -1))
 
     def search_clip(self, block_name, module_list, input_values):
-        """search best clip range of each linears in current block.
+        """Search best clip range of each linears in current block.
 
         Args:
             block_name (str): block name in model.
@@ -355,7 +355,7 @@ class ActAwareWeightQuant:
                 logger.debug("The best clip ratio for {}:{}".format(module_name, best_clip_ratio))
 
     def apply_quantize_with_clip(self, return_int=False):
-        """quantize model with clip range
+        """Quantize model with clip range.
 
         Args:
             return_int (bool, optional): whether return int dtype with WeightOnlyLinear. 
@@ -376,7 +376,7 @@ class ActAwareWeightQuant:
         logger.info("AWQ quantization is done.")
 
     def update_block_input(self, input_list):
-        """update block input for next block inference
+        """Update block input for next block inference.
 
         Args:
             input_list (list): A list of previous block outputs to serve as input to the next block.
@@ -390,7 +390,7 @@ class ActAwareWeightQuant:
                 assert False, "cannot find hidden_states position for next block"
 
     def block_inference(self, model):
-        """collect output of block.
+        """Collect output of block.
 
         Args:
             model (torch.nn.Module): input model.
@@ -407,7 +407,7 @@ class ActAwareWeightQuant:
         return total_out
 
     def module_inference(self, model, inputs):
-        """collect output of module.
+        """Collect output of module.
 
         Args:
             model (torch.nn.Module): input model.
