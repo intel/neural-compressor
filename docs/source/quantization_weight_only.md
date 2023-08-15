@@ -86,7 +86,7 @@ conf = PostTrainingQuantConfig(
         },
     },
     recipes={
-        # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsampeles': 128, 'use_full_length': False},
+        # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsamples': 128, 'use_full_length': False},
         'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
     },
 )

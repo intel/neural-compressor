@@ -15,6 +15,7 @@ acc
 Acc
 accuracies
 acdc
+actorder
 ACDC
 Acknowledgement
 activations
@@ -1253,6 +1254,8 @@ npz
 nq
 nrix
 ns
+nsample
+nsamples
 nsdf
 nSsKchNAySU
 nthreads
