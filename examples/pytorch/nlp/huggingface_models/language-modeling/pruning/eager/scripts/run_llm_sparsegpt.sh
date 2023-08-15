@@ -2,7 +2,7 @@
 set -x
 
 # Set environment
-CUBLAS_WORKSPACE_CONFIG=':4096:8'
+export CUBLAS_WORKSPACE_CONFIG=':4096:8'
 
 # Available Models
 
@@ -10,7 +10,7 @@ CUBLAS_WORKSPACE_CONFIG=':4096:8'
 
 #cd neural-compressor
 python examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_sparsegpt.py \
-    --model_name_or_path /PATH/TO/LLM/
+    --model_name_or_path /PATH/TO/LLM/ \
     --calibration_dataset_name wikitext-2-raw-v1 \
     --evaluation_dataset_name lambada \
     --per_device_train_batch_size 1 \
@@ -22,4 +22,5 @@ python examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/r
     --output_dir=/PATH/TO/SAVE/ \
     --target_sparsity 0.5 \
     --pruning_pattern 1x1
+
 

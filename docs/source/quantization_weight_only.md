@@ -24,11 +24,11 @@ There are many excellent works for weight only quantization to improve its accur
 
 ## Supported Framework Model Matrix
 
-| Algorithms/Framework |   PyTorch  |    ONNX    |
+| Algorithms/Framework |   PyTorch  |    ONNX Runtime    |
 |:--------------:|:----------:|:----------:|
 |       RTN      |  &#10004;  |  &#10004;  |
-|       AWQ      |  &#10004;  | stay tuned |
-|      GPTQ      | &#10004; | stay tuned |
+|       AWQ      |  &#10004;  | &#10004; |
+|      GPTQ      | &#10004; | &#10004; |
 |      TEQ      | &#10004; | stay tuned |
 
 ## Examples

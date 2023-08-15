@@ -4,6 +4,6 @@ onnx
 onnxruntime >= 1.14.0
 coloredlogs
 sympy
-onnxruntime-extensions; python_version < '3.10'
+onnxruntime-extensions; python_version < '3.11'
 numpy
 optimum[exporters]

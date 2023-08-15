@@ -1387,20 +1387,20 @@ class TemplateAdaptor(Adaptor):
         if sq_max_info:
             assert not q_model._smoothquant_optimized, \
                     "The model is already optimized by smoothquant, cannot apply new alpha."
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+            for _, info in sq_max_info.items():
+                alpha = info['alpha']
+                absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model, op_name)
-                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
-                set_module(q_model, op_name, new_module)
-                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                for op_name in absorbed_layer:
+                    module = fetch_module(q_model, op_name)
+                    new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                    set_module(q_model, op_name, new_module)
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         smoothquant_op_info = {'sq_linear': {}, 'qdq_linear': []}
         stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
@@ -2574,16 +2574,22 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         assert not self.version.release < Version("1.10.0").release, \
             "INC support IPEX version >= 1.10.0"
 
-        # Update model parameter when smoothquant folding = False
+        # check smoothquant folding value
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if 'smooth_quant_args' in recipe_cfgs and 'folding' in recipe_cfgs['smooth_quant_args']:
+            if recipe_cfgs['smooth_quant_args']['folding'] is None:
+                if self.version.release < Version("2.1").release:
+                    folding = True
+                else:
+                    folding=False
+            else:
+                folding = recipe_cfgs['smooth_quant_args']['folding']
+        # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and self.version.release >= Version("2.1").release \
-          and not recipe_cfgs['smooth_quant_args']['folding'] \
-          and self.approach != 'post_training_dynamic_quant':
+          and not folding and self.approach != 'post_training_dynamic_quant':
             return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
         # Update model parameter when smoothquant folding = True
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and recipe_cfgs['smooth_quant_args']['folding']:
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) and folding:
             self._apply_pre_optimization(model, tune_cfg)
 
         assert self.approach != 'quant_aware_training', \
@@ -3110,28 +3116,28 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             smoothquant_scale_info = {}
             from .torch_utils.model_wrapper import SQLinearWrapper
             from .torch_utils.util import fetch_module
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+            for _, info in sq_max_info.items():
+                alpha = info['alpha']
+                absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model._model, op_name)
-                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
-                weight_scale = new_module._get_weight_scale()
-                smoothquant_scale_info[op_name] = {
-                    'alpha': new_module.alpha,
-                    'input_scale_for_mul': new_module.input_scale,
-                    'input_scale_after_mul': new_module.scale,
-                    'input_zero_point_after_mul': new_module.zero_point,
-                    'input_dtype': new_module.dtype,
-                    'weight_scale_after_mul': weight_scale,
-                }
-                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                for op_name in absorbed_layer:
+                    module = copy.deepcopy(fetch_module(q_model._model, op_name))
+                    new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                    weight_scale = new_module._get_weight_scale()
+                    smoothquant_scale_info[op_name] = {
+                        'alpha': new_module.alpha,
+                        'input_scale_for_mul': new_module.input_scale,
+                        'input_scale_after_mul': new_module.scale,
+                        'input_zero_point_after_mul': new_module.zero_point,
+                        'input_dtype': new_module.dtype,
+                        'weight_scale_after_mul': weight_scale,
+                    }
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
@@ -3340,6 +3346,21 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             self.prepare_custom_config_dict, self.convert_custom_config_dict = None, None
         self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
+
+        # for layer-wise quant
+        # recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs and recipe_cfgs.get('layer_wise_quant', False) \
+                and self.approach != 'post_training_dynamic_quant':
+            from .torch_utils.layer_wise_quant import LayerWiseQuant
+
+            model_path = recipe_cfgs['layer_wise_quant_args'].get('model_path', None)
+            assert model_path is not None,\
+                "the layer_wise_quant_args should have args model_path to load the weight of model."
+            device = recipe_cfgs['layer_wise_quant_args'].get('decvice', 'cpu')
+            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, device=device)
+            q_model._model = lw_quant.quantize(dataloader, clean_weight=False)
+            return q_model
+        
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
             q_model._model.train()

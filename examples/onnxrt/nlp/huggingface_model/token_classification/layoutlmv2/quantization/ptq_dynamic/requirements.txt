@@ -15,7 +15,7 @@ torchvision
 setuptools
 onnx
 onnxruntime
-onnxruntime-extensions
+onnxruntime-extensions; python_version < '3.11'
 pytesseract
 #detectron2  # TODO export require it, resolve it later
 # git+https://github.com/facebookresearch/detectron2.git

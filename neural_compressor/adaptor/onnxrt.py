@@ -708,7 +708,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         sess_options.graph_optimization_level = optimization_levels[level]
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+        if sys.version_info < (3,11) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
         if not model.is_large_model:
@@ -940,7 +940,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if precision == 'bf16' and \
                     (not self.use_bf16 or (not CpuInfo().bf16 and os.getenv('FORCE_BF16') != '1')):
                     continue
- 
+                elif precision == 'weight_only_integer':
+                    continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
@@ -1232,7 +1233,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+        if sys.version_info < (3,11) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
         session = ort.InferenceSession(self.work_space + 'eval.onnx',
@@ -1485,6 +1486,201 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return predictions
 
 @adaptor_registry
+class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+        """The function is used to do calibration and quanitization in post-training
+           quantization.
+
+        Args:
+            tune_cfg (dict):     quantization config.
+            model (object):      model need to do quantization.
+            data_loader (object): calibration dataset.
+            q_func (optional):   training function for quantization aware training mode,
+                                 unimplement yet for onnx.
+
+        Returns:
+            (dict): quantized model
+        """
+        assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
+        for precision in self.query_handler.get_precisions():
+            if precision == 'weight_only_integer':
+                self.quantizable_op_types += \
+                    self.query_handler.get_op_types_by_precision(precision=precision)
+        self.quantizable_ops = self._query_quantizable_ops(model.model)
+
+        quant_config = self._cfg_to_quantize_config(tune_cfg)
+        algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
+        if "GPTQ" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
+
+            percdamp = self.recipes.get('gptq_args', {}).get('percdamp', 0.01)
+            blocksize = self.recipes.get('gptq_args', {}).get('blocksize', 128)
+            actorder = self.recipes.get('gptq_args', {}).get('actorder', False)
+            mse = self.recipes.get('gptq_args', {}).get('mse', False)
+            perchannel = self.recipes.get('gptq_args', {}).get('perchannel', True)
+            calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+            model = gptq_quantize(model,
+                                  quant_config,
+                                  data_loader,
+                                  calib_sampling_size,
+                                  percdamp=percdamp,
+                                  blocksize=blocksize,
+                                  actorder=actorder,
+                                  mse=mse,
+                                  perchannel=perchannel)
+        if "AWQ" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
+
+            auto_scale = self.recipes.get('awq_args', {}).get('auto_scale', True)
+            mse_range = self.recipes.get('awq_args', {}).get('mse_range', True)
+            n_blocks = self.recipes.get('awq_args', {}).get('n_blocks', 5)
+            calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+            model = awq_quantize(model,
+                                 quant_config,
+                                 data_loader,
+                                 calib_sampling_size,
+                                 auto_scale,
+                                 mse_range,
+                                 n_blocks)
+        elif "RTN" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
+            model = rtn_quantize(model, quant_config)
+        model.q_config = copy.deepcopy(quant_config)
+        self._dump_model_op_stats(model, tune_cfg)
+        model.topological_sort()
+        return model
+
+    def _dump_model_op_stats(self, model, tune_cfg):
+        res = {}
+        # collect all dtype info and build empty results with existing op_type
+        dtype_set = set()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if not config['weight']['dtype'] == 'fp32':
+                num_bits = config['weight']['bits']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                dtype_set.add(dtype_str)
+        dtype_set.add('FP32')
+        dtype_list = list(dtype_set)
+        dtype_list.sort()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if op_type not in res.keys():
+                res[op_type] = {dtype: 0 for dtype in dtype_list}
+
+        # fill in results with op_type and dtype
+        for op, config in tune_cfg['op'].items():
+            if config['weight']['dtype'] == 'fp32':
+                res[op_type]['FP32'] += 1
+            else:
+                num_bits = config['weight']['bits']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                res[op_type][dtype_str] += 1
+
+        # update stats format for dump.
+        field_names = ["Op Type", "Total"]
+        field_names.extend(dtype_list)
+        output_data = []
+        for op_type in res.keys():
+            field_results = [op_type, sum(res[op_type].values())]
+            field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+            output_data.append(field_results)
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
+
+    def _cfg_to_quantize_config(self, tune_cfg):
+        quantize_config = {}
+        quantize_config['calib_iteration'] = tune_cfg['calib_iteration']
+
+        for _, op in enumerate(self.quantizable_ops):
+            if (op.name, op.op_type) not in tune_cfg['op']:
+                continue
+            if tune_cfg['op'][(op.name, op.op_type)]['weight']['dtype'] in \
+                self.query_handler.get_fallback_list():
+                quantize_config[op.name] = \
+                    tune_cfg['op'][(op.name, op.op_type)]['weight']['dtype']
+            else:
+                quantize_config[op.name] = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
+
+        return quantize_config
+
+    def query_fw_capability(self, model):
+        """The function is used to query framework capability.
+        TODO: will be replaced by framework query API
+
+        Args:
+            model: onnx model
+
+        Returns:
+            (dict): quantization capability
+        """
+        # optype_wise and op_wise capability
+        self._pre_optimize(model)
+
+        quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
+        optype_wise = OrderedDict()
+        op_wise = OrderedDict()
+        for query in [self.query_handler, self.query_handler_ext]:
+            if query is None:
+                continue
+            precisions = query.get_precisions()
+
+            for precision in precisions:
+                if precision != 'weight_only_integer':
+                    continue
+                # get supported optype for target precision
+                optypes = query.get_op_types_by_precision(precision) if \
+                    query.get_op_types_by_precision(precision) != ['*'] else \
+                    optype_wise.keys()
+ 
+                configs = query.get_quantization_capability()[precision] if \
+                    precision in query.get_quantization_capability() else \
+                    {'default': {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}}
+
+                for op in optypes:
+                    if op not in quantizable_optype:
+                        continue
+                    if op not in configs:
+                        if 'default' in configs:
+                            op_capability = copy.deepcopy(configs['default'])
+                        else:
+                            continue
+                    else:
+                        op_capability = copy.deepcopy(configs[op])
+                    op_capability['activation']['quant_mode'] = 'weight_only'
+                    if op not in optype_wise.keys():
+                        optype_wise[op] = [op_capability]
+                    elif op_capability not in optype_wise[op]:
+                        optype_wise[op].append(op_capability)
+
+        for node in self.pre_optimized_model.nodes():
+            if node.op_type in ['MatMul', 'Attention'] and model.get_initializer(node.input[1]) is None:
+                op_wise.update(
+                    {(node.name, node.op_type): [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
+                continue
+            if node.op_type in optype_wise:
+                op_wise.update(
+                    {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': {}, 'block_wise': []}
+
+
+@adaptor_registry
 class ONNXRT_QLinearOpsAdaptor(ONNXRUNTIMEAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
@@ -1594,6 +1790,7 @@ class ONNXRTQuery(QueryBackendCapability):
 
         # generate specified version config according to quantization approach and format
         config = {}
+        config['capabilities'] = {} 
         for k, v in version_config.items():
             if k == 'version':
                 config['version'] = v
@@ -1601,15 +1798,15 @@ class ONNXRTQuery(QueryBackendCapability):
                 config['graph_optimization'] = v['graph_optimization']
             else:
                 if self.static and 'static' in v:
-                    config['capabilities'] = {k: {node_op: node_config 
+                    config['capabilities'].update({k: {node_op: node_config 
                     for node_op, node_config in v['static'].items() 
                     if 'mode' in node_config and \
                     self.format.split('ops')[0].lower() in \
-                    [mode.lower() for mode in node_config['mode']]}}
+                    [mode.lower() for mode in node_config['mode']]}})
                 elif self.dynamic and 'dynamic' in v:
-                    config['capabilities'] = {k: v['dynamic']}
-        if 'capabilities' not in config:
-            config['capabilities'] = {} 
+                    config['capabilities'].update({k: v['dynamic']})
+                elif k == 'weight_only_integer':
+                    config['capabilities'].update({k: v})
 
         # generate other config content including precisions and ops 
         precisions = list(version_config.keys() - {'version', 'recipes'})

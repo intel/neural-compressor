@@ -1,4 +1,4 @@
 intel-tensorflow
 onnxruntime
 onnx
-onnxruntime-extensions
+onnxruntime-extensions; python_version < '3.11'

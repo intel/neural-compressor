@@ -1231,6 +1231,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
 
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_cuda_ep', device='gpu', quant_level=1)
+        q_model = quantization.fit(self.distilbert_model, config, 
+            calib_dataloader=DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english"),
+            eval_func=eval)
+        self.assertTrue('QLinearMatMul' in [i.op_type for i in q_model.nodes()])
+
         config = PostTrainingQuantConfig(approach='static', recipes={'optypes_to_exclude_output_quant': ['MatMul']})
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)

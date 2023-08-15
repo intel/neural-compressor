@@ -1,9 +1,7 @@
-#!/bin/bash
-
-set -x
+et -x
 
 # Set environment
-CUBLAS_WORKSPACE_CONFIG=':4096:8'
+export CUBLAS_WORKSPACE_CONFIG=':4096:8'
 
 
 CUDA_VISIBLE_DEVICES=4 python \
@@ -14,13 +12,14 @@ CUDA_VISIBLE_DEVICES=4 python \
     --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 16 \
     --max_pruning_steps 3002 \
-    --weight_decay  0 \
     --block_size 512 \
     --max_length 512 \
     --do_prune \
+    --auto_config \
     --auto_slim \
     --output_dir ./sparse_model \
     --target_sparsity 0.1 \
     --pruning_pattern channelx1 \
     --pruning_frequency 500
     
+

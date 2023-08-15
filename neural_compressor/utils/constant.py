@@ -80,6 +80,7 @@ RECIPES = {
         },
     "pytorch": {
         'smooth_quant': [False, True],
+        'layer_wise_quant': [False, True]
         },
 }
 

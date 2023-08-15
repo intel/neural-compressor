@@ -1249,6 +1249,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     if isinstance(v, list) and len(v) >= 1:
                         v = v[0]
                 tune_cfg['recipe_cfgs'].setdefault('smooth_quant_args', {})[k] = v
+        if 'layer_wise_quant_args' in self.config.recipes:
+            tune_cfg['recipe_cfgs']['layer_wise_quant_args'] = self.config.recipes['layer_wise_quant_args']
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
             if recipe_name not in tune_cfg['recipe_cfgs']:
@@ -1369,6 +1371,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 framework_specific_info['use_bf16'] = True
             if framework_specific_info['backend'] == 'onnxrt_dnnl_ep' and self.config.device == 'cpu':
                 framework_specific_info['use_bf16'] = True
+            if self.config.approach =='post_training_weight_only':
+                framework = 'onnxrt_weightonly'   # use specific adaptor for weight_only approach
+ 
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.config.backend == 'ipex':
                 framework = 'pytorch_ipex'

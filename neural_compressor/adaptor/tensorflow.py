@@ -89,6 +89,10 @@ class TensorFlowAdaptor(Adaptor):
 
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.itex_mode = self.backend == 'itex' or cfg_yaml_name == 'tensorflow_itex.yaml'
+        
+        if self.itex_mode:
+            self._check_itex()
+            
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name),
             performance_only=self.performance_only,
@@ -109,6 +113,13 @@ class TensorFlowAdaptor(Adaptor):
 
         self._last_dequantize_ops = None
         self.smooth_quant_model = None
+
+    def _check_itex(self):
+        try:
+            import intel_extension_for_tensorflow
+        except:
+            raise ImportError("The Intel® Extension for TensorFlow is not installed. "\
+                                "Please install it to run models on ITEX backend")
 
     def _log_histogram(self, writer, tag, values, step=0, bins=1000):
         """Writes a histogram for later analysis."""
