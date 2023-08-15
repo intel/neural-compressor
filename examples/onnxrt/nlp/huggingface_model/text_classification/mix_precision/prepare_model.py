@@ -6,7 +6,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_model",
                         type=str,
-                        required=True,
+                        required=False,
                         default="Intel/bert-base-uncased-mrpc")
     parser.add_argument("--output_model", type=str, required=True)
     parser.add_argument("--task", type=str, required=False, default="text-classification")

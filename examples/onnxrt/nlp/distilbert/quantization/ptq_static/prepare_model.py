@@ -6,7 +6,7 @@ import torch
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=True)
+    parser.add_argument("--input_model", type=str, required=False, default="distilbert-base-uncased")
     parser.add_argument("--output_model", type=str, required=True)
     parser.add_argument('--input_dir',
                         type=str,

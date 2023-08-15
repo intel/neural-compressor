@@ -12,7 +12,7 @@ MAX_TIMES_RETRY_DOWNLOAD = 5
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=True)
+    parser.add_argument("--input_model", type=str, required=False, default='arcfaceresnet100-8.onnx')
     parser.add_argument("--output_model", type=str, required=True)
     return parser.parse_args()
 

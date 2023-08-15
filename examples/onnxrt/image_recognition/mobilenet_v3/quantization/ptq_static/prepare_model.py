@@ -10,7 +10,10 @@ MAX_TIMES_RETRY_DOWNLOAD = 5
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=True)
+    parser.add_argument("--input_model",
+                        type=str,
+                        required=False,
+                        default='mobilenet_edgetpu_224_1.0_float.tflite')
     parser.add_argument("--output_model", type=str, required=True)
     return parser.parse_args()
 

@@ -52,6 +52,9 @@ if __name__ == "__main__":
     parser.add_argument(
         '--input_model',
         type=str,
+        default='Intel/bert-base-uncased-mrpc',
+        const='Intel/bert-base-uncased-mrpc',
+        nargs='?',
         choices=['Intel/bert-base-uncased-mrpc',
                 'Intel/roberta-base-mrpc',
                 'Intel/xlm-roberta-base-mrpc',

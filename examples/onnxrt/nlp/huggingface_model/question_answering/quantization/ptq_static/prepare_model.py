@@ -12,7 +12,7 @@ def export_onnx_model(args, model):
         torch.onnx.export(model,                            # model being run
                         (inputs['input_ids'],               # model input (or a tuple for multiple inputs) 
                         inputs['attention_mask'],
-                        inputs['token_type_ids']),          
+                        inputs['token_type_ids']),
                         args.output_model,                  # where to save the model (can be a file or file-like object)
                         opset_version=11,                   # the ONNX version to export the model
                         do_constant_folding=True,           # whether to execute constant folding
@@ -31,13 +31,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
     description='Export huggingface onnx model',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        '--input_model',
-        type=str,
-        choices=['mrm8488/spanbert-finetuned-squadv1',
-                'salti/bert-base-multilingual-cased-finetuned-squad',
-                'bert-large-uncased-whole-word-masking-finetuned-squad'],
-        help='pretrained model name or path ')
+    parser.add_argument('--input_model',
+                        type=str,
+                        default='mrm8488/spanbert-finetuned-squadv1',
+                        const='mrm8488/spanbert-finetuned-squadv1',
+                        nargs='?',
+                        choices=[
+                            'mrm8488/spanbert-finetuned-squadv1',
+                            'salti/bert-base-multilingual-cased-finetuned-squad',
+                            'bert-large-uncased-whole-word-masking-finetuned-squad'
+                        ],
+                        help='pretrained model name or path ')
     parser.add_argument("--output_model", type=str, required=True)
     parser.add_argument(
         '--max_len',

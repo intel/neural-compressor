@@ -64,6 +64,7 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
 def gpt2_test():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--input_model', type=str,  required=False, default="gpt2")
     parser.add_argument('--output_model', type=str,  required=True, 
                         help='model name or path.')
     args = parser.parse_args()

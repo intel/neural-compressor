@@ -8,7 +8,7 @@ from transformers import RobertaForSequenceClassification
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=True)
+    parser.add_argument("--input_model", type=str, required=False, default="roberta-base")
     parser.add_argument("--output_model", type=str, required=True)
     parser.add_argument('--input_dir',
                         type=str,
