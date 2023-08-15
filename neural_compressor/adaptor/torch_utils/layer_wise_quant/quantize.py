@@ -25,9 +25,11 @@ from collections import UserDict
 
 from .utils import torch
 from ..model_wrapper import QDQLayer
-from torch.quantization import prepare, convert, QuantWrapper
+from torch.quantization import prepare, convert
 from accelerate.utils import set_module_tensor_to_device
-from .utils import _get_path, get_named_children, update_module, load_tensor_from_shard, load_tensor
+from .utils import (_get_path, get_named_children, update_module,
+                    load_tensor, register_weight_hooks,
+                    load_tensor_from_shard, clean_module_weight)
 
 from neural_compressor.config import default_workspace
 
@@ -88,6 +90,7 @@ class LayerWiseQuant:
         self.modules = get_named_children(self.q_model)
         self.device = device
         self._handle = {}
+        self.quantized_layers = {}
 
         self.smooth_quant = smooth_quant
         self.alpha = float(alpha)
@@ -95,9 +98,9 @@ class LayerWiseQuant:
             f'alpha should be in range (0, 1), but got {alpha}'
         if smooth_quant:
             self.init_sq()
-    
+
     def init_sq(self):
-        handles = self._register_weight_hooks(self.fp32_model)
+        handles = register_weight_hooks(self.fp32_model, self.path)
 
         # traced_model = torch.jit.trace(self.fp32_model, torch.randint(0, 100, (1, 3)))
         op_types = ['Linear']
@@ -142,6 +145,7 @@ class LayerWiseQuant:
                 update_module(self.q_model, name, module)
                 # module.qconfig = self.qconfig
                 module.qconfig = qconfig
+                self.quantized_layers[name] = -1
         self._regist_hooks()
 
         self.q_model.eval()
@@ -172,7 +176,7 @@ class LayerWiseQuant:
             torch.save(new_module, os.path.join(path, f'{name}.pt'))
             del new_module
             if clean_weight:
-                self._clean_weight(module, name)
+                clean_module_weight(module)
         torch.save(self.fp32_model, os.path.join(path, 'model_arch.pt'))
 
     def _convert(self, clean_weight=False):
@@ -180,7 +184,7 @@ class LayerWiseQuant:
             self._load_state_dict(name, TMP_DIR)
             convert(module, inplace=True)
             if clean_weight:
-                self._clean_weight(module, name)
+                clean_module_weight(module)
 
     def _regist_hooks(self):
         def forward_pre_hook(name):
@@ -222,46 +226,13 @@ class LayerWiseQuant:
                 file_path = os.path.join(TMP_DIR, f'{name}.pt')
                 if os.path.exists(TMP_DIR):
                     torch.save(module.state_dict(), file_path)
-                self._clean_weight(module, name)
+                clean_module_weight(module)
             return hook
 
         for name, module in self.modules:
             self._handle[name] = [module.register_forward_pre_hook(forward_pre_hook(name))]
             self._handle[name] += [module.register_forward_hook(forward_hook(name))]
     
-    def _register_weight_hooks(self, model):
-        def forward_pre_hook(name):
-            def load_value(param_name):
-                if 'lm_head' in param_name and getattr(model.config, "tie_word_embeddings", True):
-                    input_embeddings = model.get_input_embeddings()
-                    for name, module in modules:
-                        if module == input_embeddings:
-                            param_name = name + '.' + param_name.split('.')[-1]
-                prefix = model.base_model_prefix
-                if 'pytorch_model.bin.index.json' in os.listdir(self.path):
-                    value = load_tensor_from_shard(self.path, param_name, prefix)
-                else:
-                    value = load_tensor(os.path.join(self.path, 'pytorch_model.bin'), param_name, prefix)
-                return value
-
-            def hook(module, input):
-                for n, p in module.named_parameters():
-                    param_name = name + '.' + n
-                    value = load_value(param_name)
-                    set_module_tensor_to_device(model, param_name, self.device, value)
-            return hook
-
-        def forward_hook(name):
-            def hook(module, input, output):
-                self._clean_weight(module, name)
-            return hook
-
-        handle = {}
-        modules = get_named_children(model)
-        for name, module in modules:
-            handle[name] = [module.register_forward_pre_hook(forward_pre_hook(name))]
-            handle[name] += [module.register_forward_hook(forward_hook(name))]
-        return handle
 
     def _remove_hooks(self, handles=None):
         if handles is None:
@@ -269,26 +240,6 @@ class LayerWiseQuant:
         for handle in handles.values():
             [h.remove() for h in handle]
 
-    def _clean_weight(self, module, name):
-        if isinstance(module, QDQLayer):
-            submodule = module.module
-        else:
-            submodule = module
-        
-        for n, m in submodule.named_parameters():
-            is_buffer = n in submodule._buffers
-            old_value = getattr(submodule, n)
-            with torch.no_grad():
-                if is_buffer:
-                    submodule._buffers[n] = torch.zeros([0], device="meta")
-                else:
-                    param_cls = type(submodule._parameters[n])
-                    kwargs = submodule._parameters[n].__dict__
-                    new_value = torch.zeros([0], device="meta")
-                    new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
-                    submodule._parameters[n] = new_value
-        gc.collect()
-    
     def _adjust_parameters(self, module, name, input):
         input = input.reshape(-1, input.shape[-1])
         max_tensor = torch.max(input, dim=0)[0]
@@ -303,7 +254,8 @@ class LayerWiseQuant:
         scale[input_power == 0] = 1.0
 
         if name in self.absorb_layers:
-            module.input_scale = scale
+            module.input_scale = 1.0 / scale
+            self.quantized_layers[name] = 1.0 / scale
         if name in self.scale_weight_layers:
             module.module.weight = torch.nn.Parameter(weights * scale)
     

@@ -85,6 +85,20 @@ class QDQLayer(torch.nn.Module):
         return X
 
 
+def _wrap_lwq_layer(model, lwq_layers, op_cfgs):
+    from .layer_wise_quant.utils import get_module, update_module
+    from torch.quantization import prepare, convert
+    for name, input_scale in lwq_layers.items():
+        qconifg = op_cfgs.module_name_qconfigs.get(name + '.module')
+        module = get_module(model, name)
+        new_model = QDQLayer(module, input_scale)
+        new_model.qconfig = qconifg
+        new_model = prepare(new_model)
+        new_model = convert(new_model)
+        update_module(model, name, new_model)
+    return model
+
+
 class SQLinearWrapper(torch.nn.Module):
     def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
         super().__init__()

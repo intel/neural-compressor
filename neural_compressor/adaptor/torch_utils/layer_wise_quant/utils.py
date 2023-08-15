@@ -17,6 +17,7 @@
 """Utils for layer wise quantization."""
 
 import os
+import gc
 import json
 
 from neural_compressor.utils.utility import LazyImport
@@ -24,8 +25,28 @@ torch = LazyImport("torch")
 from accelerate import init_empty_weights
 from transformers import AutoConfig
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
+from accelerate.utils import set_module_tensor_to_device
 
 from .torch_load import load
+from ..model_wrapper import QDQLayer
+
+
+def get_module(model, key):
+    """Get module from model by key name
+
+    Args:
+        model (torch.nn.Module): original model
+        key (str): module name to be replaced
+    """
+    attrs = key.split('.')
+    module = model
+    for attr in attrs:
+        try:
+            attr = int(attr)
+            module = module[attr]
+        except:
+            module = getattr(module, attr)
+    return module
 
 
 def get_children(model):
@@ -174,3 +195,59 @@ def _get_path(pretrained_model_name_or_path):
     else:
         path = dowload_hf_model(pretrained_model_name_or_path)
     return path
+
+def register_weight_hooks(model, path, device='cpu', clean_weight=True):
+    def forward_pre_hook(name):
+        def load_value(param_name):
+            if 'lm_head' in param_name and getattr(model.config, "tie_word_embeddings", True):
+                input_embeddings = model.get_input_embeddings()
+                for name, module in modules:
+                    if module == input_embeddings:
+                        param_name = name + '.' + param_name.split('.')[-1]
+            prefix = model.base_model_prefix
+            if 'pytorch_model.bin.index.json' in os.listdir(path):
+                value = load_tensor_from_shard(path, param_name, prefix)
+            else:
+                value = load_tensor(os.path.join(path, 'pytorch_model.bin'), param_name, prefix)
+            return value
+
+        def hook(module, input):
+            for n, p in module.named_parameters():
+                param_name = name + '.' + n
+                value = load_value(param_name)
+                set_module_tensor_to_device(model, param_name, device, value)
+        return hook
+
+    def forward_hook(name):
+        def hook(module, input, output):
+            clean_module_weight(module)
+        return hook
+
+    handle = {}
+    modules = get_named_children(model)
+    for name, module in modules:
+        handle[name] = [module.register_forward_pre_hook(forward_pre_hook(name))]
+        if clean_weight:
+            handle[name] += [module.register_forward_hook(forward_hook(name))]
+    return handle
+
+
+def clean_module_weight(module):
+    if isinstance(module, QDQLayer):
+        submodule = module.module
+    else:
+        submodule = module
+    
+    for n, m in submodule.named_parameters():
+        is_buffer = n in submodule._buffers
+        old_value = getattr(submodule, n)
+        with torch.no_grad():
+            if is_buffer:
+                submodule._buffers[n] = torch.zeros([0], device="meta")
+            else:
+                param_cls = type(submodule._parameters[n])
+                kwargs = submodule._parameters[n].__dict__
+                new_value = torch.zeros([0], device="meta")
+                new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
+                submodule._parameters[n] = new_value
+    gc.collect()

@@ -3362,6 +3362,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, dataloader,
                                       device=device, smooth_quant=smooth_quant, alpha=alpha)
             q_model._model = lw_quant.quantize(clean_weight=False)
+            tune_cfg['recipe_cfgs']['lwq_layers'] = lw_quant.quantized_layers
+            q_model.q_config = copy.deepcopy(tune_cfg)
             return q_model
         
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list

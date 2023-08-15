@@ -1,17 +1,17 @@
 import unittest
 import sys
-import torch
-from torch.utils.data import DataLoader, Dataset
+import shutil
 
 sys.path.insert(0, './')
-
+import torch
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_shell
 from neural_compressor import PostTrainingQuantConfig, quantization
+from neural_compressor.utils.pytorch import load
 
 
 class TestLayerWise(unittest.TestCase):
-    @classmethod
     def test_layer_wise(self):
 
         model_name_or_path = 'facebook/opt-125m'
@@ -38,7 +38,7 @@ class TestLayerWise(unittest.TestCase):
                 return len(self.encodings.input_ids)
 
         eval_dataset = TestDataset(encoded_input)
-        eval_dataloader = DataLoader(eval_dataset)
+        eval_dataloader = DataLoader(eval_dataset, batch_size=8)
 
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
@@ -57,6 +57,14 @@ class TestLayerWise(unittest.TestCase):
             calib_dataloader=eval_dataloader,
             eval_func=lambda x: 0.1,
         )
+        ouput_dir = './saved_model'
+        q_model.save(ouput_dir)
+        load_model = load(ouput_dir,
+                          AutoModelForCausalLM.from_pretrained(model_name_or_path))
+        lm_weight = q_model._model.lm_head.module.weight()
+        test_value = load_model.lm_head.module.weight().equal(lm_weight)
+        self.assertTrue(test_value)
+        shutil.rmtree(ouput_dir)
 
     def test_util(self):
         from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import (
