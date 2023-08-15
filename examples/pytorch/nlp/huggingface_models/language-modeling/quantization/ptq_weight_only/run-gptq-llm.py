@@ -161,7 +161,7 @@ if __name__ == '__main__':
     # )
     # q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
 
-    # method 2: directly use build-in function, for some models like falcon, please use this function
+    # method 2: directly use INC build-in function, for some models like falcon, please use this function
     conf = {
         ".*":{
             'wbits': args.wbits, # 1-8 bits 
@@ -174,18 +174,8 @@ if __name__ == '__main__':
 
     results = lm_evaluate(
         model="hf-causal",
-        model_args=f'pretrained="{args.model_name_or_path}",tokenizer="{args.model_name_or_path}",dtype=float32',
+        model_args='pretrained='+args.model_name_or_path+',tokenizer='+args.model_name_or_path+',dtype=float32',
         user_model=q_model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
         batch_size=4
     )
-
-    # datasets = ['wikitext2']
-
-    # for dataset in datasets:
-    #     dataloader, testloader = get_loaders(
-    #         dataset, seed=0, model=args.model_name_or_path, seqlen=model.seqlen
-    #     )
-    #     print(dataset, flush=True)
-    #     ppl = eval_ppl_with_gptq(model, testloader, device)
-    #     results.update({dataset: ppl})
