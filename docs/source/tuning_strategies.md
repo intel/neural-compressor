@@ -179,7 +179,7 @@ flowchart TD
 
 > `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
 
-> For [smooth quantization](./smooth_quant.md), user can tuning the smooth quantization's alpha by providing a list of scalars for `alpha` item. The tuning process will take place at the **start** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.md#Example).
+> For [smooth quantization](./smooth_quant.md), users can tune the smooth quantization alpha by providing a list of scalars for the `alpha` item. The tuning process will take place at the **start stage** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.md#Example).
 
 
 **1.** Default quantization
