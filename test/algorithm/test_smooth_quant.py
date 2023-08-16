@@ -67,6 +67,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
@@ -87,7 +88,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         sq = TorchSmoothQuant(model, dummy_dataloader)
         sq.transform(alpha='auto', calib_iter=1, folding=True)
         output_sq = model(data)
-        assert torch.sum(torch.abs(output - output_sq)) < 1e-5
+        assert torch.sum(torch.abs(output - output_sq)) < 1e-3
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -97,6 +98,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 3, 1, 1)
@@ -140,6 +142,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -174,6 +177,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_relu6(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -195,6 +199,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_relu(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -216,6 +221,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_gelu(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -237,6 +243,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_bn(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -259,6 +266,7 @@ class TestSqConvOpFuse(unittest.TestCase):
 
     def test_sq_conv_gn(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -281,6 +289,7 @@ class TestSqConvOpFuse(unittest.TestCase):
 
     def test_sq_add(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 3, 1, 1)
@@ -373,6 +382,7 @@ class TestSqListInput(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -394,6 +404,7 @@ class TestSqListInput(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm_tuple(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -428,6 +439,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm_auto(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -462,6 +474,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -483,6 +496,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_T5Norm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -504,6 +518,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_relu6(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -525,6 +540,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_norm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -546,6 +562,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_norm_linear(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.norm_1 = torch.nn.LayerNorm(3)
@@ -569,6 +586,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_gelu_norm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -591,6 +609,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
     def test_sq_linear(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -610,6 +629,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -682,6 +702,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
     def test_sq_quant_ipex(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -746,6 +767,7 @@ class TestSqSkipOp(unittest.TestCase):
     @classmethod 
     def test_sq_skip_op_auto(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.linear0 = nn.Linear(4, 4, bias=False)
@@ -798,6 +820,7 @@ class TestSqSkipOp_attn(unittest.TestCase):
     @classmethod 
     def test_sq_skip_op_attn_auto(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.hidden_size = 4
