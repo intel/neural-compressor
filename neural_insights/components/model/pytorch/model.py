@@ -14,6 +14,7 @@
 # limitations under the License.
 """PyTorch model class."""
 from neural_insights.components.graph.graph import Graph
+from neural_insights.components.graph.reader.pytorch_reader import PyTorchReader
 from neural_insights.components.model.model import Model
 from neural_insights.utils.consts import Frameworks
 from neural_insights.utils.utils import check_module, get_file_extension
@@ -23,7 +24,8 @@ class PyTorchModel(Model):
     """PyTorch Script Model class."""
 
     def get_model_graph(self) -> Graph:
-        raise NotImplementedError
+        graph_reader = PyTorchReader(self)
+        return graph_reader.read()
 
     def __init__(self, path: str) -> None:
         """Initialize object."""
