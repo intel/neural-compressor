@@ -35,7 +35,7 @@ from neural_compressor.config import default_workspace
 
 from ..smooth_quant import TorchSmoothQuant
 
-TMP_DIR = f'{default_workspace}/layer_wise_quant_tmp_dir_{time.time()}'
+TMP_DIR = os.path.join(default_workspace, 'layer_wise_quant_tmp_dir')
 
 
 def mk_tmp_dir():
@@ -152,19 +152,16 @@ class LayerWiseQuant:
         with torch.no_grad():
             if isinstance(calib_data, torch.Tensor):
                 self.q_model(calib_data)
-            elif isinstance(calib_data, torch.utils.data.dataloader.DataLoader):
-                pbar = tqdm(enumerate(calib_data), total=len(calib_data))
+            else:
                 try:
+                    pbar = tqdm(enumerate(calib_data), total=len(calib_data), desc='layer_wise quant')
                     for idx, input in pbar:
                         pbar.set_description(f'iter {idx}')
                         forward_wrapper(self.q_model, input, self.device)
-                        # self.q_model(**input)
                 except Exception:  # pragma: no cover
+                    pbar = tqdm(enumerate(calib_data), total=len(calib_data), desc='layer_wise quant')
                     for idx, (input, label) in pbar:
                         forward_wrapper(self.q_model, input, self.device)
-                        # self.q_model(**input)
-            else:
-                self.q_model(**calib_data)
         self._remove_hooks()
 
     def _save(self, path=None, clean_weight=True):  # pragma: no cover
