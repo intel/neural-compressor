@@ -261,7 +261,7 @@ class KnowledgeDistillationFramework(object):
 class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
     """Initialize the KnowledgeDistillationLoss class."""
 
-    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
+    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'],
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
         """Initialize Knowledge Distillation Loss class.
 
@@ -378,7 +378,7 @@ class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
 class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
     """The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
 
-    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
+    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'],
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
         """Initialize PyTorch Knowledge Distillation Loss class.
 
@@ -394,7 +394,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             NotImplementedError: NotImplementedError
             NotImplementedError: NotImplementedError
         """
-        super(PyTorchKnowledgeDistillationLoss, self).__init__(temperature=temperature, 
+        super(PyTorchKnowledgeDistillationLoss, self).__init__(temperature=temperature,
                                                                loss_types=loss_types,
                                                                loss_weights=loss_weights,
                                                                student_model=student_model,
@@ -553,7 +553,7 @@ class PyTorchKnowledgeDistillationLossWrapper(object):
 class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
     """The TensorflowKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
 
-    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
+    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'],
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
         """Initialize Tensorflow Knowledge Distillation Loss class.
 
@@ -569,7 +569,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             NotImplementedError: NotImplementedError
             NotImplementedError: NotImplementedError
         """
-        super(TensorflowKnowledgeDistillationLoss, self).__init__(temperature=temperature, 
+        super(TensorflowKnowledgeDistillationLoss, self).__init__(temperature=temperature,
                                                                   loss_types=loss_types,
                                                                   loss_weights=loss_weights,
                                                                   student_model=student_model,
@@ -581,7 +581,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                 raise NotImplementedError('Now we only support CrossEntropyLoss '
                  'for loss of student model output with respect to targets.')
             logger.info('student_targets_loss: {}, {}'.format(self.loss_types[0], \
-                                                        self.loss_weights[0]))            
+                                                        self.loss_weights[0]))
         if self.teacher_student_loss is None:
             if self.loss_types[1] == 'CE':
                 self.teacher_student_loss = self.SoftCrossEntropy
@@ -717,7 +717,7 @@ class TensorflowKnowledgeDistillationLossWrapper(object):
 class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
     """TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss."""
 
-    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
+    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'],
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
         """Initialize Tensorflow Knowledge Distillation Loss class.
 
@@ -734,7 +734,7 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
             NotImplementedError: NotImplementedError
         """
         super(TensorflowKnowledgeDistillationLossExternal, self).__init__(
-                                                                temperature=temperature, 
+                                                                temperature=temperature,
                                                                 loss_types=loss_types,
                                                                 loss_weights=loss_weights,
                                                                 student_model=student_model,
@@ -746,7 +746,7 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
                 raise NotImplementedError('Now we only support CrossEntropyLoss '
                  'for loss of student model output with respect to targets.')
             logger.info('student_targets_loss: {}, {}'.format(self.loss_types[0], \
-                                                        self.loss_weights[0]))            
+                                                        self.loss_weights[0]))
         if self.teacher_student_loss is None:
             if self.loss_types[1] == 'CE':
                 self.teacher_student_loss = tf.keras.losses.CategoricalCrossentropy()
@@ -811,7 +811,7 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
 class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework):
     """The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
 
-    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, 
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None,
                  add_origin_loss=False, student_model=None, teacher_model=None):
         """Initialize PyTorch Knowledge Distillation Loss class.
 
@@ -880,10 +880,8 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         self.feature_matchers = None
         self.init_loss_funcs()
         assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
-            'Wrong length for layer_mappings:{}, loss_weights:{} or loss_types:{}, ' + \
-            'all should be the same.'.format(
-                len(self.layer_mappings), len(self.loss_weights), len(self.loss_types)
-                )
+            f'Wrong length for layer_mappings:{self.layer_mappings}, loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
+            'all should be the same.'
 
     def init_loss_funcs(self):
         """Init loss funcs.
@@ -950,7 +948,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
                 ):
     """PyTorch Intermediate Layers Knowledge Distillation Loss."""
 
-    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, 
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None,
                  add_origin_loss=False, student_model=None, teacher_model=None):
         """Initialize PyTorch Knowledge Distillation Loss class.
 
@@ -967,10 +965,10 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             NotImplementedError: NotImplementedError
         """
         super(PyTorchIntermediateLayersKnowledgeDistillationLoss, self).__init__(
-                                                layer_mappings=layer_mappings, 
+                                                layer_mappings=layer_mappings,
                                                 loss_types=loss_types,
                                                 loss_weights=loss_weights,
-                                                add_origin_loss=add_origin_loss, 
+                                                add_origin_loss=add_origin_loss,
                                                 student_model=student_model,
                                                 teacher_model=teacher_model)
         self.register_hooks_for_models()
@@ -1027,9 +1025,9 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             elif loss_type == 'L1':
                 loss_func = torch.nn.L1Loss()
             else:
-                raise NotImplementedError('Unsupported loss type {}, supported loss is ' + \
-                    'MSE for mean squared error, KL for Kullback-Leibler divergence and ' + \
-                    'L1 for L1 loss.'.format(loss_type))
+                raise NotImplementedError(f'Unsupported loss type {loss_type}, supported loss is ' \
+                            'MSE for mean squared error, KL for Kullback-Leibler divergence and ' \
+                            'L1 for L1 loss.')
             self.loss_funcs.append(loss_func)
 
     def init_feature_matcher(self, student_feature, teacher_feature):
@@ -1151,7 +1149,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             output_device = torch.device('cuda:0') \
                 if torch.device('cuda:0') in student_feature.keys() else torch.device('cpu')
             if init_feature_matchers:
-                feature_matcher = self.init_feature_matcher(student_feature[output_device], 
+                feature_matcher = self.init_feature_matcher(student_feature[output_device],
                                                             teacher_feature[output_device])
                 self.feature_matchers[student_layer] = feature_matcher
 
@@ -1287,11 +1285,8 @@ class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
         self.loss_funcs = []
         self.init_loss_funcs()
         assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
-            'Wrong length for layer_mappings:{}, loss_weights:{} or loss_types:{}, ' + \
-            'all should be the same.'.format(
-                len(self.layer_mappings), len(
-                    self.loss_weights), len(self.loss_types)
-        )
+            f'Wrong length for layer_mappings:{self.layer_mappings}, loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
+            'all should be the same.'
 
     def init_loss_funcs(self):
         """Init loss funcs.
@@ -1420,9 +1415,9 @@ class PyTorchSelfKnowledgeDistillationLoss(
             elif loss_type == 'L2':
                 loss_func = self.L2Divergence
             else:
-                raise NotImplementedError('Unsupported loss type {}, supported loss is ' +
-                                          'CE for software CE, KL for Kullback-Leibler divergence and ' +
-                                          'L2 for L2 distance.'.format(loss_type))
+                raise NotImplementedError(f'Unsupported loss type {loss_type}, supported loss is ' \
+                                          'CE for software CE, KL for Kullback-Leibler divergence and ' \
+                                          'L2 for L2 distance.')
             self.loss_funcs.append(loss_func)
 
     def loss_cal(self, student_outputs):

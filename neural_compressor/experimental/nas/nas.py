@@ -172,7 +172,7 @@ class NASBase(object):
                 self.model_paras_num[model_arch_vec] = self.count_model_parameters(
                     model)
         self.dump_search_results(os.path.join(
-            save_path, 'Final_results.txt'.format(i+1)))
+            save_path, 'Final_results.txt'))
         self.find_best_model_archs()
         logger.info(
             "{fix} Found {n} best model architectures {fix}".format(

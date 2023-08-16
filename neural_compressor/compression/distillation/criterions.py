@@ -467,7 +467,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             NotImplementedError: NotImplementedError
             NotImplementedError: NotImplementedError
         """
-        super(TensorflowKnowledgeDistillationLoss, self).__init__(temperature=temperature, 
+        super(TensorflowKnowledgeDistillationLoss, self).__init__(temperature=temperature,
                                                                   loss_types=loss_types,
                                                                   loss_weights=loss_weights,
                                                                   student_model=student_model,
@@ -778,10 +778,8 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         self.feature_matchers = None
         self.init_loss_funcs()
         assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
-            'Wrong length for layer_mappings:{}, loss_weights:{} or loss_types:{}, ' + \
-            'all should be the same.'.format(
-                len(self.layer_mappings), len(self.loss_weights), len(self.loss_types)
-                )
+            f'Wrong length for layer_mappings:{self.layer_mappings}, loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
+            'all should be the same.'
 
     def init_loss_funcs(self):
         """Init loss funcs.
@@ -926,9 +924,9 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             elif loss_type == 'L1':
                 loss_func = torch.nn.L1Loss()
             else:
-                raise NotImplementedError('Unsupported loss type {}, supported loss is ' + \
-                    'MSE for mean squared error, KL for Kullback-Leibler divergence and ' + \
-                    'L1 for L1 loss.'.format(loss_type))
+                raise NotImplementedError(f'Unsupported loss type {loss_type}, supported loss is ' \
+                                'MSE for mean squared error, KL for Kullback-Leibler divergence and ' \
+                                'L1 for L1 loss.')
             self.loss_funcs.append(loss_func)
 
     def init_feature_matcher(self, student_feature, teacher_feature):
@@ -1186,11 +1184,8 @@ class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
         self.loss_funcs = []
         self.init_loss_funcs()
         assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
-            'Wrong length for layer_mappings:{}, loss_weights:{} or loss_types:{}, ' + \
-            'all should be the same.'.format(
-                len(self.layer_mappings), len(
-                    self.loss_weights), len(self.loss_types)
-        )
+            f'Wrong length for layer_mappings:{self.layer_mappings}, loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
+            'all should be the same.'
 
     def init_loss_funcs(self):
         """Init loss funcs.
@@ -1319,9 +1314,9 @@ class PyTorchSelfKnowledgeDistillationLoss(
             elif loss_type == 'L2':
                 loss_func = self.L2Divergence
             else:
-                raise NotImplementedError('Unsupported loss type {}, supported loss is ' +
-                                          'CE for software CE, KL for Kullback-Leibler divergence and ' +
-                                          'L2 for L2 distance.'.format(loss_type))
+                raise NotImplementedError(f'Unsupported loss type {loss_type}, supported loss is' \
+                                          ' CE for software CE, KL for Kullback-Leibler divergence and' \
+                                          ' L2 for L2 distance.')
             self.loss_funcs.append(loss_func)
 
     def loss_cal(self, student_outputs):

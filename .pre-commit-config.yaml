@@ -29,7 +29,7 @@ repos:
         files: (.*\.(py|md|rst|cmake|yaml|yml))$
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.1
+    rev: v1.5.4
     hooks:
       - id: insert-license
         files: |
@@ -46,12 +46,6 @@ repos:
           - "40"
           - --skip-license-insertion-comment
           - "Copyright"
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
-    hooks:
-      - id: pyupgrade
-        args: [--py36-plus]
 
   - repo: https://github.com/asottile/yesqa
     rev: v1.5.0
@@ -77,7 +71,7 @@ repos:
           ]
 
   - repo: https://github.com/psf/black.git
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
       - id: black
         files: (.*\.py)$
@@ -97,7 +91,7 @@ repos:
           - mdformat-beautysh
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.282
+    rev: v0.0.284
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]

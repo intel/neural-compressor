@@ -825,7 +825,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 self.master_worker_handle(comm)
             else:
                 self.slave_worker_handle(comm)
-            logger.debug("# if self.met_flag or self.max_trial_flag or self.max_time_flag:" \
+            logger.debug("# if self.met_flag or self.max_trial_flag or self.max_time_flag: {}" \
                 .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
