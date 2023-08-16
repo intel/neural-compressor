@@ -1110,10 +1110,14 @@ class TorchSmoothQuant:
         if self.dataloader == None and self.example_inputs == None:
             return None
         if self.example_inputs is None:
-            ##assert self.dataloader, "Please provide dataloader or example_inputs"
-            for idx, input in enumerate(self.dataloader):
-                self.example_inputs = input
-                break
+            try:
+                for idx, (input, label) in enumerate(self.dataloader):
+                    self.example_inputs = input
+                    break
+            except:
+                for idx, input in enumerate(self.dataloader):
+                    self.example_inputs = input
+                    break
 
         return self.example_inputs
 
