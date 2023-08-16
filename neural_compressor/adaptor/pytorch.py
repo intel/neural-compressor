@@ -2605,7 +2605,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if self.version.release >= Version("1.12.0").release:
             # Check save_qconf_summary part is a workaroud for IPEX bug.
             # Sometimes the prepared model from get_op_capablitiy loss this attribute
-            if not hasattr(model._model, "save_qconf_summary"):
+            if not hasattr(model._model, "save_qconf_summary") or \
+              not hasattr(model._model, "load_qconf_summary"):
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 if self.version.release >= Version("2.1").release:
                     static_qconfig = ipex.quantization.default_static_qconfig_mapping
