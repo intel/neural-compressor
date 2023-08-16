@@ -743,6 +743,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_func=calib_func,
         )
 
+        fp32_model = Model()
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
