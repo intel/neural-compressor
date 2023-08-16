@@ -54,12 +54,12 @@ below:
 
 ### Tuning Space
 
-Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the [`framework capability`](./framework_yaml.md) to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_dict` and `op_type_dict` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
 
-> Note: Any options in the `op_name_dict` and `op_type_dict` that are not included in the `framework capability` will be ignored by the strategy.
+> Note: Any options in the `op_name_dict` and `op_type_dict` that are not included in the [`framework capability`](./framework_yaml.md) will be ignored by the strategy.
 
 ### Exit Policy
 User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
@@ -178,6 +178,9 @@ flowchart TD
 > `Opt` stands for optional which mean this stage can be skipped.
 
 > `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
+
+> For [smooth quantization](./smooth_quant.md), user can tuning the its's alpha by providing a list of scalers for `alpha` item. The tuning process will take place at the **start** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.md#Example).
+
 
 **1.** Default quantization
 
