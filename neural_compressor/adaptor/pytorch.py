@@ -847,7 +847,7 @@ class TemplateAdaptor(Adaptor):
         self.fp32_results = []
         self.fp32_preds_as_label = False
 
-        if self.version.release >= Version("2.0").release:
+        if self.version.release >= Version("1.8").release:
             static_quant_mapping = tq.quantization_mappings.get_default_static_quant_module_mappings()
             self.fused_op_list = \
                 [static_quant_mapping[key] for key in static_quant_mapping if "intrinsic." in str(key)]
@@ -1325,7 +1325,7 @@ class TemplateAdaptor(Adaptor):
                        save_to_disk=False,
                        save_path=None,
                        quantization_cfg=None):
-        assert self.version.release >= Version("2.0").release, "Inspect_tensor only support torch 1.8 or above!"
+        assert self.version.release >= Version("1.8").release, "Inspect_tensor only support torch 1.8 or above!"
         from neural_compressor.utils.utility import dump_data_to_local
         from torch import dequantize
         is_quantized = model.is_quantized
@@ -1352,7 +1352,10 @@ class TemplateAdaptor(Adaptor):
         observer_dict = {}
         ret = {}
         if inspect_type == 'activation' or inspect_type == 'all':
-            from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+            if self.version.release >= Version("2.0.0").release:
+                from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+            else:
+                from torch.quantization import get_observer_dict
             ret['activation'] = []
             get_observer_dict(new_model.model, observer_dict)
             if iteration_list is None:
