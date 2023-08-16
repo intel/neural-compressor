@@ -73,14 +73,14 @@ def model_forward(model, dataloader, iters, device):
         for idx, (input, label) in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
-            if cnt >= iters:
+            if iters != -1 and cnt >= iters:
                 break
     except Exception as e:
         cnt = 0
         for idx, input in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
-            if cnt >= iters:
+            if iters != -1 and cnt >= iters:
                 break
 
 
@@ -1208,7 +1208,7 @@ class GraphTrace:
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
             except Exception as e:
                 logger.warning(e)
-                logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+                logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         else:
             try:
                 traced_model = torch.jit.trace(model, dummy_input, strict=False)
@@ -1219,7 +1219,7 @@ class GraphTrace:
                     traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
                 except Exception as e:
                     logger.warning(e)
-                    logger.info("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+                    logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         if orig_device != "cpu":
             model = model.to(orig_device)
         return traced_model

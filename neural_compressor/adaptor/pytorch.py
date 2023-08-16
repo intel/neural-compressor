@@ -4313,6 +4313,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             else:
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
+        if len(all_algo):
+            logger.info(f"All algorithms to do: {all_algo}")
         if 'GPTQ' in all_algo:
             q_model._model, gptq_config = self.gptq_quantize(
                 q_model._model, tune_cfg, dataloader
@@ -4322,7 +4324,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-        elif 'RTN' in all_algo:
+        if 'RTN' in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
@@ -4331,7 +4333,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return q_model
 
     def rtn_quantize(self, model, tune_cfg):
-        logger.debug("quantizing with the round-to-nearest algorithm")
+        logger.info("quantizing with the round-to-nearest algorithm")
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
         else:
@@ -4357,7 +4359,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
-        logger.debug("quantizing with the GPTQ algorithm")
+        logger.info("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
         # convert tune_cfg to gptq_quantize's weight config
         """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
@@ -4403,7 +4405,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model, quantization_perm
 
     def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the TEQ algorithm")
+        logger.info("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None: # pragma: no cover
@@ -4490,90 +4492,52 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the AWQ algorithm")
+        logger.info("quantizing with the AWQ algorithm")
         from .torch_utils.weight_only import awq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None:
-            if dataloader is None:
-                assert False, "Please provide dataloader or example_inputs for AWQ algorithm."
-            try:
-                for idx, (input, label) in enumerate(dataloader):
-                    self.example_inputs = input
-                    break
-            except:
-                for idx, input in enumerate(dataloader):
-                    self.example_inputs = input
-                    break
+            from neural_compressor.adaptor.torch_utils.util import get_example_input
+            assert dataloader is not None, "datalaoder or example_inputs is required."
+            self.example_inputs = get_example_input(dataloader)
 
-        # get modules that can be absorbed.
-        from .torch_utils.smooth_quant import GraphTrace
-        tg = GraphTrace()
-        supported_layers = ['Linear']
-        absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
-        if absorb_to_layer is None or absorb_to_layer == {}:
-            logger.warning('No absorb layer is detected, skip AWQ algorithm')
-            return model
-
-        # got flipped dict from absorb_to_layer dict
-        flipped_dict = {}
-        for k, v in absorb_to_layer.items():
-            for m in v:
-                flipped_dict[m] = {'absorb_layer': k}
-
-        # check tune_cfg to skip layers without AWQ config
+        # build weight_config
         weight_config = {}
-        skipped_op_name_set = set()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
-                if op_name in flipped_dict:
-                    absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
-                continue
+                weight_config[op_name] = {
+                    'bits': -1, # skip quantization
+                    'group_size': 128,
+                    'scheme': 'asym',
+                    'algorithm': 'RTN',
+                }
             else:
-                weight_config[op_name] = {}
-                weight_config[op_name]['bits'] = config['weight']['bits']
-                weight_config[op_name]['group_size'] = config['weight']['group_size']
-                weight_config[op_name]['scheme'] = config['weight']['scheme']
-                if op_name in flipped_dict:
-                    algorithm = config['weight']['algorithm']
-                    if algorithm != 'AWQ':
-                        absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
-                else:
-                    skipped_op_name_set.add(op_name)
-        if skipped_op_name_set:
-            logger.info("{} is skipped by AWQ algorithm".format(skipped_op_name_set))
-
-        # collect AWQ config from tune_cfg for quantization.
-        if len(absorb_to_layer) == 0:
-            logger.warning('No absorb layer needs AWQ algorithim, skip it')
-        else:
-            logger.debug("**absorb layer**: **absorbed layers**")
-        for k, v in absorb_to_layer.items():
-            logger.debug(f"{k}: {v}")
-        logger.info("Absorbed layers with the same absorb layer use the same config")
+                weight_config[op_name] = config['weight']
 
         if 'awq_args' in self.recipes:
             auto_scale = self.recipes['awq_args'].get('auto_scale', True)
             mse_range = self.recipes['awq_args'].get('mse_range', True)
-            n_blocks = self.recipes['awq_args'].get('n_blocks', 5)
+            folding = self.recipes['awq_args'].get('folding', False)
         else:
-            auto_scale, mse_range = True, True
+            auto_scale, mse_range, folding = True, True, False
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
+            return_int = self.recipes['rtn_args'].get('return_int', False)
         else:
-            sym_full_range=False
+            sym_full_range, return_int = False, False
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         model = awq_quantize(
             model, 
+            bits=-1, # no quantize for op not in weight_config
+            example_inputs=self.example_inputs,
             weight_config=weight_config, 
-            absorb_dict=absorb_to_layer, 
             dataloader=dataloader,
             n_samples=calib_sampling_size,
             auto_scale=auto_scale, 
             mse_range=mse_range,
             calib_func=calib_func,
-            n_blocks=n_blocks,
-            return_int=False,
+            folding=folding,
+            return_int=return_int,
             sym_full_range=sym_full_range,
         )
         return model
