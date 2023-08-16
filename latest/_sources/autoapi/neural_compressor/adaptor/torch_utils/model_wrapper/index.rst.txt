@@ -19,7 +19,7 @@ Classes
 
    neural_compressor.adaptor.torch_utils.model_wrapper.FakeAffineTensorQuantFunction
    neural_compressor.adaptor.torch_utils.model_wrapper.TEQLinearFakeQuant
-   neural_compressor.adaptor.torch_utils.model_wrapper.TEQMulLinear
+   neural_compressor.adaptor.torch_utils.model_wrapper.MulLinear
 
 
 
@@ -41,11 +41,11 @@ Classes
    wrapper quantization linear
 
 
-.. py:class:: TEQMulLinear(module, input_scale)
+.. py:class:: MulLinear(module, input_scale=None)
 
 
 
 
-   Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
+   Linear wrapper to apply scale to input.
 
 

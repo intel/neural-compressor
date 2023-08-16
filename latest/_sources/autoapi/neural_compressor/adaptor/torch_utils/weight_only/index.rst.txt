@@ -21,7 +21,6 @@ Functions
    neural_compressor.adaptor.torch_utils.weight_only.quant_weight
    neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize
    neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize
-   neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output
    neural_compressor.adaptor.torch_utils.weight_only.awq_quantize
    neural_compressor.adaptor.torch_utils.weight_only.teq_quantize
    neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale
@@ -150,32 +149,13 @@ Functions
    Run weight-only quantization with
 
 
-.. py:function:: get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, calib_func=None)
-
-   A help function to get input and output tensor of modules in module_name_list.
-
-   :param model: torch model.
-   :param module_hook_config: required module name for input/output. Defaults to {}.
-                              For example:
-                                  module_hook_config = {
-                                      'fc1': ['output'],
-                                      'fc2': ['input', 'output']
-                                  }
-   :type module_hook_config: dict, optional
-   :param dataloader: dataloader for model input.
-   :param iters: iterations for inference.
-   :param calib_func: a custom inference function to replace dataloader and iters.
-
-   :returns: recorded input_values, output_values.
-   :rtype: input_values, output_values
-
-
-.. py:function:: awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, return_int=False, sym_full_range=False)
+.. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, auto_scale=True, mse_range=True, folding=False, return_int=False, sym_full_range=False)
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
    :param model: torch model.
    :type model: torch.nn.Module
+   :param example_inputs: example_inputs.
    :param weight_config: contains all info required by AWQ. Defaults to {}.
                          For example,
                              weight_config={
@@ -192,8 +172,9 @@ Functions
                        For example,
                            absorb_dict = {
                                # 'absorb_layer': absorbed_layer
-                               'fc1': ['fc2', 'fc3']
-                           } # in this case, fc2 and fc3 need to share the same scale.
+                               'fc1': ['fc1', 'fc2', 'fc3']
+                           } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
+                           # self absorb module will replace with MulLinear, which contains torch.mul and module.
    :type absorb_dict: dict, optional
    :param n_samples: calibration sample number.
    :param auto_scale: whether enable scale for salient weight. Defaults to True.

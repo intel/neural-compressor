@@ -108,16 +108,13 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model[, weight_config, dataloader, device])</p></td>
 <td><p>Run weight-only quantization with</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output" title="neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module_input_output</span></code></a>(model[, module_hook_config, ...])</p></td>
-<td><p>A help function to get input and output tensor of modules in module_name_list.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model[, weight_config, absorb_dict, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model[, bits, group_size, scheme, ...])</p></td>
 <td><p>Quant the model with Activation-aware Weight quantization(AWQ) method.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.teq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.teq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">teq_quantize</span></code></a>(model[, weight_config, absorb_to_layer, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.teq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.teq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">teq_quantize</span></code></a>(model[, weight_config, absorb_to_layer, ...])</p></td>
 <td><p>Run weight-only quantization with</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale" title="neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale, zp[, group_size])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale" title="neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale, zp[, group_size])</p></td>
 <td><p>Quant and dequant tensor with group size.</p></td>
 </tr>
 </tbody>
@@ -280,46 +277,14 @@ Defaults to False.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">get_module_input_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_hook_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.get_module_input_output" title="Permalink to this definition"></a></dt>
-<dd><p>A help function to get input and output tensor of modules in module_name_list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – torch model.</p></li>
-<li><p><strong>module_hook_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>required module name for input/output. Defaults to {}.
-For example:</p>
-<blockquote>
-<div><dl class="simple">
-<dt>module_hook_config = {</dt><dd><p>‘fc1’: [‘output’],
-‘fc2’: [‘input’, ‘output’]</p>
-</dd>
-</dl>
-<p>}</p>
-</div></blockquote>
-</p></li>
-<li><p><strong>dataloader</strong> – dataloader for model input.</p></li>
-<li><p><strong>iters</strong> – iterations for inference.</p></li>
-<li><p><strong>calib_func</strong> – a custom inference function to replace dataloader and iters.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>recorded input_values, output_values.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>input_values, output_values</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.weight_only.awq_quantize">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">awq_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absorb_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mse_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_blocks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.awq_quantize" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">awq_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mse_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.awq_quantize" title="Permalink to this definition"></a></dt>
 <dd><p>Quant the model with Activation-aware Weight quantization(AWQ) method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>torch.nn.Module</em>) – torch model.</p></li>
+<li><p><strong>example_inputs</strong> – example_inputs.</p></li>
 <li><p><strong>weight_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>contains all info required by AWQ. Defaults to {}.
 For example,</p>
 <blockquote>
@@ -345,10 +310,11 @@ For example,</p>
 <blockquote>
 <div><dl class="simple">
 <dt>absorb_dict = {</dt><dd><p># ‘absorb_layer’: absorbed_layer
-‘fc1’: [‘fc2’, ‘fc3’]</p>
+‘fc1’: [‘fc1’, ‘fc2’, ‘fc3’]</p>
 </dd>
 </dl>
-<p>} # in this case, fc2 and fc3 need to share the same scale.</p>
+<p>} # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
+# self absorb module will replace with MulLinear, which contains torch.mul and module.</p>
 </div></blockquote>
 </p></li>
 <li><p><strong>n_samples</strong> – calibration sample number.</p></li>
