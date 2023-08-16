@@ -35,10 +35,12 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     skip_op_set = set()
     for k, v in absorb_to_layer.items():
         for vv in v:
-            if vv in weight_config and weight_config[vv]['algorithm'] != 'AWQ':
+            if vv in weight_config and (weight_config[vv]['algorithm'] != 'AWQ' or \
+              weight_config[vv]['bits'] == -1):
                 skip_op_set.add(k)
     for k in no_absorb_layers:
-        if k in weight_config and weight_config[k]['algorithm'] != 'AWQ':
+        if k in weight_config and (weight_config[k]['algorithm'] != 'AWQ' or \
+          weight_config[k]['bits'] == -1):
             skip_op_set.add(k)
     for k in skip_op_set:
         if k in absorb_to_layer:
@@ -128,11 +130,15 @@ class ActAwareWeightQuant:
         self.block_absorb_dict, self.absorb_layer_dict = _get_absorb_per_block(
             self.model, self.example_inputs, 
             # for only mse_range, folding is useless.
-            folding = folding if auto_scale else False 
+            folding = folding if auto_scale else False,
+            weight_config=self.weight_config,
         )
         # process per block
         for i, module_list in self.block_absorb_dict.items():
             logger.info(f"Processing block: {i+1}/{self.block_num}")
+            if len(module_list) == 0:
+                logger.info(f"No need to process this block.")
+                continue
             # Step 1: fetch all input values of each linear for scale calculation
             # use the first linear for QKV tuple
             block_name = self.block_prefix + '.' + str(i)
@@ -180,7 +186,6 @@ class ActAwareWeightQuant:
         scale_info = {}
         logger.info("Searching best scales with AWQ algorithm")
         for module_tuple in module_list:
-            logger.info(f"[SCALE] Processing module: {module_tuple}")
             # Step 1: Initailize quantization configuration.
             if module_tuple[0] in self.weight_config:
                 cur_bits = self.weight_config[module_tuple[0]]['bits']
@@ -188,6 +193,9 @@ class ActAwareWeightQuant:
                 cur_scheme = self.weight_config[module_tuple[0]]['scheme']
             else:
                 cur_bits, cur_group_size, cur_scheme = self.bits, self.group_size, self.scheme
+            if cur_bits < 0:
+                continue
+            logger.info(f"[SCALE] Processing module: {module_tuple}")
             # Step 2: update module name in block
             module_name_list = [i.split(block_name + '.')[1] for i in module_tuple]
             # Step 3: collect w_max and x_max for scale calculation.
@@ -300,7 +308,6 @@ class ActAwareWeightQuant:
             input_val = input_values[module_tuple[0].split(block_name + '.')[1]]['input']
             # process linear modules one by one
             for module_name in module_tuple:
-                logger.info(f"[CLIP] Processing module: {module_name}")
                 # Step 1: Initailize quantization configuration.
                 if module_name in self.weight_config:
                     cur_bits = self.weight_config[module_name]['bits']
@@ -308,6 +315,9 @@ class ActAwareWeightQuant:
                     cur_scheme = self.weight_config[module_name]['scheme']
                 else:
                     cur_bits, cur_group_size, cur_scheme = self.bits, self.group_size, self.scheme
+                if cur_bits < 0:
+                    continue
+                logger.info(f"[CLIP] Processing module: {module_name}")
                 # Step 2: update module name
                 module = fetch_module(self.model, module_name)
                 # Step 3: collect origin output for MSE and state_dict for recover.
@@ -386,7 +396,7 @@ class ActAwareWeightQuant:
                 self.total_block_args[i][0] = inp
             elif 'hidden_states' in self.total_block_kwargs[i]:
                 self.total_block_kwargs[i]['hidden_states'] = inp
-            else:
+            else:  # pragma: no cover
                 assert False, "cannot find hidden_states position for next block"
 
     def block_inference(self, model):
@@ -401,7 +411,7 @@ class ActAwareWeightQuant:
         total_out = []
         for args, kwargs in zip(self.total_block_args, self.total_block_kwargs):
             out = model(*args, **kwargs)
-            if isinstance(out, tuple):
+            if isinstance(out, tuple):  # pragma: no cover
                 out = out[0]
             total_out.append(out)
         return total_out
@@ -419,7 +429,7 @@ class ActAwareWeightQuant:
         total_out = []
         for inp in inputs:
             out = model(inp)
-            if isinstance(out, tuple):
+            if isinstance(out, tuple):  # pragma: no cover
                 out = out[0]
             total_out.append(out)
         return total_out

@@ -1109,8 +1109,17 @@ def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], foldin
         model, example_inputs, supported_layers
     )
     if absorb_to_layer is None or absorb_to_layer == {}:
-        if folding:
-            logger.warning('No absorb layer is detected, please set folding=False for self-absorption')
+        absorb_to_layer = {}
+        logger.warning('No absorb layer is detected.')
+        # if no_absorb_layers is None, jit trace failed.
+        # collect all linears for next step
+        if no_absorb_layers is None:
+            no_absorb_layers = []
+            op_types = ['Linear']
+            for name, module in model.named_modules():
+                for op_type in op_types:
+                    if op_type == str(module.__class__.__name__):
+                        no_absorb_layers.append(name)
     return absorb_to_layer, no_absorb_layers
 
 

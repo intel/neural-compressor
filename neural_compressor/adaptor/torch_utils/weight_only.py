@@ -82,7 +82,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     # assert num_bits > 1, "symmetric scheme only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
-    if num_bits == 1:
+    if num_bits == 1:  # pragma: no cover
         maxq = torch.tensor(2 ** (num_bits - 1))
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
     max_val = torch.max(weight, 1)[0]
@@ -145,6 +145,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
     Returns:
         output: qdq weight.
     """
+    if num_bits <= 0:
+        return weight
     if group_size == -1 or weight.shape[1] < group_size:
         return qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile, 
                                 return_int=return_int, full_range=full_range)
@@ -259,7 +261,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}")
         if num_bits <= 0:
-            logger.info(f"skip {name}")
+            logger.info(f"Skip {name}")
             continue
         weight = m.weight
         if return_int:
@@ -298,108 +300,6 @@ def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
-
-def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
-                            calib_func=None):
-    """A help function to get input and output tensor of modules in module_name_list.
-
-    Args:
-        model: torch model.
-        module_hook_config (dict, optional): required module name for input/output. Defaults to {}.
-            For example:
-                module_hook_config = {
-                    'fc1': ['output'],
-                    'fc2': ['input', 'output']
-                }
-        dataloader: dataloader for model input.
-        iters: iterations for inference.
-        calib_func: a custom inference function to replace dataloader and iters.
-
-    Returns:
-        input_values, output_values: recorded input_values, output_values.
-    """
-    input_values, output_values = {}, {}
-    def _save_input_output_hook(name):
-        """
-        A forward hook to save input and output values of a module
-            param name: the module name
-            return: A hook function
-        """
-        def save_input_hook(module, inputs):
-            input = inputs[0]
-            if name in input_values:
-                try:
-                    input_values[name] = torch.cat((input_values[name], input), 0)
-                except Exception as e:
-                    logger.error(e)
-                    assert False, "Please unify the input shape for AWQ algorithm calibration."
-            else:
-                input_values[name] = input
-        def save_output_hook(module, inputs, outputs):
-            if isinstance(outputs, tuple):
-                outputs = outputs[0]
-            if name in output_values:
-                try:
-                    output_values[name] = torch.cat((output_values[name], outputs), 0)
-                except Exception as e:
-                    logger.error(e)
-                    assert False, "Please unify the input shape for AWQ algorithm calibration."
-            else:
-                output_values[name] = outputs
-        return save_input_hook, save_output_hook
-
-    hook_list = []
-    for name, module in model.named_modules():
-        if name in module_hook_config:
-            save_input_hook, save_output_hook = _save_input_output_hook(name)
-            require_list = module_hook_config[name]
-            if 'input' in require_list:
-                hook_list.append(
-                    module.register_forward_pre_hook(save_input_hook))
-            if 'output' in require_list:
-                hook_list.append(
-                    module.register_forward_hook(save_output_hook))
-    if calib_func:
-        calib_func(model)
-    else:
-        from .smooth_quant import model_forward
-        model_forward(model, dataloader, iters, device='cpu')
-    for h in hook_list:
-        h.remove()
-    return input_values, output_values
-
-
-@torch.no_grad()
-def _get_weight_scale(weight, q_group_size=-1):
-    org_shape = weight.shape
-    if q_group_size > 0:
-        weight = weight.view(-1, q_group_size)
-    scale = weight.abs() / weight.abs().amax(dim=1, keepdim=True)
-    scale = scale.view(org_shape)
-    scale = scale.mean(0)
-    return scale
-
-
-@torch.no_grad()
-def _get_act_scale(x):
-    return x.abs().view(-1, x.shape[-1]).mean(0)
-
-
-def _update_input_with_scale(args, kwargs, scales):
-    new_args, new_kwargs = args, kwargs
-    for i, v in enumerate(args):
-        if isinstance(v, torch.Tensor):
-            try:
-                new_args[i] = torch.div(v, scales.view(1, 1, -1))
-            except:
-                new_args[i] = v
-    for k, v in kwargs.items():
-        if isinstance(v, torch.Tensor):
-            try:
-                new_kwargs[k] = torch.div(v, scales.view(1, 1, -1))
-            except:
-                new_kwargs[k] = v
-    return new_args, new_kwargs
 
 
 @torch.no_grad()

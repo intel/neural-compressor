@@ -4313,6 +4313,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             else:
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
+        if len(all_algo):
+            logger.info(f"All algorithms to do: {all_algo}")
         if 'GPTQ' in all_algo:
             q_model._model, gptq_config = self.gptq_quantize(
                 q_model._model, tune_cfg, dataloader
@@ -4322,7 +4324,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-        elif 'RTN' in all_algo:
+        if 'RTN' in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
@@ -4331,7 +4333,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return q_model
 
     def rtn_quantize(self, model, tune_cfg):
-        logger.debug("quantizing with the round-to-nearest algorithm")
+        logger.info("quantizing with the round-to-nearest algorithm")
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
         else:
@@ -4357,7 +4359,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
-        logger.debug("quantizing with the GPTQ algorithm")
+        logger.info("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
         # convert tune_cfg to gptq_quantize's weight config
         """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
@@ -4403,7 +4405,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model, quantization_perm
 
     def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the TEQ algorithm")
+        logger.info("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None: # pragma: no cover
@@ -4490,7 +4492,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the AWQ algorithm")
+        logger.info("quantizing with the AWQ algorithm")
         from .torch_utils.weight_only import awq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None:
@@ -4506,7 +4508,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 weight_config[op_name] = {
                     'bits': -1, # skip quantization
                     'group_size': 128,
-                    'scheme': 'asym'
+                    'scheme': 'asym',
+                    'algorithm': 'RTN',
                 }
             else:
                 weight_config[op_name] = config['weight']
