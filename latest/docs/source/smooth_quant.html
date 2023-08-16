@@ -436,12 +436,23 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 </pre></div>
 </div>
 <p>smooth_quant_args description:</p>
-<p>“alpha”: “auto” or a float value. Default is 0.5. “auto” means automatic tuning.</p>
+<p>“alpha”: “auto”, a float value or a list of float values. Default is 0.5. “auto” means automatic tuning.</p>
 <p>“folding”: whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.</p>
 <ul class="simple">
 <li><p>True: Fold inserted mul into the previous layer. IPEX will only insert mul for layers can do folding.</p></li>
 <li><p>False: Allow inserting mul to update the input distribution and no folding. IPEX (version&gt;=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.</p></li>
 </ul>
+<p>To find the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, users can utilize the <a class="reference external" href="(./tuning_strategies.md)">auto-tuning</a> feature. Compares to setting the alpha to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>, this tuning process uses the evaluation result on the entire dataset as the metric to find the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>. To use this feature, users need to provide a list of scalars between 0 and 1 for the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> item. Here is an example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>import numpy as np
+conf = PostTrainingQuantConfig(
+    quant_level=&#39;auto&#39;, # quant_level can also be 1
+    ...
+    recipes={&quot;smooth_quant&quot;: True, 
+            &quot;smooth_quant_args&quot;: {&quot;alpha&quot;: np.arange(0.1, 0.5, 0.05).tolist(),}
+    ...
+    }）
+</pre></div>
+</div>
 </section>
 <section id="supported-framework-matrix">
 <h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Permalink to this heading"></a></h2>
