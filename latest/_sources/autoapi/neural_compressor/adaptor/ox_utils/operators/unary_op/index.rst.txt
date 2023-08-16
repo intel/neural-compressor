@@ -18,11 +18,20 @@ Classes
 .. autoapisummary::
 
    neural_compressor.adaptor.ox_utils.operators.unary_op.UnaryOperator
+   neural_compressor.adaptor.ox_utils.operators.unary_op.UnaryDirect8BitOperator
 
 
 
 
 .. py:class:: UnaryOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Unary operator.
+
+
+.. py:class:: UnaryDirect8BitOperator(onnx_quantizer, onnx_node)
 
 
 
