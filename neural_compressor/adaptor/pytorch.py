@@ -3141,7 +3141,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model._model, "save_qconf_summary"):
+        if not hasattr(model._model, "save_qconf_summary") or \
+          not hasattr(model._model, "load_qconf_summary"):
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(model._model, static_qconfig,
