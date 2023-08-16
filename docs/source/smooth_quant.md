@@ -357,7 +357,7 @@ smooth_quant_args description:
 - False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.
 
 
-To find the best `alpha`, users can utilize the [auto-tuning]((./tuning_strategies.md)) feature. Compares to setting the alpha to `"auto"`, this tuning process uses the evaluation result on the entire dataset as the metric to find the best `alpha`. To use this feature, users need to provide a list of scalers between 0 and 1 for the `alpha` item. Here is an example:
+To find the best `alpha`, users can utilize the [auto-tuning]((./tuning_strategies.md)) feature. Compares to setting the alpha to `"auto"`, this tuning process uses the evaluation result on the entire dataset as the metric to find the best `alpha`. To use this feature, users need to provide a list of scalars between 0 and 1 for the `alpha` item. Here is an example:
 
 ```python
 import numpy as np
