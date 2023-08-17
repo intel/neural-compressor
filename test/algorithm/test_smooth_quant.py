@@ -273,19 +273,22 @@ class TestSqConvOpFuse(unittest.TestCase):
                 self.norm = torch.nn.GroupNorm(num_channels=4, num_groups=2)
                 self.act = torch.nn.ReLU()
                 self.conv2 = torch.nn.Conv2d(4, 3, 1, 1)
+                self.conv3 = torch.nn.Conv2d(4, 3, 1, 1)
 
             def forward(self, x):
                 out = self.conv1(x)
                 out = self.norm(out)
                 out = self.act(out)
-                out = self.conv2(out)
+                tmp1 = self.conv2(out)
+                tmp2 = self.conv3(out)
+                out = tmp1 + tmp2
                 return out
 
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
         sq.transform(alpha=0.6, calib_iter=2, folding=True)
-        assert len(sq.absorb_to_layer) == 1
+        assert len(sq.absorb_to_layer['norm']) == 2
 
     def test_sq_add(self):
         class Model(torch.nn.Module):

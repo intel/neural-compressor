@@ -663,7 +663,7 @@ class TorchSmoothQuant:
             self._absorb_scales(key, absorb_scale)
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
-                input_minmax = [self.input_mins[key], self.input_maxes[key]]
+                input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
                 self._scale_layer_weight(
                     layer_name, weight_scales_info[layer_name], alpha_tmp, input_minmax
                 )
