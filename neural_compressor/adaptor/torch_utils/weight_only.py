@@ -213,7 +213,7 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
 
     Args:
         m (torch.nn.Module): torch module.
-        num_bits: num bits.
+        num_bits (int, optional): num bits.
         group_size (int, optional): how many elements share one scale/zp.
         scheme (str, optional): sym or asym.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
