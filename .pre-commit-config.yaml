@@ -6,6 +6,7 @@ exclude: |
       neural_solution/frontend/.+|
       neural_solution/test/.+|
       neural_coder/extensions/.+|
+      neural_coder/examples/.+|
       examples/.+
   )$
 repos:
@@ -87,8 +88,6 @@ repos:
     rev: 0.7.16
     hooks:
       - id: mdformat
-        additional_dependencies:
-          - mdformat-beautysh
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.284

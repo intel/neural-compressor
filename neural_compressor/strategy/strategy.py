@@ -33,7 +33,6 @@ import numpy as np
 import yaml
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from neural_compressor.config import MixedPrecisionConfig
 from .utils.constant import FALLBACK_RECIPES_SET
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig

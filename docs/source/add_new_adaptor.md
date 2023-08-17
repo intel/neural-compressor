@@ -57,7 +57,7 @@ Each framework adaptor should implement the `query_fw_capability` function, this
 
 ```python
     capability = {
-        'opwise': {('conv2d', 'Conv2D'): [int8_conv_config, {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}, {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...# all quantizable opwise key-value pair with key tuple: (node_name, node_op)}
+        'opwise': {('conv2d', 'Conv2D'): [int8_conv_config, {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}, {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ... }# all quantizable opwise key-value pair with key tuple: (node_name, node_op)}
         'optypewise': optype_wise_ability,
     }
 ```

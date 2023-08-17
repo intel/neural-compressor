@@ -49,7 +49,7 @@ quantizer.model = common.Model(model)
 model = quantizer.fit()
 
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-    save_for_huggingface_upstream(model, tokenizer, output_dir)
+save_for_huggingface_upstream(model, tokenizer, output_dir)
 
 ```
 
@@ -65,7 +65,7 @@ PostTrainingQuantConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   approach="static",        # approach: set as "static" when approach was "post_training_static_quant". Set as "dynamic" when approach was "post_training_dynamic_quant";
   ## recipes: this parameter does not need to specially be defined;
@@ -148,7 +148,7 @@ quantizer.model = common.Model(model)
 model = quantizer.fit()
 
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-    save_for_huggingface_upstream(model, tokenizer, output_dir)
+save_for_huggingface_upstream(model, tokenizer, output_dir)
 
 ```
 
@@ -165,7 +165,7 @@ QuantizationAwareTrainingConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   ## approach: this parameter does not need to specially be defined;
   ## train: these parameters do not need to specially be defined;
@@ -290,7 +290,7 @@ WeightPruningConfig(
   end_step=10,              # end_epoch: same as in the conf.yaml;
   pruning_frequency=2,      # frequency: same as in the conf.yaml;        
   ## dataloader, criterion, optimizer: these parameters do not need to specially be defined;
-  target_sparsity=0.97      # target_sparsity: same as in the conf.yaml;     
+  target_sparsity=0.97,      # target_sparsity: same as in the conf.yaml;     
   pruning_configs: [pruning_config] # Pruner: same as in the conf.yaml;           
   ## evaluation and tuning: these parameters do not need to specially be defined;
 )       
@@ -331,8 +331,8 @@ The final Pruning code is updated as follows,
     from neural_compressor.training import prepare_compression, WeightPruningConfig
     ##setting configs
     pruning_configs=[
-    {"op_names": ['layer1.*']，"pattern":'4x1'},
-    {"op_names": ['layer2.*']，"pattern":'1x1', 'target_sparsity':0.5}
+    {"op_names": ['layer1.*'], "pattern":'4x1'},
+    {"op_names": ['layer2.*'], "pattern":'1x1', 'target_sparsity':0.5}
     ]
     configs = WeightPruningConfig(
         pruning_configs=pruning_configs,
@@ -550,7 +550,7 @@ MixedPrecisionConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   tuning_criterion=tuning_criterion,
   accuracy_criterion=accuracy_criterion,
@@ -689,7 +689,7 @@ BenchmarkConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   warmup=10,                # warmup: same as in the conf.yaml;
   iteration=100,            # iteration: same as in the conf.yaml;

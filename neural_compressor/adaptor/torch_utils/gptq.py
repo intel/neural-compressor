@@ -341,7 +341,7 @@ class GPTQuantizer(object):
             # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
             def add_batch(_name):
                 def tmp(_, inp, out):
-                    gptq_for_this_block[_name].add_batch(inp[0].data, out.data)
+                    gptq_for_this_block[_name].add_batch(inp[0].data, out.data)  # noqa: F821
                 return tmp
             handles = [] # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:

@@ -54,7 +54,7 @@ def convert_to_unicode(text): # pragma: no cover
     elif six.PY2:
         if isinstance(text, str):
             return text.decode("utf-8", "ignore")
-        elif isinstance(text, unicode): # pylint: disable=undefined-variable
+        elif isinstance(text, unicode): # pylint: disable=undefined-variable # noqa: F821
             return text
         else:
             raise ValueError("Unsupported string type: %s" % (type(text)))

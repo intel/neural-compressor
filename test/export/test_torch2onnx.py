@@ -8,7 +8,6 @@ import copy
 from neural_compressor import quantization
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
-from neural_compressor.experimental.data.datasets.dataset import Datasets
 from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression
 from neural_compressor.data import Datasets, DATALOADERS

@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+import signal
 import subprocess
 
 import torch

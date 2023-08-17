@@ -197,7 +197,6 @@ class TestTensorflowModel(unittest.TestCase):
             os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
         if parse_version(tf.version.VERSION) > parse_version('2.0.0'):
             return
-        from tf_slim.nets import inception  
         model = Model('./slim_ckpt/inception_v1.ckpt')
         model.name = 'inception_v1'
         graph_def = model.graph_def

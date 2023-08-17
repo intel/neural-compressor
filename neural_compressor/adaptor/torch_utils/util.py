@@ -520,13 +520,14 @@ def auto_copy(module):  # pragma: no cover
             if output is NotImplemented:
                 with torch._C.DisableTorchFunction():
                     output = func(*args, **kwargs).as_subclass(
-                        CopyConvertTensorProxy)  # pylint: disable=E0602
+                        CopyConvertTensorProxy  # pylint: disable=E0602 # noqa: F821
+                    )
                 assert output is not NotImplemented
             return output
         def __repr__(self):
             return f'CopyTensorProxy({super().__repr__()})'
     cur_module = None
-    module_stack : List[torch.nn.Module] = []  # pylint: disable=E0602
+    module_stack : List[torch.nn.Module] = []  # pylint: disable=E0602 # noqa: F821
     assert len(module.__class__.__bases__) == 1
     class CopyDispatchModule(module.__class__.__bases__[0]):
         def __call__(self, *args, **kwargs):

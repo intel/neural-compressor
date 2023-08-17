@@ -24,7 +24,6 @@ local_schedulers_config = [
     {
         "start_step": 1,
         "end_step": 10,
-        "target_sparsity": 0.5,
         "pruning_type": "snip_momentum",
         "pruning_frequency": 2,
         "op_names": ['layer2.*'],
