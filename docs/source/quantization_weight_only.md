@@ -51,9 +51,10 @@ There are many excellent works for weight only quantization to improve its accur
 |  gptq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 | actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
-|  percdamp | 0.01 | Add a small Hessian's diagonal values to itself, which increase Hessian's numerical stability|
+|  percdamp | 0.01 | Percentage of Hessian's diagonal values' average, which will be added to Hessian's diagonal to increase numerical stability|
 |  nsamples  | 128 |  Calibration samples' size |
-|  use_full_length  | False | Whether to align calibration data to a fixed length|
+|  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
+|  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
 |  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |
 
 

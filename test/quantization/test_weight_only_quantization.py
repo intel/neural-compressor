@@ -150,7 +150,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
                 'group_size': -1,
                 'sym': False,
                 'percdamp': 0.01,
-                'actorder': True,
+                'act_order': True,
             },
             'transformer.h.2.attn.k_proj':{
                 'wbits': 3,
@@ -158,7 +158,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
                 'sym': False,
                 'percdamp': 0.01,
                 'mse': True,
-                'actorder': False
+                'act_order': False
             },
             'transformer.h.3.attn.k_proj':{
                 'wbits': 3,
@@ -166,7 +166,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
                 'sym': False,
                 'percdamp': 0.01,
                 'mse': True,
-                'actorder': False
+                'act_order': False
             },
         }
         quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
@@ -177,7 +177,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         weight_config = {
             "wbits": 4
         }
-        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, use_full_length=False)
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, use_max_length=False)
         self.assertTrue(isinstance(model, torch.nn.Module))
         del model
 

@@ -4,5 +4,7 @@ python examples/pytorch/nlp/huggingface_models/language-modeling/quantization/pt
     --dataset NeelNanda/pile-10k \
     --wbits 4 \
     --group_size 128 \
-    --act-order \
+    --pad_max_length 2048 \
+    --use_max_length \
+    --seed 0 \
     --gpu

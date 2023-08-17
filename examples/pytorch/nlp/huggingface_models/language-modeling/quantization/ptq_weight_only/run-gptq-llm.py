@@ -162,7 +162,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--percdamp', type=float, default=.01,
-        help='Percent of the average Hessian diagonal to use for dampening.'
+        help='Percent of the average Hessian diagonal to use for dampening. Please refer to GPTQ paper Part IV for more information'
     )
     parser.add_argument(
         '--nearest', action='store_true',
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument('--act-order', action='store_true', 
         help='Whether to apply the activation order GPTQ heuristic'
     )
-    parser.add_argument('--use_full_length', action='store_true', 
+    parser.add_argument('--use_max_length', action='store_true', 
         help='Only select data whose length equals or more than model.seqlen, please refer to GPTQ original implementation'
     )
     parser.add_argument('--gpu', action='store_true', help='Whether to use gpu')
@@ -226,8 +226,9 @@ if __name__ == '__main__':
     # dataloader = INCDataloader(dataloader)
     # ================================================
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
-    calib_dataset = load_dataset(args.dataset, split="train") # default
-    calib_dataset = calib_dataset.shuffle(seed=42)
+    # calib_dataset = load_dataset(args.dataset, split="train") # default
+    calib_dataset = datasets.load_from_disk('/data4/cyy/gptq_inc/pile-10k/')
+    calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
     calib_dataloader = DataLoader(
         calib_evaluator.dataset,
@@ -272,10 +273,10 @@ if __name__ == '__main__':
     #     recipes={
     #         'gptq_args':{
     #             'percdamp': 0.01, 
-    #             'actorder':args.act_order, 
+    #             'act_order':args.act_order, 
     #             'block_size': args.block_size, 
     #             'nsampeles': args.nsamples,
-    #             'use_full_length': args.use_full_length
+    #             'use_max_length': args.use_max_length
     #         },
     #     },
     # )
@@ -287,7 +288,7 @@ if __name__ == '__main__':
             'wbits': args.wbits, # 1-8 bits 
             'group_size': args.group_size,  # -1 (per-channel)
             'sym': (sym_opt == "sym"),
-            'actorder': args.act_order,
+            'act_order': args.act_order,
         }
     } 
     q_model, gptq_config = gptq_quantize(
@@ -295,7 +296,7 @@ if __name__ == '__main__':
         weight_config=conf, 
         dataloader=calib_dataloader, 
         nsamples = args.nsamples, 
-        use_full_length = args.use_full_length
+        use_max_length = args.use_max_length
     )
 
     results = lm_evaluate(

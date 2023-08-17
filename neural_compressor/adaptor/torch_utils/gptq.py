@@ -141,7 +141,7 @@ class GPTQuantizer(object):
         weight_config={}, 
         dataloader=None, 
         nsamples = 128, 
-        use_full_length = True,
+        use_max_length = True,
         device=None
     ):
         """
@@ -155,7 +155,7 @@ class GPTQuantizer(object):
                     'group_size': 32, 
                     'sym': False,
                     'percdamp': .01,
-                    'actorder': False
+                    'act_order': False
                 }
                 ...
             }
@@ -177,7 +177,7 @@ class GPTQuantizer(object):
         self.block_size_default = 128
         self.percdamp_default = 0.01
         self.sym_default = False
-        self.actorder_default = True
+        self.act_order_default = False
         self.perchannel_default = True
         self.mse_default = False
         self.check_layer_config()
@@ -187,14 +187,14 @@ class GPTQuantizer(object):
         self.is_ready = False
 
         # dataloader
-        self.use_full_length = use_full_length
+        self.use_max_length = use_max_length
         self.dataloader_original = dataloader
         self.dataloader = []
         self.nsamples = nsamples
         self.prepare_dataloader()
 
     def prepare_dataloader(self):
-        if self.use_full_length:
+        if self.use_max_length:
             # (Recommend) only take sequence whose length exceeds model.seqlen, 
             # which perserves calibration's tokens are all valid
             # This is GPTQ official dataloader implementation
@@ -257,6 +257,8 @@ class GPTQuantizer(object):
                 i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
                 j = i + unified_length
                 inp = batch[0][:, i:j]
+            else:
+                continue
             self.dataloader.append(inp)
         if len(self.dataloader) < self.nsamples: # pragma: no cover
             logger.warning(f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
@@ -317,7 +319,7 @@ class GPTQuantizer(object):
                 tmp_weight_config[name]['block_size'] = self.weight_config.get('block_size', self.group_size_default)
                 tmp_weight_config[name]['percdamp'] = self.weight_config.get('pecdamp', self.percdamp_default)
                 tmp_weight_config[name]['sym'] = self.weight_config.get('sym', self.sym_default)
-                tmp_weight_config[name]['actorder'] = self.weight_config.get('actorder', self.actorder_default)
+                tmp_weight_config[name]['act_order'] = self.weight_config.get('act_order', self.act_order_default)
                 tmp_weight_config[name]['perchannel'] = self.weight_config.get('perchannel', self.perchannel_default)
                 tmp_weight_config[name]['mse'] = self.weight_config.get('mse', self.mse_default)
             self.weight_config = tmp_weight_config
@@ -328,7 +330,7 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]['block_size'] = config.get('block_size', self.group_size_default)
                 self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
                 self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
-                self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
+                self.weight_config[layer_name]['act_order'] = config.get('act_order', self.act_order_default)
                 self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
                 self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
 
@@ -359,7 +361,7 @@ class GPTQuantizer(object):
             self.cache['i'] += 1
             for arg in kwargs:
                 # TODO: investigate include parameters
-                if self.use_full_length:
+                if self.use_max_length:
                     if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
                         self.cache[arg] = kwargs[arg]
                     else:
@@ -467,7 +469,7 @@ class GPTQuantizer(object):
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
             for j in range(len(self.dataloader)):
-                if self.use_full_length:
+                if self.use_max_length:
                     # self.inp[j] shape: [seq_len, hidden_size]
                     self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
                 else:
@@ -490,12 +492,12 @@ class GPTQuantizer(object):
                     blocksize = weight_config_this_layer['block_size'],
                     percdamp = weight_config_this_layer['percdamp'], 
                     groupsize = weight_config_this_layer['group_size'], 
-                    actorder = weight_config_this_layer['actorder'],
+                    act_order = weight_config_this_layer['act_order'],
                 )
                 gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {'scale': scale}
                 if not weight_config_this_layer['sym']:
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]['zero'] = zp
-                if weight_config_this_layer['actorder']: # save perm for restoring the weights
+                if weight_config_this_layer['act_order']: # save perm for restoring the weights
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]['perm'] = \
                                                                 gptq_for_this_block[layer_name].perm
                 gptq_for_this_block[layer_name].free()
@@ -503,7 +505,7 @@ class GPTQuantizer(object):
             # Step 2.5: replace output data with quantized weights
             idx = self.cache.pop('i')
             for j in range(len(self.dataloader)):
-                if self.use_full_length:
+                if self.use_max_length:
                     # self.inp[j] shape: [seq_len, hidden_size]
                     self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
                 else:
@@ -545,7 +547,7 @@ class GPTQ:
         self.H = torch.zeros((self.columns, self.columns), device=self.device)
         self.nsamples = 0
         self.quantizer = Quantizer()
-        self.perm = None # actorder choice
+        self.perm = None # act_order choice
 
     def add_batch(self, inp, out):
         # if DEBUG:
@@ -576,7 +578,7 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t()) # H = X*X, which should be a sysm matrix
 
-    def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, actorder=False):
+    def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, act_order=False):
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -596,7 +598,7 @@ class GPTQ:
         W[:, dead] = 0 # such channel makes no contribution to quantization computation
 
         # rearrange considering the diag's value
-        if actorder:
+        if act_order:
             perm = torch.argsort(torch.diag(H), descending=True)
             W = W[:, perm]
             H = H[perm][:, perm]
@@ -662,7 +664,7 @@ class GPTQ:
         logger.info(f'time {(time.time() - tick)}')
         logger.info(f'error {torch.sum(Losses).item()}')
 
-        if actorder:
+        if act_order:
             invperm = torch.argsort(perm)
             Q = Q[:, invperm]
 
