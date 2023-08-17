@@ -4338,8 +4338,10 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         logger.info("quantizing with the round-to-nearest algorithm")
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
+            mse_range = self.recipes['rtn_args'].get('mse_range', False)
         else:
             sym_full_range=False
+            mse_range=False
         from .torch_utils.weight_only import rtn_quantize
         from .torch_utils.util import fetch_module, set_module
         for key, config in tune_cfg['op'].items():
@@ -4355,8 +4357,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     continue
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
-                                 return_int=False, 
-                                 sym_full_range=sym_full_range)
+                                return_int=False, 
+                                sym_full_range=sym_full_range,
+                                mse_range=mse_range)
                 set_module(model, op_name, m)
         return model
 
