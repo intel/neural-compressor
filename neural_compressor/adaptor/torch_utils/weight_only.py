@@ -207,68 +207,42 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             weight = torch.cat([weight1, weight2], dim=1)
             return weight
 
-def module_inference(model, inputs):
-    """Collect output of module.
 
-    Args:
-        model (torch.nn.Module): input model.
-        inputs (list): a list of module input.
-
-    Returns:
-        output(list):  a list of module output.
-    """
-    total_out = []
-    for inp in inputs:
-        out = model(inp)
-        if isinstance(out, tuple):  # pragma: no cover
-            out = out[0]
-        total_out.append(out)
-    return total_out
-
-def search_clip(name, m, weight_config, sym_full_range):
+def search_clip(m, num_bits, group_size, scheme, sym_full_range):
     """Search best clip range of each linears in current block.
 
     Args:
-        name (str): name of the module
-        m (torch.nn.Module): torch module
-        weight_config (dict, optional): specific layer wise configirations. Defaults to {}.
+        m (torch.nn.Module): torch module.
+        num_bits: num bits.
+        group_size (int, optional): how many elements share one scale/zp.
+        scheme (str, optional): sym or asym.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
     
     Returns:
         best_clip_ratio (float): best percentile of clip
     
     """
-    logger.info("Searching the best clip range with RTN algorithm")
-    if name in weight_config:  # pragma: no cover
-        cur_bits = weight_config[name].get('bits', 4)
-        cur_group_size = weight_config[name].get('group_size', 32)
-        cur_scheme = weight_config[name].get('scheme', 'asym')
-    else:
-        cur_bits = 4
-        cur_group_size = 32
-        cur_scheme = 'asym'
-    logger.info(f"[CLIP] Processing module: {name}")
     org_stat = m.state_dict()
-    org_out = module_inference(m, m.weight.data)
+    org_weight = m.weight.data
     logger.info("Searching the best clip range with RTN algorithm")
     best_error = float('inf')
     best_clip_ratio = None
     n_grid = 200
-    max_shrink = 0.1
+    max_shrink = 0.2
     history = []
     for i_s in range(int(max_shrink * n_grid)):
         ratio = (1 - i_s / n_grid) # 1, 0.805-1.0
         m.weight.data = quant_weight(
             m.weight.data,
-            num_bits=cur_bits, 
-            group_size=cur_group_size, 
-            scheme=cur_scheme,
+            num_bits=num_bits, 
+            group_size=group_size, 
+            scheme=scheme,
             full_range=sym_full_range,
             quantile=ratio,
         )
         loss = 0
-        cur_out = module_inference(m, m.weight.data)
-        for out1, out2 in zip(org_out, cur_out):
+        cur_weight = m.weight.data
+        for out1, out2 in zip(org_weight, cur_weight):
             loss += (out1 - out2).float().pow(2).mean().item()
         history.append(loss)
         is_best = loss < best_error
@@ -277,13 +251,7 @@ def search_clip(name, m, weight_config, sym_full_range):
             best_clip_ratio = ratio
         m.load_state_dict(org_stat)
     logger.debug("The loss history of different clip range:{}".format(history))
-    if name != '' and name not in weight_config:
-        weight_config[name] = {
-            'bits': cur_bits,
-            'group_size': cur_group_size,
-            'scheme': cur_scheme
-        }
-    logger.debug("The best clip ratio for {}:{}".format(name, best_clip_ratio))
+    logger.debug("The best clip ratio is {}".format(best_clip_ratio))
     return best_clip_ratio
 
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
@@ -345,7 +313,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             continue
         weight = m.weight
         if mse_range:
-            quantile = search_clip(name, m, weight_config, sym_full_range=sym_full_range)
+            quantile = search_clip(m, num_bits, group_size, scheme, sym_full_range)
         if return_int:
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
