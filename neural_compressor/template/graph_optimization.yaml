@@ -28,7 +28,7 @@ graph_optimization:                                  # optional. tuning constrai
 
   op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
          'conv1': {
-           'activation':  {'dtype': ['bf16']}}
+           'activation':  {'dtype': ['bf16']}
          },
          'pool1': {
            'activation': {'dtype': ['bf16']},
@@ -37,7 +37,7 @@ graph_optimization:                                  # optional. tuning constrai
            'activation':  {'dtype': ['fp32']},
          }
         }
-      }
+
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
