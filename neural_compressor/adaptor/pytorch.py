@@ -2605,7 +2605,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if self.version.release >= Version("1.12.0").release:
             # Check save_qconf_summary part is a workaroud for IPEX bug.
             # Sometimes the prepared model from get_op_capablitiy loss this attribute
-            if not hasattr(model._model, "save_qconf_summary"):
+            if not hasattr(model._model, "save_qconf_summary") or \
+              not hasattr(model._model, "load_qconf_summary"):
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 if self.version.release >= Version("2.1").release:
                     static_qconfig = ipex.quantization.default_static_qconfig_mapping
@@ -2950,7 +2951,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 ipex_conf.save(self.ipex_config_path)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    assert self.q_dataloader or self.example_inputs, \
+                    assert self.q_dataloader is not None or self.example_inputs is not None, \
                             "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     if self.version.release >= Version("2.1").release:
@@ -2983,7 +2984,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         model = ipex.quantization.prepare(model, static_qconfig,
                                                               example_inputs=self.example_inputs, inplace=True)
 
-                if self.q_dataloader or self.example_inputs:
+                if self.q_dataloader is not None or self.example_inputs is not None:
                     self._simple_inference(model, self.q_dataloader, iterations=1)
                 else:
                     try:
@@ -3141,7 +3142,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model._model, "save_qconf_summary"):
+        if not hasattr(model._model, "save_qconf_summary") or \
+          not hasattr(model._model, "load_qconf_summary"):
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(model._model, static_qconfig,

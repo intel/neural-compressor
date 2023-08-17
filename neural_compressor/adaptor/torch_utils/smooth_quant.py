@@ -501,21 +501,31 @@ class TorchSmoothQuant:
 
         return scale
 
-    def _scale_layer_weight(self, layer_name, scale):  ##input channel
+    def _scale_layer_weight(self, layer_name, scale, alpha=0.5, input_minmax=None):  ##input channel
         """
         Scale the layer weights at input channel, depthwise conv output channel
         :param layer_name: The layer name
         :param scale: The scale to be multiplied
+        :param alpha: alpha for SQLinearWrapper
+        :param input_minmax: input_minmax for SQLinearWrapper
         :return:
         """
         layer = get_module(self.model, layer_name)
-        if layer.__class__.__name__ == "SQLinearWrapper":
-            return scale # weigth update is done in SQLinearWrapper initialization
-        scale = self._reshape_scale_for_weight(layer, scale)
-        layer.weight = torch.nn.Parameter(layer.weight * scale)
+        if self.insert_mul:
+            from .model_wrapper import SQLinearWrapper
+            layer = get_module(self.model, layer_name)
+            if isinstance(layer, SQLinearWrapper):
+                layer._recover_sq_linear()
+                set_module(self.model, layer_name, layer.sq_linear)  ##recover
+            else:
+                new_module = SQLinearWrapper(layer, 1.0 / scale, input_minmax, alpha)
+                set_module(self.model, layer_name, new_module)
+        elif self.allow_absorb:
+            scale = self._reshape_scale_for_weight(layer, scale)
+            layer.weight = torch.nn.Parameter(layer.weight * scale)
         return scale
 
-    def _absorb_scales(self, layer_name, scale, alpha=0.5):  ##output channel
+    def _absorb_scales(self, layer_name, scale):  ##output channel
         """
         Absorb the scale to the layer at output channel
         :param layer_name: The module name
@@ -523,22 +533,11 @@ class TorchSmoothQuant:
         :param alpha_key: The alpha passed to SQLinearWrapper
         :return:
         """
-        layer = get_module(self.model, layer_name)
-        if self.insert_mul:
-            if layer.__class__.__name__ == "SQLinearWrapper":
-                layer._recover_sq_linear()
-                set_module(self.model, layer_name, layer.sq_linear)  ##recover
-            else:
-                from .model_wrapper import SQLinearWrapper
-                input_minmax = [self.input_mins[layer_name], self.input_maxes[layer_name]]
-                new_module = SQLinearWrapper(layer, scale, input_minmax, alpha)
-                set_module(self.model, layer_name, new_module)
-            return
-
-        if not self.allow_absorb:
-            return  ## change the code style due to too many if/else statements in the following
+        if self.insert_mul or not self.allow_absorb:
+            return  # absorb is updated in SQLinearWrapper in def _scale_layer_weight
 
         ##if self.allow absorb
+        layer = get_module(self.model, layer_name)
         if layer.__class__.__name__ == 'WrapperLayer':
             layer = layer.orig_layer
         if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
@@ -650,7 +649,9 @@ class TorchSmoothQuant:
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
         :return:
         """
-        absorb_scales_info, weight_scales_info = self._cal_scales(absorb_to_layer, input_maxes, alpha, tuning)
+        absorb_scales_info, weight_scales_info = self._cal_scales(
+            absorb_to_layer, input_maxes, alpha, tuning
+        )
         if not absorb_scales_info or not weight_scales_info:
             return weight_scales_info, absorb_scales_info 
         for index, key in enumerate(absorb_to_layer.keys()):
@@ -659,10 +660,13 @@ class TorchSmoothQuant:
             elif isinstance(alpha, dict):
                 alpha_tmp = alpha[key]
             absorb_scale = absorb_scales_info[key]
-            self._absorb_scales(key, absorb_scale, alpha_tmp)
+            self._absorb_scales(key, absorb_scale)
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
-                self._scale_layer_weight(layer_name, weight_scales_info[layer_name])
+                input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
+                self._scale_layer_weight(
+                    layer_name, weight_scales_info[layer_name], alpha_tmp, input_minmax
+                )
         return weight_scales_info, absorb_scales_info
 
     def _check_need_calibration(self, alpha, percentile, op_types,
@@ -1110,10 +1114,14 @@ class TorchSmoothQuant:
         if self.dataloader == None and self.example_inputs == None:
             return None
         if self.example_inputs is None:
-            ##assert self.dataloader, "Please provide dataloader or example_inputs"
-            for idx, input in enumerate(self.dataloader):
-                self.example_inputs = input
-                break
+            try:
+                for idx, (input, label) in enumerate(self.dataloader):
+                    self.example_inputs = input
+                    break
+            except:
+                for idx, input in enumerate(self.dataloader):
+                    self.example_inputs = input
+                    break
 
         return self.example_inputs
 
