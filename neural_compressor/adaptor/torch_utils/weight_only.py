@@ -21,7 +21,7 @@
 from copy import deepcopy
 import math
 from typing import OrderedDict
-from .util import set_module, fetch_module
+from .util import set_module
 from ...utils import logger
 from ...utils.utility import LazyImport
 

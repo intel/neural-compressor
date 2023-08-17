@@ -4357,9 +4357,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     continue
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
-                                return_int=False, 
-                                sym_full_range=sym_full_range,
-                                mse_range=mse_range)
+                                 return_int=False, 
+                                 sym_full_range=sym_full_range,
+                                 mse_range=mse_range)
                 set_module(model, op_name, m)
         return model
 
