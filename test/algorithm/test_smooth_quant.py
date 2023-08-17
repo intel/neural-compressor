@@ -779,19 +779,36 @@ class TestSqLinearOpFuse(unittest.TestCase):
         self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
         self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
 
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            calibration_sampling_size=8,
+            excluded_precisions=['bf16'],
+            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto'}}
+        )
+        tmp_model = copy.deepcopy(fp32_model)
+        q_model = quantization.fit(
+            tmp_model,
+            conf,
+            calib_dataloader=CalibDataloader(),
+        )
+        output2 = q_model.model(input_ids)
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
             excluded_precisions=['bf16'],
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5, 'folding': True}}
         )
-        class CalibDataloader:
-            def __init__(self):
-                self.batch_size = 1
-            def __iter__(self):
-                yield input_ids
+        tmp_model = copy.deepcopy(fp32_model)
         q_model = quantization.fit(
-            fp32_model,
+            tmp_model,
             conf,
             calib_dataloader=CalibDataloader(),
         )
