@@ -1,12 +1,6 @@
 import unittest
 
-import torch
-import torchvision
-import torch.nn as nn
-import sys
-sys.path.insert(0, './')
 from neural_compressor.data import Datasets
-from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
 from neural_compressor.data import DataLoader
@@ -16,8 +10,6 @@ from neural_compressor.utils import create_obj_from_config
 from neural_compressor.conf.config import default_workspace
 
 class TestPruning(unittest.TestCase):
-    model = torchvision.models.resnet18()
-
 
     def test_pruning_keras(self):
         import tensorflow as tf

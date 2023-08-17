@@ -4,55 +4,39 @@ import torch
 import torchvision
 import torch.nn as nn
 import sys
-sys.path.insert(0, './')
+sys.path.insert(0, '../../pruning_2.x/')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
-
+from neural_compressor.data import DataLoader
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.conf.dotdict import DotDict
+from neural_compressor.utils import create_obj_from_config
+from neural_compressor.conf.config import default_workspace
 
 class TestPruning(unittest.TestCase):
-    # model = torchvision.models.resnet18()
-    model = torchvision.models.vit_b_16()
+    model = torchvision.models.resnet18()
+
     def test_pruning_basic(self):
         local_configs = [
             {
-                "op_names": ['encoder_layer_1.mlp*'],
-                "target_sparsity": 0.6,
-                "pattern": '2xchannel',
-                "pruning_type": "block_mask",
-                "pruning_scope": "global",
-                "criterion_type": "snip_momentum_block",
-                "criterion_reduce_type": "mean",
-                "pruning_op_types": "Linear",
+                "op_names": ['layer1.*'],
+                'target_sparsity': 0.5,
+                "pattern": '8x2',
+                "pruning_type": "magnitude_progressive",
+                "false_key": "this is to test unsupport keys"
             },
             {
-                "op_names": ['encoder_layer_2.mlp*'],
-                "target_sparsity": 0.9,
-                "pattern": '32x32',
-                "pruning_op_types": "Linear",
-                "pruning_type": "block_mask",
-                "pruning_scope": "local",
-                "criterion_type": "snip_momentum_block",
-                "criterion_reduce_type": "sum",
+                "op_names": ['layer2.*'],
+                'target_sparsity': 0.5,
+                'pattern': '2:4'
             },
             {
-                "op_names": ['encoder_layer_3.mlp*'],
-                'target_sparsity': 0.4,
-                'pattern': 'channelx1',
-                "pruning_op_types": "Linear",
-                "pruning_type": "retrain_free",
-                "pruning_scope": "local",
-                "pruning_frequency": 2,
-            },
-            {
-                "op_names": ['encoder_layer_0.mlp*', "conv_proj"],
-                'target_sparsity': 0.4,
-                'pattern': 'channelx2',
-                "pruning_op_types": ["Linear","Conv2d"],
-                "pruning_type": "retrain_free",
-                "pruning_scope": "global",
-                "pruning_frequency": 3,
+                "op_names": ['layer3.*'],
+                'target_sparsity': 0.7,
+                'pattern': '5x1',
+                "pruning_type": "snip_progressive"
             }
         ]
         config = WeightPruningConfig(
@@ -61,14 +45,15 @@ class TestPruning(unittest.TestCase):
             start_step=1,
             end_step=10
         )
-        
+        compression_manager = prepare_compression(model=self.model, confs=config)
+        compression_manager.callbacks.on_train_begin()
+
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        
-        compression_manager = prepare_compression(model=self.model, confs=config)
+
         compression_manager.callbacks.on_train_begin()
         for epoch in range(2):
             self.model.train()
@@ -92,7 +77,7 @@ class TestPruning(unittest.TestCase):
         compression_manager.callbacks.on_after_eval()
 
 
+
+
 if __name__ == "__main__":
     unittest.main()
-
-

@@ -4,48 +4,55 @@ import torch
 import torchvision
 import torch.nn as nn
 import sys
-sys.path.insert(0, './')
+sys.path.insert(0, '../../pruning_2.x/')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
 
 
-class TestPruning(unittest.TestCase):
+class TestPruningPatterns(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    def test_pruning_basic(self):
+    def test_pruning_pattern(self):
         local_configs = [
             {
                 "op_names": ['layer1.*'],
-                'target_sparsity': 0.5,
-                "pattern": '8x2',
-                "pruning_type": "magnitude_progressive",
-                "false_key": "this is to test unsupport keys"
+                'target_sparsity': 0.75,
+                "pattern": '6:8',
+                "pruning_type": "magnitude_progressive"
             },
             {
                 "op_names": ['layer2.*'],
-                'target_sparsity': 0.5,
-                'pattern': '2:4',
-
+                "pattern": '1xchannel',
+                "pruning_scope": "global"
             },
             {
+                "start_step": 2,
+                "end_step": 20,
                 "op_names": ['layer3.*'],
-                'target_sparsity': 0.7,
-                'pattern': '5x1',
+                'target_sparsity': 0.666666,
+                'pattern': '4x2',
                 "pruning_type": "snip_progressive",
-                'reg_type':"group_lasso",
-                'reg_coeff':0.1
+                "pruning_frequency": 5
             }
         ]
         config = WeightPruningConfig(
             local_configs,
             target_sparsity=0.8,
+            sparsity_decay_type="cos",
+            excluded_op_names=["downsample.*"],
+            pruning_scope="local",
+            min_sparsity_ratio_per_op=0.1,
             start_step=1,
             end_step=10
         )
         compression_manager = prepare_compression(model=self.model, confs=config)
         compression_manager.callbacks.on_train_begin()
+        # fix code coverage
+        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_configs['progressive_type'] = "linear"
+        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_configs['use_global'] = False
+        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_logger = True
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
@@ -54,7 +61,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         compression_manager.callbacks.on_train_begin()
-        for epoch in range(2):
+        for epoch in range(5):
             self.model.train()
             compression_manager.callbacks.on_epoch_begin(epoch)
             local_step = 0
