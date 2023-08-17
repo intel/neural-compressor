@@ -674,7 +674,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
             fp32_model,
             conf,
             calib_dataloader=CalibDataloader(),
-            eval_func=lambda x: 0.1,
         )
         output2 = q_model.model(input_ids)
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
