@@ -729,24 +729,56 @@ class TestSqLinearOpFuse(unittest.TestCase):
         fp32_model = Model()
         output1 = fp32_model(input_ids)
 
+        def calib_func(model):
+            model(input_ids)
+
+        # pure ipex quantization
+        qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+        from intel_extension_for_pytorch.quantization import prepare, convert
+        user_model = copy.deepcopy(fp32_model)
+        user_model = prepare(user_model.eval(), qconfig, example_inputs=input_ids, inplace=True)
+        calib_func(user_model)
+        user_model.save_qconf_summary(qconf_summary='ipex.json')
+        import json
+        with open('ipex.json', 'r') as f:
+            ipex_config_json = json.load(f)
+        with torch.no_grad():
+            user_model = convert(user_model.eval(), inplace=True).eval()
+            user_model(input_ids)
+            user_model = torch.jit.trace(user_model.eval(), input_ids, strict=False)
+            user_model = torch.jit.freeze(user_model.eval())
+            user_model(input_ids)
+            user_model(input_ids)
+        ipex_out = user_model(input_ids)
+        # inc quantization
         from neural_compressor import PostTrainingQuantConfig, quantization
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
             excluded_precisions=['bf16'],
             example_inputs=(input_ids,),
-            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto'}}
+            recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}}
         )
-        def calib_func(model):
-            model(input_ids)
-
+        tmp_model = copy.deepcopy(fp32_model)
         q_model = quantization.fit(
-            fp32_model,
+            tmp_model,
             conf,
             calib_func=calib_func,
         )
+        q_model.save('saved')
+        # compare ipex and inc quantization
+        with open('saved/best_configure.json', 'r') as f:
+            inc_config_json = json.load(f)
+        inc_out = q_model.model(input_ids)
+        ipex_sq_weight_scale = torch.tensor(ipex_config_json[' ']['q_op_infos']['0']\
+                        ['weight_tensor_infos'][0]['smooth_quant_scaling_factor'])
+        inc_sq_weight_scale = torch.tensor(inc_config_json[' ']['q_op_infos']['0']\
+                        ['weight_tensor_infos'][0]['smooth_quant_scaling_factor'])
+        self.assertTrue(torch.allclose(inc_sq_weight_scale, ipex_sq_weight_scale))
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
 
-        fp32_model = Model()
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
@@ -764,6 +796,8 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_dataloader=CalibDataloader(),
         )
         output2 = q_model.model(input_ids)
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
 
 class TestSqSkipOp(unittest.TestCase):
