@@ -102,19 +102,22 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight" title="neural_compressor.adaptor.torch_utils.weight_only.quant_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight</span></code></a>(weight[, num_bits, group_size, scheme, ...])</p></td>
 <td><p>Quant and dequant tensor with group size.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, num_bits, group_size, scheme, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.search_clip" title="neural_compressor.adaptor.torch_utils.weight_only.search_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_clip</span></code></a>(m, num_bits, group_size, scheme, ...)</p></td>
+<td><p>Search best clip range of each linears in current block.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, num_bits, group_size, scheme, ...])</p></td>
 <td><p>Quant the model with round to nearst method.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model[, weight_config, dataloader, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model[, weight_config, dataloader, ...])</p></td>
 <td><p>Run weight-only quantization with</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model[, bits, group_size, scheme, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model[, bits, group_size, scheme, ...])</p></td>
 <td><p>Quant the model with Activation-aware Weight quantization(AWQ) method.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.teq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.teq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">teq_quantize</span></code></a>(model[, weight_config, absorb_to_layer, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.teq_quantize" title="neural_compressor.adaptor.torch_utils.weight_only.teq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">teq_quantize</span></code></a>(model[, weight_config, absorb_to_layer, ...])</p></td>
 <td><p>Run weight-only quantization with</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale" title="neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale, zp[, group_size])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale" title="neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale, zp[, group_size])</p></td>
 <td><p>Quant and dequant tensor with group size.</p></td>
 </tr>
 </tbody>
@@ -224,8 +227,31 @@ Defaults to False.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.weight_only.search_clip">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">search_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym_full_range</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.search_clip" title="Permalink to this definition"></a></dt>
+<dd><p>Search best clip range of each linears in current block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<em>torch.nn.Module</em>) – torch module.</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num bits.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym.</p></li>
+<li><p><strong>sym_full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>best percentile of clip</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>best_clip_ratio (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">rtn_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">rtn_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mse_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize" title="Permalink to this definition"></a></dt>
 <dd><p>Quant the model with round to nearst method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -259,6 +285,8 @@ For example,</p>
 Defaults to False.</p></li>
 <li><p><strong>sym_full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).
 Defaults to False.</p></li>
+<li><p><strong>mse_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether search clip range.
+Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

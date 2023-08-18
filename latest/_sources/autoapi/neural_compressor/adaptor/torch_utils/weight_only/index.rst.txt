@@ -19,6 +19,7 @@ Functions
    neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_sym
    neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_actor
    neural_compressor.adaptor.torch_utils.weight_only.quant_weight
+   neural_compressor.adaptor.torch_utils.weight_only.search_clip
    neural_compressor.adaptor.torch_utils.weight_only.rtn_quantize
    neural_compressor.adaptor.torch_utils.weight_only.gptq_quantize
    neural_compressor.adaptor.torch_utils.weight_only.awq_quantize
@@ -109,7 +110,26 @@ Functions
    :rtype: output
 
 
-.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, sym_full_range=False, **kwargs)
+.. py:function:: search_clip(m, num_bits, group_size, scheme, sym_full_range)
+
+   Search best clip range of each linears in current block.
+
+   :param m: torch module.
+   :type m: torch.nn.Module
+   :param num_bits: num bits.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp.
+   :type group_size: int, optional
+   :param scheme: sym or asym.
+   :type scheme: str, optional
+   :param sym_full_range: Choose sym range whether use -2**(bits-1).
+   :type sym_full_range: bool, optional
+
+   :returns: best percentile of clip
+   :rtype: best_clip_ratio (float)
+
+
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, sym_full_range=False, mse_range=False, **kwargs)
 
    Quant the model with round to nearst method.
 
@@ -139,6 +159,9 @@ Functions
    :param sym_full_range: Choose sym range whether use -2**(bits-1).
                           Defaults to False.
    :type sym_full_range: bool, optional
+   :param mse_range: Whether search clip range.
+                     Defaults to True.
+   :type mse_range: bool, optional
 
    :returns: fake quantized torch module
    :rtype: model

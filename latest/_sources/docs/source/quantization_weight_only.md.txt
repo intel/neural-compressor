@@ -44,13 +44,14 @@ There are many excellent works for weight only quantization to improve its accur
 |  rtn_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 | sym_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
+|  mse_range |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
 |  return_int |      False     | Whether return compressed model with int data type |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 | auto_scale |      True     | Whether search for best scales based on activation distribution   |
-|  mse_range |      True     | Whether search for the best clip range from range [0.89, 1.0, 0.01] |
+|  mse_range |      True     | Whether search for the best clip range from range [0.91, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
 
 **GPTQ arguments**:
