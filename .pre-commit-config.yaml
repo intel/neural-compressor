@@ -46,13 +46,12 @@ repos:
             neural_insights/.*(py|yaml|yml|sh)
           )$
         args:
-          - --license-filepath
-          - license_template.txt
-          - --use-current-year
-          - --detect-license-in-X-top-lines
-          - "40"
-          - --skip-license-insertion-comment
-          - "Copyright"
+          [
+            --license-filepath=.github/license_template.txt,
+            --use-current-year,
+            --detect-license-in-X-top-lines=40,
+            --skip-license-insertion-comment=Copyright,
+          ]
 
   - repo: https://github.com/asottile/yesqa
     rev: v1.5.0
