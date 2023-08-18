@@ -4339,7 +4339,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
             mse_range = self.recipes['rtn_args'].get('mse_range', False)
-        else:
+        else: # pragma: no cover
             sym_full_range=False
             mse_range=False
         from .torch_utils.weight_only import rtn_quantize
