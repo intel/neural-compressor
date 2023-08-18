@@ -363,17 +363,15 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
 
 
     def test_GPTQ_quant(self):
-        class gptq_inc_loader(object):
-            def __init__(self, nsamples=32):
+        class GPTQLLMDataLoader():
+            def __init__(self):
                 self.batch_size = 1
-                self.nsamples = nsamples
-            
-            def __len__(self):
-                return self.nsamples // self.batch_size
 
             def __iter__(self):
-                for i in range(self.nsamples):
-                    yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
+                for i in range(2):
+                    yield torch.ones([1, 512], dtype=torch.long)
+
+        dataloader = GPTQLLMDataLoader()
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
@@ -395,11 +393,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                'gptq_args':{'percdamp': 0.01, 'actorder': False},
+                'gptq_args':{'percdamp': 0.01, 'act_order': False},
             },
         )
         input = (torch.ones([1, 512], dtype=torch.long))
-        dataloader = gptq_inc_loader()
         q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
         q_model.save('saved')
         out1 = q_model.model(*input)
