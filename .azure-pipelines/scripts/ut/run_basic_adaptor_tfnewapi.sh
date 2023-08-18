@@ -1,6 +1,7 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-echo "run basic adaptor tfnewapi"
+test_case="run basic adaptor tfnewapi"
+echo "${test_case}"
 
 echo "specify fwk version..."
 export tensorflow_version='spr-base'
@@ -8,7 +9,7 @@ export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.f
 # export FORCE_BF16=1
 
 echo "set up UT env..."
-bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
+bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1
 find ./tfnewapi -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh

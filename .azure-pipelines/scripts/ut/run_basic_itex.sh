@@ -1,6 +1,7 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-echo "run basic itex"
+test_case="run basic itex"
+echo "${test_case}"
 
 echo "specify fwk version..."
 export itex_version='1.1.0'
@@ -9,7 +10,7 @@ export onnx_version='1.13.0'
 export onnxruntime_version='1.13.1'
 
 echo "set up UT env..."
-bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
+bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1

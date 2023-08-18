@@ -1,6 +1,7 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-echo "run basic pt pruning ..."
+test_case="run basic pt pruning"
+echo "${test_case}"
 
 echo "specify fwk version..."
 export pytorch_version='2.0.0+cpu'
@@ -8,7 +9,7 @@ export torchvision_version='0.15.1+cpu'
 export ipex_version='2.0.0+cpu'
 
 echo "set up UT env..."
-bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
+bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1
