@@ -1493,7 +1493,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         call_args_list = mock_warning.call_args_list
         first_warning_args = call_args_list[0][0]
-        self.assertEqual(first_warning_args[0], "Backend onnxrt_trt_ep requires a GPU device. Reset device to 'gpu'.")
+        self.assertEqual(first_warning_args[0], "Backend `onnxrt_trt_ep` requires a GPU device. Reset device to 'gpu'.")
         second_warning_args = call_args_list[1][0]
         self.assertIn("not in available provider names. Fallback to available providers", second_warning_args[0])
 

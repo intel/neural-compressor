@@ -329,7 +329,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         
         if backend in ["onnxrt_trt_ep", "onnxrt_cuda_ep"] and \
             self.device != "gpu":
-            logger.warning("Backend {} requires a GPU device. Reset device to 'gpu'.".format(backend))
+            logger.warning("Backend `{}` requires a GPU device. Reset device to 'gpu'.".format(backend))
             self.device = "gpu"
 
         ep = PROVIDERS[backend]
