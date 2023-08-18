@@ -89,7 +89,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out3 = compressed_model(input)
         self.assertTrue(torch.all(out3==out2))
-
         model = Model()
         out1 = model(input)
 
@@ -107,6 +106,21 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model(sym_full_range=True)
         out3 = compressed_model(input)
         self.assertTrue(torch.all(out3==out2))
+
+        model = Model()
+        out1 = model(input)
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            recipes={
+                # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
+                # When mse_range is set to True, enable clip for weight by checking mse.
+                'rtn_args': {'sym_full_range': True, 'mse_range': True}
+            }
+        )
+        q_model = quantization.fit(model, conf)
+        out2 = q_model(input)
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        self.assertFalse(torch.all(out1 == out2))
 
         model = Model()
         out1 = model(input)

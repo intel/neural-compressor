@@ -208,9 +208,50 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             return weight
 
 
+def search_clip(m, num_bits, group_size, scheme, sym_full_range):
+    """Search best clip range of each linears in current block.
+
+    Args:
+        m (torch.nn.Module): torch module.
+        num_bits (int, optional): num bits.
+        group_size (int, optional): how many elements share one scale/zp.
+        scheme (str, optional): sym or asym.
+        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+    
+    Returns:
+        best_clip_ratio (float): best percentile of clip
+    
+    """
+    org_weight = m.weight.data
+    logger.info("Searching the best clip range with RTN algorithm")
+    best_error = float('inf')
+    best_clip_ratio = None
+    n_grid = 200
+    max_shrink = 0.2
+    history = []
+    for i_s in range(int(max_shrink * n_grid)):
+        ratio = (1 - i_s / n_grid) # 1, 0.805-1.0
+        cur_weight = quant_weight(
+            m.weight.data,
+            num_bits=num_bits, 
+            group_size=group_size, 
+            scheme=scheme,
+            full_range=sym_full_range,
+            quantile=ratio,
+        )
+        loss = (org_weight - cur_weight).float().pow(2).mean().item()
+        history.append(loss)
+        is_best = loss < best_error
+        if is_best:
+            best_error = loss
+            best_clip_ratio = ratio
+    logger.debug("The loss history of different clip range:{}".format(history))
+    logger.debug("The best clip ratio is {}".format(best_clip_ratio))
+    return best_clip_ratio
+
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
                  quantile=1.0, weight_config={}, return_int=False, 
-                 sym_full_range=False, **kwargs):
+                 sym_full_range=False, mse_range=False, **kwargs):
     """Quant the model with round to nearst method.
 
     Args:
@@ -234,6 +275,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                                      Defaults to False.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                      Defaults to False.
+        mse_range (bool, optional):  Whether search clip range.
+                                     Defaults to True.
 
     Returns:
         model: fake quantized torch module
@@ -264,6 +307,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             logger.info(f"Skip {name}")
             continue
         weight = m.weight
+        if mse_range:
+            quantile = search_clip(m, num_bits, group_size, scheme, sym_full_range)
         if return_int:
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
