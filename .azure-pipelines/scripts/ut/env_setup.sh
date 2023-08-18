@@ -91,6 +91,9 @@ if [ -f "requirements.txt" ]; then
         sleep 5
     done
     pip list
+    echo "[DEBUG]..."
+    pip install pipdeptree
+    pipdeptree
 else
     echo "Not found requirements.txt file."
 fi
