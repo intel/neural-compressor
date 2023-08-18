@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+from unittest.mock import patch
 import onnxruntime as ort
 import torch
 import torchvision
@@ -1471,6 +1472,32 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
+    @patch('logging.Logger.warning')
+    def test_backend(self, mock_warning):
+        framework_specific_info = {"device": "cpu",
+                                   "backend": "test_backend",
+                                   "approach": "post_training_static_quant",
+                                   "workspace_path": './nc_workspace'}
+        framework = "onnxrt_qlinearops"
+        with self.assertRaises(AssertionError) as context:
+          adaptor = FRAMEWORKS[framework](framework_specific_info)
+        self.assertEqual(str(context.exception), "'test_backend' backend is not supported, "\
+          "supported backends include ['default', 'onnxrt_trt_ep', 'onnxrt_dnnl_ep', 'onnxrt_cuda_ep']")
+        
+        framework_specific_info = {"device": "cpu",
+                                   "backend": "onnxrt_trt_ep",
+                                   "approach": "post_training_static_quant",
+                                   "workspace_path": './nc_workspace'}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+
+        call_args_list = mock_warning.call_args_list
+        first_warning_args = call_args_list[0][0]
+        self.assertEqual(first_warning_args[0], "Backend onnxrt_trt_ep requires a GPU device. Reset device to 'gpu'.")
+        second_warning_args = call_args_list[1][0]
+        self.assertIn("not in available provider names. Fallback to available providers", second_warning_args[0])
+
+        self.assertEqual(mock_warning.call_count, 2)
 
 
 if __name__ == "__main__":
