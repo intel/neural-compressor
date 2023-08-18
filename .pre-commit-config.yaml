@@ -90,10 +90,12 @@ repos:
         args: [--line-length=120, --skip-errors]
         exclude: docs/source-app
 
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.2
     hooks:
-      - id: mdformat
+      - id: prettier
+        files: \.(markdown|md)$
+        args: [--prose-wrap, never]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.284

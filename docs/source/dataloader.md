@@ -42,10 +42,11 @@ Of cause, users can also use frameworks own dataloader in Neural Compressor.
 ### Use Intel® Neural Compressor DataLoader API
 
 Acceptable parameters for `DataLoader` API including:
+
 | Parameter     | Description     |
-|:--------------|:----------|
+|---------------|:----------:|
 |framework (str)| different frameworks, such as `tensorflow`, `tensorflow_itex`, `keras`, `mxnet`, `pytorch` and `onnxruntime`.|
-|dataset (object)| A dataset object from which to get data. Dataset must implement __iter__ or __getitem__ method.|
+|dataset (object)| A dataset object from which to get data. Dataset must implement `__iter__` or `__getitem__` method.|
 |batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
 |collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|
 |last_batch (str, optional)| How to handle the last batch if the batch size does not evenly divide by the number of examples in the dataset. 'discard': throw it away. 'rollover': insert the examples to the beginning of the next batch.Defaults to 'rollover'.|
