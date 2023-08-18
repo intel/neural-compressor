@@ -144,7 +144,7 @@ Functions
    :rtype: model
 
 
-.. py:function:: gptq_quantize(model, weight_config={}, dataloader=None, device=None)
+.. py:function:: gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, device=None)
 
    Run weight-only quantization with
 

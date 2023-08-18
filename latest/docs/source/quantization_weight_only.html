@@ -140,7 +140,7 @@
 | bits | [1-8] |
 | group_size | [-1, 1-N] |
 | scheme | [’asym’, ‘sym’] |
-| algorithm | [’RTN’, ‘AWQ’] |</p>
+| algorithm | [’RTN’, ‘AWQ’, ‘GPTQ’] |</p>
 <p><strong>RTN arguments</strong>:
 |  rtn_args  | default value |                               comments                              |
 |:———-:|:————-:|:——————————————————————-:|
@@ -152,7 +152,16 @@
 | auto_scale |      True     | Whether search for best scales based on activation distribution   |
 |  mse_range |      True     | Whether search for the best clip range from range [0.89, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won’t |</p>
-<p><strong>Note</strong>: <code class="docutils literal notranslate"><span class="pre">group_size=-1</span></code> indicates the per-channel quantization per output channel. <code class="docutils literal notranslate"><span class="pre">group_size=[1-N]</span></code> indicates splitting the input channel elements per group_size.</p>
+<p><strong>GPTQ arguments</strong>:
+|  gptq_args  | default value |                               comments                              |
+|:———-:|:————-:|:——————————————————————-:|
+| actorder | False |   Whether to sort Hessian’s diagonal values to rearrange channel-wise quantization order|
+|  percdamp | 0.01 | Percentage of Hessian’s diagonal values’ average, which will be added to Hessian’s diagonal to increase numerical stability|
+|  nsamples  | 128 |  Calibration samples’ size |
+|  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model’s acceptable sequence length. Please refer to  model’s config json to find out this value.|
+|  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
+|  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |</p>
+<p><strong>Note</strong>: <code class="docutils literal notranslate"><span class="pre">group_size=-1</span></code> indicates the per-channel quantization per output channel. <code class="docutils literal notranslate"><span class="pre">group_size=[1-N]</span></code> indicates splitting the input channel elements per group_size. Term <strong>group_size</strong> in GPTQ refers to number of channels which share the same quantization parameters.</p>
 </section>
 <section id="export-compressed-model">
 <h3><strong>Export Compressed Model</strong><a class="headerlink" href="#export-compressed-model" title="Permalink to this heading"></a></h3>
@@ -180,9 +189,8 @@
             <span class="p">},</span>
         <span class="p">},</span>
     <span class="p">},</span>
-    <span class="c1">### GPTQ is WIP</span>
     <span class="n">recipes</span><span class="o">=</span><span class="p">{</span>
-        <span class="c1"># &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01},</span>
+        <span class="c1"># &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01, &#39;actorder&#39;:True, &#39;block_size&#39;: 128, &#39;nsamples&#39;: 128, &#39;use_full_length&#39;: False},</span>
         <span class="s1">&#39;awq_args&#39;</span><span class="p">:{</span><span class="s1">&#39;auto_scale&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;mse_range&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;n_blocks&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
     <span class="p">},</span>
 <span class="p">)</span>
