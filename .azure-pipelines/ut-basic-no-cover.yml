@@ -42,8 +42,8 @@ stages:
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
-  - stage: Pruning
-    displayName: Unit Test Pruning/Distillation/Scheduler/NAS
+  - stage: API
+    displayName: User facing API
     dependsOn: []
     jobs:
       - job:
@@ -51,9 +51,36 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_pruning"
+              utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-pruning"
+              utArtifact: "ut-coverage-api"
+              utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
+
+  - stage: Pruning
+    displayName: Unit Test Pruning
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: PyTorch Pruning
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pt_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pt-pruning"
+              utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
+      - job:
+        displayName: TensorFlow Pruning
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_tf_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-tf-pruning"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
