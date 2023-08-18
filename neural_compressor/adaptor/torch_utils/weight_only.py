@@ -222,7 +222,6 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
         best_clip_ratio (float): best percentile of clip
     
     """
-    org_stat = m.state_dict()
     org_weight = m.weight.data
     logger.info("Searching the best clip range with RTN algorithm")
     best_error = float('inf')
@@ -232,7 +231,7 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
     history = []
     for i_s in range(int(max_shrink * n_grid)):
         ratio = (1 - i_s / n_grid) # 1, 0.805-1.0
-        m.weight.data = quant_weight(
+        cur_weight = quant_weight(
             m.weight.data,
             num_bits=num_bits, 
             group_size=group_size, 
@@ -240,16 +239,12 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
             full_range=sym_full_range,
             quantile=ratio,
         )
-        loss = 0
-        cur_weight = m.weight.data
-        for out1, out2 in zip(org_weight, cur_weight):
-            loss += (out1 - out2).float().pow(2).mean().item()
+        loss = (org_weight - cur_weight).float().pow(2).mean().item()
         history.append(loss)
         is_best = loss < best_error
         if is_best:
             best_error = loss
             best_clip_ratio = ratio
-        m.load_state_dict(org_stat)
     logger.debug("The loss history of different clip range:{}".format(history))
     logger.debug("The best clip ratio is {}".format(best_clip_ratio))
     return best_clip_ratio
