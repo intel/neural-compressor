@@ -899,8 +899,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             sq_algo.alpha = user_alpha[0] if isinstance(user_alpha, list) else user_alpha
             # TODO move all adaptor checks into algo implementation
             if 'folding' not in smooth_quant_args:
-                smooth_quant_args['folding'] = False if self.framework in ['pytorch', 'pytorch_fx', 'onnxruntime'] \
-                  else True
+                smooth_quant_args['folding'] = True if self.framework in ['onnxruntime'] else False
                 logger.info("SmoothQuant args 'folding' is not set, it's {} now.".format(smooth_quant_args['folding']))
                 if self.framework == 'pytorch_ipex':
                     smooth_quant_args['folding'] = None # will reset it to True if IPEX version < 2.1.
