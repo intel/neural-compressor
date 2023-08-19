@@ -434,7 +434,7 @@ class TestBF16Convert(unittest.TestCase):
 
             graph = sess.graph
 
-            from tensorflow.python.framework import graph_util
+            from tensorflow.compat.v1 import graph_util
             graph_def = graph_util.convert_variables_to_constants(
                 sess,
                 graph.as_graph_def(),
