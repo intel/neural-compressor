@@ -80,9 +80,9 @@ fi
 # common deps
 pip install transformers
 pip install horovod
-if [[ $(grep -c "others" ${test_case}) != 0 ]];then
+if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
     pip install tf_slim xgboost
-elif [[ $(grep -c "nas" ${test_case}) != 0 ]]; then
+elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.3.0
 fi
 # test deps
