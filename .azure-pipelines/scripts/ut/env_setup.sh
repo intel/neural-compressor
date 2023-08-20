@@ -84,6 +84,8 @@ if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
     pip install tf_slim xgboost
 elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.3.0
+elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
+    pip install tensorflow-addons
 fi
 # test deps
 pip install coverage

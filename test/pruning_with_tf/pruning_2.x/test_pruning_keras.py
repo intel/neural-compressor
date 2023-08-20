@@ -7,6 +7,7 @@ from neural_compressor.data import DataLoader
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.utils import create_obj_from_config
+from neural_compressor.utils import logger
 from neural_compressor.conf.config import default_workspace
 
 class TestPruning(unittest.TestCase):
@@ -62,6 +63,8 @@ class TestPruning(unittest.TestCase):
 
         compression_manager.callbacks.on_train_end()
         stats, sparsity = model.report_sparsity()
+        logger.info(stats)
+        logger.info(sparsity)
 
 
 if __name__ == "__main__":
