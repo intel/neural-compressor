@@ -982,7 +982,7 @@ class TestTuneSqAlpha(unittest.TestCase):
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
 
-        for folding in [False]:
+        for folding in [False, True]:
             for fp32_model, dataloader in [
                 (DemoModel(), DemoCalibDataloader()), 
                 (
