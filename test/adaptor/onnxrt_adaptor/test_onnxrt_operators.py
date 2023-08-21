@@ -1377,8 +1377,6 @@ class TestCastONNXRT(unittest.TestCase):
         converted_model = fit(model, config)
         return converted_model
 
-    @unittest.skipIf('CUDAExecutionProvider' not in ort.get_all_providers(),
-        "skip since CUDAExecutionProvider is not supported")
     def test_fp16(self):
         optypes = ['Sum', 'Sub', 'Div', 'Pow', 'Add']
         for optype in optypes:
@@ -1391,7 +1389,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['Equal', 'Greater', 'GreaterOrEqual', 'Less', 'LessOrEqual']
@@ -1405,7 +1403,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['Abs', 'Exp', 'Log', 'Round', 'Sqrt', 'Softmax', 'Exp', 'Tanh', 'Sigmoid', 'LeakyRelu', 'Round']
@@ -1418,7 +1416,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['ReduceMean', 'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceProd', \
@@ -1432,7 +1430,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['Gelu']
@@ -1445,7 +1443,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['BiasGelu', 'FastGelu']
@@ -1459,7 +1457,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
 
@@ -1474,7 +1472,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['FusedMatMul']
@@ -1489,22 +1487,22 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['Gemm']
         for optype in optypes:
             inps = [['input1', TensorProto.FLOAT, (1,2)]]
-            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
             weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
-                        ['input3', TensorProto.FLOAT, (1,2), np.random.random((2))]]
+                        ['input3', TensorProto.FLOAT, (1,1), np.random.random((1))]]
             node_infos = [['test', ['input1', 'input2', 'input3'], ['output'], optype]]
             model = self.build_model(inps, outs, weights, node_infos)
             input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['LayerNormalization']
@@ -1519,7 +1517,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
         optypes = ['BatchNormalization']
@@ -1537,7 +1535,7 @@ class TestCastONNXRT(unittest.TestCase):
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue('Cast' in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == 'Cast']))
-            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=['CUDAExecutionProvider'])
+            session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=ort.get_available_providers())
             outputs = session.run(None, input_data)
 
     def get_bf16_mixed_precision_model(self, model):
@@ -1547,7 +1545,7 @@ class TestCastONNXRT(unittest.TestCase):
         converted_model = fit(model, config)
         return converted_model
 
-    @unittest.skipIf(not CpuInfo().bf16 or 'DnnlExecutionProvider' not in ort.get_all_providers(),
+    @unittest.skipIf(not CpuInfo().bf16 or 'DnnlExecutionProvider' not in ort.get_available_providers(),
         "skip since DnnlExecutionProvider is not supported")
     def test_bf16(self):
         optypes = ['Sum', 'Sub', 'Div', 'Pow', 'Add']
@@ -1665,9 +1663,9 @@ class TestCastONNXRT(unittest.TestCase):
         optypes = ['Gemm']
         for optype in optypes:
             inps = [['input1', TensorProto.FLOAT, (1,2)]]
-            outs = [['output', TensorProto.FLOAT, (1,2)]]
+            outs = [['output', TensorProto.FLOAT, (1,1)]]
             weights = [['input2', TensorProto.FLOAT, (2,1), np.random.random((2))],
-                        ['input3', TensorProto.FLOAT, [], np.random.random((1))]]
+                        ['input3', TensorProto.FLOAT, (1,1), np.random.random((1))]]
             node_infos = [['test', ['input1', 'input2', 'input3'], ['output'], optype]]
             model = self.build_model(inps, outs, weights, node_infos)
             input_data = self.build_test_data(['input1'], [(1,2)], ['float32'])
