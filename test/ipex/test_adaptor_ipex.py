@@ -376,7 +376,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
 
     @unittest.skipIf(IPEX_VERSION.release < Version("2.1.0").release,
                  "Please use Intel extension for Pytorch version higher or equal to 2.1.0")
-    def test_dict_inputs_for_model(self):
+    def test_dict_inputs_for_model_calib_func(self):
         model = AutoModelForSequenceClassification.from_pretrained(
             MODEL_NAME
         )
