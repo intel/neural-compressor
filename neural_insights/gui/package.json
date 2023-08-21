@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.4.0",
     "bootstrap": "^5.3.0",
+    "css-select": "^5.1.0",
     "cytoscape": "^3.25.0",
     "cytoscape-elk": "^2.2.0",
     "cytoscape-node-html-label": "^1.2.2",

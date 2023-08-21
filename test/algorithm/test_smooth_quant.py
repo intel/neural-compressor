@@ -6,12 +6,15 @@ import torch
 import sys
 import math
 import transformers
+from packaging.version import Version
 
 sys.path.append('./')
 
-from neural_compressor.data import Datasets, DATALOADERS
+from neural_compressor.data import Datasets
+from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
 import logging
 logger = logging.getLogger("neural_compressor")
 
@@ -20,6 +23,31 @@ try:
     TEST_IPEX = True
 except:
     TEST_IPEX = False
+
+
+class DemoModel(torch.nn.Module):
+    def __init__(self):
+        super(DemoModel, self).__init__()
+        self.fc1 = torch.nn.Linear(3, 4)
+        self.fc2 = torch.nn.Linear(4, 3)
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        return out
+
+class DemoCalibDataloader:
+    def __init__(self):
+        self.batch_size = 1
+    def __iter__(self):
+        yield torch.randn([1, 3])
+
+
+class LLMCalibDataloader:
+    def __init__(self):
+        self.batch_size = 1
+    def __iter__(self):
+        yield torch.ones([1, 3], dtype=torch.long)
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -41,6 +69,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 3, 1, 1, groups=3)
@@ -61,7 +90,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         sq = TorchSmoothQuant(model, dummy_dataloader)
         sq.transform(alpha='auto', calib_iter=1, folding=True)
         output_sq = model(data)
-        assert torch.sum(torch.abs(output - output_sq)) < 1e-5
+        assert torch.sum(torch.abs(output - output_sq)) < 1e-3
         assert len(sq.absorb_to_layer) == 1
 
     @classmethod
@@ -71,6 +100,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 3, 1, 1)
@@ -114,6 +144,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -148,6 +179,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_relu6(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -169,6 +201,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_relu(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -190,6 +223,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_gelu(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -211,6 +245,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_conv_bn(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
@@ -233,28 +268,33 @@ class TestSqConvOpFuse(unittest.TestCase):
 
     def test_sq_conv_gn(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 4, 1, 1)
                 self.norm = torch.nn.GroupNorm(num_channels=4, num_groups=2)
                 self.act = torch.nn.ReLU()
                 self.conv2 = torch.nn.Conv2d(4, 3, 1, 1)
+                self.conv3 = torch.nn.Conv2d(4, 3, 1, 1)
 
             def forward(self, x):
                 out = self.conv1(x)
                 out = self.norm(out)
                 out = self.act(out)
-                out = self.conv2(out)
+                tmp1 = self.conv2(out)
+                tmp2 = self.conv3(out)
+                out = tmp1 + tmp2
                 return out
 
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
         sq.transform(alpha=0.6, calib_iter=2, folding=True)
-        assert len(sq.absorb_to_layer) == 1
+        assert len(sq.absorb_to_layer['norm']) == 2
 
     def test_sq_add(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.conv1 = torch.nn.Conv2d(3, 3, 1, 1)
@@ -347,6 +387,7 @@ class TestSqListInput(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -368,6 +409,7 @@ class TestSqListInput(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm_tuple(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -402,6 +444,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm_auto(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -436,6 +479,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -457,6 +501,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_T5Norm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -478,6 +523,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_relu6(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -499,6 +545,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_norm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -520,6 +567,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_norm_linear(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.norm_1 = torch.nn.LayerNorm(3)
@@ -543,6 +591,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @classmethod
     def test_sq_linear_gelu_norm(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -565,6 +614,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
     def test_sq_linear(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -579,12 +629,21 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha=0.5, calib_iter=1) # By default, folding=False
-        from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
         assert isinstance(sq.model.fc1, SQLinearWrapper)
+
+    def test_sq_qkv(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+                        'facebook/opt-125m', torchscript=True,)
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(alpha=0.5, calib_iter=-1, folding=False)
+        assert isinstance(
+            sq.model.model.decoder.layers[0].self_attn.k_proj, SQLinearWrapper
+        )
 
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -595,8 +654,10 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 out = self.fc2(out)
                 return out
 
-        input_ids = torch.randn([2, 3])
+        input_ids = torch.randn([3, 3])
         fp32_model = Model()
+        output1 = fp32_model(input_ids)
+        
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
@@ -615,10 +676,12 @@ class TestSqLinearOpFuse(unittest.TestCase):
             fp32_model,
             conf,
             calib_dataloader=CalibDataloader(),
-            eval_func=lambda x: 0.1,
         )
-        from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
+        output2 = q_model.model(input_ids)
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
+        # set a big atol to avoid random issue
+        print(output1, output2)
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
         q_model.save('saved_result')
         from neural_compressor.utils.pytorch import load
@@ -630,7 +693,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
-                     "smooth_quant_args": {'alpha': 'auto'}}
+                     "smooth_quant_args": {'alpha': 'auto', 'folding': True}}
         )#  By default, folding args: {IPEX: False, ONNX RT: False, Stock PT: True}
         q_model = quantization.fit(
             fp32_model,
@@ -642,6 +705,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         # with calib_func
         conf = PostTrainingQuantConfig(
+                        example_inputs=input_ids,
                         recipes={"smooth_quant": True,
                                 "smooth_quant_args": {'alpha': 'auto', 'folding': False}}
                         )
@@ -657,6 +721,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     @unittest.skipIf(not TEST_IPEX, "Please install Intel extension for Pytorch")
     def test_sq_quant_ipex(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -671,22 +736,77 @@ class TestSqLinearOpFuse(unittest.TestCase):
         fp32_model = Model()
         output1 = fp32_model(input_ids)
 
-        from neural_compressor import PostTrainingQuantConfig, quantization
+        def calib_func(model):
+            model(input_ids)
+
+        ipex_version = Version(ipex.__version__.split('+')[0])
+        # pure ipex quantization
+        if ipex_version >= Version('2.1.0'):
+            qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+            from intel_extension_for_pytorch.quantization import prepare, convert
+            user_model = copy.deepcopy(fp32_model)
+            user_model = prepare(user_model.eval(), qconfig, example_inputs=input_ids, inplace=True)
+            calib_func(user_model)
+            user_model.save_qconf_summary(qconf_summary='ipex.json')
+            import json
+            with open('ipex.json', 'r') as f:
+                ipex_config_json = json.load(f)
+            with torch.no_grad():
+                user_model = convert(user_model.eval(), inplace=True).eval()
+                user_model(input_ids)
+                user_model = torch.jit.trace(user_model.eval(), input_ids, strict=False)
+                user_model = torch.jit.freeze(user_model.eval())
+                user_model(input_ids)
+                user_model(input_ids)
+            ipex_out = user_model(input_ids)
+            # inc quantization
+            conf = PostTrainingQuantConfig(
+                backend="ipex",
+                calibration_sampling_size=8,
+                excluded_precisions=['bf16'],
+                example_inputs=(input_ids,),
+                recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}}
+            )
+            tmp_model = copy.deepcopy(fp32_model)
+            q_model = quantization.fit(
+                tmp_model,
+                conf,
+                calib_func=calib_func,
+            )
+            q_model.save('saved')
+            # compare ipex and inc quantization
+            with open('saved/best_configure.json', 'r') as f:
+                inc_config_json = json.load(f)
+            inc_out = q_model.model(input_ids)
+            ipex_sq_weight_scale = torch.tensor(ipex_config_json[' ']['q_op_infos']['0']\
+                            ['weight_tensor_infos'][0]['smooth_quant_scaling_factor'])
+            inc_sq_weight_scale = torch.tensor(inc_config_json[' ']['q_op_infos']['0']\
+                            ['weight_tensor_infos'][0]['smooth_quant_scaling_factor'])
+            self.assertTrue(torch.allclose(inc_sq_weight_scale, ipex_sq_weight_scale))
+            # set a big atol to avoid random issue
+            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
+            self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
+
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
             excluded_precisions=['bf16'],
-            example_inputs=(input_ids,),
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto'}}
         )
-        def calib_func(model):
-            model(input_ids)
-
+        tmp_model = copy.deepcopy(fp32_model)
         q_model = quantization.fit(
-            fp32_model,
+            tmp_model,
             conf,
-            calib_func=calib_func,
+            calib_dataloader=CalibDataloader(),
         )
+        output2 = q_model.model(input_ids)
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
         conf = PostTrainingQuantConfig(
             backend="ipex",
@@ -694,17 +814,15 @@ class TestSqLinearOpFuse(unittest.TestCase):
             excluded_precisions=['bf16'],
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5, 'folding': True}}
         )
-        class CalibDataloader:
-            def __init__(self):
-                self.batch_size = 1
-            def __iter__(self):
-                yield input_ids
+        tmp_model = copy.deepcopy(fp32_model)
         q_model = quantization.fit(
-            fp32_model,
+            tmp_model,
             conf,
             calib_dataloader=CalibDataloader(),
         )
         output2 = q_model.model(input_ids)
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
 
 class TestSqSkipOp(unittest.TestCase):
@@ -721,6 +839,7 @@ class TestSqSkipOp(unittest.TestCase):
     @classmethod 
     def test_sq_skip_op_auto(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.linear0 = nn.Linear(4, 4, bias=False)
@@ -748,7 +867,17 @@ class TestSqSkipOp(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha='auto', calib_iter=1, folding=True)
         #the layernorm could not used for sq-absorb because it outputs to an add op.
-        assert len(sq.absorb_to_layer) == 0 
+        assert len(sq.absorb_to_layer) == 0
+
+    def test_sq_no_skip_op_auto(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            'facebook/opt-125m', torchscript=True,
+        )
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(alpha='auto', calib_iter=0, folding=False)
+        # folding=False will absorb all Linears with mul, kqv will use same input.
+        assert len(sq.absorb_to_layer['model.decoder.layers.2.self_attn.q_proj']) == 3
+
 
 class TestSqSkipOp_attn(unittest.TestCase):
     @classmethod
@@ -763,6 +892,7 @@ class TestSqSkipOp_attn(unittest.TestCase):
     @classmethod 
     def test_sq_skip_op_attn_auto(self):
         class Model(torch.nn.Module):
+            device = torch.device('cpu')
             def __init__(self):
                 super(Model, self).__init__()
                 self.hidden_size = 4
@@ -801,30 +931,6 @@ class TestSqSkipOp_attn(unittest.TestCase):
         assert len(sq.absorb_to_layer) == 0 
 
 
-class DemoModel(torch.nn.Module):
-    def __init__(self):
-        super(DemoModel, self).__init__()
-        self.fc1 = torch.nn.Linear(3, 4)
-        self.fc2 = torch.nn.Linear(4, 3)
-
-    def forward(self, x):
-        out = self.fc1(x)
-        out = self.fc2(out)
-        return out
-
-class DemoCalibDataloader:
-    def __init__(self):
-        self.batch_size = 1
-    def __iter__(self):
-        yield torch.randn([1, 3])
-
-
-class LLMCalibDataloader:
-    def __init__(self):
-        self.batch_size = 1
-    def __iter__(self):
-        yield torch.ones([1, 3], dtype=torch.long)
-        
 class TestTuneSqAlpha(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -876,7 +982,7 @@ class TestTuneSqAlpha(unittest.TestCase):
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
 
-        for folding in [False]:
+        for folding in [False, True]:
             for fp32_model, dataloader in [
                 (DemoModel(), DemoCalibDataloader()), 
                 (

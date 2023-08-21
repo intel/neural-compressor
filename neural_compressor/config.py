@@ -703,6 +703,8 @@ class _BaseQuantizationConfig:
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
+                 'layer_wise_quant': whether to use layer wise quant
+                 'layer_wise_quant_args': parameters for layer_wise_quant
                  'fast_bias_correction': whether do fast bias correction
                  'weight_correction': whether do weight correction
                  'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
@@ -846,8 +848,8 @@ class _BaseQuantizationConfig:
                             smooth_quant_args = {"alpha": numpy.arange(0.1, 0.5, 0.05).tolist()}
                         """
                         if isinstance(v, str):
-                            assert v == "auto", "the alpha of sq only supports float and 'auto'"
-                        elif isinstance(v, float) or isinstance(v, int):
+                            assert v == "auto", "the alpha of sq only supports float, list and 'auto'"
+                        elif isinstance(v, float) or isinstance(v, int) or isinstance(v, list):
                             continue
                         else:
                             logger.warning("Ignore the alpha as it's not a list, int or float.")
@@ -856,6 +858,18 @@ class _BaseQuantizationConfig:
                                 "The candidate value of smooth quantization alpha should be between 0 and 1."
 
                 return True
+            else:
+                return {}
+
+        def layer_wise_quant(val=None):
+            if val is not None:
+                return _check_value("layer_wise_quant", val, bool)
+            else:
+                return False
+
+        def layer_wise_quant_args(val=None):
+            if val is not None:
+                return _check_value("layer_wise_quant_args", val, dict)
             else:
                 return {}
 
@@ -946,6 +960,8 @@ class _BaseQuantizationConfig:
 
         RECIPES = {"smooth_quant": smooth_quant,
                    "smooth_quant_args": smooth_quant_args,
+                   "layer_wise_quant": layer_wise_quant,
+                   "layer_wise_quant_args": layer_wise_quant_args,
                    "fast_bias_correction": fast_bias_correction,
                    "weight_correction": weight_correction,
                    "gemm_to_matmul": gemm_to_matmul,
@@ -1140,6 +1156,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         recipes: Recipes for quantiztaion, support list is as below.
                  'smooth_quant': whether do smooth quant
                  'smooth_quant_args': parameters for smooth_quant
+                 'layer_wise_quant': whether to use layer wise quant
                  'fast_bias_correction': whether do fast bias correction
                  'weight_correction': whether do weight correction
                  'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models

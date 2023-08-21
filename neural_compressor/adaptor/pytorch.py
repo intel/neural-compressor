@@ -1822,20 +1822,20 @@ class TemplateAdaptor(Adaptor):
         if sq_max_info:
             assert not q_model._smoothquant_optimized, \
                     "The model is already optimized by smoothquant, cannot apply new alpha."
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+            for _, info in sq_max_info.items():
+                alpha = info['alpha']
+                absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model, op_name)
-                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
-                set_module(q_model, op_name, new_module)
-                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                for op_name in absorbed_layer:
+                    module = fetch_module(q_model, op_name)
+                    new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                    set_module(q_model, op_name, new_module)
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         smoothquant_op_info = {'sq_linear': {}, 'qdq_linear': []}
         stats_result['SQLinearWrapper'] = {'INT8(QDQ)': 0, 'BF16': 0, 'FP32': 0}
@@ -2603,16 +2603,22 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         assert not self.version.release < Version("1.10.0").release, \
             "INC support IPEX version >= 1.10.0"
 
-        # Update model parameter when smoothquant folding = False
+        # check smoothquant folding value
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if 'smooth_quant_args' in recipe_cfgs and 'folding' in recipe_cfgs['smooth_quant_args']:
+            if recipe_cfgs['smooth_quant_args']['folding'] is None:
+                if self.version.release < Version("2.1").release:
+                    folding = True
+                else:
+                    folding=False
+            else:
+                folding = recipe_cfgs['smooth_quant_args']['folding']
+        # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and self.version.release >= Version("2.1").release \
-          and not recipe_cfgs['smooth_quant_args']['folding'] \
-          and self.approach != 'post_training_dynamic_quant':
+          and not folding and self.approach != 'post_training_dynamic_quant':
             return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
         # Update model parameter when smoothquant folding = True
-        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
-          and recipe_cfgs['smooth_quant_args']['folding']:
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) and folding:
             self._apply_pre_optimization(model, tune_cfg)
 
         assert self.approach != 'quant_aware_training', \
@@ -2628,7 +2634,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if self.version.release >= Version("1.12.0").release:
             # Check save_qconf_summary part is a workaroud for IPEX bug.
             # Sometimes the prepared model from get_op_capablitiy loss this attribute
-            if not hasattr(model._model, "save_qconf_summary"):
+            if not hasattr(model._model, "save_qconf_summary") or \
+              not hasattr(model._model, "load_qconf_summary"):
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 if self.version.release >= Version("2.1").release:
                     static_qconfig = ipex.quantization.default_static_qconfig_mapping
@@ -2973,7 +2980,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 ipex_conf.save(self.ipex_config_path)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    assert self.q_dataloader or self.example_inputs, \
+                    assert self.q_dataloader is not None or self.example_inputs is not None, \
                             "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     if self.version.release >= Version("2.1").release:
@@ -3006,7 +3013,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         model = ipex.quantization.prepare(model, static_qconfig,
                                                               example_inputs=self.example_inputs, inplace=True)
 
-                if self.q_dataloader or self.example_inputs:
+                if self.q_dataloader is not None or self.example_inputs is not None:
                     self._simple_inference(model, self.q_dataloader, iterations=1)
                 else:
                     try:
@@ -3139,32 +3146,33 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             smoothquant_scale_info = {}
             from .torch_utils.model_wrapper import SQLinearWrapper
             from .torch_utils.util import fetch_module
-            alpha = tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
-            for op_name, info in sq_max_info.items():
-                if alpha == 'auto':
-                    alpha = info['alpha']
+            for _, info in sq_max_info.items():
+                alpha = info['alpha']
+                absorbed_layer = info['absorbed_layer']
                 input_minmax = info['input_minmax']
                 weight_max = info['weight_max']
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
-                module = fetch_module(q_model._model, op_name)
-                new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
-                weight_scale = new_module._get_weight_scale()
-                smoothquant_scale_info[op_name] = {
-                    'alpha': new_module.alpha,
-                    'input_scale_for_mul': new_module.input_scale,
-                    'input_scale_after_mul': new_module.scale,
-                    'input_zero_point_after_mul': new_module.zero_point,
-                    'input_dtype': new_module.dtype,
-                    'weight_scale_after_mul': weight_scale,
-                }
-                logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                for op_name in absorbed_layer:
+                    module = copy.deepcopy(fetch_module(q_model._model, op_name))
+                    new_module = SQLinearWrapper(module, 1.0/scale, input_minmax, alpha)
+                    weight_scale = new_module._get_weight_scale()
+                    smoothquant_scale_info[op_name] = {
+                        'alpha': new_module.alpha,
+                        'input_scale_for_mul': new_module.input_scale,
+                        'input_scale_after_mul': new_module.scale,
+                        'input_zero_point_after_mul': new_module.zero_point,
+                        'input_dtype': new_module.dtype,
+                        'weight_scale_after_mul': weight_scale,
+                    }
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model._model, "save_qconf_summary"):
+        if not hasattr(model._model, "save_qconf_summary") or \
+          not hasattr(model._model, "load_qconf_summary"):
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(model._model, static_qconfig,
@@ -3369,6 +3377,21 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             self.prepare_custom_config_dict, self.convert_custom_config_dict = None, None
         self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
+
+        # for layer-wise quant
+        # recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs and recipe_cfgs.get('layer_wise_quant', False) \
+                and self.approach != 'post_training_dynamic_quant':
+            from .torch_utils.layer_wise_quant import LayerWiseQuant
+
+            model_path = recipe_cfgs['layer_wise_quant_args'].get('model_path', None)
+            assert model_path is not None,\
+                "the layer_wise_quant_args should have args model_path to load the weight of model."
+            device = recipe_cfgs['layer_wise_quant_args'].get('decvice', 'cpu')
+            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, device=device)
+            q_model._model = lw_quant.quantize(dataloader, clean_weight=False)
+            return q_model
+        
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
             q_model._model.train()
@@ -4296,6 +4319,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         Returns:
             (object): quantized model
         """
+        
         assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
         if self.performance_only:
@@ -4322,15 +4346,18 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             else:
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
+        if len(all_algo):
+            logger.info(f"All algorithms to do: {all_algo}")
         if 'GPTQ' in all_algo:
-            q_model._model = self.gptq_quantize(q_model._model, tune_cfg, dataloader)
-
+            q_model._model, gptq_config = self.gptq_quantize(
+                q_model._model, tune_cfg, dataloader
+            )
+            q_model.gptq_config = gptq_config
         if 'TEQ' in all_algo:
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-        elif 'RTN' in all_algo:
+        if 'RTN' in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
@@ -4339,11 +4366,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return q_model
 
     def rtn_quantize(self, model, tune_cfg):
-        logger.debug("quantizing with the round-to-nearest algorithm")
+        logger.info("quantizing with the round-to-nearest algorithm")
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
-        else:
+            mse_range = self.recipes['rtn_args'].get('mse_range', False)
+        else: # pragma: no cover
             sym_full_range=False
+            mse_range=False
         from .torch_utils.weight_only import rtn_quantize
         from .torch_utils.util import fetch_module, set_module
         for key, config in tune_cfg['op'].items():
@@ -4360,36 +4389,64 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
                                  return_int=False, 
-                                 sym_full_range=sym_full_range)
+                                 sym_full_range=sym_full_range,
+                                 mse_range=mse_range)
                 set_module(model, op_name, m)
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
-        logger.debug("quantizing with the GPTQ algorithm")
+        logger.info("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
-        if 'gptq_args' in self.recipes:
-            percdamp = self.recipes['gptq_args'].get('percdamp', 0.01)
-            wbits = self.recipes.get('wbits', 4)
-            group_size = self.recipes.get('group_size', 128)
-            sym = self.recipes.get('scheme', False)
-        # implementation of gptq
-        # GPTQ(model, dataloader, w_bit, group_size, percdamp=0.01)
+        # convert tune_cfg to gptq_quantize's weight config
+        """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
+        keys of weight_config can not only be specific name, but can also be a re formula
         weight_config = {
-            'wbits': wbits, 
-            'group_size': group_size, 
-            'sym': sym,
-            'percdamp': percdamp
+            "layer_name_1": {
+                'wbits': 4,
+                'group_size': 128,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True
+            },
+            "layer_name_2": {
+                'wbits': 4,
+                'group_size': 128,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True
+            }
+            ...
         }
-        model = gptq_quantize(
+        """
+        weight_config = {}
+        for key, config in tune_cfg['op'].items():
+            op_name, op_type = key
+            if config['weight']['dtype'] == 'fp32':
+                continue # no need to be quantized
+            else:
+                weight_config[op_name] = {
+                    'wbits': config['weight']['bits'],
+                    'group_size': config['weight']['group_size'],
+                    'sym': config['weight']['scheme'] == 'sym',
+                    'percdamp': self.recipes['gptq_args'].get("percdamp", 0.01),
+                    'act_order': self.recipes['gptq_args'].get("act_order", False),
+                    'block_size': self.recipes['gptq_args'].get("block_size", True)
+                } 
+        nsamples = self.recipes['gptq_args'].get("nsamples", 128)
+        use_max_length = self.recipes['gptq_args'].get("use_max_length", False)
+        # tune_cfg => weight_config 
+        model, quantization_perm = gptq_quantize(
             model, 
             weight_config,
             dataloader,
+            nsamples,
+            use_max_length,
             self.device
         )
-        return model
+        return model, quantization_perm
 
     def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the TEQ algorithm")
+        logger.info("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None: # pragma: no cover
@@ -4476,90 +4533,52 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the AWQ algorithm")
+        logger.info("quantizing with the AWQ algorithm")
         from .torch_utils.weight_only import awq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None:
-            if dataloader is None:
-                assert False, "Please provide dataloader or example_inputs for AWQ algorithm."
-            try:
-                for idx, (input, label) in enumerate(dataloader):
-                    self.example_inputs = input
-                    break
-            except:
-                for idx, input in enumerate(dataloader):
-                    self.example_inputs = input
-                    break
+            from neural_compressor.adaptor.torch_utils.util import get_example_input
+            assert dataloader is not None, "datalaoder or example_inputs is required."
+            self.example_inputs = get_example_input(dataloader)
 
-        # get modules that can be absorbed.
-        from .torch_utils.smooth_quant import GraphTrace
-        tg = GraphTrace()
-        supported_layers = ['Linear']
-        absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
-        if absorb_to_layer is None or absorb_to_layer == {}:
-            logger.warning('No absorb layer is detected, skip AWQ algorithm')
-            return model
-
-        # got flipped dict from absorb_to_layer dict
-        flipped_dict = {}
-        for k, v in absorb_to_layer.items():
-            for m in v:
-                flipped_dict[m] = {'absorb_layer': k}
-
-        # check tune_cfg to skip layers without AWQ config
+        # build weight_config
         weight_config = {}
-        skipped_op_name_set = set()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
-                if op_name in flipped_dict:
-                    absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
-                continue
+                weight_config[op_name] = {
+                    'bits': -1, # skip quantization
+                    'group_size': 128,
+                    'scheme': 'asym',
+                    'algorithm': 'RTN',
+                }
             else:
-                weight_config[op_name] = {}
-                weight_config[op_name]['bits'] = config['weight']['bits']
-                weight_config[op_name]['group_size'] = config['weight']['group_size']
-                weight_config[op_name]['scheme'] = config['weight']['scheme']
-                if op_name in flipped_dict:
-                    algorithm = config['weight']['algorithm']
-                    if algorithm != 'AWQ':
-                        absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
-                else:
-                    skipped_op_name_set.add(op_name)
-        if skipped_op_name_set:
-            logger.info("{} is skipped by AWQ algorithm".format(skipped_op_name_set))
-
-        # collect AWQ config from tune_cfg for quantization.
-        if len(absorb_to_layer) == 0:
-            logger.warning('No absorb layer needs AWQ algorithim, skip it')
-        else:
-            logger.debug("**absorb layer**: **absorbed layers**")
-        for k, v in absorb_to_layer.items():
-            logger.debug(f"{k}: {v}")
-        logger.info("Absorbed layers with the same absorb layer use the same config")
+                weight_config[op_name] = config['weight']
 
         if 'awq_args' in self.recipes:
             auto_scale = self.recipes['awq_args'].get('auto_scale', True)
             mse_range = self.recipes['awq_args'].get('mse_range', True)
-            n_blocks = self.recipes['awq_args'].get('n_blocks', 5)
+            folding = self.recipes['awq_args'].get('folding', False)
         else:
-            auto_scale, mse_range = True, True
+            auto_scale, mse_range, folding = True, True, False
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
+            return_int = self.recipes['rtn_args'].get('return_int', False)
         else:
-            sym_full_range=False
+            sym_full_range, return_int = False, False
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         model = awq_quantize(
             model, 
+            bits=-1, # no quantize for op not in weight_config
+            example_inputs=self.example_inputs,
             weight_config=weight_config, 
-            absorb_dict=absorb_to_layer, 
             dataloader=dataloader,
             n_samples=calib_sampling_size,
             auto_scale=auto_scale, 
             mse_range=mse_range,
             calib_func=calib_func,
-            n_blocks=n_blocks,
-            return_int=False,
+            folding=folding,
+            return_int=return_int,
             sym_full_range=sym_full_range,
         )
         return model

@@ -217,7 +217,7 @@ class OnnxrtModel(Model):
         """Ensure all requirements are installed."""
         check_module("onnx")
         check_module("onnxruntime")
-        if sys.version_info < (3, 10):  # pragma: no cover
+        if sys.version_info < (3, 11):  # pragma: no cover
             check_module("onnxruntime_extensions")
 
     @property

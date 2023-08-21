@@ -28,7 +28,7 @@ except: # pragma: no cover
 
 from .smooth_quant import GraphTrace, get_module, set_module
 from .weight_only import quant_weight
-from .model_wrapper import TEQLinearFakeQuant, TEQMulLinear
+from .model_wrapper import TEQLinearFakeQuant, MulLinear
 import transformers
 
 
@@ -139,12 +139,12 @@ class TEQuantizer:
         """
         # for insert mul
         if not self.folding: # pragma: no cover
-            if isinstance(layer, TEQMulLinear):
-                set_module(self.model, layer_name, layer.sq_linear)  ##recover
+            if isinstance(layer, MulLinear):
+                set_module(self.model, layer_name, layer.linear)  ##recover
             else:
-                new_module = TEQMulLinear(layer, scale)
+                new_module = MulLinear(layer, scale)
                 set_module(self.model, layer_name, new_module)
-            self.weight_config[layer_name + ".sq_linear"] = self.weight_config[layer_name]
+            self.weight_config[layer_name + ".linear"] = self.weight_config[layer_name]
             return
 
         if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
@@ -207,8 +207,8 @@ class TEQuantizer:
         :param scale: The scale to be multiplied
         :return:
         """
-        if layer.__class__.__name__ == "TEQMulLinear":
-            layer = layer.sq_linear
+        if layer.__class__.__name__ == "MulLinear":
+            layer = layer.linear
 
         if layer.__class__.__name__ == "TEQLinearFakeQuant":
             layer = layer.orig_layer

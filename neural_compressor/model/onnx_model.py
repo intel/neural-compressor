@@ -50,6 +50,11 @@ class ONNXModel(BaseModel):
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model object to quantize')
 
+        self._config = None
+        if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath('config.json').as_posix()):
+            from transformers import PretrainedConfig
+            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
+
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -139,11 +144,21 @@ class ONNXModel(BaseModel):
             from onnx.external_data_helper import convert_model_to_external_data, \
                 load_external_data_for_model
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
-            convert_model_to_external_data(self._model,
-                                           all_tensors_to_one_file=True,
-                                           location="int8_weights.pb",
-                                           convert_attribute=False)
-        onnx.save(self._model, root)
+            onnx.save_model(self._model,
+                            root,
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            location="int8_weights.pb",
+                            size_threshold=1024,
+                            convert_attribute=False)
+        else:
+            onnx.save(self._model, root)
+        
+        if self._config is not None:
+            model_type = '' if not hasattr(self._config, 'model_type') else getattr(self._config, 'model_type')
+            setattr(self._config.__class__, 'model_type', model_type)
+            output_config_file = Path(root).parent.joinpath('config.json').as_posix()
+            self._config.to_json_file(output_config_file, use_diff=False)
 
     def nodes(self):
         """Return model nodes."""
@@ -217,13 +232,14 @@ class ONNXModel(BaseModel):
         for initializer in init_to_remove:
             self.remove_initializer(initializer)
 
-    def set_initializer(self, tensor, array):
+    def set_initializer(self, tensor, array, raw=False):
         """Update initializer."""
         old_tensor = self.get_initializer(tensor)
         self.remove_initializer(old_tensor)
         dims = old_tensor.dims
         data_type = old_tensor.data_type
-        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist())
+        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist()) if not raw \
+                else onnx.helper.make_tensor(tensor, data_type, dims, array.tostring(), raw=raw)
         self.add_initializer(new_tensor)
     
     @property
@@ -747,6 +763,27 @@ class ONNXModel(BaseModel):
 
         return None
 
+    def get_absorb_pairs(self, target_optype):
+        """Find absorbable nodes based on parent op_type and their own input status.
+
+        Args:
+            target_optype (list): target absorbable optype.
+
+        Returns:
+            absorb_pairs (dict): a dict of absorb pairs {parent: list of absorbable children}.
+        """
+        absorbable_optypes = ["LayerNormalization", "BatchNormalization", "InstanceNormalization", "Conv",
+                              "SimplifiedLayerNormalization", "MatMul", "Gemm", "Mul", "FusedConv"]
+        absorb_pairs = {}
+        for node in self.nodes():
+            if node.op_type in target_optype and self.get_initializer(node.input[1]) is not None:
+                parent = self.get_parent(node, 0)
+                if parent is None or parent.op_type not in absorbable_optypes or \
+                    self.get_initializer(parent.input[1]) is None:
+                    continue
+                absorb_pairs.setdefault(parent.name, []).append(node)
+        return absorb_pairs
+
     def match_parent_path(
         self,
         node,
@@ -792,3 +829,14 @@ class ONNXModel(BaseModel):
             current_node = matched_parent
 
         return matched_parents
+
+    def is_smoothquant_model(self):
+        """Check the model is smooth quantized or not.
+
+        Returns:
+            bool: the model is smooth quantized or not.
+        """
+        for init in self.model.graph.initializer:
+            if "_smooth_scale" in init.name:
+                return True
+        return False

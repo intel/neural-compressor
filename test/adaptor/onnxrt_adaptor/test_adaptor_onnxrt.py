@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+from unittest.mock import patch
 import onnxruntime as ort
 import torch
 import torchvision
@@ -770,6 +771,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("benchmark.yaml")
         os.remove("gather.yaml")
         os.remove("rename.yaml")
+        os.remove("rename_model.onnx")
         os.remove("rn50_9.onnx")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
@@ -1007,6 +1009,20 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
+        conf.model.framework = 'onnxrt_integerops'
+        conf.quantization.approach = 'post_training_dynamic_quant'
+        conf.quantization.calibration.sampling_size = 1
+        conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.rename_dataloader
+        quantizer.eval_dataloader = self.rename_dataloader
+        onnx.save(self.rename_model, 'rename_model.onnx')
+        quantizer.model = 'rename_model.onnx'
+        # force set the model to large model
+        quantizer.model._is_large_model = True
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
         quantizer = Quantization("dynamic.yaml")
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.eval_dataloader = self.cv_dataloader
@@ -1215,6 +1231,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
+
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_cuda_ep', device='gpu', quant_level=1)
+        q_model = quantization.fit(self.distilbert_model, config, 
+            calib_dataloader=DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english"),
+            eval_func=eval)
+        self.assertTrue('QLinearMatMul' in [i.op_type for i in q_model.nodes()])
 
         config = PostTrainingQuantConfig(approach='static', recipes={'optypes_to_exclude_output_quant': ['MatMul']})
         q_model = quantization.fit(self.matmul_model, config,
@@ -1450,6 +1472,32 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
+    @patch('logging.Logger.warning')
+    def test_backend(self, mock_warning):
+        framework_specific_info = {"device": "cpu",
+                                   "backend": "test_backend",
+                                   "approach": "post_training_static_quant",
+                                   "workspace_path": './nc_workspace'}
+        framework = "onnxrt_qlinearops"
+        with self.assertRaises(AssertionError) as context:
+          adaptor = FRAMEWORKS[framework](framework_specific_info)
+        self.assertEqual(str(context.exception), "'test_backend' backend is not supported, "\
+          "supported backends include ['default', 'onnxrt_trt_ep', 'onnxrt_dnnl_ep', 'onnxrt_cuda_ep']")
+        
+        framework_specific_info = {"device": "cpu",
+                                   "backend": "onnxrt_trt_ep",
+                                   "approach": "post_training_static_quant",
+                                   "workspace_path": './nc_workspace'}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+
+        call_args_list = mock_warning.call_args_list
+        first_warning_args = call_args_list[0][0]
+        self.assertEqual(first_warning_args[0], "Backend `onnxrt_trt_ep` requires a GPU device. Reset device to 'gpu'.")
+        second_warning_args = call_args_list[1][0]
+        self.assertIn("not in available provider names. Fallback to available providers", second_warning_args[0])
+
+        self.assertEqual(mock_warning.call_count, 2)
 
 
 if __name__ == "__main__":

@@ -761,20 +761,23 @@ def main():
         acc, _ = eval_func(model)
         logger.info(f"total_steps:{args.max_pruning_steps} accuracy:{acc}")
     else:
-        logger.info(f"***** Running Evaluation before ffn auto slim*****")
-        accuracy, avg_latency = eval_func(model)
-        logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-        model = model_slim(model, round_multiplier=32)
+        if 'bloom' not in model_name:
+            logger.info(f"***** Running Evaluation before ffn auto slim*****")
+            accuracy, avg_latency = eval_func(model)
+            logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
+            model = model_slim(model, round_multiplier=32)
 
-        logger.info(f"***** Running Evaluation after ffn auto_slim*****")
-        accuracy, avg_latency = eval_func(model)
-        logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-        
-        if args.output_dir is not None:
-            accelerator.wait_for_everyone()
-            traced_model = trace_model(model, tokenizer)
-            logger.info(f"Save silmed jit model")
-            torch.jit.save(traced_model, args.output_dir+"/slimed_jit_model.pt")
+            logger.info(f"***** Running Evaluation after ffn auto_slim*****")
+            accuracy, avg_latency = eval_func(model)
+            logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
+            
+            if args.output_dir is not None:
+                accelerator.wait_for_everyone()
+                traced_model = trace_model(model, tokenizer)
+                logger.info(f"Save silmed jit model")
+                torch.jit.save(traced_model, args.output_dir+"/slimed_jit_model.pt")
+        else:
+            logger.info(f"Trace on BLOOM MODEL is not supported yet.")
             
     
     if args.with_tracking:
@@ -783,3 +786,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

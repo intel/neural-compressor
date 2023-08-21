@@ -24,11 +24,11 @@ There are many excellent works for weight only quantization to improve its accur
 
 ## Supported Framework Model Matrix
 
-| Algorithms/Framework |   PyTorch  |    ONNX    |
+| Algorithms/Framework |   PyTorch  |    ONNX Runtime    |
 |:--------------:|:----------:|:----------:|
 |       RTN      |  &#10004;  |  &#10004;  |
-|       AWQ      |  &#10004;  | stay tuned |
-|      GPTQ      | &#10004; | stay tuned |
+|       AWQ      |  &#10004;  | &#10004; |
+|      GPTQ      | &#10004; | &#10004; |
 |      TEQ      | &#10004; | stay tuned |
 
 ## Examples
@@ -38,17 +38,34 @@ There are many excellent works for weight only quantization to improve its accur
 | bits | [1-8] |
 | group_size | [-1, 1-N] | 
 | scheme | ['asym', 'sym'] |
-| algorithm | ['RTN', 'AWQ'] |
+| algorithm | ['RTN', 'AWQ', 'GPTQ'] |
+
+**RTN arguments**:
+|  rtn_args  | default value |                               comments                              |
+|:----------:|:-------------:|:-------------------------------------------------------------------:|
+| sym_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
+|  mse_range |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
+|  return_int |      False     | Whether return compressed model with int data type |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| auto_scale |      True     |   Whether search for best scales based on activation distribution   |
-|  mse_range |      True     | Whether search for the best clip range from range [0.89, 1.0, 0.01] |
-|  n_blocks  |       5       |   Split the model into n blocks for AWQ search to avoid out-of-memory   |
+| auto_scale |      True     | Whether search for best scales based on activation distribution   |
+|  mse_range |      True     | Whether search for the best clip range from range [0.91, 1.0, 0.01] |
+|  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
+
+**GPTQ arguments**:
+|  gptq_args  | default value |                               comments                              |
+|:----------:|:-------------:|:-------------------------------------------------------------------:|
+| actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
+|  percdamp | 0.01 | Percentage of Hessian's diagonal values' average, which will be added to Hessian's diagonal to increase numerical stability|
+|  nsamples  | 128 |  Calibration samples' size |
+|  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
+|  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
+|  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |
 
 
-**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size.
+**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size. Term **group_size** in GPTQ refers to number of channels which share the same quantization parameters. 
 
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
@@ -76,9 +93,8 @@ conf = PostTrainingQuantConfig(
             },
         },
     },
-    ### GPTQ is WIP
     recipes={
-        # 'gptq_args':{'percdamp': 0.01},
+        # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsamples': 128, 'use_full_length': False},
         'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
     },
 )
