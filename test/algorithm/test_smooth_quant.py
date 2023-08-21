@@ -1,5 +1,4 @@
 import copy
-from doctest import Example
 import unittest
 import numpy as np
 import shutil
