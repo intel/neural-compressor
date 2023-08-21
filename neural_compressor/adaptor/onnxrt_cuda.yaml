@@ -407,7 +407,15 @@
       'Transpose': *default_static_qlinear_qdq,
       'ArgMax': *default_static_qlinear,
       'Resize': *default_static_qlinear_qdq,
-
+      'Abs': *default_static_qlinear_qdq,
+      'Shrink': *default_static_qlinear_qdq,
+      'Sign': *default_static_qlinear_qdq,
+      'Flatten': *default_static_qlinear_qdq, 
+      'Expand': *default_static_qlinear_qdq,
+      'Slice': *default_static_qlinear_qdq,
+      'Mod': *default_static_qlinear_qdq,
+      'ReduceMax': *default_static_qlinear_qdq,
+      'ReduceMin': *default_static_qlinear_qdq,
     },
     'dynamic': *ref_1_9_dynamic
   }

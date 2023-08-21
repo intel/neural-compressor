@@ -316,7 +316,7 @@ class PyTorchModel(PyTorchBaseModel):
                 if self.q_config['approach'] == 'post_training_weight_only':
                     from ..adaptor.torch_utils.util import collect_weight_info
                     weight_config_path = os.path.join(root, "qconfig.json")
-                    weight_config = collect_weight_info(self.q_config)
+                    weight_config = collect_weight_info(self.model, self.q_config)
                     with open(weight_config_path, 'w') as f:
                         json.dump(weight_config, f, indent = 4)
                     if hasattr(self, 'gptq_config') and self.gptq_config:
@@ -424,7 +424,7 @@ class PyTorchModel(PyTorchBaseModel):
             with open(qweight_config_path, 'r') as f:
                 weight_config = json.load(f)
         else:
-            weight_config = collect_weight_info(self.q_config)
+            weight_config = collect_weight_info(self.model, self.q_config)
         if gptq_config_path is not None:
             with open(gptq_config_path, 'r') as f:
                 gptq_config = json.load(f)

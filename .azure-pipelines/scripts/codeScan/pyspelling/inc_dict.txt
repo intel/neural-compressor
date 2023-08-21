@@ -15,6 +15,7 @@ acc
 Acc
 accuracies
 acdc
+actorder
 ACDC
 Acknowledgement
 activations
@@ -1253,6 +1254,8 @@ npz
 nq
 nrix
 ns
+nsample
+nsamples
 nsdf
 nSsKchNAySU
 nthreads
@@ -2659,9 +2662,11 @@ classDef
 bdf
 bmm
 AWQ
-GPTQ
-RTN
 awq
+GPTQ
+gptq
+RTN
+rtn
 gptq
 percdamp
 Frantar
@@ -2693,6 +2698,7 @@ hostname
 qweight
 qconfig
 TEQ
+teq
 WeightOnlyLinear
 McKinstry
 Migacz
@@ -2710,3 +2716,4 @@ xgb
 xgboost
 hpo
 HPO
+arange

@@ -476,27 +476,43 @@ class TEQLinearFakeQuant(torch.nn.Module):
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
-class TEQMulLinear(torch.nn.Module):
-    """
-    Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input
-    """
+class MulLinear(torch.nn.Module):
+    """Linear wrapper to apply scale to input."""
 
-    def __init__(self, module, input_scale):
+    def __init__(self, module, input_scale=None):
         """
         A forward hook to save input max of a module
         :param module: the linear module
         :param input_scale: scale for input
         """
-
         super().__init__()
+        if input_scale is None:
+            input_scale = torch.empty(module.in_features)
         self.register_buffer('input_scale', input_scale)
-        self.add_module('sq_linear', module)
+        self.add_module('linear', module)
 
     @property
     def weight(self):
-        return self.sq_linear.weight
+        return self.linear.weight
+
+    @weight.setter
+    def weight(self, weight):
+        self.linear.weight = weight
 
     def forward(self, X):
         X = torch.mul(X, self.input_scale)
-        X = self.sq_linear(X)
+        X = self.linear(X)
         return X
+
+    def _update_linear(self):
+        # update linear weight with input_scale
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.linear.weight /= scale
+
+    def _recover_linear(self):
+        # remove mul and reset sq_linear for ipex inference
+        scale = self.input_scale.view(1, self.input_scale.shape[0])
+        with torch.no_grad():
+            self.linear.weight *= scale
+

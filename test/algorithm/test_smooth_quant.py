@@ -273,19 +273,22 @@ class TestSqConvOpFuse(unittest.TestCase):
                 self.norm = torch.nn.GroupNorm(num_channels=4, num_groups=2)
                 self.act = torch.nn.ReLU()
                 self.conv2 = torch.nn.Conv2d(4, 3, 1, 1)
+                self.conv3 = torch.nn.Conv2d(4, 3, 1, 1)
 
             def forward(self, x):
                 out = self.conv1(x)
                 out = self.norm(out)
                 out = self.act(out)
-                out = self.conv2(out)
+                tmp1 = self.conv2(out)
+                tmp2 = self.conv3(out)
+                out = tmp1 + tmp2
                 return out
 
         model = Model()
 
         sq = TorchSmoothQuant(model, self.conv_dl)
         sq.transform(alpha=0.6, calib_iter=2, folding=True)
-        assert len(sq.absorb_to_layer) == 1
+        assert len(sq.absorb_to_layer['norm']) == 2
 
     def test_sq_add(self):
         class Model(torch.nn.Module):
@@ -626,6 +629,15 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1) # By default, folding=False
         assert isinstance(sq.model.fc1, SQLinearWrapper)
 
+    def test_sq_qkv(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+                        'facebook/opt-125m', torchscript=True,)
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(alpha=0.5, calib_iter=-1, folding=False)
+        assert isinstance(
+            sq.model.model.decoder.layers[0].self_attn.k_proj, SQLinearWrapper
+        )
+
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
         class Model(torch.nn.Module):
@@ -734,6 +746,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
             calib_func=calib_func,
         )
 
+        fp32_model = Model()
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,

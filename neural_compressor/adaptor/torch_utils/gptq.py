@@ -25,6 +25,7 @@ import transformers
 from tqdm import tqdm
 from functools import partial
 from ...utils import logger
+import random
 
 DEBUG = False 
 
@@ -119,8 +120,6 @@ def log_quantizable_layers_per_transformer(
         for name in layer_names:
             logger.info(name)
 
-#===========================================
-
 #===============quantization related============================
 def quantize(x, scale, zero, maxq):
     """Do quantization."""
@@ -141,6 +140,8 @@ class GPTQuantizer(object):
         model, 
         weight_config={}, 
         dataloader=None, 
+        nsamples = 128, 
+        use_max_length = True,
         device=None
     ):
         """
@@ -154,7 +155,7 @@ class GPTQuantizer(object):
                     'group_size': 32, 
                     'sym': False,
                     'percdamp': .01,
-                    'actorder': False
+                    'act_order': False
                 }
                 ...
             }
@@ -163,47 +164,145 @@ class GPTQuantizer(object):
         """
         # model
         self.model = model
+        self.use_cache = self.model.config.use_cache
+        self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
+        self.dtype = next(iter(self.model.parameters())).dtype
+        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
 
-        # weight config related
+        # weight config
         self.weight_config = weight_config
         # default settings, check configs
         self.wbits_default = 4
         self.group_size_default = 128
+        self.block_size_default = 128
         self.percdamp_default = 0.01
         self.sym_default = False
-        self.actorder_default = True
+        self.act_order_default = False
         self.perchannel_default = True
         self.mse_default = False
         self.check_layer_config()
 
-        # data & device
-        if hasattr(dataloader, "gptq_dataloader"):
-            self.dataloader = dataloader.gptq_dataloader
-        else:
-            self.dataloader = dataloader
-        self.nsamples = len(self.dataloader)
+        # device
         self.device = model.device
         self.is_ready = False
 
-        self.use_cache = self.model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(self.model) # get the transformer block list above
-        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
-        #self.pre_transformer_layers = trace_embeddings_layers(model) # get the embeddings above
+        # dataloader
+        self.use_max_length = use_max_length
+        self.dataloader_original = dataloader
+        self.dataloader = []
+        self.nsamples = nsamples
+        self.prepare_dataloader()
 
-        # initialize buffers which are essential for gptq computation. 
-        try:
-            self.dtype = next(iter(self.model.parameters())).dtype
-            self.inp = torch.zeros(
-                (self.nsamples, self.model.seqlen, self.model.config.hidden_size), 
-                dtype=self.dtype, 
-                device=self.device
-            )
-            self.cache = {'i': 0}
-            self.out = torch.zeros_like(self.inp)
-            self.is_ready = True
-        except:
-            logger.warning("GPTQ Quantizer initialization failed!")
-            pass
+    def prepare_dataloader(self):
+        if self.use_max_length:
+            # (Recommend) only take sequence whose length exceeds model.seqlen, 
+            # which perserves calibration's tokens are all valid
+            # This is GPTQ official dataloader implementation
+            self.obtain_first_n_samples_fulllength()
+            # initialize buffers which are essential for gptq computation.
+            self.model_hidden_size = 2048
+            self.initialize_inp_buffersize()
+            try:
+                # Since length is unified, we can allocate a continous space to store inputs
+                self.inp = torch.zeros(
+                    (len(self.dataloader), self.model.seqlen, self.model_hidden_size), 
+                    dtype=self.dtype, 
+                    device=self.device
+                )
+                self.cache = {'i': 0}
+                self.out = torch.zeros_like(self.inp)
+                self.is_ready = True
+            except:
+                logger.warning("GPTQ Quantizer initialization failed!")
+                pass
+        else:
+            # general selection, no padding, not GPTQ original implementation.
+            self.obtain_first_n_samples()
+            try:
+                self.inp = [torch.zeros(1) for _ in range(len(self.dataloader))]
+                self.cache = {'i': 0}
+                self.out = [torch.zeros(1) for _ in range(len(self.dataloader))]
+                self.is_ready = True
+            except:
+                logger.warning("GPTQ Quantizer initialization failed!")
+                pass
+
+    def obtain_first_n_samples(self, seed=0):
+        """Get first nsample data as the real calibration dataset."""
+        self.dataloader.clear()
+        random.seed(seed)
+        for batch in self.dataloader_original:
+            if len(self.dataloader) == self.nsamples:
+                break
+            if batch[0].shape[-1] > self.model.seqlen:
+                i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
+                j = i + self.model.seqlen
+                batch_final = batch[0][:, i:j]
+            else:
+                batch_final = batch[0]
+            self.dataloader.append(batch_final)
+        if len(self.dataloader) < self.nsamples:
+            logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
+    
+    def obtain_first_n_samples_fulllength(self, seed=0):
+        self.dataloader.clear()
+        random.seed(seed)
+        unified_length = self.model.seqlen
+        for batch in self.dataloader_original:
+            if len(self.dataloader) == self.nsamples:
+                break
+            if batch[0].shape[-1] == unified_length:
+                inp = batch[0]
+            elif batch[0].shape[-1] > unified_length:
+                i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
+                j = i + unified_length
+                inp = batch[0][:, i:j]
+            else:
+                continue
+            self.dataloader.append(inp)
+        if len(self.dataloader) < self.nsamples: # pragma: no cover
+            logger.warning(f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
+            but only {len(self.dataloader)} samples satisfy your setting. You may choose smaller 'model.seqlen' value.")
+
+    @torch.no_grad()
+    def initialize_inp_buffersize(self):
+        # Run a forward and generate proper buffer tensor
+        # Thus, no need to pass hidden_states dimension parameters of model.config
+        # e.g. OPT's hidden_states dimension can be called by model.config.hidden_size
+        # but mpt's hidden_states dimension can be called by model.config.d_model
+        def forward(layer, hidden_states, **kwargs):
+            # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
+            logger.info(f"The hidden_states shape along transformers blocks is {hidden_states.shape}.")
+            self.model_hidden_size = hidden_states.shape[-1]
+            raise ValueError
+
+        # Step1: fetch the embeddings and other layers before the transformer stack.
+        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+            embedding_layer = embedding_layer.to(self.device)
+
+        # Step2: modify the first transformer block's forward function to obtain inputs for calibration
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].to(self.device)
+        forward_cache = self.gptq_related_blocks['transformers'][0].forward
+        self.gptq_related_blocks['transformers'][0].forward = \
+            partial(forward, self.gptq_related_blocks['transformers'][0])
+
+        # Step3: run forward to obtain calibration datasets
+        logger.info("Collecting calibration inputs...")
+        for batch in self.dataloader:
+            try:
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    self.model(batch[0].to(self.device))
+                else:
+                    self.model(batch.to(self.device))
+            except ValueError:
+                break
+
+        # Step 4: restore original forward function, relocate layers back to cpu.
+        self.gptq_related_blocks['transformers'][0].forward = forward_cache
+        self.gptq_related_blocks['transformers'][0] = self.gptq_related_blocks['transformers'][0].cpu()
+        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+            embedding_layer.to(self.device)
+        torch.cuda.empty_cache()
         
     def get_full_layer_name(self, sub_layer_name, block_idx):
         transformer_name = self.gptq_related_blocks["transformers_name"]
@@ -217,9 +316,10 @@ class GPTQuantizer(object):
                 tmp_weight_config[name] = {}
                 tmp_weight_config[name]['wbits'] = self.weight_config.get('wbits', self.wbits_default)
                 tmp_weight_config[name]['group_size'] = self.weight_config.get('group_size', self.group_size_default)
+                tmp_weight_config[name]['block_size'] = self.weight_config.get('block_size', self.group_size_default)
                 tmp_weight_config[name]['percdamp'] = self.weight_config.get('pecdamp', self.percdamp_default)
                 tmp_weight_config[name]['sym'] = self.weight_config.get('sym', self.sym_default)
-                tmp_weight_config[name]['actorder'] = self.weight_config.get('actorder', self.actorder_default)
+                tmp_weight_config[name]['act_order'] = self.weight_config.get('act_order', self.act_order_default)
                 tmp_weight_config[name]['perchannel'] = self.weight_config.get('perchannel', self.perchannel_default)
                 tmp_weight_config[name]['mse'] = self.weight_config.get('mse', self.mse_default)
             self.weight_config = tmp_weight_config
@@ -227,9 +327,10 @@ class GPTQuantizer(object):
             for layer_name, config in self.weight_config.items():
                 self.weight_config[layer_name]['wbits'] = config.get('wbits', self.wbits_default)
                 self.weight_config[layer_name]['group_size'] = config.get('group_size', self.group_size_default)
+                self.weight_config[layer_name]['block_size'] = config.get('block_size', self.group_size_default)
                 self.weight_config[layer_name]['percdamp'] = config.get('pecdamp', self.percdamp_default)
                 self.weight_config[layer_name]['sym'] = config.get('sym', self.sym_default)
-                self.weight_config[layer_name]['actorder'] = config.get('actorder', self.actorder_default)
+                self.weight_config[layer_name]['act_order'] = config.get('act_order', self.act_order_default)
                 self.weight_config[layer_name]['perchannel'] = config.get('perchannel', self.perchannel_default)
                 self.weight_config[layer_name]['mse'] = config.get('mse', self.mse_default)
 
@@ -260,9 +361,17 @@ class GPTQuantizer(object):
             self.cache['i'] += 1
             for arg in kwargs:
                 # TODO: investigate include parameters
-                if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
-                    self.cache[arg] = kwargs[arg]
+                if self.use_max_length:
+                    if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
+                        self.cache[arg] = kwargs[arg]
+                    else:
+                        continue
                 else:
+                    # each outputs can be different shape, hence also use list to store
+                    if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
+                        if self.cache.get(arg, None) == None:
+                            self.cache[arg] = []
+                        self.cache[arg].append(kwargs[arg])
                     continue
             raise ValueError
 
@@ -280,9 +389,16 @@ class GPTQuantizer(object):
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             try:
-                self.model(batch[0].to(self.device))
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    self.model(batch[0].to(self.device))
+                else:
+                    self.model(batch.to(self.device))
             except ValueError:
                 pass
+        # output inp data shape
+        logger.info("All calibration data's shape =>")
+        for idx in range(len(self.dataloader)):
+            logger.info(self.inp[idx].shape)
         logger.info("Done.")
 
         # Step 4: restore original forward function, relocate layers back to cpu.
@@ -294,13 +410,18 @@ class GPTQuantizer(object):
         # end
         logger.info('GPTQ quantization prepared.')
 
+    def gather_single_batch_from_dict(self, data_dict, idx):
+        single_batch = {}
+        for k, v in data_dict.items():
+            single_batch[k] = data_dict[k][idx]
+        return single_batch
+
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
         logger.info("Begin ====>")
         self.pre_quantization()
-
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks['transformers'])
@@ -347,8 +468,14 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop('i')
-            for j in range(self.nsamples):
-                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+            for j in range(len(self.dataloader)):
+                if self.use_max_length:
+                    # self.inp[j] shape: [seq_len, hidden_size]
+                    self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+                else:
+                    # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
+                    cache_batch = self.gather_single_batch_from_dict(self.cache, j)
+                    self.out[j] = transformer_block(self.inp[j], **cache_batch)[0]
             self.cache['i'] = idx
             for h in handles:
                 h.remove()
@@ -362,22 +489,29 @@ class GPTQuantizer(object):
                 )
                 logger.info(f"Quantizing layer {layer_name}")
                 scale, zp = gptq_for_this_block[layer_name].fasterquant(
+                    blocksize = weight_config_this_layer['block_size'],
                     percdamp = weight_config_this_layer['percdamp'], 
                     groupsize = weight_config_this_layer['group_size'], 
-                    actorder = weight_config_this_layer['actorder'],
+                    act_order = weight_config_this_layer['act_order'],
                 )
                 gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {'scale': scale}
                 if not weight_config_this_layer['sym']:
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]['zero'] = zp
-                if weight_config_this_layer['actorder']: # save perm for restoring the weights
+                if weight_config_this_layer['act_order']: # save perm for restoring the weights
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]['perm'] = \
                                                                 gptq_for_this_block[layer_name].perm
                 gptq_for_this_block[layer_name].free()
             
             # Step 2.5: replace output data with quantized weights
             idx = self.cache.pop('i')
-            for j in range(self.nsamples):
-                self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+            for j in range(len(self.dataloader)):
+                if self.use_max_length:
+                    # self.inp[j] shape: [seq_len, hidden_size]
+                    self.out[j] = transformer_block(self.inp[j].unsqueeze(0), **self.cache)[0]
+                else:
+                    # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
+                    cache_batch = self.gather_single_batch_from_dict(self.cache, j)
+                    self.out[j] = transformer_block(self.inp[j], **cache_batch)[0]
             self.cache['i'] = idx
             self.gptq_related_blocks['transformers'][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
@@ -413,7 +547,7 @@ class GPTQ:
         self.H = torch.zeros((self.columns, self.columns), device=self.device)
         self.nsamples = 0
         self.quantizer = Quantizer()
-        self.perm = None # actorder choice
+        self.perm = None # act_order choice
 
     def add_batch(self, inp, out):
         # if DEBUG:
@@ -444,7 +578,7 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t()) # H = X*X, which should be a sysm matrix
 
-    def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, actorder=False):
+    def fasterquant(self, blocksize=128, percdamp=.01, groupsize=-1, act_order=False):
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -464,7 +598,7 @@ class GPTQ:
         W[:, dead] = 0 # such channel makes no contribution to quantization computation
 
         # rearrange considering the diag's value
-        if actorder:
+        if act_order:
             perm = torch.argsort(torch.diag(H), descending=True)
             W = W[:, perm]
             H = H[perm][:, perm]
@@ -530,7 +664,7 @@ class GPTQ:
         logger.info(f'time {(time.time() - tick)}')
         logger.info(f'error {torch.sum(Losses).item()}')
 
-        if actorder:
+        if act_order:
             invperm = torch.argsort(perm)
             Q = Q[:, invperm]
 

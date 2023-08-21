@@ -21,6 +21,7 @@ import json
 import numpy as np
 from collections import UserDict
 from packaging.version import Version
+from functools import partial
 from ...utils import logger
 from ...utils.utility import LazyImport, CpuInfo
 
@@ -963,7 +964,7 @@ def get_op_type_by_name(op_name, quantizable_ops):
             return pair[1]
     return None
 
-def collect_weight_info(q_config):
+def collect_weight_info(model, q_config):
     """collect weight info from q_config for dumping into qconfig.json
 
     qconfig.json example:
@@ -989,12 +990,15 @@ def collect_weight_info(q_config):
         if config['weight']['dtype'] == 'fp32':
             weight_info[op_name] = {'dtype': 'fp32'}
         else:
+            # fetch module type for MulLinear
+            module = fetch_module(model, op_name)
             if level == DEBUG:
                 weight_info[op_name] = {
                     'dtype': config['weight']['dtype'],
                     'bits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'scheme': config['weight']['scheme'],
+                    'module_type': str(type(module)).split('\'')[1],
                     'algorithm': config['weight']['algorithm']
                 }
             else:
@@ -1003,5 +1007,214 @@ def collect_weight_info(q_config):
                     'bits': config['weight']['bits'],
                     'group_size': config['weight']['group_size'],
                     'scheme': config['weight']['scheme'],
+                    'module_type': str(type(module)).split('\'')[1],
                 }
     return weight_info
+
+
+def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
+                            calib_func=None, input_func=None, output_func=None):
+    """A help function to get input and output tensor of modules in module_name_list.
+
+    Args:
+        model: torch model.
+        module_hook_config (dict, optional): required module name for input/output. Defaults to {}.
+            For example:
+                module_hook_config = {
+                    'fc1': ['output'],
+                    'fc2': ['input', 'output']
+                }
+        dataloader: dataloader for model input.
+        iters: iterations for inference.
+        calib_func: a custom inference function to replace dataloader and iters.
+        input_func: preprocess input for less memory usage
+        output_func: preprocess output for less memory usage
+
+    Returns:
+        total_values: recorded input_values, output_values. 
+            for example: 
+                {'fc1': 
+                    {'input': [], 'output': []},
+                }
+                                    
+    """
+    from collections import defaultdict
+    total_values = defaultdict(defaultdict)
+    def _save_input_output_hook(name, record_input=False, record_output=False):
+        """
+        A forward hook to save input and output values of a module
+            param name: the module name
+            return: A hook function
+        """
+        def _hook(module, inputs, outputs):
+            if record_input:
+                input = inputs[0]
+                if input_func is not None:
+                    input = input_func(input)
+                if name in total_values and 'input' in total_values[name]:
+                    total_values[name]['input'].append(input)
+                else:
+                    total_values[name]['input'] = [input]
+            if record_output:
+                output = outputs[0] if isinstance(outputs, tuple) else outputs
+                if output_func is not None:
+                    output = output_func(output)
+                if input_func is not None:
+                    input = input_func(input)
+                if name in total_values and 'output' in total_values[name]:
+                    total_values[name]['output'].append(output)
+                else:
+                    total_values[name]['output'] = [output]
+        return _hook
+
+    hook_list = []
+    for name, module in model.named_modules():
+        if name in module_hook_config:
+            require_list = module_hook_config[name]
+            logger.debug(f"required hooks {name}: {require_list}")
+            _hook = _save_input_output_hook(
+                name, 
+                record_input='input' in require_list,
+                record_output='output' in require_list,
+            )
+            require_list = module_hook_config[name]
+            hook_list.append(
+                module.register_forward_hook(_hook))
+    if calib_func:
+        calib_func(model)
+    else:
+        from .smooth_quant import model_forward
+        model_forward(model, dataloader, iters, device=next(model.parameters()).device)
+    for h in hook_list:
+        h.remove()
+    return total_values
+
+
+def get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False):
+    """Get absorb_to_layer and no_absorb_layer.
+
+    Args:
+        model (torch.nn.Module): input model
+        example_inputs: example_inputs
+        supported_layers (list, optional): supported_layers. Defaults to ['Linear'].
+        folding (bool, optional): whether allow self-absorption. Defaults to False.
+
+    Returns:
+        absorb_to_layer: dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+        no_absorb_layers: list of no_absorb_layers
+    """
+    # get modules that can be absorbed.
+    from .smooth_quant import GraphTrace
+    tg = GraphTrace()
+    absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
+        model, example_inputs, supported_layers
+    )
+    if absorb_to_layer is None or absorb_to_layer == {}:
+        absorb_to_layer = {}
+        logger.warning('No absorb layer is detected.')
+        # if no_absorb_layers is None, jit trace failed.
+        # collect all linears for next step
+        if no_absorb_layers is None:
+            no_absorb_layers = []
+            op_types = ['Linear']
+            for name, module in model.named_modules():
+                for op_type in op_types:
+                    if op_type == str(module.__class__.__name__):
+                        no_absorb_layers.append(name)
+    return absorb_to_layer, no_absorb_layers
+
+
+def get_block_prefix(model):
+    """get prefix and number of blockes
+
+    Args:
+        model (torch.nn.Module): input model
+
+    Returns:
+        block_prefix(str): block_list name in model
+        block_num(int): number of block in block_list
+    """
+    module_types=[torch.nn.ModuleList]
+    for n, m in model.named_modules():
+        if type(m) in module_types:
+            block_prefix = n
+            block_num = len(m)
+            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
+            break
+    assert block_num > 0, "block num should't be zero!"
+    return block_prefix, block_num
+
+
+def calibration(model, dataloader=None, n_samples=128, calib_func=None):
+    """ Calibration with dataloader or calib_func
+
+    Args:
+        model (torch.nn.Module): input model
+        dataloader: dataloader. Defaults to None.
+        n_samples (int, optional): n_samples. Defaults to 128.
+        calib_func: calib_func. Defaults to None.
+    """
+    # calibration with dataloader or calib_func
+    if calib_func is not None:
+        calib_func(model)
+    else:
+        import math
+        from .smooth_quant import model_forward
+        batch_size = dataloader.batch_size
+        iters = int(math.ceil(n_samples / batch_size))
+        if n_samples % batch_size != 0:
+            logger.info("calibration samples increase from {} to {} due to batch_size is {}".format(
+                n_samples, iters*batch_size, batch_size,
+            ))
+        model_forward(model, dataloader, iters, next(model.parameters()).device)
+
+
+def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
+    """get the input args and kwargs of first block.
+
+    Args:
+        model (torch.nn.Module): input model
+        dataloader (dataloader, optional): input dataloader. Defaults to None.
+        n_samples (int, optional): number samples from dataloader. Defaults to 128.
+        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+
+    Raises:
+        ValueError: to avoid inference of rest parts in model
+
+    Returns:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+    """
+    # Step 1: replace block_forward to collect block inputs and avoid entire inference
+    total_block_args = []
+    total_block_kwargs = []
+    def forward(layer, *args, **kwargs):
+        # update total_hidden_states, total_block_kwargs, per batch
+        total_block_args.append(list(args))
+        total_block_kwargs.append(kwargs)
+        raise ValueError
+
+    block_prefix, block_num = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    block_forward_cache = first_block.forward
+    first_block.forward = partial(forward, first_block)
+
+    # Step 2: replace model_forward to avoid ValueError
+    model_forward_cache = model.forward
+    def model_forward(model, *args, **kwargs):
+        nonlocal model_forward_cache
+        try:
+            model_forward_cache(*args, **kwargs)
+        except ValueError:
+            pass
+    model.forward = partial(model_forward, model)
+
+    # Step 3: execute calibration
+    calibration(model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func)
+    logger.info("The hidden_states collection is done.")
+
+    # Step 4: recover model and block forward
+    model.forward = model_forward_cache
+    first_block.forward = block_forward_cache
+    return total_block_args, total_block_kwargs
