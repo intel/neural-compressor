@@ -40,8 +40,8 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-coverage-adaptor"
 
-  - stage: Pruning
-    displayName: Unit Test Pruning/Distillation/Scheduler/NAS
+  - stage: API
+    displayName: User facing API
     dependsOn: []
     jobs:
       - job:
@@ -49,9 +49,32 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_pruning"
+              utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-pruning"
+              utArtifact: "ut-coverage-api"
+
+  - stage: Pruning
+    displayName: Unit Test Pruning
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: PyTorch Pruning
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pt_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pt-pruning"
+      - job:
+        displayName: TensorFlow Pruning
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_tf_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-tf-pruning"
 
   - stage: TFNewAPI
     displayName: Unit Test tf newAPI
@@ -106,8 +129,8 @@ stages:
               utArtifact: "ut-coverage-adaptor-base"
               repo: $(REPO)
 
-  - stage: Pruning_base
-    displayName: Unit Test Pruning/Distillation/Scheduler/NAS baseline
+  - stage: API_base
+    displayName: User facing API baseline
     dependsOn: []
     jobs:
       - job:
@@ -115,9 +138,34 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "gitCloneDockerConfig"
-              utScriptFileName: "run_basic_pruning"
+              utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-pruning-base"
+              utArtifact: "ut-coverage-api-base"
+              repo: $(REPO)
+
+  - stage: Pruning_base
+    displayName: Unit Test Pruning baseline
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: PyTorch Pruning baseline
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "gitCloneDockerConfig"
+              utScriptFileName: "run_basic_pt_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pt-pruning-base"
+              repo: $(REPO)
+      - job:
+        displayName: TensorFlow Pruning baseline
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "gitCloneDockerConfig"
+              utScriptFileName: "run_basic_tf_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-tf-pruning-base"
               repo: $(REPO)
 
   - stage: TFNewAPI_base
@@ -166,7 +214,7 @@ stages:
     displayName: "Coverage Combine"
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [Adaptor, Pruning, TFNewAPI, ITEX, Others, Adaptor_base, Pruning_base, TFNewAPI_base, ITEX_base, Others_base]
+    dependsOn: [Adaptor, API, Pruning, TFNewAPI, ITEX, Others, Adaptor_base, API_base, Pruning_base, TFNewAPI_base, ITEX_base, Others_base]
     jobs:
       - job: CollectDatafiles
         steps:

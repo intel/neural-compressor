@@ -3,9 +3,7 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
-import sys
 
-sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig

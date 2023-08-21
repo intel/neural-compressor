@@ -10,7 +10,9 @@ cd /neural-compressor/log_dir
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
 mkdir -p coverage_PR
 cp ut-coverage-adaptor/.coverage.adaptor ./coverage_PR/
-cp ut-coverage-pruning/.coverage.pruning ./coverage_PR/
+cp ut-coverage-api/.coverage.api ./coverage_PR/
+cp ut-coverage-tf-pruning/.coverage.tf_pruning ./coverage_PR/
+cp ut-coverage-pt-pruning/.coverage.pt_pruning ./coverage_PR/
 cp ut-coverage-tfnewapi/.coverage.tfnewapi ./coverage_PR/
 cp ut-coverage-others/.coverage.others ./coverage_PR/
 cp ut-coverage-itex/.coverage.itex ./coverage_PR/
@@ -35,7 +37,9 @@ coverage erase
 cd /neural-compressor/log_dir
 mkdir -p coverage_base
 cp ut-coverage-adaptor-base/.coverage.adaptor ./coverage_base/
-cp ut-coverage-pruning-base/.coverage.pruning ./coverage_base/
+cp ut-coverage-api-base/.coverage.api ./coverage_base/
+cp ut-coverage-tf-pruning-base/.coverage.tf_pruning ./coverage_base/
+cp ut-coverage-pt-pruning-base/.coverage.pt_pruning ./coverage_base/
 cp ut-coverage-tfnewapi-base/.coverage.tfnewapi ./coverage_base/
 cp ut-coverage-others-base/.coverage.others ./coverage_base/
 cp ut-coverage-itex-base/.coverage.itex ./coverage_base/

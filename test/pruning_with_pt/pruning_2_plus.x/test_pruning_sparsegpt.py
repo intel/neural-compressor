@@ -1,9 +1,5 @@
 import unittest
 
-import torch
-import torch.nn as nn
-import sys
-sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
@@ -12,8 +8,7 @@ from transformers import (AutoModelForCausalLM)
 
 class TestPruning(unittest.TestCase):
     model = AutoModelForCausalLM.from_pretrained(
-            "facebook/opt-125m",
-            # "/models/opt-125m/"
+            "facebook/opt-125m"
             )
     def test_pruning_basic(self):
         local_configs = [
@@ -43,9 +38,6 @@ class TestPruning(unittest.TestCase):
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 512), low=0., high=1., label=True, dtype='int64')
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-
-        # pruning = prepare_pruning(config, self.model, device='cpu')
-        # pruning.on_train_begin(dummy_dataloader)
         
         pruning = prepare_pruning(config, self.model, dataloader=dummy_dataloader, device='cpu')
         pruning.on_train_begin(dummy_dataloader)

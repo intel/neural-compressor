@@ -3,13 +3,10 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
-import sys
-sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
 from neural_compressor.training import prepare_compression
-
 
 class TestPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
@@ -26,16 +23,13 @@ class TestPruning(unittest.TestCase):
             {
                 "op_names": ['layer2.*'],
                 'target_sparsity': 0.5,
-                'pattern': '2:4',
-
+                'pattern': '2:4'
             },
             {
                 "op_names": ['layer3.*'],
                 'target_sparsity': 0.7,
                 'pattern': '5x1',
-                "pruning_type": "snip_progressive",
-                'reg_type':"group_lasso",
-                'reg_coeff':0.1
+                "pruning_type": "snip_progressive"
             }
         ]
         config = WeightPruningConfig(
@@ -74,6 +68,8 @@ class TestPruning(unittest.TestCase):
         compression_manager.callbacks.on_train_end()
         compression_manager.callbacks.on_before_eval()
         compression_manager.callbacks.on_after_eval()
+
+
 
 
 if __name__ == "__main__":
