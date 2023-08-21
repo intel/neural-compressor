@@ -62,7 +62,7 @@ def export_model(input_model, output_model):
             "-m",
             "tf2onnx.convert",
             "--opset",
-            "11",
+            "13",
             "--tflite",
             f"{input_model}",
             "--output",
@@ -77,12 +77,13 @@ def download_model(url, model_name, output_model_name, retry_times=5):
     model_name = model_name + {"bert": ".zip", "mobilebert": ".tflite"}.get(model_name)
     if os.path.isdir(model_name):
         return model_name
-    elif is_zip_file(model_name):
+    elif os.path.exists(model_name) and is_zip_file(model_name):
         print("file downloaded")
         extrafile(model_name)
         return True
-    elif is_tflite_file(model_name):
+    elif os.path.exists(model_name) and is_tflite_file(model_name):
         export_model(model_name, output_model_name)
+        print("file downloaded")
         return True
 
     print("download model...")

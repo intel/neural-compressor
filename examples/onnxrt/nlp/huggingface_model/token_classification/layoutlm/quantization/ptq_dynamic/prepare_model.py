@@ -29,6 +29,12 @@ def prepare_model(input_model, output_model):
         text=True,
     )
 
+    subprocess.run(
+        ["pip", "install", "optimum"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+
     print("\nexport model...")
     subprocess.run(
         [

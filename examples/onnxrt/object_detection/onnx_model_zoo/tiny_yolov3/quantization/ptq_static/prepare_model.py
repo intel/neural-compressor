@@ -3,13 +3,13 @@ import os
 import sys
 from urllib import request
 
-MODEL_URL = "https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/tiny-yolov3/model/tiny-yolov3-12.onnx"
+MODEL_URL = "https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/tiny-yolov3/model/tiny-yolov3-11.onnx"
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=False, default="tiny-yolov3-12.onnx")
+    parser.add_argument("--input_model", type=str, required=False, default="tiny-yolov3-11.onnx")
     parser.add_argument("--output_model", type=str, required=True)
     return parser.parse_args()
 

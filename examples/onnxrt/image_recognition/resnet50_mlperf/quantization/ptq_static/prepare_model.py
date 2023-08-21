@@ -52,6 +52,11 @@ def export_model(input_model, output_model):
     # Use [tf2onnx tool](https://github.com/onnx/tensorflow-onnx) to convert tflite to onnx model.
     print("\nexport model...")
     subprocess.run(
+        ["pip", "install", "tf2onnx"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    subprocess.run(
         [
             "python",
             "-m",
@@ -67,7 +72,7 @@ def export_model(input_model, output_model):
             "--outputs",
             "softmax_tensor:0",
             "--opset",
-            "11",
+            "13",
         ],
         stdout=subprocess.PIPE,
         text=True,

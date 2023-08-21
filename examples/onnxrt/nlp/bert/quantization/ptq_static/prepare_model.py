@@ -57,7 +57,7 @@ def extrafile(filename, target_folder="."):
 def download_model(url, model_name, retry_times=5):
     if os.path.isdir(model_name):
         return model_name
-    elif is_zip_file(model_name):
+    elif os.path.exists(model_name) and is_zip_file(model_name):
         print("file downloaded")
         extrafile(model_name)
         return True

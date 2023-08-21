@@ -28,11 +28,15 @@ def parse_arguments():
 def prepare_model(input_model, output_model, task_name):
     print("\nexport model...")
     subprocess.run(
+        ["git", "clone", "https://github.com/huggingface/transformers.git", "my_transformers"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+
+    subprocess.run(
         [
-            "git",
-            "clone",
-            "https://github.com/huggingface/transformers.git",
-            "my_transformers"
+            "pip", "install", "-r",
+            "my_transformers/examples/pytorch/text-classification/requirements.txt"
         ],
         stdout=subprocess.PIPE,
         text=True,
@@ -43,7 +47,7 @@ def prepare_model(input_model, output_model, task_name):
             "python",
             "-m",
             "my_transformers.examples.pytorch.text-classification.run_glue",
-            f"--model_name_or_path={input_model}" ,
+            f"--model_name_or_path={input_model}",
             f"--task_name={task_name}",
             "--do_train",
             "--do_eval",

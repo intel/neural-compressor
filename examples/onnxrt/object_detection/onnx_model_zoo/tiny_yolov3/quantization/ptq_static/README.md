@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 
 ```shell
-python prepare_model.py --output_model='tiny-yolov3-12.onnx'
+python prepare_model.py --output_model='tiny-yolov3-11.onnx'
 ```
 
 ## 3. Prepare Dataset

@@ -42,9 +42,7 @@ def is_zip_file(filename):
 
 
 def is_onnx_file(filename): 
-    with open(filename, 'rb') as f:
-        magic_number = f.read(4)
-    return magic_number == b'ONNX' # ONNX file magic number
+    return filename.lower().endswith('.onnx') # ONNX file magic number
 
 
 def extrafile(filename, target_folder="."):
@@ -55,11 +53,12 @@ def extrafile(filename, target_folder="."):
 def download_model(url, model_name, retry_times=5):
     if os.path.isdir(model_name):
         return model_name
-    elif is_zip_file(model_name):
+    elif os.path.exists(model_name) and is_zip_file(model_name):
         print("file downloaded")
         extrafile(model_name)
         return True
-    elif is_onnx_file(model_name):
+    elif os.path.exists(model_name) and is_onnx_file(model_name):
+        print("file downloaded")
         return True
 
     print("download model...")

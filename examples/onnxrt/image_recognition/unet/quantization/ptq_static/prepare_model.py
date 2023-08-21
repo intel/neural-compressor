@@ -22,7 +22,7 @@ def prepare_model(input_model, output_model):
         text=True,
     )
     subprocess.run(
-        ["pip", "install", "--upgrade", "diffusers[torch]"],
+        ["pip", "install", "--upgrade", "diffusers[torch]", "transformers"],
         stdout=subprocess.PIPE,
         text=True,
     )

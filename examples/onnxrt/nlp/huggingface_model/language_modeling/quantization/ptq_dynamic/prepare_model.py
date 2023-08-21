@@ -6,8 +6,8 @@ import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 MODELS = {
-    'gpt2':(GPT2LMHeadModel, GPT2Tokenizer, 'gpt2', 'gpt2'),
-    'distilgpt2': (GPT2LMHeadModel, GPT2Tokenizer, 'distilgpt2', 'distilgpt2')
+    'gpt2':(GPT2LMHeadModel, GPT2Tokenizer, 'gpt2'),
+    'distilgpt2': (GPT2LMHeadModel, GPT2Tokenizer, 'distilgpt2')
 }
 data_dir = 'test_data_set_0'
 
@@ -26,9 +26,6 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
     if hasattr(model, 'train'):
         model.train(False)
     dir = './'
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    dir = os.path.join(dir, name)
     if not os.path.exists(dir):
         os.makedirs(dir)
 
@@ -69,7 +66,7 @@ def gpt2_test():
                         help='model name or path.')
     args = parser.parse_args()
 
-    model_class, tokenizer_class, pretrained_weights, save_name = MODELS[args.output_model]
+    model_class, tokenizer_class, pretrained_weights = MODELS[args.input_model]
         # Load pretrained model/tokenizer
     tokenizer = tokenizer_class.from_pretrained(pretrained_weights)
     model = model_class.from_pretrained(pretrained_weights)
@@ -81,7 +78,7 @@ def gpt2_test():
     with torch.no_grad():
         output_1 = model(input_ids_1)  # Models outputs are now tuples
 
-    save_model(save_name, model.cpu(), input_ids_1, output_1, opset_version=11, input_names=['input1'], dynamic_axes={'input1': [0, 1, 2]})
+    save_model(args.output_model, model.cpu(), input_ids_1, output_1, opset_version=11, input_names=['input1'], dynamic_axes={'input1': [0, 1, 2]})
 
 
 gpt2_test()

@@ -11,7 +11,10 @@ MAX_TIMES_RETRY_DOWNLOAD = 5
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=False, default="ssd_mobilenet_v2_coco_2018_03_29.tar.gz")
+    parser.add_argument("--input_model",
+                        type=str,
+                        required=False,
+                        default="ssd_mobilenet_v2_coco_2018_03_29.tar.gz")
     parser.add_argument("--output_model", type=str, required=True)
     return parser.parse_args()
 
@@ -44,7 +47,7 @@ def extrafile(filename, target_folder="."):
 def download_model(url, model_name, retry_times=5):
     if os.path.isdir(model_name):
         return model_name
-    elif is_tar_gz_file(model_name):
+    elif os.path.exists(model_name) and is_tar_gz_file(model_name):
         print("file downloaded")
         extrafile(model_name)
         return True
@@ -75,7 +78,7 @@ def export_model(input_model, output_model):
             "--graphdef",
             "ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb",
             "--opset",
-            "11",
+            "13",
             "--output",
             output_model,
             "--inputs",

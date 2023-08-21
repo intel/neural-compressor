@@ -47,7 +47,7 @@ def is_tar_gz_file(filename):
 def download_model(url, model_name, retry_times=5):
     if os.path.isdir(model_name):
         return model_name
-    elif is_tar_gz_file(model_name):
+    elif os.path.exists(model_name) and is_tar_gz_file(model_name):
         print("file downloaded")
         extrafile(model_name)
         return True
@@ -78,7 +78,7 @@ def export_model(input_model, output_model):
             "--graphdef",
             "ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb",
             "--opset",
-            "11",
+            "13",
             "--output",
             output_model,
             "--inputs",
