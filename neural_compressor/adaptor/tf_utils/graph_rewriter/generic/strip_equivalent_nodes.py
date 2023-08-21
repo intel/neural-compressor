@@ -42,9 +42,9 @@ class StripEquivalentNodesOptimizer(GraphRewriterBase):
             for k, v in replaced_nodes_type.items():
                 all_replaced_nodes_type[k] = all_replaced_nodes_type.get(k, 0) + v
             iter_num += 1
-            logger.debug("StripEquivalentNodes[Iter-{}]-" \
-                "Replaced equivalent node types are {}". \
-                    format(iter_num, replaced_nodes_type))
+            logger.debug(
+                f"StripEquivalentNodes[Iter-{iter_num}]-Replaced equivalent node types are {replaced_nodes_type}"
+            )
         logger.warning("All replaced equivalent node types are {}". \
             format(all_replaced_nodes_type))
         return self.model

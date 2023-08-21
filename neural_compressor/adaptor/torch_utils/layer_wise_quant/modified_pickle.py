@@ -124,7 +124,7 @@ except ImportError:
 # Pickle opcodes.  See pickletools.py for extensive docs.  The listing
 # here is in kind-of alphabetical order of 1-character pickle code.
 # pickletools groups them by purpose.
-
+# fmt: off
 MARK           = b'('   # push special markobject on stack
 STOP           = b'.'   # every pickle ends with STOP
 POP            = b'0'   # discard topmost stack item
@@ -210,7 +210,7 @@ FRAME            = b'\x95'  # indicate the beginning of a new frame
 BYTEARRAY8       = b'\x96'  # push bytearray
 NEXT_BUFFER      = b'\x97'  # push next out-of-band buffer
 READONLY_BUFFER  = b'\x98'  # make top of stack readonly
-
+# fmt: on
 __all__.extend([x for x in dir() if re.match("[A-Z][A-Z0-9_]+$", x)])
 
 
