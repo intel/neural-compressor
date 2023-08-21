@@ -162,6 +162,12 @@ class PytorchPatternNxM(PytorchBasePattern):
             else:
                 data = data.permute(0, 2, 3, 1)  # cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
+        if len(data.shape) == 3:
+            if isinstance(data, np.ndarray):
+                data = np.transpose(data, (0, 2, 1))
+            else:
+                data = data.permute(0, 2, 1)  # cout,k,cin
+            data = data.reshape(data.shape[0], -1)
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
@@ -181,6 +187,12 @@ class PytorchPatternNxM(PytorchBasePattern):
                 data = np.transpose(data, (0, 3, 1, 2))
             else:
                 data = data.permute(0, 3, 1, 2)
+        if len(orig_shape) == 3:
+            data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
+            if isinstance(data, np.ndarray):
+                data = np.transpose(data, (0, 2, 1))
+            else:
+                data = data.permute(0, 2, 1)
         return data
 
     def reshape_orig_to_pattern(self, data, key):
@@ -296,7 +308,6 @@ class PytorchPatternNxM(PytorchBasePattern):
                 1 means unpruned and 0 means pruned.
         """
         # keep the masks if the layer exceed max sparsity ratio
-
         masks = pre_masks
         k_blockwise = self.update_residual_cnt(masks, cur_target_sparsity_ratio)
         if k_blockwise <= 0:
@@ -349,7 +360,7 @@ class PytorchPatternNxM(PytorchBasePattern):
             if key in self.invalid_layers:
                 continue
             orig_shape = self.modules[key].weight.shape
-            if len(orig_shape) == 4:  # need to permute
+            if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
                 mask = masks[key]
                 # orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
@@ -756,7 +767,6 @@ class KerasPatternNxM(KerasBasePattern):
             A dict with the identical size as pre_masks and its 0/1 values are updated.
                 1 means unpruned and 0 means pruned.
         """
-
         masks = pre_masks
         k_blockwise = self.update_residual_cnt(masks, cur_target_sparsity_ratio)
         if k_blockwise <= 0:
@@ -806,7 +816,7 @@ class KerasPatternNxM(KerasBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            if len(scores[key].shape) == 4:  # need to permute
+            if len(scores[key].shape) == 4 or len(score[key].shape) == 3:  # need to permute
                 mask = masks[key]
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
