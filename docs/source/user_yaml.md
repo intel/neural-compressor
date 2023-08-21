@@ -118,7 +118,7 @@ space. Similar to pruning, to define the training behavior, users can use the
 subsection *train* to specify the training hyper-parameters and the training 
 dataloader and it is optional if users implement *train_func* and set the attribute
 of distillation instance to *train_func*. For criterion, Intel® Neural Compressor provides a built-in 
-knowledge distillation loss class to calculate distillation loss.
+knowledge distillation loss class to calculate distillation loss.  
 ```yaml
 distillation:
   train:
@@ -141,7 +141,7 @@ distillation:
         loss_weights: [0.5, 0.5]
 ```
 * ***evaluation***: The evaluation specifications define the dataloader and metric for accuracy evaluation as well as dataloader 
-and configurations for performance benchmarking. 
+and configurations for performance benchmarking.  
 ```yaml
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   accuracy:                                          
@@ -153,7 +153,7 @@ evaluation:                                          # optional. required if use
 * ***tuning***: The tuning specifications define overall tuning targets. Users can
 use *accuracy_criterion* to specify the target of accuracy loss percentage and use
 *exit_policy* to specify the tuning timeout in seconds. The random
-seed can be specified using *random_seed*. 
+seed can be specified using *random_seed*.  
 
 ```yaml
 tuning:

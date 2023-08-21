@@ -33,16 +33,17 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 
     end
 ```
-❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. <br>
-❷ Utilizes adaptor.query_fw_capability to query the framework's capabilities. <br>
-❸ Parse the framework YAML and get quantization capability. <br>
-❹ Send the capability including 'opwise' and 'optypewise' ability to Strategy. <br>
-❺ Build the tuning space in Strategy. <br>
-❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process. <br>
-❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.<br>
+❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml.  
+❷ Utilizes adaptor.query_fw_capability to query the framework's capabilities.  
+❸ Parse the framework YAML and get quantization capability.  
+❹ Send the capability including 'opwise' and 'optypewise' ability to Strategy.  
+❺ Build the tuning space in Strategy.  
+❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.  
+❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.  
 
 ## API List that Need to Implement
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
+
 | API | Parameters |Output   |Usage   | Comments|
 | :------ | :------|:------ |:------ | :------ |
 | query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format: <br> {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]},<br> 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |

@@ -39,8 +39,8 @@ Where $D$ is a distance measurement as before, $F_t^{n_i}$ the output feature of
 
 ### Self Distillation
 
-Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.
-The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.
+Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.  
+The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.  
 <br>
 
 <img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350>

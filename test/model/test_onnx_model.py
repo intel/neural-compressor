@@ -11,10 +11,16 @@ from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor import quantization, PostTrainingQuantConfig
 
+
 def get_onnx_model():
+    import torch
+    import torchvision
+    from torch.autograd import Variable
+
     model = torchvision.models.resnet18()
     x = Variable(torch.randn(1, 3, 224, 224))
     torch_out = torch.onnx.export(model, x, "resnet18.onnx", export_params=True, verbose=True)
+
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''
@@ -22,38 +28,38 @@ def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''
     tensor = np.random.ranf(tensor_shape).astype(tensor_dtype)
     init = numpy_helper.from_array(tensor, input_name)
-    return init  
+    return init
 
 class TestOnnxModel(unittest.TestCase):
     def setUp(self):
-        #   Relu      
-        #    |      \ 
+        #   Relu
+        #    |      \
         #   Conv     \
-        #    |        \ 
-        #   Relu       |  
-        #    |       Conv  
-        #   Conv      / 
-        #      \     /  
+        #    |        \
+        #   Relu       |
+        #    |       Conv
+        #   Conv      /
+        #      \     /
         #         |
         #        Add
-    
+
         input0 = helper.make_tensor_value_info('input0', TensorProto.FLOAT, [1, 3, 1, 3])
         output = helper.make_tensor_value_info('output', TensorProto.FLOAT, [1, 3, 1, 3])
-        
+
         X1_weight = generate_input_initializer([3, 3, 1, 1], np.float32, 'X1_weight')
         X1_bias = generate_input_initializer([3], np.float32, 'X1_bias')
         X3_weight = generate_input_initializer([3, 3, 1, 1], np.float32, 'X3_weight')
         X3_bias = generate_input_initializer([3],np.float32, 'X3_bias')
         X5_weight = generate_input_initializer([3, 3, 1, 1], np.float32, 'X5_weight')
         X5_bias = generate_input_initializer([3],np.float32,'X5_bias')
-       
+
         relu_node_1 = onnx.helper.make_node('Relu', ['input0'], ['X1'], name='Relu1')
         conv_node_1 = onnx.helper.make_node('Conv', ['X1', 'X1_weight', 'X1_bias'], ['X2'], name='Conv1')
         relu_node_2 = onnx.helper.make_node('Relu', ['X2'], ['X3'], name= 'Relu2')
         conv_node_2 = onnx.helper.make_node('Conv', ['X3', 'X3_weight', 'X3_bias'], ['X4'], name='Conv2')
         conv_node_3 = onnx.helper.make_node('Conv', ['X1', 'X5_weight', 'X5_bias'], ['X5'], name='Conv3')
         add_node = onnx.helper.make_node('Add', ['X4', 'X5'], ['output'], name='Add')
-      
+
         graph = helper.make_graph([relu_node_1, conv_node_1, relu_node_2, conv_node_2, conv_node_3, add_node], 'test_graph_6', [input0], [output])
         graph.initializer.add().CopyFrom(X1_weight)
         graph.initializer.add().CopyFrom(X1_bias)
@@ -194,7 +200,7 @@ class TestOnnxModel(unittest.TestCase):
         inits = ['X1_weight', 'X1_bias', 'X3_weight', 'X3_bias', 'X5_weight', 'X5_bias']
         for init in inits:
             self.assertTrue(init in inits_name)
-        
+
 
     def test_remove_node(self):
         for node in self.model.nodes():
@@ -275,7 +281,7 @@ class TestOnnxModel(unittest.TestCase):
         opts = ['X1', 'X2', 'X3', 'X4', 'X5', 'output']
         for opt in opts:
             self.assertTrue(opt in opts_name)
-        
+
     def test_get_siblings(self):
         for node in self.model.nodes():
             if node.name == "Conv1":
@@ -285,7 +291,7 @@ class TestOnnxModel(unittest.TestCase):
         names = ["Conv3"]
         for name in names:
             self.assertTrue(name in siblings_name)
-    
+
     def test_get_children(self):
         for node in self.model.nodes():
             if node.name == "Relu1":
@@ -359,7 +365,7 @@ class TestOnnxModel(unittest.TestCase):
         self.assertIsNotNone(initializer)
         initializer = find_by_name('X1', self.model.initializer())
         self.assertIsNone(initializer)
-    
+
     def test_remove_unused_nodes(self):
         self.assertEqual(len(self.model.nodes()), 6)
         node_to_add = onnx.helper.make_node('Relu', ['output1'], ['output2'], keepdims=0, name='added_relu')
@@ -367,7 +373,7 @@ class TestOnnxModel(unittest.TestCase):
         self.assertEqual(len(self.model.nodes()), 7)
         self.model.remove_unused_nodes()
         self.assertEqual(len(self.model.nodes()), 6)
-        
+
 
 
 if __name__ == "__main__":

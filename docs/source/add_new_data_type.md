@@ -136,12 +136,12 @@ from neural_compressor.config import PostTrainingQuantConfig
 op_type_dict = {
     'Conv2d': {
         'weight': {
-            'dtype': ['int4']
+            'dtype': ['int4'],
         },
         'activation': {
-            'dtype': ['uint4']
-        }
-    }
+            'dtype': ['uint4'],
+        },
+    },
 }
 conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
 ...

@@ -25,7 +25,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 ## Validated Quantization Examples
 
-System summary: Test by Intel on 06/19/2023. 1-node, 1x Intel(R) Xeon(R) Platinum 8480+ @3.8GHz, 56 cores/socket, HT On, Turbo On, Total Memory 256GB (16x16GB DDR5 4800 MT/s [4800 MT/s]), BIOS 3A14.TEL2P1, microcode 0x2b0001b0, 
+System summary: Test by Intel on 06/19/2023. 1-node, 1x Intel(R) Xeon(R) Platinum 8480+ @3.8GHz, 56 cores/socket, HT On, Turbo On, Total Memory 256GB (16x16GB DDR5 4800 MT/s [4800 MT/s]), BIOS 3A14.TEL2P1, microcode 0x2b0001b0,   
 CentOS Stream 8, gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-10), DL Models, Frameworks: TensorFlow/ONNXRT/PyTorch, Datatype: FP32/INT8/BF16.  
 Using 1 socket, 4 cores/instance, 14 instances and batch size 1 to benchmark most of the model.  
 Using 1 socket, 56 cores/instance, 1 instance and batch size 1 for some large models performance measurement.   

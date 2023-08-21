@@ -29,6 +29,6 @@ q_model = fit(
 ```
 
 ## Validated Models
-Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo). 
-Over 30 pruning, knowledge distillation and model export samples are also available. 
-More details for validated typical models are available [here](/examples/README.md).
+Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo).  
+Over 30 pruning, knowledge distillation and model export samples are also available.  
+More details for validated typical models are available [here](/examples/README.md).  
