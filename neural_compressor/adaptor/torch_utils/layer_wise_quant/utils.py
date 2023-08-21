@@ -30,6 +30,8 @@ from accelerate.utils import set_module_tensor_to_device
 from .torch_load import load
 from ..model_wrapper import QDQLayer
 
+from ..util import logger
+
 
 def get_module(model, key):
     """Get module from model by key name

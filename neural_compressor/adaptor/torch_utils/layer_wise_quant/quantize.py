@@ -16,14 +16,12 @@
 # limitations under the License.
 """Layer wise quantization."""
 import os
-import gc
-import time
 import shutil
 from copy import deepcopy
 from tqdm import tqdm
 from collections import UserDict
 
-from .utils import torch
+from .utils import torch, logger
 from ..model_wrapper import QDQLayer
 from torch.quantization import prepare, convert
 from accelerate.utils import set_module_tensor_to_device
@@ -108,20 +106,23 @@ class LayerWiseQuant:
         sq._check_need_calibration(self.alpha, percentile=99.999, op_types=['Linear', 'Conv2d'],
                                    scales_per_op=False, calib_iter=100)
         absorb_to_layer = sq._get_all_layer_names()
-        group_modules = sq._trace(op_types, skip_unsupported_layers=False)
-        for k, v in group_modules.items():
-            # use one input for qkv
-            for i in v:
-                if i in absorb_to_layer:
-                    absorb_to_layer.pop(i)
-                    absorb_to_layer[v[0]] = v
         assert absorb_to_layer is not None,  "if you are using huggingface model,"
         "you could set torchscript to True when loading the model or set the return_dict to False"
         self.absorb_layers = []
         self.scale_weight_layers = []
-        for k, v in absorb_to_layer.items():
-            self.absorb_layers.append(k)
-            self.scale_weight_layers += v
+        group_modules = sq._trace(op_types, skip_unsupported_layers=False)
+        if group_modules:
+            for k, v in group_modules.items():
+                # use one input for qkv
+                for i in v:
+                    if i in absorb_to_layer:
+                        absorb_to_layer.pop(i)
+                        absorb_to_layer[v[0]] = v
+            for k, v in absorb_to_layer.items():
+                self.absorb_layers.append(k)
+                self.scale_weight_layers += v
+        else:
+            logger.warning('Cannot trace the model, smooth quant may be not used.')
         self._remove_hooks(handles)
 
     def quantize(self, clean_weight=True):
