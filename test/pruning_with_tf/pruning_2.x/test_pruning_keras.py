@@ -1,19 +1,19 @@
 import unittest
 
-from neural_compressor.data import Datasets
-from neural_compressor import WeightPruningConfig
-from neural_compressor.training import prepare_compression
-from neural_compressor.data import DataLoader
-from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.conf.dotdict import DotDict
-from neural_compressor.utils import create_obj_from_config
-from neural_compressor.utils import logger
-from neural_compressor.conf.config import default_workspace
-
 class TestPruning(unittest.TestCase):
 
     def test_pruning_keras(self):
         import tensorflow as tf
+        from neural_compressor.data import Datasets
+        from neural_compressor import WeightPruningConfig
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.data import DataLoader
+        from neural_compressor.adaptor import FRAMEWORKS
+        from neural_compressor.conf.dotdict import DotDict
+        from neural_compressor.utils import create_obj_from_config
+        from neural_compressor.utils import logger
+        from neural_compressor.conf.config import default_workspace
+
         model = tf.keras.applications.ResNet50V2(weights='imagenet')
         def train(model, adaptor, compression_manager, train_dataloader):
             train_cfg = {
@@ -65,6 +65,7 @@ class TestPruning(unittest.TestCase):
         stats, sparsity = model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
+        self.assertGreater(sparsity, 6)
 
 
 if __name__ == "__main__":
