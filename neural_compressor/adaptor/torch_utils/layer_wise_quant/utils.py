@@ -92,11 +92,12 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         if os.path.exists(ref_path):
             with open(ref_path) as f:
                 commit_hash = f.read()
-    pointer_path = os.path.join(
-        storage_folder, "snapshots", commit_hash
-    )
-    if os.path.isdir(pointer_path):
-        return pointer_path
+    if storage_folder and commit_hash:
+        pointer_path = os.path.join(
+            storage_folder, "snapshots", commit_hash
+        )
+        if os.path.isdir(pointer_path):
+            return pointer_path
     else:  # pragma: no cover
         from huggingface_hub import snapshot_download
         file_path = snapshot_download(repo_id)

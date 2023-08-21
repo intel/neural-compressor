@@ -156,7 +156,6 @@ class LayerWiseQuant:
                 try:
                     pbar = tqdm(enumerate(calib_data), total=len(calib_data), desc='layer_wise quant')
                     for idx, input in pbar:
-                        pbar.set_description(f'iter {idx}')
                         forward_wrapper(self.q_model, input, self.device)
                 except Exception:  # pragma: no cover
                     pbar = tqdm(enumerate(calib_data), total=len(calib_data), desc='layer_wise quant')
