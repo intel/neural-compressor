@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: LayerWiseQuant(q_model, pretrained_model_name_or_path, op_cfgs, output_dir=None, device='cpu')
+.. py:class:: LayerWiseQuant(q_model, pretrained_model_name_or_path, op_cfgs, calib_data, smooth_quant=False, output_dir=None, device='cpu', alpha=0.5)
 
 
    Layer wise quantization.
