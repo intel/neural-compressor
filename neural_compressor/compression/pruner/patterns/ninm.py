@@ -235,7 +235,7 @@ class PytorchPatternNInM(PytorchBasePattern):
         score_sum = self.reduce_tensor(current_score_new, dim=-1)
         return score_sum
 
-    def reduce_scores(self, scores):
+    def reduce_scores(self, scores):  # pragma: no cover
         """Calculate the pruning scores after reducing the data and obtain the least N scores in M.
 
         Args:
