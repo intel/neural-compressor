@@ -12,7 +12,7 @@ from neural_compressor.experimental import Quantization, Benchmark, common
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2, version1_gte_version2
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 def build_fake_yaml(fake_yaml, save_path, **kwargs):
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)

@@ -11,7 +11,7 @@ from neural_compressor import set_random_seed
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 class TestItexNewAPI(unittest.TestCase):
     @classmethod

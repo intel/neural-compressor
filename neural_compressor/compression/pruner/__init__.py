@@ -54,7 +54,7 @@ def _register_on_step_begin(model):
 #     hook_handle = model.register_backward_hook(hook)
 #     return hook_handle
     
-def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
+def _rewrite_optimizer_step(opt):
     """Mount on_before/after_optimizer_step to optimizer.
 
     :param opt: user optimizer: should be a torch.optim.Optimizer object
@@ -74,10 +74,14 @@ def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
             for pruning in self.prunings:
                 pruning.on_after_optimizer_step()
         return res
-
+    
+    if not isinstance(opt, torch.optim.Optimizer):
+        logger.error("User optimizer should be a torch.optim.Optimizer object")
+        
     opt.orig_step = opt.step
     import types
     opt.step = types.MethodType(new_step, opt)
+        
     return opt
 
 def save(
@@ -230,3 +234,4 @@ def prepare_pruning(config, model, optimizer=None, dataloader=None,
     return pruning_list[0]
     
     
+

@@ -6,7 +6,7 @@ from neural_compressor.data.dataloaders.dataloader import DataLoader
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.utils.utility import set_random_seed
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 
 class TestItexSmoothQuantTF(unittest.TestCase):

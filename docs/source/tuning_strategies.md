@@ -44,7 +44,7 @@ Tuning Strategies
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several tuning strategies, including `auto`, `O0`, `O1`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the [`quant_level="auto"`](./tuning_strategies.md#auto) is used for tuning.
 
 ## Strategy Design
 Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
@@ -54,10 +54,12 @@ below:
 
 ### Tuning Space
 
-Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the [`framework capability`](./framework_yaml.md) to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_dict` and `op_type_dict` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
+
+> Note: Any options in the `op_name_dict` and `op_type_dict` that are not included in the [`framework capability`](./framework_yaml.md) will be ignored by the strategy.
 
 ### Exit Policy
 User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
@@ -176,6 +178,9 @@ flowchart TD
 > `Opt` stands for optional which mean this stage can be skipped.
 
 > `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
+
+> For [smooth quantization](./smooth_quant.md), users can tune the smooth quantization alpha by providing a list of scalars for the `alpha` item. The tuning process will take place at the **start stage** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.md#Example).
+
 
 **1.** Default quantization
 
