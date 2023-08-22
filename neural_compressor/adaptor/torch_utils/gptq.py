@@ -26,8 +26,34 @@ from tqdm import tqdm
 from functools import partial
 from ...utils import logger
 import random
+from collections import UserDict, defaultdict
 
 DEBUG = False 
+
+# ================ device related ===================
+def move_input_to_device(input, device=torch.device('cpu')):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        for inp in input.keys():
+            input[inp] = input[inp].to(device) \
+                if isinstance(input[inp], torch.Tensor) else input[inp]
+    elif isinstance(input, list) or isinstance(input, tuple):
+        input_res, prev_size = [], None
+        for inp in input:
+            if prev_size:
+                if isinstance(inp, torch.Tensor):
+                    if inp.size() == prev_size:
+                        input_res.append(inp.to(device))
+                else:
+                    if torch.tensor(inp).size == prev_size:
+                        input_res.append(inp)
+            else:
+                input_res.append(inp.to(device) \
+                    if isinstance(inp, torch.Tensor) else inp)
+            prev_size = torch.tensor(inp).size()
+        input = input_res
+    else:
+        input = input.to(device)  # pylint: disable=no-member
+    return input
 
 # ==============model structure related==============
 def is_leaf(module):
@@ -232,15 +258,48 @@ class GPTQuantizer(object):
         self.dataloader.clear()
         random.seed(seed)
         for batch in self.dataloader_original:
+            # process data, depends on its data type.
             if len(self.dataloader) == self.nsamples:
                 break
-            if batch[0].shape[-1] > self.model.seqlen:
-                i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
-                j = i + self.model.seqlen
-                batch_final = batch[0][:, i:j]
+            # list & tuple
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] > self.model.seqlen:
+                    i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    batch_final = batch[0][:, i:j]
+                else:
+                    batch_final = batch[0]
+                self.dataloader.append(batch_final)
+            # dict
+            elif isinstance(batch, dict): # pragma: no cover
+                try:
+                    length = batch['input_ids'].shape[-1]
+                except:
+                    logger("Please make sure your dict'like data contains key of 'input_ids'.")
+                    continue
+                batch_final = {}
+                if length > self.model.seqlen:
+                    i = random.randint(0, length - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    # may have to slice every sequence related data
+                    for key in batch.keys():
+                        if isinstance(batch[key], torch.Tensor):
+                            batch_final[key] = batch[key][:, i:j] # slice on sequence length dim
+                        else:
+                            batch_final[key] = batch[key]
+                else:
+                    batch_final = batch
+                self.dataloader.append(batch_final)
+            # tensor
             else:
-                batch_final = batch[0]
-            self.dataloader.append(batch_final)
+                if batch.shape[-1] > self.model.seqlen:
+                    i = random.randint(0, batch.shape[-1] - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    batch_final = batch[:, i:j]
+                else:
+                    batch_final = batch
+                self.dataloader.append(batch_final)
+
         if len(self.dataloader) < self.nsamples:
             logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
     
@@ -251,15 +310,48 @@ class GPTQuantizer(object):
         for batch in self.dataloader_original:
             if len(self.dataloader) == self.nsamples:
                 break
-            if batch[0].shape[-1] == unified_length:
-                inp = batch[0]
-            elif batch[0].shape[-1] > unified_length:
-                i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
-                j = i + unified_length
-                inp = batch[0][:, i:j]
+            # list & tuple
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] == unified_length:
+                    batch_final = batch[0]
+                elif batch[0].shape[-1] > unified_length:
+                    i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    batch_final = batch[0][:, i:j]
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+                self.dataloader.append(batch_final)
+            # dict
+            elif isinstance(batch, dict):
+                try:
+                    length = batch['input_ids'].shape[-1]
+                except:
+                    logger("Please make sure your dict'like data contains key of 'input_ids'.")
+                    continue
+                batch_final = {}
+                if length > self.model.seqlen:
+                    i = random.randint(0, length - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    # may have to slice every sequence related data
+                    for key in batch.keys():
+                        if isinstance(batch[key], torch.Tensor):
+                            batch_final[key] = batch[key][:, i:j] # slice on sequence length dim
+                        else:
+                            batch_final[key] = batch[key]
+                elif length == self.model.seqlen:
+                    batch_final = batch
+                self.dataloader.append(batch_final)
+            # tensor
             else:
-                continue
-            self.dataloader.append(inp)
+                if batch.shape[-1] > self.model.seqlen:
+                    i = random.randint(0, batch.shape[-1] - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    batch_final = batch[:, i:j]
+                else:
+                    batch_final = batch
+                self.dataloader.append(batch_final)
+
         if len(self.dataloader) < self.nsamples: # pragma: no cover
             logger.warning(f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
             but only {len(self.dataloader)} samples satisfy your setting. You may choose smaller 'model.seqlen' value.")
@@ -289,11 +381,18 @@ class GPTQuantizer(object):
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in self.dataloader:
+            batch = move_input_to_device(batch, self.device)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
-                    self.model(batch[0].to(self.device))
+                    self.model(batch[0])
+                elif isinstance(batch, dict):
+                    self.model(**batch)
                 else:
                     self.model(batch.to(self.device))
+                # if isinstance(batch, tuple) or isinstance(batch, list):
+                #     self.model(batch[0].to(self.device))
+                # else:
+                #     self.model(batch.to(self.device))
             except ValueError:
                 break
 
@@ -388,11 +487,18 @@ class GPTQuantizer(object):
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
+            batch = move_input_to_device(batch, self.device)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
-                    self.model(batch[0].to(self.device))
+                    self.model(batch[0])
+                elif isinstance(batch, dict):
+                    self.model(**batch)
                 else:
-                    self.model(batch.to(self.device))
+                    self.model(batch)
+                # if isinstance(batch, tuple) or isinstance(batch, list):
+                #     self.model(batch[0].to(self.device))
+                # else:
+                #     self.model(batch.to(self.device))
             except ValueError:
                 pass
         # output inp data shape
