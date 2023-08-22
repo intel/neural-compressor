@@ -1,3 +1,7 @@
+ci:
+  autofix_prs: true
+  autoupdate_schedule: quarterly
+
 exclude: |
   (?x)^(
       conda_meta/.+|
@@ -9,6 +13,7 @@ exclude: |
       neural_coder/examples/.+|
       examples/.+
   )$
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -83,7 +88,7 @@ repos:
         files: (.*\.py)$
 
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.15.0
+    rev: 1.16.0
     hooks:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
