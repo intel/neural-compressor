@@ -11,7 +11,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.adaptor.tf_utils.util import disable_random
 

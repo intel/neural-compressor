@@ -18,8 +18,8 @@
 
 import os
 import numpy as np
-from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
+from tensorflow.compat.v1 import graph_util
 
 try:
     import tensorflow.compat.v1 as tf_v1

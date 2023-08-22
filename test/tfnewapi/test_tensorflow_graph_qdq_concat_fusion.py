@@ -10,7 +10,7 @@ from neural_compressor.adaptor.tf_utils.util import read_graph
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 
 def build_fake_yaml():

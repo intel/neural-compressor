@@ -6,10 +6,12 @@ import torch
 import sys
 import math
 import transformers
+from packaging.version import Version
 
 sys.path.append('./')
 
-from neural_compressor.data import Datasets, DATALOADERS
+from neural_compressor.data import Datasets
+from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
@@ -652,8 +654,10 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 out = self.fc2(out)
                 return out
 
-        input_ids = torch.randn([2, 3])
+        input_ids = torch.randn([3, 3])
         fp32_model = Model()
+        output1 = fp32_model(input_ids)
+        
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
@@ -672,9 +676,12 @@ class TestSqLinearOpFuse(unittest.TestCase):
             fp32_model,
             conf,
             calib_dataloader=CalibDataloader(),
-            eval_func=lambda x: 0.1,
         )
+        output2 = q_model.model(input_ids)
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
+        # set a big atol to avoid random issue
+        print(output1, output2)
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
         q_model.save('saved_result')
         from neural_compressor.utils.pytorch import load
@@ -686,7 +693,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             calibration_sampling_size=8,
             recipes={"smooth_quant": True, 
-                     "smooth_quant_args": {'alpha': 'auto'}}
+                     "smooth_quant_args": {'alpha': 'auto', 'folding': True}}
         )#  By default, folding args: {IPEX: False, ONNX RT: False, Stock PT: True}
         q_model = quantization.fit(
             fp32_model,
@@ -729,41 +736,93 @@ class TestSqLinearOpFuse(unittest.TestCase):
         fp32_model = Model()
         output1 = fp32_model(input_ids)
 
-        from neural_compressor import PostTrainingQuantConfig, quantization
+        def calib_func(model):
+            model(input_ids)
+
+        ipex_version = Version(ipex.__version__.split('+')[0])
+        # pure ipex quantization
+        if ipex_version >= Version('2.1.0'):
+            qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+            from intel_extension_for_pytorch.quantization import prepare, convert
+            user_model = copy.deepcopy(fp32_model)
+            user_model = prepare(user_model.eval(), qconfig, example_inputs=input_ids, inplace=True)
+            calib_func(user_model)
+            user_model.save_qconf_summary(qconf_summary='ipex.json')
+            import json
+            with open('ipex.json', 'r') as f:
+                ipex_config_json = json.load(f)
+            with torch.no_grad():
+                user_model = convert(user_model.eval(), inplace=True).eval()
+                user_model(input_ids)
+                user_model = torch.jit.trace(user_model.eval(), input_ids, strict=False)
+                user_model = torch.jit.freeze(user_model.eval())
+                user_model(input_ids)
+                user_model(input_ids)
+            ipex_out = user_model(input_ids)
+            # inc quantization
+            conf = PostTrainingQuantConfig(
+                backend="ipex",
+                calibration_sampling_size=8,
+                excluded_precisions=['bf16'],
+                example_inputs=(input_ids,),
+                recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5}}
+            )
+            tmp_model = copy.deepcopy(fp32_model)
+            q_model = quantization.fit(
+                tmp_model,
+                conf,
+                calib_func=calib_func,
+            )
+            q_model.save('saved')
+            # compare ipex and inc quantization
+            with open('saved/best_configure.json', 'r') as f:
+                inc_config_json = json.load(f)
+            inc_out = q_model.model(input_ids)
+            ipex_sq_weight_scale = torch.tensor(ipex_config_json[' ']['q_op_infos']['0']\
+                            ['weight_tensor_infos'][0]['smooth_quant_scaling_factor'])
+            inc_sq_weight_scale = torch.tensor(inc_config_json[' ']['q_op_infos']['0']\
+                            ['weight_tensor_infos'][0]['smooth_quant_scaling_factor'])
+            self.assertTrue(torch.allclose(inc_sq_weight_scale, ipex_sq_weight_scale))
+            # set a big atol to avoid random issue
+            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
+            self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
+
+        class CalibDataloader:
+            def __init__(self):
+                self.batch_size = 1
+            def __iter__(self):
+                yield input_ids
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
             excluded_precisions=['bf16'],
-            example_inputs=(input_ids,),
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto'}}
         )
-        def calib_func(model):
-            model(input_ids)
-
+        tmp_model = copy.deepcopy(fp32_model)
         q_model = quantization.fit(
-            fp32_model,
+            tmp_model,
             conf,
-            calib_func=calib_func,
+            calib_dataloader=CalibDataloader(),
         )
+        output2 = q_model.model(input_ids)
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
-        fp32_model = Model()
         conf = PostTrainingQuantConfig(
             backend="ipex",
             calibration_sampling_size=8,
             excluded_precisions=['bf16'],
             recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': 0.5, 'folding': True}}
         )
-        class CalibDataloader:
-            def __init__(self):
-                self.batch_size = 1
-            def __iter__(self):
-                yield input_ids
+        tmp_model = copy.deepcopy(fp32_model)
         q_model = quantization.fit(
-            fp32_model,
+            tmp_model,
             conf,
             calib_dataloader=CalibDataloader(),
         )
         output2 = q_model.model(input_ids)
+        # set a big atol to avoid random issue
+        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
 
 
 class TestSqSkipOp(unittest.TestCase):
@@ -923,7 +982,7 @@ class TestTuneSqAlpha(unittest.TestCase):
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=5)
 
-        for folding in [False]:
+        for folding in [False, True]:
             for fp32_model, dataloader in [
                 (DemoModel(), DemoCalibDataloader()), 
                 (
