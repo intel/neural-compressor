@@ -19,11 +19,11 @@
     name: '1.13.1'
   int8: &ref_1_13 {
     'static': &ref_1_13_static {
-      'Conv': {
-        'weight':   &int8_sym_perchanneltensor_minmax {
+      'Conv': &default_static_qlinear_qdq {
+        'weight':   &int8_sym_pertensor_minmax {
                     'dtype': ['int8'],
                     'scheme': ['sym'],
-                    'granularity': ['per_channel', 'per_tensor'],
+                    'granularity': ['per_tensor'],
                     'algorithm': ['minmax']
                     },
         'activation': &uint8_asym_pertensor_minmax {
@@ -34,23 +34,8 @@
                     },
         'mode': ['QDQ', 'QLinear']
       },
-      'Gather': {
-        'weight':   &uint8_asym_perchanneltensor_minmax {
-                    'dtype': ['uint8'],
-                    'scheme': ['asym'],
-                    'granularity': ['per_channel', 'per_tensor'],
-                    'algorithm': ['minmax']
-                    }, 
-        'activation': *uint8_asym_pertensor_minmax,
-        'mode': ['QDQ', 'QLinear']
-      },
       'MatMul': {
-        'weight':   &int8_sym_pertensor_minmax {
-                    'dtype': ['int8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
-                    }, 
+        'weight': *int8_sym_pertensor_minmax,
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
@@ -64,40 +49,11 @@
       'MaxPool': *default_static_qlinear_qdq,
       'Add': *default_static_qlinear,
     },
-    'dynamic': &ref_1_13_dynamic {
-      'Conv': {
-        'weight':   *uint8_asym_perchanneltensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'MatMul': &default_dynamic {
-        'weight': *int8_sym_pertensor_minmax,
-        'activation': *uint8_asym_pertensor_minmax
-      },
-      'Gather': *default_dynamic,
-    }
   }
-  fp16: &common_fp16 ['Abs', 'Acos', 'Acosh', 'Add', 'Affine', 'ArgMax', 'ArgMin', 'Asin',
-    'Asinh', 'Atan', 'Atanh', 'AveragePool', 'BatchNormalization', 'Ceil', 'Celu', 'Clip',
-    'Concat', 'ConstantOfShape', 'Conv', 'ConvTranspose', 'Cos', 'Cosh', 'Crop', 'CumSum',
-    'DepthToSpace', 'Div', 'Dropout', 'Einsum', 'Elu', 'Equal', 'Erf', 'Exp', 'Expand',
-    'EyeLike', 'Flatten', 'Floor', 'GRU', 'Gather', 'GatherElements', 'GatherND', 'Gemm',
-    'GlobalAveragePool', 'GlobalLpPool', 'GlobalMaxPool', 'Greater', 'GreaterOrEqual',
-    'HardSigmoid', 'Hardmax', 'Identity', 'ImageScaler', 'InstanceNormalization', 'IsNaN',
-    'LRN', 'LSTM', 'LeakyRelu', 'Less', 'LessOrEqual', 'Log', 'LogSoftmax', 'LpNormalization',
-    'LpPool', 'MatMul', 'Max', 'MaxPool', 'MaxRoiPool', 'MaxUnpool', 'Mean',
-    'MeanVarianceNormalization', 'MemcpyFromHost', 'MemcpyToHost', 'Min', 'Mod', 'Mul',
-    'Neg', 'OneHot', 'PRelu', 'Pad', 'ParametricSoftplus', 'Pow', 'RNN', 'Range', 'Reciprocal',
-    'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceMean',
-    'ReduceMin', 'ReduceProd', 'ReduceSum', 'ReduceSumSquare', 'Relu', 'Reshape', 'Resize',
-    'ReverseSequence', 'RoiAlign', 'Round', 'ScaledTanh', 'Scatter', 'ScatterElements',
-    'ScatterND', 'Selu', 'Shrink', 'Sigmoid', 'Sign', 'Sin', 'Sinh', 'Slice', 'Softmax',
-    'Softplus', 'Softsign', 'SpaceToDepth', 'Split', 'Sqrt', 'Squeeze', 'Sub', 'Sum',
-    'Tan', 'Tanh', 'ThresholdedRelu', 'Tile', 'TopK', 'Transpose', 'Trilu', 'Unsqueeze',
-    'Upsample', 'Where', 'Attention', 'BeamSearch', 'BiasDropout', 'BiasGelu', 'BiasSoftmax',
-    'BitmaskBiasDropout', 'BitmaskDropout', 'ComplexMul', 'ComplexMulConj', 'DecoderAttention',
-    'EmbedLayerNormalization', 'FastGelu', 'FusedMatMul', 'Gelu', 'GreedySearch', 'Inverse',
-    'Irfft', 'LongformerAttention', 'Rfft', 'SkipLayerNormalization', 'TransposeMatMul', 'Trilu']
-
+  fp16: &common_fp16 ['Add', 'GlobalAveragePool', 'AveragePool', 'SpaceToDepth', 'Sigmoid', 'Mul',
+    'Softmax', 'Gemm', 'MatMul', 'Conv', 'Concat', 'Upsample', 'Pow', 'Sqrt', 'DepthToSpace',
+    'Clip', 'BatchNormalization', 'Transpose', 'Softmax', 'AveragePool', 'Squeeze', 'MaxPool',
+    'Relu', 'Concat']
  
   recipes: &default_optimization
     graph_optimization:   # from onnxruntime graph_optimization_level
