@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import logging
 
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
