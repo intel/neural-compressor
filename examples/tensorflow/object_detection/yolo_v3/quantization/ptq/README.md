@@ -102,7 +102,7 @@ config = PostTrainingQuantConfig(
 
 ## 1. Quantization
 ```python
-bash run_tuning.sh --input_model=/path/to/yolov3_fp32.pb --output_model=/path/to/save/yolov3_int8.pb --dataset_location=/path/to/dataset
+bash run_quant.sh --input_model=/path/to/yolov3_fp32.pb --output_model=/path/to/save/yolov3_int8.pb --dataset_location=/path/to/dataset
 ```
 
 ## 2. Benchmark

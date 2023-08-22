@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
 from neural_compressor.experimental import Quantization
-from neural_compressor.data import DATALOADERS, Datasets
+from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
@@ -154,7 +154,7 @@ def main(args=None):
         else: 
             dataset = Datasets('tensorflow')['dummy_v2'](\
                 input_shape=[(256, 256, 3), (256, 256, 3)], label_shape=(1, ))
-        dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
+        dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size=FLAGS.batch_size)
         tf.import_graph_def(frozen_graph, name='')
         style_transfer(sess, dataloader)
 

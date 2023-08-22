@@ -1,4 +1,4 @@
-{% set version = "2.2" %}
+{% set version = "2.2.1" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-solution
@@ -18,7 +18,7 @@ requirements:
   run:
     - python
     - pip
-    - neural_compressor>=2.2
+    - neural-compressor>=2.2
     - pydantic
     - fastapi
     - uvicorn[standard]

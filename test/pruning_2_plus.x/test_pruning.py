@@ -9,7 +9,6 @@ sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from neural_compressor.experimental.compression import prepare_pruning
 
 
 class TestPruning(unittest.TestCase):
@@ -26,10 +25,11 @@ class TestPruning(unittest.TestCase):
             },
             {
                 "op_names": ['layer2.*'],
+                "pruning_type": "snip_momentum",
                 'target_sparsity': 0.5,
+                "pruning_scope": "local",
                 'pattern': '2:4'
             },
-
         ]
         config = WeightPruningConfig(
             local_configs,
@@ -43,8 +43,8 @@ class TestPruning(unittest.TestCase):
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-
-        model, optimizer = prepare_pruning(config, self.model, optimizer)
+        from neural_compressor.compression.pruner import prepare_pruning
+        pruning = prepare_pruning(config, self.model, optimizer)
 
         for epoch in range(4):
             self.model.train()
@@ -57,8 +57,9 @@ class TestPruning(unittest.TestCase):
                 optimizer.step()
                 local_step += 1
 
-        assert (model != None)
+        assert (self.model != None)
 
 
 if __name__ == "__main__":
     unittest.main()
+

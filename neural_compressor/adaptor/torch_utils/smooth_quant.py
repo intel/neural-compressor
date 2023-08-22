@@ -218,8 +218,10 @@ class TorchSmoothQuant:
             self.traced_model = self.model
         self.weight_scale_info = {}
         self.absorb_scales_info = {}
-        self.insert_mul = True
-        self.allow_absorb = False
+        self.insert_mul = False
+        self.allow_absorb = True
+        self.record_max_info = False
+        self.max_value_info = {} # to record max values for alpha tune
         self.self_absorb_layers = {}
         self.absorb_to_layer = {}
 
@@ -410,8 +412,7 @@ class TorchSmoothQuant:
         """
         layer = get_module(self.model, layer_name)
         if layer.__class__.__name__ == "SQLinearWrapper":
-            from .model_wrapper import SQLinearWrapper
-            layer = layer.sq_linear
+            return scale # weigth update is done in SQLinearWrapper initialization
         scale = self._reshape_scale_for_weight(layer, scale)
         layer.weight = torch.nn.Parameter(layer.weight * scale)
         return scale
@@ -429,6 +430,7 @@ class TorchSmoothQuant:
             from .model_wrapper import SQLinearWrapper
             layer = get_module(self.model, layer_name)
             if isinstance(layer, SQLinearWrapper):
+                layer._recover_sq_linear()
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
                 input_minmax = [self.input_mins[layer_name], self.input_maxes[layer_name]]
@@ -490,7 +492,7 @@ class TorchSmoothQuant:
                 if hasattr(layer, "bias") and layer.bias != None:
                     layer.bias *= scale
 
-    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5):
+    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
         """
         adjust the weights and biases
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
@@ -518,13 +520,20 @@ class TorchSmoothQuant:
                 weights.append(weight)
 
             weights = torch.cat(weights, dim=0)
-
             weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
+
+            if self.record_max_info and not tuning:
+                # the input of layers with same absorb layer is the same.
+                input_minmax = [self.input_mins[layers[0]], self.input_maxes[layers[0]]]
+                self.max_value_info[key] = {}
+                self.max_value_info[key]['alpha'] = alpha_key
+                self.max_value_info[key]['input_minmax'] = input_minmax
+                self.max_value_info[key]['weight_max'] = weight_max_per_channel
+                self.max_value_info[key]['absorbed_layer'] = layers
+                continue
+
             input_power = torch.pow(input_max, alpha_key)
-            logger.debug(f"{max(input_max)}, {min(input_max)}")
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha_key)
-            # logger.info(f"{absorb_to_layer[key][0]} layer sparsity is
-            # {1.0-torch.count_nonzero(input_power)/input_power.numel()}")
 
             scale = torch.clip(input_power / weight_power, min=1e-5)
             scale[input_power == 0] = 1.0
@@ -612,8 +621,9 @@ class TorchSmoothQuant:
                 input_max_op[layer_key] = input_maxes[layer_key_]
                 loss_alpha = {}
                 for alpha in alpha_space:
-                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(absorb_to_layer_sample,
-                                                                                              input_max_op, alpha)
+                    self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
+                        absorb_to_layer_sample, input_max_op, alpha, tuning=True
+                    )
                     input_of_op, output_of_op = self.input_values[layer_key], self.output_values[layer_key]
                     input_scale = self._reshape_scale_for_input(get_module(self.model, layer_key),
                                                                 self.absorb_scales_info[absorb_key])
@@ -622,9 +632,8 @@ class TorchSmoothQuant:
 
                     if layer.__class__.__name__ == "SQLinearWrapper":
                         layer = layer.sq_linear
-                    weight_qdq = quant_dequant_w(layer)
                     layer_cp = copy.deepcopy(layer)
-                    layer_cp.weight.data = weight_qdq
+                    layer_cp.weight.data = quant_dequant_w(layer_cp)
                     output_of_op_q = layer_cp(input_of_op_q)
                     self.recover()
                     loss = torch.sum(torch.abs(output_of_op - output_of_op_q) ** 2)
@@ -653,6 +662,7 @@ class TorchSmoothQuant:
                 if len(loss_all_layers) > 1:
                     ans_layer2absorb[absorb_key] = min_alpha
         logger.info("auto tuning alpha done")
+        logger.debug(ans_layer2absorb)
         return ans_layer2absorb
 
     def transform(self, alpha=0.5, folding=False, percentile=99.999, op_types=['Linear', 'Conv2d'],
@@ -694,6 +704,15 @@ class TorchSmoothQuant:
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
                     self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
+                    # fetch modules with the same input
+                    group_modules = self._trace(op_types, skip_unsupported_layers=False)
+                    for k, v in group_modules.items():
+                        # use one input for qkv
+                        for i in v:
+                            if i in self.self_absorb_layers:
+                                self.self_absorb_layers.pop(i)
+                        self.self_absorb_layers[v[0]] = v
+                    logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
@@ -735,6 +754,12 @@ class TorchSmoothQuant:
             example_inputs = self._get_example_input()
             if example_inputs != None:
                 out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
+
+            if self.record_max_info:
+                # max_info is recorded in self.max_value_info
+                self._adjust_parameters(self.absorb_to_layer, input_maxes, alpha)
+                self.model._smoothquant_optimized = False
+                return self.model
 
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer,
                                                                                       input_maxes, alpha)
@@ -795,6 +820,16 @@ class TorchSmoothQuant:
             for op_type in op_types:
                 if op_type == str(module.__class__.__name__):
                     self_absorb_layer[name] = [name]
+        # remove duplicate Linear if Linear is wrapped by Linear
+        key_list = list(self_absorb_layer.keys())
+        key_list.sort()
+        duplicate_list = []
+        for i, k1 in enumerate(key_list):
+            for k2 in key_list[i+1:]:
+                if k1 in k2:
+                    duplicate_list.append(k1)
+        for i in duplicate_list:
+            self_absorb_layer.pop(i)
         return self_absorb_layer
 
     def _get_example_input(self):
@@ -804,10 +839,11 @@ class TorchSmoothQuant:
             ##assert self.dataloader, "Please provide dataloader or example_inputs"
             for idx, input in enumerate(self.dataloader):
                 self.example_inputs = input
+                break
 
         return self.example_inputs
 
-    def _trace(self, op_types):
+    def _trace(self, op_types, skip_unsupported_layers=True):
         """
         Try the model to find the layers which can be smooth quantized.
         :param op_types: The op types to be smooth quantized
@@ -817,7 +853,12 @@ class TorchSmoothQuant:
         """
         tg = GraphTrace()
         self._get_example_input()
-        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(self.traced_model, self.example_inputs, op_types)
+        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
+            self.traced_model, self.example_inputs, op_types, 
+            skip_unsupported_layers=skip_unsupported_layers
+        )
+        if not skip_unsupported_layers:
+            return absorb_to_layer
         if absorb_to_layer == None and no_absorb_layers == None:
             logger.warning("sorry, could not trace the model, smooth quant is skipped")
             logger.warning("if you are using huggingface model,"
@@ -835,17 +876,15 @@ class TorchSmoothQuant:
         return absorb_to_layer, no_absorb_layers
 
 
-def get_parent(node):
-    if node.inputs() == None:
-        return None
-    return list(node.inputs())[0].node()
-
-def get_parents(node):
+def get_parent(node, all_parents=False):
     if node.inputs() == None:
         return None
     elif len(list(node.inputs())) == 0:
         return None
-    return list(node.inputs())
+    if not all_parents:
+        return list(node.inputs())[0].node()
+    else:
+        return list(node.inputs())
 
 
 class GraphTrace:
@@ -912,31 +951,50 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes, dict_parent_kind=None):
+    def get_prev_absorb_layer(self, nodes):
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
-            parent_scopeName = parent.scopeName()
             while 1:
                 if parent.kind() in self.skip_ops_to_find_absorb:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
-                    if dict_parent_kind:
-                        parent_out_kinds = set(dict_parent_kind[parent_scopeName])
-                        parent_out_kinds.discard('aten::size')
-                        if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
-                            prev_absorb_layer.append(parent)
-                        elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
-                            prev_absorb_layer.append(parent) ##TODO: check other scenarios
-                        else: # When parent to multiple ops, sq transformation could be wrong.
-                            prev_absorb_layer.append(None)
-                    else:
+
+                    parent_out_kinds = []
+                    for val_user in list(parent.outputs())[0].uses():
+                        next_node = val_user.user
+                        parent_out_kinds.append(next_node.kind())
+                    parent_out_kinds = set(parent_out_kinds)
+                    parent_out_kinds.discard('aten::size')
+
+                    if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
                         prev_absorb_layer.append(parent)
+                    elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        res = self.skip_op_absorb_helper(parent)
+                        prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                    else: # When parent to multiple ops, sq transformation could be wrong.
+                        prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
         return prev_absorb_layer
+
+
+    def skip_op_absorb_helper(self, parent_node):
+        for val_user in list(parent_node.outputs())[0].uses():
+            next_node = val_user.user
+            if next_node.kind() == 'aten::size':
+                continue
+            elif next_node.kind() in self.could_absorb_layers:
+                continue
+            elif next_node.kind() in self.skip_ops_to_find_absorb:
+                node_res = self.skip_op_absorb_helper(next_node)
+                if not node_res:
+                    return False
+            else:
+                return False
+        return True
 
     def mapping_torch_module_to_aten(self, op_types):
         res = []
@@ -948,26 +1006,15 @@ class GraphTrace:
         res = list(set(res))
         return res
 
-    def get_absorb_to_layer(self, model, example_input, op_types):
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
         traced_model = self.trace(model, example_input)
         if traced_model == None:
             return None, None
 
-        dict_parent_kind = defaultdict(list)
-        for node in traced_model.graph.nodes():
-            parents_list = get_parents(node)
-            node_kind, node_scopeName = node.kind(), node.scopeName()
-            if parents_list: #save input_kinds of all parent nodes
-                for parent_ in parents_list:
-                    parent = parent_.node()
-                    parent_kind = parent.kind()
-                    if 'prim' not in parent_kind and parent.scopeName() != node_scopeName:
-                        dict_parent_kind[parent.scopeName()].append(node_kind)
-
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, dict_parent_kind)
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
@@ -984,7 +1031,8 @@ class GraphTrace:
                 absorb_to_layer[absorb_name].append(layer_name)
             else:
                 absorb_to_layer[absorb_name] = [layer_name]
-        absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
+        if skip_unsupported_layers:
+            absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
         return absorb_to_layer, no_absorb_layers
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):

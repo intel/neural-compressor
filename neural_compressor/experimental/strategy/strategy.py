@@ -674,8 +674,10 @@ class TuneStrategy(object):
                 tune_cfg[op_name_type] = op_config
         tune_cfg['calib_sampling_size'] = op_tuning_cfg['calib_sampling_size']
         if self.calib_dataloader is not None:
-            tune_cfg['calib_iteration'] =  math.ceil(int(tune_cfg['calib_sampling_size']) / \
-                                                    self.calib_dataloader.batch_size)
+            # For the accelerate's DataLoaderShard, use total_batch_size instead of batch_size
+            bs = getattr(self.calib_dataloader, 'batch_size') or getattr(self.calib_dataloader, 'total_batch_size')
+            assert bs > 0, f"Calibration dataloader's batch size should be greater than one but got {bs}"
+            tune_cfg['calib_iteration'] =  math.ceil(int(tune_cfg['calib_sampling_size']) / bs)
         else:
             tune_cfg['calib_iteration'] = 1
         tune_cfg['advance'] = self.cfg.quantization.advance
@@ -704,8 +706,10 @@ class TuneStrategy(object):
         calib_sampling_size_lst = self.cfg.quantization.calibration.sampling_size
         calib_sampling_size_lst = [int(calib_sampling_size) for calib_sampling_size in calib_sampling_size_lst]
         if self.calib_dataloader:
-            self.calib_iter = [math.ceil(int(x) / self.calib_dataloader.batch_size) \
-                               for x in calib_sampling_size_lst]
+            # For the accelerate's DataLoaderShard, use total_batch_size instead of batch_size
+            bs = getattr(self.calib_dataloader, 'batch_size') or getattr(self.calib_dataloader, 'total_batch_size')
+            assert bs > 0, f"Calibration dataloader's batch size should be greater than one but got {bs}"
+            self.calib_iter = [math.ceil(int(x) / bs) for x in calib_sampling_size_lst]
         else:
             self.calib_iter = 1
         # create tuning space

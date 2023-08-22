@@ -64,6 +64,7 @@ class KerasAdaptor(Adaptor):
         self.approach = deep_get(self.framework_specific_info, 'approach', False)
         self.quantize_config = {'op_wise_config': {}}
         self.device = self.framework_specific_info['device']
+        self.backend = self.framework_specific_info['backend']
         #self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         #os.makedirs(self.work_dir, exist_ok=True)
@@ -85,6 +86,13 @@ class KerasAdaptor(Adaptor):
         self.optype_statistics = None
 
         self.conv_format = {}
+
+    def _check_itex(self):
+        try:
+            import intel_extension_for_tensorflow
+        except:
+            raise ImportError("The Intel® Extension for TensorFlow is not installed. "\
+                                "Please install it to run models on ITEX backend")
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
@@ -287,6 +295,9 @@ class KerasAdaptor(Adaptor):
         if self.bf16_ops and not self.quantize_config['op_wise_config']:
             converted_model = self.convert_bf16()
             return converted_model
+        
+        if self.backend == 'itex':
+            self._check_itex()
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)

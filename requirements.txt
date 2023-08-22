@@ -7,8 +7,8 @@ py-cpuinfo
 requests
 psutil
 Pillow
-pycocotools-windows; sys_platform != 'linux'
-pycocotools; sys_platform == 'linux'
-opencv-python
+pycocotools-windows; sys_platform == 'win32' and python_version <= '3.8'
+pycocotools; sys_platform != 'win32' or python_version > '3.8'
+opencv-python-headless
 prettytable
 deprecated >= 1.2.13

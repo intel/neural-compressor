@@ -506,6 +506,19 @@ def main():
                                                             early_stopping_threshold))
 
     eval_dataloader = trainer.get_eval_dataloader()
+    # transformer issue #1
+    # for transformers 4.31.0: accelerate dataloader
+    # *** ValueError: batch_size attribute should not be set 
+    # after DataLoaderShard is initialized
+    if eval_dataloader.batch_size is None:
+        def _build_inc_dataloader(dataloader):
+            class INCDataLoader:
+                __iter__ = dataloader.__iter__
+                def __init__(self) -> None:
+                    self.dataloader = dataloader
+                    self.batch_size = dataloader.total_batch_size
+            return INCDataLoader()
+        eval_dataloader = _build_inc_dataloader(eval_dataloader)
     batch_size = eval_dataloader.batch_size
 
     def eval_func(model):

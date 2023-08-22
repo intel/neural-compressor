@@ -74,14 +74,14 @@ def get_model_fwk_name(model):
         from importlib.util import find_spec
         try:
             so = ort.SessionOptions()
-            if sys.version_info < (3,10) and \
+            if sys.version_info < (3,11) and \
                 find_spec('onnxruntime_extensions'): # pragma: no cover
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
-                ort.InferenceSession(model, so, providers=['CPUExecutionProvider'])
+                ort.InferenceSession(model, so, providers=ort.get_available_providers())
             else:
-                ort.InferenceSession(model.SerializeToString(), so, providers=['CPUExecutionProvider'])
+                ort.InferenceSession(model.SerializeToString(), so, providers=ort.get_available_providers())
         except Exception as e:  # pragma: no cover
             if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
                 logger.warning('Please use model path instead of onnx model object to quantize')

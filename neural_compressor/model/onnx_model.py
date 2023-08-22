@@ -50,6 +50,11 @@ class ONNXModel(BaseModel):
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model object to quantize')
 
+        self._config = None
+        if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath('config.json').as_posix()):
+            from transformers import PretrainedConfig
+            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
+
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -139,11 +144,21 @@ class ONNXModel(BaseModel):
             from onnx.external_data_helper import convert_model_to_external_data, \
                 load_external_data_for_model
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
-            convert_model_to_external_data(self._model,
-                                           all_tensors_to_one_file=True,
-                                           location="int8_weights.pb",
-                                           convert_attribute=False)
-        onnx.save(self._model, root)
+            onnx.save_model(self._model,
+                            root,
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            location="int8_weights.pb",
+                            size_threshold=1024,
+                            convert_attribute=False)
+        else:
+            onnx.save(self._model, root)
+        
+        if self._config is not None:
+            model_type = '' if not hasattr(self._config, 'model_type') else getattr(self._config, 'model_type')
+            setattr(self._config.__class__, 'model_type', model_type)
+            output_config_file = Path(root).parent.joinpath('config.json').as_posix()
+            self._config.to_json_file(output_config_file, use_diff=False)
 
     def nodes(self):
         """Return model nodes."""
@@ -217,13 +232,14 @@ class ONNXModel(BaseModel):
         for initializer in init_to_remove:
             self.remove_initializer(initializer)
 
-    def set_initializer(self, tensor, array):
+    def set_initializer(self, tensor, array, raw=False):
         """Update initializer."""
         old_tensor = self.get_initializer(tensor)
         self.remove_initializer(old_tensor)
         dims = old_tensor.dims
         data_type = old_tensor.data_type
-        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist())
+        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist()) if not raw \
+                else onnx.helper.make_tensor(tensor, data_type, dims, array.tostring(), raw=raw)
         self.add_initializer(new_tensor)
     
     @property
@@ -330,32 +346,45 @@ class ONNXModel(BaseModel):
         if not tensor.endswith('_quantized'):
             logger.debug("Find {} in the quantized graph is not quantized.".format(tensor))
             return None, None
-        node = self._input_name_to_nodes[tensor][0]
-        parent = self._output_name_to_node[tensor] if tensor in self._output_name_to_node else None
-        direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad']
-        if parent is not None and parent.op_type in direct_int8:
-            fp32_tensor_name = \
-                parent.input[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        elif node.op_type in ['Gather']:
-            fp32_tensor_name = \
-                node.output[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        else:
-            fp32_tensor_name = \
-                tensor.replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        scale = fp32_tensor_name + '_scale'
-        scale_tensor = self.get_initializer(scale)
-        zo = fp32_tensor_name + '_zero_point'
-        zo_tensor = self.get_initializer(zo)
+        
+        def _searcher(tensor_name):
+            """Search scale and zero point tensor recursivly."""
+            node = self._input_name_to_nodes[tensor_name][0]
+            parent = self._output_name_to_node[tensor_name] if tensor_name in self._output_name_to_node else None
+            direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad', 'Split']
+            if parent is not None and parent.op_type in direct_int8:
+                fp32_tensor_name = \
+                    parent.input[0].replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+            elif node.op_type in ['Gather']: # pragma: no cover
+                fp32_tensor_name = \
+                    node.output[0].replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+            else:
+                fp32_tensor_name = \
+                    tensor_name.replace('_quantized', '')\
+                        .replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
+            scale = fp32_tensor_name + '_scale'
+            scale_tensor = self.get_initializer(scale)
+            zo = fp32_tensor_name + '_zero_point'
+            zo_tensor = self.get_initializer(zo)
 
+            if scale_tensor is None or zo_tensor is None:
+                if parent is not None:
+                    scale_tensor, zo_tensor = _searcher(parent.input[0])
+            return scale_tensor, zo_tensor
+        
+        node = self._input_name_to_nodes[tensor][0]
         #TODO check if scale_tensor and zero_point is needed
         # for bias of qlinearconv, scale and zero_point is not needed
         if (node.op_type == 'QLinearConv' and tensor == node.input[-1]) or \
             (node.op_type == 'QGemm' and tensor == node.input[-3]):
-            pass
+            return None, None
         else:
+            scale_tensor, zo_tensor = _searcher(tensor)
             assert scale_tensor, 'missing scale for tensor {}'.format(tensor)
             assert zo_tensor, 'missing zero point for tensor {}'.format(tensor)
-        return scale_tensor, zo_tensor
+            return scale_tensor, zo_tensor
 
     def save_model_to_file(self, output_path, use_external_data_format=False):
         """Save model to external data, which is needed for model size > 2GB."""
@@ -406,8 +435,8 @@ class ONNXModel(BaseModel):
                 if node.op_type not in black_optype:
                     ONNXModel.replace_node_output(node, old_output_name, new_output_name)
 
-    def remove_unused_constant(self):
-        """Remove unused constant."""
+    def remove_unused_nodes(self):
+        """Remove unused nodes."""
         unused_nodes = []
         nodes = self.nodes()
         for node in nodes:
@@ -420,6 +449,23 @@ class ONNXModel(BaseModel):
                 self.get_children(node)[0].output[0] not in self._input_name_to_nodes:
                 unused_nodes.append(node)
                 unused_nodes.extend(self.get_children(node))
+            else:
+                # remove the node if it does not serve as the input or output of any other nodes
+                unused = True
+                for output in node.output:
+                    if output in self._input_name_to_nodes or \
+                    output in self.output():
+                        unused = False
+                        break
+                for input in node.input:
+                    if self.get_initializer(input) is not None:
+                        continue
+                    elif input in self._output_name_to_node or \
+                    input in self.input():
+                        unused = False
+                        break
+                if unused:
+                    unused_nodes.append(node)
         self.remove_nodes(unused_nodes)
 
         ununsed_weights = []
@@ -616,7 +662,7 @@ class ONNXModel(BaseModel):
             self.remove_nodes(remove_nodes)
             self.add_initializers(inits)
             self.update()
-            self.remove_unused_constant()
+            self.remove_unused_nodes()
             self.topological_sort()
             self.save(save_path)
         else:
@@ -717,6 +763,27 @@ class ONNXModel(BaseModel):
 
         return None
 
+    def get_absorb_pairs(self, target_optype):
+        """Find absorbable nodes based on parent op_type and their own input status.
+
+        Args:
+            target_optype (list): target absorbable optype.
+
+        Returns:
+            absorb_pairs (dict): a dict of absorb pairs {parent: list of absorbable children}.
+        """
+        absorbable_optypes = ["LayerNormalization", "BatchNormalization", "InstanceNormalization", "Conv",
+                              "SimplifiedLayerNormalization", "MatMul", "Gemm", "Mul", "FusedConv"]
+        absorb_pairs = {}
+        for node in self.nodes():
+            if node.op_type in target_optype and self.get_initializer(node.input[1]) is not None:
+                parent = self.get_parent(node, 0)
+                if parent is None or parent.op_type not in absorbable_optypes or \
+                    self.get_initializer(parent.input[1]) is None:
+                    continue
+                absorb_pairs.setdefault(parent.name, []).append(node)
+        return absorb_pairs
+
     def match_parent_path(
         self,
         node,
@@ -762,3 +829,14 @@ class ONNXModel(BaseModel):
             current_node = matched_parent
 
         return matched_parents
+
+    def is_smoothquant_model(self):
+        """Check the model is smooth quantized or not.
+
+        Returns:
+            bool: the model is smooth quantized or not.
+        """
+        for init in self.model.graph.initializer:
+            if "_smooth_scale" in init.name:
+                return True
+        return False

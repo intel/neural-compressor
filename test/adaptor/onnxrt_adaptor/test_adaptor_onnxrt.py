@@ -770,6 +770,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("benchmark.yaml")
         os.remove("gather.yaml")
         os.remove("rename.yaml")
+        os.remove("rename_model.onnx")
         os.remove("rn50_9.onnx")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
@@ -1007,6 +1008,20 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
+        conf.model.framework = 'onnxrt_integerops'
+        conf.quantization.approach = 'post_training_dynamic_quant'
+        conf.quantization.calibration.sampling_size = 1
+        conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.rename_dataloader
+        quantizer.eval_dataloader = self.rename_dataloader
+        onnx.save(self.rename_model, 'rename_model.onnx')
+        quantizer.model = 'rename_model.onnx'
+        # force set the model to large model
+        quantizer.model._is_large_model = True
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
         quantizer = Quantization("dynamic.yaml")
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.eval_dataloader = self.cv_dataloader
@@ -1216,6 +1231,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
 
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_cuda_ep', device='gpu', quant_level=1)
+        q_model = quantization.fit(self.distilbert_model, config, 
+            calib_dataloader=DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english"),
+            eval_func=eval)
+        self.assertTrue('QLinearMatMul' in [i.op_type for i in q_model.nodes()])
+
         config = PostTrainingQuantConfig(approach='static', recipes={'optypes_to_exclude_output_quant': ['MatMul']})
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
@@ -1261,7 +1282,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         adaptor.pre_optimized_model = ONNXModel(self.conv_model)
-        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        # tune_cfg was removed, not need to set it to None
+        # adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, None, scales_per_op=False)
+        adaptor.smooth_quant(self.conv_model, self.cv_dataloader, 1, scales_per_op=False)
         self.assertEqual(len([i for i in adaptor.pre_optimized_model.nodes() if i.op_type == 'Mul']), 1)
  
     def test_multi_metrics(self):

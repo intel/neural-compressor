@@ -1,6 +1,11 @@
 #!/bin/bash
 
 set -x
+
+# Set environment
+CUBLAS_WORKSPACE_CONFIG=':4096:8'
+
+
 CUDA_VISIBLE_DEVICES=4 python \
     examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_no_trainer.py \
     --model_name_or_path bigscience/bloom-3b \

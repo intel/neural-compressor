@@ -121,6 +121,7 @@ class ORTSmoothQuant:
         self.tensors_to_node = {}
         self.replace_input = []
         self.ops_to_absorb = []
+        self.record_max_info = False
         self._build_absorb_function()
         
     def transform(self, alpha=0.5, folding=True, percentile=99.999, op_types=['Gemm', 'Conv', 'MatMul', 'FusedConv'],
@@ -142,6 +143,7 @@ class ORTSmoothQuant:
             A FP32 model with the same architecture as the orig model but with different weight which will be
             benefit to quantization
         """
+        self.clean()
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("alpha should be a float value in [0, 1] or 'auto' ")
             if alpha < 0:
@@ -155,12 +157,16 @@ class ORTSmoothQuant:
         if need_calibration:
             self._dump_op_info(percentile, op_types, calib_iter, quantize_config)
 
-            if alpha == 'auto':
-                alpha = self._auto_tune_alpha(calib_iter, **auto_alpha_args)
+        if self.record_max_info:
+            return self.model
 
-            scales = self._get_smooth_scales(alpha)
-            self._insert_smooth_mul_op(scales)
-            self._adjust_weights(scales)
+        if alpha == 'auto':
+            alpha = self._auto_tune_alpha(calib_iter, **auto_alpha_args)
+
+        scales = self._get_smooth_scales(alpha)
+        self._insert_smooth_mul_op(scales)
+        self._adjust_weights(scales)
+
         self.model.add_nodes(self.new_added_mul_nodes)
         self.model.model.graph.value_info.extend(self.new_added_value_info)
         self.model.add_initializers(self.new_init_tensors)
@@ -171,7 +177,7 @@ class ORTSmoothQuant:
         if folding:
             self._fold_scale(scales)
         self.model.topological_sort()
-        self.model.remove_unused_constant()
+        self.model.remove_unused_nodes()
         return self.model
 
     def recover(self):
@@ -202,6 +208,15 @@ class ORTSmoothQuant:
         self.new_added_mul_nodes = []
         self.new_init_tensors = []
         self.new_added_value_info = []
+        self.replace_input = []
+
+    def clean(self):
+        """Clean data collected from calibration."""
+        self.tensor_scales_info = {}
+        self.new_added_mul_nodes = []
+        self.new_init_tensors = []
+        self.new_added_value_info = []
+        self.replace_input = []
 
     def _check_need_calibration(self, alpha, percentile, op_types, scales_per_op, calib_iter):
         """Check need calibration or not.

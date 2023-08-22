@@ -2,11 +2,14 @@ import sys
 import os
 import onnx
 from onnx import helper, TensorProto, numpy_helper
+import shutil
+import subprocess
 import unittest
 import numpy as np
 
-sys.path.append('..')
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.data import Datasets, DATALOADERS
+from neural_compressor import quantization, PostTrainingQuantConfig
 
 def get_onnx_model():
     model = torchvision.models.resnet18()
@@ -108,6 +111,75 @@ class TestOnnxModel(unittest.TestCase):
         graph.initializer.add().CopyFrom(d_zero_point)
         model = helper.make_model(graph)
         self.q_model = ONNXModel(model)
+
+        #      MatMul
+        #        |
+        #       Add
+        #        |
+        #     Reshape
+        #        |
+        #     Reshape
+        #        |
+        #      MatMul
+        #        |
+        #       Add
+
+        input = onnx.helper.make_tensor_value_info('input', onnx.TensorProto.FLOAT, [2, 4])
+
+        W1 = onnx.helper.make_tensor_value_info('W1', onnx.TensorProto.FLOAT, [4, 5])
+        w1 = generate_input_initializer([4, 5], np.float32, 'W1')
+        B1 = onnx.helper.make_tensor_value_info('b1', onnx.TensorProto.FLOAT, [5])
+        b1 = generate_input_initializer([5], np.float32, 'b1')
+        shape = numpy_helper.from_array(np.array((2, 5)).astype(np.int64), name='shape')
+        W2 = onnx.helper.make_tensor_value_info('W2', onnx.TensorProto.FLOAT, [5, 6])
+        w2 = generate_input_initializer([5, 6], np.float32, 'W2')
+        B2 = onnx.helper.make_tensor_value_info('b2', onnx.TensorProto.FLOAT, [6])
+        b2 = generate_input_initializer([6], np.float32, 'b2')
+        output = onnx.helper.make_tensor_value_info('output', onnx.TensorProto.FLOAT, [2, 6])
+
+        node1 = onnx.helper.make_node('MatMul', inputs=['input', 'W1'], outputs=['y1'])
+        node2 = onnx.helper.make_node('Add', inputs=['y1', 'b1'], outputs=['y1_add_b1'])
+        node3 = onnx.helper.make_node('Reshape', inputs=['y1_add_b1', 'shape'], outputs=['y2'])
+        node4 = onnx.helper.make_node('Reshape', inputs=['y2', 'shape'], outputs=['y3'])
+        node5 = onnx.helper.make_node('MatMul', inputs=['y3', 'W2'], outputs=['y4'])
+        node6 = onnx.helper.make_node('Add', inputs=['y4', 'b2'], outputs=['output'])
+
+        graph = onnx.helper.make_graph([node1, node2, node3, node4, node5, node6], 'test_matmul_reshape_graph', [input, W1, B1, W2, B2], [output])
+        graph.initializer.add().CopyFrom(w1)
+        graph.initializer.add().CopyFrom(b1)
+        graph.initializer.add().CopyFrom(w2)
+        graph.initializer.add().CopyFrom(b2)
+        graph.initializer.add().CopyFrom(shape)
+
+        model = onnx.helper.make_model(graph, **{'opset_imports': [onnx.helper.make_opsetid('', 14)]})
+        self.matmul_reshape_model = model
+
+        cmd = 'optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/'
+        p = subprocess.Popen(cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) # nosec
+        p.communicate()
+
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree("./gptj", ignore_errors=True)
+        shutil.rmtree("./hf_test", ignore_errors=True)
+
+    def test_hf_model(self):
+        from optimum.onnxruntime import ORTModelForCausalLM
+        from transformers import AutoConfig, AutoTokenizer
+        os.mkdir('hf_test')
+        model = ONNXModel('gptj/decoder_model.onnx')
+        model.save('./hf_test/decoder_model.onnx')
+        self.assertTrue(os.path.exists('hf_test/config.json'))
+
+        config = AutoConfig.from_pretrained('hf_test')
+        sessions = ORTModelForCausalLM.load_model('hf_test/decoder_model.onnx')
+        model = ORTModelForCausalLM(
+                   sessions[0],
+                   config,
+                   'hf_test',
+                   use_cache=False,
+                   use_io_binding=False)
+        self.assertNotEqual(model, None)
 
     def test_nodes(self):
         self.assertEqual(len(self.model.nodes()), 6)
@@ -254,9 +326,29 @@ class TestOnnxModel(unittest.TestCase):
         self.assertEqual(nodes[0].name, "Conv1")
 
     def test_get_scale_zero(self):
-        input_scale, input_zero = self.q_model.get_scale_zero('B_quantized')
-        weight_scale, weight_zero = self.q_model.get_scale_zero('C_quantized') 
-        bias_scale, bias_zero = self.q_model.get_scale_zero('E')
+        import time
+        result = [0.1]
+        def sub_eval(model, result):
+            time.sleep(0.001 * len(result))
+            return result[0]
+
+        def eval(model):
+            return sub_eval(model, result)
+
+        dataset = Datasets("onnxrt_qdq")["dummy"]((4, 4), low=0., high=0., dtype='float32')
+        dataloader = DATALOADERS["onnxrt_qdq"](dataset, 2)
+        config = PostTrainingQuantConfig()
+        q_model = quantization.fit(self.matmul_reshape_model, config,
+            calib_dataloader=dataloader, eval_func=eval)
+        q_model.save('test.onnx')
+        scale, zp = q_model.get_scale_zero('y3_QuantizeInput_quantized')
+        self.assertEqual(scale.name, 'y1_add_b1_scale')
+        self.assertEqual(zp.name, 'y1_add_b1_zero_point')
+
+        scale, zp = q_model.get_scale_zero('input_quantized')
+        self.assertEqual(scale.name, 'input_scale')
+        self.assertEqual(zp.name, 'input_zero_point')
+
 
     def test_save(self):
         self.model.save_model_to_file('./test_model_6.onnx', use_external_data_format=True)
@@ -268,5 +360,15 @@ class TestOnnxModel(unittest.TestCase):
         initializer = find_by_name('X1', self.model.initializer())
         self.assertIsNone(initializer)
     
+    def test_remove_unused_nodes(self):
+        self.assertEqual(len(self.model.nodes()), 6)
+        node_to_add = onnx.helper.make_node('Relu', ['output1'], ['output2'], keepdims=0, name='added_relu')
+        self.model.add_node(node_to_add)
+        self.assertEqual(len(self.model.nodes()), 7)
+        self.model.remove_unused_nodes()
+        self.assertEqual(len(self.model.nodes()), 6)
+        
+
+
 if __name__ == "__main__":
     unittest.main()

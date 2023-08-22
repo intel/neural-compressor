@@ -1,7 +1,10 @@
+import sys
+sys.path.append("./")
 import unittest
 import copy
 import torch
-from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize
+
+from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize, awq_quantize, gptq_quantize, teq_quantize
 from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
 from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
 import transformers
@@ -26,7 +29,6 @@ class SimpleDataLoader():
 
     def __iter__(self):
         yield self.input
-
 
 class TestAWQWeightOnlyQuant(unittest.TestCase):
     @classmethod
@@ -102,6 +104,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
 
+        fp32_model = copy.deepcopy(self.model)
         model2 = awq_quantize(
             fp32_model, 
             weight_config=weight_config, 
@@ -114,6 +117,116 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
+class TestGPTQWeightOnlyQuant(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            torchscript=True,
+        )
+        self.gptj.seqlen = 512
+    
+    def generate_random_corpus(self, nsamples = 32):
+        meta_data = []
+        for _ in range(nsamples):
+            inp = torch.ones([1, 512], dtype=torch.long)
+            tar = torch.ones([1, 512], dtype=torch.long)
+            meta_data.append((inp, tar))
+        return meta_data
+
+    def test_gptq(self):
+        dataloader = self.generate_random_corpus()
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            'transformer.h.0.attn.k_proj':{
+                'wbits': 4,
+                'group_size': 128,
+                'sym': True,
+                'percdamp': 0.01,
+                'perchannel': False
+            },
+            'transformer.h.1.attn.k_proj':{
+                'wbits': 3,
+                'group_size': -1,
+                'sym': False,
+                'percdamp': 0.01,
+                'actorder': True,
+            },
+            'transformer.h.2.attn.k_proj':{
+                'wbits': 3,
+                'group_size': 32,
+                'sym': False,
+                'percdamp': 0.01,
+                'mse': True,
+                'actorder': False
+            },
+            'transformer.h.3.attn.k_proj':{
+                'wbits': 3,
+                'group_size': 256,
+                'sym': False,
+                'percdamp': 0.01,
+                'mse': True,
+                'actorder': False
+            },
+        }
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        self.assertTrue(isinstance(model, torch.nn.Module))
+        del model
+
+        model = copy.deepcopy(self.gptj)
+        weight_config = {
+            "wbits": 4
+        }
+        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, )
+        self.assertTrue(isinstance(model, torch.nn.Module))
+        del model
+
+class TestTEQWeightOnlyQuant(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            torchscript=True,
+        )
+        self.gptj.seqlen = 512
+
+    def generate_random_corpus(self, nsamples = 32):
+        meta_data = []
+        for _ in range(nsamples):
+            inp = torch.ones([1, 512], dtype=torch.long)
+            tar = torch.ones([1, 512], dtype=torch.long)
+            meta_data.append((inp, tar))
+        return meta_data
+
+    def train_func(self):
+        pass
+
+    def test_teq(self):
+        dataloader = self.generate_random_corpus()
+        model = copy.deepcopy(self.gptj)
+
+        weight_config = {
+            # 'op_name': (bit, group_size, sheme)
+            'transformer.h.0.mlp.fc_in': {
+                'bits': 8,
+                'group_size': -1,
+                'scheme': 'sym'
+            },
+            'transformer.h.0.mlp.fc_out': {
+                'bits': 4,
+                'group_size': 32,
+                'scheme': 'asym'
+            },
+        }
+        absorb_dict = {
+            'transformer.h.0.mlp.fc_in': ['transformer.h.0.mlp.fc_out']
+        }
+        extra_config = {'folding': True}
+
+
+        model = teq_quantize(model, weight_config=weight_config, absorb_to_layer=absorb_dict,
+                extra_config=extra_config, dataloader=dataloader)
+        self.assertTrue(isinstance(model, torch.nn.Module))
 
 if __name__ == "__main__":
     unittest.main()

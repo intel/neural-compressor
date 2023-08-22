@@ -34,7 +34,7 @@ python run_glue.py \
 
 or
 ```bash
-bash run_tuning.sh --topology=topology_name --input_model=model_name_or_path
+bash run_quant.sh --topology=topology_name --input_model=model_name_or_path
 ```
 
 ### 1.2 Quantization with multi-node

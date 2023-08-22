@@ -37,6 +37,7 @@ from neural_compressor.adaptor.ox_utils.util import to_numpy
 import math
 import sys
 import re
+from typing import Dict
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -65,6 +66,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.recipes = framework_specific_info.get("recipes", {})
         self.backend = PROVIDERS[framework_specific_info["backend"]]
         self.performance_only = framework_specific_info.get("performance_only", False)
+        self.use_bf16 = framework_specific_info.get("use_bf16", False) and \
+            self.backend in ort.get_available_providers()
+        self.use_fp16 = framework_specific_info.get("use_fp16", False)
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
@@ -93,6 +97,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             config_file = 'onnxrt_trt.yaml'
         elif self.backend == 'CUDAExecutionProvider':
             config_file = 'onnxrt_cuda.yaml'
+        elif self.backend == 'DnnlExecutionProvider':
+            config_file = 'onnxrt_dnnl.yaml'
         else: # pragma: no cover
             assert False, "{} provider is not supported in current environment, " \
                 "supported providers: {}".format(self.backend,
@@ -152,21 +158,26 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5, folding=True,
-            percentile=99.999, op_types=['MatMul', 'Gemm', 'Conv', 'FusedConv'], scales_per_op=True):
+        # sq algo and args
+        self.sq = None
+        self.cur_sq_args = {}
+
+    def smooth_quant(self, model, dataloader, iterations, alpha=0.5, folding=True,
+            percentile=99.999, op_types=['MatMul', 'Gemm', 'Conv', 'FusedConv'],
+            scales_per_op=True, record_max_info=False):
         """Get augmented model with smooth quant.
 
         Args:
             model_wrapper (object): origin_model
             dataloader (object): dataloader
             iterations (int): iterations
-            tune_cfg (dict): quantization config
             alpha (float or str): smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
             folding (bool): whether fold those foldable Mul which are inserted for SmoothQuant
             percentile (float): percentile of calibration to remove outliers
             op_types (list): The op types whose input tensor will be dumped
             scales_per_op (bool): True, each op will have an individual scale, mainly for accuracy
                                   False, ops with the same input will share a scale, mainly for performance
+            record_max_info (bool): False, whether record the scale information
 
         Returns:
             model: A modified onnx model
@@ -175,11 +186,38 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return self.smooth_quant_model
 
         from .ox_utils.smooth_quant import ORTSmoothQuant
-        quantize_config = self._cfg_to_quantize_config(tune_cfg) if tune_cfg is not None else None
-        sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
-        self.smooth_quant_model = sq.transform(
-            alpha, folding, percentile, op_types, scales_per_op, iterations, quantize_config)
+
+        # set params to cur_sq_args
+        self.cur_sq_args['alpha'] = alpha
+        self.cur_sq_args['folding'] = folding
+        self.cur_sq_args['percentile'] = percentile
+        self.cur_sq_args['op_types'] = op_types
+        self.cur_sq_args['scales_per_op'] = scales_per_op
+        self.cur_sq_args['calib_iter'] = iterations
+        
+        # pre-optimization
+        self._pre_optimize(model)
+
+        # assign the algo to the adaptor, so adaptor can call it later when needed
+        self.sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
+        self.sq.record_max_info = record_max_info
+        self.smooth_quant_model = self.sq.transform(**self.cur_sq_args)
+        logger.info("Updated the pre-optimized model with smooth quant model.")
+        # TODO double-check the smooth_quant_model and pre_optimized_model to make sure there no two fp32 model replicas
+        self.pre_optimized_model = self.smooth_quant_model
         return self.smooth_quant_model
+    
+    def _need_smooth_quant(self, tune_cfg) -> bool:
+        """Check the model needs smooth quant or not."""
+        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False) \
+            and recipe_cfgs['smooth_quant_args'].get('alpha', None):
+            # update alpha according to tune_cfg
+            self.cur_sq_args['alpha'] = \
+                tune_cfg['recipe_cfgs']['smooth_quant_args']['alpha']
+            return True
+        else:
+            return False
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -195,9 +233,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         Returns:
             (dict): quantized model
-        """
+        """        
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
-        if self.smooth_quant_model is not None:
+        if self.smooth_quant_model is not None and model.is_smoothquant_model():
             model = self.smooth_quant_model
         elif self.pre_optimized_model is not None:
             model = self.pre_optimized_model
@@ -207,6 +245,18 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
+        if self.backend == 'DnnlExecutionProvider' and \
+            any([i.domain in ['', 'ai.onnx'] and \
+            i.version < 15 for i in model.model.opset_import]): # pragma: no cover
+            from onnx import version_converter
+            from neural_compressor.model.onnx_model import ONNXModel
+            try:
+                model = self._rename_node(ONNXModel(version_converter.convert_version(model.model, 15)))
+            except:
+                logging.warning("Fail to upgrade model opset_import to >= 15, "\
+                                "please upgrate it manually to run with bf16 data type")
+                exit(0)
+            
         from neural_compressor.adaptor.ox_utils.util import QuantizationMode
         if self.format == "qlinearops":
             format = QuantizationMode.QLinearOps
@@ -228,47 +278,19 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                     repr(e)))
                 tmp_model = model
+        
+        # smooth quant the model if needed
+        if self._need_smooth_quant(tune_cfg) and not tmp_model.is_smoothquant_model():
+            self.sq.model = tmp_model
+            self.sq.record_max_info = False
+            tmp_model = self.sq.transform(**self.cur_sq_args)
+
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
-            if isinstance(data_loader, BaseDataLoader):
-                batch_size = data_loader.batch_size
-                try:
-                    for i in range(batch_size):
-                        if calib_sampling_size % (batch_size - i) == 0:
-                            calib_batch_size = batch_size - i
-                            if i != 0:  # pragma: no cover
-                                logger.warning("Reset `calibration.dataloader.batch_size` field "
-                                               "to {}".format(calib_batch_size) +
-                                               " to make sure the sampling_size is "
-                                               "divisible exactly by batch size")
-                            break
-                    tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
-                    data_loader.batch(calib_batch_size)
-                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                                                quantize_config, tmp_iterations)
-                except Exception as e:  # pragma: no cover
-                    if 'Got invalid dimensions for input' in str(e):
-                        logger.warning("Please set sampling_size to a multiple of {}".format(
-                            str(e).partition('Expected: ')[2].partition('\n')[0]))
-                        exit(0)
-                    logger.warning(
-                        "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, 1))
-                    data_loader.batch(1)
-                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                              quantize_config, calib_sampling_size)
-            else:  # pragma: no cover
-                if hasattr(data_loader, 'batch_size') and \
-                  calib_sampling_size % data_loader.batch_size != 0:
-                    logger.warning(
-                        "Please note that calibration sampling size {} " \
-                        "isn't divisible exactly by batch size {}. " \
-                        "So the real sampling size is {}.".
-                        format(calib_sampling_size, data_loader.batch_size,
-                               data_loader.batch_size * iterations))
-                quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                          quantize_config, iterations)
+            calib_iterations = self._reset_calib_iter(data_loader, calib_sampling_size, iterations)
+            quantize_params = self._get_quantize_params(tmp_model, data_loader, \
+                                                        quantize_config, calib_iterations)
         else:
             quantize_params = None
         self.quantize_params = quantize_params
@@ -301,6 +323,45 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self._dump_model_op_stats(tmp_model)
         tmp_model.topological_sort()
         return tmp_model
+    
+    def _reset_calib_iter(self, data_loader, cfg_calib_sampling_size, cfg_calib_iter):
+        """Check and reset calibration iterations according to calib_sampleing_size and dataloader batch_size."""
+        if isinstance(data_loader, BaseDataLoader):
+            batch_size = data_loader.batch_size
+            try:
+                for i in range(batch_size):
+                    if cfg_calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                            "to {}".format(calib_batch_size) +
+                                            " to make sure the sampling_size is "
+                                            "divisible exactly by batch size")
+                        break
+                tmp_iterations = int(math.ceil(cfg_calib_sampling_size / calib_batch_size))
+                data_loader.batch(calib_batch_size)
+                calib_iterations = tmp_iterations
+            except Exception as e:  # pragma: no cover
+                if 'Got invalid dimensions for input' in str(e):
+                    logger.warning("Please set sampling_size to a multiple of {}".format(
+                        str(e).partition('Expected: ')[2].partition('\n')[0]))
+                    exit(0)
+                logger.warning(
+                    "Fail to forward with batch size={}, set to {} now.".
+                    format(batch_size, 1))
+                data_loader.batch(1)
+                calib_iterations = cfg_calib_sampling_size
+        else:  # pragma: no cover
+            if hasattr(data_loader, 'batch_size') and \
+                cfg_calib_sampling_size % data_loader.batch_size != 0:
+                logger.warning(
+                    "Please note that calibration sampling size {} " \
+                    "isn't divisible exactly by batch size {}. " \
+                    "So the real sampling size is {}.".
+                    format(cfg_calib_sampling_size, data_loader.batch_size,
+                            data_loader.batch_size * cfg_calib_iter))
+            calib_iterations = cfg_calib_iter
+        return calib_iterations
 
     def _generate_qconfig(self, model, tune_cfg, quantize_params):
         tune_cfg = copy.deepcopy(tune_cfg)
@@ -463,10 +524,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = ONNXModel(model)
         black_nodes = [node for node in quantize_config if quantize_config[node]=='fp32']
         white_nodes = [node for node in quantize_config if quantize_config[node]!='fp32']
+        
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
-                  iterations=list(range(0, quantize_config['calib_iteration'])),
+                  iterations=list(range(0, iterations)), \
                   backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
@@ -590,9 +652,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # typically, NLP models have multiple inputs, 
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
         if not model.is_large_model:
-            sess = ort.InferenceSession(model.model.SerializeToString(), providers=[self.backend])
+            sess = ort.InferenceSession(model.model.SerializeToString(), providers=ort.get_available_providers())
         elif model.model_path is not None: # pragma: no cover
-            sess = ort.InferenceSession(model.model_path, providers=[self.backend])
+            sess = ort.InferenceSession(model.model_path, providers=ort.get_available_providers())
         else: # pragma: no cover
             assert False, "Please use model path instead of onnx model object to quantize."
         input_shape_lens = [len(input.shape) for input in  sess.get_inputs()]
@@ -615,16 +677,21 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return is_nlp
 
     def _pre_optimize(self, model, level=1):
+        # the pre-optimization may already done at the smoothing process
+        # pre_optimize -> sq -> update the pre_optimized_model
+        if self.pre_optimized_model:
+            logger.info("Pre-optimization already done, return it directly.")
+            return self.pre_optimized_model
         from neural_compressor import options
         from neural_compressor.adaptor.ox_utils.util import \
             remove_init_from_model_input, split_shared_bias
         remove_init_from_model_input(model)
         sess_options = ort.SessionOptions()
         optimization_levels = {
-                'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
-                'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
-                'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
-                'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
+            'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+            'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+            'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+            'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
         if not isinstance(self.query_handler.get_graph_optimization(), list):
             level = self.query_handler.get_graph_optimization()
         elif options.onnxrt.graph_optimization.level is not None:
@@ -641,22 +708,22 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         sess_options.graph_optimization_level = optimization_levels[level]
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+        if sys.version_info < (3,11) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
-        backend = self.backend if self.backend != 'TensorrtExecutionProvider' else 'CUDAExecutionProvider'
         if not model.is_large_model:
             ort.InferenceSession(model.model.SerializeToString(),
-                                 sess_options,
-                                 providers=[backend])
+                                sess_options,
+                                providers=['CPUExecutionProvider'])
         elif model.model_path is not None: # pragma: no cover
             ort.InferenceSession(model.model_path,
-                                 sess_options,
-                                 providers=[backend])
+                                sess_options,
+                                providers=['CPUExecutionProvider'])
         else: # pragma: no cover 
             logger.warning('Please use model path instead of onnx model object to quantize')
 
         tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
+
         if model.is_large_model: # pragma: no cover
             from onnx.external_data_helper import load_external_data_for_model
             load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
@@ -664,7 +731,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.model = self._replace_gemm_with_matmul(tmp_model).model if \
             options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get('gemm_to_matmul', True) else \
             tmp_model
-        model.model = self._rename_node(model.model)
+        model = self._rename_node(model)
         model = self._revert_fusedconv(model)
         if self.backend == 'TensorrtExecutionProvider':
             model = self._revert_conv_add_fusion(model)
@@ -736,7 +803,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.update()
         return model
 
-    def _rename_node(self, model):
+    def _rename_node(self, model_wrapper):
+        model = model_wrapper.model
         node_names = [i.name for i in model.graph.node]
         if len(set(node_names)) < len(node_names):
             logger.warning("This model has nodes with the same name, please check" \
@@ -745,8 +813,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             for idx, node in enumerate(model.graph.node):
                 if node_names.count(node.name) > 1:
                     node.name = node.op_type + '_nc_rename_' + str(idx)
-            onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
-        return model
+            if model_wrapper.is_large_model:
+                onnx.save(model,
+                          os.path.join(self.work_space, "renamed_model.onnx"),
+                          save_as_external_data=True,
+                          all_tensors_to_one_file=True,
+                          location="weights.pb",
+                          convert_attribute=False)
+            else:
+                onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
+        return model_wrapper
 
     @staticmethod
     def _replace_gemm_with_matmul(model):
@@ -859,9 +935,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision in ['fp16', 'bf16'] and (self.device == 'cpu' or self.backend != 'CUDAExecutionProvider'):
+                if precision == 'fp16' and not self.use_fp16:
                     continue
-                elif precision == 'bf16' and 'CUDAExecutionProvider' not in ort.get_available_providers():
+                if precision == 'bf16' and \
+                    (not self.use_bf16 or (not CpuInfo().bf16 and os.getenv('FORCE_BF16') != '1')):
+                    continue
+                elif precision == 'weight_only_integer':
                     continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
@@ -1064,6 +1143,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             '1.11.0': ['Conv', 'Gather', 'MatMul', 'Gemm'],
             '1.12.0': ['Conv', 'Gather', 'MatMul', 'Gemm']}
         specific_cfg_version = self.query_handler.get_specific_cfg_version()
+        if Version(specific_cfg_version) > ONNXRT112_VERSION:
+            specific_cfg_version = '1.12.0'
         for optype, caps in optype_wise.items():
             if optype not in supported_perchannel_optypes[specific_cfg_version]:
                 for cap in caps:
@@ -1152,7 +1233,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
-        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+        if sys.version_info < (3,11) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
         session = ort.InferenceSession(self.work_space + 'eval.onnx',
@@ -1405,6 +1486,201 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return predictions
 
 @adaptor_registry
+class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+        """The function is used to do calibration and quanitization in post-training
+           quantization.
+
+        Args:
+            tune_cfg (dict):     quantization config.
+            model (object):      model need to do quantization.
+            data_loader (object): calibration dataset.
+            q_func (optional):   training function for quantization aware training mode,
+                                 unimplement yet for onnx.
+
+        Returns:
+            (dict): quantized model
+        """
+        assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
+        for precision in self.query_handler.get_precisions():
+            if precision == 'weight_only_integer':
+                self.quantizable_op_types += \
+                    self.query_handler.get_op_types_by_precision(precision=precision)
+        self.quantizable_ops = self._query_quantizable_ops(model.model)
+
+        quant_config = self._cfg_to_quantize_config(tune_cfg)
+        algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
+        if "GPTQ" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
+
+            percdamp = self.recipes.get('gptq_args', {}).get('percdamp', 0.01)
+            blocksize = self.recipes.get('gptq_args', {}).get('blocksize', 128)
+            actorder = self.recipes.get('gptq_args', {}).get('actorder', False)
+            mse = self.recipes.get('gptq_args', {}).get('mse', False)
+            perchannel = self.recipes.get('gptq_args', {}).get('perchannel', True)
+            calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+            model = gptq_quantize(model,
+                                  quant_config,
+                                  data_loader,
+                                  calib_sampling_size,
+                                  percdamp=percdamp,
+                                  blocksize=blocksize,
+                                  actorder=actorder,
+                                  mse=mse,
+                                  perchannel=perchannel)
+        if "AWQ" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
+
+            auto_scale = self.recipes.get('awq_args', {}).get('auto_scale', True)
+            mse_range = self.recipes.get('awq_args', {}).get('mse_range', True)
+            n_blocks = self.recipes.get('awq_args', {}).get('n_blocks', 5)
+            calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+            model = awq_quantize(model,
+                                 quant_config,
+                                 data_loader,
+                                 calib_sampling_size,
+                                 auto_scale,
+                                 mse_range,
+                                 n_blocks)
+        elif "RTN" in algos:
+            from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
+            model = rtn_quantize(model, quant_config)
+        model.q_config = copy.deepcopy(quant_config)
+        self._dump_model_op_stats(model, tune_cfg)
+        model.topological_sort()
+        return model
+
+    def _dump_model_op_stats(self, model, tune_cfg):
+        res = {}
+        # collect all dtype info and build empty results with existing op_type
+        dtype_set = set()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if not config['weight']['dtype'] == 'fp32':
+                num_bits = config['weight']['bits']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                dtype_set.add(dtype_str)
+        dtype_set.add('FP32')
+        dtype_list = list(dtype_set)
+        dtype_list.sort()
+        for op, config in tune_cfg['op'].items():
+            op_type = op[1]
+            if op_type not in res.keys():
+                res[op_type] = {dtype: 0 for dtype in dtype_list}
+
+        # fill in results with op_type and dtype
+        for op, config in tune_cfg['op'].items():
+            if config['weight']['dtype'] == 'fp32':
+                res[op_type]['FP32'] += 1
+            else:
+                num_bits = config['weight']['bits']
+                group_size = config['weight']['group_size']
+                dtype_str = "A32W{}G{}".format(num_bits, group_size)
+                res[op_type][dtype_str] += 1
+
+        # update stats format for dump.
+        field_names = ["Op Type", "Total"]
+        field_names.extend(dtype_list)
+        output_data = []
+        for op_type in res.keys():
+            field_results = [op_type, sum(res[op_type].values())]
+            field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+            output_data.append(field_results)
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
+
+    def _cfg_to_quantize_config(self, tune_cfg):
+        quantize_config = {}
+        quantize_config['calib_iteration'] = tune_cfg['calib_iteration']
+
+        for _, op in enumerate(self.quantizable_ops):
+            if (op.name, op.op_type) not in tune_cfg['op']:
+                continue
+            if tune_cfg['op'][(op.name, op.op_type)]['weight']['dtype'] in \
+                self.query_handler.get_fallback_list():
+                quantize_config[op.name] = \
+                    tune_cfg['op'][(op.name, op.op_type)]['weight']['dtype']
+            else:
+                quantize_config[op.name] = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
+
+        return quantize_config
+
+    def query_fw_capability(self, model):
+        """The function is used to query framework capability.
+        TODO: will be replaced by framework query API
+
+        Args:
+            model: onnx model
+
+        Returns:
+            (dict): quantization capability
+        """
+        # optype_wise and op_wise capability
+        self._pre_optimize(model)
+
+        quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
+        optype_wise = OrderedDict()
+        op_wise = OrderedDict()
+        for query in [self.query_handler, self.query_handler_ext]:
+            if query is None:
+                continue
+            precisions = query.get_precisions()
+
+            for precision in precisions:
+                if precision != 'weight_only_integer':
+                    continue
+                # get supported optype for target precision
+                optypes = query.get_op_types_by_precision(precision) if \
+                    query.get_op_types_by_precision(precision) != ['*'] else \
+                    optype_wise.keys()
+ 
+                configs = query.get_quantization_capability()[precision] if \
+                    precision in query.get_quantization_capability() else \
+                    {'default': {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}}
+
+                for op in optypes:
+                    if op not in quantizable_optype:
+                        continue
+                    if op not in configs:
+                        if 'default' in configs:
+                            op_capability = copy.deepcopy(configs['default'])
+                        else:
+                            continue
+                    else:
+                        op_capability = copy.deepcopy(configs[op])
+                    op_capability['activation']['quant_mode'] = 'weight_only'
+                    if op not in optype_wise.keys():
+                        optype_wise[op] = [op_capability]
+                    elif op_capability not in optype_wise[op]:
+                        optype_wise[op].append(op_capability)
+
+        for node in self.pre_optimized_model.nodes():
+            if node.op_type in ['MatMul', 'Attention'] and model.get_initializer(node.input[1]) is None:
+                op_wise.update(
+                    {(node.name, node.op_type): [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
+                continue
+            if node.op_type in optype_wise:
+                op_wise.update(
+                    {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': {}, 'block_wise': []}
+
+
+@adaptor_registry
 class ONNXRT_QLinearOpsAdaptor(ONNXRUNTIMEAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
@@ -1514,6 +1790,7 @@ class ONNXRTQuery(QueryBackendCapability):
 
         # generate specified version config according to quantization approach and format
         config = {}
+        config['capabilities'] = {} 
         for k, v in version_config.items():
             if k == 'version':
                 config['version'] = v
@@ -1521,15 +1798,15 @@ class ONNXRTQuery(QueryBackendCapability):
                 config['graph_optimization'] = v['graph_optimization']
             else:
                 if self.static and 'static' in v:
-                    config['capabilities'] = {k: {node_op: node_config 
+                    config['capabilities'].update({k: {node_op: node_config 
                     for node_op, node_config in v['static'].items() 
                     if 'mode' in node_config and \
                     self.format.split('ops')[0].lower() in \
-                    [mode.lower() for mode in node_config['mode']]}}
+                    [mode.lower() for mode in node_config['mode']]}})
                 elif self.dynamic and 'dynamic' in v:
-                    config['capabilities'] = {k: v['dynamic']}
-        if 'capabilities' not in config:
-            config['capabilities'] = {} 
+                    config['capabilities'].update({k: v['dynamic']})
+                elif k == 'weight_only_integer':
+                    config['capabilities'].update({k: v})
 
         # generate other config content including precisions and ops 
         precisions = list(version_config.keys() - {'version', 'recipes'})

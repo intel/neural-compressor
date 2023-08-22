@@ -25,7 +25,8 @@ from .utils.tuning_sampler import (
     OpTypeWiseTuningSampler,
     FallbackTuningSampler,
     BlockFallbackTuningSampler,
-    LowerBitsSampler)
+    LowerBitsSampler,
+    )
 
 from .utils.tuning_structs import OpTuningConfig
 from .utils.constant import TUNING_ITEMS_LST, PRECISION_LIST, LOWER_BIT_LIST
@@ -214,7 +215,7 @@ class BasicTuneStrategy(TuneStrategy):
 
         Args:
             initial_op_tuning_cfg: the initial tuning config
-            calib_sampling_size: _description_
+            calib_sampling_size: calibration sampling size
 
         Yields:
             tuning config
@@ -252,16 +253,26 @@ class BasicTuneStrategy(TuneStrategy):
         for calib_sampling_size in calib_sampling_size_lst:
             # Initialize the tuning config for each op according to the quantization approach.
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
+            initial_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
             early_stop_tuning = False
             stage1_cnt = 0
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
             stage1_max = 1e9  # TODO set a more appropriate value
+            if not self.cur_best_tuning_cfg:
+                self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
+            # try to tune sq alpha
+            if self._should_tuning_sq_alpha(self.config.recipes):
+                for tune_cfg in self.tuning_sq_alpha(tuning_space, \
+                    deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
+                    yield tune_cfg
+
+            # op type-wise tuning
             op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],\
                 op_item_dtype_dict, initial_op_tuning_cfg)
+            
             for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
-                initial_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 if not self.cur_best_tuning_cfg:
                     self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
@@ -353,6 +364,8 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
+            logger.warning(f"[Strategy] All tuning options for the current strategy have been tried.\
+                If the quantized model does not seem to work well, it might be worth considering other strategies.")
 
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
