@@ -315,7 +315,7 @@ class TestTensorflowModel(unittest.TestCase):
         from tensorflow.python.training.tracking.tracking import AutoTrackable 
         assert isinstance(model.model, AutoTrackable), "The model getter of TensorflowSavedModelModel is not correctly run."
 
-        from tensorflow.python.framework import graph_util  
+        from tensorflow.compat.v1 import graph_util  
         graph_def = graph_util.convert_variables_to_constants(
             sess=model.sess,
             input_graph_def=model.graph_def,

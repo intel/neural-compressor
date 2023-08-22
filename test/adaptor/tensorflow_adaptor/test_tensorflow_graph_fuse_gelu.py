@@ -7,7 +7,7 @@ from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 @unittest.skipIf(tf.version.VERSION.find('up') == -1, 
         "Only supports tf 1.15.up2 and 1.15.up3 and SprBase")

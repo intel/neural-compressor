@@ -15,7 +15,7 @@ from packaging.version import Version
 import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 def build_fake_yaml():
     fake_yaml = '''

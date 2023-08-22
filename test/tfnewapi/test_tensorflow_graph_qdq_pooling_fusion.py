@@ -9,7 +9,7 @@ import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import dtypes
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 def build_fake_yaml():
     fake_yaml = '''

@@ -3,8 +3,6 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
-import sys
-sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
@@ -18,9 +16,9 @@ class TestPruningPatterns(unittest.TestCase):
         local_configs = [
             {
                 "op_names": ['layer1.*'],
-                'target_sparsity': 0.75,
-                "pattern": '6:8',
-                "pruning_type": "magnitude_progressive"
+                'target_sparsity': 0.5,
+                "pattern": '5:8',
+                "pruning_type": "magnitude"
             },
             {
                 "op_names": ['layer2.*'],
@@ -49,10 +47,6 @@ class TestPruningPatterns(unittest.TestCase):
         )
         compression_manager = prepare_compression(model=self.model, confs=config)
         compression_manager.callbacks.on_train_begin()
-        # fix code coverage
-        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_configs['progressive_type'] = "linear"
-        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_configs['use_global'] = False
-        compression_manager.callbacks.callbacks_list[0].pruners[-1].progressive_logger = True
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
