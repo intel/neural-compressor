@@ -1095,7 +1095,8 @@ class TestTuneSqAlpha(unittest.TestCase):
 class TestTextGeneration(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        self.clm_model = AutoModelForCausalLM.from_pretrained(
+        from modeling_gptj import GPTJForCausalLM
+        self.clm_model = GPTJForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-gptj",
             torchscript=True
         )
@@ -1141,6 +1142,8 @@ class TestTextGeneration(unittest.TestCase):
         out = q_model(*example_inputs)
         values, indices = out[0][:, -1, :].log_softmax(dim=-1).topk(1)
         self.assertEqual(indices[0], torch.tensor([887]))
+        self.assertEqual(indices[1], torch.tensor([362]))
+        self.assertEqual(indices[2], torch.tensor([504]))
 
        
 
