@@ -167,8 +167,8 @@ class PytorchPatternNInM(PytorchBasePattern):
             Reshaped data.
         """
         if len(orig_shape) == 4:
-            data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
-            data = data.permute(0, 2, 1)
+            data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
+            data = data.permute(0, 3, 2, 1)
         if len(orig_shape) == 3:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
             data = data.permute(0, 2, 1)
