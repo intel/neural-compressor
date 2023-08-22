@@ -71,6 +71,11 @@ def export_model(input_model, output_model):
     # Please refer to [Converting SSDMobilenet To ONNX Tutorial](https://github.com/onnx/tensorflow-onnx/blob/master/tutorials/ConvertingSSDMobilenetToONNX.ipynb) for detailed model converted.
     print("\nexport model...")
     subprocess.run(
+        ["pip", "install", "tf2onnx", "tensorflow"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    subprocess.run(
         [
             "python",
             "-m",
