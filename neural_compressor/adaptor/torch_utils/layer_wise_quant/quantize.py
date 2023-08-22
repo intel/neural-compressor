@@ -53,14 +53,14 @@ def forward_wrapper(model, input, device='cpu'):
                 input[inp] = input[inp].to(device) \
                     if isinstance(input[inp], torch.Tensor) else input[inp]
             output = model(**input)
-    elif isinstance(input, list) or isinstance(input, tuple):
+    elif isinstance(input, list) or isinstance(input, tuple):  # pragma: no cover
         if device == 'cpu':
             output = model(*input)
         else:  # pragma: no cover
             input = [inp.to(device) if isinstance(inp, torch.Tensor)
                      else inp for inp in input]  # pylint: disable=E1133
             output = model(*input)
-    else:
+    else:  # pragma: no cover
         if device == 'cpu' or not isinstance(input, torch.Tensor):
             output = model(input)
         else:  # pragma: no cover

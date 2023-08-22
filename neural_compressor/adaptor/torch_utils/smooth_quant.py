@@ -1195,8 +1195,6 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        logger.info('trace model using dummy_input: ')
-        logger.info(dummy_input)
         if hasattr(model, "device"):
             orig_device = str(model.device)
         else:

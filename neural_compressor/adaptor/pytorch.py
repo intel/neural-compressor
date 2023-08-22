@@ -3359,7 +3359,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             assert model_path is not None,\
                 "the layer_wise_quant_args should have args model_path to load the weight of model."
             device = recipe_cfgs['layer_wise_quant_args'].get('decvice', 'cpu')
-            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, dataloader,
+            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, calib_data=dataloader,
                                       device=device, smooth_quant=smooth_quant, alpha=alpha)
             q_model._model = lw_quant.quantize(clean_weight=False)
             tune_cfg['recipe_cfgs']['lwq_layers'] = lw_quant.quantized_layers
