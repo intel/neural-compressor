@@ -88,6 +88,62 @@ class BinaryOperator(Operator):
         self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(node)
 
+@op_registry(op_types="Mod")
+class BinaryDirect8BitOperator(Operator):
+    """Binary operator."""
+    
+    def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
+        super(BinaryDirect8BitOperator, self).__init__(onnx_quantizer, onnx_node)
+
+    def quantize_check(self):
+        """Check if quantizaion can be done."""
+        node = self.node
+        data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
+        if not data_found:
+            return False
+        if not all([self.quantizer.is_valid_quantize_weight(i) for i in node.input]):
+            return False
+        
+        return True
+
+    def quantize(self):
+        """Do quantizaion."""
+        node = self.node
+        self.quantizer.quantize_inputs(node, initializer_use_weight_qType=False)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+            self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"
+
+    def convert_check(self, convert_format):
+        """Check if conversion can be done."""
+        node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 or not node.name.endswith('_quant'):
+            return False
+        return True
+
+    def convert(self, convert_format):
+        """Convert to QOperator format."""
+        node = self.node
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
+        if any([i.op_type == 'DequantizeLinear' for i in parents]) and \
+            any([i.op_type == 'QuantizeLinear' for i in children]):
+            for idx, parent in enumerate(parents):
+                if parent.op_type == 'DequantizeLinear':
+                    self.node.input[idx] = parent.input[0]
+                    self.quantizer.remove_nodes.append(parent)
+            for child in children:
+                if child.op_type == 'QuantizeLinear':
+                    self.quantizer.remove_nodes.append(child)
+                    self.quantizer.model.replace_input_of_all_nodes(
+                        child.output[0], node.output[0] + '_quantized')
+            node.output[0] = node.output[0] + '_quantized'
+
 @qop_registry(op_types="QLinearAdd, QLinearMul")
 class QBinaryOperator(QOperator):
     """QBinary Operator."""

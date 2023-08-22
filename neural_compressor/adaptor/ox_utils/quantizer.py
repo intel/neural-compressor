@@ -600,7 +600,7 @@ class Quantizer:
                                     find_by_name(zeropoint_name, self.model.initializer()))
                             qlinear_node = onnx.helper.make_node("DynamicQuantizeLinear", 
                                 [tensor_name],
-                                [tensor_name + "_quantized", scale_name, zeropoint_name],
+                                [tensor_name + "_dynamic_quantized", scale_name, zeropoint_name],
                                 tensor_name + "_QuantizeLinear")
                         else:
                             scale_name, zp_name, _, _ = \

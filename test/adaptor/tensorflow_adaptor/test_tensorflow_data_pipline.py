@@ -8,7 +8,7 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name, iterator_sess_run
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 class TestDataPipelineConvert(unittest.TestCase):
 
     def test_data_pipeline(self):

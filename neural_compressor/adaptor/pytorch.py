@@ -847,6 +847,12 @@ class TemplateAdaptor(Adaptor):
         self.fp32_results = []
         self.fp32_preds_as_label = False
 
+        if self.version.release >= Version("1.8").release:
+            static_quant_mapping = tq.quantization_mappings.get_default_static_quant_module_mappings()
+            self.fused_op_list = \
+                [static_quant_mapping[key] for key in static_quant_mapping if "intrinsic." in str(key)]
+        self.fused_dict = {}
+
     def calib_func(self, model, dataloader, tmp_iterations, conf=None):
         try:
             for idx, (input, label) in enumerate(dataloader):
@@ -1229,6 +1235,435 @@ class TemplateAdaptor(Adaptor):
                     q_capability['optypewise'][bf16_op[1]] = [bf16_config, fp32_config]
         return q_capability
 
+    def get_fused_list(self, model):
+        """This is a helper function to get fused op list.
+
+        Args:
+            model (object): input model
+
+        Returns:
+            dict of op list
+        """
+        fused_dict = {}
+        for op_name, child in model.named_modules():
+            if type(child) in self.fused_op_list:
+                in_fused_loop = False
+                is_fused_module = False
+                type_name = str(child).split("(")[0]
+                prefix_index = op_name.rfind(".")
+                fp32_int8_ops = []
+                for fp32_op_name, module in self.pre_optimized_model.model.named_modules():
+                    fp32_type_name = str(module).split("(")[0]
+                    prefix_fp32_index = fp32_op_name.rfind(".")
+                    if not is_fused_module:
+                        is_fused_module = self.is_fused_module(module)
+                        if is_fused_module:
+                            in_fused_loop = True
+                            continue
+                    if is_fused_module and in_fused_loop:
+                        if op_name == fp32_op_name[: fp32_op_name.rfind(".")]:
+                            fp32_int8_ops.append(fp32_op_name)
+                            continue
+                        else:
+                            is_fused_module =False
+                            in_fused_loop = False
+                    elif op_name == fp32_op_name and not in_fused_loop:
+                        in_fused_loop = True
+                        fp32_int8_ops.append(fp32_op_name)
+                    elif in_fused_loop and \
+                        op_name[: prefix_index if prefix_index > -1 else 0] == \
+                            fp32_op_name[: prefix_fp32_index if prefix_fp32_index > -1 else 0]:
+                        if "BatchNorm" in str(type(module)):
+                            fp32_int8_ops.append(fp32_op_name)
+                            continue
+                        elif fp32_type_name in type_name.split(".")[-1][-len(fp32_type_name) - 2:]:
+                            fp32_int8_ops.append(fp32_op_name)
+                            in_fused_loop = False
+                            break
+                        else:
+                            in_fused_loop = False
+                            break
+                    elif in_fused_loop:
+                        in_fused_loop = False
+                        break
+                if len(fp32_int8_ops) > 1:
+                    fused_dict.update({op_name: fp32_int8_ops})
+        return fused_dict
+
+    def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
+        """This is a helper function to diagnosis.
+
+        Args:
+            fp32_model (object): Fp32 model (original)
+            int8_model (object): Quantized model
+            tune_cfg (dict): Quantization config
+            save_path (Path): The path to save min/max value of op outputs
+
+        Returns:
+            Op name list for inspecting, tuning configuration
+        """
+        exclude_list = ["QuantStub", "DeQuantStub", "BatchNorm2d", "Sequential"]
+        optype_list = torch.quantization.get_default_qconfig_propagation_list()
+        supported_optype = []
+        for optype in optype_list:
+            op_type = str(optype).rstrip('\'>').split('.')[-1]
+            if "intrinsic." not in str(optype) and op_type not in exclude_list:
+                supported_optype.append(optype)
+        inspect_node_list = []
+        for name, child in fp32_model.model.named_modules():
+            op_type = type(child)
+            if op_type in supported_optype:
+                inspect_node_list.append(name)
+        return inspect_node_list, tune_cfg
+
+    def inspect_tensor(self,
+                       model,
+                       dataloader,
+                       op_list=None,
+                       iteration_list=None,
+                       inspect_type='activation',
+                       save_to_disk=False,
+                       save_path=None,
+                       quantization_cfg=None):
+        assert self.version.release >= Version("1.8").release, "Inspect_tensor only support torch 1.8 or above!"
+        from neural_compressor.utils.utility import dump_data_to_local
+        from torch import dequantize
+        is_quantized = model.is_quantized
+        op_list_ = []
+        fp32_int8_map = {}
+        for op_name in op_list:
+            op_list_.append(op_name)
+            for key in self.fused_dict:
+                if op_name in self.fused_dict[key]:
+                    op_list_.pop()
+                    fp32_int8_map[op_name] = \
+                        {'activation': self.fused_dict[key][-1], 'weight': self.fused_dict[key][0]}
+                    if not is_quantized:
+                        op_list_.append(self.fused_dict[key][-1])
+                    elif key not in op_list_:
+                        op_list_.append(key)
+                    break
+
+        assert min(iteration_list) > 0, \
+            "Iteration number should great zero, 1 means first iteration."
+        iterations = max(iteration_list) if iteration_list is not None else -1
+        new_model = self._pre_eval_hook(model, op_list=op_list_, iteration_list=iteration_list)
+        self.evaluate(new_model, dataloader, iteration=iterations)
+        observer_dict = {}
+        ret = {}
+        if inspect_type == 'activation' or inspect_type == 'all':
+            if self.version.release >= Version("2.0.0").release:
+                from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+            else:
+                from torch.quantization import get_observer_dict
+            ret['activation'] = []
+            get_observer_dict(new_model.model, observer_dict)
+            if iteration_list is None:
+                iteration_list = [1]
+            for i in iteration_list:
+                summary = OrderedDict()
+                for key in observer_dict:
+                    if isinstance(observer_dict[key], torch.nn.modules.linear.Identity):
+                        continue
+                    op_name = key.replace(".activation_post_process", "")
+                    value = observer_dict[key].get_tensor_value()[i]
+                    if op_name in op_list:
+                        if type(value) is list:
+                            summary[op_name] = {}
+                            for index in range(len(value)):
+                                summary[op_name].update({
+                                    op_name + ".output" + str(index):
+                                    dequantize(value[index]).numpy()
+                                    if value[index].is_quantized else value[index].numpy()
+                                })
+                        else:
+                            summary[op_name] = {
+                                op_name + ".output0":
+                                dequantize(value).numpy() if value.is_quantized else value.numpy()
+                            }
+                    else:
+                        if bool(self.fused_dict):
+                            if is_quantized:
+                                for a in fp32_int8_map:
+                                    if op_name == a:
+                                        tensor_name = fp32_int8_map[a]['weight']
+                                        if type(value) is list:
+                                            summary[tensor_name] = {}
+                                            for index in range(len(value)):
+                                                summary[tensor_name].update({
+                                                    tensor_name + ".output" + str(index):
+                                                    dequantize(value[index]).numpy()
+                                                    if value[index].is_quantized else
+                                                    value[index].numpy()
+                                                })
+                                        else:
+                                            summary[tensor_name] = {
+                                                tensor_name + ".output0":
+                                                dequantize(value).numpy()
+                                                if value.is_quantized else value.numpy()
+                                            }
+                            else:
+                                for a in fp32_int8_map:  # pragma: no cover
+                                    if op_name == fp32_int8_map[a]['activation']:
+                                        tensor_name = fp32_int8_map[a]['weight']
+                                        if type(value) is list:
+                                            summary[tensor_name] = {}
+                                            for index in range(len(value)):
+                                                summary[tensor_name].update({
+                                                    tensor_name + ".output" + str(index):
+                                                    dequantize(value[index]).numpy()
+                                                    if value[index].is_quantized else
+                                                    value[index].numpy()
+                                                })
+                                        else:
+                                            summary[tensor_name] = {
+                                                tensor_name + ".output0":
+                                                dequantize(value).numpy()
+                                                if value.is_quantized else value.numpy()
+                                            }
+
+                ret['activation'].append(summary)
+
+        if inspect_type == 'weight' or inspect_type == 'all':
+            ret['weight'] = {}
+            state_dict = new_model._model.state_dict()
+
+            for key in state_dict:
+                if not isinstance(state_dict[key], torch.Tensor):
+                    continue
+                if 'weight' not in key and 'bias' not in key:
+                    continue
+
+                op = key[:key.rfind('.')]
+                op = op.replace('._packed_params', '')
+
+                if op in op_list:
+                    if op in ret['weight']:
+                        ret['weight'][op].update({
+                            key:
+                            dequantize(state_dict[key]).numpy()
+                            if state_dict[key].is_quantized else state_dict[key].detach().numpy()
+                        })
+                    else:
+                        ret['weight'][op] = {
+                            key:
+                            dequantize(state_dict[key]).numpy()
+                            if state_dict[key].is_quantized else state_dict[key].detach().numpy()
+                        }
+                else:
+                    if bool(self.fused_dict):
+                        if is_quantized:
+                            for a in fp32_int8_map:
+                                if op == a:
+                                    tensor_name = fp32_int8_map[a]['weight']
+                                    if tensor_name in ret['weight']:
+                                        ret['weight'][tensor_name].update({
+                                            key:
+                                            dequantize(state_dict[key]).numpy()
+                                            if state_dict[key].is_quantized else
+                                            state_dict[key].detach().numpy()
+                                        })
+                                    else:
+                                        ret['weight'][tensor_name] = \
+                                            {key: dequantize(state_dict[key]).numpy()
+                                                if state_dict[key].is_quantized else
+                                                    state_dict[key].detach().numpy()}
+                                    break
+        else:
+            ret['weight'] = None
+
+        if save_to_disk:
+            if not save_path:
+                save_path = self.workspace_path
+            dump_data_to_local(ret, save_path, 'inspect_result.pkl')
+
+        return ret
+
+    def _pre_eval_hook(self, model, op_list=None, iteration_list=None):
+        """The function is used to do some preprocession before evaluation phase.
+           Here, it used to add hook for dump output tensor for quantizable ops.
+
+        Args:
+             model (object): input model
+
+        Returns:
+              model (object): model with hook
+        """
+        from abc import ABCMeta
+
+        def _with_args(cls_or_self, **kwargs):
+            r"""Wrapper that allows creation of class factories.
+
+            This can be useful when there is a need to create classes with the same
+            constructor arguments, but different instances.
+
+            Example::
+
+                >>> Foo.with_args = classmethod(_with_args)
+                >>> foo_builder = Foo.with_args(a=3, b=4).with_args(answer=42)
+                >>> foo_instance1 = foo_builder()
+                >>> foo_instance2 = foo_builder()
+                >>> id(foo_instance1) == id(foo_instance2)
+                False
+            """
+            class _PartialWrapper(object):
+                def __init__(self, p):
+                    self.p = p
+
+                def __call__(self, *args, **keywords):
+                    return self.p(*args, **keywords)
+
+                def __repr__(self):
+                    return self.p.__repr__()
+
+                with_args = _with_args
+
+            r = _PartialWrapper(partial(cls_or_self, **kwargs))
+            return r
+
+        ABC = ABCMeta(str("ABC"), (object, ), {})  # compatible with Python 2 *and* 3:
+
+        class _RecordingObserver(ABC, torch.nn.Module):
+            """The module is mainly for debug and records the tensor values during runtime.
+
+            Args:
+                iteration_list (list, optional): indexs of iteration which to dump tensor.
+            """
+            def __init__(self, iteration_list=None, **kwargs):
+                super(_RecordingObserver, self).__init__(**kwargs)
+                self.output_tensors_dict = OrderedDict()
+                self.current_iter = 1
+                self.iteration_list = iteration_list
+
+            def forward(self, x):
+                if (self.iteration_list is None and self.current_iter == 1) or \
+                    (self.iteration_list is not None and
+                     self.current_iter in self.iteration_list):
+                    if type(x) is tuple or type(x) is list:
+                        self.output_tensors_dict[self.current_iter] = \
+                            [i.to("cpu") if i.device != 'cpu' else i.clone() for i in x]
+                    else:
+                        self.output_tensors_dict[self.current_iter] = \
+                            x.to("cpu") if x.device != "cpu" else x.clone()
+                self.current_iter += 1
+                return x
+
+            @torch.jit.export
+            def get_tensor_value(self):
+                return self.output_tensors_dict
+
+            with_args = classmethod(_with_args)
+
+        def _observer_forward_hook(module, input, output):
+            """Forward hook that calls observer on the output
+
+            Args:
+                module (object): input module
+                input (object): module input
+                output (object): module output
+
+            Returns:
+                module output tensor (object)
+            """
+            return module.activation_post_process(output)
+
+        def _add_observer_(module, op_list=None, prefix=""):
+            """Add observer for the leaf child of the module.
+
+               This function insert observer module to all leaf child module that
+               has a valid qconfig attribute.
+
+            Args:
+                module (object): input module with qconfig attributes for all the leaf modules that
+                                 we want to dump tensor
+                op_list (list, optional): list of ops which to be dumped in module
+                prefix (string): name of module
+
+            Returns:
+                None, module is modified inplace with added observer modules and forward_hooks
+            """
+            for name, child in module.named_children():
+                op_name = name if prefix == "" else prefix + "." + name
+                if isinstance(child, torch.nn.quantized.FloatFunctional) and \
+                             (op_list is None or op_name in op_list):
+                    if hasattr(child, 'qconfig') and child.qconfig is not None and (
+                            op_list is None or op_name in op_list):
+                        child.activation_post_process = \
+                            child.qconfig.activation()
+                elif hasattr(child, 'qconfig') and child.qconfig is not None and \
+                        (op_list is None or op_name in op_list):
+                    # observer and hook will be gone after we swap the module
+                    child.add_module('activation_post_process', child.qconfig.activation())
+                    child.register_forward_hook(_observer_forward_hook)
+                else:
+                    _add_observer_(child, op_list, op_name)
+
+        def _propagate_qconfig_helper(module,
+                                      qconfig_dict,
+                                      white_list=None,
+                                      qconfig_parent=None,
+                                      prefix='',
+                                      fused=False):
+            """This is a helper function for `propagate_qconfig_`
+
+            Args:
+                module (object): input module
+                qconfig_dict (dictionary): dictionary that maps from name of submodule to
+                                           quantization configuration
+                white_list (list, optional): list of quantizable modules
+                qconfig_parent (object, optional): config of parent module, we will fallback to
+                                                   this config when there is no specified config
+                                                   for current module
+                prefix (string, optional): corresponding prefix of the current module,
+                                           used as key in qconfig_dict
+                fused (bool, optional): Indicates whether the module is fused or not
+
+            Return:
+                None, module is modified inplace with qconfig attached
+            """
+            module.qconfig = qconfig_parent
+            if hasattr(module, '_modules'):
+                for name, child in module.named_children():
+                    module_prefix = prefix + '.' + name if prefix else name
+                    _propagate_qconfig_helper(child, qconfig_dict, white_list, qconfig_parent,
+                                              module_prefix)
+
+        def _prepare(model, inplace=True, op_list=[], white_list=None):
+            """The model will be attached with observer or fake quant modules, and qconfig
+               will be propagated.
+
+            Args:
+                model (object): input model to be modified in-place
+                inplace (bool, optional): carry out model transformations in-place,
+                                          the original module is mutated
+                op_list (list, optional): list of ops which to be dumped in module
+                white_list (list, optional): list of quantizable modules
+
+            Returns:
+                model (object): model with qconfig
+            """
+            if not inplace:
+                model = copy.deepcopy(model)
+            _propagate_qconfig_helper(model,
+                                      qconfig_dict={},
+                                      white_list=white_list,
+                                      qconfig_parent=model.qconfig)
+            # sanity check common API misusage
+            if not any(hasattr(m, 'qconfig') and m.qconfig for m in model.modules()): # pragma: no cover
+                logger.warn("None of the submodule got qconfig applied. Make sure you "
+                            "passed correct configuration through `qconfig_dict` or "
+                            "by assigning the `.qconfig` attribute directly on submodules")
+            _add_observer_(model, op_list=op_list)
+            return model
+
+        model = model if model.is_quantized else copy.deepcopy(model)
+        model._model.qconfig = torch.quantization.QConfig(
+            weight=torch.quantization.default_debug_observer,
+            activation=_RecordingObserver.with_args(iteration_list=iteration_list))
+        _prepare(model._model, op_list=op_list)
+
+        return model
+
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
            if this module is fused.
@@ -1495,7 +1930,6 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # for tensorboard
         self.dump_times = 0
-        self.fused_dict = {}
 
         self.optype_statistics = None
 
@@ -1604,6 +2038,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
+        self.fused_dict = self.get_fused_list(q_model.model)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
@@ -1852,7 +2287,6 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -1860,10 +2294,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                     module_prefix = op_name + '.' + name
                     if module_prefix in module_dict:
                         module_dict.pop(module_prefix)  # remove sub-modules of fused modules
-                    if op_name in self.fused_dict:
-                        self.fused_dict[op_name] = [self.fused_dict[op_name], module_prefix]
-                    else:
-                        self.fused_dict[op_name] = module_prefix
         for op_name, child in module_dict.items():
             # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
             # so remove it here
@@ -1897,211 +2327,6 @@ class PyTorchAdaptor(TemplateAdaptor):
             if hasattr(modules[key[0]], 'zero_point'):
                 value['activation']['zero_point'] = int(modules[key[0]].zero_point)
 
-    def _pre_eval_hook(self, model, op_list=None, iteration_list=None):
-        """The function is used to do some preprocession before evaluation phase.
-           Here, it used to add hook for dump output tensor for quantizable ops.
-
-        Args:
-             model (object): input model
-
-        Returns:
-              model (object): model with hook
-        """
-        from abc import ABCMeta
-
-        def _with_args(cls_or_self, **kwargs):
-            r"""Wrapper that allows creation of class factories.
-
-            This can be useful when there is a need to create classes with the same
-            constructor arguments, but different instances.
-
-            Example::
-
-                >>> Foo.with_args = classmethod(_with_args)
-                >>> foo_builder = Foo.with_args(a=3, b=4).with_args(answer=42)
-                >>> foo_instance1 = foo_builder()
-                >>> foo_instance2 = foo_builder()
-                >>> id(foo_instance1) == id(foo_instance2)
-                False
-            """
-            class _PartialWrapper(object):
-                def __init__(self, p):
-                    self.p = p
-
-                def __call__(self, *args, **keywords):
-                    return self.p(*args, **keywords)
-
-                def __repr__(self):
-                    return self.p.__repr__()
-
-                with_args = _with_args
-
-            r = _PartialWrapper(partial(cls_or_self, **kwargs))
-            return r
-
-        ABC = ABCMeta(str("ABC"), (object, ), {})  # compatible with Python 2 *and* 3:
-
-        class _RecordingObserver(ABC, torch.nn.Module):
-            """The module is mainly for debug and records the tensor values during runtime.
-
-            Args:
-                iteration_list (list, optional): indexs of iteration which to dump tensor.
-            """
-            def __init__(self, iteration_list=None, **kwargs):
-                super(_RecordingObserver, self).__init__(**kwargs)
-                self.output_tensors_dict = OrderedDict()
-                self.current_iter = 1
-                self.iteration_list = iteration_list
-
-            def forward(self, x):
-                if (self.iteration_list is None and self.current_iter == 1) or \
-                    (self.iteration_list is not None and
-                     self.current_iter in self.iteration_list):
-                    if type(x) is tuple or type(x) is list:
-                        self.output_tensors_dict[self.current_iter] = \
-                            [i.to("cpu") if i.device != 'cpu' else i.clone() for i in x]
-                    else:
-                        self.output_tensors_dict[self.current_iter] = \
-                            x.to("cpu") if x.device != "cpu" else x.clone()
-                self.current_iter += 1
-                return x
-
-            @torch.jit.export
-            def get_tensor_value(self):
-                return self.output_tensors_dict
-
-            with_args = classmethod(_with_args)
-
-        def _observer_forward_hook(module, input, output):
-            """Forward hook that calls observer on the output
-
-            Args:
-                module (object): input module
-                input (object): module input
-                output (object): module output
-
-            Returns:
-                module output tensor (object)
-            """
-            return module.activation_post_process(output)
-
-        def _add_observer_(module, op_list=None, prefix=""):
-            """Add observer for the leaf child of the module.
-
-               This function insert observer module to all leaf child module that
-               has a valid qconfig attribute.
-
-            Args:
-                module (object): input module with qconfig attributes for all the leaf modules that
-                                 we want to dump tensor
-                op_list (list, optional): list of ops which to be dumped in module
-                prefix (string): name of module
-
-            Returns:
-                None, module is modified inplace with added observer modules and forward_hooks
-            """
-            for name, child in module.named_children():
-                op_name = name if prefix == "" else prefix + "." + name
-                if isinstance(child, torch.nn.quantized.FloatFunctional) and \
-                             (op_list is None or op_name in op_list):
-                    if hasattr(child, 'qconfig') and child.qconfig is not None and (
-                            op_list is None or op_name in op_list):
-                        child.activation_post_process = \
-                            child.qconfig.activation()
-                elif hasattr(child, 'qconfig') and child.qconfig is not None and \
-                        (op_list is None or op_name in op_list):
-                    # observer and hook will be gone after we swap the module
-                    child.add_module('activation_post_process', child.qconfig.activation())
-                    child.register_forward_hook(_observer_forward_hook)
-                else:
-                    _add_observer_(child, op_list, op_name)
-
-        def _propagate_qconfig_helper(module,
-                                      qconfig_dict,
-                                      white_list=None,
-                                      qconfig_parent=None,
-                                      prefix='',
-                                      fused=False):
-            """This is a helper function for `propagate_qconfig_`
-
-            Args:
-                module (object): input module
-                qconfig_dict (dictionary): dictionary that maps from name of submodule to
-                                           quantization configuration
-                white_list (list, optional): list of quantizable modules
-                qconfig_parent (object, optional): config of parent module, we will fallback to
-                                                   this config when there is no specified config
-                                                   for current module
-                prefix (string, optional): corresponding prefix of the current module,
-                                           used as key in qconfig_dict
-                fused (bool, optional): Indicates whether the module is fused or not
-
-            Return:
-                None, module is modified inplace with qconfig attached
-            """
-            if white_list is None:
-                white_list = \
-                   torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-                   if self.version.release < Version("1.7.0").release else \
-                   torch.quantization.quantization_mappings.get_qconfig_propagation_list()
-
-            if type(module) in white_list and type(module) != torch.nn.Sequential:
-                module.qconfig = qconfig_parent
-            else:
-                module.qconfig = None
-            if hasattr(module, '_modules'):
-                for name, child in module.named_children():
-                    module_prefix = prefix + '.' + name if prefix else name
-                    _propagate_qconfig_helper(child, qconfig_dict, white_list, qconfig_parent,
-                                              module_prefix)
-
-        def _prepare(model, inplace=True, op_list=[], white_list=None):
-            """The model will be attached with observer or fake quant modules, and qconfig
-               will be propagated.
-
-            Args:
-                model (object): input model to be modified in-place
-                inplace (bool, optional): carry out model transformations in-place,
-                                          the original module is mutated
-                op_list (list, optional): list of ops which to be dumped in module
-                white_list (list, optional): list of quantizable modules
-
-            Returns:
-                model (object): model with qconfig
-            """
-            if not inplace:
-                model = copy.deepcopy(model)
-            _propagate_qconfig_helper(model,
-                                      qconfig_dict={},
-                                      white_list=white_list,
-                                      qconfig_parent=model.qconfig)
-            # sanity check common API misusage
-            if not any(hasattr(m, 'qconfig') and m.qconfig for m in model.modules()): # pragma: no cover
-                logger.warn("None of the submodule got qconfig applied. Make sure you "
-                            "passed correct configuration through `qconfig_dict` or "
-                            "by assigning the `.qconfig` attribute directly on submodules")
-            _add_observer_(model, op_list=op_list)
-            return model
-
-        # create properties
-        if self.version.release < Version("1.7.0").release:  # pragma: no cover
-            white_list = self.white_list | \
-                (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
-                 set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
-                 set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
-        elif self.version.release < Version("1.8.0").release:  # pragma: no cover
-            white_list = torch.quantization.get_compare_output_module_list()
-        else:
-            white_list = torch.quantization.get_default_compare_output_module_list()
-
-        model = model if model.is_quantized else copy.deepcopy(model)
-        model._model.qconfig = torch.quantization.QConfig(
-            weight=torch.quantization.default_debug_observer,
-            activation=_RecordingObserver.with_args(iteration_list=iteration_list))
-        _prepare(model._model, op_list=op_list, white_list=white_list)
-
-        return model
-
     def is_fused_child(self, op_name):
         """This is a helper function for `_post_eval_hook`
 
@@ -2112,43 +2337,11 @@ class PyTorchAdaptor(TemplateAdaptor):
             (bool): if this op is fused
 
         """
-        op = op_name[:op_name.rfind('.')]
-        if op in self.fused_dict and op_name[op_name.rfind('.') + 1:].isdigit():
-            return True
-        else:
-            return False
+        for key in self.fused_dict:
+            if op_name in self.fused_dict[key]:
+                return True
+        return False
 
-    def is_fused_op(self, op_name):
-        """This is a helper function for `_post_eval_hook`
-
-        Args:
-            op_name (string): op name
-
-        Returns:
-            (bool): if this op is fused
-
-        """
-        op = op_name[:op_name.rfind('.')]
-        if op in self.fused_dict:
-            return True
-        else:
-            return False
-
-    def is_last_fused_child(self, op_name):
-        """This is a helper function for `_post_eval_hook`
-
-        Args:
-            op_name (string): op name
-
-        Returns:
-            (bool): if this op is last fused op
-
-        """
-        op = op_name[:op_name.rfind('.')]
-        if op_name in self.fused_dict[op][-1]:
-            return True
-        else:
-            return False
 
     def _post_eval_hook(self, model, **args):
         """The function is used to do some post process after complete evaluation.
@@ -2200,20 +2393,17 @@ class PyTorchAdaptor(TemplateAdaptor):
         for key in observer_dict:
             if isinstance(observer_dict[key], torch.nn.modules.linear.Identity):
                 continue
-            op_name = key.strip(".activation_post_process")
+            op_name = key.replace(".activation_post_process", "")
             summary[op_name + ".output"] = observer_dict[key].get_tensor_value()
             for iter in summary[op_name + ".output"]:
                 # Only collect last fused child output
                 op = op_name
-                if self.is_fused_child(op_name) == True and \
-                   self.is_last_fused_child(op_name) == True:
-                    op = op_name[:op_name.rfind('.')]
+                if op_name in self.fused_dict:
+                    op = self.fused_dict[op_name][0]
                 else:
-                    if self.is_fused_child(op_name) == True and \
-                       self.is_last_fused_child(op_name) == False:
-                        continue
-                    else:
-                        op = op_name
+                    for key in self.fused_dict:
+                        if op_name in self.fused_dict[key]:
+                            op = op_name
 
                 if summary[op_name + ".output"][iter].is_quantized:
                     writer.add_histogram(op + "/Output/int8",
@@ -2225,7 +2415,6 @@ class PyTorchAdaptor(TemplateAdaptor):
         for key in state_dict:
             if not isinstance(state_dict[key], torch.Tensor):
                 continue
-
             op = key[:key.rfind('.')]
             if self.is_fused_child(op) is True:
                 # fused child tensorboard tag will be merge
@@ -2252,171 +2441,6 @@ class PyTorchAdaptor(TemplateAdaptor):
     def save(self, model, path=None):
         pass
 
-    def inspect_tensor(self,
-                       model,
-                       dataloader,
-                       op_list=None,
-                       iteration_list=None,
-                       inspect_type='activation',
-                       save_to_disk=False):
-        if self.version.release >= Version("1.8.0").release:
-            from torch.fx import GraphModule
-            if type(model._model) == GraphModule:  # pragma: no cover
-                assert False, "Inspect_tensor didn't support fx graph model now!"
-        from torch import dequantize
-        import numpy as np
-        is_quantized = model.is_quantized
-        op_list_ = []
-        fp32_int8_map = {}
-        for op_name in op_list:
-            op_list_.append(op_name)
-            for key in self.fused_dict:
-                if op_name in self.fused_dict[key]:
-                    fp32_int8_map[op_name] = \
-                        {'activation': self.fused_dict[key][-1], 'weight': key}
-                    if is_quantized:
-                        op_list_.append(key)
-                        op_list_.remove(op_name)
-                    else:
-                        op_list_.append(self.fused_dict[key][-1])
-
-        new_model = model if is_quantized else copy.deepcopy(model)
-
-        assert min(iteration_list) > 0, \
-            "Iteration number should great zero, 1 means first iteration."
-        iterations = max(iteration_list) if iteration_list is not None else -1
-        new_model = self._pre_eval_hook(new_model, op_list=op_list_, iteration_list=iteration_list)
-        self.evaluate(new_model, dataloader, iteration=iterations)
-        observer_dict = {}
-        ret = {}
-        if inspect_type == 'activation' or inspect_type == 'all':
-            if self.version.release >= Version("2.0.0").release:
-                from torch.quantization.quantize import _get_observer_dict as get_observer_dict
-            else:
-                from torch.quantization import get_observer_dict
-            ret['activation'] = []
-            get_observer_dict(new_model._model, observer_dict)
-            if iteration_list is None:
-                iteration_list = [1]
-            for i in iteration_list:
-                summary = OrderedDict()
-                for key in observer_dict:
-                    if isinstance(observer_dict[key], torch.nn.modules.linear.Identity):
-                        continue
-                    op_name = key.replace(".activation_post_process", "")
-                    value = observer_dict[key].get_tensor_value()[i]
-                    if op_name in op_list:
-                        if type(value) is list:
-                            summary[op_name] = {}
-                            for index in range(len(value)):
-                                summary[op_name].update({
-                                    op_name + ".output" + str(index):
-                                    dequantize(value[index]).numpy()
-                                    if value[index].is_quantized else value[index].numpy()
-                                })
-                        else:
-                            summary[op_name] = {
-                                op_name + ".output0":
-                                dequantize(value).numpy() if value.is_quantized else value.numpy()
-                            }
-                    else:
-                        if bool(self.fused_dict):
-                            if is_quantized:
-                                for a in fp32_int8_map:
-                                    if op_name == fp32_int8_map[a]['weight']:
-                                        if type(value) is list:
-                                            summary[a] = {}
-                                            for index in range(len(value)):
-                                                summary[a].update({
-                                                    op_name + ".output" + str(index):
-                                                    dequantize(value[index]).numpy()
-                                                    if value[index].is_quantized else
-                                                    value[index].numpy()
-                                                })
-                                        else:
-                                            summary[a] = {
-                                                op_name + ".output0":
-                                                dequantize(value).numpy()
-                                                if value.is_quantized else value.numpy()
-                                            }
-                            else:
-                                for a in fp32_int8_map:  # pragma: no cover
-                                    if op_name == fp32_int8_map[a]['activation']:
-                                        if type(value) is list:
-                                            summary[a] = {}
-                                            for index in range(len(value)):
-                                                summary[a].update({
-                                                    op_name + ".output" + str(index):
-                                                    dequantize(value[index]).numpy()
-                                                    if value[index].is_quantized else
-                                                    value[index].numpy()
-                                                })
-                                        else:
-                                            summary[a] = {
-                                                op_name + ".output0":
-                                                dequantize(value).numpy()
-                                                if value.is_quantized else value.numpy()
-                                            }
-
-                if save_to_disk:
-                    dump_dir = os.path.join(self.workspace_path, 'dump_tensor')
-                    os.makedirs(dump_dir, exist_ok=True)
-                    np.savez(os.path.join(dump_dir, 'activation_iter{}.npz'.format(i)), **summary)
-
-                ret['activation'].append(summary)
-
-        if inspect_type == 'weight' or inspect_type == 'all':
-            ret['weight'] = {}
-            state_dict = new_model._model.state_dict()
-
-            for key in state_dict:
-                if not isinstance(state_dict[key], torch.Tensor):
-                    continue
-                if 'weight' not in key and 'bias' not in key:
-                    continue
-
-                op = key[:key.rfind('.')]
-                op = op.replace('._packed_params', '')
-
-                if op in op_list:
-                    if op in ret['weight']:
-                        ret['weight'][op].update({
-                            key:
-                            dequantize(state_dict[key]).numpy()
-                            if state_dict[key].is_quantized else state_dict[key].detach().numpy()
-                        })
-                    else:
-                        ret['weight'][op] = {
-                            key:
-                            dequantize(state_dict[key]).numpy()
-                            if state_dict[key].is_quantized else state_dict[key].detach().numpy()
-                        }
-                else:
-                    if bool(self.fused_dict):
-                        if is_quantized:
-                            for a in fp32_int8_map:
-                                if op == fp32_int8_map[a]['weight']:
-                                    if a in ret['weight']:
-                                        ret['weight'][a].update({
-                                            key:
-                                            dequantize(state_dict[key]).numpy()
-                                            if state_dict[key].is_quantized else
-                                            state_dict[key].detach().numpy()
-                                        })
-                                    else:
-                                        ret['weight'][a] = \
-                                            {key: dequantize(state_dict[key]).numpy()
-                                                if state_dict[key].is_quantized else
-                                                    state_dict[key].detach().numpy()}
-                                    break
-
-            if save_to_disk:
-                np.savez(os.path.join(dump_dir, 'weight.npz'), **ret['weight'])
-        else:
-            ret['weight'] = None
-
-        return ret
-
     def set_tensor(self, model, tensor_dict):
         state_dict = model._model.state_dict()
         tensor_name = None
@@ -2427,7 +2451,12 @@ class PyTorchAdaptor(TemplateAdaptor):
             weight_bias = key[end + 1:]
             for op in self.fused_dict:
                 if op_name in self.fused_dict[op]:
-                    state_op_name = op
+                    if model.is_quantized:
+                        state_op_name = op
+                    else:
+                        state_op_name = self.fused_dict[op][0]
+                # elif op_name in self.fused_dict[op]:
+                    # state_op_name = op
             if state_op_name is None:
                 state_op_name = op_name
             for state_dict_key in state_dict.keys():
@@ -2605,7 +2634,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if self.version.release >= Version("1.12.0").release:
             # Check save_qconf_summary part is a workaroud for IPEX bug.
             # Sometimes the prepared model from get_op_capablitiy loss this attribute
-            if not hasattr(model._model, "save_qconf_summary"):
+            if not hasattr(model._model, "save_qconf_summary") or \
+              not hasattr(model._model, "load_qconf_summary"):
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 if self.version.release >= Version("2.1").release:
                     static_qconfig = ipex.quantization.default_static_qconfig_mapping
@@ -2950,7 +2980,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 ipex_conf.save(self.ipex_config_path)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    assert self.q_dataloader or self.example_inputs, \
+                    assert self.q_dataloader is not None or self.example_inputs is not None, \
                             "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     if self.version.release >= Version("2.1").release:
@@ -2983,7 +3013,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         model = ipex.quantization.prepare(model, static_qconfig,
                                                               example_inputs=self.example_inputs, inplace=True)
 
-                if self.q_dataloader or self.example_inputs:
+                if self.q_dataloader is not None or self.example_inputs is not None:
                     self._simple_inference(model, self.q_dataloader, iterations=1)
                 else:
                     try:
@@ -3141,7 +3171,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # Check save_qconf_summary part is a workaroud for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model._model, "save_qconf_summary"):
+        if not hasattr(model._model, "save_qconf_summary") or \
+          not hasattr(model._model, "load_qconf_summary"):
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(model._model, static_qconfig,
@@ -3467,6 +3498,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
+        self.fused_dict = self.get_fused_list(q_model.model)
+        q_model.is_quantized = True
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
@@ -4313,6 +4346,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             else:
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
+        if len(all_algo):
+            logger.info(f"All algorithms to do: {all_algo}")
         if 'GPTQ' in all_algo:
             q_model._model, gptq_config = self.gptq_quantize(
                 q_model._model, tune_cfg, dataloader
@@ -4322,7 +4357,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             q_model._model = self.teq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         if 'AWQ' in all_algo: # includes RTN in AWQ
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
-        elif 'RTN' in all_algo:
+        if 'RTN' in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
@@ -4331,11 +4366,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return q_model
 
     def rtn_quantize(self, model, tune_cfg):
-        logger.debug("quantizing with the round-to-nearest algorithm")
+        logger.info("quantizing with the round-to-nearest algorithm")
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
-        else:
+            mse_range = self.recipes['rtn_args'].get('mse_range', False)
+        else: # pragma: no cover
             sym_full_range=False
+            mse_range=False
         from .torch_utils.weight_only import rtn_quantize
         from .torch_utils.util import fetch_module, set_module
         for key, config in tune_cfg['op'].items():
@@ -4352,12 +4389,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
                                  return_int=False, 
-                                 sym_full_range=sym_full_range)
+                                 sym_full_range=sym_full_range,
+                                 mse_range=mse_range)
                 set_module(model, op_name, m)
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
-        logger.debug("quantizing with the GPTQ algorithm")
+        logger.info("quantizing with the GPTQ algorithm")
         from .torch_utils.weight_only import gptq_quantize
         # convert tune_cfg to gptq_quantize's weight config
         """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
@@ -4391,19 +4429,24 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     'group_size': config['weight']['group_size'],
                     'sym': config['weight']['scheme'] == 'sym',
                     'percdamp': self.recipes['gptq_args'].get("percdamp", 0.01),
-                    'actorder': self.recipes['gptq_args'].get("actorder", True)
+                    'act_order': self.recipes['gptq_args'].get("act_order", False),
+                    'block_size': self.recipes['gptq_args'].get("block_size", True)
                 } 
+        nsamples = self.recipes['gptq_args'].get("nsamples", 128)
+        use_max_length = self.recipes['gptq_args'].get("use_max_length", False)
         # tune_cfg => weight_config 
         model, quantization_perm = gptq_quantize(
             model, 
             weight_config,
             dataloader,
+            nsamples,
+            use_max_length,
             self.device
         )
         return model, quantization_perm
 
     def teq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the TEQ algorithm")
+        logger.info("quantizing with the TEQ algorithm")
         from .torch_utils.weight_only import teq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None: # pragma: no cover
@@ -4490,90 +4533,52 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         return model
                 
     def awq_quantize(self, model, tune_cfg, dataloader, calib_func):
-        logger.debug("quantizing with the AWQ algorithm")
+        logger.info("quantizing with the AWQ algorithm")
         from .torch_utils.weight_only import awq_quantize
         # get example inputs if not provided.
         if self.example_inputs is None:
-            if dataloader is None:
-                assert False, "Please provide dataloader or example_inputs for AWQ algorithm."
-            try:
-                for idx, (input, label) in enumerate(dataloader):
-                    self.example_inputs = input
-                    break
-            except:
-                for idx, input in enumerate(dataloader):
-                    self.example_inputs = input
-                    break
+            from neural_compressor.adaptor.torch_utils.util import get_example_input
+            assert dataloader is not None, "datalaoder or example_inputs is required."
+            self.example_inputs = get_example_input(dataloader)
 
-        # get modules that can be absorbed.
-        from .torch_utils.smooth_quant import GraphTrace
-        tg = GraphTrace()
-        supported_layers = ['Linear']
-        absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
-        if absorb_to_layer is None or absorb_to_layer == {}:
-            logger.warning('No absorb layer is detected, skip AWQ algorithm')
-            return model
-
-        # got flipped dict from absorb_to_layer dict
-        flipped_dict = {}
-        for k, v in absorb_to_layer.items():
-            for m in v:
-                flipped_dict[m] = {'absorb_layer': k}
-
-        # check tune_cfg to skip layers without AWQ config
+        # build weight_config
         weight_config = {}
-        skipped_op_name_set = set()
         for key, config in tune_cfg['op'].items():
             op_name, op_type = key
             if config['weight']['dtype'] == 'fp32':
-                if op_name in flipped_dict:
-                    absorb_to_layer.pop(flipped_dict[op_name]['absorb_layer'])
-                continue
+                weight_config[op_name] = {
+                    'bits': -1, # skip quantization
+                    'group_size': 128,
+                    'scheme': 'asym',
+                    'algorithm': 'RTN',
+                }
             else:
-                weight_config[op_name] = {}
-                weight_config[op_name]['bits'] = config['weight']['bits']
-                weight_config[op_name]['group_size'] = config['weight']['group_size']
-                weight_config[op_name]['scheme'] = config['weight']['scheme']
-                if op_name in flipped_dict:
-                    algorithm = config['weight']['algorithm']
-                    if algorithm != 'AWQ':
-                        absorb_to_layer.pop(weight_config[op_name]['absorb_layer'])
-                else:
-                    skipped_op_name_set.add(op_name)
-        if skipped_op_name_set:
-            logger.info("{} is skipped by AWQ algorithm".format(skipped_op_name_set))
-
-        # collect AWQ config from tune_cfg for quantization.
-        if len(absorb_to_layer) == 0:
-            logger.warning('No absorb layer needs AWQ algorithim, skip it')
-        else:
-            logger.debug("**absorb layer**: **absorbed layers**")
-        for k, v in absorb_to_layer.items():
-            logger.debug(f"{k}: {v}")
-        logger.info("Absorbed layers with the same absorb layer use the same config")
+                weight_config[op_name] = config['weight']
 
         if 'awq_args' in self.recipes:
             auto_scale = self.recipes['awq_args'].get('auto_scale', True)
             mse_range = self.recipes['awq_args'].get('mse_range', True)
-            n_blocks = self.recipes['awq_args'].get('n_blocks', 5)
+            folding = self.recipes['awq_args'].get('folding', False)
         else:
-            auto_scale, mse_range = True, True
+            auto_scale, mse_range, folding = True, True, False
         if 'rtn_args' in self.recipes:
             sym_full_range = self.recipes['rtn_args'].get('sym_full_range', False)
+            return_int = self.recipes['rtn_args'].get('return_int', False)
         else:
-            sym_full_range=False
+            sym_full_range, return_int = False, False
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         model = awq_quantize(
             model, 
+            bits=-1, # no quantize for op not in weight_config
+            example_inputs=self.example_inputs,
             weight_config=weight_config, 
-            absorb_dict=absorb_to_layer, 
             dataloader=dataloader,
             n_samples=calib_sampling_size,
             auto_scale=auto_scale, 
             mse_range=mse_range,
             calib_func=calib_func,
-            n_blocks=n_blocks,
-            return_int=False,
+            folding=folding,
+            return_int=return_int,
             sym_full_range=sym_full_range,
         )
         return model
@@ -4627,7 +4632,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                    header='Mixed Precision Statistics',
                    field_names=field_names).print_stat()
         self.optype_statistics = field_names, output_data
-
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,

@@ -28,6 +28,7 @@ import torch
 import torch.quantization as tq
 import yaml
 import os
+import json
 
 
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
@@ -183,6 +184,41 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
     return model
 
 
+def load_weight_only(checkpoint_dir, model):
+    """Load model in weight_only mode.
+
+    Args:
+        checkpoint_dir (dir/file/dict): The folder of checkpoint. 'qconfig.json' and 
+                                        'best_model.pt' are needed in This directory. 
+                                        'checkpoint' dir is under workspace folder and 
+                                        workspace folder is define in configure yaml file.
+        model (object): fp32 model need to do quantization.
+
+    Returns:
+        (object): quantized model
+    """
+    import neural_compressor # for eval(config['module_type'])
+    from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear
+    weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                'best_model.pt')
+    # for weight only quantized model.
+    weights_only_config_file = os.path.join(
+        os.path.abspath(os.path.expanduser(checkpoint_dir)),'qconfig.json')
+    with open(weights_only_config_file, 'r') as f:
+        weight_only_config = json.load(f)
+    for op_name, config in weight_only_config.items():
+        if config['dtype'] == 'fp32':
+            continue
+        if eval(config['module_type']) == MulLinear:
+            # op should be repleced by MulLinear
+            module = util.fetch_module(model, op_name)
+            new_module = MulLinear(module)
+            util.set_module(model, op_name, new_module)
+    model.load_state_dict(torch.load(weights_file))
+    logger.info('Load weight_only quantized model')
+    return model
+
+
 def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     """Execute the quantize process on the specified model.
 
@@ -198,6 +234,9 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     Returns:
         (object): quantized model
     """
+    weigth_only = kwargs.get('weight_only', False)
+    if weigth_only:
+        return load_weight_only(checkpoint_dir, model)
     if checkpoint_dir is not None:
         if isinstance(checkpoint_dir, dict):
             stat_dict = checkpoint_dir
@@ -212,14 +251,6 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             try:
                 weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
                                            'best_model.pt')
-                # for weight only quantized model.
-                weights_only_config_file = os.path.join(
-                  os.path.abspath(os.path.expanduser(checkpoint_dir)),'qconfig.json')
-                if os.path.exists(weights_only_config_file):
-                    model.load_state_dict(torch.load(weights_file))
-                    logger.info('Load weight_only quantized model')
-                    return model
-                # -------------------------------
                 try:
                     stat_dict = torch.jit.load(weights_file)
                     logger.info("torch.jit.load is used to recovery the int8 model quantized by INC IPEX backend")

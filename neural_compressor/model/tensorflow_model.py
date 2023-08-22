@@ -399,7 +399,7 @@ def _get_graph_from_saved_model_v1(model):
         raise ValueError("SavedModels with assets/ directory are not supported.")
 
     from tensorflow.python.saved_model import loader
-    from tensorflow.python.framework import graph_util as tf_graph_util
+    from tensorflow.compat.v1 import graph_util as tf_graph_util
     graph = ops.Graph()
     import tensorflow as tf
     with session.Session(graph=graph) as sess:
@@ -1128,7 +1128,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
         if self.model_type == 'graph_def':
             return self.sess.graph.as_graph_def()
         from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
-        from tensorflow.python.framework import graph_util
+        from tensorflow.compat.v1 import graph_util
         graph_def = self.sess.graph.as_graph_def()
         graph_def = _parse_ckpt_bn_input(graph_def)
         return graph_util.convert_variables_to_constants(

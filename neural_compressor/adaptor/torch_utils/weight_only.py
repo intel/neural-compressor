@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 import math
 from typing import OrderedDict
 from .util import set_module
@@ -81,7 +82,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     # assert num_bits > 1, "symmetric scheme only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
-    if num_bits == 1:
+    if num_bits == 1:  # pragma: no cover
         maxq = torch.tensor(2 ** (num_bits - 1))
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
     max_val = torch.max(weight, 1)[0]
@@ -144,6 +145,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
     Returns:
         output: qdq weight.
     """
+    if num_bits <= 0:
+        return weight
     if group_size == -1 or weight.shape[1] < group_size:
         return qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile, 
                                 return_int=return_int, full_range=full_range)
@@ -205,9 +208,50 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             return weight
 
 
+def search_clip(m, num_bits, group_size, scheme, sym_full_range):
+    """Search best clip range of each linears in current block.
+
+    Args:
+        m (torch.nn.Module): torch module.
+        num_bits (int, optional): num bits.
+        group_size (int, optional): how many elements share one scale/zp.
+        scheme (str, optional): sym or asym.
+        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+    
+    Returns:
+        best_clip_ratio (float): best percentile of clip
+    
+    """
+    org_weight = m.weight.data
+    logger.info("Searching the best clip range with RTN algorithm")
+    best_error = float('inf')
+    best_clip_ratio = None
+    n_grid = 200
+    max_shrink = 0.2
+    history = []
+    for i_s in range(int(max_shrink * n_grid)):
+        ratio = (1 - i_s / n_grid) # 1, 0.805-1.0
+        cur_weight = quant_weight(
+            m.weight.data,
+            num_bits=num_bits, 
+            group_size=group_size, 
+            scheme=scheme,
+            full_range=sym_full_range,
+            quantile=ratio,
+        )
+        loss = (org_weight - cur_weight).float().pow(2).mean().item()
+        history.append(loss)
+        is_best = loss < best_error
+        if is_best:
+            best_error = loss
+            best_clip_ratio = ratio
+    logger.debug("The loss history of different clip range:{}".format(history))
+    logger.debug("The best clip ratio is {}".format(best_clip_ratio))
+    return best_clip_ratio
+
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
                  quantile=1.0, weight_config={}, return_int=False, 
-                 sym_full_range=False, **kwargs):
+                 sym_full_range=False, mse_range=False, **kwargs):
     """Quant the model with round to nearst method.
 
     Args:
@@ -231,6 +275,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                                      Defaults to False.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                      Defaults to False.
+        mse_range (bool, optional):  Whether search clip range.
+                                     Defaults to True.
 
     Returns:
         model: fake quantized torch module
@@ -258,9 +304,11 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                         f"scheme={scheme}, quantile={quantile}")
         if num_bits <= 0:
-            logger.info(f"skip {name}")
+            logger.info(f"Skip {name}")
             continue
         weight = m.weight
+        if mse_range:
+            quantile = search_clip(m, num_bits, group_size, scheme, sym_full_range)
         if return_int:
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
@@ -288,127 +336,27 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             m.weight.data.copy_(q_weight)
     return model
 
-def gptq_quantize(model, weight_config={}, dataloader=None, device=None):
+def gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_max_length = True, device=None):
     """Run weight-only quantization with """
     # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
-    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, device)
+    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, nsamples, use_max_length, device)
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
 
-def get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, 
-                            calib_func=None):
-    """A help function to get input and output tensor of modules in module_name_list.
-
-    Args:
-        model: torch model.
-        module_hook_config (dict, optional): required module name for input/output. Defaults to {}.
-            For example:
-                module_hook_config = {
-                    'fc1': ['output'],
-                    'fc2': ['input', 'output']
-                }
-        dataloader: dataloader for model input.
-        iters: iterations for inference.
-        calib_func: a custom inference function to replace dataloader and iters.
-
-    Returns:
-        input_values, output_values: recorded input_values, output_values.
-    """
-    input_values, output_values = {}, {}
-    def _save_input_output_hook(name):
-        """
-        A forward hook to save input and output values of a module
-            param name: the module name
-            return: A hook function
-        """
-        def save_input_hook(module, inputs):
-            input = inputs[0]
-            if name in input_values:
-                try:
-                    input_values[name] = torch.cat((input_values[name], input), 0)
-                except Exception as e:
-                    logger.error(e)
-                    assert False, "Please unify the input shape for AWQ algorithm calibration."
-            else:
-                input_values[name] = input
-        def save_output_hook(module, inputs, outputs):
-            if isinstance(outputs, tuple):
-                outputs = outputs[0]
-            if name in output_values:
-                try:
-                    output_values[name] = torch.cat((output_values[name], outputs), 0)
-                except Exception as e:
-                    logger.error(e)
-                    assert False, "Please unify the input shape for AWQ algorithm calibration."
-            else:
-                output_values[name] = outputs
-        return save_input_hook, save_output_hook
-
-    hook_list = []
-    for name, module in model.named_modules():
-        if name in module_hook_config:
-            save_input_hook, save_output_hook = _save_input_output_hook(name)
-            require_list = module_hook_config[name]
-            if 'input' in require_list:
-                hook_list.append(
-                    module.register_forward_pre_hook(save_input_hook))
-            if 'output' in require_list:
-                hook_list.append(
-                    module.register_forward_hook(save_output_hook))
-    if calib_func:
-        calib_func(model)
-    else:
-        from .smooth_quant import model_forward
-        model_forward(model, dataloader, iters, device='cpu')
-    for h in hook_list:
-        h.remove()
-    return input_values, output_values
-
 
 @torch.no_grad()
-def _get_weight_scale(weight, q_group_size=-1):
-    org_shape = weight.shape
-    if q_group_size > 0:
-        weight = weight.view(-1, q_group_size)
-    scale = weight.abs() / weight.abs().amax(dim=1, keepdim=True)
-    scale = scale.view(org_shape)
-    scale = scale.mean(0)
-    return scale
-
-
-@torch.no_grad()
-def _get_act_scale(x):
-    return x.abs().view(-1, x.shape[-1]).mean(0)
-
-
-def _update_input_with_scale(args, kwargs, scales):
-    new_args, new_kwargs = args, kwargs
-    for i, v in enumerate(args):
-        if isinstance(v, torch.Tensor):
-            try:
-                new_args[i] = torch.div(v, scales.view(1, 1, -1))
-            except:
-                new_args[i] = v
-    for k, v in kwargs.items():
-        if isinstance(v, torch.Tensor):
-            try:
-                new_kwargs[k] = torch.div(v, scales.view(1, 1, -1))
-            except:
-                new_kwargs[k] = v
-    return new_args, new_kwargs
-
-
-@torch.no_grad()
-def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_samples=128, 
-                 auto_scale=True, mse_range=True, calib_func=None, n_blocks=5, 
-                 return_int=False, sym_full_range=False):
+def awq_quantize(model, bits=4,  group_size=32, scheme='asym', weight_config={}, 
+                 example_inputs=None, dataloader=None, n_samples=128, calib_func=None,
+                 auto_scale=True, mse_range=True, folding=False, return_int=False, 
+                 sym_full_range=False):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
         model (torch.nn.Module): torch model.
+        example_inputs: example_inputs.
         weight_config (dict, optional): contains all info required by AWQ. Defaults to {}.
             For example, 
                 weight_config={
@@ -424,8 +372,9 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
             For example,
                 absorb_dict = {
                     # 'absorb_layer': absorbed_layer
-                    'fc1': ['fc2', 'fc3']
-                } # in this case, fc2 and fc3 need to share the same scale.
+                    'fc1': ['fc1', 'fc2', 'fc3']
+                } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
+                # self absorb module will replace with MulLinear, which contains torch.mul and module.
         n_samples: calibration sample number.
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
@@ -438,233 +387,28 @@ def awq_quantize(model, weight_config={}, absorb_dict={}, dataloader=None, n_sam
     Returns:
         model: fake quantized model
     """
+    from .awq import ActAwareWeightQuant
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    # collect module names to record their input/output for loss calculation.
-    module_for_loss_dict = OrderedDict()
-    # get the upper module if absorbed modules have the same absorb module.
-    for absorb, absorbed in absorb_dict.items():
-        # used as input for absob module
-        module_for_loss_dict[absorb] = set()
-        if len(absorbed) > 1:
-            split_dict = {}
-            split_absorb = absorb.split('.')
-            for ab in absorbed:
-                split_dict[ab] = ab.split('.')
-            for ab, sp_list in split_dict.items():
-                for i in range(len(sp_list)):
-                    if sp_list[i] != split_absorb[i]:
-                        group_name = '.'.join(sp_list[:i+1])
-                        module_for_loss_dict[absorb].add(group_name)
-                        break
-        else:
-            module_for_loss_dict[absorb].add(absorbed[0])
-
-    def calibration(module_name_list):
-        if calib_func:
-            input_values, output_values = get_module_input_output(
-                model, 
-                module_name_list, 
-                calib_func=calib_func,
-            )
-        else:
-            batch_size = dataloader.batch_size
-            iters = int(math.ceil(n_samples / batch_size))
-            if n_samples % batch_size != 0:
-                logger.info("calibration samples increase from {} to {} due to batch_size is {}".format(
-                    n_samples, iters*batch_size, batch_size,
-                ))
-            input_values, output_values = get_module_input_output(
-                model, 
-                module_name_list, 
-                dataloader=dataloader, 
-                iters=iters,
-            )
-        return input_values, output_values
-
-    layer_args = {}
-    layer_kwargs = {}
-    # to fetch kwargs which torch hook cannot handle
-    class Catcher(torch.nn.Module):
-        def __init__(self, module, name):
-            super().__init__()
-            self.module = module
-            self.module_name = name
-
-        def forward(self, *args, **kwargs):
-            if self.module_name not in layer_args:
-                layer_args[self.module_name] = list(args)
-                layer_kwargs[self.module_name] = kwargs
-            else:
-                # to concat different batches
-                for i, v in enumerate(args):
-                    if isinstance(v, torch.Tensor):
-                        layer_args[self.module_name][i] = \
-                                    torch.cat([layer_args[self.module_name][i], v], dim=0)
-                for k, v in kwargs.items():
-                    if isinstance(v, torch.Tensor):
-                        layer_kwargs[self.module_name][k] = \
-                                    torch.cat([layer_kwargs[self.module_name][k], v], dim=0)
-            return self.module.forward(*args, **kwargs)
-
-    if auto_scale or mse_range:
-        from .util import fetch_module, set_module
-        block_num = n_blocks
-        module_num = math.ceil(len(absorb_dict) / block_num)
-        logger.info(f"AWQ search splits the model into {block_num} blocks to avoid OOM, " +\
-                    f"each block contains {module_num} modules")
-        for idx, (absorb, absorbed) in enumerate(absorb_dict.items()):
-            # Split module_name_list to avoid OOM when recording output tensors.
-            if idx % module_num == 0:
-                layer_args = {}
-                layer_kwargs = {}
-                part_module_hook_config = {}
-                logger.info(f"AWQ search calibration round {idx//module_num + 1}")
-                for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + module_num):
-                        part_module_hook_config[name] = ['output'] # fetch input tensor
-                        for i in module_for_loss_dict[name]:
-                            # use Catcher to record input args and kwargs
-                            tmp_module = fetch_module(model, i)
-                            new_module = Catcher(tmp_module, i)
-                            set_module(model, i, new_module)
-                            part_module_hook_config[i] = ['output'] # fetch output tensor
-                input_values, output_values = calibration(part_module_hook_config)
-                # recover Catcher
-                for id, name in enumerate(module_for_loss_dict):
-                    if idx <= id < (idx + module_num):
-                        for i in module_for_loss_dict[name]:
-                            # use Catcher to record input args and kwargs
-                            tmp_module = fetch_module(model, i)
-                            set_module(model, i, tmp_module.module)
-
-            logger.info(f"Processing module: {absorb}:{absorbed}")
-            weight = torch.cat([fetch_module(model, _m).weight for _m in absorbed], dim=0)
-            w_max = _get_weight_scale(
-                weight, q_group_size=weight_config[absorbed[0]]['group_size'])
-            del weight
-            x_max = _get_act_scale(output_values[absorb])
-            absorbed_modules = {_m: fetch_module(model, _m) for _m in absorbed}
-            org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
-            org_out = {}
-            for loss_module_name in module_for_loss_dict[absorb]:
-                out = output_values[loss_module_name]
-                if isinstance(out, tuple):
-                    out = out[0]
-                org_out[loss_module_name] = out
-            for loss_module_name in module_for_loss_dict[absorb]:
-                blockes = {_m: fetch_module(model, _m) for _m in module_for_loss_dict[absorb]}
-
-            if auto_scale:
-                logger.info("Searching best scales with AWQ algorithm")
-                best_error = float('inf')
-                best_scales = None
-                best_scale_alpha = None
-                n_grid = 20
-                history = []
-
-                for ratio in range(n_grid):
-                    ratio = ratio * 1 / n_grid
-                    scales = (x_max.pow(ratio) / w_max.pow(1-ratio)
-                            ).clamp(min=1e-4).view(-1)
-                    scales = scales / (scales.max() * scales.min()).sqrt()
-                    for name, module in absorbed_modules.items():
-                        module.weight.data = module.weight.data.mul(scales.view(1, -1))
-                        module.weight.data = quant_weight(
-                            module.weight.data,
-                            num_bits=weight_config[name]['bits'], 
-                            group_size=weight_config[name]['group_size'], 
-                            scheme=weight_config[name]['scheme'],
-                        ) / scales.view(1, -1)
-
-                    loss = 0
-                    for name, block in blockes.items():
-                        out = block(*layer_args[name], **layer_kwargs[name])
-                        if isinstance(out, tuple):
-                            out = out[0]
-                        loss += (org_out[name] - out).float().pow(2).mean().item()  # float prevents overflow
-                    history.append(loss)
-                    is_best = loss < best_error
-                    if is_best:
-                        best_error = loss
-                        best_scales = scales
-                        best_scale_alpha = ratio
-                    for name, module in absorbed_modules.items():
-                        module.load_state_dict(org_stat[name])
-
-                logger.debug("The loss history of different scale:{}".format(history))
-                logger.debug("The best alpha for scale: {}:{}".format(absorb, best_scale_alpha))
-                assert best_scales is not None, "Loss is infinity! Cannot find the correct scale."
-                best_scales = best_scales.view(-1)
-                assert torch.isnan(best_scales).sum() == 0, best_scales
-                scales = best_scales.detach()
-                # update absorb model
-                absorb_module = fetch_module(model, absorb)
-                if len(absorb_module.weight.shape) == 1:
-                    absorb_module.weight.div_(scales)  # for LayerNorm
-                else:
-                    absorb_module.weight.div_(scales.view(-1, 1))
-                if absorb_module.bias is not None:
-                    absorb_module.bias.div_(scales.view(-1))
-                # update absorbed model
-                for name in absorbed:
-                    absorbed_module = fetch_module(model, name)
-                    absorbed_module.weight.mul_(scales.view(1, -1))
-
-            if mse_range:
-                logger.info("Searching the best clip range with AWQ algorithm")
-                best_error = float('inf')
-                best_clip_ratio = None
-                n_grid = 100
-                max_shrink = 0.1
-                history = []
-                org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
-
-                for name, module in absorbed_modules.items():
-                    for i_s in range(int(max_shrink * n_grid)):
-                        ratio = (1 - i_s / n_grid) # 1, 0.95-0.55
-                        module.weight.data = quant_weight(
-                            module.weight.data,
-                            num_bits=weight_config[name]['bits'], 
-                            group_size=weight_config[name]['group_size'], 
-                            scheme=weight_config[name]['scheme'],
-                            quantile=ratio,
-                        )
-
-                        loss = 0
-                        for n, block in blockes.items():
-                            if n in name:
-                                # preprocess input with existing scale
-                                if auto_scale:
-                                    new_args, new_kwargs = _update_input_with_scale(
-                                                    layer_args[n], layer_kwargs[n], scales)
-                                else:
-                                    new_args, new_kwargs = layer_args[n], layer_kwargs[n]
-                                out = block(*new_args, **new_kwargs)
-                                if isinstance(out, tuple):
-                                    out = out[0]
-                                loss += (org_out[n] - out).float().pow(2).mean().item()  # float prevents overflow
-                        history.append(loss)
-                        is_best = loss < best_error
-                        if is_best:
-                            best_error = loss
-                            best_clip_ratio = ratio
-                        module.load_state_dict(org_stat[name])
-
-                    logger.debug("The loss history of different clip range:{}".format(history))
-                    weight_config[name]['quantile'] = best_clip_ratio
-                    logger.debug("The best clip ratio for {}:{}".format(name, best_clip_ratio))
-
-    # apply quantization and clip
-    logger.info("Quantizing the AWQ optimized fp32 model")
-    model = rtn_quantize(
+    awq = ActAwareWeightQuant(
         model, 
-        num_bits=-1, 
-        weight_config=weight_config, 
-        return_int=return_int,
-        sym_full_range=sym_full_range,
+        example_inputs=example_inputs, 
+        calib_func=calib_func, 
+        dataloader=dataloader, 
+        n_samples=n_samples,
+        bits=bits,  
+        group_size=group_size, 
+        scheme=scheme, 
+        sym_full_range=sym_full_range, 
+        weight_config=weight_config
     )
-    logger.info("AWQ quantization is done.")
-    return model
+    qdq_model = awq.quantize(
+        auto_scale=auto_scale,
+        mse_range=mse_range,
+        folding=folding,
+        return_int=return_int,
+    )
+    return qdq_model
+
 
 def teq_quantize(model, weight_config={}, absorb_to_layer={}, extra_config={},
         dataloader= None, calib_func=None, example_inputs=None):

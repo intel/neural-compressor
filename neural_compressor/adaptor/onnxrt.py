@@ -64,16 +64,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
         self.domain = framework_specific_info.get("domain", "auto")
         self.recipes = framework_specific_info.get("recipes", {})
+        self._check_backend_available(framework_specific_info["backend"])
         self.backend = PROVIDERS[framework_specific_info["backend"]]
         self.performance_only = framework_specific_info.get("performance_only", False)
         self.use_bf16 = framework_specific_info.get("use_bf16", False) and \
             self.backend in ort.get_available_providers()
         self.use_fp16 = framework_specific_info.get("use_fp16", False)
-
-        if self.backend not in ort.get_all_providers():
-            logger.warning("{} backend is not supported in current environment, "
-                "supported backends: {}".format(ONNXRT_BACKENDS[self.backend],
-                [ONNXRT_BACKENDS[i] for i in ort.get_all_providers() if i in ONNXRT_BACKENDS]))
 
         # get quantization format according to framework_specific_info
         if (not self.dynamic and "format" in framework_specific_info and \
@@ -326,6 +322,23 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         tmp_model.topological_sort()
         return tmp_model
     
+    def _check_backend_available(self, backend):
+        """Check backend is available or not."""
+        if backend not in PROVIDERS:
+            assert False, "'{}' backend is not supported, " \
+                "supported backends include {}".format(backend, \
+                [provider for provider in PROVIDERS.keys()])
+        
+        if backend in ["onnxrt_trt_ep", "onnxrt_cuda_ep"] and \
+            self.device != "gpu":
+            logger.warning("Backend `{}` requires a GPU device. Reset device to 'gpu'.".format(backend))
+            self.device = "gpu"
+
+        ep = PROVIDERS[backend]
+        if ep not in ort.get_available_providers():
+            logger.warning("Specified provider '{}' is not in available provider names. "\
+                "Fallback to available providers: '{}'".format(ep, ", ".join(ort.get_available_providers())))
+
     def _reset_calib_iter(self, data_loader, cfg_calib_sampling_size, cfg_calib_iter):
         """Check and reset calibration iterations according to calib_sampleing_size and dataloader batch_size."""
         if isinstance(data_loader, BaseDataLoader):

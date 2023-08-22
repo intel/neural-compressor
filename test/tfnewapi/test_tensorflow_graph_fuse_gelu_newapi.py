@@ -6,7 +6,7 @@ from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu import 
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 class TestGeluFusion(unittest.TestCase):
     def gelu(self, input_tensor, mul_value=0.5, addv2_value=1.0, sqrt_value=2.0):
