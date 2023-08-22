@@ -275,7 +275,7 @@ class GPTQuantizer(object):
                 try:
                     length = batch['input_ids'].shape[-1]
                 except:
-                    logger("Please make sure your dict'like data contains key of 'input_ids'.")
+                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
                     continue
                 batch_final = {}
                 if length > self.model.seqlen:
@@ -327,7 +327,7 @@ class GPTQuantizer(object):
                 try:
                     length = batch['input_ids'].shape[-1]
                 except:
-                    logger("Please make sure your dict'like data contains key of 'input_ids'.")
+                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
                     continue
                 batch_final = {}
                 if length > self.model.seqlen:
