@@ -1208,7 +1208,7 @@ class GraphTrace:
         optimize_numerics = False
         if hasattr(model, "device"):
             orig_device = model.device
-            if hasattr(model, "type"):
+            if hasattr(model.device, "type"):
                 orig_device = model.device.type
         else:
             orig_device = "cpu"
