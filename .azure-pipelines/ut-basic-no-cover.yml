@@ -99,7 +99,7 @@ stages:
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
-  - stage: IPEX 2.1
+  - stage: IPEX
     displayName: Unit Test IPEX 2.1 for SQ algo
     dependsOn: []
     jobs:
