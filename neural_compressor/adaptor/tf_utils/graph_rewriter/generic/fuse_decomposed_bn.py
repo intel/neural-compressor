@@ -26,7 +26,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.platform import flags as flags_lib
 from tensorflow.python.platform import tf_logging
