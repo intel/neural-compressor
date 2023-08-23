@@ -4,7 +4,7 @@ import subprocess
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=False, default="")
+    parser.add_argument("--input_model", type=str, required=False, default="microsoft/layoutlm-base-uncased")
     parser.add_argument("--output_model", type=str, required=True)
     return parser.parse_args()
 
