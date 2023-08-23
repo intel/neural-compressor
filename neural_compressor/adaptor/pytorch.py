@@ -3385,11 +3385,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             from .torch_utils.layer_wise_quant import LayerWiseQuant
 
             model_path = recipe_cfgs['layer_wise_quant_args'].get('model_path', None)
+            smooth_quant = recipe_cfgs['layer_wise_quant_args'].get('smooth_quant', False)
+            alpha = recipe_cfgs['layer_wise_quant_args'].get('smooth_quant_alpha', 0.5)
             assert model_path is not None,\
                 "the layer_wise_quant_args should have args model_path to load the weight of model."
             device = recipe_cfgs['layer_wise_quant_args'].get('decvice', 'cpu')
-            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, device=device)
-            q_model._model = lw_quant.quantize(dataloader, clean_weight=False)
+            lw_quant = LayerWiseQuant(q_model._model, model_path, self.fx_op_cfgs, calib_data=dataloader,
+                                      device=device, smooth_quant=smooth_quant, alpha=alpha)
+            q_model._model = lw_quant.quantize(clean_weight=False)
+            tune_cfg['recipe_cfgs']['lwq_layers'] = lw_quant.quantized_layers
+            q_model.q_config = copy.deepcopy(tune_cfg)
             return q_model
         
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list

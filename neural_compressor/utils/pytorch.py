@@ -309,6 +309,15 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         model.load_state_dict(stat_dict)
         return model
 
+    if recipe_cfgs and recipe_cfgs.get('layer_wise_quant', False) \
+            and approach_quant_mode != 'dynamic':
+        from ..adaptor.torch_utils.model_wrapper import _wrap_lwq_layer
+        op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
+        fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
+        model = _wrap_lwq_layer(model, recipe_cfgs['lwq_layers'], fx_op_cfgs)
+        model.load_state_dict(stat_dict)
+        return model
+
     for _, op_cfg in tune_cfg['op'].items():
         if 'quant_mode' not in op_cfg['activation']:
             op_cfg['activation']['quant_mode'] = approach_quant_mode

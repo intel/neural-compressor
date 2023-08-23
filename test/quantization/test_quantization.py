@@ -158,7 +158,7 @@ def build_fake_yaml6():
 
 def build_fake_model():
     import tensorflow as tf
-    from tensorflow.python.framework import graph_util
+    from tensorflow.compat.v1 import graph_util
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
@@ -301,7 +301,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_resume(self):
         import tensorflow as tf
-        from tensorflow.python.framework import graph_util
+        from tensorflow.compat.v1 import graph_util
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
         tf.compat.v1.set_random_seed(1)
