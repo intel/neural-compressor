@@ -389,10 +389,6 @@ class GPTQuantizer(object):
                     self.model(**batch)
                 else:
                     self.model(batch.to(self.device))
-                # if isinstance(batch, tuple) or isinstance(batch, list):
-                #     self.model(batch[0].to(self.device))
-                # else:
-                #     self.model(batch.to(self.device))
             except ValueError:
                 break
 
@@ -495,10 +491,6 @@ class GPTQuantizer(object):
                     self.model(**batch)
                 else:
                     self.model(batch)
-                # if isinstance(batch, tuple) or isinstance(batch, list):
-                #     self.model(batch[0].to(self.device))
-                # else:
-                #     self.model(batch.to(self.device))
             except ValueError:
                 pass
         # output inp data shape
