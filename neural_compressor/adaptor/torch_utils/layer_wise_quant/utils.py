@@ -246,11 +246,11 @@ def clean_module_weight(module):
         old_value = getattr(submodule, n)
         with torch.no_grad():
             if is_buffer:
-                submodule._buffers[n] = torch.zeros([0], device="meta")
+                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
             else:
                 param_cls = type(submodule._parameters[n])
                 kwargs = submodule._parameters[n].__dict__
-                new_value = torch.zeros([0], device="meta")
+                new_value = torch.zeros(old_value.shape, device="meta")
                 new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
                 submodule._parameters[n] = new_value
     gc.collect()
