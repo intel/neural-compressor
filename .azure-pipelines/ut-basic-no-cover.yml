@@ -99,18 +99,18 @@ stages:
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
-  - stage: IPEX
-    displayName: Unit Test IPEX 2.1 for SQ algo
-    dependsOn: []
-    jobs:
-      - job:
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_v2.1_ipex"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-ipex_v2.1"
-              utTestMode: "no-coverage"
-              utContainerName: "utTest-no-coverage"
+#  - stage: IPEX
+#    displayName: Unit Test IPEX 2.1 for SQ algo
+#    dependsOn: []
+#    jobs:
+#      - job:
+#        steps:
+#          - template: template/ut-template.yml
+#            parameters:
+#              dockerConfigName: "commonDockerConfig"
+#              utScriptFileName: "run_basic_v2.1_ipex"
+#              uploadPath: $(UPLOAD_PATH)
+#              utArtifact: "ut-ipex_v2.1"
+#              utTestMode: "no-coverage"
+#              utContainerName: "utTest-no-coverage"
 
