@@ -270,7 +270,7 @@ class GPTQuantizer(object):
                 else:
                     batch_final = batch[0]
             # dict
-            elif isinstance(batch, dict): # pragma: no cover
+            elif isinstance(batch, dict):
                 try:
                     length = batch['input_ids'].shape[-1]
                 except:
