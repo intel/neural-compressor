@@ -128,6 +128,9 @@ After prepare step is done, we add tune and benchmark code to generate quantized
         q_model.graph_def = strip_iterator(q_model.graph_def)
     q_model.save(FLAGS.output_model)
 ```
+
+You can also add the optional parameter `op_type_dict={'matmul':{'weight':{'granularity':['per_channel']}}}` in `PostTrainingQuantConfig`, which enables the per-channel quantization of MatMul, to get an int8 model with better accuracy.
+
 #### Benchmark
 ```python
     from neural_compressor.benchmark import fit

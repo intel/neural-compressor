@@ -5,7 +5,7 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 class TestFoldBatchnorm(unittest.TestCase):
     tf.compat.v1.disable_eager_execution()
     x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
