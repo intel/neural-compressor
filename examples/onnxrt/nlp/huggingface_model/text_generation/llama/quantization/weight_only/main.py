@@ -259,7 +259,7 @@ if __name__ == "__main__":
                 dataloader = GPTQDataloader(os.path.join(args.model_path, model), seqlen=args.seqlen, batch_size=1)
                 config = PostTrainingQuantConfig(
                     approach="weight_only",
-                    calibration_sampling_size=[128],
+                    calibration_sampling_size=[8],
                     op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
                     )
 
