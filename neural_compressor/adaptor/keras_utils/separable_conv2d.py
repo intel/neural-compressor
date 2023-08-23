@@ -21,9 +21,15 @@ from tensorflow.keras import activations
 from tensorflow.keras import constraints
 from tensorflow.keras import initializers
 from tensorflow.keras import regularizers
-from keras.utils import conv_utils # pylint: disable=E0401
-from keras.layers.convolutional.base_separable_conv import SeparableConv # pylint: disable=E0401
 from tensorflow import quantization
+
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+if version1_gte_version2(tf.__version__, '2.13.0'):
+    from keras.src.utils import conv_utils # pylint: disable=E0401
+    from keras.src.layers.convolutional.base_separable_conv import SeparableConv # pylint: disable=E0401
+else:
+    from keras.utils import conv_utils # pylint: disable=E0401
+    from keras.layers.convolutional.base_separable_conv import SeparableConv # pylint: disable=E0401
 
 class QSeparableConv2D(SeparableConv):
     def __init__(
