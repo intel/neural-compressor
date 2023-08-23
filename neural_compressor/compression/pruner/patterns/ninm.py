@@ -153,7 +153,7 @@ class PytorchPatternNInM(PytorchBasePattern):
             data = data.permute(0, 2, 3, 1)  # cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
         if len(data.shape) == 3:
-            data = data.permute(0, 2, 1)  # cout,k,k,cin
+            data = data.permute(0, 2, 1)  # cout,k,cin
             data = data.reshape(data.shape[0], -1)
         return data
 
@@ -168,7 +168,7 @@ class PytorchPatternNInM(PytorchBasePattern):
         """
         if len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
-            data = data.permute(0, 3, 2, 1)
+            data = data.permute(0, 3, 1, 2)
         if len(orig_shape) == 3:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
             data = data.permute(0, 2, 1)
