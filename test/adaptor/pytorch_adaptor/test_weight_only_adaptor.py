@@ -375,14 +375,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.allclose(values['fc1']['output'][0], values['fc2']['input'][0]))
         self.assertTrue(torch.allclose(values['fc2']['output'][0], out))
 
-
-    def test_GPTQ_quant(self):
+    def test_GPTQ_fixed_length_quant(self):
         class GPTQLLMDataLoader():
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
-                for i in range(2):
+                for i in range(10):
                     yield torch.ones([1, 512], dtype=torch.long)
 
         class GPTQLLMDataLoaderList():
@@ -390,11 +389,20 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 self.batch_size = 1
 
             def __iter__(self):
-                for i in range(2):
+                for i in range(10):
                     yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
+    
+        class GPTQLLMDataLoaderDict():
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                for i in range(10):
+                    yield {'input_ids': torch.ones([1, 512], dtype=torch.long), 'attention_mask': torch.ones([1, 512], dtype=torch.long)}
 
         dataloader = GPTQLLMDataLoader()
         dataloader_list = GPTQLLMDataLoaderList()
+        dataloader_dict = GPTQLLMDataLoaderDict()
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
@@ -431,7 +439,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
-        # case 2: list or tuple
+        # # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
         q_model = quantization.fit(model_2, conf, calib_dataloader=dataloader_list,)
@@ -441,8 +449,111 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+    
+        # # case 2: list or tuple
+        model_3 = copy.deepcopy(self.gptj)
+        input = torch.ones([1, 512], dtype=torch.long)
+        q_model = quantization.fit(model_3, conf, calib_dataloader=dataloader_dict,)
+        q_model.save('saved')
+        out1 = q_model.model(input)
+        compressed_model = q_model.export_compressed_model()
+        out2 = compressed_model(input)
+        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
-        print("GPTQ Done")
+        print("GPTQ with fixed length Done")
+
+    def test_GPTQ_unfixed_length_quant(self):
+        import random
+        class GPTQLLMDataLoader():
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                for i in range(10):
+                    length = random.randint(1, 1024)
+                    yield torch.ones([1, length], dtype=torch.long)
+
+        class GPTQLLMDataLoaderList():
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                for i in range(10):
+                    length = random.randint(1, 1024)
+                    yield (torch.ones([1, length], dtype=torch.long), torch.ones([1, length], dtype=torch.long))
+    
+        class GPTQLLMDataLoaderDict():
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                for i in range(10):
+                    length = random.randint(1, 1024)
+                    yield {'input_ids': torch.ones([1, length], dtype=torch.long), 'attention_mask': torch.ones([1, length], dtype=torch.long)}
+
+        dataloader = GPTQLLMDataLoader()
+        dataloader_list = GPTQLLMDataLoaderList()
+        dataloader_dict = GPTQLLMDataLoaderDict()
+
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_type_dict={
+                '.*':{ 	# re.match
+                    "weight": {
+                        'bits': 4, # 1-8 bits 
+                        'group_size': 8,  # -1 (per-channel)
+                        'scheme': 'sym', 
+                        'algorithm': 'GPTQ', 
+                    },
+                },
+            },
+            op_name_dict={
+                '.*lm_head':{ 	# re.match
+                    "weight": {
+                        'dtype': 'fp32'
+                    },
+                },
+            },
+            recipes={
+                'gptq_args':{'percdamp': 0.01, 'act_order': False, 'use_max_length': True},
+            },
+        )
+        
+        # case 1: tensor
+        model_1 = copy.deepcopy(self.gptj)
+        input = torch.ones([1, 512], dtype=torch.long)
+        q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
+        q_model.save('saved')
+        out1 = q_model.model(input)
+        compressed_model = q_model.export_compressed_model()
+        out2 = compressed_model(input)
+        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+
+        # # case 2: list or tuple
+        model_2 = copy.deepcopy(self.gptj)
+        input = torch.ones([1, 512], dtype=torch.long)
+        q_model = quantization.fit(model_2, conf, calib_dataloader=dataloader_list,)
+        q_model.save('saved')
+        out1 = q_model.model(input)
+        compressed_model = q_model.export_compressed_model()
+        out2 = compressed_model(input)
+        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+    
+        # # case 2: list or tuple
+        model_3 = copy.deepcopy(self.gptj)
+        input = torch.ones([1, 512], dtype=torch.long)
+        q_model = quantization.fit(model_3, conf, calib_dataloader=dataloader_dict,)
+        q_model.save('saved')
+        out1 = q_model.model(input)
+        compressed_model = q_model.export_compressed_model()
+        out2 = compressed_model(input)
+        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+
+        print("GPTQ with fixed length Done")
 
     def test_TEQ_quant(self):
         class teq_inc_loader(object):
