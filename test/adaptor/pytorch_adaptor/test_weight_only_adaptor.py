@@ -14,8 +14,8 @@ from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, Weigh
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        self.fc1 = torch.nn.Linear(30, 40)
-        self.fc2 = torch.nn.Linear(40, 30)
+        self.fc1 = torch.nn.Linear(30, 50)
+        self.fc2 = torch.nn.Linear(50, 30)
         self.fc3 = torch.nn.Linear(30, 5)
 
     def forward(self, x):
@@ -410,8 +410,9 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 'gptq_args':{'percdamp': 0.01, 'act_order': False},
             },
         )
+        model_1 = copy.deepcopy(self.gptj)
         input = (torch.ones([1, 512], dtype=torch.long))
-        q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
+        q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
         q_model.save('saved')
         out1 = q_model.model(*input)
         compressed_model = q_model.export_compressed_model()

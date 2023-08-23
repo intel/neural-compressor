@@ -234,12 +234,22 @@ class GPTQuantizer(object):
         for batch in self.dataloader_original:
             if len(self.dataloader) == self.nsamples:
                 break
-            if batch[0].shape[-1] > self.model.seqlen:
-                i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
-                j = i + self.model.seqlen
-                batch_final = batch[0][:, i:j]
+            # list, tuple
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] > self.model.seqlen:
+                    i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    batch_final = batch[0][:, i:j]
+                else:
+                    batch_final = batch[0]
+            # tensor
             else:
-                batch_final = batch[0]
+                if batch.shape[-1] > self.model.seqlen:
+                    i = random.randint(0, batch.shape[-1] - self.model.seqlen - 1)
+                    j = i + self.model.seqlen
+                    batch_final = batch[:, i:j]
+                else:
+                    batch_final = batch
             self.dataloader.append(batch_final)
         if len(self.dataloader) < self.nsamples:
             logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
@@ -251,14 +261,26 @@ class GPTQuantizer(object):
         for batch in self.dataloader_original:
             if len(self.dataloader) == self.nsamples:
                 break
-            if batch[0].shape[-1] == unified_length:
-                inp = batch[0]
-            elif batch[0].shape[-1] > unified_length:
-                i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
-                j = i + unified_length
-                inp = batch[0][:, i:j]
+            # list & tuple
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] == unified_length:
+                    inp = batch[0]
+                elif batch[0].shape[-1] > unified_length:
+                    i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    inp = batch[0][:, i:j]
+                else:
+                    continue
+            # tensor
             else:
-                continue
+                if batch.shape[-1] == unified_length:
+                    inp = batch[0]
+                elif batch.shape[-1] > unified_length:
+                    i = random.randint(0, batch.shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    inp = batch[:, i:j]
+                else:
+                    continue
             self.dataloader.append(inp)
         if len(self.dataloader) < self.nsamples: # pragma: no cover
             logger.warning(f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
