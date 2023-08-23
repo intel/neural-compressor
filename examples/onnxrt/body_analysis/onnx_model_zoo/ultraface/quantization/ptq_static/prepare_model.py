@@ -51,10 +51,10 @@ def download_model(url, model_name, retry_times=5):
 
 
 def export_model(input_model, output_model):
-    # Convert opset version to 12 for more quantization capability.
+    # Convert opset version to 14 for more quantization capability.
     print("\nexport model...")
     model = onnx.load(input_model)
-    model = version_converter.convert_version(model, 12)
+    model = version_converter.convert_version(model, 14)
     onnx.save_model(model, output_model)
 
 

@@ -91,7 +91,7 @@ def export_model(model, output_model, max_len=128):
             (inputs['input_ids'], inputs['attention_mask'],
              inputs['token_type_ids']),  # model input (or a tuple for multiple inputs)
             output_model,  # where to save the model (can be a file or file-like object)
-            opset_version=11,  # the ONNX version to export the model
+            opset_version=14,  # the ONNX version to export the model
             do_constant_folding=True,  # whether to execute constant folding
             input_names=[
                 'input_ids',  # the model's input names

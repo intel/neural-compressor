@@ -83,7 +83,7 @@ def export_model(input_model, output_model):
             "--graphdef",
             "ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb",
             "--opset",
-            "13",
+            "14",
             "--output",
             output_model,
             "--inputs",

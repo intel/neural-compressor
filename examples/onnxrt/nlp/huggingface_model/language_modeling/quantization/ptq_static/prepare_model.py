@@ -77,7 +77,7 @@ def gpt2_test():
     with torch.no_grad():
         output_1 = model(input_ids_1)  # Models outputs are now tuples
 
-    save_model(args.output_model, model.cpu(), input_ids_1, output_1, opset_version=11, input_names=['input1'], dynamic_axes={'input1': [0, 1, 2]}) 
+    save_model(args.output_model, model.cpu(), input_ids_1, output_1, opset_version=14, input_names=['input1'], dynamic_axes={'input1': [0, 1, 2]}) 
 
 
 gpt2_test()

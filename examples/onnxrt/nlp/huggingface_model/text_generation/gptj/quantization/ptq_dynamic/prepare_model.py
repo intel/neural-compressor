@@ -14,7 +14,7 @@ def prepare_model(input_model, output_model):
     subprocess.run(
         [
             "python", "-m", "transformers.onnx", f"--model={input_model}", f"{output_model}/",
-            "--framework", "pt", "--opset", "13", "--feature=causal-lm-with-past"
+            "--framework", "pt", "--opset", "14", "--feature=causal-lm-with-past"
         ],
         stdout=subprocess.PIPE,
         text=True,

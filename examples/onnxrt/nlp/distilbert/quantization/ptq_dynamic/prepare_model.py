@@ -82,7 +82,7 @@ def export_onnx_model(args, model, onnx_model_path):
                     (inputs['input_ids'],
                     inputs['attention_mask']),              # model input (or a tuple for multiple inputs)
                     onnx_model_path,                        # where to save the model (can be a file or file-like object)
-                    opset_version=11,                       # the ONNX version to export the model
+                    opset_version=14,                       # the ONNX version to export the model
                     do_constant_folding=True,               # whether to execute constant folding
                     input_names=['input_ids',               # the model's input names
                                 'input_mask'],

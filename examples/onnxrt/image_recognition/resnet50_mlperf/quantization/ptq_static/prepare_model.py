@@ -72,7 +72,7 @@ def export_model(input_model, output_model):
             "--outputs",
             "softmax_tensor:0",
             "--opset",
-            "13",
+            "14",
         ],
         stdout=subprocess.PIPE,
         text=True,

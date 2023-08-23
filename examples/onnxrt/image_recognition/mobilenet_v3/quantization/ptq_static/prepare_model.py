@@ -65,7 +65,7 @@ def export_model(input_model, output_model):
             "-m",
             "tf2onnx.convert",
             "--opset",
-            "13",
+            "14",
             "--tflite",
             input_model,
             "--output",

@@ -39,7 +39,9 @@ if __name__ == "__main__":
                         choices=[
                             'mrm8488/spanbert-finetuned-squadv1',
                             'salti/bert-base-multilingual-cased-finetuned-squad',
-                            'bert-large-uncased-whole-word-masking-finetuned-squad'
+                            'distilbert-base-uncased-distilled-squad',
+                            'bert-large-uncased-whole-word-masking-finetuned-squad',
+                            'deepset/roberta-large-squad2'
                         ],
                         help='pretrained model name or path ')
     parser.add_argument("--output_model", type=str, required=True)
