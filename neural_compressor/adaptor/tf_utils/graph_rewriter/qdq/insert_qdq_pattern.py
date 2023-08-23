@@ -32,7 +32,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     """Insert Q/DQ pairs before quantizable ops."""
     def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
                  bf16_ops, quantized_nodes, device, performance_only, itex_mode):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
@@ -130,7 +130,6 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     weight_node = parent_node
                 else:
                     continue
-
             if computational_node_name in self.op_wise_config.keys():
                 op_wise_cfg = self.op_wise_config[computational_node_name]
                 per_channel = op_wise_cfg[0]
@@ -463,7 +462,6 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         insert_reshape = False
         shape_convert = None
         shape_revert = None
-
         # The weight node of BatchMatMul may have no value
         if 'value' in weight_node.attr and \
            host_op_type in ("Conv2D", "MatMul", "BatchMatMul", "BatchMatMulV2", "Conv3D", \
@@ -474,6 +472,12 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
                 elif host_op_type in ('Conv2D', 'Conv2DBackpropInput'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
+                elif host_op_type in ('MatMul'): # pragma: no cover
+                    if 'transpose_b' in weight_node.attr and weight_node.attr["transpose_b"].b: # pragma: no cover
+                        ranges = np.abs(float_tensor).max(axis=(1))
+                    else:
+                        # itex qdq needs to transpose this range
+                        ranges = np.abs(float_tensor).max(axis=(0))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1))
 
