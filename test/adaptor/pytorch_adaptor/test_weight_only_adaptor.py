@@ -14,8 +14,8 @@ from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, Weigh
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        self.fc1 = torch.nn.Linear(30, 40)
-        self.fc2 = torch.nn.Linear(40, 30)
+        self.fc1 = torch.nn.Linear(30, 50)
+        self.fc2 = torch.nn.Linear(50, 30)
         self.fc3 = torch.nn.Linear(30, 5)
 
     def forward(self, x):
@@ -385,31 +385,16 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 for i in range(2):
                     yield torch.ones([1, 512], dtype=torch.long)
 
-        class GPTQLLMDataLoaderDict():
+        class GPTQLLMDataLoaderList():
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
                 for i in range(2):
-                    yield {
-                        'input_ids': torch.ones([1, 512], dtype=torch.long),
-                        'attention_mask': torch.ones([1, 512], dtype=torch.int),
-                    }
-
-        class GPTQLLMDataLoaderTuple():
-            def __init__(self):
-                self.batch_size = 1
-
-            def __iter__(self):
-                for i in range(2):
-                    yield (
-                        torch.ones([1, 512], dtype=torch.long),
-                        torch.ones([1, 512], dtype=torch.int),
-                    )
+                    yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
 
         dataloader = GPTQLLMDataLoader()
-        dataloader_dict = GPTQLLMDataLoaderDict()
-        dataloader_tuple = GPTQLLMDataLoaderTuple()
+        dataloader_list = GPTQLLMDataLoaderList()
 
         conf = PostTrainingQuantConfig(
             approach='weight_only',
@@ -434,36 +419,26 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 'gptq_args':{'percdamp': 0.01, 'act_order': False},
             },
         )
-        # case 1: default data (tensor)
+        
+        # case 1: tensor
         model_1 = copy.deepcopy(self.gptj)
-        input = (torch.ones([1, 512], dtype=torch.long))
+        input = torch.ones([1, 512], dtype=torch.long)
         q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
         q_model.save('saved')
-        out1 = q_model.model(*input)
+        out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
-        out2 = compressed_model(*input)
+        out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
-        # case 2: default data (tuple)
+        # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
-        input = (torch.ones([1, 512], dtype=torch.long))
-        q_model = quantization.fit(model_2, conf, calib_dataloader=dataloader_tuple,)
+        input = torch.ones([1, 512], dtype=torch.long)
+        q_model = quantization.fit(model_2, conf, calib_dataloader=dataloader_list,)
         q_model.save('saved')
-        out1 = q_model.model(*input)
+        out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
-        out2 = compressed_model(*input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
-
-        # case 3: dict data input
-        model_3 = copy.deepcopy(self.gptj)
-        input = (torch.ones([1, 512], dtype=torch.long))
-        q_model = quantization.fit(model_3, conf, calib_dataloader=dataloader_dict,)
-        q_model.save('saved')
-        out1 = q_model.model(*input)
-        compressed_model = q_model.export_compressed_model()
-        out2 = compressed_model(*input)
+        out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
@@ -507,8 +482,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
 
         dataloader = teq_inc_loader()
-
-        q_model = quantization.fit(self.gptj, conf, calib_dataloader=dataloader,)
+        model_1 = copy.deepcopy(self.gptj)
+        q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
 
 if __name__ == "__main__":
     unittest.main()

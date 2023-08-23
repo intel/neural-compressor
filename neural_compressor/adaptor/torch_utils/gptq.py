@@ -261,7 +261,7 @@ class GPTQuantizer(object):
             # process data, depends on its data type.
             if len(self.dataloader) == self.nsamples:
                 break
-            # list & tuple
+            # list, tuple
             if isinstance(batch, list) or isinstance(batch, tuple):
                 if batch[0].shape[-1] > self.model.seqlen:
                     i = random.randint(0, batch[0].shape[-1] - self.model.seqlen - 1)
@@ -269,7 +269,6 @@ class GPTQuantizer(object):
                     batch_final = batch[0][:, i:j]
                 else:
                     batch_final = batch[0]
-                self.dataloader.append(batch_final)
             # dict
             elif isinstance(batch, dict): # pragma: no cover
                 try:
@@ -289,7 +288,6 @@ class GPTQuantizer(object):
                             batch_final[key] = batch[key]
                 else:
                     batch_final = batch
-                self.dataloader.append(batch_final)
             # tensor
             else:
                 if batch.shape[-1] > self.model.seqlen:
@@ -298,7 +296,7 @@ class GPTQuantizer(object):
                     batch_final = batch[:, i:j]
                 else:
                     batch_final = batch
-                self.dataloader.append(batch_final)
+            self.dataloader.append(batch_final)
 
         if len(self.dataloader) < self.nsamples:
             logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
@@ -330,28 +328,32 @@ class GPTQuantizer(object):
                     logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
                     continue
                 batch_final = {}
-                if length > self.model.seqlen:
+                if length == self.model.seqlen:
+                    batch_final = batch
+                elif length > self.model.seqlen:
                     i = random.randint(0, length - self.model.seqlen - 1)
                     j = i + self.model.seqlen
                     # may have to slice every sequence related data
                     for key in batch.keys():
                         if isinstance(batch[key], torch.Tensor):
-                            batch_final[key] = batch[key][:, i:j] # slice on sequence length dim
+                            batch_final[key] = batch[key][:, i:j] # slice on sequence length dim with same position
                         else:
                             batch_final[key] = batch[key]
-                elif length == self.model.seqlen:
-                    batch_final = batch
-                self.dataloader.append(batch_final)
+                else:
+                    # not match max length, not include in target dataset
+                    continue
             # tensor
             else:
-                if batch.shape[-1] > self.model.seqlen:
-                    i = random.randint(0, batch.shape[-1] - self.model.seqlen - 1)
-                    j = i + self.model.seqlen
+                if batch.shape[-1] == unified_length:
+                    batch_final = batch
+                elif batch.shape[-1] > unified_length:
+                    i = random.randint(0, batch.shape[-1] - unified_length - 1)
+                    j = i + unified_length
                     batch_final = batch[:, i:j]
                 else:
-                    batch_final = batch
-                self.dataloader.append(batch_final)
-
+                    # not match max length, not include in target dataset
+                    continue
+            self.dataloader.append(batch_final)
         if len(self.dataloader) < self.nsamples: # pragma: no cover
             logger.warning(f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
             but only {len(self.dataloader)} samples satisfy your setting. You may choose smaller 'model.seqlen' value.")
