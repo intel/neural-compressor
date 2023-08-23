@@ -106,7 +106,7 @@ Classes
    :param outputs: A list of strings containing the outputs of model. Default is an empty list.
    :type outputs: list, optional
    :param backend: Backend name for model execution. Supported values include: 'default', 'itex',
-                   'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'.
+                   'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep'.
                    Default value is 'default'.
    :type backend: str, optional
    :param warmup: The number of iterations to perform warmup before running performance tests.
@@ -195,7 +195,8 @@ Classes
 
    :param device: Support 'cpu' and 'gpu'.
    :param backend: Backend for model execution.
-                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                   'onnxrt_dml_ep'
    :param domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
                   Adaptor will use specific quantization settings for different domains automatically, and
                   explicitly specified quantization settings will override the automatic setting.
@@ -297,7 +298,8 @@ Classes
 
    :param device: Support 'cpu' and 'gpu'.
    :param backend: Backend for model execution.
-                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                   'onnxrt_dml_ep'
    :param inputs: Inputs of model, only required in tensorflow.
    :param outputs: Outputs of model, only required in tensorflow.
    :param op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
@@ -630,8 +632,8 @@ Classes
                   Support 'cpu' and 'gpu', default is 'cpu'.
    :type device: str, optional
    :param backend: Backend for model execution.
-                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
-                   default is 'default'.
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                   'onnxrt_dml_ep'. Default is 'default'.
    :type backend: str, optional
    :param precisions: Target precision for mix precision conversion.
                       Support 'bf16' and 'fp16', default is 'bf16'.

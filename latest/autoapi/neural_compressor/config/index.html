@@ -235,7 +235,7 @@ The tuning history was automatically saved in the workspace directory</p>
 <li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the inputs of model. Default is an empty list.</p></li>
 <li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the outputs of model. Default is an empty list.</p></li>
 <li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend name for model execution. Supported values include: ‘default’, ‘itex’,
-‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’.
+‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’, ‘onnxrt_dml_ep’.
 Default value is ‘default’.</p></li>
 <li><p><strong>warmup</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to perform warmup before running performance tests.
 Default value is 5.</p></li>
@@ -332,7 +332,8 @@ strategy_kwargs=None,</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>device</strong> – Support ‘cpu’ and ‘gpu’.</p></li>
 <li><p><strong>backend</strong> – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’</p></li>
+Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’,
+‘onnxrt_dml_ep’</p></li>
 <li><p><strong>domain</strong> – Model domain. Support ‘auto’, ‘cv’, ‘object_detection’, ‘nlp’ and ‘recommendation_system’.
 Adaptor will use specific quantization settings for different domains automatically, and
 explicitly specified quantization settings will override the automatic setting.
@@ -467,7 +468,8 @@ Default value is False.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>device</strong> – Support ‘cpu’ and ‘gpu’.</p></li>
 <li><p><strong>backend</strong> – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’</p></li>
+Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’,
+‘onnxrt_dml_ep’</p></li>
 <li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
 <li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
 <li><p><strong>op_type_dict</strong> – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
@@ -834,8 +836,8 @@ Defaults to None.</p></li>
 <li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – Device for execution.
 Support ‘cpu’ and ‘gpu’, default is ‘cpu’.</p></li>
 <li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’
-default is ‘default’.</p></li>
+Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’,
+‘onnxrt_dml_ep’. Default is ‘default’.</p></li>
 <li><p><strong>precisions</strong> (<em>[</em><em>str</em><em>, </em><em>list</em><em>]</em><em>, </em><em>optional</em>) – Target precision for mix precision conversion.
 Support ‘bf16’ and ‘fp16’, default is ‘bf16’.</p></li>
 <li><p><strong>model_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the model. Default value is empty.</p></li>
