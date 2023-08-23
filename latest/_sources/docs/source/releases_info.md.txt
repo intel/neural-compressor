@@ -19,6 +19,8 @@ The MSE tuning strategy does not work with the PyTorch adaptor layer. This strat
 
 The diagnosis function does not work with ONNX Runtime 1.13.1 for QDQ format quantization of ONNX models. It can not dump the output value of QDQ pairs since framework limitation.
 
+Keras version 2.13.0 is experiencing an open issue [18284](https://github.com/keras-team/keras/issues/18284) related to the absence of a `safe_mode` parameter in `tf.keras.models.model_from_json()`. This deficiency could potentially hinder the successful quantization of certain Keras models.
+
 ## Incompatible Changes
 
 [Neural Compressor v1.2](https://github.com/intel/neural-compressor/tree/v1.2) introduces incompatible changes in user facing APIs. Please refer to [incompatible changes](incompatible_changes.md) to know which incompatible changes are made in v1.2.
@@ -29,4 +31,4 @@ The diagnosis function does not work with ONNX Runtime 1.13.1 for QDQ format qua
 
 [Neural Compressor v2.0](https://github.com/intel/neural-compressor/tree/v2.0) renames the `DATASETS` class as `Datasets`, please notice use cases like `from neural_compressor.data import Datasets`. Details please check the [PR](https://github.com/intel/neural-compressor/pull/244/files).
 
-[Neural Compressor v2.2](https://github.com/intel/neural-compressor/tree/v2.2) from this release, binary `neural-compressor-full` is deprecated, we deliver 3 binaries named `neural-compressor`, `neural-solution` and `neural-insights`. 
+[Neural Compressor v2.2](https://github.com/intel/neural-compressor/tree/v2.2) from this release, binary `neural-compressor-full` is deprecated, we deliver 3 binaries named `neural-compressor`, `neural-solution` and `neural-insights`.
