@@ -1204,10 +1204,10 @@ class GraphTrace:
         traced_model = None
         optimize_numerics = False
         if hasattr(model, "device"):
-            orig_device = model.device
+            orig_device = str(model.device)
         else:
             orig_device = "cpu"
-        if orig_device != "cpu":
+        if orig_device != "cpu" and orig_device != 'meta':
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):

@@ -336,6 +336,7 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, \
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
+                compression_manager.callbacks.on_after_optimizer_step()
             compression_manager.callbacks.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
