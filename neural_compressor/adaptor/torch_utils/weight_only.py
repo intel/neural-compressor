@@ -249,9 +249,10 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
     logger.debug("The best clip ratio is {}".format(best_clip_ratio))
     return best_clip_ratio
 
+
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
                  quantile=1.0, weight_config={}, return_int=False, 
-                 sym_full_range=False, mse_range=False, **kwargs):
+                 sym_full_range=False, mse_range=False, group_dim=1, **kwargs):
     """Quant the model with round to nearst method.
 
     Args:
@@ -277,6 +278,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                                      Defaults to False.
         mse_range (bool, optional):  Whether search clip range.
                                      Defaults to True.
+        group_dim (int, optional):   0 means splitting output channel, 
+                                     1 means splitting input channel. Defaults to 1.
 
     Returns:
         model: fake quantized torch module
@@ -306,7 +309,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         if num_bits <= 0:
             logger.info(f"Skip {name}")
             continue
-        weight = m.weight
+        weight = m.weight.T if group_dim == 0 else m.weight
         if mse_range:
             quantile = search_clip(m, num_bits, group_size, scheme, sym_full_range)
         if return_int:
@@ -315,6 +318,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 weight, num_bits, group_size, scheme, 
                 quantile, return_int=True, full_range=sym_full_range
             )
+            int_weight = int_weight.T if group_dim == 0 else int_weight
             new_module = WeightOnlyLinear(
                 m.in_features, m.out_features, num_bits, group_size,
                 zp=zp is not None, bias=m.bias is not None, 
@@ -333,6 +337,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 weight, num_bits, group_size, scheme, quantile, 
                 full_range=sym_full_range
             )
+            q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
     return model
 
