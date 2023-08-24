@@ -89,6 +89,6 @@ if __name__ == "__main__":
 
     if args.input_model == 'Intel/bart-large-mrpc':
         import os
-        os.system('python -m transformers.onnx --model=Intel/bart-large-mrpc --feature=sequence-classification bart-large-mrpc')
+        os.system('python -m transformers.onnx --model=Intel/bart-large-mrpc --feature=sequence-classification bart-large-mrpc/')
     else:
         export_onnx_model(args, model)
