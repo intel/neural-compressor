@@ -28,7 +28,7 @@ export default function Warning({ warningText, setWarningText }) {
         </p>
         <div className="d-flex justify-content-end">
           <Button onClick={() => setWarningText('')} variant="outline-danger">
-            Close me
+            Close
           </Button>
         </div>
       </Alert>

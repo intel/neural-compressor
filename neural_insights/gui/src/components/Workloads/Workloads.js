@@ -71,7 +71,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
     return (
       <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload); setSelectedOp(null); }}>
         <Button variant="secondary" className={workload.uuid === selectedWorkload.uuid ? 'active' : ''}>
-          {workload.mode}
+          {workload.mode} [{workload.framework}]
           <div className='date'>{moment(moment.unix(workload.creation_time)).fromNow()}</div>
         </Button>
       </div >
@@ -123,7 +123,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
               </div>
             </OverlayTrigger>
           </h3>
-          <table class="details-table">
+          <table className="details-table">
             <tbody>
               <tr>
                 <td>Framework:</td>

@@ -53,7 +53,7 @@ function Diagnosis() {
           </div>
         }
         {selectedWorkload?.mode === 'quantization' &&
-          <div className="flex-bigger">
+          <div className="flex-item">
             <Graph setSelectedNode={setSelectedNode} selectedWorkload={selectedWorkload} selectedOp={selectedOp} selectedPattern={selectedPattern} setWarningText={setWarningText} />
           </div>
         }
