@@ -152,6 +152,9 @@ class PytorchPatternNInM(PytorchBasePattern):
         if len(data.shape) == 4:  # TODO: need to verify whether it's ok for transposed conv
             data = data.permute(0, 2, 3, 1)  # cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
+        if len(data.shape) == 3:
+            data = data.permute(0, 2, 1)  # cout,k,cin
+            data = data.reshape(data.shape[0], -1)
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
@@ -166,6 +169,9 @@ class PytorchPatternNInM(PytorchBasePattern):
         if len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             data = data.permute(0, 3, 1, 2)
+        if len(orig_shape) == 3:
+            data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
+            data = data.permute(0, 2, 1)
         return data
 
     def reshape_orig_to_pattern(self, data, key):
@@ -229,7 +235,7 @@ class PytorchPatternNInM(PytorchBasePattern):
         score_sum = self.reduce_tensor(current_score_new, dim=-1)
         return score_sum
 
-    def reduce_scores(self, scores):
+    def reduce_scores(self, scores):  # pragma: no cover
         """Calculate the pruning scores after reducing the data and obtain the least N scores in M.
 
         Args:
@@ -353,7 +359,7 @@ class PytorchPatternNInM(PytorchBasePattern):
             if key in self.invalid_layers:
                 continue
             orig_shape = self.modules[key].weight.grad.shape
-            if len(orig_shape) == 4:  # need to permute
+            if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
                 mask = masks[key]
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
