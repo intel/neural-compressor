@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 # export pytorch model into onnx model
-
+import os
 
 def get_dummy_input(model_name_or_path):
     import torch
@@ -74,6 +74,7 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
         dynamic_axes=dict(chain(inputs.items(), outputs.items())),
         do_constant_folding=True,
     )
+    assert os.path.exists(export_model_path), f"{export_model_path} doesn't exist!"
     print(f"The model was successfully exported and saved as {export_model_path}.")
 
 

@@ -14,16 +14,11 @@ pip install -r requirements.txt
 
 ## 2. Prepare Model
 
-Download pretrained bert model. We will refer to `vocab.txt` file.
-
-```bash
-python prepare_model.py  --input_model="bert" --output_model="."
-```
-
+Download pretrained bert model. We will refer to `vocab.txt` file.  
 Download MLPerf mobilebert model and convert it to onnx model with [tf2onnx](https://github.com/onnx/tensorflow-onnx) tool.
 
 ```bash
-python prepare_model.py  --input_model="mobilebert" --output_model="mobilebert_SQuAD.onnx"
+python prepare_model.py --output_model="mobilebert_SQuAD.onnx"
 ```
 
 ## 3. Prepare Dataset

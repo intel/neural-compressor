@@ -107,6 +107,7 @@ def export_model(model, output_model, max_len=128):
                 'input_mask': symbolic_names,
                 'segment_ids': symbolic_names
             })
+        assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
         print("ONNX Model exported to {0}".format(output_model))
 
 

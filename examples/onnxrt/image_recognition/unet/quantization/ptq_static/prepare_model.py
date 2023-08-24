@@ -1,4 +1,5 @@
 import argparse
+import os
 import subprocess
 
 
@@ -38,6 +39,7 @@ def prepare_model(input_model, output_model):
         stdout=subprocess.PIPE,
         text=True,
     )
+    assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
 
 
 if __name__ == "__main__":

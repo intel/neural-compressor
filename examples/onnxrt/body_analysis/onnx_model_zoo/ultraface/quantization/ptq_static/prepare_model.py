@@ -56,6 +56,7 @@ def export_model(input_model, output_model):
     model = onnx.load(input_model)
     model = version_converter.convert_version(model, 14)
     onnx.save_model(model, output_model)
+    assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
 
 
 def prepare_model(input_model, output_model):

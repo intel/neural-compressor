@@ -25,9 +25,6 @@ def update_flatten_list(inputs, res_list):
 def save_model(name, model, inputs, outputs, input_names=None, output_names=None, **kwargs):
     if hasattr(model, 'train'):
         model.train(False)
-    dir = './'
-    if not os.path.exists(dir):
-        os.makedirs(dir)
 
     inputs_flatten = flatten(inputs)
     inputs_flatten = update_flatten_list(inputs_flatten, [])
@@ -49,13 +46,13 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
         np.testing.assert_equal(len(output_names), len(outputs_flatten),
                                 "Number of output names provided is not equal to the number of output.")
 
-    model_dir = os.path.join(dir, name + '.onnx')
     if isinstance(model, torch.jit.ScriptModule):
-        torch.onnx._export(model, inputs, model_dir, verbose=True, input_names=input_names,
+        torch.onnx._export(model, inputs, name, verbose=True, input_names=input_names,
                            output_names=output_names, **kwargs)
     else:
-        torch.onnx.export(model, inputs, model_dir, verbose=True, input_names=input_names,
+        torch.onnx.export(model, inputs, name, verbose=True, input_names=input_names,
                           output_names=output_names, **kwargs)
+    assert os.path.exists(name), f"Export failed, {name} doesn't exist!"
 
 
 def gpt2_test():

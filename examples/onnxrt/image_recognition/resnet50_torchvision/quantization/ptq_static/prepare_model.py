@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import torch
 import torchvision
@@ -34,6 +35,7 @@ def prepare_model(input_model, output_model):
                 0: 'batch_size'
             }
         })
+    assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
 
 
 if __name__ == "__main__":

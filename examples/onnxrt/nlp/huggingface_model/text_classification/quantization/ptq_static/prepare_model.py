@@ -43,6 +43,8 @@ def export_onnx_model(args, model):
                             dynamic_axes={'input_ids': symbolic_names,        # variable length axes
                                           'attention_mask' : symbolic_names,
                                           'token_type_ids' : symbolic_names})
+            
+        assert os.path.exists(args.output_model), f"{args.output_model} doesn't exist!"
         print("ONNX Model exported to {0}".format(args.output_model))
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ MAX_TIMES_RETRY_DOWNLOAD = 5
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_model", type=str, required=False, default="bert")
+    parser.add_argument("--input_model", type=str, required=False, default="mobilebert")
     parser.add_argument("--output_model", type=str, required=True)
     return parser.parse_args()
 
@@ -82,8 +82,8 @@ def download_model(url, model_name, output_model_name, retry_times=5):
         extrafile(model_name)
         return True
     elif os.path.exists(model_name) and is_tflite_file(model_name):
-        export_model(model_name, output_model_name)
         print("file downloaded")
+        export_model(model_name, output_model_name)
         return True
 
     print("download model...")
@@ -105,7 +105,9 @@ def download_model(url, model_name, output_model_name, retry_times=5):
 
 
 def prepare_model(input_model, output_model):
-    download_model(MODEL_URL.get(input_model), input_model, output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    download_model(MODEL_URL.get("bert"), "bert", output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    download_model(MODEL_URL.get("mobilebert"), "mobilebert", output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
 
 
 if __name__ == "__main__":

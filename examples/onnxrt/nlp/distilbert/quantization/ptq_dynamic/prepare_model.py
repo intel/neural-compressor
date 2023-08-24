@@ -1,4 +1,5 @@
 import argparse
+import os 
 import subprocess
 
 import torch
@@ -89,6 +90,7 @@ def export_onnx_model(args, model, onnx_model_path):
                     output_names=['output'],                # the model's output names
                     dynamic_axes={'input_ids': symbolic_names,        # variable length axes
                                 'input_mask' : symbolic_names})
+        assert os.path.exists(onnx_model_path), f"{onnx_model_path} doesn't exist!"
         print("ONNX Model exported to {0}".format(onnx_model_path))
 
 
