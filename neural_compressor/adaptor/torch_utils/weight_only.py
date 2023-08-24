@@ -39,10 +39,13 @@ FP4_E2M1 = [-6.0, -4.0, -3.0, -2.0, -1.5, -1.0, -0.0625, 0, 0.0625, 1.0, 1.5, 2.
 # the order is the same as float list, bit value range is [-7, 7]
 # 1111 = -1, 1110 = -2, 1101= -3, ...
 
-NF4_BIT = [7, 1, 2, 3, 4, 5, 6, 0, -7, -6, -5, -4, -3, -2, -1]
+NF4_BIT = [7, 1, 2, 3, 4, 5, 6, 0, -8, -7, -6, -5, -4, -3, -2, -1]
 FP4_BNB_BIT = [-5, -6, -3, -4, -1, -2, -7, 0, 1, 6, 7, 4, 5, 2, 3]
 FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
 
+FLOAT_MAPPING = {'nf4': NF4, 'fp4': FP4_BNB, 'fp4_bnb': FP4_BNB, 'fp4_e2m1': FP4_E2M1, 'e2m1': FP4_E2M1}
+INT_MAPPING = {'nf4': NF4_BIT, 'fp4': FP4_BNB_BIT, 'fp4_bnb': FP4_BNB_BIT, 
+                'fp4_e2m1': FP4_E2M1_BIT, 'e2m1': FP4_E2M1_BIT}
 
 def quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False):
     """Quantize tensor to NF4/FP4 data type.
@@ -56,24 +59,23 @@ def quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False):
     Returns:
         q_tensor: fake quantized tensor
     """
-    mapping = {'nf4': NF4, 'fp4': FP4_BNB, 'fp4_bnb': FP4_BNB, 'fp4_e2m1': FP4_E2M1, 'e2m1': FP4_E2M1}
-    int_mapping = {NF4: NF4_BIT, FP4_BNB: FP4_BNB_BIT, FP4_E2M1: FP4_E2M1_BIT}
-    assert data_type in mapping, "unexpected data type."
-    allow_data = mapping[data_type]
-    allow_data_bit = int_mapping[allow_data]
+    assert data_type in FLOAT_MAPPING, "unexpected data type."
+    allow_data = FLOAT_MAPPING[data_type]
+    allow_data_bit = INT_MAPPING[data_type]
     # get scale and update tensor
-    scale = tensor.max() * quantile / max(allow_data)
+    scale = tensor.max(1)[0] * quantile / max(allow_data)
+    scale.unsqueeze_(dim=-1)
     tensor = tensor / scale
     mid_data = [(allow_data[i] + allow_data[i+1])/2 for i in range(len(allow_data)-1)]
     q_tensor = torch.zeros_like(tensor)
     for i in range(len(allow_data)):
         data = allow_data_bit[i] if return_int else allow_data[i]
         if i == 0:
-            q_tensor += torch.where(tensor < mid_data[i], data, 0)
+            q_tensor += torch.where(tensor <= mid_data[i], data, 0)
         elif i == len(allow_data) - 1:
             q_tensor += torch.where(tensor > mid_data[i-1], data, 0)
         else:
-            q_tensor += torch.where(mid_data[i-1] < tensor < mid_data[i], data, 0)
+            q_tensor += torch.where((mid_data[i-1] < tensor) & (tensor <= mid_data[i]), data, 0)
     if return_int:
         return q_tensor.type(torch.int8), scale.type(torch.float), None
     return q_tensor * scale
@@ -174,7 +176,6 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type='int',
     """
     assert num_bits > 0, "num_bits should be larger than 0"
     if data_type != 'int' and num_bits == 4:
-        logger.info()
         return quantize_4bit(weight, quantile=quantile, data_type=data_type, 
                              return_int=return_int)
     if scheme == "sym":
@@ -364,10 +365,10 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         #import pdb; pdb.set_trace()
         log_msg = f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
                   f"scheme={scheme}, quantile={quantile}"
-        if scheme == 'sym':
-            log_msg += f", sym_full_range={sym_full_range}"
         if data_type != 'int':
-            log_msg += f", data_type={data_type}"
+            log_msg += f", dtype={data_type}"
+        elif scheme == 'sym': # nf4/fp4 is always [-7,7]
+            log_msg += f", sym_full_range={sym_full_range}"
         logger.debug(log_msg)
         if num_bits <= 0:
             logger.info(f"Skip {name}")
@@ -379,10 +380,11 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
                 weight, num_bits, group_size, scheme, quantile, 
-                data_type=data_type, return_int=True, full_range=sym_full_range
+                data_type=data_type, return_int=True, full_range=sym_full_range,
             )
             new_module = WeightOnlyLinear(
                 m.in_features, m.out_features, num_bits, group_size,
+                dtype=data_type,
                 zp=zp is not None, bias=m.bias is not None, 
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 

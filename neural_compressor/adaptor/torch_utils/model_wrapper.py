@@ -194,10 +194,18 @@ def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
 
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, bits, groupsize, 
-                 zp=False, bias=False, scale_dtype=torch.float32, 
+                 dtype='int', zp=False, bias=False, scale_dtype=torch.float32, 
                  compression_dtype=torch.int32, compression_dim=1,
                  gptq_perm=False, device='cpu'):
         super().__init__()
+        self.dtype = dtype
+        if self.dtype != 'int':  # for nf4, fp4
+            from neural_compressor.adaptor.torch_utils.weight_only import FLOAT_MAPPING, INT_MAPPING
+            float_list = FLOAT_MAPPING[self.dtype]
+            int_list = INT_MAPPING[self.dtype]
+            self.int2float_mapping = {}
+            for k, v in zip(int_list, float_list):
+                self.int2float_mapping[k] = v
         self.device = device
         self.in_features = in_features
         self.out_features = out_features
@@ -346,6 +354,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 weight[:, index] = tmp.type(weight_dtype)
         if self.compression_dim == 0:
             weight = weight.T
+        if self.dtype != 'int':
+            new_weight = torch.zeros(self.out_features, self.in_features).to(device)
+            for k, v in self.int2float_mapping.items():
+                new_weight += torch.where(weight == k, v, 0)
+            weight = new_weight
         # unpack zero_point
         if hasattr(self, 'packed_zp'):
             zp_dtype = self.compressed_dtype # to avoid overflow when weight-zp

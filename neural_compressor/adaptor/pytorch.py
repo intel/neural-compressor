@@ -4386,9 +4386,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 continue
             else:
                 dtype = config['weight']['dtype']
-                num_bits = config['weight']['bits']
+                if dtype in ['nf4', 'fp4', 'fp4_bnb', 'fp4_e2m1']:
+                    num_bits, scheme = 4, 'sym'
+                else:
+                    num_bits = config['weight']['bits']
+                    scheme = config['weight']['scheme']
                 group_size = config['weight']['group_size']
-                scheme = config['weight']['scheme']
                 algorithm = config['weight']['algorithm']
                 if algorithm != 'RTN':
                     continue
