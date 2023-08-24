@@ -103,6 +103,9 @@ class TuningItem:
             else:
                 details.append(option.get_details(depth + 1))
         return "\n".join(details)
+    
+    def __repr__(self) -> str:
+        return self.get_details()
 
 
 class TuningSpace:
@@ -178,6 +181,7 @@ class TuningSpace:
             self.root_item.append(op_item)
             self.op_items[op_name_type] = op_item
             _parse(op_cap, op_item, [], op_name_type)
+            import pdb; pdb.set_trace()
             for q_option in op_item.options:
                 if q_option and q_option.name == 'precision':
                     acc_item = q_option.get_option_by_name('activation')
@@ -220,7 +224,9 @@ class TuningSpace:
         op_user_cfg = preprocess_user_cfg(op_user_cfg)
         for att in ['activation', 'weight']:
             if op_user_cfg.get(att, None) is not None:
+                #import pdb; pdb.set_trace()
                 user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att].get('dtype', None) is not None else []
+                #if user_dtype_lst in ['nf4', 'fp4', ]
                 # Merge the precision part.
                 fwk_att_precision_cap = fw_op_cap['precision'].get(att, {})
                 fwk_precision_set = set(fwk_att_precision_cap.keys())
