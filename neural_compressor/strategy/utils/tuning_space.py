@@ -105,6 +105,11 @@ class TuningItem:
         return "\n".join(details)
     
     def __repr__(self) -> str:
+        """Display the tuning item as string.
+
+        Returns:
+            msg: the tuning item as string.
+        """
         return self.get_details()
 
 
