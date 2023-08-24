@@ -396,6 +396,9 @@ class PatternNxM(Pattern):
             if len(orig_shape) == 4:
                 mask = mask.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
                 mask = mask.permute(0, 3, 1, 2)
+            if len(orig_shape) == 3:
+                mask = mask.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
+                mask = mask.permute(0, 2, 1)
             pattern_lock_masks[key] = mask.to(weight.device)
         return pattern_lock_masks
 
@@ -569,6 +572,9 @@ class PatternNInM(Pattern):
             if len(orig_shape) == 4:
                 mask = mask.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
                 mask = mask.permute(0, 3, 1, 2)
+            if len(orig_shape) == 3:
+                mask = mask.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
+                mask = mask.permute(0, 2, 1)
 
             pattern_lock_masks[key] = mask.to(weight.device)
         return pattern_lock_masks

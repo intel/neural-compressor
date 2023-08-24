@@ -159,7 +159,7 @@ class SnipCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 # self.scores[key] = torch.abs(p * p.grad)
                 self.scores[key] = self.pattern.reduce_score(torch.abs(p * p.grad), key)
-        
+
 
 
 @register_criterion('snip_momentum')
