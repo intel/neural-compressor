@@ -4385,6 +4385,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 continue
             else:
+                dtype = config['weight']['dtype']
                 num_bits = config['weight']['bits']
                 group_size = config['weight']['group_size']
                 scheme = config['weight']['scheme']
@@ -4394,6 +4395,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
                                  return_int=False, 
+                                 data_type=dtype,
                                  sym_full_range=sym_full_range,
                                  mse_range=mse_range)
                 set_module(model, op_name, m)
