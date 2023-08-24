@@ -57,7 +57,10 @@ def move_input_to_device(input, device=torch.device('cpu')):
 
 ##TODO potential bug, data type
 def forward_wrapper(model, input, device=torch.device('cpu')):
-    input = move_input_to_device(input, device)
+    try:
+        input = move_input_to_device(input, device)
+    except:
+        logger.warning("Please check the input device if the error raised.")
     if isinstance(input, dict) or isinstance(input, UserDict):
         output = model(**input)
     elif isinstance(input, list) or isinstance(input, tuple):
@@ -1204,7 +1207,9 @@ class GraphTrace:
         traced_model = None
         optimize_numerics = False
         if hasattr(model, "device"):
-            orig_device = str(model.device)
+            orig_device = model.device
+            if hasattr(model.device, "type"):
+                orig_device = model.device.type
         else:
             orig_device = "cpu"
         if orig_device != "cpu" and orig_device != 'meta':
