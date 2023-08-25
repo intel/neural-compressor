@@ -81,6 +81,7 @@ class Workload(JsonSerializer):
             "workload_location": self.workload_location,
             "mode": self.mode.value,
             "model_path": self.model_path,
+            "model_summary_file": self.model_summary_file,
             "status": self.status.value,
             "creation_time": self.creation_time,
         }

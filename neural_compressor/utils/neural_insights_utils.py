@@ -63,11 +63,9 @@ def register_neural_insights_workload(
 
             model_path: str = os.path.join(workload_location, "input_model.pt")
             os.makedirs(workload_location, exist_ok=True)
-            torch.save(model.state_dict(), model_path)
+            torch.save(model.model.state_dict(), model_path)
 
-            first_parameter = next(model.parameters())
-            input_shape = first_parameter.size()
-            model_stats = summary(model, input_shape, verbose=0)
+            model_stats = summary(model.model, verbose=0)
             summary_str = str(model_stats)
             model_summary_file = os.path.join(workload_location, "model_summary.txt")
             with open(model_summary_file, "w", encoding="utf-8") as summary_file:
@@ -87,6 +85,7 @@ def register_neural_insights_workload(
     except ImportError:
         logger.info("Neural Insights not found.")
     except Exception as err:
+        print(traceback.format_exc())
         logger.warning(f"Could not register workload to Neural Insights: {err}.")
     return None
 
