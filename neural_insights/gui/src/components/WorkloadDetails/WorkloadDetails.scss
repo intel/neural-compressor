@@ -14,19 +14,12 @@
 // limitations under the License.
 @import './../../variables.scss';
 
-.active {
-  background-color: $accent-yellow !important;
+.details-list {
+  width: 100%;
 }
 
-.date {
-  color: $dark-gray;
-  font-size: 80%;
-}
-
-.workloads-list {
-  width: 330px;
-}
-
-.no-data {
-  min-width: 99vw;
+.delete-button {
+  float: right;
+  width: 25px;
+  height: 25px;
 }

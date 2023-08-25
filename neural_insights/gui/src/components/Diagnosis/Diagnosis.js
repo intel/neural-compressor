@@ -19,6 +19,7 @@ import OpDetails from './../OpDetails/OpDetails';
 import OpList from './../OpList/OpList';
 import Histogram from './../Histogram/Histogram';
 import Workloads from './../Workloads/Workloads';
+import WorkloadDetails from './../WorkloadDetails/WorkloadDetails';
 import Profiling from './../Profiling/Profiling';
 import Warning from './../Warning/Warning';
 import Form from 'react-bootstrap/Form';
@@ -39,10 +40,10 @@ function Diagnosis() {
       <Warning className="alert" warningText={warningText} setWarningText={setWarningText} />
       <div className="flexbox">
         <div className="flexbox-inside">
-          <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} />
-          {/* {selectedWorkload?.mode === 'quantization' &&
-              <NodeSearch />
-            } */}
+          <div className="workloads-flex">
+            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} setSelectedNode={setSelectedNode} />
+          </div>
+          <WorkloadDetails setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} />
           {selectedWorkload?.mode === 'quantization' &&
             <NodeProperties selectedNode={selectedNode} />
           }
@@ -105,7 +106,7 @@ function NodeProperties({ selectedNode }) {
     });
 
     return (
-      <div className='data-panel'>
+      <div className='data-panel-top'>
         <h3>Node details</h3>
         <table className="property-table">
           <tbody>
