@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # coding=utf-8
 # export pytorch model into onnx model
+import argparse
 import os
+import subprocess
+
 
 def get_dummy_input(model_name_or_path):
     import torch
-    from transformers import LayoutLMv2Processor
     from PIL import Image
+    from transformers import LayoutLMv2Processor
 
     processor = LayoutLMv2Processor.from_pretrained(model_name_or_path)
 
@@ -46,10 +49,12 @@ def get_dummy_input(model_name_or_path):
 
 
 def export_model_to_onnx(model_name_or_path, export_model_path):
-    from torch.onnx import export as onnx_export
     from collections import OrderedDict
     from itertools import chain
+
+    from torch.onnx import export as onnx_export
     from transformers import LayoutLMv2ForTokenClassification
+
     # labels = datasets['train'].features['ner_tags'].feature.names
     # id2label = {v: k for v, k in enumerate(labels)}
     # label2id = {k: v for v, k in enumerate(labels)}
@@ -79,14 +84,26 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
     print(f"The model was successfully exported and saved as {export_model_path}.")
 
 
-import argparse
+def prepare_env():
+    subprocess.run(
+        ["pip", "install", "detectron2"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Export huggingface onnx model", formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument("--input_model", type=str, default="nielsr/layoutlmv2-finetuned-funsd", help="fine-tuned pytorch model name or path")
+    parser = argparse.ArgumentParser(description="Export huggingface onnx model",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--input_model",
+                        type=str,
+                        default="nielsr/layoutlmv2-finetuned-funsd",
+                        help="fine-tuned pytorch model name or path")
     parser.add_argument("--output_model", type=str, required=True)
-    parser.add_argument("--max_len", type=int, default=512, help="Maximum length of the sentence pairs")
+    parser.add_argument("--max_len",
+                        type=int,
+                        default=512,
+                        help="Maximum length of the sentence pairs")
     args = parser.parse_args()
+    prepare_env()
     export_model_to_onnx(model_name_or_path=args.input_model, export_model_path=args.output_model)
