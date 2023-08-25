@@ -13,7 +13,9 @@ exclude: |
       neural_coder/examples/.+|
       examples/.+|
       neural_compressor/adaptor/ox_utils/calibrator.py|
-      neural_compressor/adaptor/ox_utils/calibration.py
+      neural_compressor/adaptor/ox_utils/calibration.py|
+      neural_compressor/adaptor/ox_utils/quantizer.py|
+      neural_compressor/objective.py
   )$
 
 repos:

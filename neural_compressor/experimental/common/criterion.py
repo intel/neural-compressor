@@ -880,7 +880,8 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         self.feature_matchers = None
         self.init_loss_funcs()
         assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
-            f'Wrong length for layer_mappings:{self.layer_mappings}, loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
+            f'Wrong length for layer_mappings:{self.layer_mappings}, ' + \
+            f'loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
             'all should be the same.'
 
     def init_loss_funcs(self):
@@ -1285,7 +1286,8 @@ class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
         self.loss_funcs = []
         self.init_loss_funcs()
         assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
-            f'Wrong length for layer_mappings:{self.layer_mappings}, loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
+            f'Wrong length for layer_mappings:{self.layer_mappings}, ' + \
+            f'loss_weights:{self.loss_weights} or loss_types:{self.loss_types}, ' + \
             'all should be the same.'
 
     def init_loss_funcs(self):
