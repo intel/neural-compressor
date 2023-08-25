@@ -29,6 +29,7 @@ ignore = [
     "E402", # Module level import not at top of file
     "E501", # Line too long (121 > 120 characters)
     "E721", # Do not compare types, use isinstance()
+    "E731", # Do not assign a lambda expression, use a def
     "E722", # Do not use bare except
     "E741", # Do not use variables named ‘l’, ‘O’, or ‘I’
     "F401", # {name} imported but unused

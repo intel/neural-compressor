@@ -2680,12 +2680,14 @@ class ParseDecodeVocTransform(BaseTransform):
         tuple of parsed image and labels
     """
 
+    # fmt: off
     def __call__(self, sample):
         """Parse decode voc."""
         # Currently only supports jpeg and png.
         # Need to use this logic because the shape is not known for
         # tf.image.decode_image and we rely on this info to
         # extend label if necessary.
+        # fmt: on
         def _decode_image(content, channels):
             """Decode the image with content."""
             return tf.cond(

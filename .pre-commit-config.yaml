@@ -88,6 +88,11 @@ repos:
     hooks:
       - id: black
         files: (.*\.py)$
+        exclude: |
+          (?x)^(
+              neural_compressor/conf/config.py|
+              neural_compressor/conf/pythonic_config.py
+          )$
 
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.16.0

@@ -37,6 +37,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                       key=lambda i: len(i),
                                       reverse=True)
         if self.new_api:
+            # fmt: off
             self.fusion_mapping = {
                 'DequantizeConv2DBiasAddQuantizeV2': self.apply_newly_conv_biasadd_fusion,
                 'DequantizeConv2DBiasAddAddNReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
@@ -127,6 +128,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv3DAddLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeDepthwiseConv2dNativeQuantizeV2': self.apply_newly_conv_single_fusion
             }
+            # fmt: on
 
     def _insert_dummy_biasadd(self, match_node_name, matched_node):
         """Insert dummy biasadd for fusion."""
