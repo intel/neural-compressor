@@ -319,6 +319,8 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
                 quantile, return_int=True, full_range=sym_full_range
             )
             int_weight = int_weight.T if group_dim == 0 else int_weight
+            scale = scale.T if group_dim == 0 else scale
+            zp = zp.T if group_dim == 0 and zp is not None else scale
             new_module = WeightOnlyLinear(
                 m.in_features, m.out_features, num_bits, group_size,
                 zp=zp is not None, bias=m.bias is not None, 
