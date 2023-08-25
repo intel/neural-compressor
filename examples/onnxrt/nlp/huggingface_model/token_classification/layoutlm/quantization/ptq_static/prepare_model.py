@@ -19,7 +19,7 @@ def prepare_model(input_model, output_model):
             "--model_name_or_path",
             f"{input_model}",
             "--output_dir",
-            "./layoutlm-base-uncased-finetuned-funsd ",
+            "./layoutlm-base-uncased-finetuned-funsd",
             "--do_train",
             "--max_steps",
             "1000",

@@ -85,7 +85,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Export huggingface onnx model", formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("--input_model", type=str, help="fine-tuned pytorch model name or path")
+    parser.add_argument("--input_model", type=str, default="nielsr/layoutlmv2-finetuned-funsd", help="fine-tuned pytorch model name or path")
     parser.add_argument("--output_model", type=str, required=True)
     parser.add_argument("--max_len", type=int, default=512, help="Maximum length of the sentence pairs")
     args = parser.parse_args()
