@@ -84,7 +84,7 @@ def export_model_to_onnx(model_name_or_path, export_model_path):
 
 def prepare_env():
     subprocess.run(
-        ["pip", "install", "detectron2"],
+        ["pip", "install", "git+https://github.com/facebookresearch/detectron2.git"],
         stdout=subprocess.PIPE,
         text=True,
     )
