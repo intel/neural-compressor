@@ -134,7 +134,8 @@ def apply_awq_scale(model, tune_cfg, absorb_pairs, output_dicts):
  
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
-            logger.warning("Miss tensors of node {} during AWQ, skip it!".format(node.name))
+            logger.warning("Miss input tensors of nodes {} during AWQ, skip it!".format(
+                ', '.join([node.name for node in nodes if node.input[0] not in output_dicts])))
             continue
         inp = np.concatenate(output_dicts[nodes[0].input[0]], axis=0)
         inp_scale = np.mean(np.reshape(np.abs(inp), (-1, inp[0].shape[-1])), axis=0)
@@ -241,7 +242,8 @@ def apply_awq_clip(model, tune_cfg, absorb_pairs, output_dicts):
     ratios = {}
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
-            logger.warning("Miss tensors of node {} during AWQ, skip it!".format(node.name))
+            logger.warning("Miss input tensors of nodes {} during AWQ, skip it!".format(
+                ', '.join([node.name for node in nodes if node.input[0] not in output_dicts])))
             continue
 
         inp = np.concatenate(output_dicts[nodes[0].input[0]], axis=0)

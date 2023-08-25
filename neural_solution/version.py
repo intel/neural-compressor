@@ -16,4 +16,5 @@
 # limitations under the License.
 
 """Neural Solution."""
-__version__ = "2.2.1"
+
+from neural_compressor.version import __version__

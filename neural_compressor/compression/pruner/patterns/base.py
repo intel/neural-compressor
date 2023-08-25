@@ -77,6 +77,9 @@ class ProgressivePatternUtils(object):
         if len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             data = data.permute(0, 3, 1, 2)
+        if len(orig_shape) == 3:
+            data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
+            data = data.permute(0, 2, 1)
         return data
 
     # some util functions which can be used.

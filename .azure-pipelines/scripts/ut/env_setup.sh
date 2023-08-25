@@ -47,15 +47,16 @@ if [[ "${torchvision_version}" != "" ]]; then
     pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
 fi
 
-if [[ "${ipex_version}" == "1.12.0+cpu" ]]; then
-    ipex_whl="http://intel-optimized-pytorch.s3.cn-north-1.amazonaws.com.cn/wheels/v1.12.0/intel_extension_for_pytorch-1.12.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
-    pip install $ipex_whl
-elif [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
+if [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
     ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp38-cp38-manylinux2014_x86_64.whl"
     pip install $ipex_whl
 elif [[ "${ipex_version}" == "2.0.0+cpu" ]]; then
     ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
     pip install $ipex_whl
+elif [[ "${ipex_version}" == "2.1.0" ]]; then
+    pip install /tf_dataset/pt_binary/ww32/torch-*.whl
+    pip install /tf_dataset/pt_binary/ww32/torchvision-*.whl
+    pip install /tf_dataset/pt_binary/ww32/intel_extension_for_pytorch-*.whl
 fi
 
 if [[ "${onnx_version}" != "" ]]; then
@@ -81,7 +82,7 @@ fi
 pip install transformers
 pip install horovod
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
-    pip install tf_slim xgboost accelerate
+    pip install tf_slim xgboost accelerate==0.21.0
 elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.3.0
 elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
