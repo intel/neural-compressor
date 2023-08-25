@@ -175,8 +175,7 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type='int',
         output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
-    print(data_type, scheme)
-    if data_type != 'int' and num_bits == 4:
+    if 'int' not in data_type and num_bits == 4:
         return quantize_4bit(weight, quantile=quantile, data_type=data_type, 
                              return_int=return_int)
     if scheme == "sym":
@@ -420,7 +419,7 @@ def gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_ma
 def awq_quantize(model, bits=4,  group_size=32, scheme='asym', weight_config={}, 
                  example_inputs=None, dataloader=None, n_samples=128, calib_func=None,
                  auto_scale=True, mse_range=True, folding=False, return_int=False, 
-                 sym_full_range=False):
+                 sym_full_range=False, data_type='int'):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -468,7 +467,8 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym', weight_config={},
         group_size=group_size, 
         scheme=scheme, 
         sym_full_range=sym_full_range, 
-        weight_config=weight_config
+        weight_config=weight_config,
+        data_type=data_type,
     )
     qdq_model = awq.quantize(
         auto_scale=auto_scale,

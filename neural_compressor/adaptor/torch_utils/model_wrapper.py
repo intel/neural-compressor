@@ -199,7 +199,7 @@ class WeightOnlyLinear(torch.nn.Module):
                  gptq_perm=False, device='cpu'):
         super().__init__()
         self.dtype = dtype
-        if self.dtype != 'int':  # for nf4, fp4
+        if 'int' not in self.dtype:  # for nf4, fp4
             from neural_compressor.adaptor.torch_utils.weight_only import FLOAT_MAPPING, INT_MAPPING
             float_list = FLOAT_MAPPING[self.dtype]
             int_list = INT_MAPPING[self.dtype]
@@ -354,7 +354,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 weight[:, index] = tmp.type(weight_dtype)
         if self.compression_dim == 0:
             weight = weight.T
-        if self.dtype != 'int':
+        if 'int' not in self.dtype:
             new_weight = torch.zeros(self.out_features, self.in_features).to(device)
             for k, v in self.int2float_mapping.items():
                 new_weight += torch.where(weight == k, v, 0)
