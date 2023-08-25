@@ -278,8 +278,6 @@ class BasicTuneStrategy(TuneStrategy):
                 op_item_dtype_dict, initial_op_tuning_cfg)
             
             for index, op_tuning_cfg in enumerate(op_type_wise_tuning_sampler):
-                if not self.cur_best_tuning_cfg:
-                    self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 # try to quantizing ops into lower bits, such as int4,
                 # if accuracy meets the requirements after first trial and max_trials > 1
