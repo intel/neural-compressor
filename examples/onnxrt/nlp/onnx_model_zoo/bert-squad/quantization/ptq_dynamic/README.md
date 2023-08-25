@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 ## 2. Prepare Model
 
-Download pretrained bert model. We will refer to `vocab.txt` file.t
+Download pretrained bert model. We will refer to `vocab.txt` file.
 
 ```bash
 python prepare_model.py  --input_model="bert" --output_model="bert.zip"
@@ -24,7 +24,7 @@ python prepare_model.py  --input_model="bert" --output_model="bert.zip"
 Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/master/text/machine_comprehension/bert-squad).
 
 ```bash
-python prepare_model.py  --input_model="BERT-Squad" --output_model="bertsquad-12.onnx"
+python prepare_model.py --output_model="bertsquad-12.onnx"
 ```
 
 ## 3. Prepare Dataset

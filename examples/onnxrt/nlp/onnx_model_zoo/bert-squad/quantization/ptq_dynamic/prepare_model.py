@@ -5,8 +5,10 @@ import zipfile
 from urllib import request
 
 MODEL_URL = {
-    "bert": "https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip",
-    "BERT-Squad": "https://github.com/onnx/models/raw/main/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx",
+    "bert":
+    "https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip",
+    "BERT-Squad":
+    "https://github.com/onnx/models/raw/main/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx",
 }
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
@@ -41,8 +43,8 @@ def is_zip_file(filename):
         return False
 
 
-def is_onnx_file(filename): 
-    return filename.lower().endswith('.onnx') # ONNX file magic number
+def is_onnx_file(filename):
+    return filename.lower().endswith('.onnx')  # ONNX file magic number
 
 
 def extrafile(filename, target_folder="."):
@@ -78,7 +80,8 @@ def download_model(url, model_name, retry_times=5):
 
 
 def prepare_model(input_model, output_model):
-     download_model(MODEL_URL.get(input_model), output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    download_model(MODEL_URL.get("bert"), output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    download_model(MODEL_URL.get("BERT-Squad"), output_model, MAX_TIMES_RETRY_DOWNLOAD)
 
 
 if __name__ == "__main__":
