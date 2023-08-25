@@ -279,7 +279,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(correct_conv_fusion, True)
 
     @disable_random()
-    def test_conv_biasadd_addv2_relu_fallback_fusion(self):
+    def test_conv_biasadd_addv2_relu_fallback_fusion_1(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.leaky_relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -325,7 +325,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_conv_fusion, True)
 
     @disable_random()
-    def test_conv_biasadd_addv2_relu_fallback_fusion(self):
+    def test_conv_biasadd_addv2_relu_fallback_fusion_2(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])

@@ -445,13 +445,17 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             from mpi4py import MPI
             if MPI.COMM_WORLD.Get_size() > 2:
                 logger.info("Use distributed tuning on {} nodes".format(MPI.COMM_WORLD.Get_size()))
-                return self.distributed_traverse()
             elif MPI.COMM_WORLD.Get_size() == 2:
                 logger.info("Use distributed tuning on {} nodes, will be fallback to normal tuning."\
                     .format(MPI.COMM_WORLD.Get_size()))
+            MPI_INSTALLED=True
         except (ImportError, AttributeError) as e:
             logger.warning("[Strategy] Please install `mpi4py` correctly if using distributed tuning;" + \
                 " otherwise, ignore this warning.")
+            MPI_INSTALLED=False
+        if MPI_INSTALLED:
+            if MPI.COMM_WORLD.Get_size() > 2:
+                return self.distributed_traverse()
         self._setup_pre_tuning_algo_scheduler()
         self._prepare_tuning()
         # import pdb;pdb.set_trace()
