@@ -23,7 +23,7 @@ from typing import Dict, Tuple, List
 from copy import deepcopy
 import itertools
 from ...utils import logger
-from .utility import OrderedDefaultDict, preprocess_user_cfg
+from .utility import OrderedDefaultDict, preprocess_user_cfg, quant_options
 from .tuning_structs import OpTuningConfig
 
 from .constant import TUNING_ITEMS_LST, WEIGHT_ONLY_TUNING_ITEMS_LST
@@ -478,7 +478,7 @@ class TuningSpace:
                         quant_mode = op_cap['activation']['quant_mode']
                         att_dtype = op_cap[att]['dtype'][0]
                         signed_flag, _data_type = extract_data_type(att_dtype)
-                        if _data_type == 'int':
+                        if quant_options.quant_type == 3:
                             _data_type = 'weight_only'
                         for item_name, item_options in op_cap[att].items():
                             if item_name == 'dtype':
