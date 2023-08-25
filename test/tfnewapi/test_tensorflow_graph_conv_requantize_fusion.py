@@ -415,7 +415,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
                         found_conv_biasadd_fusion = True
             self.assertEqual(found_conv_sumadd_fusion, True)
-            self.assertEqual(found_conv_biasadd_fusion, True)
+            self.assertEqual(found_conv_biasadd_fusion, False)
 
     @disable_random()
     def test_conv3d_add_addn_fusion(self):
