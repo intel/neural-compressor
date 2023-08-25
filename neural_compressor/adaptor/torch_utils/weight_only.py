@@ -43,9 +43,9 @@ NF4_BIT = [7, 1, 2, 3, 4, 5, 6, 0, -8, -7, -6, -5, -4, -3, -2, -1]
 FP4_BNB_BIT = [-5, -6, -3, -4, -1, -2, -7, 0, 1, 6, 7, 4, 5, 2, 3]
 FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
 
-FLOAT_MAPPING = {'nf4': NF4, 'fp4': FP4_BNB, 'fp4_bnb': FP4_BNB, 'fp4_e2m1': FP4_E2M1, 'e2m1': FP4_E2M1}
-INT_MAPPING = {'nf4': NF4_BIT, 'fp4': FP4_BNB_BIT, 'fp4_bnb': FP4_BNB_BIT, 
-                'fp4_e2m1': FP4_E2M1_BIT, 'e2m1': FP4_E2M1_BIT}
+FLOAT_MAPPING = {'nf4': NF4, 'fp4': FP4_BNB, 'fp4_e2m1_bnb': FP4_BNB, 'fp4_e2m1': FP4_E2M1}
+INT_MAPPING = {'nf4': NF4_BIT, 'fp4': FP4_BNB_BIT, 'fp4_e2m1_bnb': FP4_BNB_BIT, 
+               'fp4_e2m1': FP4_E2M1_BIT}
 
 def quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False):
     """Quantize tensor to NF4/FP4 data type.

@@ -224,7 +224,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(model_size1 / model_size2 > 2)
 
     def test_RTN_fp4_quant(self):
-        for dtype in ['nf4', 'fp4', 'fp4_bnb', 'fp4_e2m1', 'e2m1']:
+        for dtype in ['nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1']:
             input = torch.randn(3,30)
             model = Model()
             out1 = model(input)

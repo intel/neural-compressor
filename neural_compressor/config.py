@@ -42,7 +42,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int', 'int4', 'nf4', 'fp4', 'fp4_bnb', 'fp4_e2m1', 'int8', 'uint8', 
+            lambda s: all(i in ['int', 'int4', 'nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1', 'int8', 'uint8', 
                                 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list, # TODO: allow AWQ+GPTQ algo

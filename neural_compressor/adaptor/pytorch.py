@@ -4350,7 +4350,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 continue
             else:
                 dtype = config['weight']['dtype']
-                if dtype in ['nf4', 'fp4', 'fp4_bnb', 'fp4_e2m1']:
+                if dtype in ['nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1']:
                     config['weight']['bits'] = 4
                     config['weight']['scheme'] = 'sym'
                 elif dtype in ['int4']:
