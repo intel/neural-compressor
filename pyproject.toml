@@ -16,6 +16,7 @@
 profile = "black"
 line_length = 120
 known_first_party = ["neural_compressor"]
+extend_skip_glob = ["**/__init__.py"]
 
 
 [tool.black]
