@@ -293,7 +293,6 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
             fetch_collection.node_list.value.append(array.name)
             grappler_meta_graph_def.collection_def["train_op"].CopyFrom(
             fetch_collection)
-        from tensorflow.python.eager import context
         grappler_session_config = config_pb2.ConfigProto()
         rewrite_options = grappler_session_config.graph_options.rewrite_options
         rewrite_options.min_graph_nodes = -1

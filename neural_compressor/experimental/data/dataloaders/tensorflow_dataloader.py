@@ -16,7 +16,6 @@
 # limitations under the License.
 """TensorFlow Dataloader implementation."""
 
-from neural_compressor.experimental.data.datasets import dataset
 from neural_compressor.utils.utility import LazyImport
 from abc import abstractmethod
 import collections

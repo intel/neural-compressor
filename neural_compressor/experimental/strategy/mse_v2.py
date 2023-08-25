@@ -16,7 +16,6 @@
 # limitations under the License.
 """The MSE_V2 tuning strategy."""
 import copy
-from copy import deepcopy
 import numpy as np
 from collections import OrderedDict
 from typing import Dict, Any, List

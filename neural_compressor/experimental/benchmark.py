@@ -34,7 +34,6 @@ from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
-from .data import TRANSFORMS
 from .metric import METRICS
 from .common import Model as NCModel
 from .common import Metric as NCMetric

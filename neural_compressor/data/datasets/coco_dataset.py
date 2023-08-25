@@ -32,7 +32,6 @@
 
 """Built-in COCO datasets class for multiple framework backends."""
 
-import numpy as np
 from PIL import Image
 from neural_compressor.utils.utility import LazyImport
 from .dataset import dataset_registry, IterableDataset, Dataset

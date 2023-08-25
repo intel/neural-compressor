@@ -25,7 +25,6 @@ import transformers
 from transformers import AutoConfig
 
 from neural_compressor.utils import logger
-from neural_compressor.utils.pytorch import load
 
 WEIGHTS_NAME = "pytorch_model.bin"
 

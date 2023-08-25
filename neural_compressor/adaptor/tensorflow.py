@@ -16,7 +16,6 @@
 # limitations under the License.
 """Tensorflow Adaptor Classes."""
 
-from csv import writer
 import os
 import copy
 import yaml
