@@ -17,6 +17,8 @@ from neural_insights.components.diagnosis.diagnosis import Diagnosis
 from neural_insights.components.diagnosis.onnx_diagnosis.onnxrt_diagnosis import (
     OnnxRtDiagnosis,
 )
+from neural_insights.components.diagnosis.pytorch_diagnosis.pytorch_diagnosis import \
+    PyTorchDiagnosis
 from neural_insights.components.diagnosis.tensorflow_diagnosis.tensorflow_diagnosis import (
     TensorflowDiagnosis,
 )
@@ -38,6 +40,7 @@ class DiagnosisFactory:
         diagnosis_map = {
             Frameworks.ONNX: OnnxRtDiagnosis,
             Frameworks.TF: TensorflowDiagnosis,
+            Frameworks.PT: PyTorchDiagnosis,
         }
         diagnosis = diagnosis_map.get(workload.framework, None)
         if diagnosis is None:

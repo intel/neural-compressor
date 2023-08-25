@@ -13,23 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch model class."""
-from neural_insights.components.graph.graph import Graph
-from neural_insights.components.graph.reader.pytorch_reader import PyTorchReader
+import re
+from typing import List
+
 from neural_insights.components.model.model import Model
 from neural_insights.utils.consts import Frameworks
 from neural_insights.utils.utils import check_module, get_file_extension
 
 
-class PyTorchModel(Model):
+class PyTorchScriptModel(Model):
     """PyTorch Script Model class."""
-
-    def get_model_graph(self) -> Graph:
-        graph_reader = PyTorchReader(self)
-        return graph_reader.read()
 
     def __init__(self, path: str) -> None:
         """Initialize object."""
         super().__init__(path)
+
+    @staticmethod
+    def _has_any_name_parts(nodes: set, name_parts: List[str]) -> bool:
+        """Check if there is at least one node for name_parts."""
+        matching_names = []
+        for node in nodes:
+            for partial_name in name_parts:
+                search = re.match(partial_name, node)
+                if search:
+                    matching_names.append(node)
+        return bool(matching_names)
 
     @staticmethod
     def get_framework_name() -> str:
@@ -39,7 +47,7 @@ class PyTorchModel(Model):
     @staticmethod
     def supports_path(path: str) -> bool:
         """Check if given path is of supported model."""
-        return "pt" == get_file_extension(path)
+        return "py" == get_file_extension(path)
 
     def guard_requirements_installed(self) -> None:
         """Ensure all requirements are installed."""

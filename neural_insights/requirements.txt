@@ -6,3 +6,4 @@ gevent
 gevent-websocket
 cryptography
 pywin32; sys_platform != 'linux'
+torchinfo
