@@ -81,7 +81,7 @@ def quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False):
     return q_tensor * scale
 
 
-def qdq_weight_asym(weight, num_bits=4, quantile=1.0, data_type='int', return_int=False):
+def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     """Quant and dequant tensor with asym schema.
 
     Args:
@@ -175,6 +175,7 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type='int',
         output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
+    print(data_type, scheme)
     if data_type != 'int' and num_bits == 4:
         return quantize_4bit(weight, quantile=quantile, data_type=data_type, 
                              return_int=return_int)
