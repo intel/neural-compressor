@@ -28,9 +28,10 @@ select = ["E", "F"]
 ignore = [
     "E402", # Module level import not at top of file
     "E501", # Line too long (121 > 120 characters)
-    "E741", # Do not use variables named ‘l’, ‘O’, or ‘I’
     "E721", # Do not compare types, use isinstance()
     "E722", # Do not use bare except
+    "E741", # Do not use variables named ‘l’, ‘O’, or ‘I’
+    "F401", # {name} imported but unused
     "F403", # from {name} import * used; unable to detect undefined names
     "F405", # {name} may be undefined, or defined from star imports
     "F841", # Local variable is assigned to but never used{name}
