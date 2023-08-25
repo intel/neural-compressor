@@ -66,6 +66,14 @@ class BasicTuneStrategy(TuneStrategy):
             if not self.cur_best_tuning_cfg:
                 self.cur_best_tuning_cfg = deepcopy(initial_op_tuning_cfg)
 
+            # try to tune sq alpha
+            op_tuning_cfg_lst_stage_sq = []
+            if self._should_tuning_sq_alpha(self.config.recipes):
+                for tune_cfg in self.tuning_sq_alpha(tuning_space, \
+                    deepcopy(self.cur_best_tuning_cfg), self.config.recipes):
+                    op_tuning_cfg_lst_stage_sq.append(tune_cfg)
+            yield op_tuning_cfg_lst_stage_sq
+
             # op type-wise tuning
             op_type_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
@@ -116,12 +124,6 @@ class BasicTuneStrategy(TuneStrategy):
             else:
                 self.cur_best_tuning_cfg = comm.bcast(cur_best_tuning_cfg, root=0)
 
-
-            logger.info("Apply recipe one by one.")
-            op_tuning_cfg_lst_stage_recipe = []
-            for tune_cfg in self.apply_recipe_one_by_one(deepcopy(self.cur_best_tuning_cfg)):
-                op_tuning_cfg_lst_stage_recipe.append(deepcopy(op_tuning_cfg))
-            yield op_tuning_cfg_lst_stage_recipe
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
             # Fallback
