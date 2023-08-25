@@ -7,7 +7,6 @@ from neural_compressor.data import Datasets
 import torch
 import torchvision
 import torch.nn as nn
-import tensorflow as tf
 
 
 def build_fake_yaml():
@@ -150,7 +149,7 @@ class TestGradientSensitivity(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    @unittest.skipIf(tf.__version__<='2.2.0' and tf.__version__>='2.1.0', "tf 2.1 or 2.2 dont support module transformers")
+
     def test_gradient_sensitivity(self):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')

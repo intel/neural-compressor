@@ -1,7 +1,7 @@
 import unittest
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic import convert_layout
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 
 class TestConvertLayout(unittest.TestCase):

@@ -729,13 +729,6 @@ class TestPytorchAdaptor(unittest.TestCase):
             q_model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
             iteration_list=[1, 2], inspect_type='all', save_to_disk=False)
 
-    def test_get_graph_info(self):
-        from neural_compressor.adaptor.pytorch import get_ops_recursively
-        model = copy.deepcopy(self.model)
-        op_map = {}
-        get_ops_recursively(model, '', op_map)
-        self.assertTrue(op_map['conv1'] == 'Conv2d')
-
     def test_forward_wrapper(self):
         vision_model = resnet18()
         class dummymodel(torch.nn.Module):

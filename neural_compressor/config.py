@@ -259,7 +259,7 @@ class BenchmarkConfig:
         inputs (list, optional): A list of strings containing the inputs of model. Default is an empty list.
         outputs (list, optional): A list of strings containing the outputs of model. Default is an empty list.
         backend (str, optional): Backend name for model execution. Supported values include: 'default', 'itex',
-                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'.
+                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep'.
                                 Default value is 'default'.
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
                                 Default value is 5.
@@ -328,7 +328,7 @@ class BenchmarkConfig:
     def backend(self, backend):
         """Set backend."""
         if _check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep']):
             self._backend = backend
 
     @property
@@ -694,7 +694,8 @@ class _BaseQuantizationConfig:
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         backend: Backend for model execution.
-                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
+                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                 'onnxrt_dml_ep'
         domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
@@ -1104,7 +1105,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if _check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep']):
             self._backend = backend
 
     @property
@@ -1150,7 +1151,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     Args:
         device: Support 'cpu' and 'gpu'.
         backend: Backend for model execution.
-                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
+                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                 'onnxrt_dml_ep'
         domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
@@ -1329,7 +1331,8 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     Args:
         device: Support 'cpu' and 'gpu'.
         backend: Backend for model execution.
-                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
+                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                 'onnxrt_dml_ep'
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
@@ -1799,8 +1802,8 @@ class MixedPrecisionConfig(object):
         device (str, optional): Device for execution.
                                 Support 'cpu' and 'gpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
-                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep'
-                                 default is 'default'.
+                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                                 'onnxrt_dml_ep'. Default is 'default'.
         precisions ([str, list], optional): Target precision for mix precision conversion.
                                    Support 'bf16' and 'fp16', default is 'bf16'.
         model_name (str, optional): The name of the model. Default value is empty.
@@ -1959,7 +1962,7 @@ class MixedPrecisionConfig(object):
     def backend(self, backend):
         """Set backend."""
         if _check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep']):
             self._backend = backend
 
     @property

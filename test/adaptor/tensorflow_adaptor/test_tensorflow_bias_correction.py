@@ -7,7 +7,7 @@ from neural_compressor.adaptor.tf_utils.transform_graph.bias_correction import B
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 
 class TestBiasCorrection(unittest.TestCase):
     def test_bias_correction(self):

@@ -32,12 +32,13 @@ import json
 import datetime
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import ops
 from tensorflow.core.framework import graph_pb2
 from google.protobuf import text_format
 from argparse import ArgumentParser
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
+from tensorflow.compat.v1 import graph_util
+
 
 def load_graph(model_file):
     """This is a function to load TF graph from pb file

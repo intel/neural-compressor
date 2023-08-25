@@ -11,7 +11,7 @@ import logging
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from tensorflow.python.framework import graph_util
+from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
@@ -521,8 +521,8 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             self.assertEqual(found_conv_fusion, True)
 
     @disable_random()
-    def test_conv3d_add_const_addn_relu_fusion(self):
-        logging.getLogger().info("test_conv3d_add_const_addn_relu_fusion")
+    def test_conv3d_add_const_addn_relu_requantize_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_addn_relu_requantize_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")

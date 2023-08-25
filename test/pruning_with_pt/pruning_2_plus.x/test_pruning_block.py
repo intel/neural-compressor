@@ -3,16 +3,12 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
-import sys
-sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from transformers import (AutoModelForCausalLM)
 
 
 class TestPruning(unittest.TestCase):
-    # model = torchvision.models.resnet18()
     model = torchvision.models.vit_b_16()
     def test_pruning_basic(self):
         local_configs = [
@@ -48,7 +44,6 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(20, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         pruning = prepare_pruning(config, self.model, optimizer)
-        
 
         for epoch in range(2):
             self.model.train()

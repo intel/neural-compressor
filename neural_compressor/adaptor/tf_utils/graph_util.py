@@ -924,6 +924,39 @@ class GraphRewriterHelper():
         return int32_bias
 
     @staticmethod
+    def generate_int32_bias_for_matmul_per_channel(bias_tensor, weights_tensor, max_input, min_input,
+                                     max_filter_tensor, min_filter_tensor,
+                                     ): # pragma: no cover
+        """Static method that generate per-channel int32 bias for matmul op.
+
+        Args:
+            bias_tensor: bias node tensor.
+            weights_tensor: weights tensor.
+            max_input: max activation input value.
+            min_input: min activation input value.
+            max_filter_tensor: max weight input tensor.
+            min_filter_tensor: min weight input tensor.
+
+        Returns:
+            int32_bias: int32 bias
+        """
+        channel_size = bias_tensor.shape[0]
+        activation_range = 255.0
+        weights_range = 127.0
+        scales = []
+        relative_scale = 255 * min_input / (max_input - min_input)
+        for i in range(channel_size):
+            scales.append(activation_range * weights_range /
+                        ((max_input - min_input) *
+                        max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
+        int32_bias = []
+        for i in range(channel_size):
+            value = np.sum(np.array(weights_tensor),axis=0,dtype=np.int32)[i]
+            int32_bias.append((int)(np.around(value * relative_scale + bias_tensor[i] * scales[i])))
+
+        return int32_bias
+
+    @staticmethod
     def gen_valid_sampling_log(log_path):
         """Generate the valid sampling log.
 
