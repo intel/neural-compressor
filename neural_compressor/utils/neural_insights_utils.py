@@ -25,6 +25,7 @@ def register_neural_insights_workload(
         workload_location: str,
         model: Any,
         workload_mode: str,
+        workload_name: str,
 ) -> Optional[str]:
     """Register workload to Neural Insights.
 
@@ -32,6 +33,7 @@ def register_neural_insights_workload(
         workload_location: path to workload directory
         model: Neural Compressor's model instance to be registered
         workload_mode: workload mode
+        workload_name: Name of the workload
 
     Returns:
         String with Neural Insight workload UUID if registered else None
@@ -47,6 +49,7 @@ def register_neural_insights_workload(
             raise Exception(f"Workload mode '{workload_mode}' is not supported.")
 
         model_path = None
+        model_summary_file = None
         if isinstance(model.model_path, str):
             model_path: str = os.path.abspath(model.model_path)
         elif isinstance(model, ONNXModel):
@@ -56,9 +59,19 @@ def register_neural_insights_workload(
             onnx.save(model.model, model_path)
         elif isinstance(model, PyTorchModel):
             import torch
+            from torchinfo import summary
+
             model_path: str = os.path.join(workload_location, "input_model.pt")
             os.makedirs(workload_location, exist_ok=True)
             torch.save(model.state_dict(), model_path)
+
+            first_parameter = next(model.parameters())
+            input_shape = first_parameter.size()
+            model_stats = summary(model, input_shape, verbose=0)
+            summary_str = str(model_stats)
+            model_summary_file = os.path.join(workload_location, "model_summary.txt")
+            with open(model_summary_file, "w", encoding="utf-8") as summary_file:
+                summary_file.write(summary_str)
         assert isinstance(model_path, str), 'Model path not detected'
 
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
@@ -66,6 +79,8 @@ def register_neural_insights_workload(
             workload_location=workload_location,
             workload_mode=mode,
             model_path=model_path,
+            workload_name=workload_name,
+            model_summary_file=model_summary_file,
         )
         logger.info(f"Registered {workload_mode} workload to Neural Insights.")
         return ni_workload_uuid

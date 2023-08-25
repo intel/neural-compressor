@@ -38,6 +38,7 @@ class Workload(JsonSerializer):
         self.workload_location: str = data.get("workload_location", None)
 
         mode = data.get("mode")
+        self.workload_name = data.get("workload_name", mode)
         if not isinstance(mode, WorkloadModes) and isinstance(mode, str):
             mode = WorkloadModes(mode)
         self.mode: WorkloadModes = mode
@@ -57,6 +58,8 @@ class Workload(JsonSerializer):
                 framework = Frameworks(framework)
         self.framework: Optional[Frameworks] = framework
 
+        self.model_summary_file = data.get("model_summary_file", None)
+
     @property
     def model_path(self) -> str:
         """Get model_path."""
@@ -73,6 +76,7 @@ class Workload(JsonSerializer):
         """Serialize Workload class."""
         return {
             "uuid": self.uuid,
+            "workload_name": self.workload_name,
             "framework": self.framework.value,
             "workload_location": self.workload_location,
             "mode": self.mode.value,

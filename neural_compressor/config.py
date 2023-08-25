@@ -772,7 +772,8 @@ class _BaseQuantizationConfig:
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion,
-                 diagnosis=False):
+                 diagnosis=False,
+                 ni_workload_name='quantization'):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
@@ -793,6 +794,7 @@ class _BaseQuantizationConfig:
         self.quant_level = quant_level
         self._framework = None
         self.diagnosis = diagnosis
+        self.ni_workload_name = ni_workload_name
         self._example_inputs = example_inputs
 
     @property
@@ -1223,6 +1225,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                             Please refer to docstring of AccuracyCriterion class.
         diagnosis(bool): This flag indicates whether to do diagnosis.
                            Default value is False.
+        ni_workload_name: Custom workload name for Neural Insights diagnosis workload.
+                           Default value is 'quantization'.
 
     Example::
 
@@ -1254,7 +1258,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  tuning_criterion=tuning_criterion,
-                 diagnosis=False):
+                 diagnosis=False,
+                 ni_workload_name='quantization'):
         """Init a PostTrainingQuantConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -1272,10 +1277,14 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
                          tuning_criterion=tuning_criterion,
-                         diagnosis=diagnosis)
+                         diagnosis=diagnosis,
+                         ni_workload_name=ni_workload_name)
         self.approach = approach
         self.diagnosis = diagnosis
-
+        self.ni_workload_name = ni_workload_name
+        if self.diagnosis:
+            self.tuning_criterion.max_trials = 1
+        
     @property
     def approach(self):
         """Get approach."""
@@ -1301,6 +1310,17 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         """Set diagnosis."""
         if _check_value('diagnosis', diagnosis, bool):
             self._diagnosis = diagnosis
+
+    @property
+    def ni_workload_name(self):
+        """Get Neural Insights workload name."""
+        return self._ni_workload_name
+
+    @ni_workload_name.setter
+    def ni_workload_name(self, ni_workload_name):
+        """Set Neural Insights workload name."""
+        if _check_value('ni_workload_name', ni_workload_name, str):
+            self._ni_workload_name = ni_workload_name
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):

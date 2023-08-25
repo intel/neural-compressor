@@ -70,7 +70,20 @@ class Diagnosis:
             "cfg.pkl",
         )
         if not os.path.exists(config_path):
-            raise ClientErrorException("Could not find config data for specified optimization.")
+            log.debug("Could not find config data for specified optimization. Getting data from inspect files.")
+            input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
+            optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
+                "activation"
+            ][0]
+            common_ops = list(
+                set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+            config_data = {
+                "op": {},
+            }
+            for op in common_ops:
+                config_data["op"].update({(op, ): {}})
+            return config_data
+
         with open(config_path, "rb") as config_pickle:
             config_data = pickle.load(config_pickle)
         return config_data
@@ -101,7 +114,6 @@ class Diagnosis:
             common_ops = list(
                 set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
             min_max_data = dict(zip(common_ops, [{"min": None, "max": None}]*len(common_ops)))
-            print(min_max_data)
 
         for op_name, min_max in min_max_data.items():
 
