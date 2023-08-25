@@ -237,6 +237,28 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
 
+    def quant_to_lower_bits(self, initial_op_tuning_cfg, calib_sampling_size):
+        """Quantize ops into lower bits, such as int4.
+
+        Args:
+            initial_op_tuning_cfg: the initial tuning config
+            calib_sampling_size: calibration sampling size
+
+        Yields:
+            tuning config
+        """
+        for quant_bit in LOWER_BIT_LIST:
+            logger.info(f"Start to quantize ops into {quant_bit}")
+            ops = self.tuning_space.collect_op_by_quant_bits(quant_bit)
+            op_item_dtype_dict = {op.name: quant_bit for op in ops}
+            lower_bits_sampler = LowerBitsSampler(deepcopy(self.tuning_space), [],
+                                                  initial_op_tuning_cfg, op_item_dtype_dict,
+                                                  accumulate=False, skip_first=True)
+            for tune_cfg in lower_bits_sampler:
+                tune_cfg['calib_sampling_size'] = calib_sampling_size
+                yield tune_cfg
+
+
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
 
