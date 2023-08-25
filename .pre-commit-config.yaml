@@ -11,7 +11,9 @@ exclude: |
       neural_solution/test/.+|
       neural_coder/extensions/.+|
       neural_coder/examples/.+|
-      examples/.+
+      examples/.+|
+      neural_compressor/adaptor/ox_utils/calibrator.py|
+      neural_compressor/adaptor/ox_utils/calibration.py
   )$
 
 repos:
