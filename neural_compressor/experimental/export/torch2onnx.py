@@ -269,7 +269,6 @@ def static_quant_export(
                         "'op_name_dict' in '{}' config. ".format(config_name))
             exit(0)
         except Exception as e:
-            import pdb;pdb.set_trace()
             logger.error(e)
             exit(0)
             
