@@ -15,6 +15,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.adaptor.torch_utils.weight_only.quantize_4bit
    neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_asym
    neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_sym
    neural_compressor.adaptor.torch_utils.weight_only.qdq_weight_actor
@@ -26,6 +27,22 @@ Functions
    neural_compressor.adaptor.torch_utils.weight_only.teq_quantize
    neural_compressor.adaptor.torch_utils.weight_only.quant_weight_w_scale
 
+
+
+.. py:function:: quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False)
+
+   Quantize tensor to NF4/FP4 data type.
+
+   :param tensor: input tensor
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param data_type: data type. Defaults to 'nf4'.
+   :type data_type: str, optional
+   :param return_int: whether return int data. Defaults to False.
+   :type return_int: bool, optional
+
+   :returns: fake quantized tensor
+   :rtype: q_tensor
 
 
 .. py:function:: qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False)
@@ -68,7 +85,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, return_int=False, full_range=False)
+.. py:function:: qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type='int', return_int=False, full_range=False)
 
    Quant and dequant tensor per channel.
 
@@ -77,6 +94,8 @@ Functions
    :type num_bits: int, optional
    :param quantile: percentile of clip. Defaults to 1.0.
    :type quantile: float, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
    :param return_int: Choose return fp32 or int8/uint8 data.
                       Defaults to False.
    :type return_int: bool, optional
@@ -87,7 +106,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0, return_int=False, full_range=False)
+.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0, data_type='int', return_int=False, full_range=False)
 
    Quant and dequant tensor with group size.
 
@@ -100,6 +119,8 @@ Functions
    :type scheme: str, optional
    :param quantile: percentile of clip. Defaults to 1.0.
    :type quantile: float, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
    :param return_int: Choose return fp32 or int8/uint8 data.
                       Defaults to False.
    :type return_int: bool, optional
@@ -110,7 +131,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: search_clip(m, num_bits, group_size, scheme, sym_full_range)
+.. py:function:: search_clip(m, num_bits=4, group_size=32, scheme='asym', data_type='int', sym_full_range=False)
 
    Search best clip range of each linears in current block.
 
@@ -122,6 +143,8 @@ Functions
    :type group_size: int, optional
    :param scheme: sym or asym.
    :type scheme: str, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
    :param sym_full_range: Choose sym range whether use -2**(bits-1).
    :type sym_full_range: bool, optional
 
@@ -129,7 +152,7 @@ Functions
    :rtype: best_clip_ratio (float)
 
 
-.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, sym_full_range=False, mse_range=False, **kwargs)
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, data_type='int', sym_full_range=False, mse_range=False, **kwargs)
 
    Quant the model with round to nearst method.
 
@@ -141,6 +164,8 @@ Functions
    :type scheme: str, optional
    :param quantile: percentile of clip. Defaults to 1.0.
    :type quantile: float, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
    :param weight_config: specific layer wise configirations. Defaults to {}.
                          For example,
                              weight_config={
@@ -172,7 +197,7 @@ Functions
    Run weight-only quantization with
 
 
-.. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, auto_scale=True, mse_range=True, folding=False, return_int=False, sym_full_range=False)
+.. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, auto_scale=True, mse_range=True, folding=False, return_int=False, sym_full_range=False, data_type='int')
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 

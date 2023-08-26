@@ -137,10 +137,12 @@
 <h3><strong>Quantization Capability</strong>:<a class="headerlink" href="#quantization-capability" title="Permalink to this heading"></a></h3>
 <p>| Config | Capability |
 | :—: | :—:|
+| dtype | [’int’, ‘nf4’, ‘fp4’] |
 | bits | [1-8] |
 | group_size | [-1, 1-N] |
 | scheme | [’asym’, ‘sym’] |
 | algorithm | [’RTN’, ‘AWQ’, ‘GPTQ’] |</p>
+<p>Notes: 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. ‘fp4’ includes <a class="reference external" href="../../neural_compressor/adaptor/torch_utils/weight_only.py#L37">fp4_e2m1</a> and <a class="reference external" href="https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735">fp4_e2m1_bnb</a>. By default, fp4 refers to fp4_e2m1_bnb.</p>
 <p><strong>RTN arguments</strong>:
 |  rtn_args  | default value |                               comments                              |
 |:———-:|:————-:|:——————————————————————-:|
@@ -192,7 +194,7 @@
     <span class="p">},</span>
     <span class="n">recipes</span><span class="o">=</span><span class="p">{</span>
         <span class="c1"># &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01, &#39;actorder&#39;:True, &#39;block_size&#39;: 128, &#39;nsamples&#39;: 128, &#39;use_full_length&#39;: False},</span>
-        <span class="s1">&#39;awq_args&#39;</span><span class="p">:{</span><span class="s1">&#39;auto_scale&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;mse_range&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;n_blocks&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+        <span class="c1"># &#39;awq_args&#39;:{&#39;auto_scale&#39;: True, &#39;mse_range&#39;: True},</span>
     <span class="p">},</span>
 <span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
@@ -214,6 +216,7 @@
 <p>[2]. Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
 <p>[3]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
 <p>[4]. Frantar, Elias, et al. “Gptq: Accurate post-training quantization for generative pre-trained transformers.” arXiv preprint arXiv:2210.17323 (2022).</p>
+<p>[5]. Dettmers, Tim, et al. “Qlora: Efficient finetuning of quantized llms.” arXiv preprint arXiv:2305.14314 (2023).</p>
 </section>
 </section>
 
