@@ -436,6 +436,7 @@ class PyTorchModel(PyTorchBaseModel):
                 if v['dtype'] == 'fp32':
                     continue
                 else:
+                    dtype = v['dtype']
                     num_bits = v['bits']
                     group_size = v['group_size']
                     scheme = v['scheme']
@@ -443,6 +444,7 @@ class PyTorchModel(PyTorchBaseModel):
                 if k not in gptq_config:
                     new_module = rtn_quantize(
                         m, num_bits, group_size, scheme, 
+                        data_type=dtype, 
                         return_int=True, 
                         sym_full_range=sym_full_range,
                         compression_dtype=compression_dtype, 
@@ -466,6 +468,7 @@ class PyTorchModel(PyTorchBaseModel):
                 )
                 new_module = WeightOnlyLinear(
                     m.in_features, m.out_features, num_bits, group_size,
+                    dtype=dtype,
                     zp=gptq_zp is not None, bias=m.bias is not None, 
                     gptq_perm=gptq_perm is not None,
                     compression_dtype=compression_dtype, 
@@ -481,12 +484,14 @@ class PyTorchModel(PyTorchBaseModel):
                 if v['dtype'] == 'fp32':
                     continue
                 else:
+                    dtype = v['dtype']
                     num_bits = v['bits']
                     group_size = v['group_size']
                     scheme = v['scheme']
                 mod = fetch_module(self.model, k)
                 mod = rtn_quantize(
-                    mod, num_bits, group_size, scheme, 
+                    mod, num_bits, group_size, scheme,  
+                    data_type=dtype, 
                     return_int=True, 
                     sym_full_range=sym_full_range,
                     compression_dtype=compression_dtype, 

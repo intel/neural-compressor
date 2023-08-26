@@ -74,7 +74,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
 
-    def test_RTN_quant(self):
+    def test_RTN_int_quant(self):
         input = torch.randn(3,30)
         model = Model()
         out1 = model(input)
@@ -111,6 +111,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out1 = model(input)
         conf = PostTrainingQuantConfig(
             approach='weight_only',
+            op_type_dict={
+                '.*':{ 	# re.match
+                    "weight": {
+                        'dtype': 'int4', # 1-8 bits 
+                    },
+                },
+            },
             recipes={
                 # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
                 # When mse_range is set to True, enable clip for weight by checking mse.
@@ -215,6 +222,32 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
         self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
         self.assertTrue(model_size1 / model_size2 > 2)
+
+    def test_RTN_fp4_quant(self):
+        for dtype in ['nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1']:
+            input = torch.randn(3,30)
+            model = Model()
+            out1 = model(input)
+            conf = PostTrainingQuantConfig(
+                approach='weight_only',
+                op_type_dict={
+                    '.*':{ 	# re.match
+                        "weight": {
+                            'dtype': dtype, # select from int, nf4, or fp4
+                            # nf4/fp4 have fixed bits and scheme.
+                            'group_size': 32,  # -1 (per-channel)
+                            'algorithm': 'RTN', 
+                        },
+                    },
+                },
+            )
+            q_model = quantization.fit(model, conf)
+            out2 = q_model(input)
+            self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+            self.assertFalse(torch.all(out1 == out2))
+            compressed_model = q_model.export_compressed_model()
+            out3 = compressed_model(input)
+            self.assertTrue(torch.all(out3==out2))
 
     def test_AWQ_quant(self):
         conf = PostTrainingQuantConfig(
@@ -343,6 +376,40 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, MulLinear))
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_out, MulLinear))
+
+    def test_AWQ_nf4_quant(self):
+        input = torch.ones([1, 10], dtype=torch.long)
+        fp32_model = copy.deepcopy(self.gptj)
+        out1 = fp32_model(input)
+        conf = PostTrainingQuantConfig(
+            approach='weight_only',
+            op_type_dict={
+                '.*':{ 	# re.match
+                    "weight": {
+                        'dtype': 'nf4', # select from int, nf4, or fp4
+                        # nf4/fp4 have fixed bits and scheme.
+                        'group_size': 32,  # -1 (per-channel)
+                        'algorithm': 'RTN', 
+                    },
+                },
+            },
+            op_name_dict={
+                'lm_head':{ 	# re.match
+                    "weight": {
+                        'dtype': 'fp32', 
+                    },
+                },
+            },
+        )
+        q_model = quantization.fit(
+            fp32_model, conf, 
+            calib_dataloader=self.llm_dataloader,
+        )
+        out2 = q_model(input)
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
+        compressed_model = q_model.export_compressed_model()
+        out3 = compressed_model(input)
+        self.assertTrue(torch.all(out3[0] == out2[0]))
 
     def test_AWQ_util(self):
         from neural_compressor.adaptor.torch_utils.util import get_module_input_output

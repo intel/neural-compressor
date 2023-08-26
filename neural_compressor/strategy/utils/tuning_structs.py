@@ -18,7 +18,7 @@
 """Tuning structure."""
 
 from typing import Dict
-from .constant import TUNING_ITEMS_LST, PRECISION_LIST
+from .constant import TUNING_ITEMS_LST, PRECISION_LIST, WEIGHT_ONLY_TUNING_ITEMS_LST
 
 class OpTuningConfig:
     """Op tuning config."""
@@ -42,6 +42,8 @@ class OpTuningConfig:
         self.weight_dtype = None
         self.has_weight = self.op_name_type in tuning_space.ops_attr['weight']
         self._set_dtype()
+        self.tune_list = WEIGHT_ONLY_TUNING_ITEMS_LST if self.op_quant_mode == \
+                         'weight_only' else TUNING_ITEMS_LST
 
     def _set_dtype(self):
         """Set the date type."""
@@ -49,7 +51,11 @@ class OpTuningConfig:
             self.act_dtype, self.weight_dtype = self.op_quant_mode, self.op_quant_mode
         else:
             self.act_dtype = self.kwargs.get('activation_dtype', None)
-            self.weight_dtype = self.kwargs.get('weight_dtype', None)
+            if ('weight', 'dtype') in self.kwargs:
+                self.weight_dtype = self.kwargs[('weight', 'dtype')]
+            else:
+                self.weight_dtype = self.kwargs.get('weight_dtype', None)
+
         assert self.act_dtype and isinstance(self.act_dtype, str),\
             (f"Didn't assign the activation data type for {self.op_name, self.op_type}", \
                 f"with quant_mode {self.op_quant_mode}")
@@ -67,9 +73,11 @@ class OpTuningConfig:
         """
         msg =  f"op name: {self.op_name}, op type : {self.op_type} \n"
         msg += f"\t activation dtype: {self.act_dtype} \n"
-        msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.has_weight else ""
+        if self.op_quant_mode != 'weight_only':
+            # weight_dtype is contained in self.tune_list
+            msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.has_weight else ""
         for key, val in self.kwargs.items():
-            if key in TUNING_ITEMS_LST:
+            if key in self.tune_list:
                 msg += f"\t {key[0]} {key[1]}: {val}\n"
         return msg
 
@@ -89,7 +97,7 @@ class OpTuningConfig:
                 'quant_mode': self.op_quant_mode,
             }
         for key, val in self.kwargs.items():
-            if key in TUNING_ITEMS_LST:
+            if key in self.tune_list:
                 result[key[0]][key[1]] = val
         return result
 

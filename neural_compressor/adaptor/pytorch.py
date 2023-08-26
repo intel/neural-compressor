@@ -4349,6 +4349,14 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 continue
             else:
+                dtype = config['weight']['dtype']
+                if dtype in ['nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1']:
+                    config['weight']['bits'] = 4
+                    config['weight']['scheme'] = 'sym'
+                elif dtype in ['int4']:
+                    config['weight']['bits'] = 4
+                elif dtype in ['int8']:
+                    config['weight']['bits'] = 8
                 algorithm = config['weight']['algorithm']
                 all_algo.add(algorithm)
         if len(all_algo):
@@ -4385,15 +4393,17 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             if config['weight']['dtype'] == 'fp32':
                 continue
             else:
+                dtype = config['weight']['dtype']
                 num_bits = config['weight']['bits']
-                group_size = config['weight']['group_size']
                 scheme = config['weight']['scheme']
+                group_size = config['weight']['group_size']
                 algorithm = config['weight']['algorithm']
                 if algorithm != 'RTN':
                     continue
                 m = fetch_module(model, op_name)
                 m = rtn_quantize(m, num_bits, group_size, scheme, 
                                  return_int=False, 
+                                 data_type=dtype,
                                  sym_full_range=sym_full_range,
                                  mse_range=mse_range)
                 set_module(model, op_name, m)

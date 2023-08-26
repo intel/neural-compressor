@@ -23,10 +23,10 @@ from typing import Dict, Tuple, List
 from copy import deepcopy
 import itertools
 from ...utils import logger
-from .utility import OrderedDefaultDict, preprocess_user_cfg
+from .utility import OrderedDefaultDict, preprocess_user_cfg, quant_options
 from .tuning_structs import OpTuningConfig
 
-from .constant import TUNING_ITEMS_LST
+from .constant import TUNING_ITEMS_LST, WEIGHT_ONLY_TUNING_ITEMS_LST
 
 class TuningItem:
     """Not displayed in API Docs."""
@@ -103,6 +103,14 @@ class TuningItem:
             else:
                 details.append(option.get_details(depth + 1))
         return "\n".join(details)
+    
+    def __repr__(self) -> str:
+        """Display the tuning item as string.
+
+        Returns:
+            msg: the tuning item as string.
+        """
+        return self.get_details()
 
 
 class TuningSpace:
@@ -241,7 +249,10 @@ class TuningSpace:
                                 cur_items = new_op_cap[quant_mode][att][data_type][signed_flag]
                                 fwk_items = fw_op_cap[quant_mode][att][data_type][signed_flag]
                                 for method_name, method_options in op_user_cfg[att].items():
-                                    if method_name not in ['dtype', 'quant_mode'] and method_options:
+                                    skip_list = ['dtype', 'quant_mode'] 
+                                    if data_type == 'weight_only':
+                                        skip_list = ['quant_mode']
+                                    if method_name not in skip_list and method_options:
                                         # filter the method options
                                         options_intersection = set(fwk_items[method_name]\
                                             ).intersection(set(method_options))
@@ -467,6 +478,8 @@ class TuningSpace:
                         quant_mode = op_cap['activation']['quant_mode']
                         att_dtype = op_cap[att]['dtype'][0]
                         signed_flag, _data_type = extract_data_type(att_dtype)
+                        if quant_options.quant_type == 3:
+                            _data_type = 'weight_only'
                         for item_name, item_options in op_cap[att].items():
                             if item_name == 'dtype':
                                 # The dtype should be a string, need to align with fwk.yaml.
@@ -744,8 +757,9 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: T
         config_args[att + '_dtype'] =  tuning_space.ops_data_type[op_name_type].get(att_full_path, None)
         mode_item = tuning_space.get_item_by_path((op_name_type, *att_full_path))
         if mode_item:
+            item_list = WEIGHT_ONLY_TUNING_ITEMS_LST if att_full_path[0] == 'weight_only' else TUNING_ITEMS_LST
             method_args = {method_item.name: method_item.options[0] for method_item in mode_item.options \
-                if method_item.name in TUNING_ITEMS_LST}
+                if method_item.name in item_list}
             config_args.update(method_args)
     quant_mode = internal_pattern[0]
     # set the first option as the default for each tuning item
