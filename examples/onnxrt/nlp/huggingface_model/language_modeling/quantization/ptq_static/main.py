@@ -188,9 +188,7 @@ def main():
     parser.add_argument('-i', "--iter", default=0, type=int,
                         help='For accuracy measurement only.')
     args = parser.parse_args()
-
-    device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-    args.device = device
+    args.device = torch.device("cpu")
 
     # Setup logging
     logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
