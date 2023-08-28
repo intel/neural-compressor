@@ -129,4 +129,3 @@ For users, you will see log output below if you model failed on symbolic trace m
                 scores.append(dscore)
             return [boxes,labels,scores]
             ```
-

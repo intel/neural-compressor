@@ -26,7 +26,7 @@ device: cpu                                          # optional. default value i
 graph_optimization:                                  # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   precisions: fp32, bf16
 
-  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
+  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space.
          'conv1': {
            'activation':  {'dtype': ['bf16']}
          },

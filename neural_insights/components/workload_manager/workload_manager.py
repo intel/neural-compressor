@@ -20,11 +20,10 @@ import shutil
 from os import PathLike
 from typing import List, Optional
 
-from neural_insights.components.workload_manager.quantization_workload import \
-    QuantizationWorkload, AccuracyData
+from neural_insights.components.workload_manager.quantization_workload import AccuracyData, QuantizationWorkload
 from neural_insights.components.workload_manager.workload import Workload
-from neural_insights.utils.consts import WORKDIR_LOCATION, WorkloadStatus, WorkloadModes
-from neural_insights.utils.exceptions import InternalException, ClientErrorException
+from neural_insights.utils.consts import WORKDIR_LOCATION, WorkloadModes, WorkloadStatus
+from neural_insights.utils.exceptions import ClientErrorException, InternalException
 from neural_insights.utils.json_serializer import JsonSerializer
 from neural_insights.utils.logger import log
 from neural_insights.utils.singleton import Singleton
@@ -64,10 +63,10 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
         self.dump_config()
 
     def update_workload_accuracy_data(
-            self,
-            workload_uuid: str,
-            baseline_accuracy: float,
-            optimized_accuracy: float,
+        self,
+        workload_uuid: str,
+        baseline_accuracy: float,
+        optimized_accuracy: float,
     ) -> None:
         """Update workload status."""
         workload = self.get_workload(workload_uuid)
@@ -87,8 +86,8 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
 
     @staticmethod
     def validate_status_flow(
-            prev_status: WorkloadStatus,
-            new_status: WorkloadStatus,
+        prev_status: WorkloadStatus,
+        new_status: WorkloadStatus,
     ) -> None:
         """Validate status flow."""
         status_indices = {
@@ -101,7 +100,7 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
 
         # Initialize adjacency matrix with zeros
         adjacency_matrix = [[0 for _ in status_indices] for _ in status_indices]
-        for (source, target) in status_connections:
+        for source, target in status_connections:
             adjacency_matrix[source][target] = 1
 
         prev_status_indice = status_indices[prev_status]

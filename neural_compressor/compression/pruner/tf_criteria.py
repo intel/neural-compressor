@@ -1,4 +1,4 @@
-"""tensorflow pruning criterion."""
+"""Tensorflow pruning criterion."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -69,7 +69,7 @@ class PruningCriterion:
         pass
 
 
-@register_criterion('magnitude')
+@register_criterion("magnitude")
 class MagnitudeCriterion(PruningCriterion):
     """Pruning criterion.
 
@@ -94,5 +94,3 @@ class MagnitudeCriterion(PruningCriterion):
         for key in self.modules.keys():
             p = self.modules[key].get_weights()[0]
             self.scores[key] = np.abs(p)
-
-

@@ -21,6 +21,7 @@ from neural_compressor.utils.utility import mse_metric_gap
 
 PRECISION = 5
 
+
 class WeightsDetails:
     """Weights details class."""
 

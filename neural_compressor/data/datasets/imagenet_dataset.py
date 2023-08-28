@@ -33,26 +33,35 @@
 
 import os
 import re
+
 import numpy as np
 from PIL import Image
-from neural_compressor.utils.utility import LazyImport
-from neural_compressor.utils import logger
-from .dataset import dataset_registry, IterableDataset, Dataset
-tf = LazyImport('tensorflow')
-mx = LazyImport('mxnet')
-torch = LazyImport('torch')
 
-@dataset_registry(dataset_type="ImagenetRaw", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops", dataset_format='')
-class ImagenetRaw(Dataset):    # pragma: no cover
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
+
+from .dataset import Dataset, IterableDataset, dataset_registry
+
+tf = LazyImport("tensorflow")
+mx = LazyImport("mxnet")
+torch = LazyImport("torch")
+
+
+@dataset_registry(
+    dataset_type="ImagenetRaw",
+    framework="onnxrt_qlinearops, \
+                    onnxrt_integerops",
+    dataset_format="",
+)
+class ImagenetRaw(Dataset):  # pragma: no cover
     """Configuration for ImageNet raw dataset.
 
-    Please arrange data in this way:  
-        data_path/img1.jpg  
-        data_path/img2.jpg  
-        ...  
-        data_path/imgx.jpg  
-    dataset will read name and label of each image from image_list file, 
+    Please arrange data in this way:
+        data_path/img1.jpg
+        data_path/img2.jpg
+        ...
+        data_path/imgx.jpg
+    dataset will read name and label of each image from image_list file,
     if user set image_list to None, it will read from data_path/val_map.txt automatically.
     """
 
@@ -74,7 +83,7 @@ class ImagenetRaw(Dataset):    # pragma: no cover
             # by default look for val.txt
             image_list = os.path.join(data_path, "val.txt")
 
-        with open(image_list, 'r') as f:
+        with open(image_list, "r") as f:
             for s in f:
                 image_name, label = re.split(r"\s+", s.strip())
                 src = os.path.join(data_path, image_name)
@@ -94,7 +103,7 @@ class ImagenetRaw(Dataset):    # pragma: no cover
         """Return the item of dataset according to the given index."""
         image_path, label = self.image_list[index], self.label_list[index]
         with Image.open(image_path) as image:
-            image = np.array(image.convert('RGB'))
+            image = np.array(image.convert("RGB"))
             if self.transform is not None:
                 image, label = self.transform((image, label))
             return (image, label)
@@ -103,22 +112,24 @@ class ImagenetRaw(Dataset):    # pragma: no cover
         """Return the length of dataset."""
         return len(self.image_list)
 
-@dataset_registry(dataset_type="ImagenetRaw", framework="pytorch", dataset_format='')
-class PytorchImagenetRaw(ImagenetRaw):    # pragma: no cover
+
+@dataset_registry(dataset_type="ImagenetRaw", framework="pytorch", dataset_format="")
+class PytorchImagenetRaw(ImagenetRaw):  # pragma: no cover
     """Dataset for ImageNet data generation on pytorch backend."""
 
     def __getitem__(self, index):
         """Return the item of dataset according to the given index."""
         image_path, label = self.image_list[index], self.label_list[index]
         with Image.open(image_path) as image:
-            image = image.convert('RGB')
+            image = image.convert("RGB")
             if self.transform is not None:
                 image, label = self.transform((image, label))
             image = np.array(image)
             return (image, label)
 
-@dataset_registry(dataset_type="ImagenetRaw", framework="mxnet", dataset_format='')
-class MXNetImagenetRaw(ImagenetRaw):    # pragma: no cover
+
+@dataset_registry(dataset_type="ImagenetRaw", framework="mxnet", dataset_format="")
+class MXNetImagenetRaw(ImagenetRaw):  # pragma: no cover
     """Dataset for ImageNet data generation on mxnet backend."""
 
     def __getitem__(self, index):
@@ -129,48 +140,53 @@ class MXNetImagenetRaw(ImagenetRaw):    # pragma: no cover
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="ImagenetRaw", framework="tensorflow, \
-                  tensorflow_itex", dataset_format='')
-class TensorflowImagenetRaw(ImagenetRaw):    # pragma: no cover
+
+@dataset_registry(
+    dataset_type="ImagenetRaw",
+    framework="tensorflow, \
+                  tensorflow_itex",
+    dataset_format="",
+)
+class TensorflowImagenetRaw(ImagenetRaw):  # pragma: no cover
     """Dataset for ImageNet data generation on tensorflow/inteltensorflow/tensorflow_itex backend."""
 
     def __getitem__(self, index):
         """Return the item of dataset according to the given index."""
         image_path, label = self.image_list[index], self.label_list[index]
         with Image.open(image_path) as image:
-            image = np.array(image.convert('RGB'))
+            image = np.array(image.convert("RGB"))
             if self.transform is not None:
                 image, label = self.transform((image, label))
-            if type(image).__name__ == 'Tensor':
+            if type(image).__name__ == "Tensor":
                 with tf.compat.v1.Session() as sess:
                     image = sess.run(image)
-            elif type(image).__name__ == 'EagerTensor':
+            elif type(image).__name__ == "EagerTensor":
                 image = image.numpy()
             return (image, label)
 
-@dataset_registry(dataset_type="Imagenet", framework="tensorflow", dataset_format='')
-class TensorflowImagenetDataset(IterableDataset):    # pragma: no cover
+
+@dataset_registry(dataset_type="Imagenet", framework="tensorflow", dataset_format="")
+class TensorflowImagenetDataset(IterableDataset):  # pragma: no cover
     """Configuration for Imagenet dataset."""
 
-    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
+    def __new__(cls, root, subset="validation", num_cores=28, transform=None, filter=None):
         """New a imagenet dataset for tensorflow."""
-        assert subset in ('validation', 'train'), \
-            'only support subset (validation, train)'
-        logger.warning("This api is going to be deprecated, "
-                       "please use ImageRecord instead.")
+        assert subset in ("validation", "train"), "only support subset (validation, train)"
+        logger.warning("This api is going to be deprecated, " "please use ImageRecord instead.")
 
         from tensorflow.python.platform import gfile
-        glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
+
+        glob_pattern = os.path.join(root, "%s-*-of-*" % subset)
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
-            raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
+            raise ValueError("Found no files in --root matching: {}".format(glob_pattern))
 
         from tensorflow.python.data.experimental import parallel_interleave
+
         from neural_compressor.data.transforms.imagenet_transform import ParseDecodeImagenet
+
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
-        ds = ds.apply(
-          parallel_interleave(
-            tf.data.TFRecordDataset, cycle_length=num_cores))
+        ds = ds.apply(parallel_interleave(tf.data.TFRecordDataset, cycle_length=num_cores))
 
         if transform is not None:
             transform.transform_list.insert(0, ParseDecodeImagenet())
@@ -181,26 +197,32 @@ class TensorflowImagenetDataset(IterableDataset):    # pragma: no cover
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
-@dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
-                   onnxrt_integerops", dataset_format='')
-class ONNXRTImagenetDataset(Dataset):    # pragma: no cover
+
+@dataset_registry(
+    dataset_type="Imagenet",
+    framework="onnxrt_qlinearops, \
+                   onnxrt_integerops",
+    dataset_format="",
+)
+class ONNXRTImagenetDataset(Dataset):  # pragma: no cover
     """Configuration for Imagenet dataset."""
 
-    def __init__(self, root, subset='val', num_cores=28, transform=None, filter=None):
+    def __init__(self, root, subset="val", num_cores=28, transform=None, filter=None):
         """Initialize `ONNXRTImagenetDataset` class."""
         self.val_dir = os.path.join(root, subset)
-        assert os.path.exists(self.val_dir), "find no val dir in {}".format(root) + \
-            "please make sure there are train/val subfolders"
+        assert os.path.exists(self.val_dir), (
+            "find no val dir in {}".format(root) + "please make sure there are train/val subfolders"
+        )
         import glob
-        logger.warning("This api is going to be deprecated, "
-                       "please use ImageRecord instead.")
+
+        logger.warning("This api is going to be deprecated, " "please use ImageRecord instead.")
 
         self.transform = transform
         self.image_list = []
-        files = glob.glob(os.path.join(self.val_dir, '*'))
+        files = glob.glob(os.path.join(self.val_dir, "*"))
         files.sort()
         for idx, file in enumerate(files):
-            imgs = glob.glob(os.path.join(file, '*'))
+            imgs = glob.glob(os.path.join(file, "*"))
             for img in imgs:
                 self.image_list.append((img, idx))
 
@@ -211,9 +233,9 @@ class ONNXRTImagenetDataset(Dataset):    # pragma: no cover
     def __getitem__(self, index):
         """Return the item of dataset according to the given index."""
         from PIL import Image
+
         sample = self.image_list[index]
         image = Image.open(sample[0])
         if self.transform is not None:
             image, label = self.transform((image, sample[1]))
             return (image, label)
-

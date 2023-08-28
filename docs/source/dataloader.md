@@ -63,7 +63,7 @@ Users can use the unified `DataLoader` API in the following manners.
 from neural_compressor.data import DataLoader
 from neural_compressor import quantization, PostTrainingQuantConfig
 
-dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 config = PostTrainingQuantConfig()
 q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
 ```
@@ -84,7 +84,9 @@ class NewDataloader:
         for input_data, label in self.dataset:
             yield input_data, label
 
+
 from neural_compressor import quantization, PostTrainingQuantConfig
+
 config = PostTrainingQuantConfig()
 dataloader = NewDataloader(batch_size, **kwargs)
 q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)

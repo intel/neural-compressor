@@ -70,6 +70,7 @@ from neural_compressor.experimental import common, Distillation, Quantization
 from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression
+
 combs = []
 distillation_criterion = KnowledgeDistillationLossConfig()
 d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)

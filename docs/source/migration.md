@@ -33,24 +33,31 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 val_dataset = ...
 val_dataloader = torch.utils.data.Dataloader(
-                     val_dataset,
-                     batch_size=args.batch_size, shuffle=False,
-                     num_workers=args.workers, ping_memory=True)
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.workers,
+    ping_memory=True,
+)
+
+
 def eval_func(model):
     ...
 
+
 # Quantization code
 from neural_compressor.experimental import Quantization, common
+
 calib_dataloader = eval_dataloader
-quantizer = Quantization('conf.yaml')
+quantizer = Quantization("conf.yaml")
 quantizer.eval_func = eval_func
 quantizer.calib_dataloader = calib_dataloader
 quantizer.model = common.Model(model)
 model = quantizer.fit()
 
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-save_for_huggingface_upstream(model, tokenizer, output_dir)
 
+save_for_huggingface_upstream(model, tokenizer, output_dir)
 ```
 
 We formulate the `conf.yaml` as in (https://github.com/intel/neural-compressor/blob/master/neural_compressor/template/ptq.yaml)
@@ -62,34 +69,34 @@ In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to s
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
 
 PostTrainingQuantConfig(
-  ## model: this parameter does not need to specially be defined;
-  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
-  inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
-  device="cpu",             # device: same as in the conf.yaml;
-  approach="static",        # approach: set as "static" when approach was "post_training_static_quant". Set as "dynamic" when approach was "post_training_dynamic_quant";
-  ## recipes: this parameter does not need to specially be defined;
-  calibration_sampling_size=[1000, 2000],   # sampling_size: same as in the conf.yaml;
-  ## transform: this parameter does not need to specially be defined;
-  ## model_wise: this parameter does not need to specially be defined;
-  op_name_dict=op_dict,     # op_wise: same as in the conf.yaml;
-  ## evaluation: these parameters do not need to specially be defined;
-  strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
-  ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
-  objective="performance",  # tuning.objective: same as in the conf.yaml;
-  performance_only=False,    # tuning.performance_only: same as in the conf.yaml;
-  tuning_criterion=tuning_criterion,
-  accuracy_criterion=accuracy_criterion,
-  ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
+    ## model: this parameter does not need to specially be defined;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    inputs="image_tensor",  # input: same as in the conf.yaml;
+    outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
+    device="cpu",  # device: same as in the conf.yaml;
+    approach="static",  # approach: set as "static" when approach was "post_training_static_quant". Set as "dynamic" when approach was "post_training_dynamic_quant";
+    ## recipes: this parameter does not need to specially be defined;
+    calibration_sampling_size=[1000, 2000],  # sampling_size: same as in the conf.yaml;
+    ## transform: this parameter does not need to specially be defined;
+    ## model_wise: this parameter does not need to specially be defined;
+    op_name_dict=op_dict,  # op_wise: same as in the conf.yaml;
+    ## evaluation: these parameters do not need to specially be defined;
+    strategy="basic",  # tuning.strategy.name: same as in the conf.yaml;
+    ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
+    objective="performance",  # tuning.objective: same as in the conf.yaml;
+    performance_only=False,  # tuning.performance_only: same as in the conf.yaml;
+    tuning_criterion=tuning_criterion,
+    accuracy_criterion=accuracy_criterion,
+    ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
 )
 
-accuracy_criterion=AccuracyCriterion(
-  tolerable_loss=0.01,      # relative: same as in the conf.yaml;
+accuracy_criterion = AccuracyCriterion(
+    tolerable_loss=0.01,  # relative: same as in the conf.yaml;
 )
-tuning_criterion=TuningCriterion(
-  timeout=0,                # timeout: same as in the conf.yaml;
-  max_trials=100,           # max_trials: same as in the conf.yaml;
-)          
+tuning_criterion = TuningCriterion(
+    timeout=0,  # timeout: same as in the conf.yaml;
+    max_trials=100,  # max_trials: same as in the conf.yaml;
+)
 ```
 
 Following is a simple demo about how to quantize the model with PTQ in Intel Neural Compressor 2.X.
@@ -100,19 +107,27 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 val_dataset = ...
 val_dataloader = torch.utils.data.Dataloader(
-                     val_dataset,
-                     batch_size=args.batch_size, shuffle=False,
-                     num_workers=args.workers, ping_memory=True)
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.workers,
+    ping_memory=True,
+)
+
+
 def eval_func(model):
     ...
+
 
 # Quantization code
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
 tuning_criterion = TuningCriterion(max_trials=600)
 conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
 q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+
 save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
 ```
 
@@ -131,25 +146,29 @@ In Intel Neural Compressor 1.X, the difference between the QAT and PTQ is that w
 model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
+
 def eval_func(model):
     ...
 
+
 def train_func(model):
     ...
+
 
 trainer = Trainer(...)
 
 # Quantization code
 from neural_compressor.experimental import Quantization, common
-quantizer = Quantization('conf.yaml')
+
+quantizer = Quantization("conf.yaml")
 quantizer.eval_func = eval_func
 quantizer.q_func = train_func
 quantizer.model = common.Model(model)
 model = quantizer.fit()
 
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-save_for_huggingface_upstream(model, tokenizer, output_dir)
 
+save_for_huggingface_upstream(model, tokenizer, output_dir)
 ```
 
 Similar to PTQ, it requires a `conf.yaml` (https://github.com/intel/neural-compressor/blob/master/neural_compressor/template/qat.yaml) to define the quantization configuration in Intel Neural Compressor 1.X.
@@ -162,26 +181,26 @@ In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwa
 from neural_compressor.config import QuantizationAwareTrainingConfig
 
 QuantizationAwareTrainingConfig(
-  ## model: this parameter does not need to specially be defined;
-  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
-  inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
-  device="cpu",             # device: same as in the conf.yaml;
-  ## approach: this parameter does not need to specially be defined;
-  ## train: these parameters do not need to specially be defined;
-  ## model_wise: this parameter does not need to specially be defined;
-  op_name_dict=op_dict,     # op_wise: same as in the conf.yaml;
-  ## evaluation: these parameters do not need to specially be defined;
-  strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
-  ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
-  relative=0.01,            # relative: same as in the conf.yaml;
-  timeout=0,                # timeout: same as in the conf.yaml;
-  max_trials=100,           # max_trials: same as in the conf.yaml;
-  objective="performance",  # tuning.objective: same as in the conf.yaml;
-  performance_only=False,    # tuning.performance_only: same as in the conf.yaml;
-  ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
-  ## diagnosis: these parameters do not need to specially be defined;
-)       
+    ## model: this parameter does not need to specially be defined;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    inputs="image_tensor",  # input: same as in the conf.yaml;
+    outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
+    device="cpu",  # device: same as in the conf.yaml;
+    ## approach: this parameter does not need to specially be defined;
+    ## train: these parameters do not need to specially be defined;
+    ## model_wise: this parameter does not need to specially be defined;
+    op_name_dict=op_dict,  # op_wise: same as in the conf.yaml;
+    ## evaluation: these parameters do not need to specially be defined;
+    strategy="basic",  # tuning.strategy.name: same as in the conf.yaml;
+    ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
+    relative=0.01,  # relative: same as in the conf.yaml;
+    timeout=0,  # timeout: same as in the conf.yaml;
+    max_trials=100,  # max_trials: same as in the conf.yaml;
+    objective="performance",  # tuning.objective: same as in the conf.yaml;
+    performance_only=False,  # tuning.performance_only: same as in the conf.yaml;
+    ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
+    ## diagnosis: these parameters do not need to specially be defined;
+)
 ```
 
 In Intel Neural Compressor 2.X, we introduce a `compression manager`  to control the training process. It requires to insert a pair of hook `callbacks.on_train_begin` and `callbacks.on_train_end` at the begin of the training and the end of the training. Thus, the quantization code is updated as:
@@ -193,17 +212,21 @@ In Intel Neural Compressor 2.X, we introduce a `compression manager`  to control
 model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
+
 def eval_func(model):
     ...
 
+
 def train_func(model):
     ...
+
 
 trainer = Trainer(...)
 
 # Quantization code
 from neural_compressor.training import prepare_compression
 from neural_compressor.config import QuantizationAwareTrainingConfig
+
 conf = QuantizationAwareTrainingConfig()
 compression_manager = prepare_compression(model, conf)
 compression_manager.callbacks.on_train_begin()
@@ -211,8 +234,8 @@ trainer.train()
 compression_manager.callbacks.on_train_end()
 
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-save_for_huggingface_upstream(compression_manager.model, tokenizer, training_args.output_dir)
 
+save_for_huggingface_upstream(compression_manager.model, tokenizer, training_args.output_dir)
 ```
 
 ## Pruning
@@ -225,7 +248,8 @@ In Intel Neural Compressor 1.X, the Pruning config is still defined by an extra 
 
 ```python
 from neural_compressor.experimental import Pruning, common
-prune = Pruning('conf.yaml')
+
+prune = Pruning("conf.yaml")
 prune.model = model
 prune.train_func = pruning_func
 model = prune.fit()
@@ -253,10 +277,8 @@ def pruning_func(model):
         for step, batch in enumerate(train_dataloader):
             prune.on_step_begin(step)
             batch = tuple(t.to(args.device) for t in batch)
-            inputs = {'input_ids': batch[0],
-                      'attention_mask': batch[1],
-                      'labels': batch[3]}
-            #inputs['token_type_ids'] = batch[2]
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            # inputs['token_type_ids'] = batch[2]
             outputs = model(**inputs)
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 
@@ -273,8 +295,10 @@ def pruning_func(model):
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
-    
+
             prune.on_step_end()
+
+
 ...
 ```
 
@@ -299,66 +323,67 @@ WeightPruningConfig(
 We also need to replace the hooks in the training code. The newly defined hooks are included in `compression manager` and listed as follows,
 
 ```python
-    on_train_begin() : Execute at the beginning of training phase.
-    on_epoch_begin(epoch) : Execute at the beginning of each epoch.
-    on_step_begin(batch) : Execute at the beginning of each batch.
-    on_step_end() : Execute at the end of each batch.
-    on_epoch_end() : Execute at the end of each epoch.
-    on_before_optimizer_step() : Execute before optimization step.
-    on_after_optimizer_step() : Execute after optimization step.
-    on_train_end() : Execute at the ending of training phase.
+on_train_begin() : Execute at the beginning of training phase.
+on_epoch_begin(epoch) : Execute at the beginning of each epoch.
+on_step_begin(batch) : Execute at the beginning of each batch.
+on_step_end() : Execute at the end of each batch.
+on_epoch_end() : Execute at the end of each epoch.
+on_before_optimizer_step() : Execute before optimization step.
+on_after_optimizer_step() : Execute after optimization step.
+on_train_end() : Execute at the ending of training phase.
 ```
 
 The final Pruning code is updated as follows,
 
 ```python
-    config = { ## pruner
-                'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                'pruning_type': "snip_momentum", # Default pruning type.
-                'pattern': "4x1", # Default pruning pattern.
-                'op_names': ['layer1.*'],  # A list of modules that would be pruned.
-                'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
-                'start_step': 0,  # Step at which to begin pruning.
-                'end_step': 10,   # Step at which to end pruning.
-                'pruning_scope': "global", # Default pruning scope.
-                'pruning_frequency': 1, # Frequency of applying pruning.
-                'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
-                'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
-                'sparsity_decay_type': "exp", # Function applied to control pruning rate.
-                'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
-            }
-    
-    from neural_compressor.training import prepare_compression, WeightPruningConfig
-    ##setting configs
-    pruning_configs=[
-    {"op_names": ['layer1.*'], "pattern":'4x1'},
-    {"op_names": ['layer2.*'], "pattern":'1x1', 'target_sparsity':0.5}
-    ]
-    configs = WeightPruningConfig(
-        pruning_configs=pruning_configs,
-        target_sparsity=config.target_sparsity,
-        pattern=config.pattern,
-        pruning_frequency=config.pruning_frequency,
-        start_step=config.start_step,
-        end_step=config.end_step,
-        pruning_type=config.pruning_type,
-    )
-    compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()  ## insert hook
-    for epoch in range(num_train_epochs):
-        model.train()
-        for step, batch in enumerate(train_dataloader):
-            compression_manager.callbacks.on_step_begin(step) ## insert hook
-            outputs = model(**batch)
-            loss = outputs.loss
-            loss.backward()
-            compression_manager.callbacks.on_before_optimizer_step()  ## insert hook
-            optimizer.step()
-            compression_manager.callbacks.on_after_optimizer_step() ## insert hook
-            lr_scheduler.step()
-            model.zero_grad()
-    ...
-    compression_manager.callbacks.on_train_end()
+config = {  ## pruner
+    "target_sparsity": 0.9,  # Target sparsity ratio of modules.
+    "pruning_type": "snip_momentum",  # Default pruning type.
+    "pattern": "4x1",  # Default pruning pattern.
+    "op_names": ["layer1.*"],  # A list of modules that would be pruned.
+    "excluded_op_names": ["layer3.*"],  # A list of modules that would not be pruned.
+    "start_step": 0,  # Step at which to begin pruning.
+    "end_step": 10,  # Step at which to end pruning.
+    "pruning_scope": "global",  # Default pruning scope.
+    "pruning_frequency": 1,  # Frequency of applying pruning.
+    "min_sparsity_ratio_per_op": 0.0,  # Minimum sparsity ratio of each module.
+    "max_sparsity_ratio_per_op": 0.98,  # Maximum sparsity ratio of each module.
+    "sparsity_decay_type": "exp",  # Function applied to control pruning rate.
+    "pruning_op_types": ["Conv", "Linear"],  # Types of op that would be pruned.
+}
+
+from neural_compressor.training import prepare_compression, WeightPruningConfig
+
+##setting configs
+pruning_configs = [
+    {"op_names": ["layer1.*"], "pattern": "4x1"},
+    {"op_names": ["layer2.*"], "pattern": "1x1", "target_sparsity": 0.5},
+]
+configs = WeightPruningConfig(
+    pruning_configs=pruning_configs,
+    target_sparsity=config.target_sparsity,
+    pattern=config.pattern,
+    pruning_frequency=config.pruning_frequency,
+    start_step=config.start_step,
+    end_step=config.end_step,
+    pruning_type=config.pruning_type,
+)
+compression_manager = prepare_compression(model=model, confs=configs)
+compression_manager.callbacks.on_train_begin()  ## insert hook
+for epoch in range(num_train_epochs):
+    model.train()
+    for step, batch in enumerate(train_dataloader):
+        compression_manager.callbacks.on_step_begin(step)  ## insert hook
+        outputs = model(**batch)
+        loss = outputs.loss
+        loss.backward()
+        compression_manager.callbacks.on_before_optimizer_step()  ## insert hook
+        optimizer.step()
+        compression_manager.callbacks.on_after_optimizer_step()  ## insert hook
+        lr_scheduler.step()
+        model.zero_grad()
+...
+compression_manager.callbacks.on_train_end()
 ```
 
 ## Distillation
@@ -416,28 +441,31 @@ def train_func(model):
     for nepoch in range(epochs):
         model.train()
         cnt = 0
-        loss_sum = 0.
-        iter_bar = tqdm(train_dataloader, desc='Iter (loss=X.XXX)')
+        loss_sum = 0.0
+        iter_bar = tqdm(train_dataloader, desc="Iter (loss=X.XXX)")
         for batch in iter_bar:
             teacher_logits, input_ids, segment_ids, input_mask, target = batch
             cnt += 1
             output = model(input_ids, segment_ids, input_mask)
             loss = criterion(output, target)
             loss = distiller.on_after_compute_loss(
-                {'input_ids':input_ids, 'segment_ids':segment_ids, 'input_mask':input_mask},
+                {"input_ids": input_ids, "segment_ids": segment_ids, "input_mask": input_mask},
                 output,
                 loss,
-                teacher_logits)
+                teacher_logits,
+            )
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             if cnt >= iters:
                 break
-        print('Average Loss: {}'.format(loss_sum / cnt))
+        print("Average Loss: {}".format(loss_sum / cnt))
         distiller.on_epoch_end()
+
 
 from neural_compressor.experimental import Distillation, common
 from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
+
 distiller = Distillation(conf.yaml)
 distiller.student_model = model
 distiller.teacher_model = teacher
@@ -454,9 +482,9 @@ The new distillation API also introduce `compression manager` to conduct the tra
 from neural_compressor.config import DistillationConfig
 
 DistillationConfig(
-  criterion=KnowledgeDistillationLoss,  # criterion: same as in the conf.yaml;
-  optimizer=SGD,                        # optimizer: same as in the conf.yaml;
-)       
+    criterion=KnowledgeDistillationLoss,  # criterion: same as in the conf.yaml;
+    optimizer=SGD,  # optimizer: same as in the conf.yaml;
+)
 ```
 
 The newly updated distillation code is shown as follows,
@@ -501,12 +529,13 @@ The recent growth of Deep Learning has driven the development of more complex mo
 The user can add dataloader and metric in `conf.yaml` to execute evaluation.
 ```python
 from neural_compressor.experimental import MixedPrecision, common
+
 dataset = Dataset()
-converter = MixedPrecision('conf.yaml')
+converter = MixedPrecision("conf.yaml")
 converter.metric = Metric()
-converter.precisions = 'bf16'
+converter.precisions = "bf16"
 converter.eval_dataloader = common.DataLoader(dataset)
-converter.model = './model.pb'
+converter.model = "./model.pb"
 output_model = converter()
 ```
 
@@ -547,23 +576,23 @@ In 2.X version, we integrate the config information in `MixedPrecisionConfig`, l
 from neural_compressor.config import MixedPrecisionConfig, TuningCriterion, AccuracyCriterion
 
 MixedPrecisionConfig(
-  ## model: this parameter does not need to specially be defined;
-  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
-  inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
-  device="cpu",             # device: same as in the conf.yaml;
-  tuning_criterion=tuning_criterion,
-  accuracy_criterion=accuracy_criterion,
-  ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
+    ## model: this parameter does not need to specially be defined;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    inputs="image_tensor",  # input: same as in the conf.yaml;
+    outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
+    device="cpu",  # device: same as in the conf.yaml;
+    tuning_criterion=tuning_criterion,
+    accuracy_criterion=accuracy_criterion,
+    ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
 )
 
-accuracy_criterion=AccuracyCriterion(
-  tolerable_loss=0.01,      # relative: same as in the conf.yaml;
+accuracy_criterion = AccuracyCriterion(
+    tolerable_loss=0.01,  # relative: same as in the conf.yaml;
 )
-tuning_criterion=TuningCriterion(
-  timeout=0,                # timeout: same as in the conf.yaml;
-  max_trials=100,           # max_trials: same as in the conf.yaml;
-)          
+tuning_criterion = TuningCriterion(
+    timeout=0,  # timeout: same as in the conf.yaml;
+    max_trials=100,  # max_trials: same as in the conf.yaml;
+)
 ```
 
 The update demo is shown as follows,
@@ -575,7 +604,7 @@ from neural_compressor.config import MixedPrecisionConfig
 conf = MixedPrecisionConfig()
 
 converted_model = mix_precision.fit(model, config=conf)
-converted_model.save('./path/to/save/')
+converted_model.save("./path/to/save/")
 ```
 
 ## Orchestration
@@ -589,6 +618,7 @@ Intel Neural Compressor 1.X mainly relies on a `Scheduler` class to automaticall
 Following is an example how to set the `Scheduler` for Orchestration process. If the user wants to execute the pruning and quantization-aware training with one-shot way,
 ```python
 from neural_compressor.experimental import Quantization, Pruning, Scheduler
+
 prune = Pruning(prune_conf.yaml)
 quantizer = Quantization(quantization_aware_training_conf.yaml)
 scheduler = Scheduler()
@@ -628,7 +658,7 @@ train_loop:
             compression_manager.on_step_end()
         compression_manager.on_epoch_end()
     compression_manager.on_train_end()
-    
+
 model.save('./path/to/save')
 ```
 
@@ -667,9 +697,10 @@ evaluation:                                          # optional. used to config 
 
 And then, the user can get the accuracy with,
 ```python
-dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
+dataset = Dataset()  #  dataset class that implement __getitem__ method or __iter__ method
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.conf.config import BenchmarkConf
+
 conf = BenchmarkConf(config.yaml)
 evaluator = Benchmark(conf)
 evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
@@ -686,19 +717,19 @@ In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear
 from neural_compressor.config import BenchmarkConfig
 
 BenchmarkConfig(
-  ## model: this parameter does not need to specially be defined;
-  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
-  inputs="image_tensor",    # input: same as in the conf.yaml;
-  outputs="num_detections,detection_boxes,detection_scores,detection_classes", # output: same as in the conf.yaml;
-  device="cpu",             # device: same as in the conf.yaml;
-  warmup=10,                # warmup: same as in the conf.yaml;
-  iteration=100,            # iteration: same as in the conf.yaml;
-  cores_per_instance=4,     # cores_per_instance: same as in the conf.yaml;
-  num_of_instance=7,        # num_of_instance: same as in the conf.yaml;
-  inter_num_of_threads=1,   # inter_num_of_threads: same as in the conf.yaml;
-  intra_num_of_threads=4,   # intra_num_of_threads: same as in the conf.yaml;
-  ## dataloader: this parameter does not need to specially be defined;
-)     
+    ## model: this parameter does not need to specially be defined;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    inputs="image_tensor",  # input: same as in the conf.yaml;
+    outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
+    device="cpu",  # device: same as in the conf.yaml;
+    warmup=10,  # warmup: same as in the conf.yaml;
+    iteration=100,  # iteration: same as in the conf.yaml;
+    cores_per_instance=4,  # cores_per_instance: same as in the conf.yaml;
+    num_of_instance=7,  # num_of_instance: same as in the conf.yaml;
+    inter_num_of_threads=1,  # inter_num_of_threads: same as in the conf.yaml;
+    intra_num_of_threads=4,  # intra_num_of_threads: same as in the conf.yaml;
+    ## dataloader: this parameter does not need to specially be defined;
+)
 ```
 
 The new example in Intel Neural Compressor 2.X should be updated as,
@@ -706,8 +737,9 @@ The new example in Intel Neural Compressor 2.X should be updated as,
 ```python
 from neural_compressor.config import BenchmarkConfig
 from neural_compressor.benchmark import fit
+
 conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+fit(model="./int8.pb", config=conf, b_dataloader=eval_dataloader)
 ```
 
 

@@ -14,15 +14,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """LayerHistogramCollector: save the histogram by layer."""
 
 import numpy as np
+
 from neural_compressor.utils.utility import combine_histogram
+
 
 class LayerHistogramCollector(object):
     """The collector of the histogram by layer.
-    
+
     Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
     values. The collected histogram will be used for calculating the optimal thresholds for
     quantization using KL divergence.
@@ -30,7 +31,7 @@ class LayerHistogramCollector(object):
 
     def __init__(self, num_bins=8001, layer_tensor=None, include_layer=None, logger=None):
         """Init a LayerHistogramCollector object.
-        
+
         Args:
             num_bins: Number of bins for the histogram
             layer_tensor: A dict with layer names as keys and lists of NDArrays as values
@@ -55,15 +56,12 @@ class LayerHistogramCollector(object):
                 continue
             for arr in self.layer_tensor[name]:
                 if self.logger:
-                    self.logger.debug(
-                        "Collect layer {} histogram of shape {}.".format(name, arr.shape))
+                    self.logger.debug("Collect layer {} histogram of shape {}.".format(name, arr.shape))
                 min_range = np.min(arr)
                 max_range = np.max(arr)
                 th = max(abs(min_range), abs(max_range))
                 if name in self.hist_dict:
                     self.hist_dict[name] = combine_histogram(self.hist_dict[name], arr)
                 else:
-                    hist, hist_edges = np.histogram(
-                        arr, bins=self.num_bins, range=(-th, th))
-                    self.hist_dict[name] = (
-                        hist, hist_edges, min_range, max_range, th)
+                    hist, hist_edges = np.histogram(arr, bins=self.num_bins, range=(-th, th))
+                    self.hist_dict[name] = (hist, hist_edges, min_range, max_range, th)

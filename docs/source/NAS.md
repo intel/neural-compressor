@@ -45,7 +45,8 @@ Simplest launcher code if NAS configuration is defined in user-defined yaml.
 
 ```python
 from neural_compressor.experimental import NAS
-agent = NAS('/path/to/user/yaml')
+
+agent = NAS("/path/to/user/yaml")
 results = agent.search()
 ```
 
@@ -56,14 +57,15 @@ NAS class also support `NASConfig` class as it's argument.
 ```python
 from neural_compressor.conf.config import NASConfig
 from neural_compressor.experimental import NAS
-config = NASConfig(approach='dynas', search_algorithm='nsga2')
-config.dynas.supernet = 'ofa_mbv3_d234_e346_k357_w1.2'
-config.dynas.metrics = ['acc', 'macs']
+
+config = NASConfig(approach="dynas", search_algorithm="nsga2")
+config.dynas.supernet = "ofa_mbv3_d234_e346_k357_w1.2"
+config.dynas.metrics = ["acc", "macs"]
 config.dynas.population = 50
 config.dynas.num_evals = 250
-config.dynas.results_csv_path = 'search_results.csv'
+config.dynas.results_csv_path = "search_results.csv"
 config.dynas.batch_size = 64
-config.dynas.dataset_path = '/datasets/imagenet-ilsvrc2012' #example
+config.dynas.dataset_path = "/datasets/imagenet-ilsvrc2012"  # example
 agent = NAS(config)
 results = agent.search()
 ```

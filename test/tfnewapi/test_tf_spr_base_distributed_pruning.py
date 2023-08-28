@@ -1,18 +1,21 @@
 """Tests for the TensorFlow pruning with distributed training and inference."""
-import os
-import sys
-import cpuinfo
-from platform import platform, system
-import signal
-import shutil
-import subprocess
-import unittest
-import re
 import hashlib
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
 import time
+import unittest
+from platform import platform, system
+
+import cpuinfo
 import tensorflow as tf
-from neural_compressor.utils import logger
+
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.utils import logger
+
 
 def build_fake_ut():
     fake_ut = '''
@@ -333,7 +336,7 @@ class TestTensorflowPruning(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
     '''
-    with open('fake_ut.py', 'w', encoding="utf-8") as f:
+    with open("fake_ut.py", "w", encoding="utf-8") as f:
         f.write(fake_ut)
         build_fake_yaml()
 
@@ -371,12 +374,14 @@ def build_fake_yaml():
         metric:
           topk: 1
     """
-    with open('fake_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("fake_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
+
 
 def dir_md5_check(dir):
     files_list = []
     md5_list = []
+
     def get_files_list(path, list_name):
         for file in sorted(os.listdir(path)):
             file_path = os.path.join(path, file)
@@ -384,16 +389,19 @@ def dir_md5_check(dir):
                 get_files_list(file_path, list_name)
             else:
                 list_name.append(file_path)
+
     get_files_list(dir, files_list)
     for file_path in files_list:
-        with open(file_path, 'rb') as fp:
+        with open(file_path, "rb") as fp:
             data = fp.read()
         file_md5 = hashlib.md5(data).hexdigest()
         md5_list.append(file_md5)
     return md5_list
 
+
 class TestDistributed(unittest.TestCase):
-    dst_path = './baseline_model'
+    dst_path = "./baseline_model"
+
     @classmethod
     def setUpClass(cls):
         build_fake_ut()
@@ -404,9 +412,12 @@ class TestDistributed(unittest.TestCase):
             shutil.copytree("/tmp/.neural_compressor/inc_ut/resnet_v2/", os.getcwd(), dirs_exist_ok=True)
         if not os.path.exists(cls.dst_path):
             raise FileNotFoundError(f"'{cls.dst_path}' doesn't exist.")
-        elif dir_md5_check(cls.dst_path) != \
-            ['65625fef42f44e6853d4d6d5e4188a49', 'a783396652bf62db3db4c9f647953175',
-            'c7259753419d9fc053df5b2059aef8c0', '77f2a1045cffee9f6a43f2594a5627ba']:
+        elif dir_md5_check(cls.dst_path) != [
+            "65625fef42f44e6853d4d6d5e4188a49",
+            "a783396652bf62db3db4c9f647953175",
+            "c7259753419d9fc053df5b2059aef8c0",
+            "77f2a1045cffee9f6a43f2594a5627ba",
+        ]:
             logger.warning("resnet_v2 baseline_model md5 verification failed.")
             raise ValueError(f"'{cls.dst_path}' md5 verification failed.")
         else:
@@ -414,10 +425,10 @@ class TestDistributed(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake_ut.py')
-        os.remove('fake_yaml.yaml')
-        shutil.rmtree('nc_workspace', ignore_errors=True)
-        shutil.rmtree('baseline_model', ignore_errors=True)
+        os.remove("fake_ut.py")
+        os.remove("fake_yaml.yaml")
+        shutil.rmtree("nc_workspace", ignore_errors=True)
+        shutil.rmtree("baseline_model", ignore_errors=True)
 
     def setUp(self):
         logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
@@ -426,19 +437,20 @@ class TestDistributed(unittest.TestCase):
     def tearDown(self):
         logger.info(f"{self._testMethodName} done.\n")
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, "2.10.0"), "Only test TF 2.10.0 or above")
     def test_tf_distributed_pruning(self):
-        distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
-        p = subprocess.Popen(distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, shell=True)
+        distributed_cmd = "horovodrun -np 2 python fake_ut.py"
+        p = subprocess.Popen(
+            distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
+        )
         try:
             out, _ = p.communicate()
             for line in out.splitlines():
                 print(line.decode().strip())
-            matches = re.findall(r'FAILED', out.decode('utf-8'))
+            matches = re.findall(r"FAILED", out.decode("utf-8"))
             self.assertEqual(matches, [])
 
-            matches = re.findall(r'OK', out.decode('utf-8'))
+            matches = re.findall(r"OK", out.decode("utf-8"))
             self.assertTrue(len(matches) > 0)
         except KeyboardInterrupt:
             os.killpg(os.getpgid(p.pid), signal.SIGKILL)

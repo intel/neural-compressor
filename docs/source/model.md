@@ -111,6 +111,7 @@ Users can create, use, and save models in the following manners:
 
 ```python
 from neural_compressor.model import Model
+
 inc_model = Model(input_model)
 ```
 
@@ -121,6 +122,6 @@ from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
 
 conf = PostTrainingQuantConfig()
-q_model = quantization.fit(model = inc_model, conf=conf)
+q_model = quantization.fit(model=inc_model, conf=conf)
 q_model.save("saved_result")
 ```

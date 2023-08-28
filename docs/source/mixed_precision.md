@@ -147,9 +147,9 @@ To get a bf16/fp16 model, users can use the Mixed Precision API as follows.
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig() # default precision is bf16
+conf = MixedPrecisionConfig()  # default precision is bf16
 converted_model = mix_precision.fit(model, conf=conf)
-converted_model.save('./path/to/save/')
+converted_model.save("./path/to/save/")
 ```
 
 - FP16:
@@ -159,11 +159,12 @@ from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
 conf = MixedPrecisionConfig(
-        backend='onnxrt_cuda_ep',
-        device='gpu',
-        precisions='fp16')
+    backend="onnxrt_cuda_ep",
+    device="gpu",
+    precisions="fp16",
+)
 converted_model = mix_precision.fit(model, conf=conf)
-converted_model.save('./path/to/save/')
+converted_model.save("./path/to/save/")
 ```
   
 ## Examples

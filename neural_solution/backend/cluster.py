@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution cluster."""
 import sqlite3
 import threading
@@ -104,7 +103,7 @@ class Cluster:
         booked_socket_lst = []
 
         # detect and append new resource
-        self.cursor.execute(f"SELECT id, name, total_sockets FROM cluster where status = 'join'")
+        self.cursor.execute("SELECT id, name, total_sockets FROM cluster where status = 'join'")
         new_node_lst = self.cursor.fetchall()
         for index, name, total_sockets in new_node_lst:
             sql = """
@@ -112,7 +111,7 @@ class Cluster:
                     SET status = ?
                     WHERE id = ?
                 """
-            self.cursor.execute(sql, ('alive', index))
+            self.cursor.execute(sql, ("alive", index))
             self.conn.commit()
             self.socket_queue += [str(index) + " " + name] * total_sockets
             logger.info(f"[Cluster] add new node-id {index} to socket_queue:  {self.socket_queue}")
@@ -166,7 +165,12 @@ class Cluster:
             self.cursor.execute(
                 r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)"
                 + "values ('{}', '{}', '{}', {}, {}, {})".format(
-                node.name, repr(node).replace("Node", f"Node{index+1}"), "alive", node.num_sockets, 0, node.num_sockets
+                    node.name,
+                    repr(node).replace("Node", f"Node{index+1}"),
+                    "alive",
+                    node.num_sockets,
+                    0,
+                    node.num_sockets,
                 )
             )
 

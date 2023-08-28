@@ -14,13 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Build FastBiasCorrection algorithm class."""
 
 import numpy as np
+
 from .algorithm import Algorithm, algorithm_registry
 
-@algorithm_registry(algorithm_type='weight_correction', location='post_quantization')
+
+@algorithm_registry(algorithm_type="weight_correction", location="post_quantization")
 class WeightCorrection(Algorithm):
     """FastBiasCorrection algorithm class.
 
@@ -60,33 +61,43 @@ class WeightCorrection(Algorithm):
         # (TODO) assume int8 model also use fp32 op list
         # in adaptor fp32 op will be mapped to corresponding int8 op
         graph_info = origin_model.graph_info
-        op_list = [op_name for op_name, op_type in graph_info.items() if 'conv' in op_type.lower()]
+        op_list = [op_name for op_name, op_type in graph_info.items() if "conv" in op_type.lower()]
 
-        #(TODO) assume the weight format should be(oc, ic, h, w)
+        # (TODO) assume the weight format should be(oc, ic, h, w)
         cap = adaptor.query_fw_capability(origin_model)
-        quantize_cfg = {'op': cap['opwise']}
-        fp32_data = adaptor.inspect_tensor(origin_model, dataloader, op_list=op_list, 
-                                           iteration_list=list(range(1, iterations+1)), 
-                                           inspect_type='weight', quantization_cfg = quantize_cfg)
-        q_data = adaptor.inspect_tensor(q_model, dataloader, op_list=op_list, 
-                                        iteration_list=list(range(1, iterations+1)), 
-                                        inspect_type='weight', quantization_cfg = quantize_cfg)
+        quantize_cfg = {"op": cap["opwise"]}
+        fp32_data = adaptor.inspect_tensor(
+            origin_model,
+            dataloader,
+            op_list=op_list,
+            iteration_list=list(range(1, iterations + 1)),
+            inspect_type="weight",
+            quantization_cfg=quantize_cfg,
+        )
+        q_data = adaptor.inspect_tensor(
+            q_model,
+            dataloader,
+            op_list=op_list,
+            iteration_list=list(range(1, iterations + 1)),
+            inspect_type="weight",
+            quantization_cfg=quantize_cfg,
+        )
 
-        fp32_weights = fp32_data['weight']
-        q_weights = q_data['weight']
+        fp32_weights = fp32_data["weight"]
+        q_weights = q_data["weight"]
 
         tensor_dict = {}
         # for fp32_op, q_op in node_mapping.items():
         for fp32_op in op_list:
             # (TODO) assume adaptor will map the fp32_op to q_op, so directly assign here
             q_op = fp32_op
-            #(TODO) assume fp32 op output and weight all mapped from the first node name
+            # (TODO) assume fp32 op output and weight all mapped from the first node name
             # fp32 op and quantized op should all have bias
-            if fp32_op not in fp32_weights or not len(fp32_weights[fp32_op]) >= 1: 
+            if fp32_op not in fp32_weights or not len(fp32_weights[fp32_op]) >= 1:
                 continue
 
-            fp32_weight, fp32_weight_name = None, ''
-            fp32_bias, fp32_bias_name = None, ''
+            fp32_weight, fp32_weight_name = None, ""
+            fp32_bias, fp32_bias_name = None, ""
             for name, value in fp32_weights[fp32_op].items():
                 if len(value.shape) > 1:
                     fp32_weight = value
@@ -95,8 +106,8 @@ class WeightCorrection(Algorithm):
                     fp32_bias = value
                     fp32_bias_name = name
 
-            q_weight, q_weight_name = None, ''
-            q_bias, q_bias_name = None, ''
+            q_weight, q_weight_name = None, ""
+            q_bias, q_bias_name = None, ""
             for name, value in q_weights[q_op].items():
                 if len(value.shape) > 1:
                     q_weight = value
@@ -116,19 +127,18 @@ class WeightCorrection(Algorithm):
             t_q_weight = np.transpose(q_weight, transpose_shape)
             t_q_weight = t_q_weight.reshape(t_q_weight.shape[0], -1)
 
-            channel_variance = np.std(t_fp32_weight, axis=1) / \
-              (np.std(t_q_weight, axis=1) + self.eps)          
+            channel_variance = np.std(t_fp32_weight, axis=1) / (np.std(t_q_weight, axis=1) + self.eps)
 
             broad_shape = np.ones(len(fp32_weight.shape), dtype=np.int32)
             broad_shape[self.channel_axis] = len(channel_variance)
             channel_variance = channel_variance.reshape(broad_shape)
             variance_q_weight = q_weight * channel_variance
             variance_q_weight = np.transpose(variance_q_weight, transpose_shape)
-            variance_q_weight = variance_q_weight.reshape(\
-                variance_q_weight.shape[0], -1)
+            variance_q_weight = variance_q_weight.reshape(variance_q_weight.shape[0], -1)
 
-            channel_mean = np.mean(t_fp32_weight, axis=self.channel_axis) - \
-                np.mean(variance_q_weight, axis=self.channel_axis)
+            channel_mean = np.mean(t_fp32_weight, axis=self.channel_axis) - np.mean(
+                variance_q_weight, axis=self.channel_axis
+            )
 
             channel_mean = channel_mean.reshape(broad_shape)
             tensor_dict[q_weight_name] = channel_variance * fp32_weight + channel_mean

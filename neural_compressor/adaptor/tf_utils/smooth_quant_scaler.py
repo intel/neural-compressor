@@ -16,18 +16,20 @@
 # limitations under the License.
 """Tensorflow scaling model weights and activations for Smooth Quantization."""
 
+import logging
+
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import tensor_util
+from tensorflow.python.framework import dtypes, tensor_util
+
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-import logging
 
 logger = logging.getLogger("neural_compressor")
 
+
 class SmoothQuantScaler:
     """A class for scaling model weights using Smooth Quantization method.
-    
+
     Args:
         model: Tensorflow model to be scaled
         dataloader: Tensorflow dataloader for the dataset
@@ -56,10 +58,14 @@ class SmoothQuantScaler:
             w_i: distinguish between different output weight nodes on different branches when naming
         """
         from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+
         node_suffix = str(w_i)
         mul_const_node = Helper.create_constant_node(input_node_name + "/scale_mul" + node_suffix, scale, tf.float32)
-        mul_node = Helper.create_node('Mul', input_node_name + "_mul" + node_suffix,
-                            [input_node_name + "/scale_mul" + node_suffix, input_node_name])
+        mul_node = Helper.create_node(
+            "Mul",
+            input_node_name + "_mul" + node_suffix,
+            [input_node_name + "/scale_mul" + node_suffix, input_node_name],
+        )
         Helper.set_attr_dtype(mul_node, "T", dtypes.float32)
         self.mul_list.append(mul_node.name)
         self.g_analyzer.add_node(mul_node, input_node_name, [output_node_name])
@@ -75,16 +81,16 @@ class SmoothQuantScaler:
         """
         # scale: (ic,)
         original_shape = original_weight.shape
-        if len(original_shape) == 4:    # (fh, hw, ic, oc)
-            W = np.transpose(original_weight, [0, 1, 3, 2]) # move input channel to last dimension
+        if len(original_shape) == 4:  # (fh, hw, ic, oc)
+            W = np.transpose(original_weight, [0, 1, 3, 2])  # move input channel to last dimension
             W *= scale
-            W = np.transpose(W, [0, 1, 3, 2])   # move input channel back
-            weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
+            W = np.transpose(W, [0, 1, 3, 2])  # move input channel back
+            weight_node.attr["value"].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
         elif len(original_shape) == 2:  # (ic, oc) if transpose_a == transpose_b == false
             W = np.transpose(original_weight, [1, 0])
             W *= scale
             W = np.transpose(W, [1, 0])
-            weight_node.attr['value'].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
+            weight_node.attr["value"].tensor.CopyFrom(tensor_util.make_tensor_proto(W))
 
     def transform(self, max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_weight_node_names):
         """Apply scaling to weights and activations based on the maximum values per channel.
@@ -94,7 +100,7 @@ class SmoothQuantScaler:
             sq_weight_tensors (dict): A dictionary containing the name -> weight tensors mapping for each input node.
             sq_weights_nodes (dict): A dictionary containing the name -> constant nodes mapping for each input node.
             sq_weight_node_names (dict): A dictionary from weight node name to the its concrete output node name.
-        
+
         Returns:
             tuple: A tuple containing the modified model and a list of the inserted multiplication nodes.
         """
@@ -118,17 +124,18 @@ class SmoothQuantScaler:
                         tensor = np.abs(np.transpose(W, [0, 1, 3, 2]))
                         # reduce weight max to (in_channel, ), aligned with activation max
                         W_max_per_in_channel = np.max(np.reshape(tensor, (-1, tensor.shape[-1])), axis=0)
-                    elif len(W.shape) == 2: # matmul
+                    elif len(W.shape) == 2:  # matmul
                         # reduce weight max to (in_channel, ), aligned with activation max
                         tensor = np.abs(W)
                         W_max_per_in_channel = np.max(tensor, axis=1)
-                    else: # pragma: no cover
+                    else:  # pragma: no cover
                         assert False, "not supported"
                     cur_const_node = W_const_node_dict[W_name]
                     try:
-                        scale = np.power(A_max_per_in_channel, self.alpha) /  \
-                                np.power(W_max_per_in_channel, (1-self.alpha))
-                    except ValueError as e: # pragma: no cover
+                        scale = np.power(A_max_per_in_channel, self.alpha) / np.power(
+                            W_max_per_in_channel, (1 - self.alpha)
+                        )
+                    except ValueError as e:  # pragma: no cover
                         logger.info(e)
                         logger.info("Skip smoothing the node: {}".format(cur_const_node.name))
                         continue

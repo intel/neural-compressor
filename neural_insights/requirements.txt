@@ -1,8 +1,8 @@
-neural_compressor>=2.2
+cryptography
 Flask
 Flask-Cors
 Flask-SocketIO
 gevent
 gevent-websocket
-cryptography
+neural_compressor>=2.2
 pywin32; sys_platform != 'linux'

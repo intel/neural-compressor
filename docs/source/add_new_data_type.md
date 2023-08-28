@@ -133,19 +133,19 @@ Once the new data type has been added to Intel® Neural Compressor, it can be us
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig
+
 op_type_dict = {
-    'Conv2d': {
-        'weight': {
-            'dtype': ['int4'],
+    "Conv2d": {
+        "weight": {
+            "dtype": ["int4"],
         },
-        'activation': {
-            'dtype': ['uint4'],
+        "activation": {
+            "dtype": ["uint4"],
         },
     },
 }
 conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
 ...
-
 ```
 
 With this code, all `Conv2d` operators will be quantized to 4-bit, with weight using `int4` and activation using `uint4`.

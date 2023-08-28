@@ -16,10 +16,10 @@
 
 import os
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from neural_insights.utils.consts import WorkloadModes, Frameworks, WorkloadStatus
+from neural_insights.utils.consts import Frameworks, WorkloadModes, WorkloadStatus
 from neural_insights.utils.exceptions import InternalException
 from neural_insights.utils.json_serializer import JsonSerializer
 from neural_insights.utils.utils import get_framework_from_path

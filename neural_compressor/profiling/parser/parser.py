@@ -14,14 +14,15 @@
 # limitations under the License.
 
 """Parsers for log files."""
-from neural_compressor.profiling.parser.result import ProfilingResult
 from abc import ABC, abstractmethod
-
 from typing import List
+
+from neural_compressor.profiling.parser.result import ProfilingResult
 
 
 class ProfilingParser(ABC):
     """Parser class is responsible for parsing profiling log files."""
+
     def __init__(self, logs: list) -> None:
         """Initialize parser.
 
@@ -39,7 +40,6 @@ class ProfilingParser(ABC):
         """Get profiling results.
 
         Returns: list of ProfilingResult entries
-
         """
         return self._results
 

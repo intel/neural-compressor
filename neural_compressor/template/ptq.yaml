@@ -53,7 +53,7 @@ quantization:                                        # optional. tuning constrai
       scheme: asym
       dtype: int8, fp32
       algorithm: minmax, kl
-  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
+  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space.
          'conv1': {
            'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
            'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['minmax']}

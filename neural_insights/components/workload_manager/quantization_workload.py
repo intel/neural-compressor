@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The quantization_workload module for Neural Insights quantization workloads."""
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from neural_insights.components.workload_manager.workload import Workload
 from neural_insights.utils.json_serializer import JsonSerializer

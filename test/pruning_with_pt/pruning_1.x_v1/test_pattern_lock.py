@@ -3,11 +3,12 @@ import shutil
 import unittest
 
 import torch
-import torchvision
 import torch.nn as nn
+import torchvision
 
-from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+
 
 def build_fake_yaml():
     fake_yaml = """
@@ -28,7 +29,7 @@ def build_fake_yaml():
         metric:
           topk: 1
     """
-    with open('fake.yaml', 'w', encoding="utf-8") as f:
+    with open("fake.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
@@ -41,17 +42,18 @@ class TestPatternLock(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("fake.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_pattern_lock(self):
         from neural_compressor.experimental import Pruning, common
-        prune = Pruning('fake.yaml')
+
+        prune = Pruning("fake.yaml")
 
         weight = self.model.layer1[0].conv1.weight
         mask = torch.ones(weight.numel())
-        mask[:round(weight.numel()*0.9)] = .0
+        mask[: round(weight.numel() * 0.9)] = 0.0
         mask = mask[torch.randperm(mask.numel())].view(weight.shape)
         weight.data = weight * mask
 
@@ -71,7 +73,7 @@ class TestPatternLock(unittest.TestCase):
                 prune.on_epoch_begin(nepoch)
                 for i, (image, target) in enumerate(dummy_dataloader):
                     prune.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -82,6 +84,7 @@ class TestPatternLock(unittest.TestCase):
                     if cnt >= iters:
                         break
                 prune.on_epoch_end()
+
         dummy_dataset = DummyDataset(tuple([100, 3, 256, 256]), label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.model = self.model

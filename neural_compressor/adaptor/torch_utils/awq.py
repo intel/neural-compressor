@@ -1,21 +1,38 @@
-import torch
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import copy
-from neural_compressor.adaptor.torch_utils.util import (
-    fetch_module, 
-    get_example_input, 
-    get_absorb_layers,
-    get_module_input_output,
-    get_hidden_states,
-    get_block_prefix
-)
-from .model_wrapper import MulLinear
-from ...utils import logger
-from .smooth_quant import model_forward, set_module
 from functools import partial
+
+import torch
+
+from neural_compressor.adaptor.torch_utils.util import (
+    fetch_module,
+    get_absorb_layers,
+    get_block_prefix,
+    get_example_input,
+    get_hidden_states,
+    get_module_input_output,
+)
+
+from ...utils import logger
+from .model_wrapper import MulLinear
+from .smooth_quant import model_forward, set_module
 
 
 def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}):
-    """Get absorbed layer per block. 
+    """Get absorbed layer per block.
 
     Args:
         model (torch.nn.Module): input model
@@ -24,23 +41,20 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     Returns:
         block_absorb_dict: dict of absorbed layer per block. eg. {0, [[absorbed_1, xx], [xx]], ...}
     """
-    block_absorb_dict = {} # record absorbed layer per block
-    absorb_layer_dict = {} # record absorb layers for absorbed layers
+    block_absorb_dict = {}  # record absorbed layer per block
+    absorb_layer_dict = {}  # record absorb layers for absorbed layers
     absorb_to_layer, no_absorb_layers = get_absorb_layers(
-        model, example_inputs, 
-        supported_layers=['Linear'], folding=False
+        model, example_inputs, supported_layers=["Linear"], folding=False
     )
     logger.debug(f"The no absorb layers: {no_absorb_layers}")
     # skip ops when algorithm is not AWQ
     skip_op_set = set()
     for k, v in absorb_to_layer.items():
         for vv in v:
-            if vv in weight_config and (weight_config[vv]['algorithm'] != 'AWQ' or \
-              weight_config[vv]['bits'] == -1):
+            if vv in weight_config and (weight_config[vv]["algorithm"] != "AWQ" or weight_config[vv]["bits"] == -1):
                 skip_op_set.add(k)
     for k in no_absorb_layers:
-        if k in weight_config and (weight_config[k]['algorithm'] != 'AWQ' or \
-          weight_config[k]['bits'] == -1):
+        if k in weight_config and (weight_config[k]["algorithm"] != "AWQ" or weight_config[k]["bits"] == -1):
             skip_op_set.add(k)
     for k in skip_op_set:
         if k in absorb_to_layer:
@@ -53,9 +67,9 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     block_prefix, block_num = get_block_prefix(model)
     for i in range(block_num):
         block_absorb_dict[i] = []
-        block_name = block_prefix + '.' + str(i) + '.'
+        block_name = block_prefix + "." + str(i) + "."
         for k, v in absorb_to_layer.items():
-            name_list =tuple(vv for vv in v if block_name in vv)
+            name_list = tuple(vv for vv in v if block_name in vv)
             if len(name_list) > 0:
                 block_absorb_dict[i].append(name_list)
                 absorb_layer_dict[name_list] = k
@@ -90,14 +104,26 @@ def _get_act_scale(input_val):
 
 class ActAwareWeightQuant:
     """Implementation of Activation-aware Weight quantization (AWQ) algo."""
-    def __init__(self, model, example_inputs=None, calib_func=None, dataloader=None, n_samples=128,
-                 data_type='int', bits=4,  group_size=32, scheme='asym', sym_full_range=False, 
-                 weight_config={},):
+
+    def __init__(
+        self,
+        model,
+        example_inputs=None,
+        calib_func=None,
+        dataloader=None,
+        n_samples=128,
+        data_type="int",
+        bits=4,
+        group_size=32,
+        scheme="asym",
+        sym_full_range=False,
+        weight_config={},
+    ):
         self.example_inputs = example_inputs
         if example_inputs is None:
             assert dataloader is not None, "datalaoder or example_inputs is required."
             self.example_inputs = get_example_input(dataloader)
-        # Step 1: get hidden states and kwargs of first block. 
+        # Step 1: get hidden states and kwargs of first block.
         self.total_block_args, self.total_block_kwargs = get_hidden_states(
             model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func
         )
@@ -118,9 +144,9 @@ class ActAwareWeightQuant:
         Args:
             auto_scale (bool, optional): whether search scale. Defaults to True.
             mse_range (bool, optional): whether search clip range. Defaults to True.
-            folding (bool, optional): whether only allow update scale when it can be fold 
+            folding (bool, optional): whether only allow update scale when it can be fold
                                       to upper layer. Defaults to False.
-            return_int (bool, optional): whether return int dtype with WeightOnlyLinear. 
+            return_int (bool, optional): whether return int dtype with WeightOnlyLinear.
                                          Defaults to False.
 
         Returns:
@@ -130,29 +156,32 @@ class ActAwareWeightQuant:
         # block_absorb_dict is split per block, includes all absorb relationship.
         # absorb_layer_dict is the inverse of block_absorb_dict for all blocks
         self.block_absorb_dict, self.absorb_layer_dict = _get_absorb_per_block(
-            self.model, self.example_inputs, 
+            self.model,
+            self.example_inputs,
             # for only mse_range, folding is useless.
-            folding = folding if auto_scale else False,
+            folding=folding if auto_scale else False,
             weight_config=self.weight_config,
         )
         # process per block
         for i, module_list in self.block_absorb_dict.items():
             logger.info(f"Processing block: {i+1}/{self.block_num}")
             if len(module_list) == 0:
-                logger.info(f"No need to process this block.")
+                logger.info("No need to process this block.")
                 continue
             # Step 1: fetch all input values of each linear for scale calculation
             # use the first linear for QKV tuple
-            block_name = self.block_prefix + '.' + str(i)
+            block_name = self.block_prefix + "." + str(i)
             block = fetch_module(self.model, block_name)
-            module_hook_config = {
-                v[0].split(block_name + '.')[1]: ['input'] for v in module_list
-            }
+            module_hook_config = {v[0].split(block_name + ".")[1]: ["input"] for v in module_list}
+
             def block_calibration(model):
                 for args, kwargs in zip(self.total_block_args, self.total_block_kwargs):
                     model(*args, **kwargs)
+
             input_values = get_module_input_output(
-                block, module_hook_config, calib_func=block_calibration,
+                block,
+                module_hook_config,
+                calib_func=block_calibration,
             )
             # Step 3: search best scale for linears in one block and apply it
             if auto_scale:
@@ -177,7 +206,7 @@ class ActAwareWeightQuant:
         Args:
             block (torch.nn.Module): a block of model
             block_name (str): the block name in model.
-            module_list (dict): contains all linear tuple in current block, 
+            module_list (dict): contains all linear tuple in current block,
                                 linears in the same tuple shares scale.
             input_values (dict): contains all input values of linears in current block
 
@@ -185,30 +214,33 @@ class ActAwareWeightQuant:
             scale_info: a dict that contains input scales of linears in current block
         """
         from .weight_only import quant_weight
+
         scale_info = {}
         logger.info("Searching best scales with AWQ algorithm")
         for module_tuple in module_list:
             # Step 1: Initailize quantization configuration.
             if module_tuple[0] in self.weight_config:
-                cur_dtype = self.weight_config[module_tuple[0]]['dtype']
-                cur_bits = self.weight_config[module_tuple[0]]['bits']
-                cur_group_size = self.weight_config[module_tuple[0]]['group_size']
-                cur_scheme = self.weight_config[module_tuple[0]]['scheme']
+                cur_dtype = self.weight_config[module_tuple[0]]["dtype"]
+                cur_bits = self.weight_config[module_tuple[0]]["bits"]
+                cur_group_size = self.weight_config[module_tuple[0]]["group_size"]
+                cur_scheme = self.weight_config[module_tuple[0]]["scheme"]
             else:
-                cur_dtype, cur_bits, cur_group_size, cur_scheme = \
-                            self.data_type, self.bits, self.group_size, self.scheme
+                cur_dtype, cur_bits, cur_group_size, cur_scheme = (
+                    self.data_type,
+                    self.bits,
+                    self.group_size,
+                    self.scheme,
+                )
             if cur_bits < 0:
                 continue
             logger.info(f"[SCALE] Processing module: {module_tuple}")
             # Step 2: update module name in block
-            module_name_list = [i.split(block_name + '.')[1] for i in module_tuple]
+            module_name_list = [i.split(block_name + ".")[1] for i in module_tuple]
             # Step 3: collect w_max and x_max for scale calculation.
-            weight = torch.cat(
-                [fetch_module(block, _m).weight for _m in module_name_list], dim=0
-            )
+            weight = torch.cat([fetch_module(block, _m).weight for _m in module_name_list], dim=0)
             w_max = _get_weight_scale(weight, q_group_size=cur_group_size)
             del weight
-            input_val = input_values[module_name_list[0]]['input']
+            input_val = input_values[module_name_list[0]]["input"]
             x_max = _get_act_scale(input_val)
             absorbed_modules = {_m: fetch_module(block, _m) for _m in module_name_list}
             # Step 4: collect origin output for MSE and state_dict for recover.
@@ -220,7 +252,7 @@ class ActAwareWeightQuant:
                 module = absorbed_modules[module_name_list[0]]
                 org_out = self.module_inference(module, input_val)
             # Step 5: collect origin output for MSE and state_dict for recover.
-            best_error = float('inf')
+            best_error = float("inf")
             best_scales = None
             best_scale_alpha = None
             n_grid = 20
@@ -228,16 +260,15 @@ class ActAwareWeightQuant:
             # Step 6: set different alpha for scale and compare the MSE loss.
             for ratio in range(n_grid):
                 ratio = ratio * 1 / n_grid
-                scales = (x_max.pow(ratio) / w_max.pow(1-ratio)
-                        ).clamp(min=1e-4).view(-1)
+                scales = (x_max.pow(ratio) / w_max.pow(1 - ratio)).clamp(min=1e-4).view(-1)
                 scales = scales / (scales.max() * scales.min()).sqrt()
                 for name, module in absorbed_modules.items():
                     module.weight.data = module.weight.data.mul(scales.view(1, -1))
                     module.weight.data = quant_weight(
                         module.weight.data,
                         data_type=cur_dtype,
-                        num_bits=cur_bits, 
-                        group_size=cur_group_size, 
+                        num_bits=cur_bits,
+                        group_size=cur_group_size,
                         scheme=cur_scheme,
                         full_range=self.sym_full_range,
                     ) / scales.view(1, -1)
@@ -292,7 +323,7 @@ class ActAwareWeightQuant:
                 else:
                     absorb_module.weight.div_(scale.view(-1, 1))
                 # hasattr is for LlamaRMSNorm
-                if hasattr(absorb_module, 'bias') and absorb_module.bias is not None:
+                if hasattr(absorb_module, "bias") and absorb_module.bias is not None:
                     absorb_module.bias.div_(scale.view(-1))
                 for name in module_tuple:
                     absorbed_module = fetch_module(self.model, name)
@@ -303,25 +334,30 @@ class ActAwareWeightQuant:
 
         Args:
             block_name (str): block name in model.
-            module_list (dict): contains all linear tuple in current block, 
+            module_list (dict): contains all linear tuple in current block,
                                 linears in the same tuple shares scale.
             input_values (dict): contains all input values of linears in current block
         """
         from .weight_only import quant_weight
+
         logger.info("Searching the best clip range with AWQ algorithm")
         for module_tuple in module_list:
-            input_val = input_values[module_tuple[0].split(block_name + '.')[1]]['input']
+            input_val = input_values[module_tuple[0].split(block_name + ".")[1]]["input"]
             # process linear modules one by one
             for module_name in module_tuple:
                 # Step 1: Initailize quantization configuration.
                 if module_name in self.weight_config:
-                    cur_dtype = self.weight_config[module_name]['dtype']
-                    cur_bits = self.weight_config[module_name]['bits']
-                    cur_group_size = self.weight_config[module_name]['group_size']
-                    cur_scheme = self.weight_config[module_name]['scheme']
+                    cur_dtype = self.weight_config[module_name]["dtype"]
+                    cur_bits = self.weight_config[module_name]["bits"]
+                    cur_group_size = self.weight_config[module_name]["group_size"]
+                    cur_scheme = self.weight_config[module_name]["scheme"]
                 else:
-                    cur_dtype, cur_bits, cur_group_size, cur_scheme = \
-                                self.data_type, self.bits, self.group_size, self.scheme
+                    cur_dtype, cur_bits, cur_group_size, cur_scheme = (
+                        self.data_type,
+                        self.bits,
+                        self.group_size,
+                        self.scheme,
+                    )
                 if cur_bits < 0:
                     continue
                 logger.info(f"[CLIP] Processing module: {module_name}")
@@ -332,19 +368,19 @@ class ActAwareWeightQuant:
                 org_out = self.module_inference(module, input_val)
                 # Step 4:  set different clip range for weight and compare the MSE loss.
                 logger.info("Searching the best clip range with AWQ algorithm")
-                best_error = float('inf')
+                best_error = float("inf")
                 best_clip_ratio = None
                 n_grid = 100
                 max_shrink = 0.1
                 history = []
                 for i_s in range(int(max_shrink * n_grid)):
-                    ratio = (1 - i_s / n_grid) # 1, 0.91-1.0
+                    ratio = 1 - i_s / n_grid  # 1, 0.91-1.0
                     # MulLinear can also work with @weight.setter
                     module.weight.data = quant_weight(
                         module.weight.data,
                         data_type=cur_dtype,
-                        num_bits=cur_bits, 
-                        group_size=cur_group_size, 
+                        num_bits=cur_bits,
+                        group_size=cur_group_size,
                         scheme=cur_scheme,
                         full_range=self.sym_full_range,
                         quantile=ratio,
@@ -362,13 +398,13 @@ class ActAwareWeightQuant:
                 logger.debug("The loss history of different clip range:{}".format(history))
                 if module_name not in self.weight_config:
                     self.weight_config[module_name] = {
-                        'bits': cur_bits,
-                        'group_size': cur_group_size,
-                        'scheme': cur_scheme
+                        "bits": cur_bits,
+                        "group_size": cur_group_size,
+                        "scheme": cur_scheme,
                     }
-                self.weight_config[module_name]['quantile'] = best_clip_ratio
+                self.weight_config[module_name]["quantile"] = best_clip_ratio
                 if isinstance(module, MulLinear):
-                    self.weight_config[module_name+'.linear'] = self.weight_config[module_name]
+                    self.weight_config[module_name + ".linear"] = self.weight_config[module_name]
                     self.weight_config.pop(module_name)
                 logger.debug("The best clip ratio for {}:{}".format(module_name, best_clip_ratio))
 
@@ -376,18 +412,19 @@ class ActAwareWeightQuant:
         """Quantize model with clip range.
 
         Args:
-            return_int (bool, optional): whether return int dtype with WeightOnlyLinear. 
+            return_int (bool, optional): whether return int dtype with WeightOnlyLinear.
                                          Defaults to False.
         """
         # apply quantization and clip
         logger.info("Quantizing the AWQ optimized fp32 model")
         from .weight_only import rtn_quantize
+
         self.model = rtn_quantize(
-            self.model, 
-            num_bits=self.bits, 
+            self.model,
+            num_bits=self.bits,
             group_size=self.group_size,
             scheme=self.scheme,
-            weight_config=self.weight_config, 
+            weight_config=self.weight_config,
             return_int=return_int,
             sym_full_range=self.sym_full_range,
         )
@@ -402,8 +439,8 @@ class ActAwareWeightQuant:
         for i, inp in enumerate(input_list):
             if len(self.total_block_args[i]) > 0:
                 self.total_block_args[i][0] = inp
-            elif 'hidden_states' in self.total_block_kwargs[i]:
-                self.total_block_kwargs[i]['hidden_states'] = inp
+            elif "hidden_states" in self.total_block_kwargs[i]:
+                self.total_block_kwargs[i]["hidden_states"] = inp
             else:  # pragma: no cover
                 assert False, "cannot find hidden_states position for next block"
 
