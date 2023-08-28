@@ -117,6 +117,7 @@ class Component(object):
         if self.combination is not None and 'Quantization' in self.combination:
             if self.adaptor is None:
                 framework_specific_info = {'device': self.cfg.device,
+                                        'approach': "post_training_static_quant",
                                         'random_seed': self.cfg.tuning.random_seed,
                                         'workspace_path': self.cfg.tuning.workspace.path,
                                         'q_dataloader': None}
@@ -135,6 +136,7 @@ class Component(object):
         """Register Quantization Aware Training hooks."""
         if self.adaptor is None:
             framework_specific_info = {'device': self.cfg.device,
+                                    'approach': "quant_aware_training",
                                     'random_seed': self.cfg.tuning.random_seed,
                                     'workspace_path': self.cfg.tuning.workspace.path,
                                     'q_dataloader': None,
